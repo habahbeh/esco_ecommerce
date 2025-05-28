@@ -1,0 +1,451 @@
+{% load static %}
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}" {% if site_settings.default_dark_mode %}data-bs-theme="dark"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ESCO{% endblock %}</title>
+
+    <!-- Favicon -->
+    {% if site_settings.favicon %}
+        <link rel="icon" href="{{ site_settings.favicon.url }}" type="image/x-icon">
+    {% else %}
+        <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
+    {% endif %}
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    <!-- RTL support for Arabic -->
+    {% if LANGUAGE_CODE == 'ar' %}
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+        <link rel="stylesheet" href="{% static 'css/rtl.css' %}">
+    {% endif %}
+
+    <!-- Site color customization -->
+    <style>
+    :root {
+        --bs-primary: {{ site_settings.primary_color|default:"#CC2229" }};
+
+        /* طريقة أبسط لتحويل اللون إلى RGB */
+        {% if site_settings.primary_color %}
+            {% with color=site_settings.primary_color %}
+                {% if color|slice:":1" == "#" %}
+                    {% with r=color|slice:"1:3"|stringformat:"s" g=color|slice:"3:5"|stringformat:"s" b=color|slice:"5:7"|stringformat:"s" %}
+                        --bs-primary-rgb: {{ r|default:"204" }}, {{ g|default:"34" }}, {{ b|default:"41" }};
+                    {% endwith %}
+                {% else %}
+                    --bs-primary-rgb: 204, 34, 41; /* قيمة افتراضية */
+                {% endif %}
+            {% endwith %}
+        {% else %}
+            --bs-primary-rgb: 204, 34, 41; /* قيمة افتراضية */
+        {% endif %}
+    }
+</style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body dir="{% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}">
+    <!-- Header -->
+    <header>
+        <!-- Top Bar -->
+        <div class="top-bar bg-primary text-white py-2">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-inline mb-0">
+                            {% if site_settings.email %}
+                                <li class="list-inline-item me-3">
+                                    <i class="fas fa-envelope me-1"></i> {{ site_settings.email }}
+                                </li>
+                            {% endif %}
+                            {% if site_settings.phone %}
+                                <li class="list-inline-item">
+                                    <i class="fas fa-phone-alt me-1"></i> {{ site_settings.phone }}
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <ul class="list-inline mb-0">
+                            <!-- Social Media Links -->
+                            {% if site_settings.facebook %}
+                                <li class="list-inline-item">
+                                    <a href="{{ site_settings.facebook }}" class="text-white" target="_blank">
+                                        <i class="fab fa-facebook"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            {% if site_settings.twitter %}
+                                <li class="list-inline-item">
+                                    <a href="{{ site_settings.twitter }}" class="text-white" target="_blank">
+                                        <i class="fab fa-twitter"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            {% if site_settings.instagram %}
+                                <li class="list-inline-item">
+                                    <a href="{{ site_settings.instagram }}" class="text-white" target="_blank">
+                                        <i class="fab fa-instagram"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            {% if site_settings.linkedin %}
+                                <li class="list-inline-item">
+                                    <a href="{{ site_settings.linkedin }}" class="text-white" target="_blank">
+                                        <i class="fab fa-linkedin"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+
+                            <!-- Language Switcher -->
+                            <li class="list-inline-item ms-3">
+                                {% get_current_language as CURRENT_LANGUAGE %}
+                                {% get_available_languages as AVAILABLE_LANGUAGES %}
+                                {% get_language_info_list for AVAILABLE_LANGUAGES as languages %}
+
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-primary dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                        {% if CURRENT_LANGUAGE == 'ar' %}
+                                            <i class="fas fa-globe me-1"></i> العربية
+                                        {% else %}
+                                            <i class="fas fa-globe me-1"></i> English
+                                        {% endif %}
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="languageDropdown">
+                                        {% for language in languages %}
+                                            <li>
+                                                <a class="dropdown-item{% if language.code == CURRENT_LANGUAGE %} active{% endif %}"
+                                                   href="{% url 'core:set_language' language.code %}">
+                                                    {{ language.name_local }}
+                                                </a>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </li>
+
+                            <!-- Dark Mode Toggle -->
+                            {% if site_settings.enable_dark_mode %}
+                                <li class="list-inline-item ms-2">
+                                    <button class="btn btn-sm btn-primary" id="darkModeToggle">
+                                        <i class="fas fa-moon" id="darkModeIcon"></i>
+                                    </button>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Navigation -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+            <div class="container">
+                <!-- Logo -->
+                <a class="navbar-brand" href="{% url 'core:home' %}">
+                    {% if site_settings.logo %}
+                        <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name }}" height="40">
+                    {% else %}
+                        <img src="{% static 'images/logo.png' %}" alt="ESCO" height="40">
+                    {% endif %}
+                </a>
+
+                <!-- Mobile Toggle Button -->
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Navigation Items -->
+                <div class="collapse navbar-collapse" id="navbarMain">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'core:home' %}">
+                                {% trans "الرئيسية" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/products/categories/' in request.path %}active{% endif %}" href="{% url 'products:category_list' %}">
+                                {% trans "التصنيفات" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/products/special-offers/' in request.path %}active{% endif %}" href="{% url 'products:special_offers' %}">
+                                {% trans "العروض الخاصة" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/about/' in request.path %}active{% endif %}" href="{% url 'core:about' %}">
+                                {% trans "من نحن" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/contact/' in request.path %}active{% endif %}" href="{% url 'core:contact' %}">
+                                {% trans "اتصل بنا" %}
+                            </a>
+                        </li>
+                    </ul>
+
+                    <!-- Search Form -->
+                    <form class="d-flex me-auto ms-3" action="{% url 'products:product_search' %}" method="GET">
+                        <div class="input-group">
+                            <input class="form-control" type="search" name="q" placeholder="{% trans 'بحث...' %}" aria-label="Search" value="{{ request.GET.q|default:'' }}">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- User Account & Cart -->
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user me-1"></i>
+                                {% if user.is_authenticated %}
+                                    {{ user.get_full_name|default:user.username }}
+                                {% else %}
+                                    {% trans "الحساب" %}
+                                {% endif %}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="accountDropdown">
+                                {% if user.is_authenticated %}
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'accounts:profile' %}">
+                                            <i class="fas fa-user-circle me-1"></i> {% trans "الملف الشخصي" %}
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'accounts:order_history' %}">
+                                            <i class="fas fa-clipboard-list me-1"></i> {% trans "طلباتي" %}
+                                        </a>
+                                    </li>
+                                    {% if user.is_staff %}
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item" href="{% url 'dashboard:index' %}">
+                                                <i class="fas fa-tachometer-alt me-1"></i> {% trans "لوحة التحكم" %}
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'accounts:logout' %}">
+                                            <i class="fas fa-sign-out-alt me-1"></i> {% trans "تسجيل الخروج" %}
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'accounts:login' %}">
+                                            <i class="fas fa-sign-in-alt me-1"></i> {% trans "تسجيل الدخول" %}
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'accounts:register' %}">
+                                            <i class="fas fa-user-plus me-1"></i> {% trans "إنشاء حساب" %}
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link position-relative" href="{% url 'cart:cart' %}">
+                                <i class="fas fa-shopping-cart"></i>
+                                {% if cart and cart.items.count > 0 %}
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                        {{ cart.total_items }}
+                                    </span>
+                                {% endif %}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Messages -->
+    {% if messages %}
+        <div class="container mt-3">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="py-4">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-5">
+        <div class="container">
+            <div class="row">
+                <!-- About -->
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5 class="mb-3">{% trans "عن ESCO" %}</h5>
+                    <p>
+                        {% trans "ESCO هي شركة رائدة في مجال توريد معدات الطاقة والمعدات الصناعية في الأردن. نحن ملتزمون بتقديم منتجات عالية الجودة وخدمة ممتازة للعملاء." %}
+                    </p>
+                    <div class="social-icons mt-3">
+                        {% if site_settings.facebook %}
+                            <a href="{{ site_settings.facebook }}" class="text-white me-3" target="_blank">
+                                <i class="fab fa-facebook-f"></i>
+                            </a>
+                        {% endif %}
+                        {% if site_settings.twitter %}
+                            <a href="{{ site_settings.twitter }}" class="text-white me-3" target="_blank">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                        {% endif %}
+                        {% if site_settings.instagram %}
+                            <a href="{{ site_settings.instagram }}" class="text-white me-3" target="_blank">
+                                <i class="fab fa-instagram"></i>
+                            </a>
+                        {% endif %}
+                        {% if site_settings.linkedin %}
+                            <a href="{{ site_settings.linkedin }}" class="text-white me-3" target="_blank">
+                                <i class="fab fa-linkedin-in"></i>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5 class="mb-3">{% trans "روابط سريعة" %}</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <a href="{% url 'core:home' %}" class="text-white text-decoration-none">
+                                <i class="fas fa-chevron-right me-2"></i>{% trans "الرئيسية" %}
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="{% url 'products:category_list' %}" class="text-white text-decoration-none">
+                                <i class="fas fa-chevron-right me-2"></i>{% trans "التصنيفات" %}
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="{% url 'products:special_offers' %}" class="text-white text-decoration-none">
+                                <i class="fas fa-chevron-right me-2"></i>{% trans "العروض الخاصة" %}
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="{% url 'core:about' %}" class="text-white text-decoration-none">
+                                <i class="fas fa-chevron-right me-2"></i>{% trans "من نحن" %}
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="{% url 'core:contact' %}" class="text-white text-decoration-none">
+                                <i class="fas fa-chevron-right me-2"></i>{% trans "اتصل بنا" %}
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'orders:track_order' %}" class="text-white text-decoration-none">
+                                <i class="fas fa-chevron-right me-2"></i>{% trans "تتبع الطلب" %}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Contact Info -->
+                <div class="col-md-4">
+                    <h5 class="mb-3">{% trans "معلومات الاتصال" %}</h5>
+                    <ul class="list-unstyled">
+                        {% if site_settings.address %}
+                            <li class="mb-2">
+                                <i class="fas fa-map-marker-alt me-2"></i> {{ site_settings.address }}
+                            </li>
+                        {% endif %}
+                        {% if site_settings.phone %}
+                            <li class="mb-2">
+                                <i class="fas fa-phone-alt me-2"></i> {{ site_settings.phone }}
+                            </li>
+                        {% endif %}
+                        {% if site_settings.email %}
+                            <li class="mb-2">
+                                <i class="fas fa-envelope me-2"></i> {{ site_settings.email }}
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Copyright -->
+            <div class="border-top border-secondary pt-4 mt-4 text-center">
+                <p class="mb-0">
+                    &copy; {% now "Y" %} {{ site_settings.site_name|default:"ESCO" }}. {% trans "جميع الحقوق محفوظة." %}
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script src="{% static 'js/main.js' %}"></script>
+
+    <!-- Dark Mode Script -->
+    {% if site_settings.enable_dark_mode %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            const darkModeIcon = document.getElementById('darkModeIcon');
+            const htmlElement = document.documentElement;
+
+            // التحقق من وضع الظلام المحفوظ - Check saved dark mode
+            const isDarkMode = localStorage.getItem('darkMode') === 'true' ||
+                               {% if site_settings.default_dark_mode %}true{% else %}false{% endif %};
+
+            // تطبيق وضع الظلام إذا كان نشطًا - Apply dark mode if active
+            if (isDarkMode) {
+                htmlElement.setAttribute('data-bs-theme', 'dark');
+                darkModeIcon.classList.remove('fa-moon');
+                darkModeIcon.classList.add('fa-sun');
+            } else {
+                htmlElement.setAttribute('data-bs-theme', 'light');
+                darkModeIcon.classList.remove('fa-sun');
+                darkModeIcon.classList.add('fa-moon');
+            }
+
+            // تبديل وضع الظلام - Toggle dark mode
+            darkModeToggle.addEventListener('click', function() {
+                const currentTheme = htmlElement.getAttribute('data-bs-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+                htmlElement.setAttribute('data-bs-theme', newTheme);
+                localStorage.setItem('darkMode', newTheme === 'dark');
+
+                if (newTheme === 'dark') {
+                    darkModeIcon.classList.remove('fa-moon');
+                    darkModeIcon.classList.add('fa-sun');
+                } else {
+                    darkModeIcon.classList.remove('fa-sun');
+                    darkModeIcon.classList.add('fa-moon');
+                }
+            });
+        });
+    </script>
+    {% endif %}
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
