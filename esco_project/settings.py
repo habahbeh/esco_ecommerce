@@ -74,7 +74,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [os.path.join(BASE_DIR, 'templates')],
-        'APP_DIRS': True,
+        'APP_DIRS': False,  # Change this to False
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
@@ -84,6 +84,10 @@ TEMPLATES = [
                 'django.template.context_processors.i18n',  # لدعم الترجمة - For translation support
                 'core.context_processors.site_settings',  # معالج إعدادات الموقع - Site settings processor
                 'cart.context_processors.cart',  # معالج سلة التسوق - Cart processor
+            ],
+            'loaders': [
+                'django.template.loaders.filesystem.Loader',
+                'django.template.loaders.app_directories.Loader',
             ],
         },
     },
