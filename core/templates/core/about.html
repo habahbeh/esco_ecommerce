@@ -1,0 +1,264 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "من نحن" %} | ESCO{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="bg-primary text-white py-5 mb-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h1 class="display-4 fw-bold">{% trans "من نحن" %}</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb justify-content-center">
+                        <li class="breadcrumb-item"><a href="{% url 'core:home' %}" class="text-white">{% trans "الرئيسية" %}</a></li>
+                        <li class="breadcrumb-item active text-white" aria-current="page">{% trans "من نحن" %}</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- About Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <img src="{% static 'images/about-company.jpg' %}" alt="ESCO Company" class="img-fluid rounded shadow">
+            </div>
+            <div class="col-lg-6">
+                <h2 class="fw-bold mb-4">{% trans "قصة ESCO" %}</h2>
+                <p class="lead">{% trans "شركة رائدة في مجال توريد المعدات الصناعية في الأردن والشرق الأوسط" %}</p>
+                <p>{% trans "تأسست شركة ESCO في عام 2005، وقد نمت من خلال الالتزام بتقديم منتجات عالية الجودة وخدمة ممتازة للعملاء. نحن متخصصون في توفير المعدات الصناعية والحلول المتكاملة للشركات والمصانع في مختلف القطاعات." %}</p>
+                <p>{% trans "نفتخر بكوننا الموزع الحصري للعديد من العلامات التجارية العالمية المرموقة في الأردن. نعمل بجد لضمان أن عملائنا يحصلون على أفضل المنتجات بأسعار تنافسية وخدمة دعم استثنائية." %}</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Our Vision & Mission -->
+<section class="bg-light py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6 mb-4 mb-md-0">
+                <div class="card h-100 border-0 shadow-sm p-4">
+                    <div class="text-center mb-3">
+                        <i class="fas fa-eye fa-3x text-primary"></i>
+                    </div>
+                    <h3 class="text-center mb-3">{% trans "رؤيتنا" %}</h3>
+                    <p>{% trans "أن نكون الشريك المفضل في توفير المعدات الصناعية والحلول المتكاملة في الشرق الأوسط، وأن نساهم في تطوير القطاع الصناعي من خلال توفير أحدث التقنيات والمنتجات عالية الجودة." %}</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100 border-0 shadow-sm p-4">
+                    <div class="text-center mb-3">
+                        <i class="fas fa-bullseye fa-3x text-primary"></i>
+                    </div>
+                    <h3 class="text-center mb-3">{% trans "مهمتنا" %}</h3>
+                    <p>{% trans "تزويد عملائنا بأفضل المنتجات والحلول الصناعية التي تلبي احتياجاتهم وتتجاوز توقعاتهم. نسعى لبناء علاقات طويلة الأمد مع عملائنا وشركائنا تقوم على الثقة والمصداقية والشفافية." %}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Our Values -->
+<section class="py-5">
+    <div class="container">
+        <div class="section-title text-center mb-5">
+            <h2>{% trans "قيمنا" %}</h2>
+            <p class="text-muted">{% trans "المبادئ التي توجه أعمالنا" %}</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 text-center p-4 shadow-sm">
+                    <div class="icon-wrapper mb-3">
+                        <i class="fas fa-star fa-3x text-primary"></i>
+                    </div>
+                    <h4>{% trans "الجودة" %}</h4>
+                    <p class="text-muted">{% trans "نلتزم بتقديم منتجات وخدمات عالية الجودة تلبي أعلى المعايير العالمية." %}</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 text-center p-4 shadow-sm">
+                    <div class="icon-wrapper mb-3">
+                        <i class="fas fa-handshake fa-3x text-primary"></i>
+                    </div>
+                    <h4>{% trans "النزاهة" %}</h4>
+                    <p class="text-muted">{% trans "نؤمن بالصدق والشفافية في جميع تعاملاتنا مع العملاء والموردين والشركاء." %}</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 text-center p-4 shadow-sm">
+                    <div class="icon-wrapper mb-3">
+                        <i class="fas fa-users fa-3x text-primary"></i>
+                    </div>
+                    <h4>{% trans "التركيز على العميل" %}</h4>
+                    <p class="text-muted">{% trans "نضع احتياجات عملائنا في مقدمة أولوياتنا ونسعى دائمًا لتحقيق رضاهم." %}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Our Team -->
+<section class="bg-light py-5">
+    <div class="container">
+        <div class="section-title text-center mb-5">
+            <h2>{% trans "فريقنا" %}</h2>
+            <p class="text-muted">{% trans "تعرف على الأشخاص الذين يقودون ESCO" %}</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="card team-card h-100 text-center border-0 shadow-sm">
+                    <img src="{% static 'images/team-placeholder.jpg' %}" class="card-img-top" alt="Team Member">
+                    <div class="card-body">
+                        <h5 class="card-title">{% trans "أحمد الخطيب" %}</h5>
+                        <p class="text-primary">{% trans "المدير التنفيذي" %}</p>
+                        <p class="card-text small">{% trans "خبرة أكثر من 15 عامًا في مجال المعدات الصناعية" %}</p>
+                        <div class="social-icons">
+                            <a href="#" class="text-secondary me-2"><i class="fab fa-linkedin"></i></a>
+                            <a href="#" class="text-secondary me-2"><i class="fab fa-twitter"></i></a>
+                            <a href="#" class="text-secondary"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card team-card h-100 text-center border-0 shadow-sm">
+                    <img src="{% static 'images/team-placeholder.jpg' %}" class="card-img-top" alt="Team Member">
+                    <div class="card-body">
+                        <h5 class="card-title">{% trans "سارة النجار" %}</h5>
+                        <p class="text-primary">{% trans "مدير المبيعات" %}</p>
+                        <p class="card-text small">{% trans "متخصصة في تطوير استراتيجيات المبيعات وبناء علاقات العملاء" %}</p>
+                        <div class="social-icons">
+                            <a href="#" class="text-secondary me-2"><i class="fab fa-linkedin"></i></a>
+                            <a href="#" class="text-secondary me-2"><i class="fab fa-twitter"></i></a>
+                            <a href="#" class="text-secondary"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card team-card h-100 text-center border-0 shadow-sm">
+                    <img src="{% static 'images/team-placeholder.jpg' %}" class="card-img-top" alt="Team Member">
+                    <div class="card-body">
+                        <h5 class="card-title">{% trans "محمد العمري" %}</h5>
+                        <p class="text-primary">{% trans "مدير العمليات" %}</p>
+                        <p class="card-text small">{% trans "خبير في إدارة سلاسل التوريد والخدمات اللوجستية" %}</p>
+                        <div class="social-icons">
+                            <a href="#" class="text-secondary me-2"><i class="fab fa-linkedin"></i></a>
+                            <a href="#" class="text-secondary me-2"><i class="fab fa-twitter"></i></a>
+                            <a href="#" class="text-secondary"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card team-card h-100 text-center border-0 shadow-sm">
+                    <img src="{% static 'images/team-placeholder.jpg' %}" class="card-img-top" alt="Team Member">
+                    <div class="card-body">
+                        <h5 class="card-title">{% trans "ليلى الحسن" %}</h5>
+                        <p class="text-primary">{% trans "مدير التسويق" %}</p>
+                        <p class="card-text small">{% trans "متخصصة في التسويق الرقمي وبناء العلامة التجارية" %}</p>
+                        <div class="social-icons">
+                            <a href="#" class="text-secondary me-2"><i class="fab fa-linkedin"></i></a>
+                            <a href="#" class="text-secondary me-2"><i class="fab fa-twitter"></i></a>
+                            <a href="#" class="text-secondary"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Our Partners -->
+<section class="py-5">
+    <div class="container">
+        <div class="section-title text-center mb-5">
+            <h2>{% trans "شركاؤنا" %}</h2>
+            <p class="text-muted">{% trans "نفتخر بالتعاون مع أفضل العلامات التجارية العالمية" %}</p>
+        </div>
+        
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="row g-4 align-items-center justify-content-center">
+                    <div class="col-4 col-md-2">
+                        <img src="{% static 'images/partner-placeholder.png' %}" class="img-fluid grayscale" alt="Partner Logo">
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <img src="{% static 'images/partner-placeholder.png' %}" class="img-fluid grayscale" alt="Partner Logo">
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <img src="{% static 'images/partner-placeholder.png' %}" class="img-fluid grayscale" alt="Partner Logo">
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <img src="{% static 'images/partner-placeholder.png' %}" class="img-fluid grayscale" alt="Partner Logo">
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <img src="{% static 'images/partner-placeholder.png' %}" class="img-fluid grayscale" alt="Partner Logo">
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <img src="{% static 'images/partner-placeholder.png' %}" class="img-fluid grayscale" alt="Partner Logo">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="bg-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8 mb-4 mb-lg-0">
+                <h2 class="fw-bold">{% trans "هل أنت مستعد للعمل معنا؟" %}</h2>
+                <p class="lead mb-0">{% trans "تواصل معنا اليوم لمناقشة احتياجاتك واكتشاف كيف يمكننا مساعدتك" %}</p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <a href="{% url 'core:contact' %}" class="btn btn-light btn-lg">{% trans "اتصل بنا" %}</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Team Cards */
+    .team-card img {
+        height: 250px;
+        object-fit: cover;
+    }
+    
+    /* Partner Logos */
+    .grayscale {
+        filter: grayscale(100%);
+        opacity: 0.7;
+        transition: all 0.3s ease;
+    }
+    
+    .grayscale:hover {
+        filter: grayscale(0%);
+        opacity: 1;
+    }
+    
+    /* Icon Wrapper */
+    .icon-wrapper {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background-color: #f8f9fa;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0 auto;
+    }
+</style>
+{% endblock %}

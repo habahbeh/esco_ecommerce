@@ -1,0 +1,325 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "اتصل بنا" %} | ESCO{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="bg-primary text-white py-5 mb-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h1 class="display-4 fw-bold">{% trans "اتصل بنا" %}</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb justify-content-center">
+                        <li class="breadcrumb-item"><a href="{% url 'core:home' %}" class="text-white">{% trans "الرئيسية" %}</a></li>
+                        <li class="breadcrumb-item active text-white" aria-current="page">{% trans "اتصل بنا" %}</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Information -->
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 text-center p-4 shadow-sm">
+                    <div class="icon-wrapper mb-3">
+                        <i class="fas fa-map-marker-alt fa-3x text-primary"></i>
+                    </div>
+                    <h4>{% trans "العنوان" %}</h4>
+                    <p>{% trans "شارع المدينة المنورة، عمّان، الأردن" %}</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 text-center p-4 shadow-sm">
+                    <div class="icon-wrapper mb-3">
+                        <i class="fas fa-phone-alt fa-3x text-primary"></i>
+                    </div>
+                    <h4>{% trans "الهاتف" %}</h4>
+                    <p>{% trans "المبيعات" %}: +962 6 5555555</p>
+                    <p>{% trans "الدعم الفني" %}: +962 6 5555556</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 text-center p-4 shadow-sm">
+                    <div class="icon-wrapper mb-3">
+                        <i class="fas fa-envelope fa-3x text-primary"></i>
+                    </div>
+                    <h4>{% trans "البريد الإلكتروني" %}</h4>
+                    <p>{% trans "المبيعات" %}: sales@esco.jo</p>
+                    <p>{% trans "الدعم الفني" %}: support@esco.jo</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Map and Contact Form -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row">
+            <!-- Map -->
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body p-0">
+                        <h3 class="card-title p-4 border-bottom">{% trans "موقعنا" %}</h3>
+                        <div class="map-container">
+                            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3383.5040809173983!2d35.85899491520204!3d31.996336281218685!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x151ca17818ded72d%3A0xb6a54c76dcfbf36c!2z2LTYp9ix2Lkg2KfZhNmF2K_ZitmG2Kkg2KfZhNmF2YbZiNix2Kkg2LnZhdmR2KfZhg!5e0!3m2!1sar!2sjo!4v1653294058639!5m2!1sar!2sjo" width="100%" height="400" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contact Form -->
+            <div class="col-lg-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h3 class="card-title mb-4">{% trans "أرسل لنا رسالة" %}</h3>
+                        <form id="contactForm">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">{% trans "الاسم الكامل" %} *</label>
+                                <input type="text" class="form-control" id="name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">{% trans "البريد الإلكتروني" %} *</label>
+                                <input type="email" class="form-control" id="email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">{% trans "رقم الهاتف" %}</label>
+                                <input type="tel" class="form-control" id="phone">
+                            </div>
+                            <div class="mb-3">
+                                <label for="subject" class="form-label">{% trans "الموضوع" %} *</label>
+                                <input type="text" class="form-control" id="subject" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="message" class="form-label">{% trans "الرسالة" %} *</label>
+                                <textarea class="form-control" id="message" rows="5" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">{% trans "إرسال" %}</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Business Hours -->
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h2 class="mb-4">{% trans "ساعات العمل" %}</h2>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <tbody>
+                            <tr>
+                                <td>{% trans "الأحد - الخميس" %}</td>
+                                <td>9:00 AM - 5:00 PM</td>
+                            </tr>
+                            <tr>
+                                <td>{% trans "الجمعة" %}</td>
+                                <td>{% trans "مغلق" %}</td>
+                            </tr>
+                            <tr>
+                                <td>{% trans "السبت" %}</td>
+                                <td>10:00 AM - 2:00 PM</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="section-title text-center mb-5">
+            <h2>{% trans "الأسئلة الشائعة" %}</h2>
+            <p class="text-muted">{% trans "إجابات على الأسئلة الأكثر شيوعًا" %}</p>
+        </div>
+        
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingOne">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                {% trans "كيف يمكنني تقديم طلب؟" %}
+                            </button>
+                        </h2>
+                        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                {% trans "يمكنك تقديم طلب من خلال موقعنا الإلكتروني عبر اختيار المنتجات وإضافتها إلى سلة التسوق ثم إكمال عملية الشراء. كما يمكنك التواصل مع فريق المبيعات لدينا عبر الهاتف أو البريد الإلكتروني للحصول على المساعدة في تقديم طلبك." %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingTwo">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                {% trans "ما هي طرق الدفع المتاحة؟" %}
+                            </button>
+                        </h2>
+                        <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                {% trans "نقبل الدفع عبر بطاقات الائتمان (فيزا، ماستركارد)، والتحويل البنكي، والدفع النقدي عند الاستلام. للطلبات الكبيرة، يمكننا ترتيب خطط دفع مخصصة. يرجى التواصل مع فريق المبيعات لمزيد من المعلومات." %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingThree">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                {% trans "كم تستغرق عملية التوصيل؟" %}
+                            </button>
+                        </h2>
+                        <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                {% trans "تعتمد مدة التوصيل على موقعك وتوفر المنتج. عادةً ما يتم توصيل المنتجات المتوفرة في المخزون خلال 2-3 أيام عمل داخل عمّان، و3-5 أيام عمل للمحافظات الأخرى. قد تستغرق المنتجات التي تتطلب طلبًا خاصًا وقتًا أطول، وسنبلغك بالوقت المتوقع للتسليم عند تأكيد طلبك." %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingFour">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                {% trans "هل توفرون خدمات ما بعد البيع؟" %}
+                            </button>
+                        </h2>
+                        <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                {% trans "نعم، نقدم خدمات شاملة لما بعد البيع بما في ذلك التركيب، والتدريب، والصيانة، وتوفير قطع الغيار. فريق الدعم الفني لدينا متاح لمساعدتك في أي استفسارات أو مشاكل فنية قد تواجهها مع منتجاتنا." %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="bg-primary text-white py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h2 class="fw-bold">{% trans "هل لديك استفسارات أخرى؟" %}</h2>
+                <p class="lead">{% trans "فريقنا جاهز للإجابة على جميع أسئلتك واستفساراتك" %}</p>
+                <div class="mt-4">
+                    <a href="tel:+96265555555" class="btn btn-light btn-lg me-2 mb-2">
+                        <i class="fas fa-phone-alt me-2"></i> {% trans "اتصل بنا" %}
+                    </a>
+                    <a href="mailto:info@esco.jo" class="btn btn-outline-light btn-lg mb-2">
+                        <i class="fas fa-envelope me-2"></i> {% trans "راسلنا" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Map Container */
+    .map-container {
+        height: 400px;
+        width: 100%;
+    }
+    
+    /* Icon Wrapper */
+    .icon-wrapper {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background-color: #f8f9fa;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0 auto;
+    }
+    
+    /* Contact Form Validation */
+    .form-control:focus {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+    }
+    
+    .form-control.is-invalid {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Simple form validation
+        const contactForm = document.getElementById('contactForm');
+        
+        if (contactForm) {
+            contactForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Get form fields
+                const nameField = document.getElementById('name');
+                const emailField = document.getElementById('email');
+                const subjectField = document.getElementById('subject');
+                const messageField = document.getElementById('message');
+                
+                // Validate fields
+                let isValid = true;
+                
+                if (!nameField.value.trim()) {
+                    nameField.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    nameField.classList.remove('is-invalid');
+                }
+                
+                if (!emailField.value.trim() || !validateEmail(emailField.value)) {
+                    emailField.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    emailField.classList.remove('is-invalid');
+                }
+                
+                if (!subjectField.value.trim()) {
+                    subjectField.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    subjectField.classList.remove('is-invalid');
+                }
+                
+                if (!messageField.value.trim()) {
+                    messageField.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    messageField.classList.remove('is-invalid');
+                }
+                
+                // If form is valid, show success message
+                if (isValid) {
+                    // Here you would typically send the form data to a server
+                    // For demo purposes, we'll just show a success alert
+                    alert('تم إرسال رسالتك بنجاح! سنتواصل معك قريبًا.');
+                    contactForm.reset();
+                }
+            });
+        }
+        
+        // Email validation helper function
+        function validateEmail(email) {
+            const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+            return re.test(String(email).toLowerCase());
+        }
+    });
+</script>
+{% endblock %}
