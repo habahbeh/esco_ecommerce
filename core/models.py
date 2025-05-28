@@ -35,6 +35,14 @@ class SiteSettings(models.Model):
         default='#1e88e5'
     )
 
+    # إضافة حقل جديد لتخزين قيمة RGB
+    primary_color_rgb = models.CharField(
+        _("اللون الرئيسي (RGB)"),
+        max_length=15,
+        blank=True,
+        editable=False  # لا يمكن تعديله يدوياً
+    )
+
     enable_dark_mode = models.BooleanField(_("تفعيل الوضع الداكن"), default=True)
     default_dark_mode = models.BooleanField(_("الوضع الداكن افتراضيًا"), default=False)
 
@@ -45,11 +53,37 @@ class SiteSettings(models.Model):
     def __str__(self):
         return self.site_name
 
+    def save(self, *args, **kwargs):
+        # تحويل لون الهيكس إلى RGB قبل الحفظ
+        if self.primary_color:
+            hex_color = self.primary_color.lstrip('#')
+            try:
+                r = int(hex_color[0:2], 16)
+                g = int(hex_color[2:4], 16)
+                b = int(hex_color[4:6], 16)
+                self.primary_color_rgb = f"{r}, {g}, {b}"
+            except (ValueError, IndexError):
+                # في حالة حدوث خطأ، استخدام القيمة الافتراضية
+                self.primary_color_rgb = "30, 136, 229"  # أزرق افتراضي
+
+        super().save(*args, **kwargs)
+
     @classmethod
     def get_settings(cls):
         """
         الحصول على إعدادات الموقع أو إنشاء إعدادات افتراضية إذا لم تكن موجودة
         Get site settings or create default if not exists
         """
-        settings, created = cls.objects.get_or_create(pk=1)
+        settings = None
+
+        # محاولة الحصول على الإعدادات المستخدمة حالياً (ID=2)
+        try:
+            settings = cls.objects.get(pk=2)
+        except cls.DoesNotExist:
+            # محاولة الحصول على أي إعدادات
+            settings = cls.objects.first()
+            if not settings:
+                # إنشاء إعدادات جديدة إذا لم توجد أي إعدادات
+                settings = cls.objects.create(site_name="ESCO")
+
         return settings
