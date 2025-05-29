@@ -37,12 +37,151 @@
 {% endif %}
 
     <!-- Site color customization -->
-      <style>
-    :root {
-        --bs-primary: {{ site_settings.primary_color|default:"#1e88e5" }};
-        --bs-primary-rgb: {{ site_settings.primary_color_rgb|default:"30, 136, 229" }};
-    }
-</style>
+    <style>
+        :root {
+            --bs-primary: {{ site_settings.primary_color|default:"#1e88e5" }};
+            --bs-primary-rgb: {{ site_settings.primary_color_rgb|default:"30, 136, 229" }};
+        }
+
+        /* تحسين النافبار مع لوجو كبير */
+        .header-top {
+            background-color: #fff;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        .logo-container img {
+            width: 250px;
+            height: 150px;
+            object-fit: contain;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            height: 100%;
+        }
+
+        .search-container {
+            flex-grow: 1;
+            margin-left: 20px;
+            margin-right: 20px;
+        }
+
+        .search-form {
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+        }
+
+        .search-form .form-control {
+            border-radius: 20px 0 0 20px;
+            border: 1px solid #ced4da;
+            padding-left: 15px;
+        }
+
+        .search-form .btn {
+            border-radius: 0 20px 20px 0;
+        }
+
+        .user-actions {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-actions .nav-item {
+            margin-left: 15px;
+        }
+
+        .user-actions .nav-link {
+            font-size: 16px;
+            padding: 8px 12px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .user-actions .nav-link:hover {
+            background-color: rgba(var(--bs-primary-rgb), 0.1);
+        }
+
+        .cart-icon {
+            font-size: 1.2rem;
+        }
+
+        /* نافبار التنقل الرئيسي */
+        .main-navbar {
+            background-color: var(--bs-primary);
+            padding: 0;
+        }
+
+        .main-navbar .nav-link {
+            color: #fff;
+            font-weight: 500;
+            padding: 15px 20px;
+            transition: all 0.3s ease;
+        }
+
+        .main-navbar .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .main-navbar .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        /* تنسيقات الموبايل */
+        @media (max-width: 991.98px) {
+            .header-top {
+                padding: 10px 0;
+            }
+
+            .logo-container img {
+                width: 180px;
+                height: 100px;
+            }
+
+            .search-container {
+                order: 3;
+                margin: 15px 0 0 0;
+                width: 100%;
+            }
+
+            .search-form {
+                max-width: 100%;
+            }
+
+            .header-actions {
+                flex-wrap: wrap;
+            }
+
+            .user-actions {
+                order: 2;
+            }
+
+            .main-navbar .navbar-collapse {
+                background-color: var(--bs-primary);
+            }
+
+            .main-navbar .nav-link {
+                padding: 10px 15px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .logo-container img {
+                width: 150px;
+                height: 90px;
+            }
+        }
+    </style>
 
     {% block extra_css %}{% endblock %}
 </head>
@@ -140,122 +279,153 @@
             </div>
         </div>
 
-        <!-- Main Navigation -->
-        <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <!-- Header Top - Logo, Search & Account -->
+        <div class="header-top shadow-sm">
             <div class="container">
-                <!-- Logo -->
-                <a class="navbar-brand" href="{% url 'core:home' %}">
-                    {% if site_settings.logo %}
-                        <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name }}" height="40">
-                    {% else %}
-                        <img src="{% static 'images/logo.png' %}" alt="ESCO" height="40">
-                    {% endif %}
-                </a>
+                <div class="row align-items-center">
+                    <!-- Logo -->
+                    <div class="col-lg-3 col-md-4 col-8">
+                        <div class="logo-container">
+                            <a href="{% url 'core:home' %}">
+                                {% if site_settings.logo %}
+                                    <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name }}" class="img-fluid">
+                                {% else %}
+                                    <img src="{% static 'images/logo.png' %}" alt="ESCO" class="img-fluid">
+                                {% endif %}
+                            </a>
+                        </div>
+                    </div>
 
-                <!-- Mobile Toggle Button -->
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+                    <!-- Search & Account -->
+                    <div class="col-lg-9 col-md-8 col-4">
+                        <div class="header-actions">
+                            <!-- Search Form - عرض فقط في شاشات كبيرة على الديسكتوب -->
+                            <div class="search-container d-none d-lg-block">
+                                <form class="search-form d-flex" action="{% url 'products:product_search' %}" method="GET">
+                                    <div class="input-group">
+                                        <input class="form-control" type="search" name="q" placeholder="{% trans 'بحث عن منتجات...' %}" aria-label="Search" value="{{ request.GET.q|default:'' }}">
+                                        <button class="btn btn-primary" type="submit">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
 
-                <!-- Navigation Items -->
-                <div class="collapse navbar-collapse" id="navbarMain">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                            <!-- User Account & Cart -->
+                            <div class="user-actions">
+                                <ul class="navbar-nav">
+                                    <li class="nav-item dropdown">
+                                        <a class="nav-link dropdown-toggle" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="fas fa-user me-1"></i>
+                                            {% if user.is_authenticated %}
+                                                {{ user.get_full_name|default:user.username }}
+                                            {% else %}
+                                                {% trans "الحساب" %}
+                                            {% endif %}
+                                        </a>
+                                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="accountDropdown">
+                                            {% if user.is_authenticated %}
+                                                <li>
+                                                    <a class="dropdown-item" href="{% url 'accounts:profile' %}">
+                                                        <i class="fas fa-user-circle me-1"></i> {% trans "الملف الشخصي" %}
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" href="{% url 'accounts:order_history' %}">
+                                                        <i class="fas fa-clipboard-list me-1"></i> {% trans "طلباتي" %}
+                                                    </a>
+                                                </li>
+                                                {% if user.is_staff %}
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="{% url 'dashboard:index' %}">
+                                                            <i class="fas fa-tachometer-alt me-1"></i> {% trans "لوحة التحكم" %}
+                                                        </a>
+                                                    </li>
+                                                {% endif %}
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <a class="dropdown-item" href="{% url 'accounts:logout' %}">
+                                                        <i class="fas fa-sign-out-alt me-1"></i> {% trans "تسجيل الخروج" %}
+                                                    </a>
+                                                </li>
+                                            {% else %}
+                                                <li>
+                                                    <a class="dropdown-item" href="{% url 'accounts:login' %}">
+                                                        <i class="fas fa-sign-in-alt me-1"></i> {% trans "تسجيل الدخول" %}
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" href="{% url 'accounts:register' %}">
+                                                        <i class="fas fa-user-plus me-1"></i> {% trans "إنشاء حساب" %}
+                                                    </a>
+                                                </li>
+                                            {% endif %}
+                                        </ul>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link position-relative cart-icon" href="{% url 'cart:cart' %}">
+                                            <i class="fas fa-shopping-cart"></i>
+                                            {% if cart and cart.items.count > 0 %}
+                                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                                    {{ cart.total_items }}
+                                                </span>
+                                            {% endif %}
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <!-- Mobile Toggle Button for Main Navigation -->
+                            <button class="navbar-toggler d-lg-none ms-2" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbarNav" aria-controls="mainNavbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                                <i class="fas fa-bars"></i>
+                            </button>
+                        </div>
+
+                        <!-- Search Form - للموبايل فقط -->
+                        <div class="search-container d-lg-none">
+                            <form class="search-form d-flex" action="{% url 'products:product_search' %}" method="GET">
+                                <div class="input-group">
+                                    <input class="form-control" type="search" name="q" placeholder="{% trans 'بحث عن منتجات...' %}" aria-label="Search" value="{{ request.GET.q|default:'' }}">
+                                    <button class="btn btn-primary" type="submit">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Navigation -->
+        <nav class="navbar navbar-expand-lg main-navbar">
+            <div class="container">
+                <div class="collapse navbar-collapse" id="mainNavbarNav">
+                    <ul class="navbar-nav mx-auto">
                         <li class="nav-item">
                             <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'core:home' %}">
-                                {% trans "الرئيسية" %}
+                                <i class="fas fa-home me-1"></i> {% trans "الرئيسية" %}
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if '/products/categories/' in request.path %}active{% endif %}" href="{% url 'products:category_list' %}">
-                                {% trans "التصنيفات" %}
+                                <i class="fas fa-th-large me-1"></i> {% trans "التصنيفات" %}
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if '/products/special-offers/' in request.path %}active{% endif %}" href="{% url 'products:special_offers' %}">
-                                {% trans "العروض الخاصة" %}
+                                <i class="fas fa-tags me-1"></i> {% trans "العروض الخاصة" %}
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if '/about/' in request.path %}active{% endif %}" href="{% url 'core:about' %}">
-                                {% trans "من نحن" %}
+                                <i class="fas fa-info-circle me-1"></i> {% trans "من نحن" %}
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if '/contact/' in request.path %}active{% endif %}" href="{% url 'core:contact' %}">
-                                {% trans "اتصل بنا" %}
-                            </a>
-                        </li>
-                    </ul>
-
-                    <!-- Search Form -->
-                    <form class="d-flex me-auto ms-3" action="{% url 'products:product_search' %}" method="GET">
-                        <div class="input-group">
-                            <input class="form-control" type="search" name="q" placeholder="{% trans 'بحث...' %}" aria-label="Search" value="{{ request.GET.q|default:'' }}">
-                            <button class="btn btn-primary" type="submit">
-                                <i class="fas fa-search"></i>
-                            </button>
-                        </div>
-                    </form>
-
-                    <!-- User Account & Cart -->
-                    <ul class="navbar-nav ms-auto">
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-user me-1"></i>
-                                {% if user.is_authenticated %}
-                                    {{ user.get_full_name|default:user.username }}
-                                {% else %}
-                                    {% trans "الحساب" %}
-                                {% endif %}
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="accountDropdown">
-                                {% if user.is_authenticated %}
-                                    <li>
-                                        <a class="dropdown-item" href="{% url 'accounts:profile' %}">
-                                            <i class="fas fa-user-circle me-1"></i> {% trans "الملف الشخصي" %}
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{% url 'accounts:order_history' %}">
-                                            <i class="fas fa-clipboard-list me-1"></i> {% trans "طلباتي" %}
-                                        </a>
-                                    </li>
-                                    {% if user.is_staff %}
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li>
-                                            <a class="dropdown-item" href="{% url 'dashboard:index' %}">
-                                                <i class="fas fa-tachometer-alt me-1"></i> {% trans "لوحة التحكم" %}
-                                            </a>
-                                        </li>
-                                    {% endif %}
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                        <a class="dropdown-item" href="{% url 'accounts:logout' %}">
-                                            <i class="fas fa-sign-out-alt me-1"></i> {% trans "تسجيل الخروج" %}
-                                        </a>
-                                    </li>
-                                {% else %}
-                                    <li>
-                                        <a class="dropdown-item" href="{% url 'accounts:login' %}">
-                                            <i class="fas fa-sign-in-alt me-1"></i> {% trans "تسجيل الدخول" %}
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{% url 'accounts:register' %}">
-                                            <i class="fas fa-user-plus me-1"></i> {% trans "إنشاء حساب" %}
-                                        </a>
-                                    </li>
-                                {% endif %}
-                            </ul>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link position-relative" href="{% url 'cart:cart' %}">
-                                <i class="fas fa-shopping-cart"></i>
-                                {% if cart and cart.items.count > 0 %}
-                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                        {{ cart.total_items }}
-                                    </span>
-                                {% endif %}
+                                <i class="fas fa-envelope me-1"></i> {% trans "اتصل بنا" %}
                             </a>
                         </li>
                     </ul>
