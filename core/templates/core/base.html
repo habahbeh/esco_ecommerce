@@ -274,6 +274,15 @@
             .desktop-only {
                 display: block !important;
             }
+
+            .main-navbar .navbar-nav {
+                display: flex;
+                flex-direction: row;
+            }
+
+            .logo-container img {
+                max-height: 150px;
+            }
         }
 
         /* Mobile layout */
@@ -292,16 +301,26 @@
             }
 
             .logo-container img {
-                max-width: 200px;
-                max-height: 120px;
+                max-width: 180px;
+                max-height: 80px;
+            }
+
+            .main-navbar {
+                padding: 0;
             }
 
             .main-navbar .navbar-collapse {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                z-index: 1030;
                 background-color: var(--bs-primary);
+                padding: 0.5rem;
+                border-radius: 0 0 8px 8px;
+                box-shadow: 0 10px 15px rgba(0,0,0,0.1);
                 max-height: 80vh;
                 overflow-y: auto;
-                border-radius: 0 0 8px 8px;
-                z-index: 1030;
             }
 
             .main-navbar .nav-link {
@@ -556,44 +575,12 @@
             </div>
         </div>
 
-        <!-- Main Navigation for BOTH Mobile and Desktop - Right after Top Bar -->
-        <!-- Mobile Version (Collapses) -->
+        <!-- Main Navigation - تم التعديل هنا -->
         <nav class="navbar navbar-expand-lg main-navbar" aria-label="{% trans 'التنقل الرئيسي' %}">
             <div class="container">
-                <!-- For mobile: Collapsible Menu -->
-                <div class="collapse navbar-collapse d-lg-none" id="mainNavbarNav">
+                <!-- Collapsible Menu for both mobile and desktop -->
+                <div class="collapse navbar-collapse" id="mainNavbarNav">
                     <ul class="navbar-nav mx-auto">
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'core:home' %}" {% if request.path == '/' %}aria-current="page"{% endif %}>
-                                <i class="fas fa-home space-inline-1" aria-hidden="true"></i> {% trans "الرئيسية" %}
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if '/products/categories/' in request.path %}active{% endif %}" href="{% url 'products:category_list' %}" {% if '/products/categories/' in request.path %}aria-current="page"{% endif %}>
-                                <i class="fas fa-th-large space-inline-1" aria-hidden="true"></i> {% trans "التصنيفات" %}
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if '/products/special-offers/' in request.path %}active{% endif %}" href="{% url 'products:special_offers' %}" {% if '/products/special-offers/' in request.path %}aria-current="page"{% endif %}>
-                                <i class="fas fa-tags space-inline-1" aria-hidden="true"></i> {% trans "العروض الخاصة" %}
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if '/about/' in request.path %}active{% endif %}" href="{% url 'core:about' %}" {% if '/about/' in request.path %}aria-current="page"{% endif %}>
-                                <i class="fas fa-info-circle space-inline-1" aria-hidden="true"></i> {% trans "من نحن" %}
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if '/contact/' in request.path %}active{% endif %}" href="{% url 'core:contact' %}" {% if '/contact/' in request.path %}aria-current="page"{% endif %}>
-                                <i class="fas fa-envelope space-inline-1" aria-hidden="true"></i> {% trans "اتصل بنا" %}
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- For desktop: Always visible menu -->
-                <div class="d-none d-lg-block w-100">
-                    <ul class="navbar-nav mx-auto d-flex flex-row justify-content-center">
                         <li class="nav-item">
                             <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'core:home' %}" {% if request.path == '/' %}aria-current="page"{% endif %}>
                                 <i class="fas fa-home space-inline-1" aria-hidden="true"></i> {% trans "الرئيسية" %}
@@ -701,7 +688,7 @@
     {% endif %}
 
     <!-- Main Content -->
-    <main id="main-content" class="py-4">
+    <main id="main-content" class="py-0">
         {% block content %}{% endblock %}
     </main>
 
