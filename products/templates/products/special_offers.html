@@ -1,0 +1,824 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "العروض الخاصة" %} | {{ site_settings.site_name|default:"ESCO" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Page Header */
+    .offers-header {
+        background: linear-gradient(135deg, #ff5722 0%, #ff7043 100%);
+        color: white;
+        padding: 4rem 0 3rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .offers-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+        background-size: 50px 50px;
+        animation: move-pattern 20s linear infinite;
+    }
+
+    @keyframes move-pattern {
+        0% { transform: translate(0, 0); }
+        100% { transform: translate(50px, 50px); }
+    }
+
+    .offers-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .offers-subtitle {
+        font-size: 1.25rem;
+        opacity: 0.9;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Timer Banner */
+    .timer-banner {
+        background: #fff3cd;
+        border: 2px solid #ffeaa7;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 3rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .timer-banner::before {
+        content: '🎉';
+        position: absolute;
+        font-size: 5rem;
+        opacity: 0.1;
+        top: -20px;
+        left: 20px;
+        transform: rotate(-15deg);
+    }
+
+    .timer-banner::after {
+        content: '🎁';
+        position: absolute;
+        font-size: 5rem;
+        opacity: 0.1;
+        bottom: -20px;
+        right: 20px;
+        transform: rotate(15deg);
+    }
+
+    .timer-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #856404;
+        margin-bottom: 1rem;
+    }
+
+    .countdown-timer {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin-top: 1.5rem;
+    }
+
+    .timer-unit {
+        text-align: center;
+    }
+
+    .timer-value {
+        display: block;
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #ff5722;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+
+    .timer-label {
+        font-size: 0.875rem;
+        color: #856404;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* Offers Section */
+    .offers-section {
+        padding: 3rem 0 5rem;
+        background: #f8f9fa;
+    }
+
+    /* Filter Tabs */
+    .filter-tabs {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 3rem;
+        flex-wrap: wrap;
+    }
+
+    .filter-tab {
+        padding: 0.75rem 2rem;
+        background: white;
+        border: 2px solid transparent;
+        border-radius: 50px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .filter-tab:hover {
+        border-color: #ff5722;
+        color: #ff5722;
+    }
+
+    .filter-tab.active {
+        background: #ff5722;
+        color: white;
+        border-color: #ff5722;
+    }
+
+    /* Products Grid */
+    .offers-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+
+    /* Offer Card */
+    .offer-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .offer-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.12);
+    }
+
+    /* Discount Badge */
+    .discount-badge {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        background: #ff5722;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 1.125rem;
+        z-index: 10;
+        box-shadow: 0 5px 15px rgba(255, 87, 34, 0.3);
+    }
+
+    .hot-deal-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: linear-gradient(135deg, #f39c12 0%, #e74c3c 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        z-index: 10;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    /* Timer Badge */
+    .timer-badge {
+        position: absolute;
+        bottom: 1rem;
+        left: 1rem;
+        right: 1rem;
+        background: rgba(0,0,0,0.8);
+        color: white;
+        padding: 0.75rem;
+        border-radius: 10px;
+        text-align: center;
+        font-size: 0.875rem;
+        z-index: 10;
+    }
+
+    .timer-badge i {
+        color: #ffc107;
+        margin-inline-end: 0.5rem;
+    }
+
+    /* Product Image */
+    .offer-image {
+        position: relative;
+        height: 300px;
+        overflow: hidden;
+        background: #f8f9fa;
+    }
+
+    .offer-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        padding: 2rem;
+        transition: transform 0.5s ease;
+    }
+
+    .offer-card:hover .offer-image img {
+        transform: scale(1.1);
+    }
+
+    /* Product Info */
+    .offer-info {
+        padding: 2rem;
+    }
+
+    .offer-category {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+    }
+
+    .offer-name {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .offer-prices {
+        display: flex;
+        align-items: baseline;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .current-price {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #ff5722;
+    }
+
+    .original-price {
+        font-size: 1.25rem;
+        color: var(--text-muted);
+        text-decoration: line-through;
+    }
+
+    .savings-info {
+        background: #e8f5e9;
+        color: #2e7d32;
+        padding: 0.5rem 1rem;
+        border-radius: 10px;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+
+    /* Progress Bar */
+    .stock-progress {
+        margin-bottom: 1.5rem;
+    }
+
+    .progress-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .progress {
+        height: 8px;
+        background: #e0e0e0;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        background: linear-gradient(90deg, #ff5722 0%, #ff7043 100%);
+        height: 100%;
+        transition: width 0.3s ease;
+    }
+
+    /* Action Buttons */
+    .offer-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-add-cart {
+        flex: 1;
+        padding: 1rem;
+        background: var(--bs-primary);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-add-cart:hover {
+        background: rgba(var(--bs-primary-rgb), 0.9);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(var(--bs-primary-rgb), 0.3);
+    }
+
+    .btn-view {
+        padding: 1rem;
+        background: transparent;
+        color: var(--bs-primary);
+        border: 2px solid var(--bs-primary);
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-view:hover {
+        background: var(--bs-primary);
+        color: white;
+    }
+
+    /* Newsletter Section */
+    .newsletter-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 4rem 0;
+        margin-top: 5rem;
+        text-align: center;
+    }
+
+    .newsletter-content {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .newsletter-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .newsletter-form {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .newsletter-input {
+        flex: 1;
+        padding: 1rem 1.5rem;
+        border: 2px solid rgba(255,255,255,0.3);
+        background: rgba(255,255,255,0.1);
+        border-radius: 50px;
+        color: white;
+        font-size: 1rem;
+    }
+
+    .newsletter-input::placeholder {
+        color: rgba(255,255,255,0.7);
+    }
+
+    .newsletter-input:focus {
+        outline: none;
+        border-color: white;
+        background: rgba(255,255,255,0.2);
+    }
+
+    .newsletter-btn {
+        padding: 1rem 2rem;
+        background: white;
+        color: #667eea;
+        border: none;
+        border-radius: 50px;
+        font-weight: 700;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+    }
+
+    .newsletter-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    /* Empty State */
+    .empty-offers {
+        text-align: center;
+        padding: 5rem 2rem;
+    }
+
+    .empty-icon {
+        font-size: 6rem;
+        color: #ff5722;
+        margin-bottom: 1.5rem;
+        opacity: 0.3;
+    }
+
+    /* Responsive */
+    @media (max-width: 991.98px) {
+        .offers-title {
+            font-size: 2.5rem;
+        }
+
+        .countdown-timer {
+            gap: 1rem;
+        }
+
+        .timer-value {
+            font-size: 2rem;
+        }
+
+        .offers-grid {
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        .offers-title {
+            font-size: 2rem;
+        }
+
+        .offers-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .countdown-timer {
+            gap: 0.5rem;
+        }
+
+        .timer-value {
+            font-size: 1.5rem;
+        }
+
+        .newsletter-form {
+            flex-direction: column;
+        }
+
+        .newsletter-btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="offers-header">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'core:home' %}" class="text-white-50">{% trans "الرئيسية" %}</a></li>
+                <li class="breadcrumb-item active text-white" aria-current="page">{% trans "العروض الخاصة" %}</li>
+            </ol>
+        </nav>
+        <h1 class="offers-title animate-fade-in">{% trans "العروض الخاصة" %}</h1>
+        <p class="offers-subtitle animate-fade-in" style="animation-delay: 0.2s;">
+            {% trans "اكتشف أفضل العروض والخصومات على المنتجات المختارة" %}
+        </p>
+    </div>
+</section>
+
+<!-- Timer Banner -->
+<section class="container my-5">
+    <div class="timer-banner" data-aos="fade-up">
+        <h2 class="timer-title">
+            <i class="fas fa-fire text-danger me-2"></i>
+            {% trans "عروض نهاية الأسبوع - خصومات تصل إلى 70%" %}
+        </h2>
+        <p class="text-muted mb-0">{% trans "العرض ينتهي خلال:" %}</p>
+        <div class="countdown-timer" id="countdown">
+            <div class="timer-unit">
+                <span class="timer-value" id="days">00</span>
+                <span class="timer-label">{% trans "يوم" %}</span>
+            </div>
+            <div class="timer-unit">
+                <span class="timer-value" id="hours">00</span>
+                <span class="timer-label">{% trans "ساعة" %}</span>
+            </div>
+            <div class="timer-unit">
+                <span class="timer-value" id="minutes">00</span>
+                <span class="timer-label">{% trans "دقيقة" %}</span>
+            </div>
+            <div class="timer-unit">
+                <span class="timer-value" id="seconds">00</span>
+                <span class="timer-label">{% trans "ثانية" %}</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Offers Section -->
+<section class="offers-section">
+    <div class="container">
+        <!-- Filter Tabs -->
+        <div class="filter-tabs" data-aos="fade-up">
+            <a href="?filter=all" class="filter-tab {% if not request.GET.filter or request.GET.filter == 'all' %}active{% endif %}">
+                {% trans "جميع العروض" %}
+            </a>
+            <a href="?filter=hot" class="filter-tab {% if request.GET.filter == 'hot' %}active{% endif %}">
+                <i class="fas fa-fire me-1"></i> {% trans "الأكثر سخونة" %}
+            </a>
+            <a href="?filter=ending" class="filter-tab {% if request.GET.filter == 'ending' %}active{% endif %}">
+                <i class="fas fa-clock me-1"></i> {% trans "تنتهي قريباً" %}
+            </a>
+            <a href="?filter=new" class="filter-tab {% if request.GET.filter == 'new' %}active{% endif %}">
+                <i class="fas fa-sparkles me-1"></i> {% trans "عروض جديدة" %}
+            </a>
+        </div>
+
+        <!-- Products Grid -->
+        {% if products %}
+            <div class="offers-grid">
+                {% for product in products %}
+                    <div class="offer-card" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
+                        <!-- Badges -->
+                        <span class="discount-badge">
+                            {{ product.discount_percentage }}% {% trans "خصم" %}
+                        </span>
+                        
+                        {% if forloop.counter <= 3 %}
+                            <span class="hot-deal-badge">
+                                <i class="fas fa-fire me-1"></i>{% trans "صفقة ساخنة" %}
+                            </span>
+                        {% endif %}
+                        
+                        {% if product.discount_end %}
+                            <div class="timer-badge">
+                                <i class="fas fa-clock"></i>
+                                {% trans "ينتهي العرض خلال" %} {{ product.discount_end|timeuntil }}
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Product Image -->
+                        <div class="offer-image">
+                            <a href="{% url 'products:product_detail' product.slug %}">
+                                {% if product.images.exists %}
+                                    <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}">
+                                {% else %}
+                                    <img src="{{ product.default_image.url }}" alt="{{ product.name }}">
+                                {% endif %}
+                            </a>
+                        </div>
+                        
+                        <!-- Product Info -->
+                        <div class="offer-info">
+                            <p class="offer-category">{{ product.category.name }}</p>
+                            <h3 class="offer-name">
+                                <a href="{% url 'products:product_detail' product.slug %}" class="text-decoration-none text-dark">
+                                    {{ product.name }}
+                                </a>
+                            </h3>
+                            
+                            <div class="offer-prices">
+                                <span class="current-price">{{ product.current_price|floatformat:2 }} {% trans "د.أ" %}</span>
+                                <span class="original-price">{{ product.base_price|floatformat:2 }}</span>
+                            </div>
+                            
+                            <div class="savings-info">
+                                <i class="fas fa-tag me-1"></i>
+                                {% blocktrans with amount=product.savings_amount|floatformat:2 %}توفر {{ amount }} د.أ{% endblocktrans %}
+                            </div>
+                            
+                            <!-- Stock Progress -->
+                            {% if product.track_inventory %}
+                                <div class="stock-progress">
+                                    <div class="progress-label">
+                                        <span>{% trans "تم بيع" %} {{ product.sales_count }}</span>
+                                        <span>{% trans "متبقي" %} {{ product.stock_quantity }}</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar" style="width: {% widthratio product.sales_count product.sales_count|add:product.stock_quantity 100 %}%"></div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Actions -->
+                            <div class="offer-actions">
+                                <form action="{% url 'cart:add_to_cart' product.id %}" method="post" class="flex-fill">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="quantity" value="1">
+                                    <button type="submit" class="btn-add-cart" {% if not product.in_stock %}disabled{% endif %}>
+                                        <i class="fas fa-shopping-cart me-2"></i>
+                                        {% if product.in_stock %}
+                                            {% trans "أضف للسلة" %}
+                                        {% else %}
+                                            {% trans "نفذ المخزون" %}
+                                        {% endif %}
+                                    </button>
+                                </form>
+                                <a href="{% url 'products:product_detail' product.slug %}" class="btn-view">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+                <nav aria-label="{% trans 'التنقل بين الصفحات' %}" class="mt-5">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if request.GET.filter %}&filter={{ request.GET.filter }}{% endif %}">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.filter %}&filter={{ request.GET.filter }}{% endif %}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if request.GET.filter %}&filter={{ request.GET.filter }}{% endif %}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.filter %}&filter={{ request.GET.filter }}{% endif %}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.filter %}&filter={{ request.GET.filter }}{% endif %}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <!-- Empty State -->
+            <div class="empty-offers">
+                <i class="fas fa-tags empty-icon"></i>
+                <h2 class="empty-title">{% trans "لا توجد عروض حالياً" %}</h2>
+                <p class="empty-description">
+                    {% trans "تابعنا للحصول على أحدث العروض والخصومات الحصرية" %}
+                </p>
+                <a href="{% url 'products:product_list' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-shopping-bag me-2"></i>
+                    {% trans "تصفح جميع المنتجات" %}
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Newsletter Section -->
+<section class="newsletter-section">
+    <div class="container">
+        <div class="newsletter-content" data-aos="fade-up">
+            <h2 class="newsletter-title">{% trans "لا تفوت أي عرض!" %}</h2>
+            <p>{% trans "اشترك في نشرتنا البريدية واحصل على العروض الحصرية أولاً" %}</p>
+            <form class="newsletter-form" id="newsletterForm">
+                <input type="email" class="newsletter-input" placeholder="{% trans 'بريدك الإلكتروني' %}" required>
+                <button type="submit" class="newsletter-btn">
+                    {% trans "اشترك الآن" %}
+                </button>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize AOS
+    AOS.init({
+        duration: 600,
+        once: true,
+        offset: 50
+    });
+
+    // Countdown Timer
+    function startCountdown() {
+        // Set the date we're counting down to (example: 7 days from now)
+        const countDownDate = new Date().getTime() + (7 * 24 * 60 * 60 * 1000);
+
+        const timer = setInterval(function() {
+            const now = new Date().getTime();
+            const distance = countDownDate - now;
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            document.getElementById("days").innerHTML = days.toString().padStart(2, '0');
+            document.getElementById("hours").innerHTML = hours.toString().padStart(2, '0');
+            document.getElementById("minutes").innerHTML = minutes.toString().padStart(2, '0');
+            document.getElementById("seconds").innerHTML = seconds.toString().padStart(2, '0');
+
+            if (distance < 0) {
+                clearInterval(timer);
+                document.getElementById("countdown").innerHTML = "{% trans 'انتهى العرض' %}";
+            }
+        }, 1000);
+    }
+
+    // Start countdown on page load
+    startCountdown();
+
+    // Newsletter Form
+    document.getElementById('newsletterForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const email = this.querySelector('input[type="email"]').value;
+        const button = this.querySelector('button');
+        const originalText = button.textContent;
+        
+        // Show loading state
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{% trans "جاري الاشتراك..." %}';
+        
+        // Simulate API call
+        setTimeout(() => {
+            button.innerHTML = '<i class="fas fa-check me-2"></i>{% trans "تم الاشتراك!" %}';
+            this.reset();
+            
+            setTimeout(() => {
+                button.disabled = false;
+                button.textContent = originalText;
+            }, 2000);
+        }, 1500);
+    });
+
+    // Add to Cart Animation
+    document.querySelectorAll('.btn-add-cart').forEach(button => {
+        button.addEventListener('click', function(e) {
+            // Create flying cart icon
+            const flyingCart = document.createElement('i');
+            flyingCart.className = 'fas fa-shopping-cart';
+            flyingCart.style.cssText = `
+                position: fixed;
+                z-index: 9999;
+                font-size: 2rem;
+                color: var(--bs-primary);
+                pointer-events: none;
+                transition: all 1s ease;
+            `;
+            
+            const rect = this.getBoundingClientRect();
+            flyingCart.style.left = rect.left + 'px';
+            flyingCart.style.top = rect.top + 'px';
+            
+            document.body.appendChild(flyingCart);
+            
+            // Animate to cart icon in header
+            const cartIcon = document.querySelector('.cart-btn');
+            if (cartIcon) {
+                const cartRect = cartIcon.getBoundingClientRect();
+                
+                setTimeout(() => {
+                    flyingCart.style.left = cartRect.left + 'px';
+                    flyingCart.style.top = cartRect.top + 'px';
+                    flyingCart.style.fontSize = '0';
+                    flyingCart.style.opacity = '0';
+                }, 100);
+                
+                setTimeout(() => {
+                    flyingCart.remove();
+                    // Add pulse animation to cart
+                    cartIcon.classList.add('pulse');
+                    setTimeout(() => cartIcon.classList.remove('pulse'), 500);
+                }, 1100);
+            }
+        });
+    });
+</script>
+{% endblock %}
