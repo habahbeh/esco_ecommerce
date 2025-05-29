@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 
 # تأكد من استيراد جميع النماذج المطلوبة - Import all required models
 from products.models import Product, Category, ProductVariant, ProductImage, ProductDiscount
+
 from orders.models import Order, OrderItem
 from accounts.models import User
 from .models import DashboardNotification, ProductReviewAssignment
@@ -727,7 +728,6 @@ class CategoryDeleteView(StaffRequiredMixin, DeleteView):
 
 # ===== إدارة الخصومات ===== #
 # ===== Discount Management ===== #
-
 class DiscountListView(StaffRequiredMixin, ListView):
     """
     عرض قائمة الخصومات - يعرض قائمة الخصومات في لوحة التحكم
@@ -736,9 +736,10 @@ class DiscountListView(StaffRequiredMixin, ListView):
     model = ProductDiscount
     template_name = 'dashboard/discounts/list.html'
     context_object_name = 'discounts'
+    paginate_by = 20
 
     def get_queryset(self):
-        queryset = ProductDiscount.objects.all().order_by('-start_date')
+        queryset = ProductDiscount.objects.select_related('category', 'created_by').prefetch_related('products').order_by('-start_date')
 
         # فلترة حسب النشاط - Filter by activity
         is_active = self.request.GET.get('is_active')
@@ -751,10 +752,37 @@ class DiscountListView(StaffRequiredMixin, ListView):
         if category_id:
             queryset = queryset.filter(category_id=category_id)
 
+        # فلترة حسب نوع الخصم - Filter by discount type
+        discount_type = self.request.GET.get('discount_type')
+        if discount_type:
+            queryset = queryset.filter(discount_type=discount_type)
+
+        # فلترة حسب حالة الانتهاء - Filter by expiry status
+        expiry_status = self.request.GET.get('expiry_status')
+        if expiry_status:
+            from django.utils import timezone
+            now = timezone.now()
+
+            if expiry_status == 'active':
+                queryset = queryset.filter(
+                    is_active=True,
+                    start_date__lte=now
+                ).filter(
+                    models.Q(end_date__isnull=True) | models.Q(end_date__gte=now)
+                )
+            elif expiry_status == 'expired':
+                queryset = queryset.filter(end_date__lt=now)
+            elif expiry_status == 'upcoming':
+                queryset = queryset.filter(start_date__gt=now)
+
         # البحث - Search
         search = self.request.GET.get('search')
         if search:
-            queryset = queryset.filter(name__icontains=search)
+            queryset = queryset.filter(
+                models.Q(name__icontains=search) |
+                models.Q(description__icontains=search) |
+                models.Q(code__icontains=search)
+            )
 
         return queryset
 
@@ -764,110 +792,171 @@ class DiscountListView(StaffRequiredMixin, ListView):
         # الفئات للفلترة - Categories for filtering
         context['categories'] = Category.objects.all()
 
+        # أنواع الخصم للفلترة - Discount types for filtering
+        context['discount_types'] = ProductDiscount.DISCOUNT_TYPE_CHOICES
+
         # الفلاتر الحالية - Current filters
         context['current_is_active'] = self.request.GET.get('is_active', '')
         context['current_category'] = self.request.GET.get('category', '')
+        context['current_discount_type'] = self.request.GET.get('discount_type', '')
+        context['current_expiry_status'] = self.request.GET.get('expiry_status', '')
         context['current_search'] = self.request.GET.get('search', '')
 
-        # تحديد الخصومات النشطة والمنتهية - Determine active and expired discounts
+        # إحصائيات سريعة - Quick statistics
         from django.utils import timezone
         now = timezone.now()
 
+        all_discounts = ProductDiscount.objects.all()
+        context['stats'] = {
+            'total_discounts': all_discounts.count(),
+            'active_discounts': all_discounts.filter(
+                is_active=True,
+                start_date__lte=now
+            ).filter(
+                models.Q(end_date__isnull=True) | models.Q(end_date__gte=now)
+            ).count(),
+            'expired_discounts': all_discounts.filter(end_date__lt=now).count(),
+            'upcoming_discounts': all_discounts.filter(start_date__gt=now).count(),
+        }
+
+        # تحديد حالة كل خصم - Determine status of each discount
         for discount in context['discounts']:
-            discount.is_valid_now = (
-                discount.is_active and
-                discount.start_date <= now and
-                (discount.end_date is None or discount.end_date >= now)
-            )
+            discount.status = self.get_discount_status(discount)
+            discount.usage_percentage = discount.get_usage_percentage()
 
         return context
+
+    def get_discount_status(self, discount):
+        """Determine the status of a discount"""
+        from django.utils import timezone
+        now = timezone.now()
+
+        if not discount.is_active:
+            return 'inactive'
+        elif discount.start_date > now:
+            return 'upcoming'
+        elif discount.end_date and discount.end_date < now:
+            return 'expired'
+        elif discount.max_uses and discount.used_count >= discount.max_uses:
+            return 'exhausted'
+        else:
+            return 'active'
+
 
 class DiscountCreateView(StaffRequiredMixin, CreateView):
     """
-    عرض إنشاء خصم - يتيح للموظفين إنشاء خصم جديد
-    Discount create view - allows staff to create a new discount
+    إنشاء خصم جديد
+    Create new discount
     """
     model = ProductDiscount
-    template_name = 'dashboard/discounts/form.html'
-    fields = ['name', 'description', 'discount_type', 'value', 'start_date', 'end_date', 'is_active', 'category']
+    template_name = 'dashboard/discounts/create.html'
+    fields = [
+        'name', 'description', 'code', 'discount_type', 'value', 'max_discount_amount',
+        'application_type', 'category', 'products', 'start_date', 'end_date',
+        'min_purchase_amount', 'min_quantity', 'max_uses', 'max_uses_per_user',
+        'buy_quantity', 'get_quantity', 'get_discount_percentage',
+        'is_active', 'is_stackable', 'requires_coupon_code', 'priority'
+    ]
+    success_url = reverse_lazy('dashboard:discounts-list')
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        messages.success(self.request, _('تم إنشاء الخصم بنجاح'))
+        return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = _('إضافة خصم جديد')
         context['categories'] = Category.objects.all()
+        context['products'] = Product.objects.filter(is_active=True, status='published')
         return context
 
-    def form_valid(self, form):
-        # التحقق من صحة قيمة الخصم - Validate discount value
-        if form.instance.discount_type == 'percentage' and form.instance.value > 100:
-            form.add_error('value', _('لا يمكن أن تتجاوز نسبة الخصم 100%.'))
-            return self.form_invalid(form)
-
-        # حفظ الخصم - Save the discount
-        response = super().form_valid(form)
-
-        # إنشاء رسالة نجاح - Create success message
-        messages.success(self.request, _('تم إنشاء الخصم بنجاح.'))
-
-        return response
-
-    def get_success_url(self):
-        return reverse_lazy('dashboard:discount_list')
 
 class DiscountUpdateView(StaffRequiredMixin, UpdateView):
     """
-    عرض تحديث الخصم - يتيح للموظفين تحديث خصم موجود
-    Discount update view - allows staff to update an existing discount
+    تحديث خصم موجود
+    Update existing discount
     """
     model = ProductDiscount
-    template_name = 'dashboard/discounts/form.html'
-    fields = ['name', 'description', 'discount_type', 'value', 'start_date', 'end_date', 'is_active', 'category']
+    template_name = 'dashboard/discounts/update.html'
+    fields = [
+        'name', 'description', 'code', 'discount_type', 'value', 'max_discount_amount',
+        'application_type', 'category', 'products', 'start_date', 'end_date',
+        'min_purchase_amount', 'min_quantity', 'max_uses', 'max_uses_per_user',
+        'buy_quantity', 'get_quantity', 'get_discount_percentage',
+        'is_active', 'is_stackable', 'requires_coupon_code', 'priority'
+    ]
+    success_url = reverse_lazy('dashboard:discounts-list')
+
+    def form_valid(self, form):
+        messages.success(self.request, _('تم تحديث الخصم بنجاح'))
+        return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = _('تحديث الخصم')
         context['categories'] = Category.objects.all()
-        context['is_update'] = True
+        context['products'] = Product.objects.filter(is_active=True, status='published')
         return context
 
-    def form_valid(self, form):
-        # التحقق من صحة قيمة الخصم - Validate discount value
-        if form.instance.discount_type == 'percentage' and form.instance.value > 100:
-            form.add_error('value', _('لا يمكن أن تتجاوز نسبة الخصم 100%.'))
-            return self.form_invalid(form)
-
-        # حفظ الخصم - Save the discount
-        response = super().form_valid(form)
-
-        # إنشاء رسالة نجاح - Create success message
-        messages.success(self.request, _('تم تحديث الخصم بنجاح.'))
-
-        return response
-
-    def get_success_url(self):
-        return reverse_lazy('dashboard:discount_list')
 
 class DiscountDeleteView(StaffRequiredMixin, DeleteView):
     """
-    عرض حذف الخصم - يتيح للموظفين حذف خصم
-    Discount delete view - allows staff to delete a discount
+    حذف خصم
+    Delete discount
     """
     model = ProductDiscount
     template_name = 'dashboard/discounts/delete.html'
+    success_url = reverse_lazy('dashboard:discounts-list')
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, _('تم حذف الخصم بنجاح'))
+        return super().delete(request, *args, **kwargs)
+
+
+class DiscountDetailView(StaffRequiredMixin, DetailView):
+    """
+    تفاصيل الخصم
+    Discount details
+    """
+    model = ProductDiscount
+    template_name = 'dashboard/discounts/detail.html'
     context_object_name = 'discount'
-    success_url = reverse_lazy('dashboard:discount_list')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # عدد المنتجات التي تستخدم هذا الخصم - Number of products using this discount
-        context['product_count'] = Product.objects.filter(discount=self.object).count()
+        # منتجات الخصم - Discount products
+        discount = self.object
+        if discount.application_type == 'all_products':
+            context['applicable_products'] = Product.objects.filter(is_active=True, status='published')[:10]
+        elif discount.application_type == 'category' and discount.category:
+            context['applicable_products'] = discount.category.products.filter(is_active=True, status='published')[:10]
+        elif discount.application_type == 'specific_products':
+            context['applicable_products'] = discount.products.filter(is_active=True, status='published')
+
+        # إحصائيات الاستخدام - Usage statistics
+        context['usage_stats'] = {
+            'usage_percentage': discount.get_usage_percentage(),
+            'remaining_uses': discount.max_uses - discount.used_count if discount.max_uses else None,
+            'is_exhausted': discount.max_uses and discount.used_count >= discount.max_uses,
+        }
 
         return context
 
-    def delete(self, request, *args, **kwargs):
-        messages.success(request, _('تم حذف الخصم بنجاح.'))
-        return super().delete(request, *args, **kwargs)
+
+class ToggleDiscountStatusView(StaffRequiredMixin, View):
+    """
+    تفعيل/إلغاء تفعيل الخصم
+    Toggle discount status
+    """
+    def post(self, request, pk):
+        discount = get_object_or_404(ProductDiscount, pk=pk)
+        discount.is_active = not discount.is_active
+        discount.save()
+
+        status_text = _('تم تفعيل الخصم') if discount.is_active else _('تم إلغاء تفعيل الخصم')
+        messages.success(request, status_text)
+
+        return redirect('dashboard:discounts-list')
 
 # ===== إدارة الطلبات ===== #
 # ===== Order Management ===== #

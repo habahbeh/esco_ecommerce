@@ -53,8 +53,20 @@ INSTALLED_APPS = [
     'django_cleanup.apps.CleanupConfig',
     'mptt',
     'import_export',
+    'rest_framework',
+    'django_filters',
 
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 12,
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
+}
 
 
 MIDDLEWARE = [
@@ -192,3 +204,6 @@ SESSION_COOKIE_AGE = 60 * 60 * 24 * 30  # 30 days
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
+
+# حجم أقصى للصور
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
