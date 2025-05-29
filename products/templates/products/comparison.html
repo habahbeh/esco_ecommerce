@@ -1,0 +1,845 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "مقارنة المنتجات" %} | {{ site_settings.site_name|default:"ESCO" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Page Header */
+    .comparison-header {
+        background: linear-gradient(135deg, #673ab7 0%, #9c27b0 100%);
+        color: white;
+        padding: 3rem 0 2rem;
+        margin-bottom: 3rem;
+    }
+
+    .comparison-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .comparison-subtitle {
+        opacity: 0.9;
+        font-size: 1.125rem;
+    }
+
+    /* Comparison Section */
+    .comparison-section {
+        padding: 2rem 0 5rem;
+        min-height: 70vh;
+    }
+
+    /* Comparison Table */
+    .comparison-wrapper {
+        overflow-x: auto;
+        margin-bottom: 3rem;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+
+    .comparison-table {
+        width: 100%;
+        background: white;
+        border-collapse: separate;
+        border-spacing: 0;
+        min-width: 800px;
+    }
+
+    .comparison-table th,
+    .comparison-table td {
+        padding: 1.5rem;
+        text-align: center;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .comparison-table th {
+        background: #f8f9fa;
+        font-weight: 700;
+        color: var(--text-primary);
+        position: sticky;
+        left: 0;
+        z-index: 10;
+        min-width: 150px;
+    }
+
+    .comparison-table td {
+        background: white;
+        position: relative;
+    }
+
+    /* Product Row */
+    .product-row {
+        border-right: 1px solid var(--border-color);
+    }
+
+    .product-row:last-child {
+        border-right: none;
+    }
+
+    /* Product Header */
+    .product-header {
+        background: white !important;
+        padding: 2rem 1.5rem !important;
+        border-bottom: 2px solid var(--border-color) !important;
+    }
+
+    .remove-product {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        width: 30px;
+        height: 30px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.875rem;
+    }
+
+    .remove-product:hover {
+        transform: scale(1.1);
+        box-shadow: 0 3px 10px rgba(220, 53, 69, 0.3);
+    }
+
+    .product-image-compare {
+        width: 150px;
+        height: 150px;
+        object-fit: contain;
+        margin: 0 auto 1rem;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 15px;
+    }
+
+    .product-name-compare {
+        font-size: 1.125rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+        line-height: 1.4;
+    }
+
+    .product-price-compare {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--bs-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .original-price-compare {
+        font-size: 1.125rem;
+        color: var(--text-muted);
+        text-decoration: line-through;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Specification Rows */
+    .spec-label {
+        background: #f8f9fa !important;
+        font-weight: 600;
+        text-align: left !important;
+        color: var(--text-primary);
+        border-right: 2px solid var(--border-color);
+    }
+
+    html[dir="rtl"] .spec-label {
+        text-align: right !important;
+        border-right: none;
+        border-left: 2px solid var(--border-color);
+    }
+
+    .spec-value {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+    }
+
+    .spec-icon {
+        margin-inline-end: 0.5rem;
+        color: var(--bs-primary);
+    }
+
+    /* Highlight Differences */
+    .highlight-diff {
+        background: #fff3cd !important;
+        font-weight: 600;
+    }
+
+    /* Action Buttons */
+    .btn-add-compare {
+        width: 100%;
+        padding: 0.75rem;
+        background: var(--bs-primary);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-add-compare:hover {
+        background: rgba(var(--bs-primary-rgb), 0.9);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(var(--bs-primary-rgb), 0.3);
+    }
+
+    /* Add Product Card */
+    .add-product-card {
+        height: 100%;
+        min-height: 500px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9fa;
+        border: 3px dashed var(--border-color);
+        border-radius: 20px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .add-product-card:hover {
+        border-color: var(--bs-primary);
+        background: rgba(var(--bs-primary-rgb), 0.05);
+    }
+
+    .add-icon {
+        width: 80px;
+        height: 80px;
+        background: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        color: var(--bs-primary);
+        margin-bottom: 1.5rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+
+    /* Empty State */
+    .empty-comparison {
+        text-align: center;
+        padding: 5rem 2rem;
+    }
+
+    .empty-icon {
+        font-size: 6rem;
+        color: #673ab7;
+        margin-bottom: 1.5rem;
+        opacity: 0.3;
+    }
+
+    .empty-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+    }
+
+    .empty-description {
+        font-size: 1.125rem;
+        color: var(--text-secondary);
+        margin-bottom: 2rem;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Comparison Tools */
+    .comparison-tools {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .highlight-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .toggle-switch {
+        width: 50px;
+        height: 26px;
+        background: #ccc;
+        border-radius: 13px;
+        position: relative;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .toggle-switch.active {
+        background: var(--bs-primary);
+    }
+
+    .toggle-knob {
+        width: 22px;
+        height: 22px;
+        background: white;
+        border-radius: 50%;
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        transition: left 0.3s ease;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .toggle-switch.active .toggle-knob {
+        left: 26px;
+    }
+
+    .btn-print {
+        padding: 0.75rem 1.5rem;
+        background: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-print:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+    }
+
+    /* Share Comparison */
+    .share-comparison {
+        text-align: center;
+        margin-top: 3rem;
+        padding: 2rem;
+        background: #f8f9fa;
+        border-radius: 20px;
+    }
+
+    /* Responsive */
+    @media (max-width: 991.98px) {
+        .comparison-title {
+            font-size: 2rem;
+        }
+
+        .comparison-table {
+            font-size: 0.875rem;
+        }
+
+        .product-image-compare {
+            width: 100px;
+            height: 100px;
+        }
+
+        .product-name-compare {
+            font-size: 1rem;
+        }
+
+        .product-price-compare {
+            font-size: 1.25rem;
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1rem 0.75rem;
+        }
+
+        .comparison-tools {
+            flex-direction: column;
+            align-items: stretch;
+        }
+    }
+
+    /* Print Styles */
+    @media print {
+        .comparison-header,
+        .comparison-tools,
+        .remove-product,
+        .add-product-card,
+        .share-comparison,
+        .btn-add-compare {
+            display: none !important;
+        }
+
+        .comparison-wrapper {
+            box-shadow: none;
+            border: 1px solid #ddd;
+        }
+
+        .comparison-table {
+            font-size: 12px;
+        }
+    }
+
+    /* Dark Mode */
+    [data-bs-theme="dark"] .comparison-table {
+        background: #1e1e1e;
+    }
+
+    [data-bs-theme="dark"] .comparison-table th {
+        background: #2d2d2d;
+    }
+
+    [data-bs-theme="dark"] .comparison-table td {
+        background: #1e1e1e;
+    }
+
+    [data-bs-theme="dark"] .add-product-card {
+        background: #2d2d2d;
+        border-color: #404040;
+    }
+
+    [data-bs-theme="dark"] .share-comparison {
+        background: #1a1a1a;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="comparison-header">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'core:home' %}" class="text-white-50">{% trans "الرئيسية" %}</a></li>
+                <li class="breadcrumb-item active text-white" aria-current="page">{% trans "مقارنة المنتجات" %}</li>
+            </ol>
+        </nav>
+        <h1 class="comparison-title">{% trans "مقارنة المنتجات" %}</h1>
+        <p class="comparison-subtitle">
+            {% if products %}
+                {% blocktrans count count=products|length %}تتم مقارنة {{ count }} منتج{% endblocktrans %}
+            {% else %}
+                {% trans "قارن بين المنتجات لاتخاذ القرار الأفضل" %}
+            {% endif %}
+        </p>
+    </div>
+</section>
+
+<!-- Comparison Content -->
+<section class="comparison-section">
+    <div class="container">
+        {% if products %}
+            <!-- Comparison Tools -->
+            <div class="comparison-tools">
+                <div class="highlight-toggle">
+                    <label for="highlightDiff">{% trans "إبراز الاختلافات" %}</label>
+                    <div class="toggle-switch" id="highlightToggle" onclick="toggleHighlight()">
+                        <div class="toggle-knob"></div>
+                    </div>
+                </div>
+                <button class="btn-print" onclick="printComparison()">
+                    <i class="fas fa-print"></i>
+                    {% trans "طباعة المقارنة" %}
+                </button>
+            </div>
+
+            <!-- Comparison Table -->
+            <div class="comparison-wrapper">
+                <table class="comparison-table">
+                    <!-- Product Headers -->
+                    <tr>
+                        <th class="spec-label">{% trans "المنتج" %}</th>
+                        {% for product in products %}
+                            <td class="product-header product-row">
+                                <button class="remove-product" 
+                                        onclick="removeFromComparison({{ product.id }})"
+                                        aria-label="{% trans 'إزالة من المقارنة' %}">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                
+                                <a href="{% url 'products:product_detail' product.slug %}">
+                                    {% if product.images.exists %}
+                                        <img src="{{ product.images.first.image.url }}" class="product-image-compare" alt="{{ product.name }}">
+                                    {% else %}
+                                        <img src="{{ product.default_image.url }}" class="product-image-compare" alt="{{ product.name }}">
+                                    {% endif %}
+                                </a>
+                                
+                                <h3 class="product-name-compare">
+                                    <a href="{% url 'products:product_detail' product.slug %}" class="text-decoration-none text-dark">
+                                        {{ product.name }}
+                                    </a>
+                                </h3>
+                                
+                                {% if product.show_price and product.category.show_prices %}
+                                    {% if product.has_discount %}
+                                        <span class="original-price-compare">{{ product.base_price|floatformat:2 }} {% trans "د.أ" %}</span>
+                                    {% endif %}
+                                    <div class="product-price-compare">
+                                        {{ product.current_price|floatformat:2 }} {% trans "د.أ" %}
+                                    </div>
+                                {% else %}
+                                    <div class="product-price-compare">
+                                        {% trans "اتصل للسعر" %}
+                                    </div>
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                        
+                        {% if products|length < 4 %}
+                            <td class="product-header">
+                                <div class="add-product-card" onclick="showProductSelector()">
+                                    <div class="add-icon">
+                                        <i class="fas fa-plus"></i>
+                                    </div>
+                                    <h4>{% trans "أضف منتج للمقارنة" %}</h4>
+                                    <p class="text-muted">{% trans "يمكنك مقارنة حتى 4 منتجات" %}</p>
+                                </div>
+                            </td>
+                        {% endif %}
+                    </tr>
+
+                    <!-- Specifications -->
+                    <tr>
+                        <th class="spec-label">
+                            <i class="fas fa-tag spec-icon"></i>{% trans "الفئة" %}
+                        </th>
+                        {% for product in products %}
+                            <td class="spec-value product-row">{{ product.category.name }}</td>
+                        {% endfor %}
+                        {% if products|length < 4 %}
+                            <td class="product-row">-</td>
+                        {% endif %}
+                    </tr>
+
+                    <tr>
+                        <th class="spec-label">
+                            <i class="fas fa-trademark spec-icon"></i>{% trans "العلامة التجارية" %}
+                        </th>
+                        {% for product in products %}
+                            <td class="spec-value product-row">{{ product.brand.name|default:"-" }}</td>
+                        {% endfor %}
+                        {% if products|length < 4 %}
+                            <td class="product-row">-</td>
+                        {% endif %}
+                    </tr>
+
+                    <tr>
+                        <th class="spec-label">
+                            <i class="fas fa-barcode spec-icon"></i>{% trans "رقم المنتج" %}
+                        </th>
+                        {% for product in products %}
+                            <td class="spec-value product-row">{{ product.sku }}</td>
+                        {% endfor %}
+                        {% if products|length < 4 %}
+                            <td class="product-row">-</td>
+                        {% endif %}
+                    </tr>
+
+                    <tr>
+                        <th class="spec-label">
+                            <i class="fas fa-check-circle spec-icon"></i>{% trans "التوفر" %}
+                        </th>
+                        {% for product in products %}
+                            <td class="spec-value product-row">
+                                {% if product.in_stock %}
+                                    <span class="text-success">{% trans "متوفر" %}</span>
+                                {% else %}
+                                    <span class="text-danger">{% trans "غير متوفر" %}</span>
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                        {% if products|length < 4 %}
+                            <td class="product-row">-</td>
+                        {% endif %}
+                    </tr>
+
+                    <tr>
+                        <th class="spec-label">
+                            <i class="fas fa-star spec-icon"></i>{% trans "التقييم" %}
+                        </th>
+                        {% for product in products %}
+                            <td class="spec-value product-row">
+                                {% if product.rating %}
+                                    {{ product.rating|floatformat:1 }}/5
+                                    <small class="text-muted">({{ product.review_count }} {% trans "تقييم" %})</small>
+                                {% else %}
+                                    <span class="text-muted">{% trans "لا توجد تقييمات" %}</span>
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                        {% if products|length < 4 %}
+                            <td class="product-row">-</td>
+                        {% endif %}
+                    </tr>
+
+                    <!-- Physical Specifications -->
+                    {% if products.0.weight or products.1.weight or products.2.weight or products.3.weight %}
+                    <tr>
+                        <th class="spec-label">
+                            <i class="fas fa-weight spec-icon"></i>{% trans "الوزن" %}
+                        </th>
+                        {% for product in products %}
+                            <td class="spec-value product-row">
+                                {% if product.weight %}
+                                    {{ product.weight }} {% trans "كجم" %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                        {% if products|length < 4 %}
+                            <td class="product-row">-</td>
+                        {% endif %}
+                    </tr>
+                    {% endif %}
+
+                    <!-- Action Buttons -->
+                    <tr>
+                        <th class="spec-label">{% trans "الإجراءات" %}</th>
+                        {% for product in products %}
+                            <td class="product-row">
+                                <form action="{% url 'cart:add_to_cart' product.id %}" method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="quantity" value="1">
+                                    <button type="submit" class="btn-add-compare" {% if not product.in_stock %}disabled{% endif %}>
+                                        <i class="fas fa-shopping-cart me-2"></i>
+                                        {% if product.in_stock %}
+                                            {% trans "أضف للسلة" %}
+                                        {% else %}
+                                            {% trans "غير متوفر" %}
+                                        {% endif %}
+                                    </button>
+                                </form>
+                            </td>
+                        {% endfor %}
+                        {% if products|length < 4 %}
+                            <td class="product-row">-</td>
+                        {% endif %}
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Share Comparison -->
+            <div class="share-comparison" data-aos="fade-up">
+                <h4 class="share-title">{% trans "شارك هذه المقارنة" %}</h4>
+                <div class="share-buttons">
+                    <button class="btn btn-sm btn-outline-primary me-2" onclick="copyComparisonLink()">
+                        <i class="fas fa-copy me-1"></i> {% trans "نسخ الرابط" %}
+                    </button>
+                    <a href="#" class="btn btn-sm btn-primary" onclick="shareComparison()">
+                        <i class="fas fa-share-alt me-1"></i> {% trans "مشاركة" %}
+                    </a>
+                </div>
+            </div>
+        {% else %}
+            <!-- Empty State -->
+            <div class="empty-comparison">
+                <i class="fas fa-exchange-alt empty-icon"></i>
+                <h2 class="empty-title">{% trans "لم تختر أي منتجات للمقارنة" %}</h2>
+                <p class="empty-description">
+                    {% trans "ابدأ بإضافة المنتجات التي تريد مقارنتها. يمكنك مقارنة حتى 4 منتجات في نفس الوقت." %}
+                </p>
+                <a href="{% url 'products:product_list' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-shopping-bag me-2"></i>
+                    {% trans "تصفح المنتجات" %}
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Product Selector Modal -->
+<div class="modal fade" id="productSelectorModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{% trans "اختر منتج للمقارنة" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="form-control mb-3" placeholder="{% trans 'ابحث عن منتج...' %}" id="productSearch">
+                <div id="productSearchResults"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize AOS
+    AOS.init({
+        duration: 600,
+        once: true,
+        offset: 50
+    });
+
+    // Toggle Highlight Differences
+    let highlightEnabled = false;
+    
+    function toggleHighlight() {
+        highlightEnabled = !highlightEnabled;
+        const toggle = document.getElementById('highlightToggle');
+        
+        if (highlightEnabled) {
+            toggle.classList.add('active');
+            highlightDifferences();
+        } else {
+            toggle.classList.remove('active');
+            clearHighlights();
+        }
+    }
+
+    function highlightDifferences() {
+        const table = document.querySelector('.comparison-table');
+        const rows = table.querySelectorAll('tr');
+        
+        rows.forEach((row, index) => {
+            if (index === 0) return; // Skip header row
+            
+            const cells = row.querySelectorAll('td.spec-value');
+            const values = Array.from(cells).map(cell => cell.textContent.trim());
+            
+            // Check if all values are different
+            const uniqueValues = [...new Set(values)];
+            
+            if (uniqueValues.length > 1 && uniqueValues.length === values.length) {
+                cells.forEach(cell => cell.classList.add('highlight-diff'));
+            }
+        });
+    }
+
+    function clearHighlights() {
+        document.querySelectorAll('.highlight-diff').forEach(cell => {
+            cell.classList.remove('highlight-diff');
+        });
+    }
+
+    // Remove from Comparison
+    function removeFromComparison(productId) {
+        const currentUrl = new URL(window.location.href);
+        const productIds = currentUrl.searchParams.getAll('id');
+        
+        // Remove the product ID
+        const newIds = productIds.filter(id => id !== productId.toString());
+        
+        // Update URL
+        currentUrl.searchParams.delete('id');
+        newIds.forEach(id => currentUrl.searchParams.append('id', id));
+        
+        window.location.href = currentUrl.href;
+    }
+
+    // Print Comparison
+    function printComparison() {
+        window.print();
+    }
+
+    // Copy Comparison Link
+    function copyComparisonLink() {
+        const url = window.location.href;
+        
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(url).then(() => {
+                showNotification('{% trans "تم نسخ الرابط!" %}', 'success');
+            });
+        } else {
+            // Fallback for older browsers
+            const input = document.createElement('input');
+            input.value = url;
+            document.body.appendChild(input);
+            input.select();
+            document.execCommand('copy');
+            document.body.removeChild(input);
+            showNotification('{% trans "تم نسخ الرابط!" %}', 'success');
+        }
+    }
+
+    // Share Comparison
+    function shareComparison() {
+        if (navigator.share) {
+            navigator.share({
+                title: '{% trans "مقارنة المنتجات على ESCO" %}',
+                text: '{% trans "شاهد مقارنة المنتجات" %}',
+                url: window.location.href
+            });
+        } else {
+            copyComparisonLink();
+        }
+        
+        return false;
+    }
+
+    // Show Product Selector
+    function showProductSelector() {
+        const modal = new bootstrap.Modal(document.getElementById('productSelectorModal'));
+        modal.show();
+    }
+
+    // Product Search in Modal
+    let searchTimeout;
+    document.getElementById('productSearch')?.addEventListener('input', function(e) {
+        clearTimeout(searchTimeout);
+        const query = e.target.value;
+        
+        if (query.length < 2) {
+            document.getElementById('productSearchResults').innerHTML = '';
+            return;
+        }
+        
+        searchTimeout = setTimeout(() => {
+            searchProducts(query);
+        }, 300);
+    });
+
+    function searchProducts(query) {
+        const resultsDiv = document.getElementById('productSearchResults');
+        resultsDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> {% trans "جاري البحث..." %}</div>';
+        
+        // Simulate search (replace with actual AJAX call)
+        setTimeout(() => {
+            // This should be replaced with actual search results
+            resultsDiv.innerHTML = `
+                <div class="list-group">
+                    <a href="#" class="list-group-item list-group-item-action" onclick="addToComparison(1)">
+                        <div class="d-flex align-items-center">
+                            <img src="/static/images/product-placeholder.jpg" width="50" height="50" class="me-3">
+                            <div>
+                                <h6 class="mb-1">منتج تجريبي 1</h6>
+                                <small class="text-muted">الفئة: معدات</small>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            `;
+        }, 500);
+    }
+
+    function addToComparison(productId) {
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.append('id', productId);
+        window.location.href = currentUrl.href;
+    }
+
+    // Show Notification
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
+        notification.style.zIndex = '9999';
+        notification.innerHTML = message;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+</script>
+{% endblock %}
