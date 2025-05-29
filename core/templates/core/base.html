@@ -2,26 +2,38 @@
 {% load i18n %}
 {% load color_filters %}
 
-
 <!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE }}" {% if site_settings.default_dark_mode %}data-bs-theme="dark"{% endif %}>
+<html lang="{{ LANGUAGE_CODE }}" {% if site_settings.default_dark_mode %}data-bs-theme="dark"{% endif %} dir="{% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}ESCO{% endblock %}</title>
+    <meta name="description" content="{{ site_settings.site_description|default:'ESCO - توريد المعدات الصناعية في الأردن والشرق الأوسط' }}">
+    <meta name="keywords" content="معدات صناعية, توريد, ESCO, الأردن, الشرق الأوسط">
+    <meta name="author" content="ESCO">
+    <meta name="theme-color" content="{{ site_settings.primary_color|default:'#1e88e5' }}">
+
+    <title>{% block title %}{% if site_settings.site_name %}{{ site_settings.site_name }}{% else %}ESCO{% endif %}{% endblock %}</title>
 
     <!-- Favicon -->
     {% if site_settings.favicon %}
         <link rel="icon" href="{{ site_settings.favicon.url }}" type="image/x-icon">
+        <link rel="shortcut icon" href="{{ site_settings.favicon.url }}" type="image/x-icon">
     {% else %}
         <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
+        <link rel="shortcut icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
     {% endif %}
 
+    <!-- Preload critical assets -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
 
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer">
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -29,12 +41,12 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
 
-    <!-- RTL support for Arabic -->
+    <!-- RTL/LTR support -->
     {% if LANGUAGE_CODE == 'ar' %}
-    <link rel="stylesheet" href="{% static 'css/rtl.css' %}">
-{% else %}
-    <link rel="stylesheet" href="{% static 'css/ltr.css' %}">
-{% endif %}
+        <link rel="stylesheet" href="{% static 'css/rtl.css' %}">
+    {% else %}
+        <link rel="stylesheet" href="{% static 'css/ltr.css' %}">
+    {% endif %}
 
     <!-- Site color customization -->
     <style>
@@ -43,82 +55,96 @@
             --bs-primary-rgb: {{ site_settings.primary_color_rgb|default:"30, 136, 229" }};
         }
 
-        /* تحسين النافبار مع لوجو كبير */
+        /* Header Styling */
         .header-top {
-            background-color: #fff;
-            padding: 10px 0;
+            background-color: var(--bs-body-bg);
+            padding: 15px 0;
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            transition: background-color 0.3s ease;
         }
 
         .logo-container {
             display: flex;
             align-items: center;
             justify-content: flex-start;
+            height: 100%;
         }
 
         .logo-container img {
-            width: 250px;
-            height: 150px;
+            max-width: 250px;
+            height: auto;
+            max-height: 150px;
             object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+
+        .logo-container img:hover {
+            transform: scale(1.02);
         }
 
         .header-actions {
             display: flex;
+            flex-direction: row;
             align-items: center;
             justify-content: flex-end;
             height: 100%;
         }
 
-        .search-container {
-            flex-grow: 1;
-            margin-left: 20px;
-            margin-right: 20px;
-        }
-
-        .search-form {
-            width: 100%;
-            max-width: 500px;
-            margin-left: auto;
-        }
-
-        .search-form .form-control {
-            border-radius: 20px 0 0 20px;
-            border: 1px solid #ced4da;
-            padding-left: 15px;
-        }
-
-        .search-form .btn {
-            border-radius: 0 20px 20px 0;
-        }
-
-        .user-actions {
+        /* Search Container - Vertically Centered */
+        .search-wrapper {
             display: flex;
             align-items: center;
+            justify-content: flex-end;
+            height: 100%;
+            padding: 0 15px;
         }
 
-        .user-actions .nav-item {
-            margin-left: 15px;
-        }
-
-        .user-actions .nav-link {
-            font-size: 16px;
-            padding: 8px 12px;
+        /* Account and Cart Buttons */
+        .account-btn, .cart-btn {
+            padding: 6px 12px;
             border-radius: 5px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            font-size: 0.9rem;
+        }
+
+        .cart-btn {
+            background-color: var(--bs-primary);
+            border-color: var(--bs-primary);
+            color: white;
+        }
+
+        .account-btn {
+            border: 1px solid white;
+            color: white;
+            background-color: transparent;
+        }
+
+        .account-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Mobile Nav Toggle Button */
+        .mobile-nav-toggle {
+            padding: 6px 10px;
+            font-size: 1.1rem;
+            border-radius: 5px;
+            background-color: transparent;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.5);
             transition: all 0.3s ease;
         }
 
-        .user-actions .nav-link:hover {
-            background-color: rgba(var(--bs-primary-rgb), 0.1);
+        .mobile-nav-toggle:hover {
+            background-color: rgba(255, 255, 255, 0.1);
         }
 
-        .cart-icon {
-            font-size: 1.2rem;
-        }
-
-        /* نافبار التنقل الرئيسي */
+        /* Main Navigation */
         .main-navbar {
             background-color: var(--bs-primary);
             padding: 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         .main-navbar .nav-link {
@@ -126,6 +152,7 @@
             font-weight: 500;
             padding: 15px 20px;
             transition: all 0.3s ease;
+            position: relative;
         }
 
         .main-navbar .nav-link:hover {
@@ -137,109 +164,351 @@
             color: #fff;
         }
 
-        /* تنسيقات الموبايل */
+        .main-navbar .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: #fff;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            padding: 8px 0;
+            font-size: 0.9rem;
+        }
+
+        .top-bar a {
+            transition: opacity 0.3s ease;
+        }
+
+        .top-bar a:hover {
+            opacity: 0.8;
+        }
+
+        /* Dark Mode Toggle */
+        #darkModeToggle {
+            transition: all 0.3s ease;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            padding: 0;
+        }
+
+        #darkModeToggle:hover {
+            transform: rotate(15deg);
+        }
+
+        /* Search Field RTL/LTR Support */
+        .search-field {
+            padding: 10px 15px;
+            height: 46px;
+        }
+
+        html[dir="ltr"] .search-field {
+            border-radius: 8px 0 0 8px;
+        }
+
+        html[dir="rtl"] .search-field {
+            border-radius: 0 8px 8px 0;
+        }
+
+        .search-button {
+            padding: 10px 15px;
+            height: 46px;
+        }
+
+        html[dir="ltr"] .search-button {
+            border-radius: 0 8px 8px 0;
+        }
+
+        html[dir="rtl"] .search-button {
+            border-radius: 8px 0 0 8px;
+        }
+
+        /* Improved RTL/LTR Support */
+        html[dir="ltr"] .me-auto {
+            margin-right: auto !important;
+            margin-left: 0 !important;
+        }
+
+        html[dir="rtl"] .me-auto {
+            margin-left: auto !important;
+            margin-right: 0 !important;
+        }
+
+        html[dir="ltr"] .ms-auto {
+            margin-left: auto !important;
+            margin-right: 0 !important;
+        }
+
+        html[dir="rtl"] .ms-auto {
+            margin-right: auto !important;
+            margin-left: 0 !important;
+        }
+
+        /* Common directional spacing for both RTL and LTR */
+        .space-inline-1 {
+            margin-inline-start: 0.25rem !important;
+        }
+
+        .space-inline-2 {
+            margin-inline-start: 0.5rem !important;
+        }
+
+        .space-inline-3 {
+            margin-inline-start: 1rem !important;
+        }
+
+        /* Desktop layout */
+        @media (min-width: 992px) {
+            .mobile-only {
+                display: none !important;
+            }
+
+            .desktop-only {
+                display: block !important;
+            }
+        }
+
+        /* Mobile layout */
         @media (max-width: 991.98px) {
-            .header-top {
-                padding: 10px 0;
+            .desktop-only {
+                display: none !important;
+            }
+
+            .mobile-only {
+                display: block !important;
+            }
+
+            .logo-container {
+                justify-content: center;
+                margin: 10px 0;
             }
 
             .logo-container img {
-                width: 180px;
-                height: 100px;
-            }
-
-            .search-container {
-                order: 3;
-                margin: 15px 0 0 0;
-                width: 100%;
-            }
-
-            .search-form {
-                max-width: 100%;
-            }
-
-            .header-actions {
-                flex-wrap: wrap;
-            }
-
-            .user-actions {
-                order: 2;
+                max-width: 200px;
+                max-height: 120px;
             }
 
             .main-navbar .navbar-collapse {
                 background-color: var(--bs-primary);
+                max-height: 80vh;
+                overflow-y: auto;
+                border-radius: 0 0 8px 8px;
+                z-index: 1030;
             }
 
             .main-navbar .nav-link {
+                padding: 12px 15px;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+            }
+
+            .main-navbar .nav-link:last-child {
+                border-bottom: none;
+            }
+
+            .mobile-search-wrapper {
+                width: 100%;
+                margin: 15px 0;
+            }
+
+            .mobile-search-wrapper .search-field {
+                height: 50px;
+                padding: 10px 15px;
+            }
+
+            .mobile-search-wrapper .search-button {
+                height: 50px;
                 padding: 10px 15px;
             }
         }
 
         @media (max-width: 576px) {
             .logo-container img {
-                width: 150px;
-                height: 90px;
+                max-width: 180px;
+                max-height: 100px;
             }
+
+            .top-bar {
+                font-size: 0.8rem;
+            }
+
+            .account-btn, .cart-btn {
+                padding: 5px 10px;
+                font-size: 0.8rem;
+            }
+
+            .mobile-nav-toggle {
+                padding: 5px 8px;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Scroll to Top Button */
+        .scroll-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background-color: var(--bs-primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .scroll-to-top.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .scroll-to-top:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Accessibility Improvements */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--bs-primary);
+            color: white;
+            padding: 8px;
+            z-index: 100;
+            transition: top 0.3s;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        /* RTL specific adjustments */
+        html[dir="rtl"] .scroll-to-top {
+            right: auto;
+            left: 20px;
+        }
+
+        html[dir="rtl"] .skip-link {
+            left: auto;
+            right: 0;
         }
     </style>
 
     {% block extra_css %}{% endblock %}
 </head>
-<body dir="{% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}">
+<body>
+    <!-- Accessibility Skip Link -->
+    <a href="#main-content" class="skip-link">{% trans "تخطي إلى المحتوى الرئيسي" %}</a>
+
     <!-- Header -->
     <header>
-        <!-- Top Bar -->
+        <!-- Top Bar with Account and Cart -->
         <div class="top-bar bg-primary text-white py-2">
             <div class="container">
-                <div class="row">
-                    <div class="col-md-6">
+                <div class="row align-items-center">
+                    <div class="col-6 col-md-4">
                         <ul class="list-inline mb-0">
                             {% if site_settings.email %}
                                 <li class="list-inline-item me-3">
-                                    <i class="fas fa-envelope me-1"></i> {{ site_settings.email }}
+                                    <a href="mailto:{{ site_settings.email }}" class="text-white text-decoration-none">
+                                        <i class="fas fa-envelope space-inline-1" aria-hidden="true"></i>
+                                        <span class="d-none d-md-inline">{{ site_settings.email }}</span>
+                                    </a>
                                 </li>
                             {% endif %}
                             {% if site_settings.phone %}
                                 <li class="list-inline-item">
-                                    <i class="fas fa-phone-alt me-1"></i> {{ site_settings.phone }}
+                                    <a href="tel:{{ site_settings.phone }}" class="text-white text-decoration-none">
+                                        <i class="fas fa-phone-alt space-inline-1" aria-hidden="true"></i>
+                                        <span class="d-none d-md-inline">{{ site_settings.phone }}</span>
+                                    </a>
                                 </li>
                             {% endif %}
                         </ul>
                     </div>
-                    <div class="col-md-6 text-end">
+                    <div class="col-6 col-md-8 text-end">
                         <ul class="list-inline mb-0">
-                            <!-- Social Media Links -->
-                            {% if site_settings.facebook %}
-                                <li class="list-inline-item">
-                                    <a href="{{ site_settings.facebook }}" class="text-white" target="_blank">
-                                        <i class="fab fa-facebook"></i>
-                                    </a>
-                                </li>
-                            {% endif %}
-                            {% if site_settings.twitter %}
-                                <li class="list-inline-item">
-                                    <a href="{{ site_settings.twitter }}" class="text-white" target="_blank">
-                                        <i class="fab fa-twitter"></i>
-                                    </a>
-                                </li>
-                            {% endif %}
-                            {% if site_settings.instagram %}
-                                <li class="list-inline-item">
-                                    <a href="{{ site_settings.instagram }}" class="text-white" target="_blank">
-                                        <i class="fab fa-instagram"></i>
-                                    </a>
-                                </li>
-                            {% endif %}
-                            {% if site_settings.linkedin %}
-                                <li class="list-inline-item">
-                                    <a href="{{ site_settings.linkedin }}" class="text-white" target="_blank">
-                                        <i class="fab fa-linkedin"></i>
-                                    </a>
-                                </li>
-                            {% endif %}
+                            <!-- Account and Cart Buttons -->
+                            <li class="list-inline-item">
+                                <div class="dropdown">
+                                    <button class="btn btn-sm account-btn dropdown-toggle" type="button" id="accountDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-user space-inline-1" aria-hidden="true"></i>
+                                        <span class="d-none d-md-inline">
+                                            {% if user.is_authenticated %}
+                                                {{ user.get_full_name|default:user.username|truncatechars:15 }}
+                                            {% else %}
+                                                {% trans "الحساب" %}
+                                            {% endif %}
+                                        </span>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="accountDropdown">
+                                        {% if user.is_authenticated %}
+                                            <li>
+                                                <a class="dropdown-item" href="{% url 'accounts:profile' %}">
+                                                    <i class="fas fa-user-circle space-inline-1" aria-hidden="true"></i> {% trans "الملف الشخصي" %}
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item" href="{% url 'accounts:order_history' %}">
+                                                    <i class="fas fa-clipboard-list space-inline-1" aria-hidden="true"></i> {% trans "طلباتي" %}
+                                                </a>
+                                            </li>
+                                            {% if user.is_staff %}
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <a class="dropdown-item" href="{% url 'dashboard:index' %}">
+                                                        <i class="fas fa-tachometer-alt space-inline-1" aria-hidden="true"></i> {% trans "لوحة التحكم" %}
+                                                    </a>
+                                                </li>
+                                            {% endif %}
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <a class="dropdown-item" href="{% url 'accounts:logout' %}">
+                                                    <i class="fas fa-sign-out-alt space-inline-1" aria-hidden="true"></i> {% trans "تسجيل الخروج" %}
+                                                </a>
+                                            </li>
+                                        {% else %}
+                                            <li>
+                                                <a class="dropdown-item" href="{% url 'accounts:login' %}">
+                                                    <i class="fas fa-sign-in-alt space-inline-1" aria-hidden="true"></i> {% trans "تسجيل الدخول" %}
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item" href="{% url 'accounts:register' %}">
+                                                    <i class="fas fa-user-plus space-inline-1" aria-hidden="true"></i> {% trans "إنشاء حساب" %}
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                            </li>
+                            <li class="list-inline-item space-inline-2">
+                                <a href="{% url 'cart:cart' %}" class="btn btn-sm cart-btn position-relative" aria-label="{% trans 'سلة التسوق' %}">
+                                    <i class="fas fa-shopping-cart" aria-hidden="true"></i>
+                                    <span class="d-none d-md-inline space-inline-1">{% trans "السلة" %}</span>
+                                    {% if cart and cart.items.count > 0 %}
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" aria-label="{% trans 'عدد العناصر في السلة:' %} {{ cart.total_items }}">
+                                            {{ cart.total_items }}
+                                        </span>
+                                    {% endif %}
+                                </a>
+                            </li>
 
                             <!-- Language Switcher -->
-                            <li class="list-inline-item ms-3">
+                            <li class="list-inline-item space-inline-2">
                                 {% get_current_language as CURRENT_LANGUAGE %}
                                 {% get_available_languages as AVAILABLE_LANGUAGES %}
                                 {% get_language_info_list for AVAILABLE_LANGUAGES as languages %}
@@ -247,16 +516,17 @@
                                 <div class="dropdown">
                                     <button class="btn btn-sm btn-primary dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                         {% if CURRENT_LANGUAGE == 'ar' %}
-                                            <i class="fas fa-globe me-1"></i> العربية
+                                            <i class="fas fa-globe" aria-hidden="true"></i>
                                         {% else %}
-                                            <i class="fas fa-globe me-1"></i> English
+                                            <i class="fas fa-globe" aria-hidden="true"></i>
                                         {% endif %}
                                     </button>
-                                    <ul class="dropdown-menu" aria-labelledby="languageDropdown">
+                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
                                         {% for language in languages %}
                                             <li>
                                                 <a class="dropdown-item{% if language.code == CURRENT_LANGUAGE %} active{% endif %}"
-                                                   href="{% url 'core:set_language' language.code %}">
+                                                   href="{% url 'core:set_language' language.code %}"
+                                                   {% if language.code == CURRENT_LANGUAGE %}aria-current="true"{% endif %}>
                                                     {{ language.name_local }}
                                                 </a>
                                             </li>
@@ -267,28 +537,131 @@
 
                             <!-- Dark Mode Toggle -->
                             {% if site_settings.enable_dark_mode %}
-                                <li class="list-inline-item ms-2">
-                                    <button class="btn btn-sm btn-primary" id="darkModeToggle">
-                                        <i class="fas fa-moon" id="darkModeIcon"></i>
+                                <li class="list-inline-item space-inline-2">
+                                    <button class="btn btn-sm btn-primary" id="darkModeToggle" aria-label="{% trans 'تبديل وضع الظلام' %}">
+                                        <i class="fas fa-moon" id="darkModeIcon" aria-hidden="true"></i>
                                     </button>
                                 </li>
                             {% endif %}
+
+                            <!-- Mobile Navigation Toggle -->
+                            <li class="list-inline-item space-inline-2 d-lg-none">
+                                <button class="navbar-toggler mobile-nav-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbarNav" aria-controls="mainNavbarNav" aria-expanded="false" aria-label="{% trans 'تبديل التنقل' %}">
+                                    <i class="fas fa-bars" aria-hidden="true"></i>
+                                </button>
+                            </li>
                         </ul>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Header Top - Logo, Search & Account -->
+        <!-- Main Navigation for BOTH Mobile and Desktop - Right after Top Bar -->
+        <!-- Mobile Version (Collapses) -->
+        <nav class="navbar navbar-expand-lg main-navbar" aria-label="{% trans 'التنقل الرئيسي' %}">
+            <div class="container">
+                <!-- For mobile: Collapsible Menu -->
+                <div class="collapse navbar-collapse d-lg-none" id="mainNavbarNav">
+                    <ul class="navbar-nav mx-auto">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'core:home' %}" {% if request.path == '/' %}aria-current="page"{% endif %}>
+                                <i class="fas fa-home space-inline-1" aria-hidden="true"></i> {% trans "الرئيسية" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/products/categories/' in request.path %}active{% endif %}" href="{% url 'products:category_list' %}" {% if '/products/categories/' in request.path %}aria-current="page"{% endif %}>
+                                <i class="fas fa-th-large space-inline-1" aria-hidden="true"></i> {% trans "التصنيفات" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/products/special-offers/' in request.path %}active{% endif %}" href="{% url 'products:special_offers' %}" {% if '/products/special-offers/' in request.path %}aria-current="page"{% endif %}>
+                                <i class="fas fa-tags space-inline-1" aria-hidden="true"></i> {% trans "العروض الخاصة" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/about/' in request.path %}active{% endif %}" href="{% url 'core:about' %}" {% if '/about/' in request.path %}aria-current="page"{% endif %}>
+                                <i class="fas fa-info-circle space-inline-1" aria-hidden="true"></i> {% trans "من نحن" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/contact/' in request.path %}active{% endif %}" href="{% url 'core:contact' %}" {% if '/contact/' in request.path %}aria-current="page"{% endif %}>
+                                <i class="fas fa-envelope space-inline-1" aria-hidden="true"></i> {% trans "اتصل بنا" %}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- For desktop: Always visible menu -->
+                <div class="d-none d-lg-block w-100">
+                    <ul class="navbar-nav mx-auto d-flex flex-row justify-content-center">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'core:home' %}" {% if request.path == '/' %}aria-current="page"{% endif %}>
+                                <i class="fas fa-home space-inline-1" aria-hidden="true"></i> {% trans "الرئيسية" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/products/categories/' in request.path %}active{% endif %}" href="{% url 'products:category_list' %}" {% if '/products/categories/' in request.path %}aria-current="page"{% endif %}>
+                                <i class="fas fa-th-large space-inline-1" aria-hidden="true"></i> {% trans "التصنيفات" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/products/special-offers/' in request.path %}active{% endif %}" href="{% url 'products:special_offers' %}" {% if '/products/special-offers/' in request.path %}aria-current="page"{% endif %}>
+                                <i class="fas fa-tags space-inline-1" aria-hidden="true"></i> {% trans "العروض الخاصة" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/about/' in request.path %}active{% endif %}" href="{% url 'core:about' %}" {% if '/about/' in request.path %}aria-current="page"{% endif %}>
+                                <i class="fas fa-info-circle space-inline-1" aria-hidden="true"></i> {% trans "من نحن" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/contact/' in request.path %}active{% endif %}" href="{% url 'core:contact' %}" {% if '/contact/' in request.path %}aria-current="page"{% endif %}>
+                                <i class="fas fa-envelope space-inline-1" aria-hidden="true"></i> {% trans "اتصل بنا" %}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Header Content Area -->
         <div class="header-top shadow-sm">
             <div class="container">
-                <div class="row align-items-center">
-                    <!-- Logo -->
-                    <div class="col-lg-3 col-md-4 col-8">
+                <div class="row">
+                    <!-- For Desktop: Logo and Search in the same row -->
+                    <div class="col-lg-3 col-md-4 desktop-only">
                         <div class="logo-container">
-                            <a href="{% url 'core:home' %}">
+                            <a href="{% url 'core:home' %}" aria-label="{% trans 'الصفحة الرئيسية' %}">
                                 {% if site_settings.logo %}
-                                    <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name }}" class="img-fluid">
+                                    <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name|default:'ESCO' }}" class="img-fluid">
+                                {% else %}
+                                    <img src="{% static 'images/logo.png' %}" alt="ESCO" class="img-fluid">
+                                {% endif %}
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-lg-9 col-md-8 desktop-only">
+                        <div class="header-actions">
+                            <div class="search-wrapper w-100">
+                                <form action="{% url 'products:product_search' %}" method="GET" role="search" class="w-100">
+                                    <div class="input-group">
+                                        <input class="form-control search-field" type="search" name="q" placeholder="{% trans 'بحث عن منتجات...' %}" aria-label="{% trans 'بحث' %}" value="{{ request.GET.q|default:'' }}">
+                                        <button class="btn btn-primary search-button" type="submit" aria-label="{% trans 'بحث' %}">
+                                            <i class="fas fa-search" aria-hidden="true"></i>
+                                            <span class="d-none d-md-inline space-inline-1">{% trans "بحث" %}</span>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- For Mobile: Logo in its own row -->
+                    <div class="col-12 mobile-only">
+                        <div class="logo-container">
+                            <a href="{% url 'core:home' %}" aria-label="{% trans 'الصفحة الرئيسية' %}">
+                                {% if site_settings.logo %}
+                                    <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name|default:'ESCO' }}" class="img-fluid">
                                 {% else %}
                                     <img src="{% static 'images/logo.png' %}" alt="ESCO" class="img-fluid">
                                 {% endif %}
@@ -296,99 +669,15 @@
                         </div>
                     </div>
 
-                    <!-- Search & Account -->
-                    <div class="col-lg-9 col-md-8 col-4">
-                        <div class="header-actions">
-                            <!-- Search Form - عرض فقط في شاشات كبيرة على الديسكتوب -->
-                            <div class="search-container d-none d-lg-block">
-                                <form class="search-form d-flex" action="{% url 'products:product_search' %}" method="GET">
-                                    <div class="input-group">
-                                        <input class="form-control" type="search" name="q" placeholder="{% trans 'بحث عن منتجات...' %}" aria-label="Search" value="{{ request.GET.q|default:'' }}">
-                                        <button class="btn btn-primary" type="submit">
-                                            <i class="fas fa-search"></i>
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-
-                            <!-- User Account & Cart -->
-                            <div class="user-actions">
-                                <ul class="navbar-nav">
-                                    <li class="nav-item dropdown">
-                                        <a class="nav-link dropdown-toggle" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="fas fa-user me-1"></i>
-                                            {% if user.is_authenticated %}
-                                                {{ user.get_full_name|default:user.username }}
-                                            {% else %}
-                                                {% trans "الحساب" %}
-                                            {% endif %}
-                                        </a>
-                                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="accountDropdown">
-                                            {% if user.is_authenticated %}
-                                                <li>
-                                                    <a class="dropdown-item" href="{% url 'accounts:profile' %}">
-                                                        <i class="fas fa-user-circle me-1"></i> {% trans "الملف الشخصي" %}
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <a class="dropdown-item" href="{% url 'accounts:order_history' %}">
-                                                        <i class="fas fa-clipboard-list me-1"></i> {% trans "طلباتي" %}
-                                                    </a>
-                                                </li>
-                                                {% if user.is_staff %}
-                                                    <li><hr class="dropdown-divider"></li>
-                                                    <li>
-                                                        <a class="dropdown-item" href="{% url 'dashboard:index' %}">
-                                                            <i class="fas fa-tachometer-alt me-1"></i> {% trans "لوحة التحكم" %}
-                                                        </a>
-                                                    </li>
-                                                {% endif %}
-                                                <li><hr class="dropdown-divider"></li>
-                                                <li>
-                                                    <a class="dropdown-item" href="{% url 'accounts:logout' %}">
-                                                        <i class="fas fa-sign-out-alt me-1"></i> {% trans "تسجيل الخروج" %}
-                                                    </a>
-                                                </li>
-                                            {% else %}
-                                                <li>
-                                                    <a class="dropdown-item" href="{% url 'accounts:login' %}">
-                                                        <i class="fas fa-sign-in-alt me-1"></i> {% trans "تسجيل الدخول" %}
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <a class="dropdown-item" href="{% url 'accounts:register' %}">
-                                                        <i class="fas fa-user-plus me-1"></i> {% trans "إنشاء حساب" %}
-                                                    </a>
-                                                </li>
-                                            {% endif %}
-                                        </ul>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link position-relative cart-icon" href="{% url 'cart:cart' %}">
-                                            <i class="fas fa-shopping-cart"></i>
-                                            {% if cart and cart.items.count > 0 %}
-                                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                                    {{ cart.total_items }}
-                                                </span>
-                                            {% endif %}
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-
-                            <!-- Mobile Toggle Button for Main Navigation -->
-                            <button class="navbar-toggler d-lg-none ms-2" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbarNav" aria-controls="mainNavbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                                <i class="fas fa-bars"></i>
-                            </button>
-                        </div>
-
-                        <!-- Search Form - للموبايل فقط -->
-                        <div class="search-container d-lg-none">
-                            <form class="search-form d-flex" action="{% url 'products:product_search' %}" method="GET">
+                    <!-- For Mobile: Search in its own row -->
+                    <div class="col-12 mobile-only">
+                        <div class="mobile-search-wrapper">
+                            <form action="{% url 'products:product_search' %}" method="GET" role="search" class="w-100">
                                 <div class="input-group">
-                                    <input class="form-control" type="search" name="q" placeholder="{% trans 'بحث عن منتجات...' %}" aria-label="Search" value="{{ request.GET.q|default:'' }}">
-                                    <button class="btn btn-primary" type="submit">
-                                        <i class="fas fa-search"></i>
+                                    <input class="form-control search-field" type="search" name="q" placeholder="{% trans 'بحث عن منتجات...' %}" aria-label="{% trans 'بحث' %}" value="{{ request.GET.q|default:'' }}">
+                                    <button class="btn btn-primary search-button" type="submit" aria-label="{% trans 'بحث' %}">
+                                        <i class="fas fa-search" aria-hidden="true"></i>
+                                        <span class="d-none d-md-inline space-inline-1">{% trans "بحث" %}</span>
                                     </button>
                                 </div>
                             </form>
@@ -397,41 +686,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Main Navigation -->
-        <nav class="navbar navbar-expand-lg main-navbar">
-            <div class="container">
-                <div class="collapse navbar-collapse" id="mainNavbarNav">
-                    <ul class="navbar-nav mx-auto">
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'core:home' %}">
-                                <i class="fas fa-home me-1"></i> {% trans "الرئيسية" %}
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if '/products/categories/' in request.path %}active{% endif %}" href="{% url 'products:category_list' %}">
-                                <i class="fas fa-th-large me-1"></i> {% trans "التصنيفات" %}
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if '/products/special-offers/' in request.path %}active{% endif %}" href="{% url 'products:special_offers' %}">
-                                <i class="fas fa-tags me-1"></i> {% trans "العروض الخاصة" %}
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if '/about/' in request.path %}active{% endif %}" href="{% url 'core:about' %}">
-                                <i class="fas fa-info-circle me-1"></i> {% trans "من نحن" %}
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if '/contact/' in request.path %}active{% endif %}" href="{% url 'core:contact' %}">
-                                <i class="fas fa-envelope me-1"></i> {% trans "اتصل بنا" %}
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
     </header>
 
     <!-- Messages -->
@@ -440,14 +694,14 @@
             {% for message in messages %}
                 <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
                     {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% trans 'إغلاق' %}"></button>
                 </div>
             {% endfor %}
         </div>
     {% endif %}
 
     <!-- Main Content -->
-    <main class="py-4">
+    <main id="main-content" class="py-4">
         {% block content %}{% endblock %}
     </main>
 
@@ -463,23 +717,23 @@
                     </p>
                     <div class="social-icons mt-3">
                         {% if site_settings.facebook %}
-                            <a href="{{ site_settings.facebook }}" class="text-white me-3" target="_blank">
-                                <i class="fab fa-facebook-f"></i>
+                            <a href="{{ site_settings.facebook }}" class="text-white me-3" target="_blank" rel="noopener" aria-label="{% trans 'فيسبوك' %}">
+                                <i class="fab fa-facebook-f" aria-hidden="true"></i>
                             </a>
                         {% endif %}
                         {% if site_settings.twitter %}
-                            <a href="{{ site_settings.twitter }}" class="text-white me-3" target="_blank">
-                                <i class="fab fa-twitter"></i>
+                            <a href="{{ site_settings.twitter }}" class="text-white me-3" target="_blank" rel="noopener" aria-label="{% trans 'تويتر' %}">
+                                <i class="fab fa-twitter" aria-hidden="true"></i>
                             </a>
                         {% endif %}
                         {% if site_settings.instagram %}
-                            <a href="{{ site_settings.instagram }}" class="text-white me-3" target="_blank">
-                                <i class="fab fa-instagram"></i>
+                            <a href="{{ site_settings.instagram }}" class="text-white me-3" target="_blank" rel="noopener" aria-label="{% trans 'انستغرام' %}">
+                                <i class="fab fa-instagram" aria-hidden="true"></i>
                             </a>
                         {% endif %}
                         {% if site_settings.linkedin %}
-                            <a href="{{ site_settings.linkedin }}" class="text-white me-3" target="_blank">
-                                <i class="fab fa-linkedin-in"></i>
+                            <a href="{{ site_settings.linkedin }}" class="text-white me-3" target="_blank" rel="noopener" aria-label="{% trans 'لينكد إن' %}">
+                                <i class="fab fa-linkedin-in" aria-hidden="true"></i>
                             </a>
                         {% endif %}
                     </div>
@@ -491,32 +745,32 @@
                     <ul class="list-unstyled">
                         <li class="mb-2">
                             <a href="{% url 'core:home' %}" class="text-white text-decoration-none">
-                                <i class="fas fa-chevron-right me-2"></i>{% trans "الرئيسية" %}
+                                <i class="fas fa-chevron-right space-inline-2" aria-hidden="true"></i>{% trans "الرئيسية" %}
                             </a>
                         </li>
                         <li class="mb-2">
                             <a href="{% url 'products:category_list' %}" class="text-white text-decoration-none">
-                                <i class="fas fa-chevron-right me-2"></i>{% trans "التصنيفات" %}
+                                <i class="fas fa-chevron-right space-inline-2" aria-hidden="true"></i>{% trans "التصنيفات" %}
                             </a>
                         </li>
                         <li class="mb-2">
                             <a href="{% url 'products:special_offers' %}" class="text-white text-decoration-none">
-                                <i class="fas fa-chevron-right me-2"></i>{% trans "العروض الخاصة" %}
+                                <i class="fas fa-chevron-right space-inline-2" aria-hidden="true"></i>{% trans "العروض الخاصة" %}
                             </a>
                         </li>
                         <li class="mb-2">
                             <a href="{% url 'core:about' %}" class="text-white text-decoration-none">
-                                <i class="fas fa-chevron-right me-2"></i>{% trans "من نحن" %}
+                                <i class="fas fa-chevron-right space-inline-2" aria-hidden="true"></i>{% trans "من نحن" %}
                             </a>
                         </li>
                         <li class="mb-2">
                             <a href="{% url 'core:contact' %}" class="text-white text-decoration-none">
-                                <i class="fas fa-chevron-right me-2"></i>{% trans "اتصل بنا" %}
+                                <i class="fas fa-chevron-right space-inline-2" aria-hidden="true"></i>{% trans "اتصل بنا" %}
                             </a>
                         </li>
                         <li>
                             <a href="{% url 'orders:track_order' %}" class="text-white text-decoration-none">
-                                <i class="fas fa-chevron-right me-2"></i>{% trans "تتبع الطلب" %}
+                                <i class="fas fa-chevron-right space-inline-2" aria-hidden="true"></i>{% trans "تتبع الطلب" %}
                             </a>
                         </li>
                     </ul>
@@ -528,17 +782,21 @@
                     <ul class="list-unstyled">
                         {% if site_settings.address %}
                             <li class="mb-2">
-                                <i class="fas fa-map-marker-alt me-2"></i> {{ site_settings.address }}
+                                <i class="fas fa-map-marker-alt space-inline-2" aria-hidden="true"></i> {{ site_settings.address }}
                             </li>
                         {% endif %}
                         {% if site_settings.phone %}
                             <li class="mb-2">
-                                <i class="fas fa-phone-alt me-2"></i> {{ site_settings.phone }}
+                                <a href="tel:{{ site_settings.phone }}" class="text-white text-decoration-none">
+                                    <i class="fas fa-phone-alt space-inline-2" aria-hidden="true"></i> {{ site_settings.phone }}
+                                </a>
                             </li>
                         {% endif %}
                         {% if site_settings.email %}
                             <li class="mb-2">
-                                <i class="fas fa-envelope me-2"></i> {{ site_settings.email }}
+                                <a href="mailto:{{ site_settings.email }}" class="text-white text-decoration-none">
+                                    <i class="fas fa-envelope space-inline-2" aria-hidden="true"></i> {{ site_settings.email }}
+                                </a>
                             </li>
                         {% endif %}
                     </ul>
@@ -550,18 +808,27 @@
                 <p class="mb-0">
                     &copy; {% now "Y" %} {{ site_settings.site_name|default:"ESCO" }}. {% trans "جميع الحقوق محفوظة." %}
                 </p>
+                <div class="mt-2">
+                    <a href="{% url 'core:terms' %}" class="text-white text-decoration-none mx-2">{% trans "الشروط والأحكام" %}</a> |
+                    <a href="{% url 'core:privacy' %}" class="text-white text-decoration-none mx-2">{% trans "سياسة الخصوصية" %}</a>
+                </div>
             </div>
         </div>
     </footer>
 
+    <!-- Scroll to Top Button -->
+    <button id="scrollToTop" class="scroll-to-top" aria-label="{% trans 'العودة إلى الأعلى' %}">
+        <i class="fas fa-arrow-up" aria-hidden="true"></i>
+    </button>
+
     <!-- Bootstrap Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous" defer></script>
 
     <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous" defer></script>
 
     <!-- Custom JavaScript -->
-    <script src="{% static 'js/main.js' %}"></script>
+    <script src="{% static 'js/main.js' %}" defer></script>
 
     <!-- Dark Mode Script -->
     {% if site_settings.enable_dark_mode %}
@@ -571,11 +838,11 @@
             const darkModeIcon = document.getElementById('darkModeIcon');
             const htmlElement = document.documentElement;
 
-            // التحقق من وضع الظلام المحفوظ - Check saved dark mode
+            // Check saved dark mode
             const isDarkMode = localStorage.getItem('darkMode') === 'true' ||
                                {% if site_settings.default_dark_mode %}true{% else %}false{% endif %};
 
-            // تطبيق وضع الظلام إذا كان نشطًا - Apply dark mode if active
+            // Apply dark mode if active
             if (isDarkMode) {
                 htmlElement.setAttribute('data-bs-theme', 'dark');
                 darkModeIcon.classList.remove('fa-moon');
@@ -586,7 +853,7 @@
                 darkModeIcon.classList.add('fa-moon');
             }
 
-            // تبديل وضع الظلام - Toggle dark mode
+            // Toggle dark mode
             darkModeToggle.addEventListener('click', function() {
                 const currentTheme = htmlElement.getAttribute('data-bs-theme');
                 const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -601,6 +868,24 @@
                     darkModeIcon.classList.remove('fa-sun');
                     darkModeIcon.classList.add('fa-moon');
                 }
+            });
+
+            // Scroll to top functionality
+            const scrollToTopBtn = document.getElementById('scrollToTop');
+
+            window.addEventListener('scroll', function() {
+                if (window.pageYOffset > 300) {
+                    scrollToTopBtn.classList.add('active');
+                } else {
+                    scrollToTopBtn.classList.remove('active');
+                }
+            });
+
+            scrollToTopBtn.addEventListener('click', function() {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
             });
         });
     </script>
