@@ -1,0 +1,1125 @@
+{% load static %}
+{% load i18n %}
+
+<!-- Product Reviews Section Component -->
+<div class="reviews-section" id="reviewsSection">
+    <div class="reviews-header">
+        <h3 class="reviews-title">
+            <i class="fas fa-star me-2"></i>{% trans "تقييمات العملاء" %}
+        </h3>
+        {% if can_review %}
+            <button class="btn btn-primary" onclick="showReviewForm()">
+                <i class="fas fa-pen me-2"></i>{% trans "اكتب تقييمك" %}
+            </button>
+        {% endif %}
+    </div>
+
+    <!-- Rating Summary -->
+    <div class="rating-summary">
+        <div class="row align-items-center">
+            <div class="col-lg-4">
+                <div class="overall-rating">
+                    <div class="rating-number">{{ product.rating|floatformat:1|default:"0.0" }}</div>
+                    <div class="rating-stars">
+                        {% for i in "12345" %}
+                            {% if product.rating >= i|add:0 %}
+                                <i class="fas fa-star"></i>
+                            {% elif product.rating >= i|add:0|add:-0.5 %}
+                                <i class="fas fa-star-half-alt"></i>
+                            {% else %}
+                                <i class="far fa-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <div class="rating-count">
+                        {% blocktrans count count=total_reviews %}{{ count }} تقييم{% endblocktrans %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <div class="rating-breakdown">
+                    {% for rating, data in rating_breakdown.items %}
+                        <div class="rating-bar-item">
+                            <span class="rating-label">
+                                {{ rating }} <i class="fas fa-star"></i>
+                            </span>
+                            <div class="rating-bar">
+                                <div class="rating-bar-fill" style="width: {{ data.percentage }}%"></div>
+                            </div>
+                            <span class="rating-count-small">{{ data.count }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Filters -->
+    <div class="review-filters">
+        <div class="filter-pills">
+            <button class="filter-pill active" onclick="filterReviews('all')">
+                {% trans "جميع التقييمات" %} ({{ total_reviews }})
+            </button>
+            <button class="filter-pill" onclick="filterReviews('5')">
+                5 <i class="fas fa-star"></i> ({{ rating_breakdown.5.count }})
+            </button>
+            <button class="filter-pill" onclick="filterReviews('4')">
+                4 <i class="fas fa-star"></i> ({{ rating_breakdown.4.count }})
+            </button>
+            <button class="filter-pill" onclick="filterReviews('3')">
+                3 <i class="fas fa-star"></i> ({{ rating_breakdown.3.count }})
+            </button>
+            <button class="filter-pill" onclick="filterReviews('2')">
+                2 <i class="fas fa-star"></i> ({{ rating_breakdown.2.count }})
+            </button>
+            <button class="filter-pill" onclick="filterReviews('1')">
+                1 <i class="fas fa-star"></i> ({{ rating_breakdown.1.count }})
+            </button>
+        </div>
+
+        <div class="sort-dropdown">
+            <select class="form-select form-select-sm" onchange="sortReviews(this.value)">
+                <option value="newest">{% trans "الأحدث أولاً" %}</option>
+                <option value="oldest">{% trans "الأقدم أولاً" %}</option>
+                <option value="helpful">{% trans "الأكثر فائدة" %}</option>
+                <option value="rating_high">{% trans "التقييم: الأعلى" %}</option>
+                <option value="rating_low">{% trans "التقييم: الأقل" %}</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Reviews List -->
+    <div class="reviews-list" id="reviewsList">
+        {% for review in reviews %}
+            <div class="review-item" data-rating="{{ review.rating }}" data-review-id="{{ review.id }}">
+                <div class="review-header">
+                    <div class="reviewer-info">
+                        <div class="reviewer-avatar">
+                            {% if review.user.profile.avatar %}
+                                <img src="{{ review.user.profile.avatar.url }}" alt="{{ review.user.get_full_name }}">
+                            {% else %}
+                                <i class="fas fa-user"></i>
+                            {% endif %}
+                        </div>
+                        <div class="reviewer-details">
+                            <h5 class="reviewer-name">{{ review.user.get_full_name|default:review.user.username }}</h5>
+                            <div class="review-meta">
+                                <span class="review-date">{{ review.created_at|date:"j F Y" }}</span>
+                                {% if review.user.orders.filter(items__product=product, status='delivered').exists %}
+                                    <span class="verified-purchase">
+                                        <i class="fas fa-check-circle"></i> {% trans "مشتري موثق" %}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="review-rating">
+                        {% for i in "12345" %}
+                            {% if i|add:0 <= review.rating %}
+                                <i class="fas fa-star"></i>
+                            {% else %}
+                                <i class="far fa-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+                {% if review.title %}
+                    <h6 class="review-title">{{ review.title }}</h6>
+                {% endif %}
+
+                <div class="review-content">
+                    <p>{{ review.comment|linebreaks }}</p>
+                </div>
+
+                {% if review.image1 or review.image2 or review.image3 %}
+                    <div class="review-images">
+                        {% if review.image1 %}
+                            <a href="{{ review.image1.url }}" class="review-image" data-lightbox="review-{{ review.id }}">
+                                <img src="{{ review.image1.url }}" alt="Review image 1">
+                            </a>
+                        {% endif %}
+                        {% if review.image2 %}
+                            <a href="{{ review.image2.url }}" class="review-image" data-lightbox="review-{{ review.id }}">
+                                <img src="{{ review.image2.url }}" alt="Review image 2">
+                            </a>
+                        {% endif %}
+                        {% if review.image3 %}
+                            <a href="{{ review.image3.url }}" class="review-image" data-lightbox="review-{{ review.id }}">
+                                <img src="{{ review.image3.url }}" alt="Review image 3">
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                <div class="review-footer">
+                    <div class="helpful-section">
+                        <span class="helpful-text">{% trans "هل كان هذا التقييم مفيداً؟" %}</span>
+                        <button class="btn-helpful" onclick="voteReview({{ review.id }}, 'helpful')">
+                            <i class="far fa-thumbs-up"></i>
+                            <span class="helpful-count">{{ review.helpful_count }}</span>
+                        </button>
+                        <button class="btn-helpful" onclick="voteReview({{ review.id }}, 'not_helpful')">
+                            <i class="far fa-thumbs-down"></i>
+                            <span class="not-helpful-count">{{ review.not_helpful_count }}</span>
+                        </button>
+                    </div>
+
+                    <button class="btn-report" onclick="reportReview({{ review.id }})">
+                        <i class="fas fa-flag"></i> {% trans "إبلاغ" %}
+                    </button>
+                </div>
+
+                {% if review.is_featured %}
+                    <div class="featured-badge">
+                        <i class="fas fa-award"></i> {% trans "تقييم مميز" %}
+                    </div>
+                {% endif %}
+            </div>
+        {% empty %}
+            <div class="no-reviews">
+                <i class="far fa-comment-dots"></i>
+                <p>{% trans "لا توجد تقييمات بعد. كن أول من يقيم هذا المنتج!" %}</p>
+                {% if can_review %}
+                    <button class="btn btn-primary" onclick="showReviewForm()">
+                        {% trans "اكتب أول تقييم" %}
+                    </button>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Load More Reviews -->
+    {% if reviews.has_next %}
+        <div class="load-more-section">
+            <button class="btn btn-outline-primary" onclick="loadMoreReviews({{ reviews.next_page_number }})">
+                {% trans "عرض المزيد من التقييمات" %}
+            </button>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Review Form Modal -->
+<div class="modal fade" id="reviewFormModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{% trans "اكتب تقييمك" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reviewForm" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <div class="mb-4">
+                        <label class="form-label required">{% trans "تقييمك" %}</label>
+                        <div class="rating-input">
+                            {% for i in "12345" %}
+                                <input type="radio" name="rating" value="{{ i }}" id="star{{ i }}" required>
+                                <label for="star{{ i }}" class="star-label" data-rating="{{ i }}">
+                                    <i class="fas fa-star"></i>
+                                </label>
+                            {% endfor %}
+                        </div>
+                        <div class="rating-text text-muted"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="reviewTitle" class="form-label">{% trans "عنوان التقييم" %}</label>
+                        <input type="text" class="form-control" id="reviewTitle" name="title"
+                               placeholder="{% trans 'ملخص رأيك في كلمات قليلة' %}" maxlength="200">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="reviewComment" class="form-label required">{% trans "تقييمك" %}</label>
+                        <textarea class="form-control" id="reviewComment" name="comment" rows="5"
+                                  placeholder="{% trans 'شارك تجربتك مع هذا المنتج' %}" required></textarea>
+                        <div class="form-text">{% trans "الحد الأدنى 20 حرف" %}</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "أضف صور (اختياري)" %}</label>
+                        <div class="image-upload-area">
+                            <div class="image-upload-box">
+                                <input type="file" id="image1" name="image1" accept="image/*" onchange="previewImage(this, 1)">
+                                <label for="image1">
+                                    <i class="fas fa-camera"></i>
+                                    <span>{% trans "صورة 1" %}</span>
+                                </label>
+                                <div class="image-preview" id="preview1"></div>
+                            </div>
+                            <div class="image-upload-box">
+                                <input type="file" id="image2" name="image2" accept="image/*" onchange="previewImage(this, 2)">
+                                <label for="image2">
+                                    <i class="fas fa-camera"></i>
+                                    <span>{% trans "صورة 2" %}</span>
+                                </label>
+                                <div class="image-preview" id="preview2"></div>
+                            </div>
+                            <div class="image-upload-box">
+                                <input type="file" id="image3" name="image3" accept="image/*" onchange="previewImage(this, 3)">
+                                <label for="image3">
+                                    <i class="fas fa-camera"></i>
+                                    <span>{% trans "صورة 3" %}</span>
+                                </label>
+                                <div class="image-preview" id="preview3"></div>
+                            </div>
+                        </div>
+                        <div class="form-text">{% trans "الحد الأقصى لحجم الصورة 5MB" %}</div>
+                    </div>
+
+                    <div class="review-guidelines">
+                        <h6>{% trans "إرشادات كتابة التقييم:" %}</h6>
+                        <ul>
+                            <li>{% trans "ركز على تجربتك الشخصية مع المنتج" %}</li>
+                            <li>{% trans "كن صادقاً وموضوعياً في تقييمك" %}</li>
+                            <li>{% trans "تجنب استخدام لغة مسيئة أو غير لائقة" %}</li>
+                            <li>{% trans "لا تضع معلومات شخصية أو روابط خارجية" %}</li>
+                        </ul>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "إلغاء" %}</button>
+                <button type="button" class="btn btn-primary" onclick="submitReview()">
+                    <i class="fas fa-paper-plane me-2"></i>{% trans "إرسال التقييم" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Review Modal -->
+<div class="modal fade" id="reportReviewModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{% trans "الإبلاغ عن تقييم" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reportForm">
+                    <input type="hidden" id="reportReviewId" name="review_id">
+
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "سبب الإبلاغ" %}</label>
+                        <select class="form-select" name="reason" required>
+                            <option value="">{% trans "اختر السبب" %}</option>
+                            <option value="inappropriate">{% trans "محتوى غير لائق" %}</option>
+                            <option value="spam">{% trans "بريد عشوائي" %}</option>
+                            <option value="fake">{% trans "تقييم مزيف" %}</option>
+                            <option value="offensive">{% trans "لغة مسيئة" %}</option>
+                            <option value="other">{% trans "أخرى" %}</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="reportDescription" class="form-label">{% trans "تفاصيل إضافية (اختياري)" %}</label>
+                        <textarea class="form-control" id="reportDescription" name="description" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "إلغاء" %}</button>
+                <button type="button" class="btn btn-danger" onclick="submitReport()">
+                    <i class="fas fa-flag me-2"></i>{% trans "إرسال البلاغ" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Reviews Section Styles */
+.reviews-section {
+    margin-top: 3rem;
+    padding: 2rem 0;
+}
+
+.reviews-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.reviews-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* Rating Summary */
+.rating-summary {
+    background: #f8f9fa;
+    padding: 2rem;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+}
+
+.overall-rating {
+    text-align: center;
+}
+
+.rating-number {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: var(--bs-primary);
+    line-height: 1;
+}
+
+.rating-stars {
+    font-size: 1.5rem;
+    color: #ffc107;
+    margin: 0.5rem 0;
+}
+
+.rating-count {
+    color: #6c757d;
+}
+
+/* Rating Breakdown */
+.rating-breakdown {
+    padding: 0 2rem;
+}
+
+.rating-bar-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.rating-label {
+    min-width: 50px;
+    font-weight: 600;
+    color: #6c757d;
+}
+
+.rating-bar {
+    flex: 1;
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.rating-bar-fill {
+    height: 100%;
+    background: #ffc107;
+    transition: width 0.3s ease;
+}
+
+.rating-count-small {
+    min-width: 30px;
+    text-align: right;
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+/* Review Filters */
+.review-filters {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.filter-pills {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.filter-pill {
+    padding: 0.5rem 1rem;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 50px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.filter-pill:hover {
+    background: #e9ecef;
+}
+
+.filter-pill.active {
+    background: var(--bs-primary);
+    color: white;
+    border-color: var(--bs-primary);
+}
+
+/* Review Item */
+.review-item {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.review-item:hover {
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.reviewer-info {
+    display: flex;
+    gap: 1rem;
+}
+
+.reviewer-avatar {
+    width: 50px;
+    height: 50px;
+    background: #f8f9fa;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.reviewer-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.reviewer-avatar i {
+    font-size: 1.5rem;
+    color: #6c757d;
+}
+
+.reviewer-name {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.review-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.verified-purchase {
+    color: #28a745;
+}
+
+.review-rating {
+    color: #ffc107;
+}
+
+.review-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.review-content {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+/* Review Images */
+.review-images {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.review-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.review-image:hover {
+    transform: scale(1.05);
+}
+
+.review-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Review Footer */
+.review-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid #f0f0f0;
+}
+
+.helpful-section {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.helpful-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.btn-helpful {
+    background: none;
+    border: 1px solid #dee2e6;
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-helpful:hover {
+    background: #f8f9fa;
+}
+
+.btn-helpful.voted {
+    background: var(--bs-primary);
+    color: white;
+    border-color: var(--bs-primary);
+}
+
+.btn-report {
+    background: none;
+    border: none;
+    color: #6c757d;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-report:hover {
+    color: #dc3545;
+}
+
+/* Featured Badge */
+.featured-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: #ffc107;
+    color: #000;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* No Reviews */
+.no-reviews {
+    text-align: center;
+    padding: 3rem;
+}
+
+.no-reviews i {
+    font-size: 4rem;
+    color: #dee2e6;
+    margin-bottom: 1rem;
+}
+
+/* Load More */
+.load-more-section {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+/* Review Form Modal */
+.rating-input {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.rating-input input[type="radio"] {
+    display: none;
+}
+
+.star-label {
+    font-size: 2rem;
+    color: #dee2e6;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.star-label:hover,
+.star-label:hover ~ .star-label,
+.rating-input input[type="radio"]:checked ~ .star-label {
+    color: #ffc107;
+}
+
+.rating-text {
+    text-align: center;
+    margin-top: 0.5rem;
+    min-height: 1.5rem;
+}
+
+/* Image Upload */
+.image-upload-area {
+    display: flex;
+    gap: 1rem;
+}
+
+.image-upload-box {
+    flex: 1;
+    position: relative;
+}
+
+.image-upload-box input[type="file"] {
+    display: none;
+}
+
+.image-upload-box label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    height: 120px;
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.image-upload-box label:hover {
+    border-color: var(--bs-primary);
+    background: rgba(var(--bs-primary-rgb), 0.05);
+}
+
+.image-upload-box i {
+    font-size: 2rem;
+    color: #6c757d;
+}
+
+.image-preview {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+}
+
+.image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.image-preview .remove-image {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: rgba(255,255,255,0.9);
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Review Guidelines */
+.review-guidelines {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 10px;
+    margin-top: 1rem;
+}
+
+.review-guidelines h6 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.review-guidelines ul {
+    margin: 0;
+    padding-left: 1.5rem;
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* Responsive */
+@media (max-width: 767.98px) {
+    .reviews-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+
+    .rating-summary .row {
+        text-align: center;
+    }
+
+    .rating-breakdown {
+        padding: 2rem 0 0 0;
+    }
+
+    .review-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-pills {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 0.5rem;
+    }
+
+    .review-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .review-footer {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+
+    .image-upload-area {
+        flex-direction: column;
+    }
+}
+
+/* Dark Mode */
+[data-bs-theme="dark"] .rating-summary {
+    background: #1a1a1a;
+}
+
+[data-bs-theme="dark"] .review-item {
+    background: #1e1e1e;
+    border-color: #404040;
+}
+
+[data-bs-theme="dark"] .filter-pill {
+    background: #2d2d2d;
+    border-color: #404040;
+}
+
+[data-bs-theme="dark"] .filter-pill.active {
+    background: var(--bs-primary);
+    border-color: var(--bs-primary);
+}
+
+[data-bs-theme="dark"] .image-upload-box label {
+    background: #2d2d2d;
+    border-color: #404040;
+}
+
+[data-bs-theme="dark"] .review-guidelines {
+    background: #1a1a1a;
+}
+</style>
+
+<script>
+// Reviews JavaScript
+let currentFilter = 'all';
+let currentSort = 'newest';
+
+// Show review form
+function showReviewForm() {
+    {% if not user.is_authenticated %}
+        if (confirm('{% trans "يجب تسجيل الدخول لكتابة تقييم. هل تريد تسجيل الدخول الآن؟" %}')) {
+            window.location.href = '{% url "accounts:login" %}?next={{ request.path }}';
+        }
+        return;
+    {% endif %}
+
+    {% if not can_review %}
+        alert('{% trans "يجب شراء هذا المنتج أولاً لتتمكن من تقييمه" %}');
+        return;
+    {% endif %}
+
+    const modal = new bootstrap.Modal(document.getElementById('reviewFormModal'));
+    modal.show();
+}
+
+// Rating input interaction
+document.querySelectorAll('.star-label').forEach((label, index) => {
+    label.addEventListener('click', function() {
+        const rating = 5 - index;
+        updateRatingText(rating);
+    });
+});
+
+function updateRatingText(rating) {
+    const texts = {
+        1: '{% trans "سيء جداً" %}',
+        2: '{% trans "سيء" %}',
+        3: '{% trans "مقبول" %}',
+        4: '{% trans "جيد" %}',
+        5: '{% trans "ممتاز" %}'
+    };
+
+    const ratingText = document.querySelector('.rating-text');
+    if (ratingText) {
+        ratingText.textContent = texts[rating] || '';
+    }
+}
+
+// Image preview
+function previewImage(input, index) {
+    const preview = document.getElementById(`preview${index}`);
+
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            preview.innerHTML = `
+                <img src="${e.target.result}" alt="Preview">
+                <button type="button" class="remove-image" onclick="removeImage(${index})">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            preview.style.display = 'block';
+            input.parentElement.querySelector('label').style.display = 'none';
+        };
+
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function removeImage(index) {
+    const input = document.getElementById(`image${index}`);
+    const preview = document.getElementById(`preview${index}`);
+    const label = input.parentElement.querySelector('label');
+
+    input.value = '';
+    preview.innerHTML = '';
+    preview.style.display = 'none';
+    label.style.display = 'flex';
+}
+
+// Submit review
+async function submitReview() {
+    const form = document.getElementById('reviewForm');
+    const formData = new FormData(form);
+
+    // Validate
+    const rating = formData.get('rating');
+    const comment = formData.get('comment');
+
+    if (!rating) {
+        alert('{% trans "يرجى اختيار تقييم" %}');
+        return;
+    }
+
+    if (!comment || comment.length < 20) {
+        alert('{% trans "يجب أن يكون التقييم 20 حرف على الأقل" %}');
+        return;
+    }
+
+    // Show loading
+    const submitBtn = event.target;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{% trans "جاري الإرسال..." %}';
+
+    try {
+        const response = await fetch('{% url "products:submit_review" product.id %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Close modal
+            bootstrap.Modal.getInstance(document.getElementById('reviewFormModal')).hide();
+
+            // Show success message
+            showNotification('{% trans "شكراً لك! سيتم نشر تقييمك بعد المراجعة" %}', 'success');
+
+            // Reset form
+            form.reset();
+            removeImage(1);
+            removeImage(2);
+            removeImage(3);
+        } else {
+            showNotification(data.message || '{% trans "حدث خطأ" %}', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('{% trans "حدث خطأ في الاتصال" %}', 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>{% trans "إرسال التقييم" %}';
+    }
+}
+
+// Filter reviews
+function filterReviews(rating) {
+    currentFilter = rating;
+    const reviews = document.querySelectorAll('.review-item');
+
+    reviews.forEach(review => {
+        if (rating === 'all' || review.dataset.rating === rating) {
+            review.style.display = '';
+        } else {
+            review.style.display = 'none';
+        }
+    });
+
+    // Update active pill
+    document.querySelectorAll('.filter-pill').forEach(pill => {
+        pill.classList.remove('active');
+    });
+    event.target.classList.add('active');
+}
+
+// Sort reviews
+function sortReviews(sortBy) {
+    currentSort = sortBy;
+
+    // Here you would typically make an AJAX call to fetch sorted reviews
+    // For now, we'll just reload with sort parameter
+    const url = new URL(window.location);
+    url.searchParams.set('sort', sortBy);
+    window.location = url;
+}
+
+// Vote review
+async function voteReview(reviewId, voteType) {
+    try {
+        const response = await fetch(`/products/api/review/${reviewId}/vote/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({ type: voteType })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Update counts
+            const review = document.querySelector(`[data-review-id="${reviewId}"]`);
+            review.querySelector('.helpful-count').textContent = data.helpful_count;
+            review.querySelector('.not-helpful-count').textContent = data.not_helpful_count;
+
+            // Mark as voted
+            const btn = event.target.closest('.btn-helpful');
+            btn.classList.add('voted');
+        } else if (data.already_voted) {
+            showNotification('{% trans "لقد قمت بالتصويت مسبقاً" %}', 'info');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('{% trans "حدث خطأ" %}', 'error');
+    }
+}
+
+// Report review
+function reportReview(reviewId) {
+    document.getElementById('reportReviewId').value = reviewId;
+    const modal = new bootstrap.Modal(document.getElementById('reportReviewModal'));
+    modal.show();
+}
+
+// Submit report
+async function submitReport() {
+    const form = document.getElementById('reportForm');
+    const formData = new FormData(form);
+    const reviewId = formData.get('review_id');
+
+    try {
+        const response = await fetch(`/products/api/review/${reviewId}/report/`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCsrfToken()
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('reportReviewModal')).hide();
+            showNotification(data.message, 'success');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('{% trans "حدث خطأ" %}', 'error');
+    }
+}
+
+// Load more reviews
+async function loadMoreReviews(page) {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{% trans "جاري التحميل..." %}';
+
+    try {
+        const response = await fetch(`{{ product.get_absolute_url }}reviews/?page=${page}`);
+        const html = await response.text();
+
+        // Parse HTML and append reviews
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const newReviews = doc.querySelectorAll('.review-item');
+
+        const reviewsList = document.getElementById('reviewsList');
+        newReviews.forEach(review => {
+            reviewsList.appendChild(review.cloneNode(true));
+        });
+
+        // Update or remove load more button
+        const loadMoreSection = doc.querySelector('.load-more-section');
+        if (loadMoreSection) {
+            document.querySelector('.load-more-section').innerHTML = loadMoreSection.innerHTML;
+        } else {
+            document.querySelector('.load-more-section').remove();
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('{% trans "حدث خطأ في تحميل المزيد" %}', 'error');
+    }
+}
+
+// Utility functions
+function getCsrfToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+function showNotification(message, type) {
+    // You can implement your notification system here
+    console.log(`${type}: ${message}`);
+}
+</script>
