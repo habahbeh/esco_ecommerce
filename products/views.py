@@ -836,3 +836,511 @@ def special_offers_view(request):
     }
 
     return render(request, 'products/special_offers.html', context)
+
+
+class CategoryDetailView(DetailView):
+    """
+    عرض تفاصيل الفئة مع المنتجات
+    """
+    model = Category
+    template_name = 'products/category_detail.html'
+    context_object_name = 'category'
+    slug_field = 'slug'
+
+    def get_queryset(self):
+        return Category.objects.filter(is_active=True).select_related('parent')
+
+    def get(self, request, *args, **kwargs):
+        response = super().get(request, *args, **kwargs)
+        # Increment view count
+        self.object.increment_views()
+        return response
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        category = self.object
+
+        # Get subcategories
+        context['subcategories'] = category.children.filter(is_active=True).annotate(
+            products_count=Count('products', filter=Q(
+                products__is_active=True,
+                products__status='published'
+            ))
+        )
+
+        # Get products in this category
+        products = Product.objects.filter(
+            category=category,
+            is_active=True,
+            status='published'
+        ).select_related('category', 'brand').prefetch_related('images')
+
+        # Apply sorting
+        sort_by = self.request.GET.get('sort', 'newest')
+        if sort_by == 'newest':
+            products = products.order_by('-created_at')
+        elif sort_by == 'price_low':
+            products = products.order_by('base_price')
+        elif sort_by == 'price_high':
+            products = products.order_by('-base_price')
+        elif sort_by == 'best_selling':
+            products = products.order_by('-sales_count')
+        elif sort_by == 'top_rated':
+            products = products.annotate(
+                avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True))
+            ).order_by('-avg_rating')
+
+        # Pagination
+        paginator = Paginator(products, 12)
+        page = self.request.GET.get('page')
+        try:
+            products_page = paginator.page(page)
+        except PageNotAnInteger:
+            products_page = paginator.page(1)
+        except EmptyPage:
+            products_page = paginator.page(paginator.num_pages)
+
+        context['products'] = products_page
+        context['page_obj'] = products_page
+        context['is_paginated'] = products_page.has_other_pages()
+
+        # Get statistics
+        context['products_count'] = category.products.filter(
+            is_active=True, status='published'
+        ).count()
+        context['subcategories_count'] = context['subcategories'].count()
+
+        # Get top brands in this category
+        context['top_brands'] = Brand.objects.filter(
+            products__category=category,
+            products__is_active=True,
+            products__status='published',
+            is_active=True
+        ).annotate(
+            product_count=Count('products', filter=Q(
+                products__category=category,
+                products__is_active=True,
+                products__status='published'
+            ))
+        ).order_by('-product_count')[:10]
+
+        context['brands_count'] = context['top_brands'].count()
+
+        return context
+
+
+def advanced_search_view(request):
+    """
+    صفحة البحث المتقدم
+    """
+    template_name = 'products/advanced_search.html'
+
+    # Get categories with product counts
+    categories = Category.objects.filter(
+        is_active=True
+    ).annotate(
+        products_count=Count('products', filter=Q(
+            products__is_active=True,
+            products__status='published'
+        ))
+    ).filter(products_count__gt=0).order_by('level', 'name')
+
+    # Get brands with product counts
+    brands = Brand.objects.filter(
+        is_active=True
+    ).annotate(
+        product_count=Count('products', filter=Q(
+            products__is_active=True,
+            products__status='published'
+        ))
+    ).filter(product_count__gt=0).order_by('name')
+
+    # Get recent searches from session
+    recent_searches = request.session.get('recent_searches', [])[:5]
+
+    # Get saved searches for logged in users
+    saved_searches = []
+    if request.user.is_authenticated:
+        # This would require a SavedSearch model
+        pass
+
+    # Process search if query exists
+    products = None
+    if request.GET:
+        products_qs = Product.objects.filter(
+            is_active=True,
+            status='published'
+        ).select_related('category', 'brand').prefetch_related('images')
+
+        # Apply filters
+        q = request.GET.get('q', '').strip()
+        if q:
+            products_qs = products_qs.filter(
+                Q(name__icontains=q) |
+                Q(name_en__icontains=q) |
+                Q(description__icontains=q) |
+                Q(sku__icontains=q) |
+                Q(tags__name__icontains=q)
+            ).distinct()
+
+            # Save to recent searches
+            if q not in recent_searches:
+                recent_searches.insert(0, q)
+                recent_searches = recent_searches[:10]
+                request.session['recent_searches'] = recent_searches
+
+        # Category filter
+        category_ids = request.GET.getlist('category')
+        if category_ids:
+            products_qs = products_qs.filter(category__id__in=category_ids)
+
+        # Brand filter
+        brand_ids = request.GET.getlist('brand')
+        if brand_ids:
+            products_qs = products_qs.filter(brand__id__in=brand_ids)
+
+        # Price range
+        min_price = request.GET.get('min_price')
+        max_price = request.GET.get('max_price')
+        if min_price:
+            products_qs = products_qs.filter(base_price__gte=min_price)
+        if max_price:
+            products_qs = products_qs.filter(base_price__lte=max_price)
+
+        # Additional filters
+        if request.GET.get('on_sale'):
+            now = timezone.now()
+            products_qs = products_qs.filter(
+                Q(discount_percentage__gt=0) | Q(discount_amount__gt=0)
+            ).filter(
+                Q(discount_start__isnull=True) | Q(discount_start__lte=now)
+            ).filter(
+                Q(discount_end__isnull=True) | Q(discount_end__gte=now)
+            )
+
+        if request.GET.get('in_stock'):
+            products_qs = products_qs.filter(
+                Q(track_inventory=False, stock_status='in_stock') |
+                Q(track_inventory=True, stock_quantity__gt=0)
+            )
+
+        if request.GET.get('is_new'):
+            products_qs = products_qs.filter(is_new=True)
+
+        if request.GET.get('is_featured'):
+            products_qs = products_qs.filter(is_featured=True)
+
+        # Rating filter
+        min_rating = request.GET.get('min_rating')
+        if min_rating:
+            products_qs = products_qs.annotate(
+                avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True))
+            ).filter(avg_rating__gte=min_rating)
+
+        # Sorting
+        sort_by = request.GET.get('sort', 'relevance')
+        if sort_by == 'newest':
+            products_qs = products_qs.order_by('-created_at')
+        elif sort_by == 'price_low':
+            products_qs = products_qs.order_by('base_price')
+        elif sort_by == 'price_high':
+            products_qs = products_qs.order_by('-base_price')
+        elif sort_by == 'best_selling':
+            products_qs = products_qs.order_by('-sales_count')
+        elif sort_by == 'top_rated':
+            products_qs = products_qs.annotate(
+                avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True))
+            ).order_by('-avg_rating')
+
+        # Pagination
+        paginator = Paginator(products_qs, 12)
+        page = request.GET.get('page')
+        try:
+            products = paginator.page(page)
+        except PageNotAnInteger:
+            products = paginator.page(1)
+        except EmptyPage:
+            products = paginator.page(paginator.num_pages)
+
+    context = {
+        'categories': categories,
+        'brands': brands,
+        'recent_searches': recent_searches,
+        'saved_searches': saved_searches,
+        'products': products,
+        'page_obj': products,
+        'paginator': paginator if products else None,
+        'is_paginated': products.has_other_pages() if products else False,
+    }
+
+    return render(request, template_name, context)
+
+
+@require_http_methods(["POST"])
+def increment_category_views(request, category_id):
+    """
+    API endpoint لزيادة عدد مشاهدات الفئة
+    """
+    try:
+        category = Category.objects.get(id=category_id)
+        category.increment_views()
+        return JsonResponse({'success': True})
+    except Category.DoesNotExist:
+        return JsonResponse({'success': False}, status=404)
+
+
+@login_required
+@require_http_methods(["POST"])
+def toggle_wishlist(request, product_id):
+    """
+    تبديل حالة المنتج في قائمة الأمنيات
+    """
+    try:
+        product = Product.objects.get(id=product_id, is_active=True)
+        wishlist, created = Wishlist.objects.get_or_create(
+            user=request.user,
+            product=product
+        )
+
+        if not created:
+            wishlist.delete()
+            in_wishlist = False
+            message = _('تمت إزالة المنتج من قائمة الأمنيات')
+        else:
+            in_wishlist = True
+            message = _('تمت إضافة المنتج إلى قائمة الأمنيات')
+
+        return JsonResponse({
+            'success': True,
+            'in_wishlist': in_wishlist,
+            'message': str(message),
+            'wishlist_count': request.user.wishlists.count()
+        })
+
+    except Product.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': str(_('المنتج غير موجود'))
+        }, status=404)
+
+
+@require_http_methods(["GET"])
+def export_products(request):
+    """
+    تصدير المنتجات إلى CSV
+    """
+    # Check permissions
+    if not request.user.is_staff:
+        return HttpResponseForbidden()
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="products_export.csv"'
+    response.write('\ufeff'.encode('utf8'))  # BOM for Excel
+
+    writer = csv.writer(response)
+
+    # Header
+    writer.writerow([
+        'ID', 'اسم المنتج', 'Product Name', 'SKU', 'الفئة', 'العلامة التجارية',
+        'السعر الأساسي', 'نسبة الخصم', 'السعر الحالي', 'المخزون', 'الحالة',
+        'مميز', 'جديد', 'الأكثر مبيعاً', 'عدد المبيعات', 'عدد المشاهدات',
+        'تاريخ الإنشاء'
+    ])
+
+    # Data
+    products = Product.objects.all().select_related('category', 'brand')
+
+    for product in products:
+        writer.writerow([
+            product.id,
+            product.name,
+            product.name_en,
+            product.sku,
+            product.category.name if product.category else '',
+            product.brand.name if product.brand else '',
+            product.base_price,
+            product.discount_percentage,
+            product.current_price,
+            product.stock_quantity,
+            product.get_status_display(),
+            'نعم' if product.is_featured else 'لا',
+            'نعم' if product.is_new else 'لا',
+            'نعم' if product.is_best_seller else 'لا',
+            product.sales_count,
+            product.views_count,
+            product.created_at.strftime('%Y-%m-%d %H:%M')
+        ])
+
+    return response
+
+
+@require_http_methods(["GET"])
+def get_variant_details(request, variant_id):
+    """
+    الحصول على تفاصيل متغير المنتج
+    """
+    try:
+        variant = ProductVariant.objects.get(id=variant_id, is_active=True)
+
+        data = {
+            'id': variant.id,
+            'name': variant.name,
+            'sku': variant.sku,
+            'price': str(variant.current_price),
+            'stock_quantity': variant.stock_quantity,
+            'available_quantity': variant.available_quantity,
+            'in_stock': variant.is_in_stock,
+            'attributes': variant.display_attributes,
+            'images': [
+                {
+                    'url': img.image.url,
+                    'alt': img.alt_text
+                } for img in variant.get_images()
+            ]
+        }
+
+        return JsonResponse(data)
+
+    except ProductVariant.DoesNotExist:
+        return JsonResponse({'error': 'Variant not found'}, status=404)
+
+
+@require_http_methods(["POST"])
+def report_review(request, review_id):
+    """
+    الإبلاغ عن مراجعة مسيئة
+    """
+    try:
+        review = ProductReview.objects.get(id=review_id, is_approved=True)
+
+        # Create report (requires ReviewReport model)
+        reason = request.POST.get('reason', 'inappropriate')
+        description = request.POST.get('description', '')
+
+        # For now, just mark the review for moderation
+        review.is_approved = False
+        review.save()
+
+        messages.warning(request, _('تم الإبلاغ عن المراجعة وسيتم مراجعتها'))
+
+        return JsonResponse({
+            'success': True,
+            'message': str(_('شكراً لك. سيتم مراجعة البلاغ'))
+        })
+
+    except ProductReview.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': str(_('المراجعة غير موجودة'))
+        }, status=404)
+
+
+@require_http_methods(["POST"])
+def vote_review_helpful(request, review_id):
+    """
+    التصويت على مراجعة كمفيدة أو غير مفيدة
+    """
+    try:
+        review = ProductReview.objects.get(id=review_id, is_approved=True)
+        vote_type = request.POST.get('type', 'helpful')
+
+        # Track user votes (requires ReviewVote model or session tracking)
+        session_key = f'review_vote_{review_id}'
+
+        if session_key in request.session:
+            return JsonResponse({
+                'success': False,
+                'message': str(_('لقد قمت بالتصويت مسبقاً'))
+            })
+
+        if vote_type == 'helpful':
+            review.helpful_count = F('helpful_count') + 1
+        else:
+            review.not_helpful_count = F('not_helpful_count') + 1
+
+        review.save()
+        review.refresh_from_db()
+
+        # Mark as voted
+        request.session[session_key] = True
+
+        return JsonResponse({
+            'success': True,
+            'helpful_count': review.helpful_count,
+            'not_helpful_count': review.not_helpful_count,
+            'percentage': review.helpful_percentage
+        })
+
+    except ProductReview.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': str(_('المراجعة غير موجودة'))
+        }, status=404)
+
+
+def get_products_by_tag(request, tag_slug):
+    """
+    عرض المنتجات حسب الوسم
+    """
+    try:
+        tag = Tag.objects.get(slug=tag_slug)
+    except Tag.DoesNotExist:
+        messages.error(request, _('الوسم غير موجود'))
+        return redirect('products:product_list')
+
+    products = Product.objects.filter(
+        tags=tag,
+        is_active=True,
+        status='published'
+    ).select_related('category', 'brand').prefetch_related('images')
+
+    # Apply filters and sorting similar to ProductListView
+    # ... (same filtering logic)
+
+    paginator = Paginator(products, 12)
+    page = request.GET.get('page')
+
+    try:
+        products_page = paginator.page(page)
+    except PageNotAnInteger:
+        products_page = paginator.page(1)
+    except EmptyPage:
+        products_page = paginator.page(paginator.num_pages)
+
+    context = {
+        'tag': tag,
+        'products': products_page,
+        'page_obj': products_page,
+        'paginator': paginator,
+    }
+
+    return render(request, 'products/tag_products.html', context)
+
+
+def product_360_view(request, product_id):
+    """
+    عرض 360 درجة للمنتج
+    """
+    try:
+        product = Product.objects.get(id=product_id, is_active=True)
+        images_360 = product.images.filter(is_360=True).order_by('order')
+
+        if not images_360.exists():
+            return JsonResponse({
+                'error': 'No 360 images available'
+            }, status=404)
+
+        data = {
+            'product_name': product.name,
+            'images': [
+                {
+                    'url': img.image.url,
+                    'order': img.order
+                } for img in images_360
+            ]
+        }
+
+        return JsonResponse(data)
+
+    except Product.DoesNotExist:
+        return JsonResponse({'error': 'Product not found'}, status=404)
