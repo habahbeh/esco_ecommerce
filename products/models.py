@@ -18,7 +18,7 @@ from django.utils import timezone
 from django.urls import reverse
 from django.utils.text import slugify
 from decimal import Decimal
-
+import csv
 
 User = get_user_model()
 
@@ -1835,3 +1835,15 @@ class ProductDiscount(models.Model):
         if not self.max_uses:
             return 0
         return int((self.used_count / self.max_uses) * 100)
+
+
+def get_descendants(self):
+    """Get all descendant categories including all levels"""
+    return self.get_all_children(include_self=False)
+
+# Add to ProductImage model in models.py:
+is_360 = models.BooleanField(
+    _("صورة 360 درجة"),
+    default=False,
+    help_text=_("هل هذه صورة للعرض 360 درجة؟")
+)
