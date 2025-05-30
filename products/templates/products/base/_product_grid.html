@@ -1,0 +1,90 @@
+{% load i18n %}
+
+<div class="products-grid">
+    <div class="row g-4" id="products-container">
+        {% for product in products %}
+            <div class="col-6 col-md-4 col-lg-3 product-grid-item" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
+                {% include 'products/base/_product_card.html' with product=product %}
+            </div>
+        {% empty %}
+            <div class="col-12">
+                {% include 'products/includes/_no_products_found.html' %}
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Load More Button (for AJAX loading) -->
+{% if products and is_paginated and page_obj.has_next %}
+    <div class="text-center mt-5">
+        <button class="btn btn-outline-primary load-more-btn"
+                data-page="{{ page_obj.next_page_number }}"
+                data-url="{% url 'products:product_list' %}">
+            <i class="fas fa-spinner fa-spin me-2 d-none"></i>
+            <span class="btn-text">{% trans "تحميل المزيد" %}</span>
+        </button>
+    </div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const loadMoreBtn = document.querySelector('.load-more-btn');
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', function() {
+            const btn = this;
+            const spinner = btn.querySelector('.fa-spinner');
+            const btnText = btn.querySelector('.btn-text');
+            const page = btn.dataset.page;
+            const url = btn.dataset.url;
+
+            // Show loading state
+            spinner.classList.remove('d-none');
+            btnText.textContent = '{% trans "جاري التحميل..." %}';
+            btn.disabled = true;
+
+            // Fetch products
+            fetch(`${url}?page=${page}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newProducts = doc.querySelectorAll('.product-grid-item');
+                const container = document.getElementById('products-container');
+
+                // Append new products
+                newProducts.forEach(product => {
+                    container.appendChild(product);
+                });
+
+                // Update or remove button
+                const nextPage = parseInt(page) + 1;
+                const hasNext = doc.querySelector('.load-more-btn');
+
+                if (hasNext) {
+                    btn.dataset.page = nextPage;
+                    spinner.classList.add('d-none');
+                    btnText.textContent = '{% trans "تحميل المزيد" %}';
+                    btn.disabled = false;
+                } else {
+                    btn.remove();
+                }
+
+                // Reinitialize AOS for new products
+                if (typeof AOS !== 'undefined') {
+                    AOS.refresh();
+                }
+            })
+            .catch(error => {
+                console.error('Error loading products:', error);
+                spinner.classList.add('d-none');
+                btnText.textContent = '{% trans "حدث خطأ، حاول مجدداً" %}';
+                btn.disabled = false;
+            });
+        });
+    }
+});
+</script>

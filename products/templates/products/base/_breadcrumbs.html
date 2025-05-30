@@ -1,0 +1,103 @@
+{% load i18n %}
+
+{% if breadcrumbs %}
+<nav aria-label="{% trans 'مسار التنقل' %}" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'core:home' %}">
+                <i class="fas fa-home"></i>
+                {% trans "الرئيسية" %}
+            </a>
+        </li>
+
+        {% for breadcrumb in breadcrumbs %}
+            {% if breadcrumb.url %}
+                <li class="breadcrumb-item">
+                    <a href="{{ breadcrumb.url }}">{{ breadcrumb.name }}</a>
+                </li>
+            {% else %}
+                <li class="breadcrumb-item active" aria-current="page">
+                    {{ breadcrumb.name }}
+                </li>
+            {% endif %}
+        {% endfor %}
+    </ol>
+</nav>
+
+<style>
+    .breadcrumb {
+        background-color: var(--bs-gray-100);
+        padding: 0.75rem 1rem;
+        border-radius: 0.375rem;
+        margin-bottom: 0;
+    }
+
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: "›";
+        color: var(--bs-gray-600);
+        font-weight: bold;
+        {% if LANGUAGE_CODE == 'ar' %}
+            float: right;
+            padding-left: 0.5rem;
+            padding-right: 0;
+        {% else %}
+            float: left;
+            padding-right: 0.5rem;
+            padding-left: 0;
+        {% endif %}
+    }
+
+    .breadcrumb-item a {
+        color: var(--bs-primary);
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .breadcrumb-item a:hover {
+        color: var(--bs-primary-dark);
+        text-decoration: underline;
+    }
+
+    .breadcrumb-item.active {
+        color: var(--bs-gray-700);
+        font-weight: 500;
+    }
+
+    @media (max-width: 575.98px) {
+        .breadcrumb {
+            font-size: 0.875rem;
+            padding: 0.5rem 0.75rem;
+        }
+
+        .breadcrumb-item:not(.active) span {
+            display: none;
+        }
+    }
+</style>
+
+<!-- Structured Data for SEO -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "{% trans 'الرئيسية' %}",
+            "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'core:home' %}"
+        }
+        {% for breadcrumb in breadcrumbs %}
+        ,{
+            "@type": "ListItem",
+            "position": {{ forloop.counter|add:1 }},
+            "name": "{{ breadcrumb.name }}"
+            {% if breadcrumb.url %}
+            ,"item": "{{ request.scheme }}://{{ request.get_host }}{{ breadcrumb.url }}"
+            {% endif %}
+        }
+        {% endfor %}
+    ]
+}
+</script>
+{% endif %}

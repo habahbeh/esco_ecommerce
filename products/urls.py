@@ -11,14 +11,18 @@ urlpatterns = [
     # Category URLs
     path('categories/', views.CategoryListView.as_view(), name='category_list'),
     path('category/<slug:category_slug>/', views.ProductListView.as_view(), name='category_products'),
+    path('category/<slug:slug>/details/', views.CategoryDetailView.as_view(), name='category_detail'),  # مفقود
 
     # Special pages
     path('special-offers/', views.special_offers_view, name='special_offers'),
     path('search/', views.ProductListView.as_view(), name='product_search'),
+    path('advanced-search/', views.advanced_search_view, name='advanced_search'),  # مفقود
+    path('tag/<slug:tag_slug>/', views.get_products_by_tag, name='tag_products'),  # مفقود
 
     # API endpoints
     path('api/search-suggestions/', views.search_suggestions, name='search_suggestions'),
     path('api/product/<int:product_id>/quick-view/', views.product_quick_view, name='product_quick_view'),
+    path('api/product/<int:product_id>/360/', views.product_360_view, name='product_360'),  # مفقود
 
     # Wishlist URLs
     path('wishlist/', views.wishlist_view, name='wishlist'),

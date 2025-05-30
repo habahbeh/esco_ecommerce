@@ -1,0 +1,163 @@
+{% load i18n %}
+
+<div class="sorting-bar bg-light rounded p-3 mb-4">
+    <div class="row align-items-center">
+        <!-- Results Count -->
+        <div class="col-md-4 mb-2 mb-md-0">
+            <p class="mb-0 text-muted">
+                {% blocktrans count counter=total_count %}
+                    عرض {{ counter }} منتج
+                {% plural %}
+                    عرض {{ counter }} منتج
+                {% endblocktrans %}
+                {% if search_query %}
+                    {% trans "لـ" %} "<strong>{{ search_query }}</strong>"
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- Sorting Options -->
+        <div class="col-md-4 mb-2 mb-md-0">
+            <form method="get" action="" class="sorting-form">
+                <!-- Preserve existing parameters -->
+                {% for key, value in request.GET.items %}
+                    {% if key != 'sort' and key != 'page' %}
+                        <input type="hidden" name="{{ key }}" value="{{ value }}">
+                    {% endif %}
+                {% endfor %}
+
+                <div class="input-group input-group-sm">
+                    <label class="input-group-text" for="sortSelect">
+                        <i class="fas fa-sort me-1"></i>{% trans "ترتيب" %}
+                    </label>
+                    <select class="form-select" id="sortSelect" name="sort" onchange="this.form.submit()">
+                        <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>
+                            {% trans "الأحدث" %}
+                        </option>
+                        <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>
+                            {% trans "الأقدم" %}
+                        </option>
+                        <option value="price_low" {% if sort_by == 'price_low' %}selected{% endif %}>
+                            {% trans "السعر: منخفض إلى مرتفع" %}
+                        </option>
+                        <option value="price_high" {% if sort_by == 'price_high' %}selected{% endif %}>
+                            {% trans "السعر: مرتفع إلى منخفض" %}
+                        </option>
+                        <option value="name_az" {% if sort_by == 'name_az' %}selected{% endif %}>
+                            {% trans "الاسم: أ-ي" %}
+                        </option>
+                        <option value="name_za" {% if sort_by == 'name_za' %}selected{% endif %}>
+                            {% trans "الاسم: ي-أ" %}
+                        </option>
+                        <option value="best_selling" {% if sort_by == 'best_selling' %}selected{% endif %}>
+                            {% trans "الأكثر مبيعاً" %}
+                        </option>
+                        <option value="most_viewed" {% if sort_by == 'most_viewed' %}selected{% endif %}>
+                            {% trans "الأكثر مشاهدة" %}
+                        </option>
+                        <option value="top_rated" {% if sort_by == 'top_rated' %}selected{% endif %}>
+                            {% trans "الأعلى تقييماً" %}
+                        </option>
+                    </select>
+                </div>
+            </form>
+        </div>
+
+        <!-- View Options -->
+        <div class="col-md-4 text-md-end">
+            <div class="btn-group btn-group-sm" role="group" aria-label="{% trans 'خيارات العرض' %}">
+                <button type="button" class="btn btn-outline-secondary view-type-btn active"
+                        data-view="grid" title="{% trans 'عرض شبكي' %}">
+                    <i class="fas fa-th"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary view-type-btn"
+                        data-view="list" title="{% trans 'عرض قائمة' %}">
+                    <i class="fas fa-list"></i>
+                </button>
+            </div>
+
+            <!-- Products per page -->
+            <div class="d-inline-block ms-3">
+                <form method="get" action="" class="per-page-form">
+                    <!-- Preserve existing parameters -->
+                    {% for key, value in request.GET.items %}
+                        {% if key != 'per_page' and key != 'page' %}
+                            <input type="hidden" name="{{ key }}" value="{{ value }}">
+                        {% endif %}
+                    {% endfor %}
+
+                    <select class="form-select form-select-sm" name="per_page" onchange="this.form.submit()">
+                        <option value="12" {% if request.GET.per_page == '12' or not request.GET.per_page %}selected{% endif %}>12</option>
+                        <option value="24" {% if request.GET.per_page == '24' %}selected{% endif %}>24</option>
+                        <option value="36" {% if request.GET.per_page == '36' %}selected{% endif %}>36</option>
+                        <option value="48" {% if request.GET.per_page == '48' %}selected{% endif %}>48</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // View type switching
+    const viewButtons = document.querySelectorAll('.view-type-btn');
+    const productsContainer = document.querySelector('.products-grid, .products-list');
+
+    // Get saved view type from localStorage
+    const savedView = localStorage.getItem('productsViewType') || 'grid';
+
+    // Apply saved view
+    if (savedView === 'list' && productsContainer) {
+        productsContainer.classList.remove('products-grid');
+        productsContainer.classList.add('products-list');
+        viewButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.view === savedView);
+        });
+    }
+
+    viewButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const viewType = this.dataset.view;
+
+            // Update active state
+            viewButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            // Save preference
+            localStorage.setItem('productsViewType', viewType);
+
+            // Switch view
+            if (productsContainer) {
+                if (viewType === 'grid') {
+                    productsContainer.classList.remove('products-list');
+                    productsContainer.classList.add('products-grid');
+
+                    // Change structure for grid view
+                    const items = productsContainer.querySelectorAll('.product-list-item');
+                    items.forEach(item => {
+                        const productId = item.dataset.productId;
+                        // Here you would need to fetch and replace with grid card
+                        // For now, we'll just reload the page
+                        if (items.length > 0) {
+                            window.location.reload();
+                        }
+                    });
+                } else {
+                    productsContainer.classList.remove('products-grid');
+                    productsContainer.classList.add('products-list');
+
+                    // Change structure for list view
+                    const items = productsContainer.querySelectorAll('.product-grid-item');
+                    items.forEach(item => {
+                        // Similar to above, reload for now
+                        if (items.length > 0) {
+                            window.location.reload();
+                        }
+                    });
+                }
+            }
+        });
+    });
+});
+</script>

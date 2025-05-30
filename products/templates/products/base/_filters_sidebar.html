@@ -1,0 +1,248 @@
+{% load i18n %}
+
+<div class="filters-sidebar">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">{% trans "تصفية النتائج" %}</h5>
+        <button type="button" class="btn btn-sm btn-link text-decoration-none clear-filters">
+            {% trans "مسح الكل" %}
+        </button>
+    </div>
+
+    <form method="get" action="" class="filters-form">
+        <!-- Keep search query if exists -->
+        {% if request.GET.q %}
+            <input type="hidden" name="q" value="{{ request.GET.q }}">
+        {% endif %}
+
+        <!-- Categories Filter -->
+        {% if categories %}
+            <div class="filter-section mb-4">
+                <h6 class="filter-title mb-3">
+                    <i class="fas fa-th-large me-2"></i>{% trans "الفئات" %}
+                </h6>
+                <div class="filter-content">
+                    {% for category in categories %}
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox"
+                                   name="category" value="{{ category.id }}"
+                                   id="cat_{{ category.id }}"
+                                   {% if category.id|stringformat:"s" in request.GET.getlist.category %}checked{% endif %}>
+                            <label class="form-check-label d-flex justify-content-between" for="cat_{{ category.id }}">
+                                <span>{{ category.name }}</span>
+                                <span class="text-muted small">({{ category.products_count }})</span>
+                            </label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Brands Filter -->
+        {% if brands %}
+            <div class="filter-section mb-4">
+                <h6 class="filter-title mb-3">
+                    <i class="fas fa-tag me-2"></i>{% trans "العلامات التجارية" %}
+                </h6>
+                <div class="filter-content">
+                    {% for brand in brands %}
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox"
+                                   name="brand" value="{{ brand.id }}"
+                                   id="brand_{{ brand.id }}"
+                                   {% if brand.id|stringformat:"s" in request.GET.getlist.brand %}checked{% endif %}>
+                            <label class="form-check-label d-flex justify-content-between" for="brand_{{ brand.id }}">
+                                <span>{{ brand.name }}</span>
+                                <span class="text-muted small">({{ brand.product_count }})</span>
+                            </label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Price Range Filter -->
+        <div class="filter-section mb-4">
+            <h6 class="filter-title mb-3">
+                <i class="fas fa-dollar-sign me-2"></i>{% trans "السعر" %}
+            </h6>
+            <div class="filter-content">
+                <div class="price-range-inputs">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <input type="number" class="form-control form-control-sm"
+                                   name="min_price" placeholder="{% trans 'من' %}"
+                                   value="{{ request.GET.min_price }}"
+                                   min="0" step="0.01">
+                        </div>
+                        <div class="col-6">
+                            <input type="number" class="form-control form-control-sm"
+                                   name="max_price" placeholder="{% trans 'إلى' %}"
+                                   value="{{ request.GET.max_price }}"
+                                   min="0" step="0.01">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick price ranges -->
+                <div class="quick-price-ranges mt-3">
+                    <button type="button" class="btn btn-sm btn-outline-secondary w-100 mb-2 price-range-btn"
+                            data-min="0" data-max="50">
+                        {% trans "أقل من 50 د.أ" %}
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary w-100 mb-2 price-range-btn"
+                            data-min="50" data-max="100">
+                        50 - 100 {% trans "د.أ" %}
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary w-100 mb-2 price-range-btn"
+                            data-min="100" data-max="200">
+                        100 - 200 {% trans "د.أ" %}
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary w-100 price-range-btn"
+                            data-min="200" data-max="">
+                        {% trans "أكثر من 200 د.أ" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Filter -->
+        <div class="filter-section mb-4">
+            <h6 class="filter-title mb-3">
+                <i class="fas fa-star me-2"></i>{% trans "المميزات" %}
+            </h6>
+            <div class="filter-content">
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox"
+                           name="is_new" value="1" id="is_new"
+                           {% if request.GET.is_new == "1" %}checked{% endif %}>
+                    <label class="form-check-label" for="is_new">
+                        {% trans "منتجات جديدة" %}
+                    </label>
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox"
+                           name="is_featured" value="1" id="is_featured"
+                           {% if request.GET.is_featured == "1" %}checked{% endif %}>
+                    <label class="form-check-label" for="is_featured">
+                        {% trans "منتجات مميزة" %}
+                    </label>
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox"
+                           name="on_sale" value="1" id="on_sale"
+                           {% if request.GET.on_sale == "1" %}checked{% endif %}>
+                    <label class="form-check-label" for="on_sale">
+                        {% trans "عروض وخصومات" %}
+                    </label>
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox"
+                           name="in_stock" value="1" id="in_stock"
+                           {% if request.GET.in_stock == "1" %}checked{% endif %}>
+                    <label class="form-check-label" for="in_stock">
+                        {% trans "متوفر في المخزن فقط" %}
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rating Filter -->
+        <div class="filter-section mb-4">
+            <h6 class="filter-title mb-3">
+                <i class="fas fa-star-half-alt me-2"></i>{% trans "التقييم" %}
+            </h6>
+            <div class="filter-content">
+                {% for i in "54321" %}
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio"
+                               name="min_rating" value="{{ i }}"
+                               id="rating_{{ i }}"
+                               {% if request.GET.min_rating == i %}checked{% endif %}>
+                        <label class="form-check-label" for="rating_{{ i }}">
+                            <div class="d-flex align-items-center">
+                                {% for star in "12345" %}
+                                    {% if star|add:0 <= i|add:0 %}
+                                        <i class="fas fa-star text-warning small"></i>
+                                    {% else %}
+                                        <i class="far fa-star text-warning small"></i>
+                                    {% endif %}
+                                {% endfor %}
+                                <span class="ms-2">{% trans "فما فوق" %}</span>
+                            </div>
+                        </label>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Apply Filters Button -->
+        <div class="d-grid">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-filter me-2"></i>{% trans "تطبيق الفلاتر" %}
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+    .filter-section {
+        border-bottom: 1px solid var(--bs-gray-200);
+        padding-bottom: 1rem;
+    }
+
+    .filter-section:last-child {
+        border-bottom: none;
+    }
+
+    .filter-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--bs-dark);
+    }
+
+    .form-check-label {
+        font-size: 0.9rem;
+        cursor: pointer;
+        width: 100%;
+    }
+
+    .price-range-btn {
+        font-size: 0.875rem;
+    }
+
+    @media (max-width: 991.98px) {
+        .filters-sidebar {
+            background: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Clear filters
+    document.querySelector('.clear-filters')?.addEventListener('click', function() {
+        window.location.href = window.location.pathname;
+    });
+
+    // Quick price range buttons
+    document.querySelectorAll('.price-range-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelector('input[name="min_price"]').value = this.dataset.min;
+            document.querySelector('input[name="max_price"]').value = this.dataset.max;
+        });
+    });
+
+    // Auto-submit on filter change (optional)
+    const autoSubmit = false; // Set to true for auto-submit
+    if (autoSubmit) {
+        document.querySelectorAll('.filters-form input').forEach(input => {
+            input.addEventListener('change', function() {
+                this.form.submit();
+            });
+        });
+    }
+});
+</script>
