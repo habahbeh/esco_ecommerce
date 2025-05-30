@@ -1,0 +1,129 @@
+{% load i18n %}
+
+{% if is_paginated %}
+<nav aria-label="{% trans 'التنقل بين الصفحات' %}" class="mt-5">
+    <ul class="pagination justify-content-center">
+        <!-- First Page -->
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page=1"
+                   aria-label="{% trans 'الصفحة الأولى' %}">
+                    <i class="fas fa-angle-double-right"></i>
+                </a>
+            </li>
+        {% endif %}
+
+        <!-- Previous Page -->
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}"
+                   aria-label="{% trans 'الصفحة السابقة' %}">
+                    <i class="fas fa-angle-right"></i>
+                </a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">
+                    <i class="fas fa-angle-right"></i>
+                </span>
+            </li>
+        {% endif %}
+
+        <!-- Page Numbers -->
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <li class="page-item active" aria-current="page">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ num }}">{{ num }}</a>
+                </li>
+            {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ num }}">{{ num }}</a>
+                </li>
+            {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            {% endif %}
+        {% endfor %}
+
+        <!-- Next Page -->
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}"
+                   aria-label="{% trans 'الصفحة التالية' %}">
+                    <i class="fas fa-angle-left"></i>
+                </a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">
+                    <i class="fas fa-angle-left"></i>
+                </span>
+            </li>
+        {% endif %}
+
+        <!-- Last Page -->
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.paginator.num_pages }}"
+                   aria-label="{% trans 'الصفحة الأخيرة' %}">
+                    <i class="fas fa-angle-double-left"></i>
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+
+    <!-- Page Info -->
+    <p class="text-center text-muted mt-3">
+        {% blocktrans with current=page_obj.number total=page_obj.paginator.num_pages %}
+            الصفحة {{ current }} من {{ total }}
+        {% endblocktrans %}
+    </p>
+</nav>
+{% endif %}
+
+<style>
+    .pagination {
+        flex-wrap: wrap;
+    }
+
+    .page-link {
+        color: var(--bs-primary);
+        border: 1px solid var(--bs-gray-300);
+        margin: 0 2px;
+        border-radius: 0.375rem;
+        padding: 0.5rem 0.75rem;
+        transition: all 0.3s ease;
+    }
+
+    .page-link:hover {
+        background-color: var(--bs-primary);
+        color: white;
+        border-color: var(--bs-primary);
+        transform: translateY(-2px);
+    }
+
+    .page-item.active .page-link {
+        background-color: var(--bs-primary);
+        border-color: var(--bs-primary);
+        color: white;
+        box-shadow: 0 2px 5px rgba(var(--bs-primary-rgb), 0.3);
+    }
+
+    .page-item.disabled .page-link {
+        background-color: var(--bs-gray-100);
+        border-color: var(--bs-gray-300);
+        color: var(--bs-gray-500);
+    }
+
+    @media (max-width: 575.98px) {
+        .page-link {
+            padding: 0.375rem 0.5rem;
+            font-size: 0.875rem;
+        }
+    }
+</style>

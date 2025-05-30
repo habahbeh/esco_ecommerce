@@ -1,0 +1,156 @@
+{% load i18n static %}
+{% load humanize %}
+
+<div class="product-card h-100" data-product-id="{{ product.id }}">
+    <div class="card h-100 border-0 shadow-sm hover-lift">
+        <!-- Product Image -->
+        <div class="product-image-container position-relative overflow-hidden">
+            <!-- Badges -->
+            <div class="product-badges position-absolute top-0 start-0 p-2 d-flex flex-column gap-1 z-1">
+                {% if product.is_new %}
+                    <span class="badge bg-info">{% trans "جديد" %}</span>
+                {% endif %}
+                {% if product.has_discount %}
+                    <span class="badge bg-danger">{{ product.savings_percentage }}% {% trans "خصم" %}</span>
+                {% endif %}
+                {% if product.is_featured %}
+                    <span class="badge bg-warning text-dark">{% trans "مميز" %}</span>
+                {% endif %}
+                {% if not product.in_stock %}
+                    <span class="badge bg-secondary">{% trans "غير متوفر" %}</span>
+                {% endif %}
+            </div>
+
+            <!-- Product Actions -->
+            <div class="product-actions position-absolute top-0 end-0 p-2 d-flex flex-column gap-2">
+                <button class="btn btn-sm btn-light rounded-circle wishlist-btn"
+                        data-product-id="{{ product.id }}"
+                        title="{% trans 'إضافة إلى قائمة الأمنيات' %}">
+                    <i class="{% if product.id in wishlist_items %}fas{% else %}far{% endif %} fa-heart"></i>
+                </button>
+                <button class="btn btn-sm btn-light rounded-circle compare-btn"
+                        data-product-id="{{ product.id }}"
+                        title="{% trans 'إضافة للمقارنة' %}">
+                    <i class="fas fa-exchange-alt"></i>
+                </button>
+                <button class="btn btn-sm btn-light rounded-circle quick-view-btn"
+                        data-product-id="{{ product.id }}"
+                        title="{% trans 'عرض سريع' %}">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+
+            <!-- Product Image Link -->
+            <a href="{{ product.get_absolute_url }}" class="d-block">
+                {% if product.default_image %}
+                    <img src="{{ product.default_image.image.url }}"
+                         alt="{{ product.default_image.alt_text|default:product.name }}"
+                         class="card-img-top"
+                         loading="lazy">
+                {% else %}
+                    <img src="{% static 'images/no-image.png' %}"
+                         alt="{{ product.name }}"
+                         class="card-img-top">
+                {% endif %}
+            </a>
+
+            <!-- Quick Add to Cart (shows on hover) -->
+            {% if product.in_stock %}
+                <div class="quick-add-cart position-absolute bottom-0 start-0 end-0 p-2 bg-dark bg-opacity-75">
+                    <form class="add-to-cart-form" action="{% url 'cart:add_to_cart' %}" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                        <input type="hidden" name="quantity" value="1">
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                            <i class="fas fa-shopping-cart me-2"></i>{% trans "أضف للسلة" %}
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Product Info -->
+        <div class="card-body d-flex flex-column">
+            <!-- Category -->
+            <div class="product-category mb-1">
+                <a href="{{ product.category.get_absolute_url }}" class="text-muted small text-decoration-none">
+                    {{ product.category.name }}
+                </a>
+            </div>
+
+            <!-- Product Title -->
+            <h5 class="product-title card-title mb-2">
+                <a href="{{ product.get_absolute_url }}" class="text-decoration-none text-dark stretched-link">
+                    {{ product.name|truncatechars:50 }}
+                </a>
+            </h5>
+
+            <!-- Rating -->
+            {% if product.rating %}
+                <div class="product-rating mb-2">
+                    {% include 'products/components/_rating_stars.html' with rating=product.rating small=True %}
+                    <span class="text-muted small">({{ product.review_count }})</span>
+                </div>
+            {% endif %}
+
+            <!-- Price -->
+            <div class="product-price mt-auto">
+                {% include 'products/components/_price_display.html' with product=product %}
+            </div>
+
+            <!-- Stock Status -->
+            {% if not product.in_stock %}
+                <div class="mt-2">
+                    <span class="text-danger small">
+                        <i class="fas fa-times-circle"></i> {% trans "غير متوفر حالياً" %}
+                    </span>
+                </div>
+            {% elif product.low_stock %}
+                <div class="mt-2">
+                    <span class="text-warning small">
+                        <i class="fas fa-exclamation-circle"></i> {% trans "الكمية محدودة" %}
+                    </span>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .product-card .quick-add-cart {
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+    }
+
+    .product-card:hover .quick-add-cart {
+        transform: translateY(0);
+    }
+
+    .product-card .product-actions {
+        opacity: 0;
+        transform: translateX(20px);
+        transition: all 0.3s ease;
+    }
+
+    .product-card:hover .product-actions {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .product-card .card {
+        transition: all 0.3s ease;
+    }
+
+    .product-card .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+    }
+
+    .product-card .product-image-container img {
+        transition: transform 0.5s ease;
+    }
+
+    .product-card:hover .product-image-container img {
+        transform: scale(1.05);
+    }
+</style>
