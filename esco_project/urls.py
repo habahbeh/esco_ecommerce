@@ -1,183 +1,243 @@
-# File: products/urls.py
+# File: esco_project/urls.py
 """
-URLs configuration for products app - مُصحح وآمن
-يعمل مع الهيكل القديم والجديد للعروض
+URL configuration for esco_project.
+الإعداد الرئيسي لروابط مشروع ESCO E-commerce
 """
 
+from django.contrib import admin
 from django.urls import path, include
-from django.views.decorators.cache import cache_page
+from django.conf import settings
+from django.conf.urls.static import static
+from django.views.generic import TemplateView, RedirectView
+from django.contrib.sitemaps.views import sitemap
+from django.views.i18n import set_language, JavaScriptCatalog
+from django.conf.urls.i18n import i18n_patterns
 
-# استيراد آمن للعروض - يعمل مع النظام القديم والجديد
-try:
-    # محاولة استيراد من الهيكل الجديد
-    from .views import (
-        ProductListView,
-        ProductDetailView,
-        CategoryListView,
-        CategoryDetailView,
-        SpecialOffersView,
-        SearchView,
-        AdvancedSearchView,
+# Sitemaps (يمكن تفعيلها لاحقاً)
+# from core.sitemaps import StaticViewSitemap
+# from products.sitemaps import ProductSitemap, CategorySitemap
 
-        # API views
-        search_suggestions,
-        product_quick_view,
+# sitemaps = {
+#     'static': StaticViewSitemap,
+#     'products': ProductSitemap,
+#     'categories': CategorySitemap,
+# }
 
-        # Wishlist views  
-        wishlist_view,
-        add_to_wishlist,
-        remove_from_wishlist,
-        toggle_wishlist,
+# URLs التي لا تحتاج لغة (Language-independent URLs)
+urlpatterns = [
+    # Admin panel
+    path('admin/', admin.site.urls),
 
-        # Comparison views
-        comparison_view,
-        add_to_comparison,
+    # Language and internationalization
+    path('i18n/', include('django.conf.urls.i18n')),
+    path('set-language/', set_language, name='set_language'),
 
-        # Review views
-        submit_review,
-        vote_review_helpful,
-        report_review,
-    )
+    # JavaScript translations
+    path('jsi18n/', JavaScriptCatalog.as_view(), name='javascript-catalog'),
 
-    NEW_STRUCTURE = True
-except ImportError:
-    # إذا فشل، استخدم الهيكل القديم
-    try:
-        from . import views
+    # API endpoints (لا تحتاج ترجمة)
+    path('api/', include([
+        # يمكنك تفعيل هذه عند إنشاء ملفات API المناسبة
+        # path('products/', include('products.api_urls', namespace='products_api')),
+        # path('cart/', include('cart.api_urls', namespace='cart_api')),
+        # path('orders/', include('orders.api_urls', namespace='orders_api')),
+        # path('accounts/', include('accounts.api_urls', namespace='accounts_api')),
+    ])),
 
-        NEW_STRUCTURE = False
-    except ImportError:
-        # إذا فشل كل شيء، أنشئ عروض افتراضية
-        from django.http import HttpResponse
-        from django.views.generic import TemplateView
+    # Health check and system endpoints
+    path('health/', TemplateView.as_view(template_name='health.html'), name='health_check'),
+    path('robots.txt', TemplateView.as_view(
+        template_name='robots.txt',
+        content_type='text/plain'
+    ), name='robots'),
 
+    # Sitemap
+    # path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='sitemap'),
 
-        def default_view(request, *args, **kwargs):
-            return HttpResponse("Products app is under maintenance")
-
-
-        # عروض افتراضية
-        ProductListView = TemplateView
-        ProductDetailView = TemplateView
-        CategoryListView = TemplateView
-        CategoryDetailView = TemplateView
-        SpecialOffersView = TemplateView
-        SearchView = TemplateView
-        AdvancedSearchView = TemplateView
-
-        # API views افتراضية
-        search_suggestions = default_view
-        product_quick_view = default_view
-        wishlist_view = default_view
-        add_to_wishlist = default_view
-        remove_from_wishlist = default_view
-        toggle_wishlist = default_view
-        comparison_view = default_view
-        add_to_comparison = default_view
-        submit_review = default_view
-        vote_review_helpful = default_view
-        report_review = default_view
-
-        NEW_STRUCTURE = False
-
-app_name = 'products'
-
-# URLs أساسية آمنة
-basic_urlpatterns = [
-    # الصفحة الرئيسية للمنتجات
-    path('', ProductListView.as_view(), name='product_list'),
+    # Webhooks and external integrations (لا تحتاج ترجمة)
+    path('webhooks/', include([
+        # path('payment/', include('payment.webhook_urls')),
+        # path('shipping/', include('shipping.webhook_urls')),
+    ])),
 ]
 
-# URLs للهيكل الجديد
-if NEW_STRUCTURE:
-    urlpatterns = [
-        # Main product pages
-        path('', ProductListView.as_view(), name='product_list'),
-        path('categories/', CategoryListView.as_view(), name='category_list'),
-        path('search/', SearchView.as_view(), name='search'),
-        path('search/advanced/', AdvancedSearchView.as_view(), name='advanced_search'),
+# URLs التي تدعم الترجمة (Translatable URLs)
+urlpatterns += i18n_patterns(
+    # الصفحة الرئيسية - Homepage
+    path('', include('core.urls', namespace='core')),
 
-        # Special collections
-        path('offers/', SpecialOffersView.as_view(), name='special_offers'),
-        path('new/', ProductListView.as_view(), {'filter_type': 'new'}, name='new_products'),
-        path('featured/', ProductListView.as_view(), {'filter_type': 'featured'}, name='featured_products'),
+    # Products - المنتجات
+    path('products/', include('products.urls', namespace='products')),
+    path('shop/', RedirectView.as_view(url='/products/', permanent=True)),
+    path('store/', RedirectView.as_view(url='/products/', permanent=True)),
 
-        # Category and product details
-        path('category/<slug:category_slug>/', ProductListView.as_view(), name='category_products'),
-        path('category/<slug:slug>/detail/', CategoryDetailView.as_view(), name='category_detail'),
-        path('product/<slug:slug>/', ProductDetailView.as_view(), name='product_detail'),
+    # User accounts - حسابات المستخدمين
+    path('accounts/', include('accounts.urls', namespace='accounts')),
+    path('auth/', include('django.contrib.auth.urls')),
 
-        # User features
-        path('wishlist/', wishlist_view, name='wishlist'),
-        path('comparison/', comparison_view, name='comparison'),
+    # Shopping cart - سلة التسوق
+    path('cart/', include('cart.urls', namespace='cart')),
+    path('basket/', RedirectView.as_view(url='/cart/', permanent=True)),
 
-        # API endpoints (wrapped with try-catch for safety)
-        path('api/search/suggestions/', search_suggestions, name='search_suggestions'),
-        path('api/product/<int:product_id>/quick-view/', product_quick_view, name='product_quick_view'),
-        path('api/wishlist/add/<int:product_id>/', add_to_wishlist, name='add_to_wishlist'),
-        path('api/wishlist/remove/<int:product_id>/', remove_from_wishlist, name='remove_from_wishlist'),
-        path('api/wishlist/toggle/<int:product_id>/', toggle_wishlist, name='toggle_wishlist'),
-        path('api/comparison/add/', add_to_comparison, name='add_to_comparison'),
-        path('api/review/submit/<int:product_id>/', submit_review, name='submit_review'),
-        path('api/review/<int:review_id>/vote/', vote_review_helpful, name='vote_review_helpful'),
-        path('api/review/<int:review_id>/report/', report_review, name='report_review'),
-    ]
+    # Orders - الطلبات
+    path('orders/', include('orders.urls', namespace='orders')),
+    path('my-orders/', RedirectView.as_view(url='/orders/', permanent=True)),
 
-else:
-    # URLs للهيكل القديم - استخدام views module
-    urlpatterns = [
-        # Main pages
-        path('', getattr(views, 'ProductListView', views.product_list).as_view()
-        if hasattr(getattr(views, 'ProductListView', None), 'as_view')
-        else getattr(views, 'product_list', default_view), name='product_list'),
+    # Dashboard - لوحة التحكم
+    path('dashboard/', include('dashboard.urls', namespace='dashboard')),
+    path('panel/', RedirectView.as_view(url='/dashboard/', permanent=True)),
 
-        path('categories/', getattr(views, 'CategoryListView', views.category_list).as_view()
-        if hasattr(getattr(views, 'CategoryListView', None), 'as_view')
-        else getattr(views, 'category_list', default_view), name='category_list'),
+    # Global search - البحث الشامل
+    path('search/', RedirectView.as_view(url='/products/search/', permanent=True)),
 
-        path('search/', getattr(views, 'SearchView', views.search).as_view()
-        if hasattr(getattr(views, 'SearchView', None), 'as_view')
-        else getattr(views, 'search', default_view), name='search'),
+    # Static pages - الصفحات الثابتة
+    path('about/', TemplateView.as_view(template_name='pages/about.html'), name='about'),
+    path('contact/', TemplateView.as_view(template_name='pages/contact.html'), name='contact'),
+    path('privacy/', TemplateView.as_view(template_name='pages/privacy.html'), name='privacy'),
+    path('terms/', TemplateView.as_view(template_name='pages/terms.html'), name='terms'),
+    path('faq/', TemplateView.as_view(template_name='pages/faq.html'), name='faq'),
+    path('shipping/', TemplateView.as_view(template_name='pages/shipping.html'), name='shipping_info'),
+    path('returns/', TemplateView.as_view(template_name='pages/returns.html'), name='returns'),
 
-        # Product detail
-        path('product/<slug:slug>/', getattr(views, 'ProductDetailView', views.product_detail).as_view()
-        if hasattr(getattr(views, 'ProductDetailView', None), 'as_view')
-        else getattr(views, 'product_detail', default_view), name='product_detail'),
+    # Support pages - صفحات الدعم
+    path('help/', TemplateView.as_view(template_name='pages/help.html'), name='help'),
+    path('support/', RedirectView.as_view(url='/help/', permanent=True)),
 
-        # Category products
-        path('category/<slug:category_slug>/', getattr(views, 'category_products', default_view),
-             name='category_products'),
+    # Company pages - صفحات الشركة
+    path('careers/', TemplateView.as_view(template_name='pages/careers.html'), name='careers'),
+    path('news/', TemplateView.as_view(template_name='pages/news.html'), name='news'),
 
-        # API endpoints
-        path('api/search/suggestions/', getattr(views, 'search_suggestions', default_view), name='search_suggestions'),
-        path('api/wishlist/add/<int:product_id>/', getattr(views, 'add_to_wishlist', default_view),
-             name='add_to_wishlist'),
+    # Maintenance mode (يمكن تفعيلها عند الحاجة)
+    # path('maintenance/', TemplateView.as_view(template_name='maintenance.html'), name='maintenance'),
 
-        # Wishlist
-        path('wishlist/', getattr(views, 'wishlist_view', default_view), name='wishlist'),
-    ]
+    prefix_default_language=False,  # لا تضع اللغة الافتراضية في URL
+)
 
+# إعدادات البيئة التطويرية
+if settings.DEBUG:
+    # Django Debug Toolbar
+    try:
+        import debug_toolbar
 
-# إضافة معالجات الأخطاء
-def safe_view_wrapper(view_func):
-    """Wrapper آمن للعروض"""
-
-    def wrapper(request, *args, **kwargs):
-        try:
-            return view_func(request, *args, **kwargs)
-        except Exception as e:
-            from django.http import HttpResponse
-            return HttpResponse(f"View temporarily unavailable: {str(e)}", status=503)
-
-    return wrapper
-
-
-# تطبيق الـ wrapper على العروض إذا لزم الأمر
-if not NEW_STRUCTURE:
-    # لف العروض المعرضة للخطأ
-    for i, pattern in enumerate(urlpatterns):
-        if hasattr(pattern, 'callback') and pattern.callback == default_view:
-            continue  # تجاهل العروض الافتراضية
-
-        # يمكن إضافة safe wrapper هنا إذا لزم الأمر
+        urlpatterns = [
+                          path('__debug__/', include(debug_toolbar.urls)),
+                      ] + urlpatterns
+    except ImportError:
         pass
+
+    # Serve media files
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+    # Serve static files
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+    # Development-only URLs
+    urlpatterns += [
+        # Test pages
+        path('test/email/', TemplateView.as_view(template_name='test/email.html'), name='test_email'),
+        path('test/404/', TemplateView.as_view(template_name='errors/404.html'), name='test_404'),
+        path('test/500/', TemplateView.as_view(template_name='errors/500.html'), name='test_500'),
+    ]
+
+# معالجات الأخطاء المخصصة
+handler404 = 'esco_project.views.page_not_found_view'
+handler500 = 'esco_project.views.server_error_view'
+handler403 = 'esco_project.views.permission_denied_view'
+handler400 = 'esco_project.views.bad_request_view'
+
+# تخصيص موقع الإدارة
+admin.site.site_header = "ESCO E-commerce إدارة"
+admin.site.site_title = "ESCO Admin"
+admin.site.index_title = "مرحباً بك في لوحة تحكم ESCO"
+admin.site.site_url = "/"  # رابط للعودة للموقع الرئيسي
+
+# إعدادات إضافية للبيئة الإنتاجية
+if not settings.DEBUG:
+    # Security URLs for production
+    urlpatterns += [
+        # SSL and security
+        path('.well-known/', include([
+            # SSL certificate verification
+            # path('acme-challenge/', include('acme.urls')),
+        ])),
+    ]
+
+# URLs للتطبيقات الإضافية (يمكن تفعيلها لاحقاً)
+# Uncomment when ready to use
+
+# # Payment integration
+# urlpatterns += i18n_patterns(
+#     path('payment/', include('payment.urls', namespace='payment')),
+#     path('checkout/', RedirectView.as_view(url='/payment/', permanent=True)),
+# )
+
+# # Wishlist
+# urlpatterns += i18n_patterns(
+#     path('wishlist/', include('wishlist.urls', namespace='wishlist')),
+#     path('favorites/', RedirectView.as_view(url='/wishlist/', permanent=True)),
+# )
+
+# # Reviews and ratings
+# urlpatterns += i18n_patterns(
+#     path('reviews/', include('reviews.urls', namespace='reviews')),
+# )
+
+# # Coupons and discounts
+# urlpatterns += i18n_patterns(
+#     path('coupons/', include('coupons.urls', namespace='coupons')),
+#     path('discounts/', RedirectView.as_view(url='/coupons/', permanent=True)),
+# )
+
+# # Blog
+# urlpatterns += i18n_patterns(
+#     path('blog/', include('blog.urls', namespace='blog')),
+#     path('news/', RedirectView.as_view(url='/blog/', permanent=True)),
+# )
+
+# # Notifications
+# urlpatterns += i18n_patterns(
+#     path('notifications/', include('notifications.urls', namespace='notifications')),
+# )
+
+# # Vendor/Multi-vendor support
+# urlpatterns += i18n_patterns(
+#     path('vendors/', include('vendors.urls', namespace='vendors')),
+#     path('seller/', RedirectView.as_view(url='/vendors/', permanent=True)),
+# )
+
+# # Inventory management
+# urlpatterns += i18n_patterns(
+#     path('inventory/', include('inventory.urls', namespace='inventory')),
+# )
+
+# تعليق توضيحي للمطورين
+"""
+هيكل الروابط:
+
+1. روابط النظام (بدون ترجمة):
+   - /admin/ - لوحة الإدارة
+   - /api/ - API endpoints
+   - /health/ - فحص النظام
+   - /robots.txt - ملف الروبوتات
+
+2. روابط الموقع (مع دعم الترجمة):
+   - / - الصفحة الرئيسية
+   - /products/ - المنتجات
+   - /accounts/ - الحسابات
+   - /cart/ - سلة التسوق
+   - /orders/ - الطلبات
+   - /dashboard/ - لوحة التحكم
+
+3. صفحات ثابتة:
+   - /about/ - من نحن
+   - /contact/ - اتصل بنا
+   - /privacy/ - سياسة الخصوصية
+
+4. معالجة الأخطاء:
+   - 404, 500, 403, 400 pages
+
+ملاحظات:
+- يدعم اللغتين العربية والإنجليزية
+- URLs مرتبة حسب الأولوية
+- يمكن تفعيل تطبيقات إضافية عند الحاجة
+"""
