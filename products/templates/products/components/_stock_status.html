@@ -1,0 +1,176 @@
+{% load i18n %}
+
+<div class="stock-status-wrapper">
+    {% if product.track_inventory %}
+        {% if product.in_stock %}
+            {% if product.low_stock %}
+                <div class="stock-status low-stock">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>{% trans "متبقي" %} {{ product.stock_quantity }} {% trans "قطعة فقط" %}</span>
+                    <div class="stock-bar">
+                        <div class="stock-level" style="width: 20%; background-color: #ffc107;"></div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="stock-status in-stock">
+                    <i class="fas fa-check-circle"></i>
+                    <span>{% trans "متوفر في المخزن" %}</span>
+                    {% if product.stock_quantity <= 50 %}
+                        <small>({{ product.stock_quantity }} {% trans "قطعة" %})</small>
+                    {% endif %}
+                    <div class="stock-bar">
+                        <div class="stock-level" style="width: {% if product.stock_quantity > 100 %}100{% else %}{{ product.stock_quantity }}{% endif %}%; background-color: #28a745;"></div>
+                    </div>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="stock-status out-of-stock">
+                <i class="fas fa-times-circle"></i>
+                <span>{% trans "غير متوفر حالياً" %}</span>
+
+                {% if product.stock_status == 'pre_order' %}
+                    <div class="pre-order-info">
+                        <i class="fas fa-clock"></i>
+                        <span>{% trans "متاح للطلب المسبق" %}</span>
+                    </div>
+                {% endif %}
+
+                <button type="button" class="btn btn-sm btn-outline-primary notify-btn"
+                        data-bs-toggle="modal" data-bs-target="#notifyModal"
+                        data-product-id="{{ product.id }}">
+                    <i class="fas fa-bell"></i> {% trans "أعلمني عند التوفر" %}
+                </button>
+            </div>
+        {% endif %}
+    {% else %}
+        <!-- Products without inventory tracking -->
+        {% if product.stock_status == 'in_stock' %}
+            <div class="stock-status in-stock">
+                <i class="fas fa-check-circle"></i>
+                <span>{% trans "متوفر" %}</span>
+            </div>
+        {% elif product.stock_status == 'pre_order' %}
+            <div class="stock-status pre-order">
+                <i class="fas fa-clock"></i>
+                <span>{% trans "طلب مسبق" %}</span>
+                <small>{% trans "يتم التوصيل خلال 7-10 أيام عمل" %}</small>
+            </div>
+        {% else %}
+            <div class="stock-status out-of-stock">
+                <i class="fas fa-times-circle"></i>
+                <span>{% trans "غير متوفر" %}</span>
+            </div>
+        {% endif %}
+    {% endif %}
+
+    <!-- Shipping Estimate -->
+    {% if product.in_stock and product.requires_shipping %}
+        <div class="shipping-estimate">
+            <i class="fas fa-truck"></i>
+            <span>{% trans "يصلك خلال" %} 2-3 {% trans "أيام عمل" %}</span>
+        </div>
+    {% endif %}
+
+    <!-- Max Order Quantity -->
+    {% if product.max_order_quantity < 100 %}
+        <div class="order-limit">
+            <i class="fas fa-info-circle"></i>
+            <small>{% trans "الحد الأقصى للطلب" %}: {{ product.max_order_quantity }} {% trans "قطعة" %}</small>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.stock-status-wrapper {
+    margin: 1rem 0;
+}
+
+.stock-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    position: relative;
+}
+
+.stock-status i {
+    font-size: 1.125rem;
+}
+
+.stock-status.in-stock {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.stock-status.low-stock {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+}
+
+.stock-status.out-of-stock {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+.stock-status.pre-order {
+    background: rgba(23, 162, 184, 0.1);
+    color: #17a2b8;
+}
+
+.stock-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: rgba(0,0,0,0.1);
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    overflow: hidden;
+}
+
+.stock-level {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.pre-order-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.notify-btn {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.shipping-estimate {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding: 0.5rem 0;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.order-limit {
+    margin-top: 0.5rem;
+    color: var(--text-muted);
+}
+
+@media (max-width: 575.98px) {
+    .stock-status {
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .stock-status i {
+        font-size: 1rem;
+    }
+}
+</style>

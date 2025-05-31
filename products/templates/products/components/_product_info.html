@@ -1,0 +1,263 @@
+{% load i18n humanize %}
+
+<div class="product-info">
+    <!-- Category & Brand -->
+    <div class="product-meta">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'products:category_detail' product.category.slug %}">
+                        {{ product.category.name }}
+                    </a>
+                </li>
+                {% if product.brand %}
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'products:product_list' %}?brand={{ product.brand.id }}">
+                            {{ product.brand.name }}
+                        </a>
+                    </li>
+                {% endif %}
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Product Title -->
+    <h1 class="product-title">{{ product.name }}</h1>
+    {% if product.name_en %}
+        <h2 class="product-subtitle text-muted">{{ product.name_en }}</h2>
+    {% endif %}
+
+    <!-- Rating & Reviews -->
+    {% if product.review_count > 0 %}
+        <div class="product-rating mb-3">
+            {% include 'products/components/_rating_stars.html' with rating=product.rating %}
+            <a href="#reviews" class="review-link ms-2">
+                ({{ product.review_count }} {% trans "تقييم" %})
+            </a>
+        </div>
+    {% endif %}
+
+    <!-- SKU & Availability -->
+    <div class="product-identifiers">
+        <span class="sku">
+            <strong>{% trans "رقم المنتج" %}:</strong> {{ product.sku }}
+        </span>
+        {% if product.barcode %}
+            <span class="barcode">
+                <strong>{% trans "الباركود" %}:</strong> {{ product.barcode }}
+            </span>
+        {% endif %}
+    </div>
+
+    <!-- Short Description -->
+    {% if product.short_description %}
+        <div class="short-description">
+            {{ product.short_description|safe }}
+        </div>
+    {% endif %}
+
+    <!-- Key Features -->
+    {% if product.specifications %}
+        <div class="key-features">
+            <h6 class="features-title">{% trans "المميزات الرئيسية" %}:</h6>
+            <ul class="features-list">
+                {% for key, value in product.specifications.items|slice:":4" %}
+                    <li><i class="fas fa-check-circle text-success"></i> {{ key }}: {{ value }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <!-- Product Badges -->
+    <div class="product-badges-inline">
+        {% if product.is_best_seller %}
+            <span class="badge bg-warning text-dark">
+                <i class="fas fa-fire"></i> {% trans "الأكثر مبيعاً" %}
+            </span>
+        {% endif %}
+        {% if product.is_digital %}
+            <span class="badge bg-info">
+                <i class="fas fa-download"></i> {% trans "منتج رقمي" %}
+            </span>
+        {% endif %}
+        {% if not product.requires_shipping %}
+            <span class="badge bg-secondary">
+                <i class="fas fa-globe"></i> {% trans "لا يتطلب شحن" %}
+            </span>
+        {% endif %}
+    </div>
+
+    <!-- Shipping Info -->
+    {% if product.requires_shipping %}
+        <div class="shipping-info">
+            <div class="shipping-item">
+                <i class="fas fa-shipping-fast text-primary"></i>
+                <span>{% trans "شحن سريع خلال 2-3 أيام عمل" %}</span>
+            </div>
+            {% if product.weight %}
+                <div class="shipping-item">
+                    <i class="fas fa-weight text-primary"></i>
+                    <span>{% trans "الوزن" %}: {{ product.weight|floatformat:2 }} {% trans "كجم" %}</span>
+                </div>
+            {% endif %}
+            {% if product.length and product.width and product.height %}
+                <div class="shipping-item">
+                    <i class="fas fa-ruler-combined text-primary"></i>
+                    <span>{% trans "الأبعاد" %}: {{ product.length|floatformat:0 }} × {{ product.width|floatformat:0 }} × {{ product.height|floatformat:0 }} {% trans "سم" %}</span>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <!-- Tags -->
+    {% if product.tags.exists %}
+        <div class="product-tags">
+            <i class="fas fa-tags text-muted"></i>
+            {% for tag in product.tags.all %}
+                <a href="{% url 'products:tag_products' tag.slug %}" class="tag-link">
+                    {{ tag.name }}
+                </a>{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.product-info {
+    margin-bottom: 2rem;
+}
+
+.product-meta .breadcrumb {
+    background: none;
+    padding: 0;
+    margin-bottom: 0.5rem;
+}
+
+.product-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.product-subtitle {
+    font-size: 1.25rem;
+    font-weight: 400;
+    margin-bottom: 1rem;
+}
+
+.product-rating {
+    display: flex;
+    align-items: center;
+}
+
+.review-link {
+    text-decoration: none;
+    color: var(--text-secondary);
+    transition: color 0.3s ease;
+}
+
+.review-link:hover {
+    color: var(--bs-primary);
+}
+
+.product-identifiers {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.short-description {
+    margin: 1.5rem 0;
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    color: var(--text-secondary);
+}
+
+.key-features {
+    background: rgba(var(--bs-primary-rgb), 0.05);
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    margin: 1.5rem 0;
+}
+
+.features-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.features-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.features-list li {
+    padding: 0.25rem 0;
+    font-size: 0.9375rem;
+}
+
+.features-list i {
+    margin-inline-end: 0.5rem;
+}
+
+.product-badges-inline {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin: 1rem 0;
+}
+
+.shipping-info {
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 0;
+    margin: 1.5rem 0;
+}
+
+.shipping-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9375rem;
+}
+
+.shipping-item:last-child {
+    margin-bottom: 0;
+}
+
+.product-tags {
+    margin-top: 1.5rem;
+    font-size: 0.875rem;
+}
+
+.tag-link {
+    text-decoration: none;
+    color: var(--text-secondary);
+    transition: color 0.3s ease;
+}
+
+.tag-link:hover {
+    color: var(--bs-primary);
+    text-decoration: underline;
+}
+
+@media (max-width: 767.98px) {
+    .product-title {
+        font-size: 1.5rem;
+    }
+
+    .product-subtitle {
+        font-size: 1.125rem;
+    }
+
+    .product-identifiers {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+</style>

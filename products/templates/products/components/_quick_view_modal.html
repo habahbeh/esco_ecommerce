@@ -1,0 +1,586 @@
+{% load i18n static %}
+
+<!-- Quick View Modal -->
+<div class="modal fade" id="quickViewModal" tabindex="-1" aria-labelledby="quickViewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="quickViewModalLabel">{% trans "عرض سريع" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'إغلاق' %}"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Loading State -->
+                <div class="quick-view-loading text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">{% trans "جاري التحميل..." %}</span>
+                    </div>
+                    <p class="mt-3 text-muted">{% trans "جاري تحميل معلومات المنتج..." %}</p>
+                </div>
+
+                <!-- Content Container (Hidden initially) -->
+                <div class="quick-view-content" style="display: none;">
+                    <div class="row">
+                        <!-- Product Images -->
+                        <div class="col-lg-6">
+                            <div class="quick-view-gallery">
+                                <div class="main-image-container">
+                                    <img src="" alt="" class="img-fluid" id="quickViewMainImage">
+                                </div>
+                                <div class="thumbnail-strip" id="quickViewThumbnails">
+                                    <!-- Thumbnails will be inserted here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Product Info -->
+                        <div class="col-lg-6">
+                            <div class="quick-view-info">
+                                <!-- Category -->
+                                <div class="product-category mb-2">
+                                    <a href="" id="quickViewCategory"></a>
+                                </div>
+
+                                <!-- Title -->
+                                <h3 class="product-title" id="quickViewTitle"></h3>
+
+                                <!-- Rating -->
+                                <div class="product-rating mb-3" id="quickViewRating">
+                                    <!-- Rating will be inserted here -->
+                                </div>
+
+                                <!-- Price -->
+                                <div class="product-price mb-3" id="quickViewPrice">
+                                    <!-- Price will be inserted here -->
+                                </div>
+
+                                <!-- Short Description -->
+                                <div class="product-description mb-4" id="quickViewDescription">
+                                    <!-- Description will be inserted here -->
+                                </div>
+
+                                <!-- Stock Status -->
+                                <div class="stock-status mb-3" id="quickViewStock">
+                                    <!-- Stock status will be inserted here -->
+                                </div>
+
+                                <!-- Quick Add Form -->
+                                <form class="quick-add-form" id="quickAddForm">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="product_id" id="quickViewProductId">
+
+                                    <div class="d-flex align-items-center gap-3 mb-4">
+                                        <div class="quantity-wrapper">
+                                            <label class="form-label mb-1">{% trans "الكمية:" %}</label>
+                                            <div class="quantity-controls">
+                                                <button type="button" class="qty-btn qty-minus">-</button>
+                                                <input type="number" name="quantity" value="1" min="1" class="qty-input">
+                                                <button type="button" class="qty-btn qty-plus">+</button>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex-grow-1">
+                                            <button type="submit" class="btn btn-primary w-100" id="quickAddButton">
+                                                <i class="fas fa-shopping-cart me-2"></i>
+                                                {% trans "أضف إلى السلة" %}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+
+                                <!-- Product Links -->
+                                <div class="product-links">
+                                    <a href="" class="btn btn-outline-primary" id="quickViewDetailsLink">
+                                        <i class="fas fa-eye me-2"></i>
+                                        {% trans "عرض التفاصيل الكاملة" %}
+                                    </a>
+                                    <button type="button" class="btn btn-outline-secondary wishlist-quick-btn" data-product-id="">
+                                        <i class="far fa-heart me-2"></i>
+                                        {% trans "أضف لقائمة الأمنيات" %}
+                                    </button>
+                                </div>
+
+                                <!-- Key Features -->
+                                <div class="key-features mt-4" id="quickViewFeatures">
+                                    <!-- Features will be inserted here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Quick View Modal Styles */
+#quickViewModal .modal-dialog {
+    max-width: 1000px;
+}
+
+.quick-view-gallery {
+    position: sticky;
+    top: 0;
+}
+
+.main-image-container {
+    background: #f8f9fa;
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.main-image-container img {
+    max-height: 400px;
+    object-fit: contain;
+}
+
+.thumbnail-strip {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding: 0.5rem 0;
+}
+
+.thumbnail-item {
+    flex: 0 0 60px;
+    height: 60px;
+    border: 2px solid transparent;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    cursor: pointer;
+    background: #f8f9fa;
+    padding: 0.25rem;
+}
+
+.thumbnail-item:hover,
+.thumbnail-item.active {
+    border-color: var(--bs-primary);
+}
+
+.thumbnail-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.quick-view-info {
+    padding: 0 1rem;
+}
+
+.product-category a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.875rem;
+}
+
+.product-category a:hover {
+    color: var(--bs-primary);
+}
+
+.quantity-wrapper {
+    min-width: 120px;
+}
+
+.quantity-controls {
+    display: flex;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.qty-btn {
+    background: transparent;
+    border: none;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.qty-btn:hover {
+    background: var(--bs-primary);
+    color: white;
+}
+
+.qty-input {
+    border: none;
+    width: 50px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.qty-input:focus {
+    outline: none;
+}
+
+.product-links {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.key-features {
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+}
+
+.key-features h6 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.key-features ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.key-features li {
+    padding: 0.5rem 0;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+}
+
+.key-features li i {
+    color: var(--bs-success);
+    margin-inline-end: 0.5rem;
+}
+
+/* Loading State */
+.quick-view-loading {
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Responsive */
+@media (max-width: 991.98px) {
+    .quick-view-gallery {
+        position: static;
+        margin-bottom: 2rem;
+    }
+
+    .quick-view-info {
+        padding: 0;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .main-image-container {
+        min-height: 250px;
+    }
+
+    .main-image-container img {
+        max-height: 250px;
+    }
+
+    .product-links {
+        flex-direction: column;
+    }
+
+    .product-links .btn {
+        width: 100%;
+    }
+}
+</style>
+
+<script>
+// Quick View functionality
+let quickViewModal;
+
+document.addEventListener('DOMContentLoaded', function() {
+    quickViewModal = new bootstrap.Modal(document.getElementById('quickViewModal'));
+
+    // Handle quick view button clicks
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.quick-view-btn')) {
+            e.preventDefault();
+            const productId = e.target.closest('.quick-view-btn').dataset.productId;
+            loadQuickView(productId);
+        }
+    });
+
+    // Handle thumbnail clicks
+    document.getElementById('quickViewThumbnails').addEventListener('click', function(e) {
+        if (e.target.closest('.thumbnail-item')) {
+            const thumbnail = e.target.closest('.thumbnail-item');
+            document.getElementById('quickViewMainImage').src = thumbnail.dataset.fullImage;
+
+            // Update active state
+            document.querySelectorAll('.thumbnail-item').forEach(t => t.classList.remove('active'));
+            thumbnail.classList.add('active');
+        }
+    });
+
+    // Handle quantity controls
+    document.querySelector('.qty-minus').addEventListener('click', function() {
+        const input = document.querySelector('.qty-input');
+        const currentValue = parseInt(input.value);
+        if (currentValue > 1) {
+            input.value = currentValue - 1;
+        }
+    });
+
+    document.querySelector('.qty-plus').addEventListener('click', function() {
+        const input = document.querySelector('.qty-input');
+        const currentValue = parseInt(input.value);
+        input.value = currentValue + 1;
+    });
+
+    // Handle quick add form
+    document.getElementById('quickAddForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const button = document.getElementById('quickAddButton');
+        const originalText = button.innerHTML;
+
+        // Show loading state
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{% trans "جاري الإضافة..." %}';
+
+        // Submit via AJAX
+        fetch('{% url "cart:quick_add" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                showAlert('success', data.message || '{% trans "تمت إضافة المنتج إلى السلة" %}');
+
+                // Update cart count
+                updateCartCount(data.cart_count);
+
+                // Reset quantity
+                document.querySelector('.qty-input').value = 1;
+
+                // Close modal after a delay
+                setTimeout(() => {
+                    quickViewModal.hide();
+                }, 1500);
+            } else {
+                showAlert('danger', data.message || '{% trans "حدث خطأ" %}');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('danger', '{% trans "حدث خطأ في الاتصال" %}');
+        })
+        .finally(() => {
+            // Restore button
+            button.disabled = false;
+            button.innerHTML = originalText;
+        });
+    });
+});
+
+function loadQuickView(productId) {
+    // Show modal
+    quickViewModal.show();
+
+    // Show loading state
+    document.querySelector('.quick-view-loading').style.display = 'block';
+    document.querySelector('.quick-view-content').style.display = 'none';
+
+    // Fetch product data
+    fetch(`/api/products/${productId}/quick-view/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                populateQuickView(data.product);
+            } else {
+                showAlert('danger', '{% trans "فشل تحميل معلومات المنتج" %}');
+                quickViewModal.hide();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('danger', '{% trans "حدث خطأ في تحميل المنتج" %}');
+            quickViewModal.hide();
+        });
+}
+
+function populateQuickView(product) {
+    // Update product ID
+    document.getElementById('quickViewProductId').value = product.id;
+
+    // Update category
+    const categoryLink = document.getElementById('quickViewCategory');
+    categoryLink.href = product.category_url;
+    categoryLink.textContent = product.category_name;
+
+    // Update title
+    document.getElementById('quickViewTitle').textContent = product.name;
+
+    // Update rating
+    const ratingContainer = document.getElementById('quickViewRating');
+    if (product.rating_count > 0) {
+        ratingContainer.innerHTML = `
+            ${generateStars(product.rating)}
+            <span class="ms-2 text-muted">(${product.rating_count} {% trans "تقييم" %})</span>
+        `;
+        ratingContainer.style.display = 'block';
+    } else {
+        ratingContainer.style.display = 'none';
+    }
+
+    // Update price
+    const priceContainer = document.getElementById('quickViewPrice');
+    if (product.has_discount) {
+        priceContainer.innerHTML = `
+            <span class="current-price h4 text-primary">
+                ${product.currency_symbol} ${product.current_price}
+            </span>
+            <span class="original-price text-muted text-decoration-line-through ms-2">
+                ${product.currency_symbol} ${product.base_price}
+            </span>
+            <span class="badge bg-danger ms-2">${product.discount_percentage}% {% trans "خصم" %}</span>
+        `;
+    } else {
+        priceContainer.innerHTML = `
+            <span class="current-price h4 text-primary">
+                ${product.currency_symbol} ${product.base_price}
+            </span>
+        `;
+    }
+
+    // Update description
+    document.getElementById('quickViewDescription').innerHTML = product.short_description || '';
+
+    // Update stock status
+    const stockContainer = document.getElementById('quickViewStock');
+    if (product.in_stock) {
+        stockContainer.innerHTML = `
+            <span class="text-success">
+                <i class="fas fa-check-circle me-1"></i>
+                {% trans "متوفر في المخزن" %}
+            </span>
+        `;
+        document.getElementById('quickAddButton').disabled = false;
+    } else {
+        stockContainer.innerHTML = `
+            <span class="text-danger">
+                <i class="fas fa-times-circle me-1"></i>
+                {% trans "غير متوفر حالياً" %}
+            </span>
+        `;
+        document.getElementById('quickAddButton').disabled = true;
+    }
+
+    // Update main image
+    const mainImage = document.getElementById('quickViewMainImage');
+    mainImage.src = product.main_image;
+    mainImage.alt = product.name;
+
+    // Update thumbnails
+    const thumbnailsContainer = document.getElementById('quickViewThumbnails');
+    thumbnailsContainer.innerHTML = product.images.map((image, index) => `
+        <div class="thumbnail-item ${index === 0 ? 'active' : ''}"
+             data-full-image="${image.full}">
+            <img src="${image.thumbnail}" alt="${product.name}">
+        </div>
+    `).join('');
+
+    // Update details link
+    document.getElementById('quickViewDetailsLink').href = product.url;
+
+    // Update wishlist button
+    document.querySelector('.wishlist-quick-btn').dataset.productId = product.id;
+
+    // Update key features
+    const featuresContainer = document.getElementById('quickViewFeatures');
+    if (product.key_features && product.key_features.length > 0) {
+        featuresContainer.innerHTML = `
+            <h6>{% trans "المميزات الرئيسية:" %}</h6>
+            <ul>
+                ${product.key_features.map(feature => `
+                    <li><i class="fas fa-check-circle"></i> ${feature}</li>
+                `).join('')}
+            </ul>
+        `;
+        featuresContainer.style.display = 'block';
+    } else {
+        featuresContainer.style.display = 'none';
+    }
+
+    // Hide loading, show content
+    document.querySelector('.quick-view-loading').style.display = 'none';
+    document.querySelector('.quick-view-content').style.display = 'block';
+}
+
+function generateStars(rating) {
+    let stars = '';
+    for (let i = 1; i <= 5; i++) {
+        if (rating >= i) {
+            stars += '<i class="fas fa-star text-warning"></i>';
+        } else if (rating > i - 1) {
+            stars += '<i class="fas fa-star-half-alt text-warning"></i>';
+        } else {
+            stars += '<i class="far fa-star text-warning"></i>';
+        }
+    }
+    return stars;
+}
+
+function showAlert(type, message) {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `;
+
+    // Add alert to modal body
+    const alertContainer = document.createElement('div');
+    alertContainer.innerHTML = alertHtml;
+    document.querySelector('.quick-view-content').prepend(alertContainer.firstElementChild);
+
+    // Auto dismiss after 3 seconds
+    setTimeout(() => {
+        const alert = document.querySelector('.quick-view-content .alert');
+        if (alert) {
+            bootstrap.Alert.getOrCreateInstance(alert).close();
+        }
+    }, 3000);
+}
+
+function updateCartCount(count) {
+    // Update all cart count badges
+    document.querySelectorAll('.cart-count').forEach(badge => {
+        badge.textContent = count;
+        if (count > 0) {
+            badge.style.display = 'inline';
+        } else {
+            badge.style.display = 'none';
+        }
+    });
+}
+
+// Handle wishlist button in quick view
+document.querySelector('.wishlist-quick-btn').addEventListener('click', function() {
+    const productId = this.dataset.productId;
+    toggleWishlist(productId, this);
+});
+
+// Reset modal when hidden
+document.getElementById('quickViewModal').addEventListener('hidden.bs.modal', function () {
+    // Reset form
+    document.getElementById('quickAddForm').reset();
+
+    // Clear any alerts
+    const alerts = document.querySelectorAll('.quick-view-content .alert');
+    alerts.forEach(alert => alert.remove());
+});
+</script>

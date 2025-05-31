@@ -1,0 +1,171 @@
+{% load i18n %}
+
+<div class="rating-breakdown">
+    <div class="overall-rating">
+        <div class="rating-number">{{ product.rating|floatformat:1 }}</div>
+        <div class="rating-info">
+            {% include 'products/components/_rating_stars.html' with rating=product.rating %}
+            <div class="total-reviews">{{ total_reviews }} {% trans "تقييم" %}</div>
+        </div>
+    </div>
+
+    <div class="rating-bars">
+        {% for star in "54321" %}
+            {% with count=rating_breakdown|get_item:star %}
+                <div class="rating-bar-item">
+                    <span class="star-label">{{ star }} {% trans "نجوم" %}</span>
+                    <div class="progress">
+                        <div class="progress-bar"
+                             role="progressbar"
+                             style="width: {{ count.percentage }}%"
+                             aria-valuenow="{{ count.percentage }}"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                    <span class="count-label">{{ count.count }}</span>
+                </div>
+            {% endwith %}
+        {% endfor %}
+    </div>
+
+    <!-- Rating Summary -->
+    <div class="rating-summary">
+        <h6>{% trans "ملخص التقييمات" %}</h6>
+        <div class="summary-items">
+            {% if product.rating >= 4.5 %}
+                <div class="summary-item positive">
+                    <i class="fas fa-star"></i>
+                    <span>{% trans "تقييم ممتاز من معظم العملاء" %}</span>
+                </div>
+            {% elif product.rating >= 3.5 %}
+                <div class="summary-item positive">
+                    <i class="fas fa-thumbs-up"></i>
+                    <span>{% trans "تقييم جيد بشكل عام" %}</span>
+                </div>
+            {% endif %}
+
+            {% if total_reviews > 10 %}
+                <div class="summary-item">
+                    <i class="fas fa-users"></i>
+                    <span>{% trans "موثوق من عدد كبير من العملاء" %}</span>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.rating-breakdown {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 2rem;
+}
+
+.overall-rating {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.rating-number {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.rating-info {
+    flex: 1;
+}
+
+.total-reviews {
+    margin-top: 0.25rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.rating-bars {
+    margin-bottom: 1.5rem;
+}
+
+.rating-bar-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.star-label {
+    width: 60px;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.progress {
+    flex: 1;
+    height: 8px;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background-color: #ffc107;
+    transition: width 0.6s ease;
+}
+
+.count-label {
+    width: 30px;
+    text-align: end;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.rating-summary h6 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.summary-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.summary-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.summary-item.positive {
+    color: var(--bs-success);
+}
+
+.summary-item i {
+    width: 20px;
+}
+
+@media (max-width: 575.98px) {
+    .rating-breakdown {
+        padding: 1rem;
+    }
+
+    .overall-rating {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .rating-number {
+        font-size: 2.5rem;
+    }
+}
+</style>

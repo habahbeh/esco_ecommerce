@@ -1,0 +1,262 @@
+{% load i18n %}
+
+<div class="product-tabs-section">
+    <!-- Tab Navigation -->
+    <ul class="nav nav-tabs product-nav-tabs" id="productTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="description-tab" data-bs-toggle="tab"
+                    data-bs-target="#description" type="button" role="tab"
+                    aria-controls="description" aria-selected="true">
+                <i class="fas fa-info-circle"></i> {% trans "الوصف" %}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="specifications-tab" data-bs-toggle="tab"
+                    data-bs-target="#specifications" type="button" role="tab"
+                    aria-controls="specifications" aria-selected="false">
+                <i class="fas fa-list-ul"></i> {% trans "المواصفات" %}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="reviews-tab" data-bs-toggle="tab"
+                    data-bs-target="#reviews" type="button" role="tab"
+                    aria-controls="reviews" aria-selected="false">
+                <i class="fas fa-star"></i> {% trans "التقييمات" %}
+                {% if product.review_count > 0 %}
+                    <span class="badge bg-primary ms-1">{{ product.review_count }}</span>
+                {% endif %}
+            </button>
+        </li>
+        {% if product.requires_shipping %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="shipping-tab" data-bs-toggle="tab"
+                        data-bs-target="#shipping" type="button" role="tab"
+                        aria-controls="shipping" aria-selected="false">
+                    <i class="fas fa-truck"></i> {% trans "الشحن والإرجاع" %}
+                </button>
+            </li>
+        {% endif %}
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content product-tab-content" id="productTabsContent">
+        <!-- Description Tab -->
+        <div class="tab-pane fade show active" id="description" role="tabpanel"
+             aria-labelledby="description-tab">
+            <div class="tab-content-wrapper">
+                {% if product.description %}
+                    <div class="product-description">
+                        {{ product.description|safe }}
+                    </div>
+                {% else %}
+                    <p class="text-muted">{% trans "لا يوجد وصف متاح لهذا المنتج." %}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Specifications Tab -->
+        <div class="tab-pane fade" id="specifications" role="tabpanel"
+             aria-labelledby="specifications-tab">
+            <div class="tab-content-wrapper">
+                {% include 'products/components/_product_specs.html' %}
+            </div>
+        </div>
+
+        <!-- Reviews Tab -->
+        <div class="tab-pane fade" id="reviews" role="tabpanel"
+             aria-labelledby="reviews-tab">
+            <div class="tab-content-wrapper">
+                <div class="row">
+                    <div class="col-lg-4">
+                        {% include 'products/components/_rating_breakdown.html' %}
+                    </div>
+                    <div class="col-lg-8">
+                        {% include 'products/components/_review_list.html' %}
+
+                        {% if can_review %}
+                            <div class="write-review-section mt-4">
+                                <h5>{% trans "اكتب تقييمك" %}</h5>
+                                {% include 'products/components/_review_form.html' %}
+                            </div>
+                        {% elif user.is_authenticated %}
+                            <div class="alert alert-info mt-4">
+                                <i class="fas fa-info-circle"></i>
+                                {% trans "يجب شراء المنتج أولاً لتتمكن من تقييمه." %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info mt-4">
+                                <i class="fas fa-sign-in-alt"></i>
+                                {% trans "يرجى" %}
+                                <a href="{% url 'accounts:login' %}?next={{ request.path }}">{% trans "تسجيل الدخول" %}</a>
+                                {% trans "لكتابة تقييم." %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shipping Tab -->
+        {% if product.requires_shipping %}
+            <div class="tab-pane fade" id="shipping" role="tabpanel"
+                 aria-labelledby="shipping-tab">
+                <div class="tab-content-wrapper">
+                    <div class="shipping-policy">
+                        <h5 class="mb-3">{% trans "معلومات الشحن" %}</h5>
+                        <div class="policy-item">
+                            <i class="fas fa-shipping-fast text-primary"></i>
+                            <div>
+                                <h6>{% trans "الشحن السريع" %}</h6>
+                                <p>{% trans "يتم توصيل الطلبات خلال 2-3 أيام عمل داخل عمّان و 4-5 أيام للمحافظات الأخرى." %}</p>
+                            </div>
+                        </div>
+
+                        <div class="policy-item">
+                            <i class="fas fa-box text-primary"></i>
+                            <div>
+                                <h6>{% trans "التغليف الآمن" %}</h6>
+                                <p>{% trans "جميع المنتجات تُغلف بعناية لضمان وصولها بحالة ممتازة." %}</p>
+                            </div>
+                        </div>
+
+                        <h5 class="mb-3 mt-4">{% trans "سياسة الإرجاع" %}</h5>
+                        <div class="policy-item">
+                            <i class="fas fa-undo text-primary"></i>
+                            <div>
+                                <h6>{% trans "إرجاع مجاني خلال 30 يوم" %}</h6>
+                                <p>{% trans "يمكنك إرجاع المنتج خلال 30 يوم من تاريخ الاستلام بشرط أن يكون في حالته الأصلية." %}</p>
+                            </div>
+                        </div>
+
+                        <div class="policy-item">
+                            <i class="fas fa-shield-alt text-primary"></i>
+                            <div>
+                                <h6>{% trans "ضمان الجودة" %}</h6>
+                                <p>{% trans "جميع منتجاتنا أصلية 100% ومكفولة بضمان الوكيل." %}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.product-tabs-section {
+    margin-top: 3rem;
+}
+
+.product-nav-tabs {
+    border-bottom: 2px solid var(--border-color);
+    gap: 0.5rem;
+}
+
+.product-nav-tabs .nav-link {
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text-secondary);
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.product-nav-tabs .nav-link:hover {
+    color: var(--bs-primary);
+    background: rgba(var(--bs-primary-rgb), 0.05);
+}
+
+.product-nav-tabs .nav-link.active {
+    color: var(--bs-primary);
+    border-bottom-color: var(--bs-primary);
+    background: none;
+}
+
+.product-nav-tabs .nav-link i {
+    font-size: 1rem;
+}
+
+.product-tab-content {
+    background: white;
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.tab-content-wrapper {
+    padding: 2rem;
+}
+
+.product-description {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: var(--text-secondary);
+}
+
+.product-description h2,
+.product-description h3,
+.product-description h4,
+.product-description h5,
+.product-description h6 {
+    color: var(--text-primary);
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.product-description ul,
+.product-description ol {
+    margin: 1rem 0;
+    padding-inline-start: 2rem;
+}
+
+.product-description img {
+    max-width: 100%;
+    height: auto;
+    margin: 1rem 0;
+    border-radius: var(--radius-md);
+}
+
+.policy-item {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: rgba(var(--bs-primary-rgb), 0.05);
+    border-radius: var(--radius-md);
+}
+
+.policy-item i {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.policy-item h6 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.policy-item p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+}
+
+@media (max-width: 767.98px) {
+    .product-nav-tabs .nav-link {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+
+    .product-nav-tabs .nav-link i {
+        display: none;
+    }
+
+    .tab-content-wrapper {
+        padding: 1.5rem 1rem;
+    }
+}
+</style>

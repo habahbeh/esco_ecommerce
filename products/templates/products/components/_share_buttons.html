@@ -1,0 +1,177 @@
+{% load i18n %}
+
+<div class="share-buttons">
+    <span class="share-label">{% trans "شارك:" %}</span>
+
+    <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}"
+       target="_blank"
+       rel="noopener"
+       class="share-btn facebook"
+       aria-label="{% trans 'مشاركة على فيسبوك' %}">
+        <i class="fab fa-facebook-f"></i>
+    </a>
+
+    <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri }}&text={{ product.name|urlencode }}"
+       target="_blank"
+       rel="noopener"
+       class="share-btn twitter"
+       aria-label="{% trans 'مشاركة على تويتر' %}">
+        <i class="fab fa-twitter"></i>
+    </a>
+
+    <a href="https://wa.me/?text={{ product.name|urlencode }}%20{{ request.build_absolute_uri }}"
+       target="_blank"
+       rel="noopener"
+       class="share-btn whatsapp"
+       aria-label="{% trans 'مشاركة على واتساب' %}">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ request.build_absolute_uri }}"
+       target="_blank"
+       rel="noopener"
+       class="share-btn linkedin"
+       aria-label="{% trans 'مشاركة على لينكد إن' %}">
+        <i class="fab fa-linkedin-in"></i>
+    </a>
+
+    <a href="mailto:?subject={{ product.name|urlencode }}&body={{ request.build_absolute_uri }}"
+       class="share-btn email"
+       aria-label="{% trans 'مشاركة عبر البريد الإلكتروني' %}">
+        <i class="fas fa-envelope"></i>
+    </a>
+
+    <button type="button"
+            class="share-btn copy-link"
+            onclick="copyProductLink()"
+            aria-label="{% trans 'نسخ الرابط' %}">
+        <i class="fas fa-link"></i>
+    </button>
+</div>
+
+<style>
+.share-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--border-color);
+    margin-top: 1.5rem;
+}
+
+.share-label {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-inline-end: 0.5rem;
+}
+
+.share-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-decoration: none;
+    transition: transform 0.3s ease;
+    cursor: pointer;
+    border: none;
+}
+
+.share-btn:hover {
+    transform: translateY(-3px);
+}
+
+.share-btn.facebook {
+    background: #1877f2;
+}
+
+.share-btn.twitter {
+    background: #1da1f2;
+}
+
+.share-btn.whatsapp {
+    background: #25d366;
+}
+
+.share-btn.linkedin {
+    background: #0077b5;
+}
+
+.share-btn.email {
+    background: #ea4335;
+}
+
+.share-btn.copy-link {
+    background: #6c757d;
+}
+
+.share-btn i {
+    font-size: 1rem;
+}
+
+/* Tooltip for copy */
+.copy-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.copy-tooltip.show {
+    opacity: 1;
+}
+
+@media (max-width: 575.98px) {
+    .share-buttons {
+        flex-wrap: wrap;
+    }
+
+    .share-btn {
+        width: 35px;
+        height: 35px;
+    }
+}
+</style>
+
+<script>
+function copyProductLink() {
+    const url = window.location.href;
+
+    // Create temporary input
+    const input = document.createElement('input');
+    input.value = url;
+    document.body.appendChild(input);
+    input.select();
+
+    try {
+        document.execCommand('copy');
+
+        // Show success message
+        const btn = event.currentTarget;
+        const tooltip = document.createElement('div');
+        tooltip.className = 'copy-tooltip show';
+        tooltip.textContent = '{% trans "تم نسخ الرابط!" %}';
+        btn.style.position = 'relative';
+        btn.appendChild(tooltip);
+
+        setTimeout(() => {
+            tooltip.remove();
+        }, 2000);
+    } catch (err) {
+        console.error('Failed to copy:', err);
+    }
+
+    document.body.removeChild(input);
+}
+</script>

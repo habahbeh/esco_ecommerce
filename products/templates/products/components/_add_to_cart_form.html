@@ -1,0 +1,377 @@
+{% load i18n %}
+
+<form class="add-to-cart-form" method="post" action="{% url 'cart:add_to_cart' product.id %}" id="addToCartForm">
+    {% csrf_token %}
+
+    <!-- Quantity Selection -->
+    <div class="quantity-section">
+        <label class="quantity-label">{% trans "الكمية" %}:</label>
+        <div class="quantity-controls">
+            <button type="button" class="quantity-btn quantity-decrease" aria-label="{% trans 'تقليل الكمية' %}">
+                <i class="fas fa-minus"></i>
+            </button>
+            <input type="number"
+                   name="quantity"
+                   class="quantity-input"
+                   value="1"
+                   min="1"
+                   max="{{ product.max_order_quantity }}"
+                   aria-label="{% trans 'الكمية' %}">
+            <button type="button" class="quantity-btn quantity-increase" aria-label="{% trans 'زيادة الكمية' %}">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+
+        <!-- Quantity x Price Display -->
+        <div class="quantity-price" style="display: none;">
+            <span class="quantity-price-text">
+                <span class="qty-amount">1</span> × {{ CURRENCY_SYMBOL|default:"د.أ" }} <span class="unit-price">{{ product.current_price|floatformat:2 }}</span> =
+                <strong>{{ CURRENCY_SYMBOL|default:"د.أ" }} <span class="total-price">{{ product.current_price|floatformat:2 }}</span></strong>
+            </span>
+        </div>
+    </div>
+
+    <!-- Hidden Fields for Variants -->
+    <input type="hidden" name="variant_id" id="selectedVariantId" value="">
+
+    <!-- Action Buttons -->
+    <div class="cart-actions">
+        <div class="primary-actions">
+            {% if product.in_stock %}
+                <button type="submit" class="btn btn-primary btn-lg btn-add-cart" name="action" value="add_to_cart">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="btn-text">{% trans "أضف إلى السلة" %}</span>
+                    <span class="btn-loading" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i> {% trans "جاري الإضافة..." %}
+                    </span>
+                </button>
+
+                <button type="submit" class="btn btn-success btn-lg btn-buy-now" name="action" value="buy_now">
+                    <i class="fas fa-bolt"></i>
+                    <span>{% trans "اشتري الآن" %}</span>
+                </button>
+            {% else %}
+                <button type="button" class="btn btn-secondary btn-lg" disabled>
+                    <i class="fas fa-times-circle"></i>
+                    {% trans "غير متوفر" %}
+                </button>
+
+                {% if product.stock_status == 'pre_order' %}
+                    <button type="submit" class="btn btn-info btn-lg" name="action" value="pre_order">
+                        <i class="fas fa-clock"></i>
+                        {% trans "طلب مسبق" %}
+                    </button>
+                {% endif %}
+            {% endif %}
+        </div>
+
+        <div class="secondary-actions">
+            <button type="button" class="btn btn-outline-secondary btn-icon wishlist-btn"
+                    data-product-id="{{ product.id }}"
+                    aria-label="{% trans 'إضافة لقائمة الأمنيات' %}">
+                <i class="{% if in_wishlist %}fas{% else %}far{% endif %} fa-heart"></i>
+            </button>
+
+            <button type="button" class="btn btn-outline-secondary btn-icon compare-btn"
+                    data-product-id="{{ product.id }}"
+                    aria-label="{% trans 'إضافة للمقارنة' %}">
+                <i class="fas fa-exchange-alt"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Success Message (Hidden by default) -->
+    <div class="cart-success-message" style="display: none;">
+        <div class="alert alert-success d-flex align-items-center">
+            <i class="fas fa-check-circle me-2"></i>
+            <span>{% trans "تمت إضافة المنتج إلى السلة بنجاح!" %}</span>
+        </div>
+        <div class="success-actions">
+            <a href="{% url 'cart:cart' %}" class="btn btn-primary btn-sm">
+                {% trans "عرض السلة" %}
+            </a>
+            <button type="button" class="btn btn-outline-primary btn-sm continue-shopping">
+                {% trans "متابعة التسوق" %}
+            </button>
+        </div>
+    </div>
+</form>
+
+<style>
+.add-to-cart-form {
+    margin-top: 2rem;
+}
+
+.quantity-section {
+    margin-bottom: 1.5rem;
+}
+
+.quantity-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.quantity-controls {
+    display: inline-flex;
+    align-items: center;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.quantity-btn {
+    background: transparent;
+    border: none;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--text-secondary);
+}
+
+.quantity-btn:hover {
+    background: var(--bs-primary);
+    color: white;
+}
+
+.quantity-input {
+    border: none;
+    width: 60px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.quantity-input:focus {
+    outline: none;
+}
+
+.quantity-price {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.cart-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.primary-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex: 1;
+}
+
+.secondary-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-add-cart,
+.btn-buy-now {
+    flex: 1;
+    min-width: 150px;
+    font-weight: 600;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-add-cart::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-add-cart:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn-icon {
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.cart-success-message {
+    margin-top: 1rem;
+    animation: slideInUp 0.3s ease;
+}
+
+.success-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 767.98px) {
+    .cart-actions {
+        flex-direction: column;
+    }
+
+    .primary-actions {
+        width: 100%;
+    }
+
+    .secondary-actions {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .btn-add-cart,
+    .btn-buy-now {
+        min-width: auto;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('addToCartForm');
+    const quantityInput = form.querySelector('.quantity-input');
+    const decreaseBtn = form.querySelector('.quantity-decrease');
+    const increaseBtn = form.querySelector('.quantity-increase');
+    const quantityPrice = form.querySelector('.quantity-price');
+    const unitPrice = parseFloat('{{ product.current_price }}');
+
+    // Quantity controls
+    decreaseBtn.addEventListener('click', function() {
+        const currentValue = parseInt(quantityInput.value);
+        if (currentValue > 1) {
+            quantityInput.value = currentValue - 1;
+            updateQuantityPrice();
+        }
+    });
+
+    increaseBtn.addEventListener('click', function() {
+        const currentValue = parseInt(quantityInput.value);
+        const maxValue = parseInt(quantityInput.max);
+        if (currentValue < maxValue) {
+            quantityInput.value = currentValue + 1;
+            updateQuantityPrice();
+        }
+    });
+
+    quantityInput.addEventListener('change', updateQuantityPrice);
+
+    function updateQuantityPrice() {
+        const quantity = parseInt(quantityInput.value);
+        if (quantity > 1) {
+            const total = (quantity * unitPrice).toFixed(2);
+            quantityPrice.querySelector('.qty-amount').textContent = quantity;
+            quantityPrice.querySelector('.total-price').textContent = total;
+            quantityPrice.style.display = 'block';
+        } else {
+            quantityPrice.style.display = 'none';
+        }
+    }
+
+    // AJAX form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const submitBtn = e.submitter;
+        const originalContent = submitBtn.innerHTML;
+
+        // Show loading state
+        submitBtn.disabled = true;
+        if (submitBtn.classList.contains('btn-add-cart')) {
+            submitBtn.querySelector('.btn-text').style.display = 'none';
+            submitBtn.querySelector('.btn-loading').style.display = 'inline';
+        } else {
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + '{% trans "جاري المعالجة..." %}';
+        }
+
+        // Submit via AJAX
+        const formData = new FormData(form);
+        formData.append('action', submitBtn.value);
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (submitBtn.value === 'buy_now') {
+                    window.location.href = data.redirect_url || '{% url "cart:checkout" %}';
+                } else {
+                    // Show success message
+                    form.querySelector('.cart-success-message').style.display = 'block';
+
+                    // Update cart count
+                    updateCartCount(data.cart_count);
+
+                    // Reset form
+                    quantityInput.value = 1;
+                    updateQuantityPrice();
+                }
+            } else {
+                alert(data.message || '{% trans "حدث خطأ" %}');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('{% trans "حدث خطأ في الاتصال" %}');
+        })
+        .finally(() => {
+            // Restore button
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalContent;
+            if (submitBtn.classList.contains('btn-add-cart')) {
+                submitBtn.querySelector('.btn-text').style.display = 'inline';
+                submitBtn.querySelector('.btn-loading').style.display = 'none';
+            }
+        });
+    });
+
+    // Continue shopping button
+    const continueBtn = form.querySelector('.continue-shopping');
+    if (continueBtn) {
+        continueBtn.addEventListener('click', function() {
+            form.querySelector('.cart-success-message').style.display = 'none';
+        });
+    }
+});
+
+function updateCartCount(count) {
+    const cartBadges = document.querySelectorAll('.cart-badge');
+    cartBadges.forEach(badge => {
+        if (count > 0) {
+            badge.textContent = count;
+            badge.style.display = 'block';
+        } else {
+            badge.style.display = 'none';
+        }
+    });
+}
+</script>

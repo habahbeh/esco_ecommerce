@@ -1,0 +1,66 @@
+{% load i18n %}
+
+<div class="rating-stars {% if small %}rating-stars-sm{% endif %}" data-rating="{{ rating|default:0 }}">
+    {% for i in "12345" %}
+        {% if rating >= i|add:0 %}
+            <i class="fas fa-star"></i>
+        {% elif rating > i|add:-1 and rating < i|add:0 %}
+            <i class="fas fa-star-half-alt"></i>
+        {% else %}
+            <i class="far fa-star"></i>
+        {% endif %}
+    {% endfor %}
+
+    {% if show_number %}
+        <span class="rating-number">({{ rating|floatformat:1 }})</span>
+    {% endif %}
+
+    {% if review_count %}
+        <span class="review-count">({{ review_count }} {% trans "تقييم" %})</span>
+    {% endif %}
+
+    {% if show_link %}
+        <a href="#reviews" class="reviews-link">
+            {% trans "عرض التقييمات" %}
+        </a>
+    {% endif %}
+</div>
+
+<style>
+.rating-stars {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.125rem;
+    color: #ffc107;
+}
+
+.rating-stars i {
+    font-size: 1rem;
+}
+
+.rating-stars-sm i {
+    font-size: 0.875rem;
+}
+
+.rating-number {
+    margin-inline-start: 0.5rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.review-count {
+    margin-inline-start: 0.5rem;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.reviews-link {
+    margin-inline-start: 0.5rem;
+    font-size: 0.875rem;
+    text-decoration: none;
+}
+
+.reviews-link:hover {
+    text-decoration: underline;
+}
+</style>
