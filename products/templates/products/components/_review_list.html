@@ -1,0 +1,214 @@
+{% load i18n %}
+
+<div class="reviews-list">
+    <!-- Reviews Header -->
+    <div class="reviews-header">
+        <h5>{% trans "تقييمات العملاء" %} ({{ total_reviews }})</h5>
+
+        <!-- Sort Options -->
+        <div class="review-sort">
+            <label for="reviewSort">{% trans "ترتيب حسب:" %}</label>
+            <select id="reviewSort" class="form-select form-select-sm">
+                <option value="newest">{% trans "الأحدث" %}</option>
+                <option value="oldest">{% trans "الأقدم" %}</option>
+                <option value="helpful">{% trans "الأكثر فائدة" %}</option>
+                <option value="rating_high">{% trans "التقييم الأعلى" %}</option>
+                <option value="rating_low">{% trans "التقييم الأقل" %}</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Filter by Rating -->
+    <div class="review-filters">
+        <button class="filter-btn active" data-rating="all">
+            {% trans "الكل" %} ({{ total_reviews }})
+        </button>
+        {% for rating, count in rating_breakdown.items %}
+            {% if count.count > 0 %}
+                <button class="filter-btn" data-rating="{{ rating }}">
+                    {{ rating }} <i class="fas fa-star text-warning"></i> ({{ count.count }})
+                </button>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Reviews Container -->
+    <div class="reviews-container" id="reviewsContainer">
+        {% if reviews %}
+            {% for review in reviews %}
+                {% include 'products/components/_review_item.html' %}
+            {% endfor %}
+
+            <!-- Load More Button -->
+            {% if reviews.count < total_reviews %}
+                <div class="text-center mt-4">
+                    <button class="btn btn-outline-primary" id="loadMoreReviews" data-page="2">
+                        {% trans "عرض المزيد من التقييمات" %}
+                    </button>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="no-reviews">
+                <i class="fas fa-comment-slash fa-3x text-muted mb-3"></i>
+                <p class="text-muted">{% trans "لا توجد تقييمات بعد. كن أول من يقيم هذا المنتج!" %}</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.reviews-list {
+    margin-top: 2rem;
+}
+
+.reviews-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.reviews-header h5 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.review-sort {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.review-sort label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.review-sort select {
+    width: auto;
+}
+
+.review-filters {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 0.375rem 0.75rem;
+    border: 1px solid var(--border-color);
+    background: white;
+    border-radius: var(--radius-pill);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.filter-btn:hover {
+    border-color: var(--bs-primary);
+    color: var(--bs-primary);
+}
+
+.filter-btn.active {
+    background: var(--bs-primary);
+    border-color: var(--bs-primary);
+    color: white;
+}
+
+.reviews-container {
+    min-height: 300px;
+}
+
+.no-reviews {
+    text-align: center;
+    padding: 3rem;
+}
+
+#loadMoreReviews {
+    min-width: 200px;
+}
+
+@media (max-width: 575.98px) {
+    .reviews-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .review-sort {
+        width: 100%;
+    }
+
+    .review-sort select {
+        width: 100%;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const sortSelect = document.getElementById('reviewSort');
+    const loadMoreBtn = document.getElementById('loadMoreReviews');
+    const container = document.getElementById('reviewsContainer');
+
+    // Filter by rating
+    filterButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            filterButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            const rating = this.dataset.rating;
+            filterReviews(rating);
+        });
+    });
+
+    // Sort reviews
+    sortSelect.addEventListener('change', function() {
+        const sortBy = this.value;
+        sortReviews(sortBy);
+    });
+
+    // Load more reviews
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', function() {
+            const page = this.dataset.page;
+            loadMoreReviews(page);
+        });
+    }
+
+    function filterReviews(rating) {
+        // AJAX call to filter reviews
+        // For now, just show/hide based on data attributes
+        const reviews = container.querySelectorAll('.review-item');
+        reviews.forEach(review => {
+            if (rating === 'all') {
+                review.style.display = 'block';
+            } else {
+                const reviewRating = review.querySelector('.rating-stars').dataset.rating;
+                review.style.display = reviewRating === rating ? 'block' : 'none';
+            }
+        });
+    }
+
+    function sortReviews(sortBy) {
+        // AJAX call to sort reviews
+        console.log('Sorting by:', sortBy);
+    }
+
+    function loadMoreReviews(page) {
+        // AJAX call to load more reviews
+        loadMoreBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> {% trans "جاري التحميل..." %}';
+        loadMoreBtn.disabled = true;
+
+        // Simulate loading
+        setTimeout(() => {
+            loadMoreBtn.innerHTML = '{% trans "عرض المزيد من التقييمات" %}';
+            loadMoreBtn.disabled = false;
+            loadMoreBtn.dataset.page = parseInt(page) + 1;
+        }, 1000);
+    }
+});
+</script>

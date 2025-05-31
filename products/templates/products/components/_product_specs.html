@@ -1,0 +1,186 @@
+{% load i18n %}
+
+{% if product.specifications %}
+<div class="product-specifications">
+    <h5 class="specs-title">{% trans "المواصفات الفنية" %}</h5>
+
+    <div class="specs-table">
+        <table class="table table-striped">
+            <tbody>
+                {% for key, value in product.specifications.items %}
+                    <tr>
+                        <th>{{ key }}</th>
+                        <td>{{ value }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Additional Product Details -->
+    <div class="additional-details mt-4">
+        <div class="row g-3">
+            <!-- General Info -->
+            <div class="col-md-6">
+                <div class="detail-card">
+                    <h6 class="detail-title">{% trans "معلومات عامة" %}</h6>
+                    <ul class="detail-list">
+                        <li>
+                            <span class="detail-label">{% trans "الحالة" %}:</span>
+                            <span class="detail-value">{{ product.get_status_display }}</span>
+                        </li>
+                        <li>
+                            <span class="detail-label">{% trans "تاريخ الإضافة" %}:</span>
+                            <span class="detail-value">{{ product.created_at|date:"Y/m/d" }}</span>
+                        </li>
+                        {% if product.brand %}
+                            <li>
+                                <span class="detail-label">{% trans "بلد المنشأ" %}:</span>
+                                <span class="detail-value">{{ product.brand.country|default:"-" }}</span>
+                            </li>
+                        {% endif %}
+                        <li>
+                            <span class="detail-label">{% trans "الضمان" %}:</span>
+                            <span class="detail-value">{% trans "سنة واحدة" %}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Dimensions & Weight -->
+            {% if product.weight or product.length %}
+                <div class="col-md-6">
+                    <div class="detail-card">
+                        <h6 class="detail-title">{% trans "الوزن والأبعاد" %}</h6>
+                        <ul class="detail-list">
+                            {% if product.weight %}
+                                <li>
+                                    <span class="detail-label">{% trans "الوزن" %}:</span>
+                                    <span class="detail-value">{{ product.weight|floatformat:2 }} {% trans "كجم" %}</span>
+                                </li>
+                            {% endif %}
+                            {% if product.length %}
+                                <li>
+                                    <span class="detail-label">{% trans "الطول" %}:</span>
+                                    <span class="detail-value">{{ product.length|floatformat:0 }} {% trans "سم" %}</span>
+                                </li>
+                            {% endif %}
+                            {% if product.width %}
+                                <li>
+                                    <span class="detail-label">{% trans "العرض" %}:</span>
+                                    <span class="detail-value">{{ product.width|floatformat:0 }} {% trans "سم" %}</span>
+                                </li>
+                            {% endif %}
+                            {% if product.height %}
+                                <li>
+                                    <span class="detail-label">{% trans "الارتفاع" %}:</span>
+                                    <span class="detail-value">{{ product.height|floatformat:0 }} {% trans "سم" %}</span>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.product-specifications {
+    margin-top: 2rem;
+}
+
+.specs-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+}
+
+.specs-table {
+    background: white;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.specs-table .table {
+    margin-bottom: 0;
+}
+
+.specs-table th {
+    width: 35%;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: rgba(var(--bs-primary-rgb), 0.05);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.specs-table td {
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.detail-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    height: 100%;
+}
+
+.detail-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--bs-primary);
+}
+
+.detail-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.detail-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.detail-list li:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.detail-value {
+    color: var(--text-secondary);
+    text-align: end;
+}
+
+@media (max-width: 767.98px) {
+    .specs-table th {
+        width: 40%;
+        font-size: 0.875rem;
+    }
+
+    .specs-table td {
+        font-size: 0.875rem;
+    }
+
+    .detail-card {
+        padding: 1rem;
+    }
+
+    .detail-list {
+        font-size: 0.875rem;
+    }
+}
+</style>

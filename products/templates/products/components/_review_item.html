@@ -1,0 +1,261 @@
+{% load i18n humanize %}
+
+<div class="review-item">
+    <div class="review-header">
+        <div class="reviewer-info">
+            <div class="reviewer-avatar">
+                {{ review.user.get_full_name|first|upper }}
+            </div>
+            <div>
+                <h6 class="reviewer-name">{{ review.user.get_full_name|default:review.user.username }}</h6>
+                <div class="review-meta">
+                    <span class="review-date">{{ review.created_at|naturaltime }}</span>
+                    {% if review.user.product_reviews.count > 1 %}
+                        <span class="reviewer-badge">
+                            <i class="fas fa-check-circle"></i> {% trans "مشتري موثق" %}
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="review-rating">
+            {% include 'products/components/_rating_stars.html' with rating=review.rating small=True %}
+        </div>
+    </div>
+
+    {% if review.title %}
+        <h6 class="review-title">{{ review.title }}</h6>
+    {% endif %}
+
+    <div class="review-content">
+        <p>{{ review.comment|linebreaks }}</p>
+    </div>
+
+    {% if review.image1 or review.image2 or review.image3 %}
+        <div class="review-images">
+            {% if review.image1 %}
+                <a href="{{ review.image1.url }}" class="review-image" data-lightbox="review-{{ review.id }}">
+                    <img src="{{ review.image1.url }}" alt="{% trans 'صورة المراجعة' %}">
+                </a>
+            {% endif %}
+            {% if review.image2 %}
+                <a href="{{ review.image2.url }}" class="review-image" data-lightbox="review-{{ review.id }}">
+                    <img src="{{ review.image2.url }}" alt="{% trans 'صورة المراجعة' %}">
+                </a>
+            {% endif %}
+            {% if review.image3 %}
+                <a href="{{ review.image3.url }}" class="review-image" data-lightbox="review-{{ review.id }}">
+                    <img src="{{ review.image3.url }}" alt="{% trans 'صورة المراجعة' %}">
+                </a>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <div class="review-footer">
+        <div class="helpful-section">
+            <span class="helpful-question">{% trans "هل كان هذا التقييم مفيداً؟" %}</span>
+            <div class="helpful-buttons">
+                <button class="btn btn-sm btn-outline-success helpful-btn"
+                        data-review-id="{{ review.id }}"
+                        data-type="helpful">
+                    <i class="fas fa-thumbs-up"></i> {% trans "نعم" %}
+                    {% if review.helpful_count > 0 %}
+                        <span class="count">({{ review.helpful_count }})</span>
+                    {% endif %}
+                </button>
+                <button class="btn btn-sm btn-outline-danger helpful-btn"
+                        data-review-id="{{ review.id }}"
+                        data-type="not_helpful">
+                    <i class="fas fa-thumbs-down"></i> {% trans "لا" %}
+                    {% if review.not_helpful_count > 0 %}
+                        <span class="count">({{ review.not_helpful_count }})</span>
+                    {% endif %}
+                </button>
+            </div>
+        </div>
+
+        {% if review.helpful_percentage > 70 %}
+            <div class="helpful-badge">
+                <i class="fas fa-star"></i>
+                {{ review.helpful_percentage }}% {% trans "وجدوا هذا التقييم مفيداً" %}
+            </div>
+        {% endif %}
+
+        <button class="btn btn-sm btn-link report-btn" data-review-id="{{ review.id }}">
+            <i class="fas fa-flag"></i> {% trans "إبلاغ" %}
+        </button>
+    </div>
+</div>
+
+<style>
+.review-item {
+    padding: 1.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.review-item:last-child {
+    border-bottom: none;
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.reviewer-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.reviewer-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--bs-primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.125rem;
+}
+
+.reviewer-name {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.review-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.reviewer-badge {
+    color: var(--bs-success);
+    font-weight: 500;
+}
+
+.review-title {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.review-content {
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+}
+
+.review-content p {
+    margin-bottom: 0.5rem;
+}
+
+.review-content p:last-child {
+    margin-bottom: 0;
+}
+
+.review-images {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.review-image {
+    width: 80px;
+    height: 80px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.review-image:hover {
+    transform: scale(1.05);
+}
+
+.review-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.review-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.helpful-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.helpful-question {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.helpful-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.helpful-btn {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+.helpful-btn .count {
+    font-weight: 600;
+}
+
+.helpful-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    background: rgba(var(--bs-success-rgb), 0.1);
+    color: var(--bs-success);
+    border-radius: var(--radius-pill);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.report-btn {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-decoration: none;
+}
+
+.report-btn:hover {
+    color: var(--bs-danger);
+}
+
+@media (max-width: 575.98px) {
+    .review-header {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .review-footer {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .helpful-section {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+    }
+}
+</style>

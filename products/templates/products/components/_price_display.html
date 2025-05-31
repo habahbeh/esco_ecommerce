@@ -1,0 +1,200 @@
+{% load i18n humanize %}
+
+<div class="price-display {% if large %}price-display-large{% endif %}">
+    {% if product.show_price %}
+        {% if product.has_discount %}
+            <div class="price-wrapper has-discount">
+                <div class="current-price">
+                    <span class="currency">{{ CURRENCY_SYMBOL|default:"د.أ" }}</span>
+                    <span class="amount">{{ product.current_price|floatformat:2|intcomma }}</span>
+                </div>
+                <div class="original-price">
+                    <span class="text-decoration-line-through text-muted">
+                        {{ CURRENCY_SYMBOL|default:"د.أ" }} {{ product.base_price|floatformat:2|intcomma }}
+                    </span>
+                </div>
+                <div class="discount-badge">
+                    <span class="badge bg-danger">
+                        {{ product.savings_percentage }}% {% trans "خصم" %}
+                    </span>
+                </div>
+            </div>
+            {% if show_savings %}
+                <div class="savings-info">
+                    <i class="fas fa-tag"></i>
+                    {% trans "وفر" %} {{ CURRENCY_SYMBOL|default:"د.أ" }} {{ product.savings_amount|floatformat:2|intcomma }}
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="price-wrapper">
+                <div class="current-price">
+                    <span class="currency">{{ CURRENCY_SYMBOL|default:"د.أ" }}</span>
+                    <span class="amount">{{ product.base_price|floatformat:2|intcomma }}</span>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if product.tax_rate > 0 %}
+            <div class="tax-info">
+                <small class="text-muted">
+                    {% trans "السعر يشمل الضريبة" %} ({{ product.tax_rate|floatformat:0 }}%)
+                </small>
+            </div>
+        {% endif %}
+
+        {% if product.discount_end %}
+            <div class="offer-timer" data-end-date="{{ product.discount_end|date:'c' }}">
+                <i class="fas fa-clock text-danger"></i>
+                <span class="timer-text">{% trans "العرض ينتهي خلال" %}</span>
+                <span class="countdown">
+                    <span class="days">0</span> {% trans "يوم" %}
+                    <span class="hours">0</span>:
+                    <span class="minutes">0</span>:
+                    <span class="seconds">0</span>
+                </span>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="price-wrapper">
+            <div class="contact-for-price">
+                <i class="fas fa-phone-alt"></i>
+                <span>{% trans "اتصل للحصول على السعر" %}</span>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.price-display {
+    margin: 1rem 0;
+}
+
+.price-wrapper {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.price-wrapper.has-discount {
+    align-items: center;
+}
+
+.current-price {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--bs-primary);
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+}
+
+.price-display-large .current-price {
+    font-size: 2.25rem;
+}
+
+.currency {
+    font-size: 0.75em;
+    font-weight: 500;
+}
+
+.original-price {
+    font-size: 1.25rem;
+    color: var(--text-muted);
+}
+
+.discount-badge .badge {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+}
+
+.savings-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(var(--bs-success-rgb), 0.1);
+    color: var(--bs-success);
+    border-radius: var(--radius-pill);
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
+.tax-info {
+    margin-top: 0.5rem;
+}
+
+.offer-timer {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(var(--bs-danger-rgb), 0.1);
+    border-radius: var(--radius-md);
+    margin-top: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.countdown {
+    font-family: monospace;
+    font-size: 1rem;
+    color: var(--bs-danger);
+}
+
+.contact-for-price {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+}
+
+@media (max-width: 575.98px) {
+    .current-price {
+        font-size: 1.5rem;
+    }
+
+    .price-display-large .current-price {
+        font-size: 1.875rem;
+    }
+
+    .original-price {
+        font-size: 1rem;
+    }
+}
+</style>
+
+<script>
+// Countdown Timer
+document.addEventListener('DOMContentLoaded', function() {
+    const timerElements = document.querySelectorAll('.offer-timer');
+
+    timerElements.forEach(timer => {
+        const endDate = new Date(timer.dataset.endDate);
+
+        function updateTimer() {
+            const now = new Date();
+            const diff = endDate - now;
+
+            if (diff > 0) {
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                timer.querySelector('.days').textContent = days;
+                timer.querySelector('.hours').textContent = String(hours).padStart(2, '0');
+                timer.querySelector('.minutes').textContent = String(minutes).padStart(2, '0');
+                timer.querySelector('.seconds').textContent = String(seconds).padStart(2, '0');
+            } else {
+                timer.innerHTML = '<span class="text-danger">{% trans "انتهى العرض" %}</span>';
+            }
+        }
+
+        updateTimer();
+        setInterval(updateTimer, 1000);
+    });
+});
+</script>

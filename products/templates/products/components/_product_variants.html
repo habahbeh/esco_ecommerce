@@ -1,0 +1,247 @@
+{% load i18n %}
+
+{% if product.variants.filter.exists %}
+<div class="product-variants">
+    <!-- Color Variants -->
+    {% if product.variants.filter.exists %}
+        <div class="variant-group">
+            <label class="variant-label">{% trans "اللون" %}:</label>
+            <div class="color-variants">
+                {% for variant in product.variants.filter %}
+                    {% if variant.color %}
+                        <div class="color-option {% if forloop.first %}active{% endif %}"
+                             data-variant-id="{{ variant.id }}"
+                             data-price="{{ variant.current_price }}"
+                             data-stock="{{ variant.stock_quantity }}"
+                             data-sku="{{ variant.sku }}"
+                             title="{{ variant.get_color_display }}">
+                            {% if variant.color_code %}
+                                <span class="color-swatch" style="background-color: {{ variant.color_code }}"></span>
+                            {% else %}
+                                <span class="color-name">{{ variant.get_color_display }}</span>
+                            {% endif %}
+                            {% if not variant.is_in_stock %}
+                                <span class="out-of-stock-line"></span>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Size Variants -->
+    {% if product.variants.filter.exists %}
+        <div class="variant-group">
+            <label class="variant-label">
+                {% trans "المقاس" %}:
+                <button type="button" class="size-guide-btn" data-bs-toggle="modal" data-bs-target="#sizeGuideModal">
+                    <i class="fas fa-ruler"></i> {% trans "دليل المقاسات" %}
+                </button>
+            </label>
+            <div class="size-variants">
+                {% for variant in product.variants.filter %}
+                    {% if variant.size %}
+                        <button class="size-option {% if forloop.first %}active{% endif %} {% if not variant.is_in_stock %}disabled{% endif %}"
+                                data-variant-id="{{ variant.id }}"
+                                data-price="{{ variant.current_price }}"
+                                data-stock="{{ variant.stock_quantity }}"
+                                {% if not variant.is_in_stock %}disabled{% endif %}>
+                            {{ variant.get_size_display }}
+                        </button>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Custom Variants -->
+    {% for variant in product.variants.filter %}
+        {% if variant.material or variant.pattern %}
+            <div class="variant-group">
+                <label class="variant-label">
+                    {% if variant.material %}{% trans "المادة" %}{% elif variant.pattern %}{% trans "النقشة" %}{% endif %}:
+                </label>
+                <select class="form-select variant-select" data-variant-type="custom">
+                    {% for v in product.variants.filter %}
+                        {% if v.material or v.pattern %}
+                            <option value="{{ v.id }}"
+                                    data-price="{{ v.current_price }}"
+                                    data-stock="{{ v.stock_quantity }}"
+                                    {% if not v.is_in_stock %}disabled{% endif %}>
+                                {{ v.material|default:v.pattern }}
+                                {% if not v.is_in_stock %}({% trans "غير متوفر" %}){% endif %}
+                            </option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+        {% endif %}
+    {% endfor %}
+
+    <!-- Selected Variant Info -->
+    <div class="selected-variant-info" style="display: none;">
+        <div class="variant-sku">
+            <span class="text-muted">{% trans "رقم المنتج" %}:</span>
+        </div>
+        <div class="variant-availability">
+            <span class="text-muted">{% trans "المتوفر" %}:</span>
+            <span class="variant-stock"></span>
+        </div>
+    </div>
+</div>
+
+<style>
+.product-variants {
+    margin-bottom: 1.5rem;
+}
+
+.variant-group {
+    margin-bottom: 1.25rem;
+}
+
+.variant-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+}
+
+.size-guide-btn {
+    background: none;
+    border: none;
+    color: var(--bs-primary);
+    font-size: 0.875rem;
+    font-weight: normal;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.size-guide-btn:hover {
+    text-decoration: underline;
+}
+
+/* Color Variants */
+.color-variants {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.color-option {
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.color-swatch {
+    display: block;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.color-option.active .color-swatch {
+    border-color: var(--bs-primary);
+    transform: scale(1.1);
+}
+
+.color-name {
+    display: block;
+    padding: 0.5rem 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-pill);
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+}
+
+.color-option.active .color-name {
+    border-color: var(--bs-primary);
+    background: var(--bs-primary);
+    color: white;
+}
+
+.out-of-stock-line {
+    position: absolute;
+    top: 50%;
+    left: -5%;
+    right: -5%;
+    height: 2px;
+    background: #dc3545;
+    transform: rotate(-45deg);
+}
+
+/* Size Variants */
+.size-variants {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.size-option {
+    padding: 0.5rem 1rem;
+    border: 2px solid var(--border-color);
+    background: white;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 50px;
+}
+
+.size-option:hover:not(.disabled) {
+    border-color: var(--bs-primary);
+    transform: translateY(-2px);
+}
+
+.size-option.active {
+    background: var(--bs-primary);
+    border-color: var(--bs-primary);
+    color: white;
+}
+
+.size-option.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
+/* Custom Variants */
+.variant-select {
+    max-width: 300px;
+}
+
+/* Selected Variant Info */
+.selected-variant-info {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(var(--bs-primary-rgb), 0.05);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+}
+
+.selected-variant-info > div {
+    margin-bottom: 0.5rem;
+}
+
+.selected-variant-info > div:last-child {
+    margin-bottom: 0;
+}
+
+@media (max-width: 575.98px) {
+    .color-swatch {
+        width: 35px;
+        height: 35px;
+    }
+
+    .size-option {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+    }
+}
+</style>
