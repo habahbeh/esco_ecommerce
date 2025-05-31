@@ -1,0 +1,538 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block extra_css %}
+    {{ block.super }}
+    <!-- Product-specific CSS -->
+    <link rel="stylesheet" href="{% static 'css/products.css' %}">
+
+    <style>
+        /* Enhanced Product Styles */
+        .products-container {
+            padding-top: 2rem;
+        }
+
+        .breadcrumb-container {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .breadcrumb {
+            background: transparent;
+            margin: 0;
+            padding: 0;
+        }
+
+        .breadcrumb-item {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .breadcrumb-item.active {
+            color: var(--bs-primary);
+            font-weight: 600;
+        }
+
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: "←";
+            color: var(--text-muted);
+            margin: 0 0.5rem;
+        }
+
+        html[dir="rtl"] .breadcrumb-item + .breadcrumb-item::before {
+            content: "→";
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        .page-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background: var(--bs-primary);
+            border-radius: 2px;
+        }
+
+        .page-subtitle {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+            margin-bottom: 0;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .section-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .section-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        /* Product Grid Base Styles */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 768px) {
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 1.5rem;
+            }
+        }
+
+        /* Loading States */
+        .loading-skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 8px;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .skeleton-card {
+            height: 400px;
+            border-radius: 12px;
+        }
+
+        .skeleton-image {
+            height: 200px;
+            margin-bottom: 1rem;
+        }
+
+        .skeleton-text {
+            height: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .skeleton-text.short {
+            width: 60%;
+        }
+
+        .skeleton-text.medium {
+            width: 80%;
+        }
+
+        /* Filter Panel */
+        .filters-panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            position: sticky;
+            top: 100px;
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+
+        .filter-group {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .filter-group:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .filter-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-options {
+            space-y: 0.5rem;
+        }
+
+        .filter-option {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 0;
+            transition: color 0.2s ease;
+        }
+
+        .filter-option:hover {
+            color: var(--bs-primary);
+        }
+
+        .filter-option input[type="checkbox"],
+        .filter-option input[type="radio"] {
+            margin-right: 0.75rem;
+            margin-left: 0;
+        }
+
+        html[dir="rtl"] .filter-option input[type="checkbox"],
+        html[dir="rtl"] .filter-option input[type="radio"] {
+            margin-right: 0;
+            margin-left: 0.75rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 991.98px) {
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .filters-panel {
+                position: static;
+                max-height: none;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .breadcrumb-container {
+                padding: 0.75rem 1rem;
+            }
+
+            .page-header {
+                margin-bottom: 2rem;
+            }
+
+            .page-title {
+                font-size: 1.75rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+
+    {% block product_css %}{% endblock %}
+{% endblock %}
+
+{% block content %}
+    <div class="products-container">
+        <div class="container">
+            <!-- Breadcrumbs -->
+            {% if breadcrumbs %}
+                <div class="breadcrumb-container">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item">
+                                <a href="{% url 'core:home' %}" class="text-decoration-none">
+                                    <i class="fas fa-home me-1"></i>
+                                    {% trans "الرئيسية" %}
+                                </a>
+                            </li>
+                            {% for crumb in breadcrumbs %}
+                                {% if crumb.url %}
+                                    <li class="breadcrumb-item">
+                                        <a href="{{ crumb.url }}" class="text-decoration-none">
+                                            {{ crumb.name }}
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="breadcrumb-item active" aria-current="page">
+                                        {{ crumb.name }}
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                        </ol>
+                    </nav>
+                </div>
+            {% endif %}
+
+            <!-- Page Header -->
+            {% block page_header %}
+                <div class="page-header">
+                    <h1 class="page-title">{% block page_title %}{% trans "المنتجات" %}{% endblock %}</h1>
+                    {% block page_subtitle %}
+                        <p class="page-subtitle">{% trans "اكتشف مجموعتنا الواسعة من المنتجات عالية الجودة" %}</p>
+                    {% endblock %}
+                </div>
+            {% endblock %}
+
+            <!-- Alert Messages -->
+            {% if messages %}
+                <div class="messages-container mb-4">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            <div class="d-flex align-items-center">
+                                {% if message.tags == 'success' %}
+                                    <i class="fas fa-check-circle me-2"></i>
+                                {% elif message.tags == 'error' %}
+                                    <i class="fas fa-exclamation-circle me-2"></i>
+                                {% elif message.tags == 'warning' %}
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                {% else %}
+                                    <i class="fas fa-info-circle me-2"></i>
+                                {% endif %}
+                                {{ message }}
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% trans 'إغلاق' %}"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Main Content -->
+            <div class="row">
+                <!-- Sidebar (for pages that need filters) -->
+                {% block sidebar %}{% endblock %}
+
+                <!-- Main Content Area -->
+                <div class="{% block content_col_class %}col-12{% endblock %}">
+                    {% block main_content %}
+                        <!-- Default content -->
+                        <div class="text-center py-5">
+                            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">{% trans "المحتوى قيد التطوير" %}</h4>
+                            <p class="text-muted">{% trans "سيتم إضافة المحتوى قريباً" %}</p>
+                        </div>
+                    {% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="text-center">
+            <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">{% trans "جاري التحميل..." %}</span>
+            </div>
+            <h6>{% trans "جاري التحميل..." %}</h6>
+        </div>
+    </div>
+
+    <!-- Include Modals -->
+    {% include 'products/modals/_size_guide_modal.html' %}
+    {% include 'products/modals/_360_view_modal.html' %}
+    {% include 'products/modals/_notify_modal.html' %}
+    {% include 'products/modals/_zoom_modal.html' %}
+
+    <!-- Quick View Modal -->
+    <div class="modal fade" id="quickViewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title">
+                        <i class="fas fa-eye me-2"></i>
+                        {% trans "عرض سريع" %}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'إغلاق' %}"></button>
+                </div>
+                <div class="modal-body" id="quickViewContent">
+                    <!-- Quick view content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    {{ block.super }}
+
+    <!-- Product-specific JavaScript -->
+    <script src="{% static 'js/products.js' %}"></script>
+
+    <script>
+        // Global product functions
+
+        // Show loading overlay
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+
+        // Hide loading overlay
+        function hideLoading() {
+            setTimeout(() => {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }, 300);
+        }
+
+        // Show notification
+        function showNotification(type, message) {
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} alert-dismissible fade show notification-toast`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 1050;
+                min-width: 300px;
+                max-width: 400px;
+                animation: slideIn 0.3s ease;
+            `;
+
+            notification.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            document.body.appendChild(notification);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+
+        // Get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Open quick view modal
+        function openQuickView(productId) {
+            showLoading();
+
+            fetch(`/products/api/product/${productId}/quick-view/`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('quickViewContent').innerHTML = html;
+                    const modal = new bootstrap.Modal(document.getElementById('quickViewModal'));
+                    modal.show();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('error', 'حدث خطأ في تحميل العرض السريع');
+                })
+                .finally(() => {
+                    hideLoading();
+                });
+        }
+
+        // Update cart count
+        function updateCartCount(count) {
+            const cartBadge = document.querySelector('.cart-badge');
+            if (cartBadge) {
+                cartBadge.textContent = count;
+                cartBadge.style.display = count > 0 ? 'inline-block' : 'none';
+            }
+        }
+
+        // Update comparison count
+        function updateComparisonCount(count) {
+            const comparisonBadge = document.querySelector('.comparison-badge');
+            if (comparisonBadge) {
+                comparisonBadge.textContent = count;
+                comparisonBadge.style.display = count > 0 ? 'inline-block' : 'none';
+            }
+        }
+
+        // Initialize wishlist buttons
+        function initializeWishlistButtons() {
+            document.querySelectorAll('.wishlist-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const productId = this.dataset.productId;
+                    toggleWishlist(productId, this);
+                });
+            });
+        }
+
+        // Toggle wishlist
+        function toggleWishlist(productId, button) {
+            fetch(`/products/api/wishlist/toggle/${productId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const icon = button.querySelector('i');
+                    if (data.in_wishlist) {
+                        icon.classList.remove('far');
+                        icon.classList.add('fas');
+                        button.classList.add('text-danger');
+                    } else {
+                        icon.classList.remove('fas');
+                        icon.classList.add('far');
+                        button.classList.remove('text-danger');
+                    }
+                    showNotification('success', data.message);
+                } else {
+                    showNotification('error', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('error', 'حدث خطأ في الاتصال');
+            });
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeWishlistButtons();
+
+            // Initialize AOS if available
+            if (typeof AOS !== 'undefined') {
+                AOS.init({
+                    duration: 600,
+                    once: true,
+                    offset: 50
+                });
+            }
+        });
+    </script>
+
+    {% block product_js %}{% endblock %}
+{% endblock %}
