@@ -1,20 +1,131 @@
+# products/admin.py
 from django.contrib import admin
 from django.utils.html import mark_safe, format_html
 from django.utils.translation import gettext_lazy as _
-from django.db.models import Count, Avg, Q
-from django.urls import reverse
+from django.db.models import Count, Avg, Q, Sum, F, Max, Min
+from django.urls import reverse, path
 from django.utils import timezone
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.admin import SimpleListFilter
 from django import forms
+from django.core.exceptions import ValidationError
+from django.contrib.admin.widgets import AdminFileWidget
+from django.utils.safestring import mark_safe
 import json
+import csv
+from decimal import Decimal
+from datetime import datetime, timedelta
 
 from .models import (
     Category, Brand, Product, ProductImage, ProductVariant,
-    Tag, ProductReview, Wishlist, ProductComparison
+    Tag, ProductReview, Wishlist, ProductComparison, ProductViewHistory,
+    ProductAttribute, ProductAttributeValue, ProductQuestion,
+    ProductSubscription, ProductDiscount, DiscountUsage
 )
 
 
+# ==================== CUSTOM FILTERS ====================
+
+class StockLevelFilter(SimpleListFilter):
+    """فلتر مستوى المخزون"""
+    title = _('مستوى المخزون')
+    parameter_name = 'stock_level'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('in_stock', _('متوفر')),
+            ('low_stock', _('مخزون منخفض')),
+            ('out_of_stock', _('نفد المخزون')),
+            ('overstocked', _('مخزون زائد')),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'in_stock':
+            return queryset.filter(stock_quantity__gt=F('min_stock_level'))
+        elif self.value() == 'low_stock':
+            return queryset.filter(
+                stock_quantity__gt=0,
+                stock_quantity__lte=F('min_stock_level')
+            )
+        elif self.value() == 'out_of_stock':
+            return queryset.filter(stock_quantity=0)
+        elif self.value() == 'overstocked':
+            return queryset.filter(stock_quantity__gt=100)
+
+
+class PriceRangeFilter(SimpleListFilter):
+    """فلتر نطاق الأسعار"""
+    title = _('نطاق السعر')
+    parameter_name = 'price_range'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('0-100', _('0 - 100 ر.س')),
+            ('100-500', _('100 - 500 ر.س')),
+            ('500-1000', _('500 - 1000 ر.س')),
+            ('1000-5000', _('1000 - 5000 ر.س')),
+            ('5000+', _('أكثر من 5000 ر.س')),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == '0-100':
+            return queryset.filter(base_price__range=(0, 100))
+        elif self.value() == '100-500':
+            return queryset.filter(base_price__range=(100, 500))
+        elif self.value() == '500-1000':
+            return queryset.filter(base_price__range=(500, 1000))
+        elif self.value() == '1000-5000':
+            return queryset.filter(base_price__range=(1000, 5000))
+        elif self.value() == '5000+':
+            return queryset.filter(base_price__gt=5000)
+
+
+class DateCreatedFilter(SimpleListFilter):
+    """فلتر تاريخ الإنشاء"""
+    title = _('تاريخ الإنشاء')
+    parameter_name = 'date_created'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('today', _('اليوم')),
+            ('yesterday', _('أمس')),
+            ('this_week', _('هذا الأسبوع')),
+            ('this_month', _('هذا الشهر')),
+            ('last_month', _('الشهر الماضي')),
+            ('this_year', _('هذا العام')),
+        )
+
+    def queryset(self, request, queryset):
+        now = timezone.now()
+        if self.value() == 'today':
+            return queryset.filter(created_at__date=now.date())
+        elif self.value() == 'yesterday':
+            yesterday = now - timedelta(days=1)
+            return queryset.filter(created_at__date=yesterday.date())
+        elif self.value() == 'this_week':
+            start_week = now - timedelta(days=now.weekday())
+            return queryset.filter(created_at__gte=start_week)
+        elif self.value() == 'this_month':
+            return queryset.filter(
+                created_at__year=now.year,
+                created_at__month=now.month
+            )
+        elif self.value() == 'last_month':
+            last_month = now.replace(day=1) - timedelta(days=1)
+            return queryset.filter(
+                created_at__year=last_month.year,
+                created_at__month=last_month.month
+            )
+        elif self.value() == 'this_year':
+            return queryset.filter(created_at__year=now.year)
+
+
+# ==================== CUSTOM FORMS ====================
+
 class CategoryAdminForm(forms.ModelForm):
-    """Custom form for category with better parent selection"""
+    """نموذج محسن لإدارة الفئات"""
 
     class Meta:
         model = Category
@@ -22,60 +133,146 @@ class CategoryAdminForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Exclude self and descendants from parent choices
+
+        # منع المرجع الدائري
         if self.instance.pk:
-            descendants = self.instance.get_descendants()
+            descendants = self.instance.get_all_children()
             descendants_ids = [d.id for d in descendants] + [self.instance.pk]
             self.fields['parent'].queryset = Category.objects.exclude(id__in=descendants_ids)
 
+        # تحسين عرض الخيارات
+        self.fields['parent'].empty_label = _("-- فئة جذر --")
+
+        # إضافة help text مخصص
+        self.fields['color'].help_text = _('اللون بصيغة سداسية عشرية مثل: #FF5733')
+        self.fields['icon'].help_text = _('CSS class للأيقونة مثل: fas fa-laptop')
+
+
+class ProductAdminForm(forms.ModelForm):
+    """نموذج محسن لإدارة المنتجات"""
+
+    class Meta:
+        model = Product
+        fields = '__all__'
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 6}),
+            'short_description': forms.Textarea(attrs={'rows': 3}),
+            'specifications': forms.Textarea(attrs={'rows': 4}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        # التحقق من منطق الخصومات
+        discount_percentage = cleaned_data.get('discount_percentage', 0)
+        discount_amount = cleaned_data.get('discount_amount', 0)
+        base_price = cleaned_data.get('base_price', 0)
+
+        if discount_percentage > 0 and discount_amount > 0:
+            raise ValidationError(_("لا يمكن تطبيق نسبة خصم ومبلغ خصم معاً"))
+
+        if discount_amount >= base_price:
+            raise ValidationError(_("مبلغ الخصم لا يمكن أن يكون أكبر من السعر الأساسي"))
+
+        return cleaned_data
+
+
+class ProductImageWidget(AdminFileWidget):
+    """ويدجت محسن لصور المنتجات"""
+
+    def render(self, name, value, attrs=None, renderer=None):
+        output = []
+        if value and hasattr(value, 'url'):
+            output.append(format_html(
+                '<div class="image-preview" style="margin-bottom: 10px;">'
+                '<img src="{}" style="max-width: 200px; max-height: 200px; border: 1px solid #ddd; border-radius: 4px;">'
+                '</div>',
+                value.url
+            ))
+        output.append(super().render(name, value, attrs, renderer))
+        return mark_safe(''.join(output))
+
+
+# ==================== INLINE ADMINS ====================
+
+class ProductImageInline(admin.TabularInline):
+    """إدارة صور المنتجات المضمنة"""
+    model = ProductImage
+    extra = 1
+    max_num = 10
+    fields = ['image', 'image_preview', 'alt_text', 'is_primary', 'sort_order']
+    readonly_fields = ['image_preview']
+    ordering = ['sort_order', '-is_primary']
+
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html(
+                '<img src="{}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px;">',
+                obj.image.url
+            )
+        return _('لا توجد صورة')
+
+    image_preview.short_description = _('معاينة')
+
+
+class ProductVariantInline(admin.TabularInline):
+    """إدارة متغيرات المنتجات المضمنة"""
+    model = ProductVariant
+    extra = 0
+    fields = [
+        'name', 'sku', 'attributes', 'base_price',
+        'stock_quantity', 'is_active', 'is_default'
+    ]
+    readonly_fields = ['available_quantity_display']
+
+    def available_quantity_display(self, obj):
+        return f"{obj.available_quantity} / {obj.stock_quantity}"
+
+    available_quantity_display.short_description = _('متاح / إجمالي')
+
+
+class ProductAttributeValueInline(admin.TabularInline):
+    """إدارة قيم خصائص المنتجات المضمنة"""
+    model = ProductAttributeValue
+    extra = 0
+    autocomplete_fields = ['attribute']
+
+
+class SubCategoryInline(admin.TabularInline):
+    """إدارة الفئات الفرعية المضمنة"""
+    model = Category
+    fk_name = 'parent'
+    extra = 0
+    fields = ['name', 'slug', 'is_active', 'sort_order', 'products_count']
+    readonly_fields = ['products_count']
+    show_change_link = True
+
+
+# ==================== MAIN ADMIN CLASSES ====================
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    """
-    إدارة فئات المنتجات في لوحة التحكم
-    Category administration in dashboard
-    """
+    """إدارة فئات المنتجات المحسنة"""
 
-    # List Display
+    form = CategoryAdminForm
     list_display = [
-        'indented_name', 'slug', 'parent', 'level', 'products_count',
-        'is_active', 'is_featured', 'sort_order', 'views_count', 'created_at'
+        'indented_name', 'level', 'products_count', 'views_count',
+        'is_active', 'is_featured', 'sort_order', 'created_at'
     ]
-
-    # List Filters
     list_filter = [
-        'is_active',
-        'is_featured',
-        'show_in_menu',
-        'level',
-        'parent',
-        'created_at',
-        'updated_at',
+        'is_active', 'is_featured', 'show_in_menu', 'level',
         ('parent', admin.RelatedOnlyFieldListFilter),
+        DateCreatedFilter
     ]
-
-    # Search Fields
-    search_fields = [
-        'name',
-        'name_en',
-        'description',
-        'slug',
-        'meta_title',
-        'meta_keywords'
-    ]
-
-    # Ordering
+    search_fields = ['name', 'name_en', 'description', 'slug']
+    prepopulated_fields = {'slug': ('name',)}
     ordering = ['level', 'sort_order', 'name']
+    list_editable = ['sort_order', 'is_active', 'is_featured']
+    list_per_page = 50
+    inlines = [SubCategoryInline]
 
-    # Prepopulated Fields
-    prepopulated_fields = {
-        'slug': ('name',),
-        'meta_title': ('name',),
-    }
-
-    # Fieldsets for better organization
     fieldsets = (
-        (_('معلومات أساسية'), {
+        (_('المعلومات الأساسية'), {
             'fields': (
                 ('name', 'name_en'),
                 'slug',
@@ -86,946 +283,969 @@ class CategoryAdmin(admin.ModelAdmin):
         (_('التصنيف الهرمي'), {
             'fields': (
                 ('parent', 'sort_order'),
+                'level',
             ),
-            'description': _('إعدادات ترتيب وتصنيف الفئة'),
         }),
         (_('المظهر والعرض'), {
             'fields': (
-                ('image', 'icon'),
-                'color',
+                ('image', 'banner_image'),
+                ('icon', 'color'),
                 ('is_active', 'is_featured', 'show_in_menu'),
+                'show_prices',
             ),
             'classes': ('collapse',),
         }),
-        (_('الأعمال والعمولة'), {
+        (_('الإعدادات التجارية'), {
             'fields': ('commission_rate',),
             'classes': ('collapse',),
         }),
-        (_('تحسين محركات البحث (SEO)'), {
+        (_('تحسين محركات البحث'), {
             'fields': (
                 'meta_title',
                 'meta_description',
                 'meta_keywords',
             ),
             'classes': ('collapse',),
-            'description': _('إعدادات تحسين محركات البحث'),
+        }),
+        (_('المحتوى الإضافي'), {
+            'fields': ('content_blocks',),
+            'classes': ('collapse',),
+        }),
+        (_('الإحصائيات'), {
+            'fields': (
+                'products_count', 'views_count',
+                'created_at', 'updated_at', 'created_by'
+            ),
+            'classes': ('collapse',),
         }),
     )
 
-    # Read-only fields
     readonly_fields = [
-        'level',
-        'products_count',
-        'views_count',
-        'created_at',
-        'updated_at',
-        'full_name_display',
-        'breadcrumb_display'
+        'level', 'products_count', 'views_count',
+        'created_at', 'updated_at', 'breadcrumb_display'
     ]
 
-    # List editable fields
-    list_editable = ['sort_order', 'is_active', 'is_featured']
-
-    # Filters
-    list_per_page = 50
-    list_max_show_all = 200
-
-    # Actions
     actions = [
-        'make_active',
-        'make_inactive',
-        'make_featured',
-        'remove_featured',
-        'update_products_count'
+        'make_active', 'make_inactive', 'make_featured',
+        'remove_featured', 'update_products_count', 'export_csv'
     ]
 
     def get_queryset(self, request):
-        """Optimize queryset with select_related"""
-        qs = super().get_queryset(request)
-        return qs.select_related('parent', 'created_by').prefetch_related('children')
+        return super().get_queryset(request).select_related('parent', 'created_by')
 
     def indented_name(self, obj):
-        """Display indented category name based on level"""
-        indent = '——' * obj.level
-        return f"{indent} {obj.name}"
+        """عرض الاسم مع المسافة البادئة"""
+        indent = '──' * obj.level
+        return format_html('{} {}', indent, obj.name)
 
     indented_name.short_description = _('اسم الفئة')
     indented_name.admin_order_field = 'name'
 
-    def full_name_display(self, obj):
-        """Display full hierarchical name"""
-        return obj.full_name
-
-    full_name_display.short_description = _('الاسم الكامل')
-
     def breadcrumb_display(self, obj):
-        """Display breadcrumb"""
+        """عرض التسلسل الهرمي"""
         breadcrumb = obj.get_breadcrumb()
-        names = [f'<a href="../{cat.pk}/change/">{cat.name}</a>' for cat in breadcrumb[:-1]]
-        names.append(f'<strong>{obj.name}</strong>')
-        return format_html(' > '.join(names))
+        links = []
+        for cat in breadcrumb[:-1]:
+            url = reverse('admin:products_category_change', args=[cat.pk])
+            links.append(f'<a href="{url}">{cat.name}</a>')
+        links.append(f'<strong>{obj.name}</strong>')
+        return format_html(' > '.join(links))
 
     breadcrumb_display.short_description = _('التسلسل الهرمي')
-    breadcrumb_display.allow_tags = True
-
-    def get_form(self, request, obj=None, **kwargs):
-        """Customize form"""
-        form = super().get_form(request, obj, **kwargs)
-
-        # Filter parent choices to prevent circular references
-        if obj:
-            # Exclude self and all descendants from parent choices
-            excluded_ids = [obj.pk] + [child.pk for child in obj.get_all_children()]
-            form.base_fields['parent'].queryset = Category.objects.exclude(
-                pk__in=excluded_ids
-            )
-
-        # Add help text
-        if 'color' in form.base_fields:
-            form.base_fields['color'].help_text = _(
-                'أدخل لون سداسي عشري (مثل: #FF5733) أو اتركه فارغاً'
-            )
-
-        return form
-
-    def get_readonly_fields(self, request, obj=None):
-        """Dynamic readonly fields"""
-        readonly = list(self.readonly_fields)
-
-        if obj:  # Editing existing object
-            readonly.extend(['full_name_display', 'breadcrumb_display'])
-
-        return readonly
 
     def save_model(self, request, obj, form, change):
-        """Save model with user tracking"""
-        if not change:  # Creating new object
+        if not change:
             obj.created_by = request.user
-
         super().save_model(request, obj, form, change)
 
-    # Custom Actions
+    # إجراءات مخصصة
     def make_active(self, request, queryset):
-        """Make selected categories active"""
         updated = queryset.update(is_active=True)
-        self.message_user(
-            request,
-            _(f'تم تفعيل {updated} فئة بنجاح.'),
-            messages.SUCCESS
-        )
+        self.message_user(request, f'{updated} فئة تم تفعيلها بنجاح.', messages.SUCCESS)
 
     make_active.short_description = _('تفعيل الفئات المختارة')
 
     def make_inactive(self, request, queryset):
-        """Make selected categories inactive"""
         updated = queryset.update(is_active=False)
-        self.message_user(
-            request,
-            _(f'تم إلغاء تفعيل {updated} فئة بنجاح.'),
-            messages.SUCCESS
-        )
+        self.message_user(request, f'{updated} فئة تم إلغاء تفعيلها بنجاح.', messages.SUCCESS)
 
     make_inactive.short_description = _('إلغاء تفعيل الفئات المختارة')
 
     def make_featured(self, request, queryset):
-        """Make selected categories featured"""
         updated = queryset.update(is_featured=True)
-        self.message_user(
-            request,
-            _(f'تم جعل {updated} فئة مميزة بنجاح.'),
-            messages.SUCCESS
-        )
+        self.message_user(request, f'{updated} فئة تم تمييزها بنجاح.', messages.SUCCESS)
 
-    make_featured.short_description = _('جعل الفئات مميزة')
+    make_featured.short_description = _('تمييز الفئات المختارة')
 
     def remove_featured(self, request, queryset):
-        """Remove featured status from selected categories"""
         updated = queryset.update(is_featured=False)
-        self.message_user(
-            request,
-            _(f'تم إلغاء حالة مميزة من {updated} فئة بنجاح.'),
-            messages.SUCCESS
-        )
+        self.message_user(request, f'{updated} فئة تم إلغاء تمييزها بنجاح.', messages.SUCCESS)
 
-    remove_featured.short_description = _('إلغاء حالة مميزة')
+    remove_featured.short_description = _('إلغاء تمييز الفئات المختارة')
 
     def update_products_count(self, request, queryset):
-        """Update products count for selected categories"""
-        updated_count = 0
         for category in queryset:
             category.update_products_count()
-            updated_count += 1
-
-        self.message_user(
-            request,
-            _(f'تم تحديث عدد المنتجات لـ {updated_count} فئة بنجاح.'),
-            messages.SUCCESS
-        )
+        self.message_user(request, f'تم تحديث عدد المنتجات لـ {queryset.count()} فئة.', messages.SUCCESS)
 
     update_products_count.short_description = _('تحديث عدد المنتجات')
 
-    def get_list_display_links(self, request, list_display):
-        """Customize list display links"""
-        return ['indented_name']
+    def export_csv(self, request, queryset):
+        """تصدير الفئات إلى CSV"""
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="categories.csv"'
 
-    def changelist_view(self, request, extra_context=None):
-        """Add extra context to changelist"""
-        extra_context = extra_context or {}
+        writer = csv.writer(response)
+        writer.writerow(['الاسم', 'المستوى', 'عدد المنتجات', 'نشط', 'مميز'])
 
-        # Add statistics
-        total_categories = Category.objects.count()
-        active_categories = Category.objects.filter(is_active=True).count()
-        featured_categories = Category.objects.filter(is_featured=True).count()
-        root_categories = Category.objects.filter(parent__isnull=True).count()
+        for category in queryset:
+            writer.writerow([
+                category.name, category.level, category.products_count,
+                'نعم' if category.is_active else 'لا',
+                'نعم' if category.is_featured else 'لا'
+            ])
 
-        extra_context.update({
-            'total_categories': total_categories,
-            'active_categories': active_categories,
-            'featured_categories': featured_categories,
-            'root_categories': root_categories,
-        })
-
-        return super().changelist_view(request, extra_context)
-
-    def response_add(self, request, obj, post_url_continue=None):
-        """Custom response after adding"""
-        response = super().response_add(request, obj, post_url_continue)
-        self.message_user(
-            request,
-            _(f'تم إنشاء الفئة "{obj.name}" بنجاح.'),
-            messages.SUCCESS
-        )
         return response
 
-    def response_change(self, request, obj):
-        """Custom response after changing"""
-        response = super().response_change(request, obj)
-        self.message_user(
-            request,
-            _(f'تم تحديث الفئة "{obj.name}" بنجاح.'),
-            messages.SUCCESS
-        )
-        return response
-
-    def delete_model(self, request, obj):
-        """Custom delete with message"""
-        category_name = obj.name
-        super().delete_model(request, obj)
-        self.message_user(
-            request,
-            _(f'تم حذف الفئة "{category_name}" بنجاح.'),
-            messages.SUCCESS
-        )
-
-    def has_delete_permission(self, request, obj=None):
-        """Custom delete permission"""
-        if obj and obj.products.exists():
-            return False  # Don't allow deletion if category has products
-        return super().has_delete_permission(request, obj)
-
-    class Media:
-        """Additional CSS and JS"""
-        css = {
-            'all': ('admin/css/category_admin.css',)
-        }
-        js = ('admin/js/category_admin.js',)
-
-
-# Inline admin for subcategories
-class SubCategoryInline(admin.TabularInline):
-    """Inline admin for subcategories"""
-    model = Category
-    fk_name = 'parent'
-    extra = 0
-    fields = ['name', 'slug', 'is_active', 'sort_order']
-    prepopulated_fields = {'slug': ('name',)}
-
-    def get_queryset(self, request):
-        return super().get_queryset(request).select_related('parent')
-
-
-# Add inline to CategoryAdmin if needed
-# CategoryAdmin.inlines = [SubCategoryInline]
-
+    export_csv.short_description = _('تصدير إلى CSV')
 
 
 @admin.register(Brand)
 class BrandAdmin(admin.ModelAdmin):
+    """إدارة العلامات التجارية المحسنة"""
+
     list_display = [
-        'logo_thumbnail', 'name', 'country', 'product_count',
-        'is_featured', 'is_active', 'order'
+        'logo_thumbnail', 'name', 'country', 'products_count',
+        'rating', 'is_featured', 'is_active', 'is_verified', 'views_count'
     ]
-    list_filter = ['is_active', 'is_featured', 'country']
-    search_fields = ['name', 'name_en', 'country']
+    list_filter = [
+        'is_active', 'is_featured', 'is_verified', 'country',
+        DateCreatedFilter
+    ]
+    search_fields = ['name', 'name_en', 'country', 'description']
     prepopulated_fields = {'slug': ('name',)}
-    ordering = ['order', 'name']
-    list_editable = ['is_featured', 'is_active', 'order']
+    ordering = ['sort_order', 'name']
+    list_editable = ['is_featured', 'is_active', 'is_verified',]
+    readonly_fields = ['products_count', 'views_count', 'rating', 'created_at', 'updated_at']
 
     fieldsets = (
-        (_('معلومات أساسية'), {
-            'fields': ('name', 'name_en', 'slug', 'logo', 'country', 'website')
+        (_('المعلومات الأساسية'), {
+            'fields': (
+                ('name', 'name_en'),
+                'slug',
+                ('logo', 'banner_image'),
+            )
+        }),
+        (_('معلومات التواصل'), {
+            'fields': (
+                ('website', 'email'),
+                'phone',
+                ('country', 'city'),
+            ),
+            'classes': ('collapse',),
         }),
         (_('الوصف'), {
-            'fields': ('description',)
+            'fields': ('description', 'history'),
+            'classes': ('collapse',),
         }),
         (_('الإعدادات'), {
-            'fields': ('is_active', 'is_featured', 'order')
+            'fields': (
+                ('is_active', 'is_featured', 'is_verified'),
+                'sort_order',
+            )
+        }),
+        (_('الشبكات الاجتماعية'), {
+            'fields': ('social_links',),
+            'classes': ('collapse',),
+        }),
+        (_('تحسين محركات البحث'), {
+            'fields': ('meta_title', 'meta_description', 'meta_keywords'),
+            'classes': ('collapse',),
+        }),
+        (_('الإحصائيات'), {
+            'fields': (
+                'products_count', 'views_count', 'rating',
+                'created_at', 'updated_at'
+            ),
+            'classes': ('collapse',),
         }),
     )
 
+    actions = ['make_featured', 'remove_featured', 'verify_brands', 'export_csv']
+
     def logo_thumbnail(self, obj):
         if obj.logo:
-            return mark_safe(f'<img src="{obj.logo.url}" width="50" height="50" style="object-fit: contain;">')
-        return '-'
+            return format_html(
+                '<img src="{}" style="width: 50px; height: 50px; object-fit: contain; border-radius: 4px;">',
+                obj.logo.url
+            )
+        return '—'
 
     logo_thumbnail.short_description = _('الشعار')
 
-    def product_count(self, obj):
+    def products_count(self, obj):
         count = obj.products.filter(is_active=True).count()
-        url = reverse('admin:products_product_changelist') + f'?brand__id__exact={obj.id}'
-        return format_html('<a href="{}">{} منتج</a>', url, count)
+        if count > 0:
+            url = reverse('admin:products_product_changelist') + f'?brand__id__exact={obj.id}'
+            return format_html('<a href="{}">{} منتج</a>', url, count)
+        return '0'
 
-    product_count.short_description = _('عدد المنتجات')
+    products_count.short_description = _('عدد المنتجات')
 
+    def verify_brands(self, request, queryset):
+        updated = queryset.update(is_verified=True)
+        self.message_user(request, f'تم توثيق {updated} علامة تجارية.', messages.SUCCESS)
 
-class ProductImageInline(admin.TabularInline):
-    model = ProductImage
-    extra = 1
-    fields = ['image', 'alt_text', 'caption', 'is_primary', 'order']
-    readonly_fields = ['image_preview']
+    verify_brands.short_description = _('توثيق العلامات التجارية')
 
-    def image_preview(self, obj):
-        if obj.image:
-            return mark_safe(f'<img src="{obj.image.url}" width="100" height="100" style="object-fit: contain;">')
-        return '-'
+    def export_csv(self, request, queryset):
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="brands.csv"'
 
-    image_preview.short_description = _('معاينة')
+        writer = csv.writer(response)
+        writer.writerow(['الاسم', 'البلد', 'عدد المنتجات', 'التقييم', 'موثق'])
 
+        for brand in queryset:
+            writer.writerow([
+                brand.name, brand.country, brand.products_count,
+                f'{brand.rating:.1f}', 'نعم' if brand.is_verified else 'لا'
+            ])
 
-class ProductVariantInline(admin.TabularInline):
-    model = ProductVariant
-    extra = 0
-    fields = ['name', 'sku', 'size', 'color', 'material', 'price_adjustment', 'stock_quantity', 'is_active']
+        return response
+
+    export_csv.short_description = _('تصدير إلى CSV')
 
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
+    """إدارة المنتجات المحسنة"""
+
+    form = ProductAdminForm
     list_display = [
         'image_thumbnail', 'name', 'sku', 'category', 'brand',
         'formatted_price', 'stock_status_display', 'status',
-        'is_featured', 'is_new', 'views_count', 'sales_count'
+        'is_featured', 'rating_display', 'sales_count', 'views_count'
     ]
     list_filter = [
         'status', 'is_active', 'is_featured', 'is_new', 'is_best_seller',
-        'category', 'brand', 'stock_status', 'created_at'
+        'category', 'brand', 'stock_status', 'condition',
+        StockLevelFilter, PriceRangeFilter, DateCreatedFilter
     ]
-    search_fields = ['name', 'name_en', 'sku', 'barcode', 'description']
+    search_fields = [
+        'name', 'name_en', 'sku', 'barcode', 'description',
+        'category__name', 'brand__name'
+    ]
     prepopulated_fields = {'slug': ('name',)}
     readonly_fields = [
         'sku', 'views_count', 'sales_count', 'created_at',
-        'updated_at', 'published_at', 'created_by'
+        'updated_at', 'published_at', 'current_price_display',
+        'available_quantity', 'rating_display'
     ]
     autocomplete_fields = ['category', 'brand', 'tags', 'related_products']
+    filter_horizontal = ['tags', 'related_products', 'cross_sell_products', 'upsell_products']
     date_hierarchy = 'created_at'
-    inlines = [ProductImageInline, ProductVariantInline]
+    list_per_page = 25
+    list_max_show_all = 100
+    save_on_top = True
+
+    inlines = [ProductImageInline, ProductVariantInline, ProductAttributeValueInline]
 
     fieldsets = (
-        (_('معلومات أساسية'), {
+        (_('المعلومات الأساسية'), {
             'fields': (
-                'name', 'name_en', 'slug', 'sku', 'barcode',
-                'category', 'brand', 'tags'
-            )
+                ('name', 'name_en'),
+                'slug',
+                ('sku', 'barcode'),
+                ('category', 'brand'),
+                'tags',
+            ),
+            'classes': ('wide',),
         }),
         (_('الوصف'), {
             'fields': (
-                'short_description', 'short_description_en',
-                'description', 'description_en', 'specifications'
-            )
+                'short_description',
+                'description',
+                'specifications',
+                'features',
+            ),
         }),
         (_('التسعير'), {
             'fields': (
-                'base_price', 'discount_percentage', 'discount_amount',
-                'discount_start', 'discount_end', 'tax_rate', 'cost'
-            )
+                ('base_price', 'compare_price', 'cost'),
+                ('discount_percentage', 'discount_amount'),
+                ('discount_start', 'discount_end'),
+                ('tax_rate', 'tax_class'),
+                'current_price_display',
+            ),
         }),
         (_('المخزون'), {
             'fields': (
-                'stock_quantity', 'stock_status', 'min_stock_level',
-                'max_order_quantity', 'track_inventory'
-            )
+                ('stock_quantity', 'reserved_quantity'),
+                ('stock_status', 'min_stock_level'),
+                ('max_order_quantity', 'track_inventory'),
+                'available_quantity',
+            ),
         }),
         (_('الأبعاد والوزن'), {
-            'fields': ('weight', 'length', 'width', 'height'),
-            'classes': ('collapse',)
+            'fields': (
+                'weight',
+                ('length', 'width', 'height'),
+            ),
+            'classes': ('collapse',),
+        }),
+        (_('خصائص المنتج'), {
+            'fields': (
+                'condition',
+                ('is_digital', 'requires_shipping', 'is_gift_card'),
+                ('available_for_preorder', 'preorder_message'),
+                ('warranty_period', 'warranty_details'),
+            ),
+            'classes': ('collapse',),
         }),
         (_('الإعدادات'), {
             'fields': (
-                'status', 'is_active', 'show_price', 'is_featured',
-                'is_new', 'is_best_seller', 'is_digital', 'requires_shipping'
-            )
+                ('status', 'is_active'),
+                ('show_price', 'allow_reviews'),
+                ('is_featured', 'is_new', 'is_best_seller'),
+                ('featured_until',),
+            ),
         }),
         (_('المنتجات ذات الصلة'), {
-            'fields': ('related_products',),
-            'classes': ('collapse',)
+            'fields': (
+                'related_products',
+                'cross_sell_products',
+                'upsell_products',
+            ),
+            'classes': ('collapse',),
         }),
-        (_('SEO'), {
-            'fields': ('meta_title', 'meta_description', 'meta_keywords'),
-            'classes': ('collapse',)
+        (_('تحسين محركات البحث'), {
+            'fields': (
+                'meta_title',
+                'meta_description',
+                'meta_keywords',
+                'search_keywords',
+            ),
+            'classes': ('collapse',),
         }),
         (_('الإحصائيات'), {
             'fields': (
-                'views_count', 'sales_count', 'created_at',
-                'updated_at', 'published_at', 'created_by'
+                ('views_count', 'sales_count', 'wishlist_count'),
+                'rating_display',
+                ('created_at', 'updated_at', 'published_at'),
+                'created_by',
             ),
-            'classes': ('collapse',)
+            'classes': ('collapse',),
         }),
     )
 
+    actions = [
+        'make_published', 'make_draft', 'make_featured', 'remove_featured',
+        'duplicate_products', 'update_stock_status', 'apply_discount', 'export_csv'
+    ]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            'category', 'brand', 'created_by'
+        ).prefetch_related('tags', 'images', 'reviews')
+
     def save_model(self, request, obj, form, change):
-        if not change:  # New object
+        if not change:
             obj.created_by = request.user
         super().save_model(request, obj, form, change)
 
     def image_thumbnail(self, obj):
         image = obj.default_image
         if image:
-            return mark_safe(
-                f'<img src="{image.image.url}" width="50" height="50" '
-                f'style="object-fit: contain; border: 1px solid #ddd; border-radius: 4px;">'
+            return format_html(
+                '<img src="{}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">',
+                image.image.url
             )
-        return '-'
+        return '—'
 
     image_thumbnail.short_description = _('الصورة')
 
     def formatted_price(self, obj):
         if obj.has_discount:
             return format_html(
-                '<span style="text-decoration: line-through; color: #999;">{}</span> '
+                '<span style="text-decoration: line-through; color: #999;">{}</span><br>'
                 '<span style="color: #e74c3c; font-weight: bold;">{}</span>',
-                f'{obj.base_price:.2f}',
-                f'{obj.current_price:.2f}'
+                f'{obj.base_price:.2f} ر.س',
+                f'{obj.current_price:.2f} ر.س'
             )
-        return f'{obj.base_price:.2f}'
+        return f'{obj.base_price:.2f} ر.س'
 
     formatted_price.short_description = _('السعر')
 
+    def current_price_display(self, obj):
+        return f'{obj.current_price:.2f} ر.س'
+
+    current_price_display.short_description = _('السعر الحالي')
+
     def stock_status_display(self, obj):
-        if obj.stock_status == 'in_stock':
-            color = 'green'
-            icon = '✓'
-        elif obj.stock_status == 'out_of_stock':
-            color = 'red'
-            icon = '✗'
-        else:
-            color = 'orange'
-            icon = '⏳'
+        colors = {
+            'in_stock': '#28a745',
+            'out_of_stock': '#dc3545',
+            'pre_order': '#ffc107',
+            'discontinued': '#6c757d'
+        }
+
+        color = colors.get(obj.stock_status, '#6c757d')
+        status_text = obj.get_stock_status_display()
 
         if obj.track_inventory:
-            text = f'{icon} {obj.stock_quantity}'
-        else:
-            text = f'{icon} {obj.get_stock_status_display()}'
+            if obj.low_stock:
+                color = '#ffc107'
+                status_text += f' ({obj.available_quantity})'
+            elif obj.available_quantity > 0:
+                status_text += f' ({obj.available_quantity})'
 
         return format_html(
-            '<span style="color: {};">{}</span>',
-            color,
-            text
+            '<span style="color: {}; font-weight: bold;">{}</span>',
+            color, status_text
         )
 
-    stock_status_display.short_description = _('المخزون')
+    stock_status_display.short_description = _('حالة المخزون')
 
-    def get_queryset(self, request):
-        return super().get_queryset(request).select_related(
-            'category', 'brand', 'created_by'
-        ).prefetch_related('tags', 'images')
+    def rating_display(self, obj):
+        rating = obj.rating
+        if rating > 0:
+            stars = '⭐' * int(rating)
+            return format_html(
+                '<span style="color: #f39c12;">{}</span> ({:.1f})',
+                stars, rating
+            )
+        return '—'
 
-    actions = ['make_published', 'make_draft', 'make_featured', 'remove_featured']
+    rating_display.short_description = _('التقييم')
 
+    # إجراءات مخصصة
     def make_published(self, request, queryset):
         updated = queryset.update(status='published', published_at=timezone.now())
-        self.message_user(request, f'{updated} منتج تم نشره.')
+        self.message_user(request, f'{updated} منتج تم نشره.', messages.SUCCESS)
 
     make_published.short_description = _('نشر المنتجات المحددة')
 
     def make_draft(self, request, queryset):
         updated = queryset.update(status='draft')
-        self.message_user(request, f'{updated} منتج تم تحويله لمسودة.')
+        self.message_user(request, f'{updated} منتج تم تحويله لمسودة.', messages.SUCCESS)
 
     make_draft.short_description = _('تحويل لمسودة')
 
-    def make_featured(self, request, queryset):
-        updated = queryset.update(is_featured=True)
-        self.message_user(request, f'{updated} منتج تم تمييزه.')
+    def duplicate_products(self, request, queryset):
+        """تكرار المنتجات المختارة"""
+        duplicated_count = 0
+        for product in queryset:
+            # إنشاء نسخة جديدة
+            product.pk = None
+            product.sku = product.generate_sku()
+            product.slug = f"{product.slug}-copy"
+            product.name = f"{product.name} - نسخة"
+            product.status = 'draft'
+            product.save()
+            duplicated_count += 1
 
-    make_featured.short_description = _('تمييز المنتجات')
+        self.message_user(
+            request,
+            f'تم تكرار {duplicated_count} منتج بنجاح.',
+            messages.SUCCESS
+        )
 
-    def remove_featured(self, request, queryset):
-        updated = queryset.update(is_featured=False)
-        self.message_user(request, f'{updated} منتج تم إلغاء تمييزه.')
+    duplicate_products.short_description = _('تكرار المنتجات')
 
-    remove_featured.short_description = _('إلغاء التمييز')
+    def update_stock_status(self, request, queryset):
+        """تحديث حالة المخزون تلقائياً"""
+        updated_count = 0
+        for product in queryset:
+            if product.track_inventory:
+                if product.available_quantity <= 0:
+                    product.stock_status = 'out_of_stock'
+                elif product.available_quantity <= product.min_stock_level:
+                    product.stock_status = 'in_stock'  # Low stock but in stock
+                else:
+                    product.stock_status = 'in_stock'
+                product.save(update_fields=['stock_status'])
+                updated_count += 1
+
+        self.message_user(
+            request,
+            f'تم تحديث حالة المخزون لـ {updated_count} منتج.',
+            messages.SUCCESS
+        )
+
+    update_stock_status.short_description = _('تحديث حالة المخزون')
+
+    def export_csv(self, request, queryset):
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="products.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow([
+            'الاسم', 'SKU', 'الفئة', 'العلامة التجارية', 'السعر',
+            'الكمية', 'الحالة', 'تاريخ الإنشاء'
+        ])
+
+        for product in queryset:
+            writer.writerow([
+                product.name, product.sku,
+                product.category.name, product.brand.name if product.brand else '',
+                product.current_price, product.stock_quantity,
+                product.get_status_display(), product.created_at.strftime('%Y-%m-%d')
+            ])
+
+        return response
+
+    export_csv.short_description = _('تصدير إلى CSV')
 
 
 @admin.register(ProductImage)
 class ProductImageAdmin(admin.ModelAdmin):
-    list_display = ['image_preview', 'product', 'alt_text', 'is_primary', 'order']
-    list_filter = ['is_primary', 'created_at']
+    """إدارة صور المنتجات"""
+
+    list_display = ['image_preview', 'product', 'alt_text', 'is_primary', 'sort_order', 'created_at']
+    list_filter = ['is_primary', 'is_360', 'created_at']
     search_fields = ['product__name', 'alt_text', 'caption']
-    list_editable = ['is_primary', 'order']
-    ordering = ['product', 'order']
+    list_editable = ['is_primary', 'sort_order']
+    ordering = ['product', 'sort_order']
+    autocomplete_fields = ['product', 'variant']
 
     def image_preview(self, obj):
         if obj.image:
-            return mark_safe(
-                f'<img src="{obj.image.url}" width="100" height="100" '
-                f'style="object-fit: contain; border: 1px solid #ddd; border-radius: 4px;">'
+            return format_html(
+                '<img src="{}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px;">',
+                obj.get_thumbnail_url()
             )
-        return '-'
+        return '—'
 
     image_preview.short_description = _('معاينة')
 
 
+@admin.register(ProductVariant)
+class ProductVariantAdmin(admin.ModelAdmin):
+    """إدارة متغيرات المنتجات"""
+
+    list_display = [
+        'name', 'product', 'sku', 'current_price',
+        'stock_quantity_display', 'is_active', 'is_default', 'sort_order'
+    ]
+    list_filter = [
+        'is_active', 'is_default', 'track_inventory',
+        ('product', admin.RelatedOnlyFieldListFilter),
+        DateCreatedFilter
+    ]
+    search_fields = ['name', 'sku', 'product__name']
+    autocomplete_fields = ['product']
+    list_editable = ['is_active', 'sort_order']
+    ordering = ['product', 'sort_order']
+
+    fieldsets = (
+        (_('المعلومات الأساسية'), {
+            'fields': (
+                'product', 'name', 'sku',
+                ('is_active', 'is_default'), 'sort_order'
+            )
+        }),
+        (_('الخصائص'), {
+            'fields': ('attributes',),
+        }),
+        (_('التسعير'), {
+            'fields': ('base_price',),
+        }),
+        (_('المخزون'), {
+            'fields': (
+                ('stock_quantity', 'reserved_quantity'),
+                'track_inventory',
+            ),
+        }),
+        (_('الأبعاد'), {
+            'fields': ('weight',),
+            'classes': ('collapse',),
+        }),
+    )
+
+    def stock_quantity_display(self, obj):
+        if obj.track_inventory:
+            available = obj.available_quantity
+            total = obj.stock_quantity
+            color = '#28a745' if available > 0 else '#dc3545'
+            return format_html(
+                '<span style="color: {};">{} / {}</span>',
+                color, available, total
+            )
+        return _('غير محدود')
+
+    stock_quantity_display.short_description = _('المخزون')
+
+
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    list_display = ['name', 'slug', 'product_count', 'created_at']
-    search_fields = ['name']
+    """إدارة الوسوم"""
+
+    list_display = ['name', 'color_display', 'products_count', 'usage_count', 'is_featured', 'is_active']
+    list_filter = ['is_active', 'is_featured', DateCreatedFilter]
+    search_fields = ['name', 'description']
     prepopulated_fields = {'slug': ('name',)}
+    list_editable = ['is_featured', 'is_active']
+    readonly_fields = ['products_count', 'usage_count']
 
-    def product_count(self, obj):
-        count = obj.products.filter(is_active=True).count()
-        return f'{count} منتج'
+    def color_display(self, obj):
+        if obj.color:
+            return format_html(
+                '<span style="background-color: {}; padding: 2px 8px; border-radius: 3px; color: white;">{}</span>',
+                obj.color, obj.name
+            )
+        return obj.name
 
-    product_count.short_description = _('عدد المنتجات')
+    color_display.short_description = _('اللون')
 
 
 @admin.register(ProductReview)
 class ProductReviewAdmin(admin.ModelAdmin):
+    """إدارة تقييمات المنتجات"""
+
     list_display = [
         'product', 'user', 'rating_stars', 'title',
         'is_approved', 'is_featured', 'helpful_stats', 'created_at'
     ]
-    list_filter = ['rating', 'is_approved', 'is_featured', 'created_at']
-    search_fields = ['product__name', 'user__username', 'user__email', 'title', 'comment']
+    list_filter = [
+        'rating', 'is_approved', 'is_featured', 'recommend',
+        ('product', admin.RelatedOnlyFieldListFilter),
+        DateCreatedFilter
+    ]
+    search_fields = ['product__name', 'user__username', 'title', 'content']
     readonly_fields = [
-        'product', 'user', 'rating', 'title', 'comment',
-        'image1', 'image2', 'image3', 'helpful_count',
-        'not_helpful_count', 'created_at', 'updated_at'
+        'helpful_votes', 'unhelpful_votes', 'report_count',
+        'ip_address', 'user_agent', 'created_at', 'updated_at'
     ]
     list_editable = ['is_approved', 'is_featured']
     date_hierarchy = 'created_at'
+    autocomplete_fields = ['product']
 
     fieldsets = (
         (_('معلومات التقييم'), {
-            'fields': ('product', 'user', 'rating', 'title', 'comment')
+            'fields': (
+                ('product', 'user'),
+                ('rating', 'recommend'),
+                'title', 'content',
+            )
         }),
-        (_('الصور'), {
-            'fields': ('image1', 'image2', 'image3'),
-            'classes': ('collapse',)
+        (_('تقييمات فرعية'), {
+            'fields': (
+                ('quality_rating', 'value_rating', 'delivery_rating'),
+            ),
+            'classes': ('collapse',),
+        }),
+        (_('الصورة'), {
+            'fields': ('image',),
+            'classes': ('collapse',),
         }),
         (_('الإعدادات'), {
-            'fields': ('is_approved', 'is_featured')
+            'fields': (
+                ('is_approved', 'is_featured'),
+                ('approved_at', 'approved_by'),
+            )
         }),
         (_('الإحصائيات'), {
-            'fields': ('helpful_count', 'not_helpful_count', 'created_at', 'updated_at')
+            'fields': (
+                ('helpful_votes', 'unhelpful_votes'),
+                'report_count', 'is_spam',
+            ),
+            'classes': ('collapse',),
+        }),
+        (_('معلومات تقنية'), {
+            'fields': (
+                'ip_address', 'user_agent',
+                'purchase_date',
+                ('created_at', 'updated_at'),
+            ),
+            'classes': ('collapse',),
         }),
     )
+
+    actions = ['approve_reviews', 'reject_reviews', 'make_featured', 'mark_as_spam']
 
     def rating_stars(self, obj):
         stars = '⭐' * obj.rating
         empty_stars = '☆' * (5 - obj.rating)
         return format_html(
             '<span style="color: #f39c12; font-size: 16px;">{}{}</span>',
-            stars,
-            empty_stars
+            stars, empty_stars
         )
 
     rating_stars.short_description = _('التقييم')
 
     def helpful_stats(self, obj):
-        if obj.helpful_count + obj.not_helpful_count > 0:
+        if obj.total_votes > 0:
             percentage = obj.helpful_percentage
+            color = '#28a745' if percentage >= 70 else '#ffc107' if percentage >= 50 else '#dc3545'
             return format_html(
                 '<span style="color: {};">{}% ({}/{})</span>',
-                'green' if percentage >= 70 else 'orange' if percentage >= 50 else 'red',
-                percentage,
-                obj.helpful_count,
-                obj.helpful_count + obj.not_helpful_count
+                color, percentage, obj.helpful_votes, obj.total_votes
             )
-        return '-'
+        return '—'
 
     helpful_stats.short_description = _('نسبة الإفادة')
 
-    actions = ['approve_reviews', 'reject_reviews', 'make_featured']
-
     def approve_reviews(self, request, queryset):
-        updated = queryset.update(is_approved=True)
-        self.message_user(request, f'{updated} تقييم تم اعتماده.')
+        updated = queryset.update(is_approved=True, approved_at=timezone.now(), approved_by=request.user)
+        self.message_user(request, f'{updated} تقييم تم اعتماده.', messages.SUCCESS)
 
-    approve_reviews.short_description = _('اعتماد التقييمات المحددة')
+    approve_reviews.short_description = _('اعتماد التقييمات')
 
     def reject_reviews(self, request, queryset):
         updated = queryset.update(is_approved=False)
-        self.message_user(request, f'{updated} تقييم تم رفضه.')
+        self.message_user(request, f'{updated} تقييم تم رفضه.', messages.SUCCESS)
 
-    reject_reviews.short_description = _('رفض التقييمات المحددة')
+    reject_reviews.short_description = _('رفض التقييمات')
 
-    def make_featured(self, request, queryset):
-        updated = queryset.update(is_featured=True)
-        self.message_user(request, f'{updated} تقييم تم تمييزه.')
+    def mark_as_spam(self, request, queryset):
+        updated = queryset.update(is_spam=True, is_approved=False)
+        self.message_user(request, f'{updated} تقييم تم تصنيفه كرسالة مزعجة.', messages.SUCCESS)
 
-    make_featured.short_description = _('تمييز التقييمات')
+    mark_as_spam.short_description = _('تصنيف كرسالة مزعجة')
+
+
+@admin.register(ProductDiscount)
+class ProductDiscountAdmin(admin.ModelAdmin):
+    """إدارة خصومات المنتجات"""
+
+    list_display = [
+        'name', 'discount_type', 'value', 'application_type',
+        'start_date', 'end_date', 'is_active', 'used_count', 'usage_percentage'
+    ]
+    list_filter = [
+        'discount_type', 'application_type', 'is_active',
+        'requires_coupon_code', 'is_stackable',
+        DateCreatedFilter
+    ]
+    search_fields = ['name', 'description', 'code']
+    filter_horizontal = ['products']
+    date_hierarchy = 'start_date'
+    readonly_fields = ['used_count', 'created_at', 'updated_at']
+
+    fieldsets = (
+        (_('المعلومات الأساسية'), {
+            'fields': (
+                ('name', 'code'),
+                'description',
+            )
+        }),
+        (_('إعدادات الخصم'), {
+            'fields': (
+                ('discount_type', 'value'),
+                'max_discount_amount',
+                ('application_type', 'category'),
+                'products',
+            )
+        }),
+        (_('فترة الصلاحية'), {
+            'fields': (
+                ('start_date', 'end_date'),
+            )
+        }),
+        (_('شروط الاستخدام'), {
+            'fields': (
+                ('min_purchase_amount', 'min_quantity'),
+                ('max_uses', 'max_uses_per_user'),
+            ),
+            'classes': ('collapse',),
+        }),
+        (_('خصم اشتري X احصل على Y'), {
+            'fields': (
+                ('buy_quantity', 'get_quantity'),
+                'get_discount_percentage',
+            ),
+            'classes': ('collapse',),
+        }),
+        (_('الإعدادات'), {
+            'fields': (
+                ('is_active', 'requires_coupon_code'),
+                ('is_stackable', 'priority'),
+            )
+        }),
+        (_('الإحصائيات'), {
+            'fields': (
+                'used_count',
+                ('created_at', 'updated_at', 'created_by'),
+            ),
+            'classes': ('collapse',),
+        }),
+    )
+
+    def usage_percentage(self, obj):
+        if obj.max_uses:
+            percentage = obj.get_usage_percentage()
+            color = '#dc3545' if percentage >= 90 else '#ffc107' if percentage >= 70 else '#28a745'
+            return format_html(
+                '<span style="color: {};">{}%</span>',
+                color, percentage
+            )
+        return '—'
+
+    usage_percentage.short_description = _('نسبة الاستخدام')
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(Wishlist)
 class WishlistAdmin(admin.ModelAdmin):
-    list_display = ['user', 'product', 'product_price', 'created_at']
-    list_filter = ['created_at']
-    search_fields = ['user__username', 'user__email', 'product__name']
-    date_hierarchy = 'created_at'
+    """إدارة قوائم الأمنيات"""
 
-    def product_price(self, obj):
-        return f'{obj.product.current_price:.2f} د.أ'
-
-    product_price.short_description = _('سعر المنتج')
+    list_display = ['user', 'product', 'variant', 'notify_on_sale', 'notify_on_restock', 'created_at']
+    list_filter = ['notify_on_sale', 'notify_on_restock', DateCreatedFilter]
+    search_fields = ['user__username', 'product__name']
+    autocomplete_fields = ['user', 'product', 'variant']
+    readonly_fields = ['created_at', 'updated_at']
 
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related('user', 'product')
+        return super().get_queryset(request).select_related('user', 'product', 'variant')
 
 
-# Register ProductVariant if needed separately
-@admin.register(ProductVariant)
-class ProductVariantAdmin(admin.ModelAdmin):
-    """
-    إدارة متغيرات المنتجات في لوحة التحكم
-    Product variants administration
-    """
+@admin.register(ProductAttribute)
+class ProductAttributeAdmin(admin.ModelAdmin):
+    """إدارة خصائص المنتجات"""
 
-    # List Display
-    list_display = [
-        'full_name_display', 'product', 'color', 'size', 'sku',
-        'stock_status_display', 'stock_quantity', 'available_quantity',
-        'current_price', 'sort_order', 'is_default', 'is_active', 'sales_count'
-    ]
+    list_display = ['name', 'attribute_type', 'is_required', 'is_filterable', 'sort_order', 'is_active']
+    list_filter = ['attribute_type', 'is_required', 'is_filterable', 'is_searchable', 'is_active']
+    search_fields = ['name', 'name_en']
+    prepopulated_fields = {'slug': ('name',)}
+    filter_horizontal = ['categories']
+    list_editable = ['sort_order', 'is_active']
 
-    # List Filters
-    list_filter = [
-        'is_active',
-        'is_default',
-        'color',
-        'size',
-        'material',
-        ('product', admin.RelatedOnlyFieldListFilter),
-        ('product__category', admin.RelatedOnlyFieldListFilter),
-        'created_at',
-        'updated_at',
-    ]
-
-    # Search Fields
-    search_fields = [
-        'name',
-        'sku',
-        'product__name',
-        'product__sku',
-        'material',
-        'pattern'
-    ]
-
-    # Ordering
-    ordering = ['product__name', 'sort_order', 'name']
-
-    # Fieldsets
     fieldsets = (
-        (_('معلومات أساسية'), {
+        (_('المعلومات الأساسية'), {
             'fields': (
-                'product',
-                ('name', 'sku'),
-                ('is_active', 'is_default'),
+                ('name', 'name_en'),
+                'slug',
+                'attribute_type',
+            )
+        }),
+        (_('خيارات الاختيار'), {
+            'fields': ('options',),
+            'classes': ('collapse',),
+        }),
+        (_('الإعدادات'), {
+            'fields': (
+                ('is_required', 'is_filterable'),
+                ('is_searchable', 'is_active'),
                 'sort_order',
-            ),
+            )
         }),
-        (_('خصائص المتغير'), {
-            'fields': (
-                ('color', 'color_code'),
-                ('size', 'material'),
-                'pattern',
-                'custom_attributes',
-            ),
+        (_('الفئات'), {
+            'fields': ('categories',),
             'classes': ('collapse',),
         }),
-        (_('الأسعار والتكاليف'), {
+    )
+
+
+@admin.register(ProductQuestion)
+class ProductQuestionAdmin(admin.ModelAdmin):
+    """إدارة أسئلة المنتجات"""
+
+    list_display = [
+        'product', 'user', 'question_preview', 'is_answered',
+        'is_public', 'helpful_votes', 'created_at'
+    ]
+    list_filter = ['is_answered', 'is_public', 'is_featured', DateCreatedFilter]
+    search_fields = ['product__name', 'user__username', 'question', 'answer']
+    autocomplete_fields = ['product', 'user', 'answered_by']
+    readonly_fields = ['helpful_votes', 'answered_at', 'created_at', 'updated_at']
+
+    fieldsets = (
+        (_('السؤال'), {
             'fields': (
-                ('price_adjustment', 'cost_adjustment'),
-            ),
-            'classes': ('collapse',),
+                ('product', 'user'),
+                'question',
+                ('is_public', 'is_featured'),
+            )
         }),
-        (_('إدارة المخزون'), {
+        (_('الإجابة'), {
             'fields': (
-                ('stock_quantity', 'reserved_quantity'),
-                'min_stock_level',
-            ),
+                'answer',
+                ('answered_by', 'answered_at'),
+                'is_answered',
+            )
         }),
-        (_('الأبعاد والوزن'), {
+        (_('الإحصائيات'), {
             'fields': (
-                ('weight',),
-                ('length', 'width', 'height'),
+                'helpful_votes',
+                ('created_at', 'updated_at'),
             ),
             'classes': ('collapse',),
         }),
     )
 
-    # Read-only Fields
-    readonly_fields = [
-        'sales_count',
-        'views_count',
-        'created_at',
-        'updated_at',
-        'current_price_display',
-        'available_quantity_display',
-        'stock_status_display'
-    ]
+    def question_preview(self, obj):
+        return obj.question[:50] + '...' if len(obj.question) > 50 else obj.question
 
-    # List Editable
-    list_editable = ['sort_order', 'is_active', 'stock_quantity']
+    question_preview.short_description = _('السؤال')
 
-    # Actions
-    actions = [
-        'make_active',
-        'make_inactive',
-        'set_as_default',
-        'update_stock',
-        'reset_reserved_quantity'
-    ]
+    actions = ['mark_as_answered', 'make_public', 'make_private']
 
-    # Pagination
-    list_per_page = 50
-    list_max_show_all = 200
+    def mark_as_answered(self, request, queryset):
+        for question in queryset:
+            if question.answer:
+                question.is_answered = True
+                question.answered_by = request.user
+                question.answered_at = timezone.now()
+                question.save()
 
-    # Raw ID Fields (for better performance with many products)
-    raw_id_fields = ['product']
+        self.message_user(request, f'تم تحديث حالة الإجابة للأسئلة.', messages.SUCCESS)
 
-    # Autocomplete Fields
-    autocomplete_fields = ['product']
+    mark_as_answered.short_description = _('تصنيف كمجاب عليه')
 
-    def get_queryset(self, request):
-        """Optimize queryset"""
-        return super().get_queryset(request).select_related(
-            'product',
-            'product__category'
-        ).prefetch_related('product__images')
 
-    # Custom Display Methods
-    def full_name_display(self, obj):
-        """Display full variant name with color coding"""
-        name = obj.full_name
-        if obj.color_code:
-            return format_html(
-                '<span style="display: inline-block; width: 15px; height: 15px; '
-                'background-color: {}; border: 1px solid #ccc; margin-right: 5px; '
-                'vertical-align: middle;"></span>{}',
-                obj.color_code,
-                name
-            )
-        return name
+# ==================== DASHBOARD CUSTOMIZATION ====================
 
-    full_name_display.short_description = _('اسم المتغير')
-    full_name_display.admin_order_field = 'name'
+def get_admin_stats():
+    """إحصائيات سريعة للوحة الإدارة"""
+    stats = {
+        'total_products': Product.objects.count(),
+        'active_products': Product.objects.filter(is_active=True, status='published').count(),
+        'total_categories': Category.objects.count(),
+        'total_brands': Brand.objects.count(),
+        'low_stock_products': Product.objects.filter(
+            track_inventory=True,
+            stock_quantity__lte=F('min_stock_level'),
+            stock_quantity__gt=0
+        ).count(),
+        'out_of_stock': Product.objects.filter(
+            track_inventory=True,
+            stock_quantity=0
+        ).count(),
+        'pending_reviews': ProductReview.objects.filter(is_approved=False).count(),
+        'total_reviews': ProductReview.objects.filter(is_approved=True).count(),
+    }
+    return stats
 
-    def stock_status_display(self, obj):
-        """Display stock status with colors"""
-        status = obj.stock_status
-        colors = {
-            'in_stock': '#28a745',  # أخضر
-            'low_stock': '#ffc107',  # أصفر
-            'out_of_stock': '#dc3545',  # أحمر
-        }
 
-        status_text = {
-            'in_stock': _('متوفر'),
-            'low_stock': _('مخزون منخفض'),
-            'out_of_stock': _('غير متوفر'),
-        }
+# تسجيل الباقي من النماذج
+admin.site.register(ProductComparison)
+admin.site.register(ProductViewHistory)
+admin.site.register(ProductAttributeValue)
+admin.site.register(ProductSubscription)
+admin.site.register(DiscountUsage)
 
-        return format_html(
-            '<span style="color: {}; font-weight: bold;">{}</span>',
-            colors.get(status, '#6c757d'),
-            status_text.get(status, status)
-        )
+# تخصيص عناوين الإدارة
+admin.site.site_header = _('إدارة المنتجات')
+admin.site.site_title = _('لوحة التحكم')
+admin.site.index_title = _('مرحباً بك في لوحة إدارة المنتجات')
 
-    stock_status_display.short_description = _('حالة المخزون')
 
-    def current_price_display(self, obj):
-        """Display current price with currency"""
-        return f"{obj.current_price} ر.س"
-
-    current_price_display.short_description = _('السعر الحالي')
-
-    def available_quantity_display(self, obj):
-        """Display available quantity"""
-        return f"{obj.available_quantity} / {obj.stock_quantity}"
-
-    available_quantity_display.short_description = _('المتاح / المخزون')
-
-    # Form Customization
-    def get_form(self, request, obj=None, **kwargs):
-        """Customize form"""
-        form = super().get_form(request, obj, **kwargs)
-
-        # Add help text for custom attributes
-        if 'custom_attributes' in form.base_fields:
-            form.base_fields['custom_attributes'].help_text = _(
-                'أدخل الخصائص المخصصة بصيغة JSON. مثال: '
-                '{"الوزن": "500 جرام", "البلد": "السعودية"}'
-            )
-
-        return form
-
-    def get_readonly_fields(self, request, obj=None):
-        """Dynamic readonly fields"""
-        readonly = list(self.readonly_fields)
-
-        if obj:  # Editing existing object
-            readonly.extend(['current_price_display', 'available_quantity_display'])
-
-        return readonly
-
-    # Custom Actions
-    def make_active(self, request, queryset):
-        """Make selected variants active"""
-        updated = queryset.update(is_active=True)
-        self.message_user(
-            request,
-            _(f'تم تفعيل {updated} متغير بنجاح.'),
-            messages.SUCCESS
-        )
-
-    make_active.short_description = _('تفعيل المتغيرات المختارة')
-
-    def make_inactive(self, request, queryset):
-        """Make selected variants inactive"""
-        updated = queryset.update(is_active=False)
-        self.message_user(
-            request,
-            _(f'تم إلغاء تفعيل {updated} متغير بنجاح.'),
-            messages.SUCCESS
-        )
-
-    make_inactive.short_description = _('إلغاء تفعيل المتغيرات المختارة')
-
-    def set_as_default(self, request, queryset):
-        """Set selected variant as default for its product"""
-        updated_count = 0
-        for variant in queryset:
-            # Remove default from other variants of the same product
-            ProductVariant.objects.filter(
-                product=variant.product
-            ).update(is_default=False)
-
-            # Set this variant as default
-            variant.is_default = True
-            variant.save()
-            updated_count += 1
-
-        self.message_user(
-            request,
-            _(f'تم تعيين {updated_count} متغير كافتراضي.'),
-            messages.SUCCESS
-        )
-
-    set_as_default.short_description = _('تعيين كمتغير افتراضي')
-
-    def update_stock(self, request, queryset):
-        """Custom action to update stock (placeholder for future implementation)"""
-        self.message_user(
-            request,
-            _('تم اختيار المتغيرات لتحديث المخزون. استخدم نموذج التحديث المجمع.'),
-            messages.INFO
-        )
-
-    update_stock.short_description = _('تحديث المخزون')
-
-    def reset_reserved_quantity(self, request, queryset):
-        """Reset reserved quantity to zero"""
-        updated = queryset.update(reserved_quantity=0)
-        self.message_user(
-            request,
-            _(f'تم إعادة تعيين الكمية المحجوزة لـ {updated} متغير.'),
-            messages.SUCCESS
-        )
-
-    reset_reserved_quantity.short_description = _('إعادة تعيين الكمية المحجوزة')
-
-    def save_model(self, request, obj, form, change):
-        """Custom save with validation"""
-        try:
-            super().save_model(request, obj, form, change)
-
-            if not change:  # New object
-                self.message_user(
-                    request,
-                    _(f'تم إنشاء المتغير "{obj.name}" بنجاح.'),
-                    messages.SUCCESS
-                )
-            else:  # Updated object
-                self.message_user(
-                    request,
-                    _(f'تم تحديث المتغير "{obj.name}" بنجاح.'),
-                    messages.SUCCESS
-                )
-
-        except Exception as e:
-            self.message_user(
-                request,
-                _(f'حدث خطأ: {str(e)}'),
-                messages.ERROR
-            )
-
-    def delete_model(self, request, obj):
-        """Custom delete with message"""
-        variant_name = obj.name
-        super().delete_model(request, obj)
-        self.message_user(
-            request,
-            _(f'تم حذف المتغير "{variant_name}" بنجاح.'),
-            messages.SUCCESS
-        )
+# تخصيص CSS للإدارة
+class AdminConfig:
+    """إعدادات مخصصة للإدارة"""
 
     class Media:
-        """Additional CSS and JS"""
         css = {
-            'all': ('admin/css/variant_admin.css',)
-        }
-        js = ('admin/js/variant_admin.js',)
-
-
-# Inline Admin for Product Variants
-class ProductVariantInline(admin.TabularInline):
-    """Inline admin for product variants in ProductAdmin"""
-    model = ProductVariant
-    extra = 1
-    fields = [
-        'name', 'color', 'size', 'sku', 'price_adjustment',
-        'stock_quantity', 'is_active', 'is_default', 'sort_order'
-    ]
-    readonly_fields = ['sales_count']
-
-    def get_queryset(self, request):
-        return super().get_queryset(request).select_related('product')
-
-
-# Alternative: Stacked Inline for more detailed view
-class ProductVariantStackedInline(admin.StackedInline):
-    """Stacked inline for detailed variant management"""
-    model = ProductVariant
-    extra = 0
-    fieldsets = (
-        (None, {
-            'fields': (
-                ('name', 'sku'),
-                ('color', 'size'),
-                ('price_adjustment', 'stock_quantity'),
-                ('is_active', 'is_default'),
+            'all': (
+                'admin/css/custom_admin.css',
+                'admin/css/arabic_admin.css',
             )
-        }),
-    )
-
-    def get_queryset(self, request):
-        return super().get_queryset(request).select_related('product')
+        }
+        js = (
+            'admin/js/custom_admin.js',
+            'admin/js/admin_enhancements.js',
+        )
