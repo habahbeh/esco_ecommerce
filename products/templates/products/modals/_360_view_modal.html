@@ -1,0 +1,602 @@
+{% load static %}
+{% load i18n %}
+
+<!-- 360 View Modal -->
+<div class="modal fade" id="view360Modal" tabindex="-1" aria-labelledby="view360ModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-white" id="view360ModalLabel">
+                    <i class="fas fa-sync-alt me-2"></i>
+                    {% trans "عرض 360 درجة" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{% trans 'إغلاق' %}"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="view-360-container">
+                    <!-- Loading State -->
+                    <div class="loading-360" id="loading360">
+                        <div class="text-center text-white p-5">
+                            <div class="spinner-border text-primary mb-3" role="status">
+                                <span class="visually-hidden">{% trans "جاري التحميل..." %}</span>
+                            </div>
+                            <h6>{% trans "جاري تحميل العرض ثلاثي الأبعاد..." %}</h6>
+                            <div class="progress mt-3" style="height: 6px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                     role="progressbar"
+                                     style="width: 0%"
+                                     id="loadingProgress">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 360 Viewer -->
+                    <div class="view-360-viewer" id="viewer360" style="display: none;">
+                        <div class="viewer-canvas">
+                            <canvas id="view360Canvas" width="800" height="600"></canvas>
+
+                            <!-- 360 Controls -->
+                            <div class="view-360-controls">
+                                <div class="controls-panel">
+                                    <!-- Play/Pause -->
+                                    <button class="control-btn" id="playPauseBtn" title="{% trans 'تشغيل/إيقاف' %}">
+                                        <i class="fas fa-play"></i>
+                                    </button>
+
+                                    <!-- Speed Control -->
+                                    <div class="speed-control">
+                                        <label class="text-white small">{% trans "السرعة" %}</label>
+                                        <input type="range" class="form-range" id="speedControl" min="0.5" max="3" step="0.5" value="1">
+                                    </div>
+
+                                    <!-- Direction Toggle -->
+                                    <button class="control-btn" id="directionBtn" title="{% trans 'تغيير الاتجاه' %}">
+                                        <i class="fas fa-exchange-alt"></i>
+                                    </button>
+
+                                    <!-- Reset View -->
+                                    <button class="control-btn" id="resetBtn" title="{% trans 'إعادة تعيين' %}">
+                                        <i class="fas fa-undo"></i>
+                                    </button>
+
+                                    <!-- Fullscreen -->
+                                    <button class="control-btn" id="fullscreenBtn" title="{% trans 'ملء الشاشة' %}">
+                                        <i class="fas fa-expand"></i>
+                                    </button>
+
+                                    <!-- Zoom Controls -->
+                                    <div class="zoom-controls">
+                                        <button class="control-btn" id="zoomInBtn" title="{% trans 'تكبير' %}">
+                                            <i class="fas fa-search-plus"></i>
+                                        </button>
+                                        <button class="control-btn" id="zoomOutBtn" title="{% trans 'تصغير' %}">
+                                            <i class="fas fa-search-minus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div class="rotation-progress">
+                                <div class="progress" style="height: 4px;">
+                                    <div class="progress-bar bg-primary"
+                                         role="progressbar"
+                                         style="width: 0%"
+                                         id="rotationProgress">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Instructions -->
+                            <div class="view-360-instructions" id="instructions360">
+                                <div class="instruction-overlay">
+                                    <div class="instruction-content text-center text-white">
+                                        <i class="fas fa-hand-paper fa-2x mb-3 text-primary"></i>
+                                        <h6>{% trans "تعليمات الاستخدام" %}</h6>
+                                        <p class="mb-3">
+                                            <i class="fas fa-mouse me-2"></i>
+                                            {% trans "اسحب للدوران" %}
+                                        </p>
+                                        <p class="mb-3">
+                                            <i class="fas fa-scroll me-2"></i>
+                                            {% trans "تحريك العجلة للتكبير/التصغير" %}
+                                        </p>
+                                        <button class="btn btn-primary btn-sm" onclick="hideInstructions()">
+                                            {% trans "فهمت" %}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Frame Counter -->
+                        <div class="frame-counter">
+                            <span class="text-white small">
+                                {% trans "الإطار" %}: <span id="currentFrame">1</span> / <span id="totalFrames">36</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Error State -->
+                    <div class="view-360-error" id="error360" style="display: none;">
+                        <div class="text-center text-white p-5">
+                            <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                            <h5>{% trans "عذراً، حدث خطأ!" %}</h5>
+                            <p>{% trans "لا يمكن تحميل العرض ثلاثي الأبعاد في الوقت الحالي" %}</p>
+                            <button class="btn btn-primary" onclick="retry360View()">
+                                <i class="fas fa-redo me-2"></i>
+                                {% trans "إعادة المحاولة" %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <div class="d-flex justify-content-between w-100">
+                    <div class="view-360-info text-white small">
+                        <i class="fas fa-info-circle me-2"></i>
+                        {% trans "اسحب للدوران، تحريك العجلة للتكبير" %}
+                    </div>
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>
+                        {% trans "إغلاق" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.view-360-container {
+    position: relative;
+    background: #000;
+    min-height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.viewer-canvas {
+    position: relative;
+    width: 100%;
+    height: 500px;
+    overflow: hidden;
+}
+
+#view360Canvas {
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+}
+
+#view360Canvas:active {
+    cursor: grabbing;
+}
+
+.view-360-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+}
+
+.controls-panel {
+    background: rgba(0,0,0,0.8);
+    border-radius: 25px;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    backdrop-filter: blur(10px);
+}
+
+.control-btn {
+    background: transparent;
+    border: 2px solid rgba(255,255,255,0.3);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.control-btn:hover {
+    background: var(--bs-primary);
+    border-color: var(--bs-primary);
+    transform: scale(1.1);
+}
+
+.control-btn.active {
+    background: var(--bs-primary);
+    border-color: var(--bs-primary);
+}
+
+.speed-control {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.speed-control .form-range {
+    width: 80px;
+    height: 5px;
+}
+
+.zoom-controls {
+    display: flex;
+    gap: 5px;
+}
+
+.rotation-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.frame-counter {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(0,0,0,0.7);
+    padding: 8px 12px;
+    border-radius: 15px;
+    backdrop-filter: blur(5px);
+}
+
+.view-360-instructions {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+}
+
+.instruction-overlay {
+    background: rgba(0,0,0,0.9);
+    border-radius: 15px;
+    padding: 2rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.view-360-info {
+    display: flex;
+    align-items: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .controls-panel {
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 15px;
+    }
+
+    .speed-control {
+        width: 100%;
+    }
+
+    .speed-control .form-range {
+        width: 100%;
+    }
+
+    .viewer-canvas {
+        height: 400px;
+    }
+}
+
+/* Loading Animation */
+@keyframes rotate360 {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.loading-360 .spinner-border {
+    animation: rotate360 1s linear infinite;
+}
+</style>
+
+<script>
+class View360 {
+    constructor(containerId, images) {
+        this.container = document.getElementById(containerId);
+        this.canvas = document.getElementById('view360Canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.images = images || [];
+        this.currentFrame = 0;
+        this.totalFrames = this.images.length;
+        this.isPlaying = false;
+        this.isLoading = false;
+        this.isDragging = false;
+        this.lastMouseX = 0;
+        this.rotation = 0;
+        this.autoRotateSpeed = 1;
+        this.direction = 1; // 1 for clockwise, -1 for counter-clockwise
+        this.zoom = 1;
+        this.loadedImages = [];
+
+        this.init();
+    }
+
+    init() {
+        this.setupCanvas();
+        this.bindEvents();
+        this.loadImages();
+    }
+
+    setupCanvas() {
+        const rect = this.container.getBoundingClientRect();
+        this.canvas.width = rect.width;
+        this.canvas.height = rect.height;
+    }
+
+    bindEvents() {
+        // Mouse events
+        this.canvas.addEventListener('mousedown', (e) => this.startDrag(e));
+        this.canvas.addEventListener('mousemove', (e) => this.drag(e));
+        this.canvas.addEventListener('mouseup', () => this.endDrag());
+        this.canvas.addEventListener('wheel', (e) => this.handleZoom(e));
+
+        // Touch events
+        this.canvas.addEventListener('touchstart', (e) => this.startDrag(e.touches[0]));
+        this.canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            this.drag(e.touches[0]);
+        });
+        this.canvas.addEventListener('touchend', () => this.endDrag());
+
+        // Control buttons
+        document.getElementById('playPauseBtn').addEventListener('click', () => this.togglePlay());
+        document.getElementById('directionBtn').addEventListener('click', () => this.toggleDirection());
+        document.getElementById('resetBtn').addEventListener('click', () => this.reset());
+        document.getElementById('fullscreenBtn').addEventListener('click', () => this.toggleFullscreen());
+        document.getElementById('zoomInBtn').addEventListener('click', () => this.zoomIn());
+        document.getElementById('zoomOutBtn').addEventListener('click', () => this.zoomOut());
+        document.getElementById('speedControl').addEventListener('input', (e) => {
+            this.autoRotateSpeed = parseFloat(e.target.value);
+        });
+    }
+
+    async loadImages() {
+        this.showLoading();
+        const loadPromises = this.images.map((src, index) => {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    this.loadedImages[index] = img;
+                    this.updateLoadingProgress((index + 1) / this.images.length * 100);
+                    resolve(img);
+                };
+                img.onerror = reject;
+                img.src = src;
+            });
+        });
+
+        try {
+            await Promise.all(loadPromises);
+            this.hideLoading();
+            this.showViewer();
+            this.render();
+            setTimeout(() => this.showInstructions(), 1000);
+        } catch (error) {
+            this.showError();
+        }
+    }
+
+    showLoading() {
+        document.getElementById('loading360').style.display = 'block';
+        document.getElementById('viewer360').style.display = 'none';
+        document.getElementById('error360').style.display = 'none';
+    }
+
+    hideLoading() {
+        document.getElementById('loading360').style.display = 'none';
+    }
+
+    showViewer() {
+        document.getElementById('viewer360').style.display = 'block';
+    }
+
+    showError() {
+        document.getElementById('loading360').style.display = 'none';
+        document.getElementById('viewer360').style.display = 'none';
+        document.getElementById('error360').style.display = 'block';
+    }
+
+    showInstructions() {
+        document.getElementById('instructions360').style.display = 'block';
+    }
+
+    updateLoadingProgress(percent) {
+        document.getElementById('loadingProgress').style.width = percent + '%';
+    }
+
+    startDrag(e) {
+        this.isDragging = true;
+        this.lastMouseX = e.clientX;
+        this.canvas.style.cursor = 'grabbing';
+    }
+
+    drag(e) {
+        if (!this.isDragging) return;
+
+        const deltaX = e.clientX - this.lastMouseX;
+        this.rotation += deltaX * 0.5;
+        this.currentFrame = Math.floor((this.rotation / 360) * this.totalFrames) % this.totalFrames;
+        if (this.currentFrame < 0) this.currentFrame += this.totalFrames;
+
+        this.render();
+        this.updateFrameCounter();
+        this.updateProgress();
+
+        this.lastMouseX = e.clientX;
+    }
+
+    endDrag() {
+        this.isDragging = false;
+        this.canvas.style.cursor = 'grab';
+    }
+
+    handleZoom(e) {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.1 : 0.1;
+        this.zoom = Math.max(0.5, Math.min(3, this.zoom + delta));
+        this.render();
+    }
+
+    togglePlay() {
+        this.isPlaying = !this.isPlaying;
+        const btn = document.getElementById('playPauseBtn');
+        const icon = btn.querySelector('i');
+
+        if (this.isPlaying) {
+            icon.className = 'fas fa-pause';
+            btn.classList.add('active');
+            this.animate();
+        } else {
+            icon.className = 'fas fa-play';
+            btn.classList.remove('active');
+        }
+    }
+
+    animate() {
+        if (!this.isPlaying) return;
+
+        this.rotation += this.autoRotateSpeed * this.direction;
+        this.currentFrame = Math.floor((this.rotation / 360) * this.totalFrames) % this.totalFrames;
+        if (this.currentFrame < 0) this.currentFrame += this.totalFrames;
+
+        this.render();
+        this.updateFrameCounter();
+        this.updateProgress();
+
+        requestAnimationFrame(() => this.animate());
+    }
+
+    toggleDirection() {
+        this.direction *= -1;
+        const btn = document.getElementById('directionBtn');
+        btn.classList.toggle('active');
+    }
+
+    reset() {
+        this.rotation = 0;
+        this.currentFrame = 0;
+        this.zoom = 1;
+        this.isPlaying = false;
+
+        const playBtn = document.getElementById('playPauseBtn');
+        playBtn.querySelector('i').className = 'fas fa-play';
+        playBtn.classList.remove('active');
+
+        this.render();
+        this.updateFrameCounter();
+        this.updateProgress();
+    }
+
+    zoomIn() {
+        this.zoom = Math.min(3, this.zoom + 0.2);
+        this.render();
+    }
+
+    zoomOut() {
+        this.zoom = Math.max(0.5, this.zoom - 0.2);
+        this.render();
+    }
+
+    toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            this.container.requestFullscreen();
+        } else {
+            document.exitFullscreen();
+        }
+    }
+
+    render() {
+        if (!this.loadedImages[this.currentFrame]) return;
+
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        const img = this.loadedImages[this.currentFrame];
+        const scale = Math.min(this.canvas.width / img.width, this.canvas.height / img.height) * this.zoom;
+        const x = (this.canvas.width - img.width * scale) / 2;
+        const y = (this.canvas.height - img.height * scale) / 2;
+
+        this.ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+    }
+
+    updateFrameCounter() {
+        document.getElementById('currentFrame').textContent = this.currentFrame + 1;
+        document.getElementById('totalFrames').textContent = this.totalFrames;
+    }
+
+    updateProgress() {
+        const progress = ((this.currentFrame + 1) / this.totalFrames) * 100;
+        document.getElementById('rotationProgress').style.width = progress + '%';
+    }
+}
+
+// Global functions
+function hideInstructions() {
+    document.getElementById('instructions360').style.display = 'none';
+}
+
+function retry360View() {
+    // Re-initialize the 360 view
+    const modal = document.getElementById('view360Modal');
+    const productId = modal.dataset.productId;
+    if (productId) {
+        load360View(productId);
+    }
+}
+
+function load360View(productId) {
+    // Fetch 360 images from server
+    fetch(`/products/api/product/${productId}/360/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.images && data.images.length > 0) {
+                const images = data.images.map(img => img.url);
+                window.viewer360 = new View360('viewer360', images);
+            } else {
+                document.getElementById('error360').style.display = 'block';
+                document.getElementById('loading360').style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading 360 view:', error);
+            document.getElementById('error360').style.display = 'block';
+            document.getElementById('loading360').style.display = 'none';
+        });
+}
+
+// Initialize when modal opens
+document.getElementById('view360Modal').addEventListener('show.bs.modal', function(event) {
+    const button = event.relatedTarget;
+    const productId = button.getAttribute('data-product-id');
+    this.dataset.productId = productId;
+
+    // Reset modal state
+    document.getElementById('loading360').style.display = 'block';
+    document.getElementById('viewer360').style.display = 'none';
+    document.getElementById('error360').style.display = 'none';
+    document.getElementById('instructions360').style.display = 'none';
+
+    // Load 360 view
+    load360View(productId);
+});
+</script>

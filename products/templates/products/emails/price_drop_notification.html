@@ -1,0 +1,493 @@
+{% load static %}
+{% load i18n %}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% trans "إشعار انخفاض السعر" %} - {{ site_settings.site_name|default:"ESCO" }}</title>
+
+    <style>
+        /* Reset styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background-color: #f8f9fa;
+            direction: rtl;
+            text-align: right;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        /* Header */
+        .email-header {
+            background: linear-gradient(135deg, #1e88e5 0%, #1976d2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .logo {
+            max-height: 50px;
+            margin-bottom: 15px;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .header-subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        /* Content */
+        .email-content {
+            padding: 30px 20px;
+        }
+
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .notification-box {
+            background: linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 100%);
+            border: 2px solid #28a745;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 25px 0;
+            text-align: center;
+        }
+
+        .notification-icon {
+            font-size: 48px;
+            color: #28a745;
+            margin-bottom: 15px;
+        }
+
+        .notification-title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #155724;
+            margin-bottom: 10px;
+        }
+
+        .notification-message {
+            font-size: 16px;
+            color: #155724;
+            margin-bottom: 20px;
+        }
+
+        /* Product Card */
+        .product-card {
+            background: #ffffff;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 25px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .product-image-container {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .product-image {
+            max-width: 200px;
+            max-height: 200px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .product-details {
+            padding: 20px;
+        }
+
+        .product-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .product-category {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 15px;
+        }
+
+        .price-comparison {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .price-label {
+            font-size: 16px;
+            color: #856404;
+        }
+
+        .old-price {
+            font-size: 18px;
+            color: #dc3545;
+            text-decoration: line-through;
+        }
+
+        .new-price {
+            font-size: 24px;
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        .savings {
+            font-size: 20px;
+            font-weight: bold;
+            color: #e67e22;
+        }
+
+        .savings-percentage {
+            background: #28a745;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        /* Call-to-Action */
+        .cta-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            text-decoration: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .cta-button:hover {
+            background: linear-gradient(135deg, #218838 0%, #1fa084 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        }
+
+        .secondary-cta {
+            display: inline-block;
+            background: transparent;
+            color: #1e88e5;
+            text-decoration: none;
+            padding: 12px 30px;
+            border: 2px solid #1e88e5;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .secondary-cta:hover {
+            background: #1e88e5;
+            color: white;
+        }
+
+        /* Additional Info */
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #1e88e5;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .info-title {
+            font-weight: bold;
+            color: #1565c0;
+            margin-bottom: 10px;
+        }
+
+        .info-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .info-list li {
+            padding: 5px 0;
+            color: #1976d2;
+        }
+
+        .info-list li:before {
+            content: "✓";
+            color: #28a745;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        /* Footer */
+        .email-footer {
+            background: #2c3e50;
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .footer-content {
+            margin-bottom: 20px;
+        }
+
+        .social-links {
+            margin: 20px 0;
+        }
+
+        .social-link {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: #34495e;
+            color: white;
+            text-decoration: none;
+            border-radius: 50%;
+            line-height: 40px;
+            margin: 0 5px;
+            transition: all 0.3s ease;
+        }
+
+        .social-link:hover {
+            background: #1e88e5;
+            transform: translateY(-2px);
+        }
+
+        .unsubscribe {
+            font-size: 12px;
+            color: #95a5a6;
+            margin-top: 20px;
+        }
+
+        .unsubscribe a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .email-container {
+                margin: 10px;
+                border-radius: 8px;
+            }
+
+            .email-content {
+                padding: 20px 15px;
+            }
+
+            .header-title {
+                font-size: 20px;
+            }
+
+            .notification-title {
+                font-size: 18px;
+            }
+
+            .product-name {
+                font-size: 18px;
+            }
+
+            .new-price {
+                font-size: 20px;
+            }
+
+            .cta-button {
+                padding: 12px 30px;
+                font-size: 16px;
+            }
+
+            .price-row {
+                flex-direction: column;
+                align-items: start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="email-header">
+            {% if site_settings.logo %}
+                <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name }}" class="logo">
+            {% endif %}
+            <div class="header-title">🎉 {% trans "انخفض السعر!" %}</div>
+            <div class="header-subtitle">{% trans "المنتج الذي تتابعه أصبح أرخص" %}</div>
+        </div>
+
+        <!-- Content -->
+        <div class="email-content">
+            <div class="greeting">
+                {% trans "مرحباً" %} {{ user_name|default:"عزيزي العميل" }}،
+            </div>
+
+            <p>
+                {% trans "لدينا أخبار رائعة لك! انخفض سعر المنتج الذي طلبت منا إشعارك عنه." %}
+            </p>
+
+            <!-- Notification Box -->
+            <div class="notification-box">
+                <div class="notification-icon">💰</div>
+                <div class="notification-title">{% trans "وفر الآن!" %}</div>
+                <div class="notification-message">
+                    {% trans "احصل على خصم يصل إلى" %}
+                    <strong>{{ discount_percentage }}%</strong>
+                    {% trans "على هذا المنتج" %}
+                </div>
+            </div>
+
+            <!-- Product Card -->
+            <div class="product-card">
+                <div class="product-image-container">
+                    <img src="{{ product_image }}" alt="{{ product_name }}" class="product-image">
+                </div>
+                <div class="product-details">
+                    <div class="product-name">{{ product_name }}</div>
+                    <div class="product-category">{{ product_category }}</div>
+
+                    <!-- Price Comparison -->
+                    <div class="price-comparison">
+                        <div class="price-row">
+                            <span class="price-label">{% trans "السعر السابق:" %}</span>
+                            <span class="old-price">{{ old_price }} {% trans "د.أ" %}</span>
+                        </div>
+                        <div class="price-row">
+                            <span class="price-label">{% trans "السعر الجديد:" %}</span>
+                            <span class="new-price">{{ new_price }} {% trans "د.أ" %}</span>
+                        </div>
+                        <div class="price-row">
+                            <span class="price-label">{% trans "توفر:" %}</span>
+                            <span class="savings">{{ savings_amount }} {% trans "د.أ" %}</span>
+                        </div>
+                        <div style="text-align: center;">
+                            <span class="savings-percentage">
+                                {% trans "خصم" %} {{ discount_percentage }}%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Call to Action -->
+            <div class="cta-section">
+                <a href="{{ product_url }}" class="cta-button">
+                    🛒 {% trans "اشتري الآن" %}
+                </a>
+                <br>
+                <a href="{{ product_url }}" class="secondary-cta">
+                    👁️ {% trans "عرض التفاصيل" %}
+                </a>
+                <a href="{{ comparison_url }}" class="secondary-cta">
+                    ⚖️ {% trans "مقارنة الأسعار" %}
+                </a>
+            </div>
+
+            <!-- Additional Info -->
+            <div class="info-box">
+                <div class="info-title">📋 {% trans "معلومات مهمة:" %}</div>
+                <ul class="info-list">
+                    <li>{% trans "العرض محدود لفترة قصيرة" %}</li>
+                    <li>{% trans "شحن مجاني للطلبات فوق 100 د.أ" %}</li>
+                    <li>{% trans "ضمان استرداد الأموال خلال 30 يوماً" %}</li>
+                    <li>{% trans "دعم فني مجاني لمدة سنة" %}</li>
+                </ul>
+            </div>
+
+            <p>
+                {% trans "لا تفوت هذه الفرصة الذهبية! قد يرتفع السعر مرة أخرى قريباً." %}
+            </p>
+
+            <p>
+                {% trans "شكراً لاختيارك" %} {{ site_settings.site_name|default:"ESCO" }}
+                <br>
+                {% trans "فريق خدمة العملاء" %}
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div class="email-footer">
+            <div class="footer-content">
+                <strong>{{ site_settings.site_name|default:"ESCO" }}</strong>
+                <br>
+                {% if site_settings.address %}
+                    {{ site_settings.address }}
+                    <br>
+                {% endif %}
+                {% if site_settings.phone %}
+                    📞 {{ site_settings.phone }}
+                    <br>
+                {% endif %}
+                {% if site_settings.email %}
+                    ✉️ {{ site_settings.email }}
+                {% endif %}
+            </div>
+
+            <!-- Social Links -->
+            {% if site_settings.facebook or site_settings.twitter or site_settings.instagram %}
+                <div class="social-links">
+                    {% if site_settings.facebook %}
+                        <a href="{{ site_settings.facebook }}" class="social-link">📘</a>
+                    {% endif %}
+                    {% if site_settings.twitter %}
+                        <a href="{{ site_settings.twitter }}" class="social-link">🐦</a>
+                    {% endif %}
+                    {% if site_settings.instagram %}
+                        <a href="{{ site_settings.instagram }}" class="social-link">📷</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <!-- Unsubscribe -->
+            <div class="unsubscribe">
+                {% trans "لا تريد استلام هذه الرسائل؟" %}
+                <a href="{{ unsubscribe_url }}">{% trans "إلغاء الاشتراك" %}</a>
+                |
+                <a href="{{ settings_url }}">{% trans "إدارة التفضيلات" %}</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

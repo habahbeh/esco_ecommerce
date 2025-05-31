@@ -1,0 +1,430 @@
+{% load static %}
+{% load i18n %}
+
+<!-- Load More Products AJAX Response -->
+{% for product in products %}
+    <div class="col-lg-3 col-md-4 col-sm-6 product-item" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
+        <div class="product-card-enhanced">
+            <!-- Product Badges -->
+            <div class="product-badges">
+                {% if product.has_discount %}
+                    <span class="product-badge bg-danger">
+                        {{ product.discount_percentage }}% {% trans "خصم" %}
+                    </span>
+                {% elif product.is_new %}
+                    <span class="product-badge bg-success">
+                        {% trans "جديد" %}
+                    </span>
+                {% elif product.is_featured %}
+                    <span class="product-badge bg-warning">
+                        {% trans "مميز" %}
+                    </span>
+                {% endif %}
+
+                <!-- Wishlist Button -->
+                <button class="product-wishlist wishlist-btn"
+                        data-product-id="{{ product.id }}"
+                        title="{% trans 'إضافة للمفضلة' %}">
+                    <i class="far fa-heart"></i>
+                </button>
+            </div>
+
+            <!-- Product Image -->
+            <div class="product-image-wrapper">
+                <a href="{{ product.get_absolute_url }}">
+                    {% if product.images.exists %}
+                        <img src="{{ product.images.first.image.url }}"
+                             class="product-main-image"
+                             alt="{{ product.name }}"
+                             loading="lazy">
+                    {% else %}
+                        <img src="{% static 'images/no-image.png' %}"
+                             class="product-main-image"
+                             alt="{{ product.name }}"
+                             loading="lazy">
+                    {% endif %}
+                </a>
+
+                <!-- Quick Actions -->
+                <div class="product-quick-actions">
+                    <button class="quick-action-btn"
+                            onclick="openQuickView({{ product.id }})"
+                            title="{% trans 'عرض سريع' %}">
+                        <i class="fas fa-eye"></i>
+                        <span class="d-none d-md-inline">{% trans "عرض سريع" %}</span>
+                    </button>
+                    <button class="quick-action-btn"
+                            onclick="addToComparison({{ product.id }})"
+                            title="{% trans 'مقارنة' %}">
+                        <i class="fas fa-exchange-alt"></i>
+                        <span class="d-none d-md-inline">{% trans "مقارنة" %}</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Product Details -->
+            <div class="product-details">
+                <!-- Category -->
+                <p class="product-category">
+                    <a href="{{ product.category.get_absolute_url }}" class="text-decoration-none">
+                        {{ product.category.name }}
+                    </a>
+                </p>
+
+                <!-- Product Name -->
+                <h5 class="product-name">
+                    <a href="{{ product.get_absolute_url }}" class="text-dark text-decoration-none">
+                        {{ product.name|truncatechars:50 }}
+                    </a>
+                </h5>
+
+                <!-- Rating -->
+                <div class="product-rating">
+                    <div class="stars">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= product.rating %}
+                                <i class="fas fa-star"></i>
+                            {% elif forloop.counter|add:"-1" < product.rating %}
+                                <i class="fas fa-star-half-alt"></i>
+                            {% else %}
+                                <i class="far fa-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <span class="rating-count">({{ product.review_count }})</span>
+                </div>
+
+                <!-- Price and Add to Cart -->
+                <div class="product-price-wrapper">
+                    <div class="product-price">
+                        {% if product.show_price and product.category.show_prices %}
+                            <span class="current-price">
+                                {{ product.current_price|floatformat:2 }} {% trans "د.أ" %}
+                            </span>
+                            {% if product.has_discount %}
+                                <span class="original-price">
+                                    {{ product.base_price|floatformat:2 }}
+                                </span>
+                            {% endif %}
+                        {% else %}
+                            <span class="current-price">{% trans "اتصل للسعر" %}</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Add to Cart Button -->
+                    {% if product.in_stock %}
+                        <button class="add-to-cart-icon"
+                                onclick="addToCart({{ product.id }})"
+                                title="{% trans 'إضافة للسلة' %}">
+                            <i class="fas fa-shopping-cart"></i>
+                        </button>
+                    {% else %}
+                        <button class="add-to-cart-icon bg-secondary"
+                                onclick="openNotifyModal({{ product.id }}, '{{ product.name|escapejs }}', '{% if product.images.exists %}{{ product.images.first.image.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}', '{{ product.sku }}', '{{ product.current_price }} د.أ', {% if product.variants.exists %}true{% else %}false{% endif %})"
+                                title="{% trans 'إشعاري عند التوفر' %}">
+                            <i class="fas fa-bell"></i>
+                        </button>
+                    {% endif %}
+                </div>
+
+                <!-- Stock Status -->
+                <div class="stock-status mt-2">
+                    {% if product.in_stock %}
+                        {% if product.track_inventory and product.low_stock %}
+                            <small class="text-warning">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                {% trans "كمية محدودة" %}
+                            </small>
+                        {% else %}
+                            <small class="text-success">
+                                <i class="fas fa-check me-1"></i>
+                                {% trans "متوفر" %}
+                            </small>
+                        {% endif %}
+                    {% else %}
+                        <small class="text-danger">
+                            <i class="fas fa-times me-1"></i>
+                            {% trans "غير متوفر" %}
+                        </small>
+                    {% endif %}
+                </div>
+
+                <!-- Product Features -->
+                {% if product.specifications %}
+                    <div class="product-features mt-2">
+                        {% for key, value in product.specifications.items|slice:":2" %}
+                            <small class="text-muted d-block">
+                                <i class="fas fa-check-circle me-1 text-success"></i>
+                                {{ key }}: {{ value|truncatechars:20 }}
+                            </small>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% empty %}
+    <!-- No More Products -->
+    <div class="col-12">
+        <div class="text-center py-5">
+            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">{% trans "لا توجد منتجات أخرى" %}</h5>
+            <p class="text-muted">{% trans "تم عرض جميع المنتجات المتاحة" %}</p>
+        </div>
+    </div>
+{% endfor %}
+
+<!-- Load More Button -->
+{% if has_next %}
+    <div class="col-12">
+        <div class="text-center mt-4">
+            <button class="btn btn-outline-primary btn-lg"
+                    id="loadMoreBtn"
+                    data-page="{{ next_page_number }}"
+                    onclick="loadMoreProducts({{ next_page_number }})">
+                <i class="fas fa-plus me-2"></i>
+                {% trans "تحميل المزيد" %}
+                <span class="spinner-border spinner-border-sm ms-2"
+                      role="status"
+                      style="display: none;"
+                      id="loadMoreSpinner">
+                </span>
+            </button>
+        </div>
+    </div>
+{% endif %}
+
+<script>
+// Function to load more products
+function loadMoreProducts(page) {
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+    const spinner = document.getElementById('loadMoreSpinner');
+    const productsContainer = document.querySelector('.products-grid');
+
+    if (!loadMoreBtn || !productsContainer) return;
+
+    // Show loading state
+    loadMoreBtn.disabled = true;
+    spinner.style.display = 'inline-block';
+
+    // Get current URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set('page', page);
+
+    // Make AJAX request
+    fetch(`${window.location.pathname}?${urlParams.toString()}`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.text();
+    })
+    .then(html => {
+        // Create temporary container
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+
+        // Extract new products
+        const newProducts = tempDiv.querySelectorAll('.product-item');
+
+        // Remove old load more button
+        const oldLoadMoreBtn = productsContainer.querySelector('#loadMoreBtn')?.closest('.col-12');
+        if (oldLoadMoreBtn) {
+            oldLoadMoreBtn.remove();
+        }
+
+        // Add new products with animation
+        newProducts.forEach((product, index) => {
+            product.style.opacity = '0';
+            product.style.transform = 'translateY(30px)';
+            productsContainer.appendChild(product);
+
+            // Animate in
+            setTimeout(() => {
+                product.style.transition = 'all 0.5s ease';
+                product.style.opacity = '1';
+                product.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+
+        // Add new load more button if exists
+        const newLoadMoreBtn = tempDiv.querySelector('#loadMoreBtn')?.closest('.col-12');
+        if (newLoadMoreBtn) {
+            productsContainer.appendChild(newLoadMoreBtn);
+        }
+
+        // Re-initialize wishlist buttons for new products
+        initializeWishlistButtons();
+
+        // Re-initialize AOS for new products
+        if (typeof AOS !== 'undefined') {
+            AOS.refresh();
+        }
+
+        // Update URL without page reload
+        const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+        window.history.pushState({}, '', newUrl);
+
+        // Show success message
+        showNotification('success', `تم تحميل ${newProducts.length} منتج إضافي`);
+    })
+    .catch(error => {
+        console.error('Error loading more products:', error);
+        showNotification('error', 'حدث خطأ في تحميل المنتجات');
+
+        // Re-enable button
+        loadMoreBtn.disabled = false;
+        spinner.style.display = 'none';
+    });
+}
+
+// Initialize infinite scroll (optional)
+function initializeInfiniteScroll() {
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+    if (!loadMoreBtn) return;
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !loadMoreBtn.disabled) {
+                const page = parseInt(loadMoreBtn.dataset.page);
+                if (page) {
+                    loadMoreProducts(page);
+                }
+            }
+        });
+    }, {
+        threshold: 0.1,
+        rootMargin: '100px'
+    });
+
+    observer.observe(loadMoreBtn);
+}
+
+// Auto-initialize infinite scroll on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Uncomment to enable infinite scroll
+    // initializeInfiniteScroll();
+});
+
+// Re-initialize wishlist buttons for newly loaded products
+function initializeWishlistButtons() {
+    document.querySelectorAll('.wishlist-btn:not([data-initialized])').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const productId = this.dataset.productId;
+            toggleWishlist(productId, this);
+        });
+        btn.dataset.initialized = 'true';
+    });
+}
+
+// Enhanced add to cart with better feedback
+function addToCart(productId, quantity = 1) {
+    const button = document.querySelector(`[onclick="addToCart(${productId})"]`);
+    const originalContent = button.innerHTML;
+
+    // Show loading state
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    button.disabled = true;
+
+    const data = {
+        product_id: productId,
+        quantity: quantity
+    };
+
+    fetch('/cart/add/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success animation
+            button.innerHTML = '<i class="fas fa-check"></i>';
+            button.classList.add('bg-success');
+
+            // Update cart count
+            updateCartCount(data.cart_count);
+
+            // Show notification
+            showNotification('success', 'تمت إضافة المنتج إلى السلة بنجاح');
+
+            // Reset button after delay
+            setTimeout(() => {
+                button.innerHTML = originalContent;
+                button.classList.remove('bg-success');
+                button.disabled = false;
+            }, 2000);
+        } else {
+            throw new Error(data.message || 'خطأ في إضافة المنتج');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+
+        // Show error state
+        button.innerHTML = '<i class="fas fa-times"></i>';
+        button.classList.add('bg-danger');
+
+        showNotification('error', error.message || 'حدث خطأ في إضافة المنتج');
+
+        // Reset button
+        setTimeout(() => {
+            button.innerHTML = originalContent;
+            button.classList.remove('bg-danger');
+            button.disabled = false;
+        }, 2000);
+    });
+}
+
+// Add to comparison with feedback
+function addToComparison(productId) {
+    fetch('/products/api/compare/add/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({product_id: productId})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('success', data.message);
+            updateComparisonCount(data.comparison_count);
+        } else {
+            showNotification('error', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('error', 'حدث خطأ في إضافة المنتج للمقارنة');
+    });
+}
+
+// Open quick view
+function openQuickView(productId) {
+    fetch(`/products/api/product/${productId}/quick-view/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Create and show quick view modal
+                showQuickViewModal(data.html);
+            } else {
+                showNotification('error', 'حدث خطأ في تحميل العرض السريع');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('error', 'حدث خطأ في الاتصال');
+        });
+}
+</script>

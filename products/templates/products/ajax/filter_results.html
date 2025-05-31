@@ -1,0 +1,747 @@
+{% load static %}
+{% load i18n %}
+
+<!-- Filter Results AJAX Response -->
+<div class="filter-results-container">
+    <!-- Results Header -->
+    <div class="results-header mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="results-info">
+                <h5 class="mb-1">
+                    {% if total_count > 0 %}
+                        {% blocktrans count counter=total_count %}
+                            تم العثور على منتج واحد
+                        {% plural %}
+                            تم العثور على {{ counter }} منتج
+                        {% endblocktrans %}
+                    {% else %}
+                        {% trans "لم يتم العثور على أي منتجات" %}
+                    {% endif %}
+                </h5>
+                {% if search_query %}
+                    <p class="text-muted mb-0">
+                        {% trans "نتائج البحث عن:" %} <strong>"{{ search_query }}"</strong>
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- View Toggle -->
+            <div class="view-toggle-container">
+                <div class="btn-group" role="group">
+                    <button type="button"
+                            class="btn btn-outline-secondary view-toggle-btn {% if view_type == 'grid' %}active{% endif %}"
+                            data-view="grid"
+                            title="{% trans 'عرض شبكي' %}">
+                        <i class="fas fa-th"></i>
+                    </button>
+                    <button type="button"
+                            class="btn btn-outline-secondary view-toggle-btn {% if view_type == 'list' %}active{% endif %}"
+                            data-view="list"
+                            title="{% trans 'عرض قائمة' %}">
+                        <i class="fas fa-list"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Filters -->
+        {% if active_filters %}
+            <div class="active-filters mt-3">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <span class="text-muted small fw-bold">{% trans "الفلاتر النشطة:" %}</span>
+                    {% for filter in active_filters %}
+                        <span class="badge bg-primary-subtle text-primary filter-badge">
+                            {{ filter.label }}: {{ filter.display }}
+                            <button type="button"
+                                    class="btn-close btn-close-sm ms-1"
+                                    onclick="removeFilter('{{ filter.type }}', '{{ filter.value }}')"
+                                    title="{% trans 'إزالة الفلتر' %}">
+                            </button>
+                        </span>
+                    {% endfor %}
+                    <button class="btn btn-sm btn-outline-secondary" onclick="clearAllFilters()">
+                        <i class="fas fa-times me-1"></i>
+                        {% trans "مسح الكل" %}
+                    </button>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Sort Options -->
+        <div class="sort-options mt-3">
+            <div class="d-flex align-items-center gap-3">
+                <span class="text-muted small fw-bold">{% trans "ترتيب حسب:" %}</span>
+                <select class="form-select form-select-sm"
+                        style="width: auto;"
+                        onchange="updateSort(this.value)">
+                    <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>
+                        {% trans "الأحدث" %}
+                    </option>
+                    <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>
+                        {% trans "الأقدم" %}
+                    </option>
+                    <option value="price_low" {% if sort_by == 'price_low' %}selected{% endif %}>
+                        {% trans "السعر: منخفض إلى مرتفع" %}
+                    </option>
+                    <option value="price_high" {% if sort_by == 'price_high' %}selected{% endif %}>
+                        {% trans "السعر: مرتفع إلى منخفض" %}
+                    </option>
+                    <option value="name_az" {% if sort_by == 'name_az' %}selected{% endif %}>
+                        {% trans "الاسم: أ-ي" %}
+                    </option>
+                    <option value="name_za" {% if sort_by == 'name_za' %}selected{% endif %}>
+                        {% trans "الاسم: ي-أ" %}
+                    </option>
+                    <option value="best_selling" {% if sort_by == 'best_selling' %}selected{% endif %}>
+                        {% trans "الأكثر مبيعاً" %}
+                    </option>
+                    <option value="most_viewed" {% if sort_by == 'most_viewed' %}selected{% endif %}>
+                        {% trans "الأكثر مشاهدة" %}
+                    </option>
+                    <option value="top_rated" {% if sort_by == 'top_rated' %}selected{% endif %}>
+                        {% trans "الأعلى تقييماً" %}
+                    </option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Grid/List -->
+    {% if products %}
+        <div class="products-container {% if view_type == 'list' %}list-view{% else %}grid-view{% endif %}">
+            <div class="row products-grid" id="productsGrid">
+                {% for product in products %}
+                    {% if view_type == 'list' %}
+                        <!-- List View -->
+                        <div class="col-12 product-item list-item" data-aos="fade-up">
+                            <div class="product-card-list">
+                                <div class="row align-items-center">
+                                    <!-- Product Image -->
+                                    <div class="col-md-3">
+                                        <div class="product-image-container">
+                                            <a href="{{ product.get_absolute_url }}">
+                                                {% if product.images.exists %}
+                                                    <img src="{{ product.images.first.image.url }}"
+                                                         class="img-fluid"
+                                                         alt="{{ product.name }}"
+                                                         loading="lazy">
+                                                {% else %}
+                                                    <img src="{% static 'images/no-image.png' %}"
+                                                         class="img-fluid"
+                                                         alt="{{ product.name }}"
+                                                         loading="lazy">
+                                                {% endif %}
+                                            </a>
+
+                                            <!-- Badges -->
+                                            <div class="product-badges">
+                                                {% if product.has_discount %}
+                                                    <span class="badge bg-danger">{{ product.discount_percentage }}%</span>
+                                                {% elif product.is_new %}
+                                                    <span class="badge bg-success">{% trans "جديد" %}</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Product Info -->
+                                    <div class="col-md-6">
+                                        <div class="product-info">
+                                            <p class="product-category text-muted small">
+                                                {{ product.category.name }}
+                                            </p>
+                                            <h5 class="product-title">
+                                                <a href="{{ product.get_absolute_url }}" class="text-dark text-decoration-none">
+                                                    {{ product.name }}
+                                                </a>
+                                            </h5>
+
+                                            <!-- Rating -->
+                                            <div class="product-rating mb-2">
+                                                <div class="stars">
+                                                    {% for i in "12345" %}
+                                                        {% if forloop.counter <= product.rating %}
+                                                            <i class="fas fa-star text-warning"></i>
+                                                        {% else %}
+                                                            <i class="far fa-star text-muted"></i>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </div>
+                                                <span class="rating-count text-muted small">({{ product.review_count }})</span>
+                                            </div>
+
+                                            <!-- Short Description -->
+                                            {% if product.short_description %}
+                                                <p class="product-description text-muted">
+                                                    {{ product.short_description|truncatewords:20 }}
+                                                </p>
+                                            {% endif %}
+
+                                            <!-- Features -->
+                                            {% if product.specifications %}
+                                                <ul class="product-features list-unstyled">
+                                                    {% for key, value in product.specifications.items|slice:":3" %}
+                                                        <li class="small text-muted">
+                                                            <i class="fas fa-check text-success me-2"></i>
+                                                            {{ key }}: {{ value|truncatechars:30 }}
+                                                        </li>
+                                                    {% endfor %}
+                                                </ul>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <!-- Price and Actions -->
+                                    <div class="col-md-3">
+                                        <div class="product-actions text-end">
+                                            <!-- Price -->
+                                            <div class="product-price mb-3">
+                                                {% if product.show_price and product.category.show_prices %}
+                                                    <div class="current-price h5 text-primary mb-1">
+                                                        {{ product.current_price|floatformat:2 }} {% trans "د.أ" %}
+                                                    </div>
+                                                    {% if product.has_discount %}
+                                                        <div class="original-price text-muted text-decoration-line-through small">
+                                                            {{ product.base_price|floatformat:2 }} {% trans "د.أ" %}
+                                                        </div>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <div class="h6 text-primary">{% trans "اتصل للسعر" %}</div>
+                                                {% endif %}
+                                            </div>
+
+                                            <!-- Stock Status -->
+                                            <div class="stock-status mb-3">
+                                                {% if product.in_stock %}
+                                                    <span class="badge bg-success-subtle text-success">
+                                                        <i class="fas fa-check me-1"></i>{% trans "متوفر" %}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-danger-subtle text-danger">
+                                                        <i class="fas fa-times me-1"></i>{% trans "غير متوفر" %}
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+
+                                            <!-- Action Buttons -->
+                                            <div class="action-buttons">
+                                                {% if product.in_stock %}
+                                                    <button class="btn btn-primary btn-sm w-100 mb-2"
+                                                            onclick="addToCart({{ product.id }})">
+                                                        <i class="fas fa-shopping-cart me-1"></i>
+                                                        {% trans "إضافة للسلة" %}
+                                                    </button>
+                                                {% else %}
+                                                    <button class="btn btn-outline-primary btn-sm w-100 mb-2"
+                                                            onclick="openNotifyModal({{ product.id }}, '{{ product.name|escapejs }}', '{% if product.images.exists %}{{ product.images.first.image.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}', '{{ product.sku }}', '{{ product.current_price }} د.أ')">
+                                                        <i class="fas fa-bell me-1"></i>
+                                                        {% trans "أشعرني عند التوفر" %}
+                                                    </button>
+                                                {% endif %}
+
+                                                <div class="d-flex gap-1">
+                                                    <button class="btn btn-outline-secondary btn-sm flex-fill wishlist-btn"
+                                                            data-product-id="{{ product.id }}">
+                                                        <i class="far fa-heart"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-secondary btn-sm flex-fill"
+                                                            onclick="addToComparison({{ product.id }})">
+                                                        <i class="fas fa-exchange-alt"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-secondary btn-sm flex-fill"
+                                                            onclick="openQuickView({{ product.id }})">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- Grid View -->
+                        <div class="col-lg-3 col-md-4 col-sm-6 product-item" data-aos="fade-up">
+                            <div class="product-card-enhanced">
+                                <!-- Product Badges -->
+                                <div class="product-badges">
+                                    {% if product.has_discount %}
+                                        <span class="product-badge bg-danger">
+                                            {{ product.discount_percentage }}% {% trans "خصم" %}
+                                        </span>
+                                    {% elif product.is_new %}
+                                        <span class="product-badge bg-success">
+                                            {% trans "جديد" %}
+                                        </span>
+                                    {% elif product.is_featured %}
+                                        <span class="product-badge bg-warning">
+                                            {% trans "مميز" %}
+                                        </span>
+                                    {% endif %}
+
+                                    <!-- Wishlist Button -->
+                                    <button class="product-wishlist wishlist-btn"
+                                            data-product-id="{{ product.id }}">
+                                        <i class="far fa-heart"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Product Image -->
+                                <div class="product-image-wrapper">
+                                    <a href="{{ product.get_absolute_url }}">
+                                        {% if product.images.exists %}
+                                            <img src="{{ product.images.first.image.url }}"
+                                                 class="product-main-image"
+                                                 alt="{{ product.name }}"
+                                                 loading="lazy">
+                                        {% else %}
+                                            <img src="{% static 'images/no-image.png' %}"
+                                                 class="product-main-image"
+                                                 alt="{{ product.name }}"
+                                                 loading="lazy">
+                                        {% endif %}
+                                    </a>
+
+                                    <!-- Quick Actions -->
+                                    <div class="product-quick-actions">
+                                        <button class="quick-action-btn"
+                                                onclick="openQuickView({{ product.id }})">
+                                            <i class="fas fa-eye"></i>
+                                            <span class="d-none d-md-inline">{% trans "عرض سريع" %}</span>
+                                        </button>
+                                        <button class="quick-action-btn"
+                                                onclick="addToComparison({{ product.id }})">
+                                            <i class="fas fa-exchange-alt"></i>
+                                            <span class="d-none d-md-inline">{% trans "مقارنة" %}</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Product Details -->
+                                <div class="product-details">
+                                    <p class="product-category">{{ product.category.name }}</p>
+                                    <h5 class="product-name">
+                                        <a href="{{ product.get_absolute_url }}" class="text-dark text-decoration-none">
+                                            {{ product.name|truncatechars:50 }}
+                                        </a>
+                                    </h5>
+
+                                    <!-- Rating -->
+                                    <div class="product-rating">
+                                        <div class="stars">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= product.rating %}
+                                                    <i class="fas fa-star"></i>
+                                                {% else %}
+                                                    <i class="far fa-star"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                        <span class="rating-count">({{ product.review_count }})</span>
+                                    </div>
+
+                                    <!-- Price and Add to Cart -->
+                                    <div class="product-price-wrapper">
+                                        <div class="product-price">
+                                            {% if product.show_price and product.category.show_prices %}
+                                                <span class="current-price">
+                                                    {{ product.current_price|floatformat:2 }} {% trans "د.أ" %}
+                                                </span>
+                                                {% if product.has_discount %}
+                                                    <span class="original-price">
+                                                        {{ product.base_price|floatformat:2 }}
+                                                    </span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="current-price">{% trans "اتصل للسعر" %}</span>
+                                            {% endif %}
+                                        </div>
+
+                                        {% if product.in_stock %}
+                                            <button class="add-to-cart-icon"
+                                                    onclick="addToCart({{ product.id }})">
+                                                <i class="fas fa-shopping-cart"></i>
+                                            </button>
+                                        {% else %}
+                                            <button class="add-to-cart-icon bg-secondary"
+                                                    onclick="openNotifyModal({{ product.id }}, '{{ product.name|escapejs }}', '{% if product.images.exists %}{{ product.images.first.image.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}', '{{ product.sku }}', '{{ product.current_price }} د.أ')">
+                                                <i class="fas fa-bell"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+            <nav aria-label="{% trans 'تنقل الصفحات' %}" class="mt-5">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1" onclick="loadPage(1); return false;">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}" onclick="loadPage({{ page_obj.previous_page_number }}); return false;">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}" onclick="loadPage({{ num }}); return false;">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}" onclick="loadPage({{ page_obj.next_page_number }}); return false;">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" onclick="loadPage({{ page_obj.paginator.num_pages }}); return false;">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+
+    {% else %}
+        <!-- No Results -->
+        <div class="no-results text-center py-5">
+            <div class="no-results-icon mb-4">
+                <i class="fas fa-search fa-4x text-muted"></i>
+            </div>
+            <h4 class="text-muted mb-3">{% trans "لم يتم العثور على أي منتجات" %}</h4>
+            <p class="text-muted mb-4">
+                {% trans "جرب تعديل معايير البحث أو إزالة بعض الفلاتر" %}
+            </p>
+
+            <!-- Suggestions -->
+            <div class="search-suggestions">
+                <h6 class="mb-3">{% trans "اقتراحات:" %}</h6>
+                <div class="d-flex flex-wrap justify-content-center gap-2">
+                    <button class="btn btn-outline-primary btn-sm" onclick="clearAllFilters()">
+                        {% trans "مسح جميع الفلاتر" %}
+                    </button>
+                    <a href="{% url 'products:product_list' %}" class="btn btn-outline-secondary btn-sm">
+                        {% trans "عرض جميع المنتجات" %}
+                    </a>
+                    <a href="{% url 'products:category_list' %}" class="btn btn-outline-info btn-sm">
+                        {% trans "تصفح الفئات" %}
+                    </a>
+                </div>
+            </div>
+
+            <!-- Popular Categories -->
+            {% if popular_categories %}
+                <div class="popular-categories mt-5">
+                    <h6 class="mb-3">{% trans "فئات شائعة:" %}</h6>
+                    <div class="row justify-content-center">
+                        {% for category in popular_categories|slice:":4" %}
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <a href="{{ category.get_absolute_url }}" class="card text-decoration-none h-100">
+                                    <div class="card-body text-center">
+                                        {% if category.icon %}
+                                            <i class="{{ category.icon }} fa-2x text-primary mb-2"></i>
+                                        {% else %}
+                                            <i class="fas fa-cube fa-2x text-primary mb-2"></i>
+                                        {% endif %}
+                                        <h6 class="card-title">{{ category.name }}</h6>
+                                        <small class="text-muted">
+                                            {{ category.products_count }} {% trans "منتج" %}
+                                        </small>
+                                    </div>
+                                </a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.filter-results-container {
+    animation: fadeIn 0.5s ease;
+}
+
+.filter-badge {
+    position: relative;
+    padding-right: 2rem;
+}
+
+.filter-badge .btn-close {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 0;
+    font-size: 0.7rem;
+}
+
+.view-toggle-btn.active {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+    color: white;
+}
+
+.product-card-list {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+    margin-bottom: 1.5rem;
+}
+
+.product-card-list:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.list-view .product-image-container {
+    position: relative;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.list-view .product-image-container img {
+    max-height: 180px;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+.list-view .product-badges {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+}
+
+.list-view .product-features {
+    max-height: 80px;
+    overflow: hidden;
+}
+
+.no-results-icon {
+    animation: bounce 1s ease infinite alternate;
+}
+
+@keyframes bounce {
+    from { transform: translateY(0px); }
+    to { transform: translateY(-10px); }
+}
+
+.popular-categories .card {
+    transition: all 0.3s ease;
+}
+
+.popular-categories .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+/* Responsive */
+@media (max-width: 767.98px) {
+    .results-header .d-flex {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .sort-options {
+        text-align: center;
+    }
+
+    .active-filters {
+        text-align: center;
+    }
+
+    .list-view .row {
+        text-align: center;
+    }
+
+    .list-view .product-actions {
+        text-align: center !important;
+        margin-top: 1rem;
+    }
+}
+</style>
+
+<script>
+// View toggle functionality
+document.querySelectorAll('.view-toggle-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const view = this.dataset.view;
+        document.querySelectorAll('.view-toggle-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+
+        // Update view
+        const container = document.querySelector('.products-container');
+        if (container) {
+            container.className = view === 'list' ? 'products-container list-view' : 'products-container grid-view';
+        }
+
+        // Update URL parameter
+        const url = new URL(window.location);
+        url.searchParams.set('view', view);
+        window.history.pushState({}, '', url);
+    });
+});
+
+// Remove filter functionality
+function removeFilter(type, value) {
+    const url = new URL(window.location);
+
+    if (type === 'price') {
+        url.searchParams.delete('min_price');
+        url.searchParams.delete('max_price');
+    } else {
+        const currentValues = url.searchParams.getAll(type);
+        url.searchParams.delete(type);
+        currentValues.forEach(val => {
+            if (val !== value) {
+                url.searchParams.append(type, val);
+            }
+        });
+    }
+
+    applyFilters(url.searchParams);
+}
+
+// Clear all filters
+function clearAllFilters() {
+    const url = new URL(window.location);
+    const preserveParams = ['q', 'sort', 'view', 'category'];
+    const newUrl = new URL(window.location.pathname, window.location.origin);
+
+    preserveParams.forEach(param => {
+        if (url.searchParams.has(param)) {
+            newUrl.searchParams.set(param, url.searchParams.get(param));
+        }
+    });
+
+    applyFilters(newUrl.searchParams);
+}
+
+// Update sort
+function updateSort(sortValue) {
+    const url = new URL(window.location);
+    url.searchParams.set('sort', sortValue);
+    applyFilters(url.searchParams);
+}
+
+// Load specific page
+function loadPage(pageNumber) {
+    const url = new URL(window.location);
+    url.searchParams.set('page', pageNumber);
+    applyFilters(url.searchParams);
+}
+
+// Apply filters with AJAX
+function applyFilters(searchParams) {
+    const url = `${window.location.pathname}?${searchParams.toString()}`;
+
+    // Show loading state
+    showFilterLoading();
+
+    fetch(url, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.text())
+    .then(html => {
+        // Update content
+        const resultsContainer = document.querySelector('.filter-results-container');
+        if (resultsContainer) {
+            resultsContainer.innerHTML = html;
+        }
+
+        // Update URL
+        window.history.pushState({}, '', url);
+
+        // Re-initialize components
+        initializeWishlistButtons();
+
+        // Scroll to top of results
+        resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    })
+    .catch(error => {
+        console.error('Error applying filters:', error);
+        showNotification('error', 'حدث خطأ في تطبيق الفلاتر');
+    })
+    .finally(() => {
+        hideFilterLoading();
+    });
+}
+
+// Show filter loading state
+function showFilterLoading() {
+    const container = document.querySelector('.products-container');
+    if (container) {
+        container.style.opacity = '0.5';
+        container.style.pointerEvents = 'none';
+
+        // Add loading overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'filter-loading-overlay';
+        overlay.innerHTML = `
+            <div class="text-center">
+                <div class="spinner-border text-primary mb-2" role="status"></div>
+                <div>جاري التحديث...</div>
+            </div>
+        `;
+        overlay.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        `;
+
+        container.style.position = 'relative';
+        container.appendChild(overlay);
+    }
+}
+
+// Hide filter loading state
+function hideFilterLoading() {
+    const container = document.querySelector('.products-container');
+    if (container) {
+        container.style.opacity = '1';
+        container.style.pointerEvents = 'auto';
+
+        const overlay = container.querySelector('.filter-loading-overlay');
+        if (overlay) {
+            overlay.remove();
+        }
+    }
+}
+</script>

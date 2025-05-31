@@ -1,0 +1,667 @@
+{% load static %}
+{% load i18n %}
+
+<!-- Search Suggestions AJAX Response -->
+<div class="search-suggestions-container">
+    {% if suggestions %}
+        <div class="suggestions-list">
+            <!-- Products Section -->
+            {% for suggestion in suggestions %}
+                {% if suggestion.type == 'product' %}
+                    {% if forloop.first %}
+                        <div class="suggestion-section">
+                            <div class="suggestion-header">
+                                <i class="fas fa-cube text-primary me-2"></i>
+                                <span class="fw-bold">{% trans "المنتجات" %}</span>
+                            </div>
+                    {% endif %}
+
+                    <a href="{{ suggestion.url }}" class="suggestion-item product-suggestion">
+                        <div class="suggestion-content">
+                            <div class="suggestion-icon">
+                                <i class="fas fa-box text-primary"></i>
+                            </div>
+                            <div class="suggestion-info">
+                                <div class="suggestion-title">{{ suggestion.name }}</div>
+                                {% if suggestion.price %}
+                                    <div class="suggestion-meta text-muted small">
+                                        {{ suggestion.price }} {% trans "د.أ" %}
+                                    </div>
+                                {% endif %}
+                                {% if suggestion.category %}
+                                    <div class="suggestion-category text-muted small">
+                                        {{ suggestion.category }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="suggestion-action">
+                                <i class="fas fa-arrow-right text-muted"></i>
+                            </div>
+                        </div>
+                    </a>
+
+                    {% if forloop.last or suggestions|slice:"forloop.counter:"|first.type != 'product' %}
+                        </div>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+
+            <!-- Categories Section -->
+            {% for suggestion in suggestions %}
+                {% if suggestion.type == 'category' %}
+                    {% if forloop.first %}
+                        <div class="suggestion-section">
+                            <div class="suggestion-header">
+                                <i class="fas fa-th-large text-success me-2"></i>
+                                <span class="fw-bold">{% trans "الفئات" %}</span>
+                            </div>
+                    {% endif %}
+
+                    <a href="{{ suggestion.url }}" class="suggestion-item category-suggestion">
+                        <div class="suggestion-content">
+                            <div class="suggestion-icon">
+                                <i class="fas fa-folder text-success"></i>
+                            </div>
+                            <div class="suggestion-info">
+                                <div class="suggestion-title">{{ suggestion.name }}</div>
+                                {% if suggestion.products_count %}
+                                    <div class="suggestion-meta text-muted small">
+                                        {{ suggestion.products_count }} {% trans "منتج" %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="suggestion-action">
+                                <i class="fas fa-arrow-right text-muted"></i>
+                            </div>
+                        </div>
+                    </a>
+
+                    {% if forloop.last or suggestions|slice:"forloop.counter:"|first.type != 'category' %}
+                        </div>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+
+            <!-- Brands Section -->
+            {% for suggestion in suggestions %}
+                {% if suggestion.type == 'brand' %}
+                    {% if forloop.first %}
+                        <div class="suggestion-section">
+                            <div class="suggestion-header">
+                                <i class="fas fa-tag text-warning me-2"></i>
+                                <span class="fw-bold">{% trans "العلامات التجارية" %}</span>
+                            </div>
+                    {% endif %}
+
+                    <a href="{{ suggestion.url }}" class="suggestion-item brand-suggestion">
+                        <div class="suggestion-content">
+                            <div class="suggestion-icon">
+                                {% if suggestion.logo %}
+                                    <img src="{{ suggestion.logo }}" alt="{{ suggestion.name }}" class="brand-logo">
+                                {% else %}
+                                    <i class="fas fa-tag text-warning"></i>
+                                {% endif %}
+                            </div>
+                            <div class="suggestion-info">
+                                <div class="suggestion-title">{{ suggestion.name }}</div>
+                                {% if suggestion.products_count %}
+                                    <div class="suggestion-meta text-muted small">
+                                        {{ suggestion.products_count }} {% trans "منتج" %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="suggestion-action">
+                                <i class="fas fa-arrow-right text-muted"></i>
+                            </div>
+                        </div>
+                    </a>
+
+                    {% if forloop.last or suggestions|slice:"forloop.counter:"|first.type != 'brand' %}
+                        </div>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+
+            <!-- Popular Searches Section -->
+            {% if popular_searches %}
+                <div class="suggestion-section">
+                    <div class="suggestion-header">
+                        <i class="fas fa-fire text-danger me-2"></i>
+                        <span class="fw-bold">{% trans "بحث شائع" %}</span>
+                    </div>
+                    {% for search in popular_searches|slice:":3" %}
+                        <a href="{% url 'products:product_search' %}?q={{ search.query|urlencode }}" class="suggestion-item search-suggestion">
+                            <div class="suggestion-content">
+                                <div class="suggestion-icon">
+                                    <i class="fas fa-search text-secondary"></i>
+                                </div>
+                                <div class="suggestion-info">
+                                    <div class="suggestion-title">{{ search.query }}</div>
+                                    <div class="suggestion-meta text-muted small">
+                                        {{ search.count }} {% trans "نتيجة" %}
+                                    </div>
+                                </div>
+                                <div class="suggestion-action">
+                                    <i class="fas fa-arrow-right text-muted"></i>
+                                </div>
+                            </div>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Recent Searches (if user has any) -->
+            {% if recent_searches %}
+                <div class="suggestion-section">
+                    <div class="suggestion-header">
+                        <i class="fas fa-history text-info me-2"></i>
+                        <span class="fw-bold">{% trans "عمليات بحث سابقة" %}</span>
+                    </div>
+                    {% for search in recent_searches|slice:":3" %}
+                        <a href="{% url 'products:product_search' %}?q={{ search|urlencode }}" class="suggestion-item recent-suggestion">
+                            <div class="suggestion-content">
+                                <div class="suggestion-icon">
+                                    <i class="fas fa-clock text-info"></i>
+                                </div>
+                                <div class="suggestion-info">
+                                    <div class="suggestion-title">{{ search }}</div>
+                                </div>
+                                <div class="suggestion-action">
+                                    <button class="remove-recent-btn" onclick="removeRecentSearch('{{ search }}'); event.preventDefault();" title="{% trans 'حذف' %}">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Search All Button -->
+        <div class="search-all-section">
+            <a href="{% url 'products:product_search' %}?q={{ query|urlencode }}" class="search-all-btn">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <i class="fas fa-search me-2"></i>
+                        {% blocktrans with query=query %}البحث عن "{{ query }}" في جميع المنتجات{% endblocktrans %}
+                    </div>
+                    <i class="fas fa-arrow-left"></i>
+                </div>
+            </a>
+        </div>
+
+    {% elif query %}
+        <!-- No Suggestions Found -->
+        <div class="no-suggestions">
+            <div class="text-center py-4">
+                <i class="fas fa-search fa-2x text-muted mb-3"></i>
+                <h6 class="text-muted">{% trans "لا توجد اقتراحات" %}</h6>
+                <p class="text-muted small mb-3">
+                    {% trans "لم نجد أي نتائج مطابقة. جرب البحث بكلمات أخرى." %}
+                </p>
+
+                <!-- Quick Search Buttons -->
+                <div class="quick-search-buttons">
+                    <a href="{% url 'products:product_search' %}?q={{ query|urlencode }}" class="btn btn-sm btn-outline-primary me-2">
+                        <i class="fas fa-search me-1"></i>
+                        {% trans "البحث عن كل شيء" %}
+                    </a>
+                    <a href="{% url 'products:category_list' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-th-large me-1"></i>
+                        {% trans "تصفح الفئات" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Popular Categories for Empty Search -->
+        {% if popular_categories %}
+            <div class="suggestion-section">
+                <div class="suggestion-header">
+                    <i class="fas fa-star text-warning me-2"></i>
+                    <span class="fw-bold">{% trans "فئات شائعة" %}</span>
+                </div>
+                {% for category in popular_categories|slice:":4" %}
+                    <a href="{{ category.get_absolute_url }}" class="suggestion-item category-suggestion">
+                        <div class="suggestion-content">
+                            <div class="suggestion-icon">
+                                {% if category.icon %}
+                                    <i class="{{ category.icon }} text-primary"></i>
+                                {% else %}
+                                    <i class="fas fa-cube text-primary"></i>
+                                {% endif %}
+                            </div>
+                            <div class="suggestion-info">
+                                <div class="suggestion-title">{{ category.name }}</div>
+                                <div class="suggestion-meta text-muted small">
+                                    {{ category.products_count }} {% trans "منتج" %}
+                                </div>
+                            </div>
+                            <div class="suggestion-action">
+                                <i class="fas fa-arrow-right text-muted"></i>
+                            </div>
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+    {% else %}
+        <!-- Empty State - Show Popular Items -->
+        <div class="empty-search-state">
+            <!-- Trending Searches -->
+            {% if trending_searches %}
+                <div class="suggestion-section">
+                    <div class="suggestion-header">
+                        <i class="fas fa-trending-up text-success me-2"></i>
+                        <span class="fw-bold">{% trans "الأكثر بحثاً" %}</span>
+                    </div>
+                    {% for search in trending_searches|slice:":5" %}
+                        <a href="{% url 'products:product_search' %}?q={{ search.query|urlencode }}" class="suggestion-item trending-suggestion">
+                            <div class="suggestion-content">
+                                <div class="suggestion-icon">
+                                    <i class="fas fa-arrow-trend-up text-success"></i>
+                                </div>
+                                <div class="suggestion-info">
+                                    <div class="suggestion-title">{{ search.query }}</div>
+                                    <div class="suggestion-meta text-success small">
+                                        <i class="fas fa-arrow-up me-1"></i>
+                                        {% trans "رائج" %}
+                                    </div>
+                                </div>
+                                <div class="suggestion-action">
+                                    <i class="fas fa-arrow-right text-muted"></i>
+                                </div>
+                            </div>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Featured Categories -->
+            {% if featured_categories %}
+                <div class="suggestion-section">
+                    <div class="suggestion-header">
+                        <i class="fas fa-star text-warning me-2"></i>
+                        <span class="fw-bold">{% trans "فئات مميزة" %}</span>
+                    </div>
+                    {% for category in featured_categories|slice:":4" %}
+                        <a href="{{ category.get_absolute_url }}" class="suggestion-item featured-suggestion">
+                            <div class="suggestion-content">
+                                <div class="suggestion-icon">
+                                    {% if category.icon %}
+                                        <i class="{{ category.icon }} text-warning"></i>
+                                    {% else %}
+                                        <i class="fas fa-star text-warning"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="suggestion-info">
+                                    <div class="suggestion-title">{{ category.name }}</div>
+                                    <div class="suggestion-meta text-warning small">
+                                        <i class="fas fa-star me-1"></i>
+                                        {% trans "مميز" %}
+                                    </div>
+                                </div>
+                                <div class="suggestion-action">
+                                    <i class="fas fa-arrow-right text-muted"></i>
+                                </div>
+                            </div>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.search-suggestions-container {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    background: white;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.suggestion-section {
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.suggestion-section:last-child {
+    border-bottom: none;
+}
+
+.suggestion-header {
+    padding: 0.75rem 1rem;
+    background: #f8f9fa;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    color: var(--text-secondary);
+    border-bottom: 1px solid #e9ecef;
+}
+
+.suggestion-item {
+    display: block;
+    padding: 0;
+    color: inherit;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item:hover {
+    background: rgba(var(--bs-primary-rgb), 0.05);
+    color: var(--bs-primary);
+}
+
+.suggestion-content {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    gap: 0.75rem;
+}
+
+.suggestion-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.brand-logo {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+.suggestion-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.suggestion-title {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.suggestion-meta {
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.suggestion-category {
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.suggestion-action {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.remove-recent-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    padding: 2px;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    transition: all 0.2s ease;
+}
+
+.remove-recent-btn:hover {
+    background: var(--bs-danger);
+    color: white;
+}
+
+.search-all-section {
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+}
+
+.search-all-btn {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: var(--bs-primary);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.search-all-btn:hover {
+    background: rgba(var(--bs-primary-rgb), 0.9);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.no-suggestions {
+    padding: 1rem;
+    text-align: center;
+}
+
+.quick-search-buttons {
+    margin-top: 1rem;
+}
+
+.empty-search-state {
+    padding: 0.5rem 0;
+}
+
+/* Dark mode support */
+[data-bs-theme="dark"] .search-suggestions-container {
+    background: var(--bs-dark);
+    border-color: #404040;
+}
+
+[data-bs-theme="dark"] .suggestion-header {
+    background: #2a2a2a;
+    border-color: #404040;
+}
+
+[data-bs-theme="dark"] .suggestion-item {
+    border-color: #404040;
+}
+
+[data-bs-theme="dark"] .suggestion-item:hover {
+    background: rgba(var(--bs-primary-rgb), 0.1);
+}
+
+[data-bs-theme="dark"] .search-all-section {
+    background: #2a2a2a;
+    border-color: #404040;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+    .search-suggestions-container {
+        max-height: 300px;
+    }
+
+    .suggestion-content {
+        padding: 0.6rem 0.8rem;
+        gap: 0.6rem;
+    }
+
+    .suggestion-title {
+        font-size: 0.9rem;
+    }
+
+    .suggestion-meta {
+        font-size: 0.75rem;
+    }
+}
+
+/* Scrollbar styling */
+.search-suggestions-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.search-suggestions-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.search-suggestions-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.search-suggestions-container::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
+</style>
+
+<script>
+// Remove recent search
+function removeRecentSearch(query) {
+    fetch('/products/api/remove-recent-search/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({query: query})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remove the suggestion item from DOM
+            const suggestionItems = document.querySelectorAll('.recent-suggestion');
+            suggestionItems.forEach(item => {
+                if (item.href.includes(encodeURIComponent(query))) {
+                    item.remove();
+                }
+            });
+
+            // If no more recent searches, remove the section
+            const recentSection = document.querySelector('.recent-suggestion');
+            if (!recentSection) {
+                const section = document.querySelector('.suggestion-section');
+                if (section && section.querySelector('.fa-history')) {
+                    section.remove();
+                }
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error removing recent search:', error);
+    });
+}
+
+// Highlight matching text in suggestions
+function highlightMatches(text, query) {
+    if (!query) return text;
+
+    const regex = new RegExp(`(${query})`, 'gi');
+    return text.replace(regex, '<mark>$1</mark>');
+}
+
+// Auto-hide suggestions when clicking outside
+document.addEventListener('click', function(event) {
+    const searchContainer = document.querySelector('.search-form');
+    const suggestionsContainer = document.querySelector('.search-suggestions-container');
+
+    if (suggestionsContainer && !searchContainer.contains(event.target)) {
+        suggestionsContainer.style.display = 'none';
+    }
+});
+
+// Keyboard navigation for suggestions
+let currentSuggestionIndex = -1;
+const suggestions = document.querySelectorAll('.suggestion-item');
+
+function handleSuggestionNavigation(event) {
+    if (!suggestions.length) return;
+
+    switch(event.key) {
+        case 'ArrowDown':
+            event.preventDefault();
+            currentSuggestionIndex = Math.min(currentSuggestionIndex + 1, suggestions.length - 1);
+            updateSuggestionSelection();
+            break;
+
+        case 'ArrowUp':
+            event.preventDefault();
+            currentSuggestionIndex = Math.max(currentSuggestionIndex - 1, -1);
+            updateSuggestionSelection();
+            break;
+
+        case 'Enter':
+            if (currentSuggestionIndex >= 0) {
+                event.preventDefault();
+                suggestions[currentSuggestionIndex].click();
+            }
+            break;
+
+        case 'Escape':
+            document.querySelector('.search-suggestions-container').style.display = 'none';
+            currentSuggestionIndex = -1;
+            break;
+    }
+}
+
+function updateSuggestionSelection() {
+    suggestions.forEach((suggestion, index) => {
+        if (index === currentSuggestionIndex) {
+            suggestion.classList.add('selected');
+            suggestion.scrollIntoView({ block: 'nearest' });
+        } else {
+            suggestion.classList.remove('selected');
+        }
+    });
+}
+
+// Add selected styling
+const style = document.createElement('style');
+style.textContent = `
+    .suggestion-item.selected {
+        background: rgba(var(--bs-primary-rgb), 0.1) !important;
+        color: var(--bs-primary) !important;
+    }
+`;
+document.head.appendChild(style);
+
+// Bind keyboard events to search input
+const searchInput = document.querySelector('.search-input');
+if (searchInput) {
+    searchInput.addEventListener('keydown', handleSuggestionNavigation);
+}
+</script>
