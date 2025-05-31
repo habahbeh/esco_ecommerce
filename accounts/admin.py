@@ -7,8 +7,35 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.translation import gettext_lazy as _
 from django.utils.html import format_html
+from django.db.models import Count
 
-from .models import User, UserProfile, UserAddress
+from .models import User, UserProfile, UserAddress, UserActivity
+
+
+class UserProfileInline(admin.StackedInline):
+    """
+    Inline admin for user profile
+    """
+    model = UserProfile
+    extra = 0
+    fields = [
+        'profession', 'company', 'bio', 'interests',
+        'identity_verified', 'phone_verified'
+    ]
+    readonly_fields = ['created_at', 'updated_at']
+
+
+class UserAddressInline(admin.TabularInline):
+    """
+    Inline admin for user addresses
+    """
+    model = UserAddress
+    extra = 0
+    fields = [
+        'label', 'type', 'city', 'country',
+        'is_default', 'is_billing_default', 'is_shipping_default'
+    ]
+    readonly_fields = ['created_at']
 
 
 @admin.register(User)
@@ -88,8 +115,14 @@ class UserAdmin(BaseUserAdmin):
         }),
     )
 
+    inlines = [UserProfileInline, UserAddressInline]
+
     def get_queryset(self, request):
-        return super().get_queryset(request).prefetch_related('groups')
+        return super().get_queryset(request).prefetch_related(
+            'groups', 'addresses', 'profile'
+        ).annotate(
+            address_count=Count('addresses')
+        )
 
     actions = ['verify_users', 'make_product_reviewer', 'remove_product_reviewer']
 
@@ -126,19 +159,6 @@ class UserAdmin(BaseUserAdmin):
         )
 
     remove_product_reviewer.short_description = _("إزالة صلاحية مراجعة المنتجات")
-
-
-class UserAddressInline(admin.TabularInline):
-    """
-    Inline admin for user addresses
-    """
-    model = UserAddress
-    extra = 0
-    fields = [
-        'label', 'type', 'city', 'country',
-        'is_default', 'is_billing_default', 'is_shipping_default'
-    ]
-    readonly_fields = ['created_at']
 
 
 @admin.register(UserProfile)
@@ -185,8 +205,6 @@ class UserProfileAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
-
-    inlines = [UserAddressInline]
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('user')
@@ -240,5 +258,59 @@ class UserAddressAdmin(admin.ModelAdmin):
         return super().get_queryset(request).select_related('user')
 
 
-# Add UserProfile inline to UserAdmin
-UserAdmin.inlines = [UserAddressInline]
+@admin.register(UserActivity)
+class UserActivityAdmin(admin.ModelAdmin):
+    """
+    إدارة أنشطة المستخدمين
+    User Activity Admin
+    """
+    list_display = [
+        'user', 'activity_type', 'short_description', 'timestamp', 'ip_address'
+    ]
+    list_filter = [
+        'activity_type', 'timestamp'
+    ]
+    search_fields = [
+        'user__username', 'user__email', 'activity_type', 'description'
+    ]
+    readonly_fields = ['timestamp']
+    date_hierarchy = 'timestamp'
+
+    fieldsets = (
+        (_('معلومات النشاط'), {
+            'fields': ('user', 'activity_type', 'description')
+        }),
+        (_('معلومات تقنية'), {
+            'fields': ('object_id', 'content_type', 'ip_address', 'timestamp'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user')
+
+    def short_description(self, obj):
+        """عرض وصف مختصر للنشاط"""
+        if len(obj.description) > 50:
+            return f"{obj.description[:50]}..."
+        return obj.description
+
+    short_description.short_description = _("الوصف المختصر")
+
+    # إعدادات إضافية للأداء
+    list_per_page = 50
+    list_max_show_all = 200
+
+    def has_add_permission(self, request):
+        """منع إضافة أنشطة يدوياً"""
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        """منع تعديل الأنشطة"""
+        return False
+
+
+# إعدادات إضافية للـ Admin Site
+admin.site.site_header = _("إدارة الموقع")
+admin.site.site_title = _("لوحة التحكم")
+admin.site.index_title = _("مرحباً بك في لوحة التحكم")
