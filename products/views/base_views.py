@@ -1,8 +1,23 @@
 # File: products/views/base_views.py
 """
-Base views and mixins for products app
-Contains common functionality and base classes
+Base views for products app
+Contains common functionality and mixins used across different views
 """
+
+from typing import Dict, Any, List, Optional
+from django.views.generic import ListView, DetailView
+from django.db.models import Q, Count, Avg, Min, Max, Prefetch
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.utils.translation import gettext as _
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.conf import settings
+from django.utils import timezone
+import logging
+from django.views.decorators.vary import vary_on_headers
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+
 
 from typing import Optional, Dict, Any, List
 from django.views.generic import ListView, DetailView
@@ -18,150 +33,71 @@ from django.utils.translation import gettext as _
 from decimal import Decimal
 import logging
 
-from ..models import Product, Category, Brand, ProductImage, Tag
+
 
 logger = logging.getLogger(__name__)
 
 
 class CachedMixin:
-    """Mixin for adding caching functionality"""
-    cache_timeout = getattr(settings, 'CACHE_TIMEOUT', 300)  # 5 minutes default
+    """
+    Mixin for caching functionality
+    """
+    cache_timeout = 300  # 5 minutes default
 
-    def get_cache_key(self, *args, **kwargs) -> str:
-        """Generate cache key for the view"""
-        return f"{self.__class__.__name__}:{':'.join(map(str, args))}:{hash(frozenset(kwargs.items()))}"
-
-    def get_cached_data(self, key: str, default=None):
-        """Get data from cache"""
-        return cache.get(key, default)
-
-    def set_cached_data(self, key: str, data, timeout=None):
-        """Set data in cache"""
-        if timeout is None:
-            timeout = self.cache_timeout
-        cache.set(key, data, timeout)
+    @method_decorator(cache_page(cache_timeout))
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
 
 
 class OptimizedQueryMixin:
-    """Mixin for optimizing database queries"""
+    """
+    Mixin for optimizing database queries
+    """
 
-    def get_optimized_product_queryset(self) -> QuerySet:
-        """Get optimized product queryset with proper select_related and prefetch_related"""
+    def get_optimized_product_queryset(self):
+        """Get optimized product queryset with related objects"""
+        from ..models import Product
+
         return Product.objects.filter(
             is_active=True,
             status='published'
         ).select_related(
             'category',
-            'brand',
-            'created_by'
+            'brand'
         ).prefetch_related(
-            Prefetch(
-                'images',
-                queryset=ProductImage.objects.filter(is_primary=True).order_by('order')
-            ),
-            'tags',
-            Prefetch(
-                'reviews',
-                queryset=self.get_approved_reviews_queryset()
-            )
+            'images',
+            'tags'
         )
 
-    def get_approved_reviews_queryset(self) -> QuerySet:
-        """Get approved reviews queryset"""
-        from ..models import ProductReview
-        return ProductReview.objects.filter(is_approved=True).select_related('user')
+    def get_optimized_category_queryset(self):
+        """Get optimized category queryset"""
+        from ..models import Category
 
-
-class FilterMixin:
-    """Mixin for handling common filtering logic"""
-
-    def get_filters_from_request(self) -> Dict[str, Any]:
-        """Extract and validate filters from request"""
-        filters = {}
-
-        # Brand filter
-        brands = self.request.GET.getlist('brand')
-        if brands:
-            filters['brands'] = [int(b) for b in brands if b.isdigit()]
-
-        # Price range
-        min_price = self.request.GET.get('min_price')
-        max_price = self.request.GET.get('max_price')
-
-        if min_price and self._is_valid_decimal(min_price):
-            filters['min_price'] = Decimal(min_price)
-        if max_price and self._is_valid_decimal(max_price):
-            filters['max_price'] = Decimal(max_price)
-
-        # Boolean filters
-        filters['is_new'] = self.request.GET.get('is_new') == '1'
-        filters['is_featured'] = self.request.GET.get('is_featured') == '1'
-        filters['on_sale'] = self.request.GET.get('on_sale') == '1'
-        filters['in_stock'] = self.request.GET.get('in_stock') == '1'
-
-        # Tags
-        tags = self.request.GET.getlist('tag')
-        if tags:
-            filters['tags'] = [int(t) for t in tags if t.isdigit()]
-
-        # Rating
-        min_rating = self.request.GET.get('min_rating')
-        if min_rating and min_rating.isdigit():
-            filters['min_rating'] = int(min_rating)
-
-        return filters
-
-    def _is_valid_decimal(self, value: str) -> bool:
-        """Check if string can be converted to decimal"""
-        try:
-            Decimal(value)
-            return True
-        except (ValueError, TypeError):
-            return False
-
-
-class BreadcrumbMixin:
-    """Mixin for generating breadcrumbs"""
-
-    def get_breadcrumbs(self, obj=None) -> List[Dict[str, Optional[str]]]:
-        """Generate breadcrumbs for the view"""
-        breadcrumbs = [
-            {'name': _('الرئيسية'), 'url': '/'}
-        ]
-
-        if hasattr(obj, 'category') and obj.category:
-            # Add category breadcrumbs
-            for ancestor in obj.category.get_ancestors():
-                breadcrumbs.append({
-                    'name': ancestor.name,
-                    'url': ancestor.get_absolute_url()
-                })
-
-            breadcrumbs.append({
-                'name': obj.category.name,
-                'url': obj.category.get_absolute_url()
-            })
-
-        if obj and hasattr(obj, 'name'):
-            breadcrumbs.append({
-                'name': obj.name,
-                'url': None  # Current page
-            })
-
-        return breadcrumbs
+        return Category.objects.filter(
+            is_active=True
+        ).annotate(
+            products_count=Count(
+                'products',
+                filter=Q(
+                    products__is_active=True,
+                    products__status='published'
+                )
+            )
+        ).select_related('parent')
 
 
 class PaginationMixin:
-    """Mixin for handling pagination"""
+    """
+    Mixin for pagination functionality
+    """
     paginate_by = 12
+    page_kwarg = 'page'
 
-    def get_paginated_objects(self, queryset: QuerySet, page_size: Optional[int] = None):
+    def get_paginated_objects(self, queryset, per_page=None):
         """Get paginated objects"""
-        if page_size is None:
-            page_size = self.paginate_by
-
-        paginator = Paginator(queryset, page_size)
-        page = self.request.GET.get('page')
+        per_page = per_page or self.paginate_by
+        paginator = Paginator(queryset, per_page)
+        page = self.request.GET.get(self.page_kwarg)
 
         try:
             page_obj = paginator.page(page)
@@ -173,395 +109,324 @@ class PaginationMixin:
         return page_obj, paginator
 
 
-class BaseProductListView(ListView, OptimizedQueryMixin, FilterMixin, PaginationMixin, CachedMixin):
-    """Base class for product list views"""
-    model = Product
-    context_object_name = 'products'
-    paginate_by = 12
+class FilterMixin:
+    """
+    Mixin for filtering functionality
+    """
 
-    def get_queryset(self) -> QuerySet:
-        """Get filtered and sorted queryset"""
-        queryset = self.get_optimized_product_queryset()
+    def get_filters_from_request(self) -> Dict[str, Any]:
+        """Extract filters from request parameters"""
+        filters = {}
 
-        # Apply search
-        search_query = self.request.GET.get('q', '').strip()
-        if search_query:
-            queryset = self.apply_search_filter(queryset, search_query)
+        # Category filter
+        category = self.request.GET.get('category')
+        if category:
+            filters['category'] = category
 
-        # Apply filters
-        filters = self.get_filters_from_request()
-        queryset = self.apply_filters(queryset, filters)
-
-        # Apply sorting
-        queryset = self.apply_sorting(queryset)
-
-        return queryset
-
-    def apply_search_filter(self, queryset: QuerySet, query: str) -> QuerySet:
-        """Apply search filter to queryset"""
-        return queryset.filter(
-            Q(name__icontains=query) |
-            Q(name_en__icontains=query) |
-            Q(description__icontains=query) |
-            Q(description_en__icontains=query) |
-            Q(sku__icontains=query) |
-            Q(tags__name__icontains=query)
-        ).distinct()
-
-    def apply_filters(self, queryset: QuerySet, filters: Dict[str, Any]) -> QuerySet:
-        """Apply filters to queryset"""
         # Brand filter
-        if 'brands' in filters and filters['brands']:
-            queryset = queryset.filter(brand__id__in=filters['brands'])
+        brand = self.request.GET.get('brand')
+        if brand:
+            filters['brand'] = brand
 
         # Price range
+        min_price = self.request.GET.get('min_price')
+        max_price = self.request.GET.get('max_price')
+        if min_price:
+            try:
+                filters['min_price'] = float(min_price)
+            except (ValueError, TypeError):
+                pass
+        if max_price:
+            try:
+                filters['max_price'] = float(max_price)
+            except (ValueError, TypeError):
+                pass
+
+        # Boolean filters
+        if self.request.GET.get('on_sale'):
+            filters['on_sale'] = True
+        if self.request.GET.get('in_stock'):
+            filters['in_stock'] = True
+        if self.request.GET.get('is_new'):
+            filters['is_new'] = True
+        if self.request.GET.get('is_featured'):
+            filters['is_featured'] = True
+
+        # Rating filter
+        min_rating = self.request.GET.get('min_rating')
+        if min_rating:
+            try:
+                filters['min_rating'] = int(min_rating)
+            except (ValueError, TypeError):
+                pass
+
+        return filters
+
+    def apply_filters(self, queryset, filters: Dict[str, Any]):
+        """Apply filters to queryset"""
+        if not filters:
+            return queryset
+
+        # Category filter
+        if 'category' in filters:
+            try:
+                from ..models import Category
+                category = Category.objects.get(slug=filters['category'], is_active=True)
+                # Include subcategories if category has get_descendants method
+                if hasattr(category, 'get_descendants'):
+                    categories = [category] + list(category.get_descendants())
+                    queryset = queryset.filter(category__in=categories)
+                else:
+                    queryset = queryset.filter(category=category)
+            except:
+                pass
+
+        # Brand filter
+        if 'brand' in filters:
+            try:
+                from ..models import Brand
+                brand = Brand.objects.get(slug=filters['brand'], is_active=True)
+                queryset = queryset.filter(brand=brand)
+            except:
+                pass
+
+        # Price filters
         if 'min_price' in filters:
             queryset = queryset.filter(base_price__gte=filters['min_price'])
         if 'max_price' in filters:
             queryset = queryset.filter(base_price__lte=filters['max_price'])
 
-        # Feature filters
+        # On sale filter
+        if filters.get('on_sale'):
+            now = timezone.now()
+            queryset = queryset.filter(
+                Q(discount_percentage__gt=0) | Q(discount_amount__gt=0)
+            ).filter(
+                Q(discount_start__isnull=True) | Q(discount_start__lte=now)
+            ).filter(
+                Q(discount_end__isnull=True) | Q(discount_end__gte=now)
+            )
+
+        # Stock filter
+        if filters.get('in_stock'):
+            queryset = queryset.filter(
+                Q(track_inventory=False, stock_status='in_stock') |
+                Q(track_inventory=True, stock_quantity__gt=0)
+            )
+
+        # Boolean filters
         if filters.get('is_new'):
             queryset = queryset.filter(is_new=True)
         if filters.get('is_featured'):
             queryset = queryset.filter(is_featured=True)
-        if filters.get('on_sale'):
-            queryset = self.filter_on_sale_products(queryset)
-        if filters.get('in_stock'):
-            queryset = self.filter_in_stock_products(queryset)
 
-        # Tags
-        if 'tags' in filters and filters['tags']:
-            queryset = queryset.filter(tags__id__in=filters['tags']).distinct()
-
-        # Rating
+        # Rating filter
         if 'min_rating' in filters:
-            from django.db.models import Avg
             queryset = queryset.annotate(
                 avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True))
             ).filter(avg_rating__gte=filters['min_rating'])
 
         return queryset
 
-    def filter_on_sale_products(self, queryset: QuerySet) -> QuerySet:
-        """Filter products that are on sale"""
-        from django.utils import timezone
-        now = timezone.now()
 
-        return queryset.filter(
-            Q(discount_percentage__gt=0) | Q(discount_amount__gt=0)
-        ).filter(
-            Q(discount_start__isnull=True) | Q(discount_start__lte=now)
-        ).filter(
-            Q(discount_end__isnull=True) | Q(discount_end__gte=now)
-        )
+class SortingMixin:
+    """
+    Mixin for sorting functionality
+    """
 
-    def filter_in_stock_products(self, queryset: QuerySet) -> QuerySet:
-        """Filter products that are in stock"""
-        return queryset.filter(
-            Q(track_inventory=False, stock_status='in_stock') |
-            Q(track_inventory=True, stock_quantity__gt=0)
-        )
-
-    def apply_sorting(self, queryset: QuerySet) -> QuerySet:
+    def apply_sorting(self, queryset):
         """Apply sorting to queryset"""
         sort_by = self.request.GET.get('sort', 'newest')
 
-        sort_options = {
-            'newest': '-created_at',
-            'oldest': 'created_at',
-            'price_low': 'base_price',
-            'price_high': '-base_price',
-            'name_az': 'name',
-            'name_za': '-name',
-            'best_selling': '-sales_count',
-            'most_viewed': '-views_count',
-        }
-
-        if sort_by in sort_options:
-            return queryset.order_by(sort_options[sort_by])
+        if sort_by == 'newest':
+            return queryset.order_by('-created_at')
+        elif sort_by == 'oldest':
+            return queryset.order_by('created_at')
+        elif sort_by == 'price_low':
+            return queryset.order_by('base_price')
+        elif sort_by == 'price_high':
+            return queryset.order_by('-base_price')
+        elif sort_by == 'name_asc':
+            return queryset.order_by('name')
+        elif sort_by == 'name_desc':
+            return queryset.order_by('-name')
+        elif sort_by == 'best_selling':
+            return queryset.order_by('-sales_count')
         elif sort_by == 'top_rated':
-            from django.db.models import Avg, Count
-            return queryset.annotate(
-                avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True)),
-                review_count=Count('reviews', filter=Q(reviews__is_approved=True))
-            ).order_by('-avg_rating', '-review_count')
+            queryset = queryset.annotate(
+                avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True))
+            ).order_by('-avg_rating')
+            return queryset
+        elif sort_by == 'most_viewed':
+            return queryset.order_by('-view_count')
 
-        return queryset.order_by('-created_at')  # Default sorting
+        # Default sorting
+        return queryset.order_by('-created_at')
+
+
+class BreadcrumbMixin:
+    """
+    Mixin for breadcrumb functionality
+    """
+
+    def get_breadcrumbs(self, category=None):
+        """Get breadcrumbs for navigation"""
+        breadcrumbs = [
+            {'name': _('الرئيسية'), 'url': '/'},
+            {'name': _('المنتجات'), 'url': '/products/'},
+        ]
+
+        if category:
+            # Add category hierarchy if get_ancestors exists
+            if hasattr(category, 'get_ancestors'):
+                ancestors = list(category.get_ancestors())
+                for ancestor in ancestors:
+                    breadcrumbs.append({
+                        'name': ancestor.name,
+                        'url': ancestor.get_absolute_url() if hasattr(ancestor, 'get_absolute_url') else '#'
+                    })
+
+            # Add current category
+            breadcrumbs.append({
+                'name': category.name,
+                'url': category.get_absolute_url() if hasattr(category, 'get_absolute_url') else '#',
+                'active': True
+            })
+
+        return breadcrumbs
+
+
+class BaseProductListView(ListView, OptimizedQueryMixin, PaginationMixin, FilterMixin, SortingMixin, BreadcrumbMixin):
+    """
+    Base view for product listing with common functionality
+    """
+    template_name = 'products/product_list.html'
+    context_object_name = 'products'
+    paginate_by = 12
+
+    def get_queryset(self):
+        """Get the base queryset for products"""
+        return self.get_optimized_product_queryset()
 
     def get_context_data(self, **kwargs):
-        """Add common context data"""
         context = super().get_context_data(**kwargs)
 
-        # Search query
-        context['search_query'] = self.request.GET.get('q', '')
+        # Add filtering context
+        context['filters'] = self.get_filters_from_request()
+        context['sort_options'] = self.get_sort_options()
+        context['current_sort'] = self.request.GET.get('sort', 'newest')
 
-        # Sort option
-        context['sort_by'] = self.request.GET.get('sort', 'newest')
-
-        # View type
-        context['view_type'] = self.request.GET.get('view', 'grid')
-
-        # Active filters
-        context['active_filters'] = self.get_active_filters()
-
-        # Filter options
-        context.update(self.get_filter_options())
+        # Add pagination info
+        if self.is_paginated:
+            context['page_range'] = self.get_page_range(context['paginator'], context['page_obj'])
 
         return context
 
-    def get_active_filters(self) -> List[Dict[str, str]]:
-        """Get active filters for display"""
-        filters = []
-
-        # Brand filters
-        brand_ids = self.request.GET.getlist('brand')
-        if brand_ids:
-            brands = Brand.objects.filter(id__in=brand_ids)
-            for brand in brands:
-                filters.append({
-                    'type': 'brand',
-                    'label': _('العلامة التجارية'),
-                    'value': str(brand.id),
-                    'display': brand.name
-                })
-
-        # Price filters
-        min_price = self.request.GET.get('min_price')
-        max_price = self.request.GET.get('max_price')
-        if min_price or max_price:
-            price_display = []
-            if min_price:
-                price_display.append(f"من {min_price}")
-            if max_price:
-                price_display.append(f"إلى {max_price}")
-            filters.append({
-                'type': 'price',
-                'label': _('السعر'),
-                'value': 'price',
-                'display': ' '.join(price_display)
-            })
-
-        # Feature filters
-        feature_filters = [
-            ('is_new', _('منتجات جديدة')),
-            ('on_sale', _('منتجات مخفضة')),
-            ('is_featured', _('منتجات مميزة')),
-            ('in_stock', _('متوفر في المخزون')),
+    def get_sort_options(self):
+        """Get available sorting options"""
+        return [
+            ('newest', _('الأحدث')),
+            ('oldest', _('الأقدم')),
+            ('price_low', _('السعر: من الأقل للأعلى')),
+            ('price_high', _('السعر: من الأعلى للأقل')),
+            ('name_asc', _('الاسم: أ-ي')),
+            ('name_desc', _('الاسم: ي-أ')),
+            ('best_selling', _('الأكثر مبيعاً')),
+            ('top_rated', _('الأعلى تقييماً')),
+            ('most_viewed', _('الأكثر مشاهدة')),
         ]
 
-        for filter_key, display_name in feature_filters:
-            if self.request.GET.get(filter_key) == '1':
-                filters.append({
-                    'type': filter_key,
-                    'label': _('الحالة'),
-                    'value': '1',
-                    'display': display_name
-                })
+    def get_page_range(self, paginator, page_obj):
+        """Get page range for pagination"""
+        current_page = page_obj.number
+        total_pages = paginator.num_pages
 
-        return filters
+        # Show 5 pages around current page
+        start_page = max(1, current_page - 2)
+        end_page = min(total_pages, current_page + 2)
 
-    def get_filter_options(self) -> Dict[str, Any]:
-        """Get filter options for the template"""
-        # Cache filter options
-        cache_key = f'filter_options_{self.__class__.__name__}'
-        cached_options = self.get_cached_data(cache_key)
-
-        if cached_options is not None:
-            return cached_options
-
-        from django.db.models import Count, Min, Max
-
-        # Get brands with product counts
-        brands = Brand.objects.filter(
-            is_active=True,
-            products__is_active=True,
-            products__status='published'
-        ).annotate(
-            product_count=Count('products', filter=Q(
-                products__is_active=True,
-                products__status='published'
-            ))
-        ).filter(product_count__gt=0).order_by('name')
-
-        # Get price range
-        price_stats = Product.objects.filter(
-            is_active=True,
-            status='published'
-        ).aggregate(
-            min_price=Min('base_price'),
-            max_price=Max('base_price')
-        )
-
-        # Get popular tags
-        popular_tags = Tag.objects.annotate(
-            product_count=Count('products', filter=Q(
-                products__is_active=True,
-                products__status='published'
-            ))
-        ).filter(product_count__gt=0).order_by('-product_count')[:20]
-
-        options = {
-            'brands': brands,
-            'price_range': {
-                'min': price_stats['min_price'] or 0,
-                'max': price_stats['max_price'] or 1000
-            },
-            'popular_tags': popular_tags,
-        }
-
-        # Cache for 10 minutes
-        self.set_cached_data(cache_key, options, 600)
-
-        return options
+        return range(start_page, end_page + 1)
 
 
-class BaseProductDetailView(DetailView, OptimizedQueryMixin, BreadcrumbMixin, CachedMixin):
-    """Base class for product detail views"""
-    model = Product
+class BaseProductDetailView(DetailView, OptimizedQueryMixin, BreadcrumbMixin):
+    """
+    Base view for product detail with common functionality
+    """
+    template_name = 'products/product_detail.html'
     context_object_name = 'product'
     slug_field = 'slug'
 
-    def get_queryset(self) -> QuerySet:
-        """Get optimized product queryset"""
-        return Product.objects.filter(
-            is_active=True,
-            status='published'
-        ).select_related(
-            'category', 'brand', 'created_by'
-        ).prefetch_related(
-            'images',
-            'tags',
-            'variants',
-            'related_products',
-            Prefetch(
-                'reviews',
-                queryset=self.get_approved_reviews_queryset()
-            )
-        )
+    def get_queryset(self):
+        """Get optimized queryset for product detail"""
+        return self.get_optimized_product_queryset()
 
-    def get(self, request, *args, **kwargs):
-        """Handle GET request and increment views"""
-        response = super().get(request, *args, **kwargs)
+    def get_object(self, queryset=None):
+        """Get product object and increment view count"""
+        obj = super().get_object(queryset)
 
-        # Increment view count asynchronously
+        # Increment view count if method exists
         try:
-            self.object.increment_views()
+            if hasattr(obj, 'increment_views'):
+                obj.increment_views()
         except Exception as e:
-            logger.warning(f"Failed to increment views for product {self.object.id}: {e}")
+            logger.warning(f"Failed to increment views for product {obj.id}: {e}")
 
-        return response
+        return obj
 
     def get_context_data(self, **kwargs):
-        """Add context data for product detail"""
         context = super().get_context_data(**kwargs)
         product = self.object
 
-        # Breadcrumbs
-        context['breadcrumbs'] = self.get_breadcrumbs(product)
+        # Add breadcrumbs
+        if hasattr(product, 'category') and product.category:
+            context['breadcrumbs'] = self.get_breadcrumbs(product.category)
 
-        # Reviews context
-        context.update(self.get_reviews_context(product))
-
-        # Related products
+        # Add related products
         context['related_products'] = self.get_related_products(product)
 
-        # Product variants
-        context['variants'] = product.variants.filter(is_active=True)
+        # Add product images
+        if hasattr(product, 'images'):
+            context['product_images'] = product.images.filter(is_active=True).order_by('order')
 
-        # Check if in wishlist
-        if self.request.user.is_authenticated:
-            context['in_wishlist'] = self.is_in_wishlist(product)
+        # Add product variants if available
+        if hasattr(product, 'variants'):
+            context['product_variants'] = product.variants.filter(is_active=True)
 
-        # Specifications
-        context['specifications'] = product.specifications or {}
+        # Add reviews if available
+        if hasattr(product, 'reviews'):
+            context['reviews'] = product.reviews.filter(is_approved=True).order_by('-created_at')[:10]
+            context['reviews_count'] = product.reviews.filter(is_approved=True).count()
+            context['average_rating'] = product.reviews.filter(is_approved=True).aggregate(
+                avg=Avg('rating')
+            )['avg'] or 0
 
-        # Recently viewed
-        context['recently_viewed'] = self.get_recently_viewed(product)
+            # Check if user can review (if user is authenticated)
+            context['can_review'] = (
+                    self.request.user.is_authenticated and
+                    not product.reviews.filter(user=self.request.user).exists()
+            )
 
         return context
 
-    def get_reviews_context(self, product) -> Dict[str, Any]:
-        """Get reviews context data"""
-        reviews = product.reviews.filter(is_approved=True)
-
-        return {
-            'reviews': reviews[:5],
-            'total_reviews': reviews.count(),
-            'rating_breakdown': self.get_rating_breakdown(reviews),
-            'can_review': product.can_review(self.request.user) if self.request.user.is_authenticated else False,
-        }
-
-    def get_rating_breakdown(self, reviews) -> Dict[int, Dict[str, int]]:
-        """Calculate rating breakdown"""
-        breakdown = {5: {'count': 0, 'percentage': 0}, 4: {'count': 0, 'percentage': 0},
-                     3: {'count': 0, 'percentage': 0}, 2: {'count': 0, 'percentage': 0},
-                     1: {'count': 0, 'percentage': 0}}
-
-        total = reviews.count()
-        if total == 0:
-            return breakdown
-
-        for rating in range(1, 6):
-            count = reviews.filter(rating=rating).count()
-            breakdown[rating] = {
-                'count': count,
-                'percentage': int((count / total) * 100)
-            }
-
-        return breakdown
-
-    def get_related_products(self, product, limit: int = 4):
+    def get_related_products(self, product, limit=6):
         """Get related products"""
-        # Manual related products first
-        related = list(product.related_products.filter(
-            is_active=True,
-            status='published'
-        )[:limit])
+        if not hasattr(product, 'category') or not product.category:
+            return []
 
-        # Fill remaining with auto-suggested products
-        if len(related) < limit:
-            auto_related = Product.objects.filter(
-                category=product.category,
-                is_active=True,
-                status='published'
+        related = self.get_optimized_product_queryset().filter(
+            category=product.category
+        ).exclude(id=product.id)
+
+        # If not enough products in same category, include products from parent category
+        if related.count() < limit and hasattr(product.category, 'parent') and product.category.parent:
+            additional = self.get_optimized_product_queryset().filter(
+                category=product.category.parent
             ).exclude(
-                id__in=[product.id] + [p.id for p in related]
-            ).order_by('-sales_count')[:limit - len(related)]
+                id__in=[product.id] + list(related.values_list('id', flat=True))
+            )
+            related = list(related) + list(additional[:limit - related.count()])
 
-            related.extend(list(auto_related))
-
-        return related
-
-    def is_in_wishlist(self, product) -> bool:
-        """Check if product is in user's wishlist"""
-        from ..models import Wishlist
-        return Wishlist.objects.filter(
-            user=self.request.user,
-            product=product
-        ).exists()
-
-    def get_recently_viewed(self, product, limit: int = 4):
-        """Get recently viewed products from session"""
-        session_key = 'recently_viewed'
-        recently_viewed = self.request.session.get(session_key, [])
-
-        # Add current product
-        if product.id not in recently_viewed:
-            recently_viewed.insert(0, product.id)
-            recently_viewed = recently_viewed[:5]  # Keep only 5
-            self.request.session[session_key] = recently_viewed
-
-        # Get products excluding current one
-        if len(recently_viewed) > 1:
-            return Product.objects.filter(
-                id__in=recently_viewed,
-                is_active=True,
-                status='published'
-            ).exclude(id=product.id)[:limit]
-
-        return []
-
+        return related[:limit]
 
 @method_decorator([cache_page(300), vary_on_headers('User-Agent')], name='dispatch')
 class CachedListView(BaseProductListView):

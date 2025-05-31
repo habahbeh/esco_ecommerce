@@ -1,0 +1,375 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}
+    {% if search_query %}
+        {% blocktrans %}نتائج البحث عن: {{ search_query }}{% endblocktrans %}
+    {% else %}
+        {% trans "البحث في المنتجات" %}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- نموذج البحث -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+            <div class="mb-4 lg:mb-0">
+                {% if search_query %}
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        {% blocktrans %}نتائج البحث عن: "{{ search_query }}"{% endblocktrans %}
+                    </h1>
+                    <p class="text-gray-600 mt-1">
+                        {% if results_count %}
+                            {% blocktrans count counter=results_count %}
+                                تم العثور على {{ counter }} منتج
+                            {% plural %}
+                                تم العثور على {{ counter }} منتج
+                            {% endblocktrans %}
+                        {% else %}
+                            {% blocktrans count counter=object_list|length %}
+                                تم العثور على {{ counter }} منتج
+                            {% plural %}
+                                تم العثور على {{ counter }} منتج
+                            {% endblocktrans %}
+                        {% endif %}
+                    </p>
+                {% else %}
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        {% trans "البحث في المنتجات" %}
+                    </h1>
+                {% endif %}
+            </div>
+
+            <!-- نموذج البحث -->
+            <div class="w-full lg:w-auto">
+                <form method="get" class="flex">
+                    <input
+                        type="text"
+                        name="q"
+                        value="{{ search_query }}"
+                        placeholder="{% trans 'ابحث عن المنتجات...' %}"
+                        class="flex-1 lg:w-80 px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                    <button
+                        type="submit"
+                        class="px-6 py-2 bg-blue-600 text-white rounded-r-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                        {% trans "بحث" %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {% if search_query %}
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- الفلاتر الجانبية -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow-sm p-6 sticky top-4">
+                    <h3 class="text-lg font-semibold mb-4">{% trans "تصفية النتائج" %}</h3>
+
+                    <form method="get" id="filter-form">
+                        <input type="hidden" name="q" value="{{ search_query }}">
+
+                        <!-- فلتر الترتيب -->
+                        <div class="mb-6">
+                            <h4 class="font-medium mb-3">{% trans "ترتيب حسب" %}</h4>
+                            <select name="sort" onchange="this.form.submit()" class="w-full border border-gray-300 rounded px-3 py-2">
+                                {% for value, label in sort_options %}
+                                <option value="{{ value }}" {% if current_sort == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- فلتر السعر -->
+                        <div class="mb-6">
+                            <h4 class="font-medium mb-3">{% trans "نطاق السعر" %}</h4>
+                            <div class="flex space-x-2 space-x-reverse">
+                                <input
+                                    type="number"
+                                    name="min_price"
+                                    value="{{ filters.min_price|default:'' }}"
+                                    placeholder="{% trans 'الحد الأدنى' %}"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                                >
+                                <input
+                                    type="number"
+                                    name="max_price"
+                                    value="{{ filters.max_price|default:'' }}"
+                                    placeholder="{% trans 'الحد الأقصى' %}"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                                >
+                            </div>
+                        </div>
+
+                        <!-- فلاتر إضافية -->
+                        <div class="mb-6">
+                            <h4 class="font-medium mb-3">{% trans "خيارات إضافية" %}</h4>
+
+                            <label class="flex items-center mb-2">
+                                <input
+                                    type="checkbox"
+                                    name="is_featured"
+                                    value="1"
+                                    {% if filters.is_featured %}checked{% endif %}
+                                    class="mr-2"
+                                >
+                                <span class="text-sm">{% trans "منتجات مميزة" %}</span>
+                            </label>
+
+                            <label class="flex items-center mb-2">
+                                <input
+                                    type="checkbox"
+                                    name="is_new"
+                                    value="1"
+                                    {% if filters.is_new %}checked{% endif %}
+                                    class="mr-2"
+                                >
+                                <span class="text-sm">{% trans "منتجات جديدة" %}</span>
+                            </label>
+
+                            <label class="flex items-center mb-2">
+                                <input
+                                    type="checkbox"
+                                    name="on_sale"
+                                    value="1"
+                                    {% if filters.on_sale %}checked{% endif %}
+                                    class="mr-2"
+                                >
+                                <span class="text-sm">{% trans "منتجات مخفضة" %}</span>
+                            </label>
+
+                            <label class="flex items-center mb-2">
+                                <input
+                                    type="checkbox"
+                                    name="in_stock"
+                                    value="1"
+                                    {% if filters.in_stock %}checked{% endif %}
+                                    class="mr-2"
+                                >
+                                <span class="text-sm">{% trans "متوفر في المخزن" %}</span>
+                            </label>
+                        </div>
+
+                        <button
+                            type="submit"
+                            class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+                        >
+                            {% trans "تطبيق الفلاتر" %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- النتائج -->
+            <div class="lg:col-span-3">
+                {% if products or object_list %}
+                    <!-- شبكة المنتجات -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {% for product in products|default:object_list %}
+                            <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
+                                <!-- صورة المنتج -->
+                                <div class="aspect-w-1 aspect-h-1 bg-gray-200">
+                                    {% if product.main_image %}
+                                        <img
+                                            src="{{ product.main_image.url }}"
+                                            alt="{{ product.name }}"
+                                            class="w-full h-48 object-cover"
+                                        >
+                                    {% else %}
+                                        <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+                                            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                                            </svg>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- معلومات المنتج -->
+                                <div class="p-4">
+                                    <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2">
+                                        {{ product.name }}
+                                    </h3>
+
+                                    {% if product.short_description %}
+                                        <p class="text-sm text-gray-600 mb-3 line-clamp-2">
+                                            {{ product.short_description }}
+                                        </p>
+                                    {% endif %}
+
+                                    <!-- السعر والإجراءات -->
+                                    <div class="flex items-center justify-between">
+                                        <div class="text-lg font-bold text-blue-600">
+                                            {% if product.current_price %}
+                                                {{ product.current_price }}
+                                            {% elif product.base_price %}
+                                                {{ product.base_price }}
+                                            {% else %}
+                                                {% trans "السعر غير محدد" %}
+                                            {% endif %}
+                                            <span class="text-sm text-gray-500">{% trans "ريال" %}</span>
+                                        </div>
+
+                                        <!-- رابط التفاصيل -->
+                                        {% if product.get_absolute_url %}
+                                            <a
+                                                href="{{ product.get_absolute_url }}"
+                                                class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 transition-colors duration-200"
+                                            >
+                                                {% trans "عرض التفاصيل" %}
+                                            </a>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- معلومات إضافية -->
+                                    <div class="mt-3 flex items-center justify-between text-xs text-gray-500">
+                                        {% if product.category %}
+                                            <span>{{ product.category.name }}</span>
+                                        {% endif %}
+                                        {% if product.brand %}
+                                            <span>{{ product.brand.name }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- ترقيم الصفحات -->
+                    {% if is_paginated %}
+                        <div class="mt-8">
+                            {% include 'includes/pagination.html' %}
+                        </div>
+                    {% endif %}
+
+                {% else %}
+                    <!-- لا توجد نتائج -->
+                    <div class="bg-white rounded-lg shadow-sm p-8 text-center">
+                        <div class="text-gray-400 mb-4">
+                            <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">
+                            {% trans "لم نجد أي منتجات" %}
+                        </h3>
+                        <p class="text-gray-600 mb-4">
+                            {% blocktrans %}لا توجد نتائج للبحث عن "{{ search_query }}"{% endblocktrans %}
+                        </p>
+
+                        <!-- اقتراحات البحث إذا كانت متوفرة -->
+                        {% if search_suggestions %}
+                            <div class="mb-6">
+                                <p class="text-sm text-gray-500 mb-3">{% trans "جرب البحث عن:" %}</p>
+                                <div class="flex flex-wrap justify-center gap-2">
+                                    {% for suggestion in search_suggestions %}
+                                        <a
+                                            href="?q={{ suggestion|urlencode }}"
+                                            class="bg-gray-100 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-200"
+                                        >
+                                            {{ suggestion }}
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <!-- نصائح البحث -->
+                        <div class="space-y-2 text-sm text-gray-500 mb-6">
+                            <p>{% trans "جرب ما يلي:" %}</p>
+                            <ul class="list-disc list-inside space-y-1 text-right">
+                                <li>{% trans "تحقق من الإملاء" %}</li>
+                                <li>{% trans "استخدم كلمات مختلفة" %}</li>
+                                <li>{% trans "استخدم كلمات أقل تحديداً" %}</li>
+                                <li>{% trans "جرب البحث باللغة الإنجليزية" %}</li>
+                            </ul>
+                        </div>
+
+                        <!-- عمليات بحث شائعة -->
+                        {% if popular_searches %}
+                            <div class="mb-6">
+                                <p class="text-sm text-gray-500 mb-3">{% trans "عمليات بحث شائعة:" %}</p>
+                                <div class="flex flex-wrap justify-center gap-2">
+                                    {% for search_term in popular_searches %}
+                                        <a
+                                            href="?q={{ search_term|urlencode }}"
+                                            class="bg-blue-100 text-blue-700 px-3 py-1 rounded text-sm hover:bg-blue-200"
+                                        >
+                                            {{ search_term }}
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <a
+                            href="{% url 'products:product_list' %}"
+                            class="inline-block bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors duration-200"
+                        >
+                            {% trans "تصفح جميع المنتجات" %}
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <!-- عرض بدون بحث -->
+        <div class="text-center py-12">
+            <div class="text-gray-400 mb-4">
+                <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">
+                {% trans "ابحث في منتجاتنا" %}
+            </h2>
+            <p class="text-gray-600 mb-6">
+                {% trans "استخدم نموذج البحث أعلاه للعثور على المنتجات التي تبحث عنها" %}
+            </p>
+
+            <!-- روابط سريعة -->
+            <div class="flex flex-wrap justify-center gap-4">
+                <a href="{% url 'products:featured_products' %}" class="bg-blue-100 text-blue-700 px-4 py-2 rounded hover:bg-blue-200">
+                    {% trans "المنتجات المميزة" %}
+                </a>
+                <a href="{% url 'products:new_products' %}" class="bg-green-100 text-green-700 px-4 py-2 rounded hover:bg-green-200">
+                    {% trans "المنتجات الجديدة" %}
+                </a>
+                <a href="{% url 'products:special_offers' %}" class="bg-red-100 text-red-700 px-4 py-2 rounded hover:bg-red-200">
+                    {% trans "العروض الخاصة" %}
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- JavaScript للفلاتر التلقائية -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterForm = document.getElementById('filter-form');
+    if (filterForm) {
+        const inputs = filterForm.querySelectorAll('input[type="checkbox"]');
+
+        inputs.forEach(input => {
+            input.addEventListener('change', function() {
+                filterForm.submit();
+            });
+        });
+    }
+});
+</script>
+
+<!-- CSS إضافي للـ line-clamp -->
+<style>
+.line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+</style>
+{% endblock %}
