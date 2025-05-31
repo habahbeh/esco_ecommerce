@@ -1,0 +1,739 @@
+{% load static %}
+{% load i18n %}
+
+<div class="price-filter-widget">
+    <div class="filter-header">
+        <h6 class="filter-title">
+            <i class="fas fa-dollar-sign text-success me-2"></i>
+            {% trans "نطاق السعر" %}
+        </h6>
+        <button class="btn btn-sm btn-outline-secondary clear-price-filter"
+                id="clearPriceFilter" style="display: none;">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <div class="filter-content">
+        <!-- Price Statistics -->
+        {% if price_range %}
+        <div class="price-stats mb-3">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-label">{% trans "أقل سعر" %}</span>
+                    <span class="stat-value">{{ price_range.min }} {% trans "د.أ" %}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">{% trans "أعلى سعر" %}</span>
+                    <span class="stat-value">{{ price_range.max }} {% trans "د.أ" %}</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Price Range Slider -->
+        <div class="price-slider-container mb-4">
+            <div class="slider-track-container">
+                <div class="slider-track" id="sliderTrack"></div>
+                <div class="slider-range" id="sliderRange"></div>
+                <input type="range"
+                       class="slider-input"
+                       id="minPriceSlider"
+                       min="{{ price_range.min|default:0 }}"
+                       max="{{ price_range.max|default:1000 }}"
+                       value="{{ request.GET.min_price|default:price_range.min|default:0 }}"
+                       step="1">
+                <input type="range"
+                       class="slider-input"
+                       id="maxPriceSlider"
+                       min="{{ price_range.min|default:0 }}"
+                       max="{{ price_range.max|default:1000 }}"
+                       value="{{ request.GET.max_price|default:price_range.max|default:1000 }}"
+                       step="1">
+            </div>
+
+            <div class="slider-values mt-2">
+                <span class="min-value" id="minValueDisplay">{{ request.GET.min_price|default:price_range.min|default:0 }}</span>
+                <span class="separator">-</span>
+                <span class="max-value" id="maxValueDisplay">{{ request.GET.max_price|default:price_range.max|default:1000 }}</span>
+                <span class="currency">{% trans "د.أ" %}</span>
+            </div>
+        </div>
+
+        <!-- Manual Price Input -->
+        <div class="price-inputs mb-3">
+            <div class="row g-2">
+                <div class="col-6">
+                    <label class="form-label small">{% trans "من" %}</label>
+                    <div class="input-group input-group-sm">
+                        <input type="number"
+                               class="form-control"
+                               id="minPriceInput"
+                               name="min_price"
+                               placeholder="0"
+                               min="0"
+                               max="{{ price_range.max|default:10000 }}"
+                               value="{{ request.GET.min_price|default:'' }}">
+                        <span class="input-group-text">{% trans "د.أ" %}</span>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <label class="form-label small">{% trans "إلى" %}</label>
+                    <div class="input-group input-group-sm">
+                        <input type="number"
+                               class="form-control"
+                               id="maxPriceInput"
+                               name="max_price"
+                               placeholder="{{ price_range.max|default:1000 }}"
+                               min="0"
+                               max="{{ price_range.max|default:10000 }}"
+                               value="{{ request.GET.max_price|default:'' }}">
+                        <span class="input-group-text">{% trans "د.أ" %}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Price Ranges -->
+        <div class="quick-price-ranges mb-3">
+            <label class="form-label small mb-2">{% trans "نطاقات سريعة" %}</label>
+            <div class="price-ranges-grid">
+                <button type="button" class="price-range-btn" data-min="0" data-max="50">
+                    {% trans "أقل من 50" %}
+                </button>
+                <button type="button" class="price-range-btn" data-min="50" data-max="100">
+                    50 - 100
+                </button>
+                <button type="button" class="price-range-btn" data-min="100" data-max="200">
+                    100 - 200
+                </button>
+                <button type="button" class="price-range-btn" data-min="200" data-max="500">
+                    200 - 500
+                </button>
+                <button type="button" class="price-range-btn" data-min="500" data-max="1000">
+                    500 - 1000
+                </button>
+                <button type="button" class="price-range-btn" data-min="1000" data-max="{{ price_range.max|default:10000 }}">
+                    {% trans "أكثر من 1000" %}
+                </button>
+            </div>
+        </div>
+
+        <!-- Price Distribution Chart -->
+        <div class="price-distribution mb-3">
+            <label class="form-label small mb-2">{% trans "توزيع الأسعار" %}</label>
+            <div class="distribution-chart" id="priceDistribution">
+                <!-- Price distribution bars will be generated here -->
+                <div class="chart-bar" style="height: 60%;" data-range="0-50" title="0-50 د.أ"></div>
+                <div class="chart-bar" style="height: 80%;" data-range="50-100" title="50-100 د.أ"></div>
+                <div class="chart-bar" style="height: 40%;" data-range="100-200" title="100-200 د.أ"></div>
+                <div class="chart-bar" style="height: 70%;" data-range="200-500" title="200-500 د.أ"></div>
+                <div class="chart-bar" style="height: 30%;" data-range="500-1000" title="500-1000 د.أ"></div>
+                <div class="chart-bar" style="height: 15%;" data-range="1000+" title="أكثر من 1000 د.أ"></div>
+            </div>
+            <div class="chart-labels">
+                <span>0</span>
+                <span>50</span>
+                <span>100</span>
+                <span>200</span>
+                <span>500</span>
+                <span>1000+</span>
+            </div>
+        </div>
+
+        <!-- Current Selection Display -->
+        <div class="current-selection" id="currentSelection">
+            <div class="selection-info">
+                <i class="fas fa-info-circle text-info me-2"></i>
+                <span class="selection-text">
+                    {% if request.GET.min_price or request.GET.max_price %}
+                        {% trans "عرض المنتجات من" %}
+                        <strong>{{ request.GET.min_price|default:0 }}</strong>
+                        {% trans "إلى" %}
+                        <strong>{{ request.GET.max_price|default:price_range.max|default:1000 }}</strong>
+                        {% trans "د.أ" %}
+                    {% else %}
+                        {% trans "عرض جميع المنتجات" %}
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+
+        <!-- Price Filter Actions -->
+        <div class="price-filter-actions mt-3">
+            <div class="row g-2">
+                <div class="col-6">
+                    <button class="btn btn-success btn-sm w-100" id="applyPriceFilter">
+                        <i class="fas fa-filter me-1"></i>
+                        {% trans "تطبيق" %}
+                    </button>
+                </div>
+                <div class="col-6">
+                    <button class="btn btn-outline-secondary btn-sm w-100" id="resetPriceFilter">
+                        <i class="fas fa-undo me-1"></i>
+                        {% trans "إعادة تعيين" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Save Price Range -->
+        {% if user.is_authenticated %}
+        <div class="save-price-range mt-2">
+            <button class="btn btn-outline-info btn-sm w-100" id="savePriceRange">
+                <i class="fas fa-bookmark me-1"></i>
+                {% trans "حفظ هذا النطاق" %}
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.price-filter-widget {
+    background: var(--bs-body-bg);
+    border-radius: 10px;
+    border: 1px solid rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.filter-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(40, 167, 69, 0.05));
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+.filter-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--bs-body-color);
+}
+
+.filter-content {
+    padding: 1rem;
+}
+
+/* Price Statistics */
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.stat-item {
+    background: rgba(40, 167, 69, 0.05);
+    border-radius: 6px;
+    padding: 8px;
+    text-align: center;
+    border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.7rem;
+    color: #6c757d;
+    margin-bottom: 2px;
+}
+
+.stat-value {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #28a745;
+}
+
+/* Price Range Slider */
+.price-slider-container {
+    padding: 0 8px;
+}
+
+.slider-track-container {
+    position: relative;
+    height: 6px;
+    margin: 20px 0;
+}
+
+.slider-track {
+    position: absolute;
+    width: 100%;
+    height: 6px;
+    background: #e9ecef;
+    border-radius: 3px;
+}
+
+.slider-range {
+    position: absolute;
+    height: 6px;
+    background: linear-gradient(90deg, #28a745, #20c997);
+    border-radius: 3px;
+    z-index: 2;
+}
+
+.slider-input {
+    position: absolute;
+    width: 100%;
+    height: 6px;
+    background: transparent;
+    appearance: none;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.slider-input::-webkit-slider-thumb {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #28a745;
+    border: 3px solid white;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    cursor: pointer;
+    pointer-events: all;
+    transition: all 0.3s ease;
+}
+
+.slider-input::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.slider-input::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #28a745;
+    border: 3px solid white;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    cursor: pointer;
+    pointer-events: all;
+}
+
+.slider-values {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #28a745;
+}
+
+.separator {
+    color: #6c757d;
+}
+
+.currency {
+    color: #6c757d;
+    font-weight: 400;
+}
+
+/* Manual Price Input */
+.price-inputs .form-label {
+    font-weight: 500;
+    color: var(--bs-body-color);
+}
+
+.price-inputs .input-group-text {
+    background: #28a745;
+    color: white;
+    border-color: #28a745;
+    font-size: 0.8rem;
+}
+
+.price-inputs .form-control {
+    border-color: rgba(40, 167, 69, 0.3);
+}
+
+.price-inputs .form-control:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+/* Quick Price Ranges */
+.price-ranges-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+}
+
+.price-range-btn {
+    background: rgba(40, 167, 69, 0.1);
+    border: 1px solid rgba(40, 167, 69, 0.3);
+    color: #28a745;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.price-range-btn:hover {
+    background: #28a745;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+.price-range-btn.active {
+    background: #28a745;
+    color: white;
+}
+
+/* Price Distribution Chart */
+.distribution-chart {
+    display: flex;
+    align-items: end;
+    gap: 4px;
+    height: 60px;
+    padding: 8px;
+    background: rgba(0,0,0,0.02);
+    border-radius: 6px;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.chart-bar {
+    flex: 1;
+    background: linear-gradient(to top, #28a745, #20c997);
+    border-radius: 2px 2px 0 0;
+    min-height: 10%;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+.chart-bar:hover {
+    opacity: 1;
+    transform: scaleY(1.1);
+}
+
+.chart-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+    font-size: 0.7rem;
+    color: #6c757d;
+}
+
+/* Current Selection */
+.current-selection {
+    background: rgba(23, 162, 184, 0.1);
+    border: 1px solid rgba(23, 162, 184, 0.3);
+    border-radius: 6px;
+    padding: 8px;
+}
+
+.selection-info {
+    display: flex;
+    align-items: center;
+    font-size: 0.8rem;
+}
+
+.selection-text {
+    color: var(--bs-body-color);
+}
+
+/* Price Filter Actions */
+.price-filter-actions .btn {
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.save-price-range .btn {
+    font-size: 0.75rem;
+}
+
+/* Dark mode adjustments */
+[data-bs-theme="dark"] .price-filter-widget {
+    border-color: rgba(255,255,255,0.1);
+}
+
+[data-bs-theme="dark"] .filter-header {
+    border-color: rgba(255,255,255,0.1);
+}
+
+[data-bs-theme="dark"] .slider-track {
+    background: #495057;
+}
+
+[data-bs-theme="dark"] .stat-item {
+    background: rgba(40, 167, 69, 0.1);
+    border-color: rgba(40, 167, 69, 0.3);
+}
+
+[data-bs-theme="dark"] .distribution-chart {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.1);
+}
+
+[data-bs-theme="dark"] .current-selection {
+    background: rgba(23, 162, 184, 0.15);
+    border-color: rgba(23, 162, 184, 0.4);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .filter-content {
+        padding: 0.75rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .price-ranges-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-labels {
+        font-size: 0.65rem;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const minSlider = document.getElementById('minPriceSlider');
+    const maxSlider = document.getElementById('maxPriceSlider');
+    const minInput = document.getElementById('minPriceInput');
+    const maxInput = document.getElementById('maxPriceInput');
+    const minDisplay = document.getElementById('minValueDisplay');
+    const maxDisplay = document.getElementById('maxValueDisplay');
+    const sliderRange = document.getElementById('sliderRange');
+    const priceRangeBtns = document.querySelectorAll('.price-range-btn');
+    const applyBtn = document.getElementById('applyPriceFilter');
+    const resetBtn = document.getElementById('resetPriceFilter');
+    const clearBtn = document.getElementById('clearPriceFilter');
+    const savePriceRange = document.getElementById('savePriceRange');
+    const currentSelection = document.getElementById('currentSelection');
+
+    const minPrice = parseInt(minSlider.min);
+    const maxPrice = parseInt(minSlider.max);
+
+    // Update slider range display
+    function updateSliderRange() {
+        const minVal = parseInt(minSlider.value);
+        const maxVal = parseInt(maxSlider.value);
+
+        // Prevent overlap
+        if (minVal >= maxVal) {
+            if (minSlider === document.activeElement) {
+                maxSlider.value = minVal + 1;
+            } else {
+                minSlider.value = maxVal - 1;
+            }
+        }
+
+        const minPercent = ((minSlider.value - minPrice) / (maxPrice - minPrice)) * 100;
+        const maxPercent = ((maxSlider.value - minPrice) / (maxPrice - minPrice)) * 100;
+
+        sliderRange.style.left = minPercent + '%';
+        sliderRange.style.width = (maxPercent - minPercent) + '%';
+
+        // Update displays
+        minDisplay.textContent = minSlider.value;
+        maxDisplay.textContent = maxSlider.value;
+        minInput.value = minSlider.value;
+        maxInput.value = maxSlider.value;
+
+        updateCurrentSelection();
+        updateClearButton();
+    }
+
+    // Update current selection text
+    function updateCurrentSelection() {
+        const minVal = minSlider.value;
+        const maxVal = maxSlider.value;
+        const selectionText = currentSelection.querySelector('.selection-text');
+
+        if (minVal == minPrice && maxVal == maxPrice) {
+            selectionText.innerHTML = '{% trans "عرض جميع المنتجات" %}';
+        } else {
+            selectionText.innerHTML = `
+                {% trans "عرض المنتجات من" %}
+                <strong>${minVal}</strong>
+                {% trans "إلى" %}
+                <strong>${maxVal}</strong>
+                {% trans "د.أ" %}
+            `;
+        }
+    }
+
+    // Update clear button visibility
+    function updateClearButton() {
+        const hasFilter = minSlider.value != minPrice || maxSlider.value != maxPrice;
+        clearBtn.style.display = hasFilter ? 'block' : 'none';
+    }
+
+    // Slider event listeners
+    if (minSlider && maxSlider) {
+        minSlider.addEventListener('input', updateSliderRange);
+        maxSlider.addEventListener('input', updateSliderRange);
+
+        // Initial update
+        updateSliderRange();
+    }
+
+    // Input field event listeners
+    if (minInput && maxInput) {
+        minInput.addEventListener('input', function() {
+            let value = parseInt(this.value) || minPrice;
+            value = Math.max(minPrice, Math.min(value, maxPrice - 1));
+            this.value = value;
+            minSlider.value = value;
+            updateSliderRange();
+        });
+
+        maxInput.addEventListener('input', function() {
+            let value = parseInt(this.value) || maxPrice;
+            value = Math.max(minPrice + 1, Math.min(value, maxPrice));
+            this.value = value;
+            maxSlider.value = value;
+            updateSliderRange();
+        });
+    }
+
+    // Quick price range buttons
+    priceRangeBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const min = this.getAttribute('data-min');
+            const max = this.getAttribute('data-max');
+
+            minSlider.value = min;
+            maxSlider.value = max;
+            updateSliderRange();
+
+            // Update active state
+            priceRangeBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+
+    // Apply filter
+    if (applyBtn) {
+        applyBtn.addEventListener('click', function() {
+            const url = new URL(window.location);
+
+            if (minSlider.value != minPrice) {
+                url.searchParams.set('min_price', minSlider.value);
+            } else {
+                url.searchParams.delete('min_price');
+            }
+
+            if (maxSlider.value != maxPrice) {
+                url.searchParams.set('max_price', maxSlider.value);
+            } else {
+                url.searchParams.delete('max_price');
+            }
+
+            window.location.href = url.toString();
+        });
+    }
+
+    // Reset filter
+    if (resetBtn) {
+        resetBtn.addEventListener('click', function() {
+            const url = new URL(window.location);
+            url.searchParams.delete('min_price');
+            url.searchParams.delete('max_price');
+            window.location.href = url.toString();
+        });
+    }
+
+    // Clear filter
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+            minSlider.value = minPrice;
+            maxSlider.value = maxPrice;
+            updateSliderRange();
+            priceRangeBtns.forEach(btn => btn.classList.remove('active'));
+        });
+    }
+
+    // Save price range (for authenticated users)
+    if (savePriceRange) {
+        savePriceRange.addEventListener('click', function() {
+            const minVal = minSlider.value;
+            const maxVal = maxSlider.value;
+
+            // Send AJAX request to save
+            fetch('{% url "products:save_price_range" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    min_price: minVal,
+                    max_price: maxVal
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.innerHTML = '<i class="fas fa-check me-1"></i> {% trans "تم الحفظ" %}';
+                    this.classList.remove('btn-outline-info');
+                    this.classList.add('btn-success');
+
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fas fa-bookmark me-1"></i> {% trans "حفظ هذا النطاق" %}';
+                        this.classList.remove('btn-success');
+                        this.classList.add('btn-outline-info');
+                    }, 2000);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    }
+
+    // Price distribution chart interaction
+    const chartBars = document.querySelectorAll('.chart-bar');
+    chartBars.forEach(bar => {
+        bar.addEventListener('click', function() {
+            const range = this.getAttribute('data-range');
+            let min, max;
+
+            if (range === '1000+') {
+                min = 1000;
+                max = maxPrice;
+            } else {
+                [min, max] = range.split('-').map(Number);
+            }
+
+            minSlider.value = min;
+            maxSlider.value = max;
+            updateSliderRange();
+
+            // Update quick buttons
+            priceRangeBtns.forEach(btn => {
+                const btnMin = parseInt(btn.getAttribute('data-min'));
+                const btnMax = parseInt(btn.getAttribute('data-max'));
+
+                if (btnMin === min && btnMax === max) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        });
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey || e.metaKey) {
+            switch(e.key) {
+                case 'Enter':
+                    if (applyBtn) applyBtn.click();
+                    break;
+                case 'r':
+                    e.preventDefault();
+                    if (resetBtn) resetBtn.click();
+                    break;
+            }
+        }
+    });
+});
+</script>

@@ -1,0 +1,401 @@
+{% load static %}
+
+<!-- Product Schema.org Markup for SEO -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org/",
+  "@type": "Product",
+  "name": "{{ product.name|escapejs }}",
+  {% if product.name_en %}"alternateName": "{{ product.name_en|escapejs }}",{% endif %}
+  "description": "{{ product.short_description|default:product.description|striptags|truncatewords:30|escapejs }}",
+  "sku": "{{ product.sku|escapejs }}",
+  {% if product.barcode %}"gtin": "{{ product.barcode|escapejs }}",{% endif %}
+  "brand": {
+    "@type": "Brand",
+    "name": "{{ product.brand.name|default:'Unknown'|escapejs }}"
+    {% if product.brand.logo %},"logo": "{{ request.scheme }}://{{ request.get_host }}{{ product.brand.logo.url }}"{% endif %}
+    {% if product.brand.website %},"url": "{{ product.brand.website|escapejs }}"{% endif %}
+  },
+  "manufacturer": {
+    "@type": "Organization",
+    "name": "{{ product.brand.name|default:'ESCO'|escapejs }}"
+    {% if product.brand and product.brand.country %},"address": {
+      "@type": "PostalAddress",
+      "addressCountry": "{{ product.brand.country|escapejs }}"
+    }{% endif %}
+  },
+  "category": "{{ product.category.name|escapejs }}",
+  "url": "{{ request.scheme }}://{{ request.get_host }}{{ product.get_absolute_url }}",
+  {% if product.default_image %}"image": [
+    "{{ request.scheme }}://{{ request.get_host }}{{ product.default_image.image.url }}"
+    {% for image in product.images.all %}
+      {% if not image.is_primary %},"{{ request.scheme }}://{{ request.get_host }}{{ image.image.url }}"{% endif %}
+    {% endfor %}
+  ],{% endif %}
+  "offers": {
+    "@type": "Offer",
+    "url": "{{ request.scheme }}://{{ request.get_host }}{{ product.get_absolute_url }}",
+    "priceCurrency": "JOD",
+    "price": "{{ product.current_price }}",
+    {% if product.has_discount %}"priceValidUntil": "{{ product.discount_end|date:'c'|default:'2024-12-31T23:59:59Z' }}",{% endif %}
+    "availability": "{% if product.in_stock %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}",
+    "itemCondition": "https://schema.org/NewCondition",
+    "seller": {
+      "@type": "Organization",
+      "name": "{{ site_settings.site_name|default:'ESCO'|escapejs }}",
+      "url": "{{ request.scheme }}://{{ request.get_host }}",
+      {% if site_settings.logo %}"logo": "{{ request.scheme }}://{{ request.get_host }}{{ site_settings.logo.url }}",{% endif %}
+      {% if site_settings.phone %}"telephone": "{{ site_settings.phone|escapejs }}",{% endif %}
+      {% if site_settings.email %}"email": "{{ site_settings.email|escapejs }}",{% endif %}
+      {% if site_settings.address %}"address": {
+        "@type": "PostalAddress",
+        "streetAddress": "{{ site_settings.address|escapejs }}",
+        "addressCountry": "JO"
+      },{% endif %}
+      "areaServed": "JO"
+    }
+    {% if product.track_inventory %},"inventoryLevel": {{ product.stock_quantity }}{% endif %}
+    {% if product.has_discount %},"priceSpecification": {
+      "@type": "UnitPriceSpecification",
+      "price": "{{ product.base_price }}",
+      "priceCurrency": "JOD"
+    }{% endif %}
+  },
+  {% if product.rating and product.review_count > 0 %}"aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "{{ product.rating|floatformat:1 }}",
+    "bestRating": "5",
+    "worstRating": "1",
+    "ratingCount": "{{ product.review_count }}"
+  },{% endif %}
+  {% if product.reviews.exists %}"review": [
+    {% for review in product.reviews.all|slice:":5" %}
+    {
+      "@type": "Review",
+      "author": {
+        "@type": "Person",
+        "name": "{{ review.user.get_full_name|default:review.user.username|escapejs }}"
+      },
+      "datePublished": "{{ review.created_at|date:'c' }}",
+      "description": "{{ review.comment|striptags|truncatewords:50|escapejs }}",
+      "name": "{{ review.title|escapejs }}",
+      "reviewRating": {
+        "@type": "Rating",
+        "bestRating": "5",
+        "ratingValue": "{{ review.rating }}",
+        "worstRating": "1"
+      }
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ],{% endif %}
+  "additionalProperty": [
+    {% if product.weight %}{
+      "@type": "PropertyValue",
+      "name": "Weight",
+      "value": "{{ product.weight }} kg"
+    },{% endif %}
+    {% if product.length %}{
+      "@type": "PropertyValue",
+      "name": "Length",
+      "value": "{{ product.length }} cm"
+    },{% endif %}
+    {% if product.width %}{
+      "@type": "PropertyValue",
+      "name": "Width",
+      "value": "{{ product.width }} cm"
+    },{% endif %}
+    {% if product.height %}{
+      "@type": "PropertyValue",
+      "name": "Height",
+      "value": "{{ product.height }} cm"
+    },{% endif %}
+    {% if product.specifications %}
+      {% for key, value in product.specifications.items %}
+      {
+        "@type": "PropertyValue",
+        "name": "{{ key|escapejs }}",
+        "value": "{{ value|escapejs }}"
+      }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    {% endif %}
+  ],
+  {% if product.variants.exists %}"hasVariant": [
+    {% for variant in product.variants.all %}
+    {
+      "@type": "ProductModel",
+      "name": "{{ variant.name|escapejs }}",
+      "sku": "{{ variant.sku|escapejs }}",
+      "offers": {
+        "@type": "Offer",
+        "price": "{{ variant.current_price }}",
+        "priceCurrency": "JOD",
+        "availability": "{% if variant.is_in_stock %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}"
+        {% if variant.stock_quantity %},"inventoryLevel": {{ variant.stock_quantity }}{% endif %}
+      }
+      {% if variant.color %},"color": "{{ variant.get_color_display|escapejs }}"{% endif %}
+      {% if variant.size %},"size": "{{ variant.get_size_display|escapejs }}"{% endif %}
+      {% if variant.material %},"material": "{{ variant.material|escapejs }}"{% endif %}
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ],{% endif %}
+  "isRelatedTo": [
+    {% for related in product.related_products.all|slice:":3" %}
+    {
+      "@type": "Product",
+      "name": "{{ related.name|escapejs }}",
+      "url": "{{ request.scheme }}://{{ request.get_host }}{{ related.get_absolute_url }}"
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ],
+  "keywords": "{{ product.meta_keywords|default:'' }}{% if product.tags.exists %}, {% for tag in product.tags.all %}{{ tag.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}",
+  {% if product.published_at %}"datePublished": "{{ product.published_at|date:'c' }}",{% endif %}
+  "dateModified": "{{ product.updated_at|date:'c' }}",
+  "productionDate": "{{ product.created_at|date:'c' }}",
+  {% if product.is_new %}"releaseDate": "{{ product.created_at|date:'c' }}",{% endif %}
+  "audience": {
+    "@type": "Audience",
+    "audienceType": "{% if product.category.name %}{{ product.category.name }} buyers{% else %}General consumers{% endif %}"
+  },
+  "potentialAction": [
+    {
+      "@type": "BuyAction",
+      "target": "{{ request.scheme }}://{{ request.get_host }}{{ product.get_absolute_url }}",
+      "price": "{{ product.current_price }}",
+      "priceCurrency": "JOD"
+    },
+    {
+      "@type": "ViewAction",
+      "target": "{{ request.scheme }}://{{ request.get_host }}{{ product.get_absolute_url }}"
+    }
+  ],
+  "mainEntity": {
+    "@type": "WebPage",
+    "@id": "{{ request.scheme }}://{{ request.get_host }}{{ product.get_absolute_url }}",
+    "name": "{{ product.name|escapejs }}",
+    "description": "{{ product.meta_description|default:product.short_description|striptags|escapejs }}",
+    "url": "{{ request.scheme }}://{{ request.get_host }}{{ product.get_absolute_url }}",
+    "inLanguage": "{{ LANGUAGE_CODE }}",
+    "isPartOf": {
+      "@type": "WebSite",
+      "@id": "{{ request.scheme }}://{{ request.get_host }}",
+      "name": "{{ site_settings.site_name|default:'ESCO'|escapejs }}",
+      "url": "{{ request.scheme }}://{{ request.get_host }}",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "{{ request.scheme }}://{{ request.get_host }}{% url 'products:product_search' %}?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+  },
+  "sameAs": [
+    {% if product.brand and product.brand.website %}"{{ product.brand.website|escapejs }}"{% endif %}
+  ]
+}
+</script>
+
+<!-- Organization Schema -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "{{ site_settings.site_name|default:'ESCO'|escapejs }}",
+  "url": "{{ request.scheme }}://{{ request.get_host }}",
+  {% if site_settings.logo %}"logo": "{{ request.scheme }}://{{ request.get_host }}{{ site_settings.logo.url }}",{% endif %}
+  {% if site_settings.phone %}"telephone": "{{ site_settings.phone|escapejs }}",{% endif %}
+  {% if site_settings.email %}"email": "{{ site_settings.email|escapejs }}",{% endif %}
+  {% if site_settings.address %}"address": {
+    "@type": "PostalAddress",
+    "streetAddress": "{{ site_settings.address|escapejs }}",
+    "addressCountry": "JO"
+  },{% endif %}
+  "sameAs": [
+    {% if site_settings.facebook %}"{{ site_settings.facebook|escapejs }}"{% if site_settings.twitter or site_settings.instagram or site_settings.linkedin %},{% endif %}{% endif %}
+    {% if site_settings.twitter %}"{{ site_settings.twitter|escapejs }}"{% if site_settings.instagram or site_settings.linkedin %},{% endif %}{% endif %}
+    {% if site_settings.instagram %}"{{ site_settings.instagram|escapejs }}"{% if site_settings.linkedin %},{% endif %}{% endif %}
+    {% if site_settings.linkedin %}"{{ site_settings.linkedin|escapejs }}"{% endif %}
+  ],
+  "foundingDate": "2020",
+  "areaServed": {
+    "@type": "Country",
+    "name": "Jordan"
+  },
+  "hasOfferCatalog": {
+    "@type": "OfferCatalog",
+    "name": "{{ site_settings.site_name|default:'ESCO'|escapejs }} Products",
+    "itemListElement": [
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Product",
+          "name": "{{ product.name|escapejs }}",
+          "category": "{{ product.category.name|escapejs }}"
+        }
+      }
+    ]
+  }
+}
+</script>
+
+<!-- BreadcrumbList Schema -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "{% trans 'الرئيسية' %}",
+      "item": "{{ request.scheme }}://{{ request.get_host }}/"
+    },
+    {% if breadcrumbs %}
+      {% for breadcrumb in breadcrumbs %}
+      {
+        "@type": "ListItem",
+        "position": {{ forloop.counter|add:1 }},
+        "name": "{{ breadcrumb.name|escapejs }}",
+        {% if breadcrumb.url %}"item": "{{ request.scheme }}://{{ request.get_host }}{{ breadcrumb.url }}"{% else %}"item": "{{ request.scheme }}://{{ request.get_host }}{{ product.get_absolute_url }}"{% endif %}
+      }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    {% else %}
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "{{ product.category.name|escapejs }}",
+        "item": "{{ request.scheme }}://{{ request.get_host }}{{ product.category.get_absolute_url }}"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "{{ product.name|escapejs }}",
+        "item": "{{ request.scheme }}://{{ request.get_host }}{{ product.get_absolute_url }}"
+      }
+    {% endif %}
+  ]
+}
+</script>
+
+<!-- FAQ Schema (if product has specifications) -->
+{% if product.specifications %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {% for key, value in product.specifications.items %}
+    {
+      "@type": "Question",
+      "name": "ما هو {{ key|escapejs }}؟",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "{{ value|escapejs }}"
+      }
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ]
+}
+</script>
+{% endif %}
+
+<!-- Local Business Schema (for company info) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "name": "{{ site_settings.site_name|default:'ESCO'|escapejs }}",
+  "image": {% if site_settings.logo %}"{{ request.scheme }}://{{ request.get_host }}{{ site_settings.logo.url }}"{% else %}""{% endif %},
+  "@id": "{{ request.scheme }}://{{ request.get_host }}/",
+  "url": "{{ request.scheme }}://{{ request.get_host }}/",
+  {% if site_settings.phone %}"telephone": "{{ site_settings.phone|escapejs }}",{% endif %}
+  {% if site_settings.email %}"email": "{{ site_settings.email|escapejs }}",{% endif %}
+  {% if site_settings.address %}"address": {
+    "@type": "PostalAddress",
+    "streetAddress": "{{ site_settings.address|escapejs }}",
+    "addressCountry": "JO"
+  },{% endif %}
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": 31.9539,
+    "longitude": 35.9106
+  },
+  "openingHoursSpecification": {
+    "@type": "OpeningHoursSpecification",
+    "dayOfWeek": [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Sunday"
+    ],
+    "opens": "08:00",
+    "closes": "17:00"
+  },
+  "priceRange": "$$",
+  "currenciesAccepted": "JOD",
+  "paymentAccepted": "Cash, Credit Card",
+  "areaServed": {
+    "@type": "Country",
+    "name": "Jordan"
+  }
+}
+</script>
+
+<!-- WebSite Schema with Site Search -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "{{ site_settings.site_name|default:'ESCO'|escapejs }}",
+  "url": "{{ request.scheme }}://{{ request.get_host }}/",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": "{{ request.scheme }}://{{ request.get_host }}{% url 'products:product_search' %}?q={search_term_string}"
+    },
+    "query-input": "required name=search_term_string"
+  },
+  "sameAs": [
+    {% if site_settings.facebook %}"{{ site_settings.facebook|escapejs }}"{% if site_settings.twitter or site_settings.instagram or site_settings.linkedin %},{% endif %}{% endif %}
+    {% if site_settings.twitter %}"{{ site_settings.twitter|escapejs }}"{% if site_settings.instagram or site_settings.linkedin %},{% endif %}{% endif %}
+    {% if site_settings.instagram %}"{{ site_settings.instagram|escapejs }}"{% if site_settings.linkedin %},{% endif %}{% endif %}
+    {% if site_settings.linkedin %}"{{ site_settings.linkedin|escapejs }}"{% endif %}
+  ]
+}
+</script>
+
+<!-- Additional Open Graph Tags -->
+<meta property="og:title" content="{{ product.name|striptags }}">
+<meta property="og:description" content="{{ product.short_description|default:product.description|striptags|truncatewords:30 }}">
+<meta property="og:type" content="product">
+<meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{{ product.get_absolute_url }}">
+{% if product.default_image %}<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.default_image.image.url }}">{% endif %}
+<meta property="og:site_name" content="{{ site_settings.site_name|default:'ESCO' }}">
+<meta property="product:price:amount" content="{{ product.current_price }}">
+<meta property="product:price:currency" content="JOD">
+<meta property="product:availability" content="{% if product.in_stock %}in stock{% else %}out of stock{% endif %}">
+<meta property="product:condition" content="new">
+<meta property="product:brand" content="{{ product.brand.name|default:'ESCO' }}">
+<meta property="product:category" content="{{ product.category.name }}">
+
+<!-- Twitter Card Tags -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ product.name|striptags }}">
+<meta name="twitter:description" content="{{ product.short_description|default:product.description|striptags|truncatewords:30 }}">
+{% if product.default_image %}<meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.default_image.image.url }}">{% endif %}
+
+<!-- Additional Meta Tags -->
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+<meta name="googlebot" content="index, follow">
+<link rel="canonical" href="{{ request.scheme }}://{{ request.get_host }}{{ product.get_absolute_url }}">
+{% if product.meta_title %}<meta name="title" content="{{ product.meta_title }}">{% endif %}
+{% if product.meta_description %}<meta name="description" content="{{ product.meta_description }}">{% endif %}
+{% if product.meta_keywords %}<meta name="keywords" content="{{ product.meta_keywords }}">{% endif %}
+
+<!-- Preload Critical Resources -->
+{% if product.default_image %}
+<link rel="preload" as="image" href="{{ product.default_image.image.url }}">
+{% endif %}

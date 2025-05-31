@@ -1,0 +1,713 @@
+{% load static %}
+{% load i18n %}
+
+<div class="brand-filter-widget">
+    <div class="filter-header">
+        <h6 class="filter-title">
+            <i class="fas fa-tags text-primary me-2"></i>
+            {% trans "العلامات التجارية" %}
+        </h6>
+        <button class="btn btn-sm btn-outline-secondary clear-brand-filter"
+                id="clearBrandFilter" style="display: none;">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <div class="filter-content">
+        <!-- Brand Search -->
+        <div class="brand-search mb-3">
+            <div class="input-group input-group-sm">
+                <input type="text" class="form-control" id="brandSearch"
+                       placeholder="{% trans 'ابحث عن علامة تجارية...' %}">
+                <button class="btn btn-outline-secondary" type="button">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Popular Brands -->
+        {% if brands %}
+        <div class="popular-brands mb-3">
+            <div class="brands-grid">
+                {% for brand in brands|slice:":6" %}
+                <div class="brand-item popular-brand" data-brand-name="{{ brand.name|lower }}">
+                    <label class="brand-label">
+                        <input type="checkbox" name="brand" value="{{ brand.id }}"
+                               class="brand-checkbox"
+                               {% if brand.id|stringformat:"s" in request.GET.brand %}checked{% endif %}>
+                        <div class="brand-content">
+                            {% if brand.logo %}
+                                <div class="brand-logo">
+                                    <img src="{{ brand.logo.url }}" alt="{{ brand.name }}"
+                                         class="brand-image" loading="lazy">
+                                </div>
+                            {% else %}
+                                <div class="brand-logo brand-logo-placeholder">
+                                    <i class="fas fa-tag"></i>
+                                </div>
+                            {% endif %}
+                            <div class="brand-info">
+                                <span class="brand-name">{{ brand.name }}</span>
+                                <span class="brand-count">({{ brand.product_count }})</span>
+                            </div>
+                        </div>
+                        <div class="brand-checkmark">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- All Brands List -->
+        <div class="all-brands">
+            <div class="brands-toggle mb-2">
+                <button class="btn btn-link btn-sm p-0" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#allBrandsList"
+                        aria-expanded="false" aria-controls="allBrandsList">
+                    <i class="fas fa-chevron-down me-1"></i>
+                    {% trans "عرض جميع العلامات التجارية" %}
+                    <span class="badge bg-secondary ms-2">{{ brands|length }}</span>
+                </button>
+            </div>
+
+            <div class="collapse" id="allBrandsList">
+                <div class="brands-list" id="brandsList">
+                    {% for brand in brands %}
+                    <div class="brand-list-item" data-brand-name="{{ brand.name|lower }}">
+                        <label class="brand-list-label">
+                            <input type="checkbox" name="brand" value="{{ brand.id }}"
+                                   class="brand-checkbox form-check-input"
+                                   {% if brand.id|stringformat:"s" in request.GET.brand %}checked{% endif %}>
+
+                            <div class="brand-list-content">
+                                {% if brand.logo %}
+                                    <img src="{{ brand.logo.url }}" alt="{{ brand.name }}"
+                                         class="brand-list-image" loading="lazy">
+                                {% else %}
+                                    <div class="brand-list-placeholder">
+                                        {{ brand.name|first|upper }}
+                                    </div>
+                                {% endif %}
+
+                                <div class="brand-list-info">
+                                    <span class="brand-list-name">{{ brand.name }}</span>
+                                    {% if brand.country %}
+                                        <small class="brand-country text-muted">{{ brand.country }}</small>
+                                    {% endif %}
+                                </div>
+
+                                <span class="brand-list-count">{{ brand.product_count }}</span>
+                            </div>
+                        </label>
+
+                        <!-- Featured Brand Badge -->
+                        {% if brand.is_featured %}
+                            <span class="featured-brand-badge">
+                                <i class="fas fa-star"></i>
+                            </span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Load More Brands -->
+                {% if brands|length > 20 %}
+                <div class="load-more-brands mt-2">
+                    <button class="btn btn-outline-primary btn-sm w-100" id="loadMoreBrands">
+                        <i class="fas fa-plus me-2"></i>
+                        {% trans "عرض المزيد" %}
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Selected Brands Summary -->
+        <div class="selected-brands-summary mt-3" id="selectedBrandsSummary" style="display: none;">
+            <div class="summary-header">
+                <small class="text-muted">{% trans "العلامات المختارة:" %}</small>
+                <button class="btn btn-sm btn-outline-danger clear-all-brands">
+                    {% trans "مسح الكل" %}
+                </button>
+            </div>
+            <div class="selected-brands-list" id="selectedBrandsList">
+                <!-- Selected brands will be populated here -->
+            </div>
+        </div>
+
+        <!-- Brand Filter Actions -->
+        <div class="brand-filter-actions mt-3">
+            <div class="row g-2">
+                <div class="col-6">
+                    <button class="btn btn-primary btn-sm w-100" id="applyBrandFilter">
+                        <i class="fas fa-filter me-1"></i>
+                        {% trans "تطبيق" %}
+                    </button>
+                </div>
+                <div class="col-6">
+                    <button class="btn btn-outline-secondary btn-sm w-100" id="resetBrandFilter">
+                        <i class="fas fa-undo me-1"></i>
+                        {% trans "إعادة تعيين" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.brand-filter-widget {
+    background: var(--bs-body-bg);
+    border-radius: 10px;
+    border: 1px solid rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.filter-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: linear-gradient(135deg, rgba(var(--bs-primary-rgb), 0.1), rgba(var(--bs-primary-rgb), 0.05));
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+.filter-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--bs-body-color);
+}
+
+.filter-content {
+    padding: 1rem;
+}
+
+/* Brand Search */
+.brand-search .form-control {
+    border-radius: 6px 0 0 6px;
+    font-size: 0.85rem;
+}
+
+.brand-search .btn {
+    border-radius: 0 6px 6px 0;
+    border-left: none;
+}
+
+/* Popular Brands Grid */
+.brands-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.brand-item {
+    transition: transform 0.2s ease;
+}
+
+.brand-item:hover {
+    transform: translateY(-2px);
+}
+
+.brand-label {
+    display: block;
+    cursor: pointer;
+    margin: 0;
+    position: relative;
+}
+
+.brand-checkbox {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.brand-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px;
+    border: 2px solid rgba(0,0,0,0.08);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    background: var(--bs-body-bg);
+    position: relative;
+    overflow: hidden;
+}
+
+.brand-content:hover {
+    border-color: rgba(var(--bs-primary-rgb), 0.3);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.brand-checkbox:checked + .brand-content {
+    border-color: var(--bs-primary);
+    background: rgba(var(--bs-primary-rgb), 0.1);
+}
+
+.brand-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.03);
+    margin-bottom: 4px;
+}
+
+.brand-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.brand-logo-placeholder {
+    color: #6c757d;
+    font-size: 1rem;
+}
+
+.brand-info {
+    text-align: center;
+}
+
+.brand-name {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--bs-body-color);
+    line-height: 1.2;
+    margin-bottom: 2px;
+}
+
+.brand-count {
+    font-size: 0.7rem;
+    color: #6c757d;
+}
+
+.brand-checkmark {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 16px;
+    height: 16px;
+    background: var(--bs-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.6rem;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.3s ease;
+}
+
+.brand-checkbox:checked ~ .brand-checkmark {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* All Brands List */
+.brands-toggle .btn-link {
+    color: var(--bs-body-color);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.brands-toggle .btn-link:hover {
+    color: var(--bs-primary);
+}
+
+.brands-list {
+    max-height: 250px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(var(--bs-primary-rgb), 0.3) transparent;
+}
+
+.brands-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.brands-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.brands-list::-webkit-scrollbar-thumb {
+    background: rgba(var(--bs-primary-rgb), 0.3);
+    border-radius: 2px;
+}
+
+.brand-list-item {
+    position: relative;
+    margin-bottom: 8px;
+}
+
+.brand-list-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    margin: 0;
+}
+
+.brand-list-label:hover {
+    background: rgba(var(--bs-primary-rgb), 0.05);
+}
+
+.brand-list-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.brand-list-image {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+.brand-list-placeholder {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    background: rgba(var(--bs-primary-rgb), 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--bs-primary);
+}
+
+.brand-list-info {
+    flex: 1;
+}
+
+.brand-list-name {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--bs-body-color);
+    line-height: 1.2;
+}
+
+.brand-country {
+    font-size: 0.7rem;
+    line-height: 1;
+}
+
+.brand-list-count {
+    font-size: 0.75rem;
+    color: #6c757d;
+    background: rgba(0,0,0,0.05);
+    padding: 2px 6px;
+    border-radius: 10px;
+    min-width: 24px;
+    text-align: center;
+}
+
+.featured-brand-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    color: #ffc107;
+    font-size: 0.7rem;
+}
+
+/* Selected Brands Summary */
+.selected-brands-summary {
+    background: rgba(var(--bs-primary-rgb), 0.05);
+    border-radius: 6px;
+    padding: 8px;
+    border: 1px solid rgba(var(--bs-primary-rgb), 0.2);
+}
+
+.summary-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.summary-header .btn {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+}
+
+.selected-brands-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.selected-brand-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--bs-primary);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.selected-brand-remove {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 0.6rem;
+    padding: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.selected-brand-remove:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+/* Brand Filter Actions */
+.brand-filter-actions .btn {
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* Load More Brands */
+.load-more-brands .btn {
+    font-size: 0.8rem;
+}
+
+/* Dark mode adjustments */
+[data-bs-theme="dark"] .brand-filter-widget {
+    border-color: rgba(255,255,255,0.1);
+}
+
+[data-bs-theme="dark"] .filter-header {
+    border-color: rgba(255,255,255,0.1);
+}
+
+[data-bs-theme="dark"] .brand-content {
+    border-color: rgba(255,255,255,0.1);
+}
+
+[data-bs-theme="dark"] .brand-logo {
+    background: rgba(255,255,255,0.05);
+}
+
+[data-bs-theme="dark"] .brand-list-count {
+    background: rgba(255,255,255,0.1);
+}
+
+/* RTL adjustments */
+html[dir="rtl"] .brand-search .form-control {
+    border-radius: 0 6px 6px 0;
+}
+
+html[dir="rtl"] .brand-search .btn {
+    border-radius: 6px 0 0 6px;
+    border-left: 1px solid #ced4da;
+    border-right: none;
+}
+
+html[dir="rtl"] .brand-checkmark {
+    right: auto;
+    left: 4px;
+}
+
+html[dir="rtl"] .featured-brand-badge {
+    right: auto;
+    left: 4px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .brands-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .brand-logo {
+        width: 35px;
+        height: 35px;
+    }
+
+    .filter-content {
+        padding: 0.75rem;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const brandSearch = document.getElementById('brandSearch');
+    const brandsList = document.getElementById('brandsList');
+    const selectedBrandsSummary = document.getElementById('selectedBrandsSummary');
+    const selectedBrandsList = document.getElementById('selectedBrandsList');
+    const clearBrandFilter = document.getElementById('clearBrandFilter');
+    const applyBrandFilter = document.getElementById('applyBrandFilter');
+    const resetBrandFilter = document.getElementById('resetBrandFilter');
+    const loadMoreBrands = document.getElementById('loadMoreBrands');
+
+    let visibleBrandsCount = 20;
+
+    // Brand Search
+    if (brandSearch && brandsList) {
+        brandSearch.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            const brandItems = document.querySelectorAll('.brand-list-item, .brand-item');
+
+            brandItems.forEach(item => {
+                const brandName = item.getAttribute('data-brand-name');
+                if (brandName && brandName.includes(searchTerm)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = searchTerm ? 'none' : 'block';
+                }
+            });
+        });
+    }
+
+    // Load More Brands
+    if (loadMoreBrands) {
+        loadMoreBrands.addEventListener('click', function() {
+            const hiddenBrands = brandsList.querySelectorAll('.brand-list-item:nth-child(n+' + (visibleBrandsCount + 1) + ')');
+            const showCount = Math.min(10, hiddenBrands.length);
+
+            for (let i = 0; i < showCount; i++) {
+                hiddenBrands[i].style.display = 'block';
+            }
+
+            visibleBrandsCount += showCount;
+
+            if (visibleBrandsCount >= brandsList.children.length) {
+                this.style.display = 'none';
+            }
+        });
+
+        // Initially hide brands beyond the limit
+        const allBrands = brandsList.querySelectorAll('.brand-list-item');
+        allBrands.forEach((brand, index) => {
+            if (index >= visibleBrandsCount) {
+                brand.style.display = 'none';
+            }
+        });
+    }
+
+    // Handle brand selection
+    function updateSelectedBrands() {
+        const checkedBrands = document.querySelectorAll('.brand-checkbox:checked');
+
+        if (checkedBrands.length > 0) {
+            selectedBrandsSummary.style.display = 'block';
+            clearBrandFilter.style.display = 'block';
+
+            selectedBrandsList.innerHTML = '';
+            checkedBrands.forEach(checkbox => {
+                const brandName = checkbox.closest('.brand-item, .brand-list-item')
+                    .querySelector('.brand-name, .brand-list-name').textContent;
+
+                const tag = document.createElement('span');
+                tag.className = 'selected-brand-tag';
+                tag.innerHTML = `
+                    ${brandName}
+                    <button type="button" class="selected-brand-remove" data-brand-id="${checkbox.value}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                selectedBrandsList.appendChild(tag);
+            });
+        } else {
+            selectedBrandsSummary.style.display = 'none';
+            clearBrandFilter.style.display = 'none';
+        }
+    }
+
+    // Listen for checkbox changes
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('brand-checkbox')) {
+            updateSelectedBrands();
+        }
+    });
+
+    // Remove selected brand
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('selected-brand-remove') ||
+            e.target.closest('.selected-brand-remove')) {
+            const button = e.target.closest('.selected-brand-remove');
+            const brandId = button.getAttribute('data-brand-id');
+            const checkbox = document.querySelector(`.brand-checkbox[value="${brandId}"]`);
+
+            if (checkbox) {
+                checkbox.checked = false;
+                updateSelectedBrands();
+            }
+        }
+    });
+
+    // Clear all brands
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('clear-all-brands')) {
+            document.querySelectorAll('.brand-checkbox:checked').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            updateSelectedBrands();
+        }
+    });
+
+    // Clear brand filter
+    if (clearBrandFilter) {
+        clearBrandFilter.addEventListener('click', function() {
+            document.querySelectorAll('.brand-checkbox:checked').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            updateSelectedBrands();
+        });
+    }
+
+    // Apply brand filter
+    if (applyBrandFilter) {
+        applyBrandFilter.addEventListener('click', function() {
+            const checkedBrands = Array.from(document.querySelectorAll('.brand-checkbox:checked'))
+                .map(checkbox => checkbox.value);
+
+            const url = new URL(window.location);
+            url.searchParams.delete('brand');
+
+            checkedBrands.forEach(brandId => {
+                url.searchParams.append('brand', brandId);
+            });
+
+            window.location.href = url.toString();
+        });
+    }
+
+    // Reset brand filter
+    if (resetBrandFilter) {
+        resetBrandFilter.addEventListener('click', function() {
+            const url = new URL(window.location);
+            url.searchParams.delete('brand');
+            window.location.href = url.toString();
+        });
+    }
+
+    // Initialize on page load
+    updateSelectedBrands();
+});
+</script>
