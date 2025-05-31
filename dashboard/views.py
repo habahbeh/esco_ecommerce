@@ -1,3 +1,4 @@
+# dashboard/views.py
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -6,8 +7,8 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
-from django.http import JsonResponse
-from django.db.models import Count, Sum, Q
+from django.http import JsonResponse, HttpResponse
+from django.db.models import Count, Sum, Q, F, Avg
 import csv, json
 from datetime import datetime, timedelta
 
@@ -38,7 +39,7 @@ class DashboardView(StaffRequiredMixin, TemplateView):
         # الإحصائيات - Statistics
         context['total_products'] = Product.objects.count()
         context['active_products'] = Product.objects.filter(status='published', is_active=True).count()
-        context['pending_products'] = Product.objects.filter(status='pending').count()
+        context['pending_products'] = Product.objects.filter(status='pending_review').count()
         context['total_orders'] = Order.objects.count()
 
         # إحصائيات المبيعات - Sales statistics
@@ -48,20 +49,20 @@ class DashboardView(StaffRequiredMixin, TemplateView):
         # طلبات اليوم - Today's orders
         context['today_orders'] = Order.objects.filter(created_at__date=today).count()
         context['today_sales'] = Order.objects.filter(created_at__date=today).aggregate(
-            total=Sum('grand_total')
+            total=Sum('total_amount')
         )['total'] or 0
 
         # طلبات الشهر - Month's orders
         context['month_orders'] = Order.objects.filter(created_at__date__gte=start_of_month).count()
         context['month_sales'] = Order.objects.filter(created_at__date__gte=start_of_month).aggregate(
-            total=Sum('grand_total')
+            total=Sum('total_amount')
         )['total'] or 0
 
         # أحدث الطلبات - Latest orders
         context['latest_orders'] = Order.objects.order_by('-created_at')[:5]
 
         # المنتجات التي تحتاج إلى مراجعة - Products needing review
-        if self.request.user.is_product_reviewer or self.request.user.is_superuser:
+        if hasattr(self.request.user, 'is_product_reviewer') and self.request.user.is_product_reviewer or self.request.user.is_superuser:
             context['pending_reviews'] = ProductReviewAssignment.objects.filter(
                 reviewer=self.request.user,
                 is_completed=False
@@ -112,8 +113,6 @@ class ProductListView(StaffRequiredMixin, ListView):
         if search:
             queryset = queryset.filter(
                 Q(name__icontains=search) |
-                Q(name_ar__icontains=search) |
-                Q(name_en__icontains=search) |
                 Q(sku__icontains=search)
             )
 
@@ -123,7 +122,7 @@ class ProductListView(StaffRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
 
         # الفئات للفلترة - Categories for filtering
-        context['categories'] = Category.objects.filter(level=1)
+        context['categories'] = Category.objects.filter(level=0)  # Root categories
 
         # الفلاتر الحالية - Current filters
         context['current_status'] = self.request.GET.get('status', '')
@@ -164,9 +163,8 @@ class ProductCreateView(StaffRequiredMixin, CreateView):
     model = Product
     template_name = 'dashboard/products/form.html'
     fields = [
-        'name_ar', 'name_en', 'sku', 'description_ar', 'description_en',
-        'short_description', 'category', 'base_price', 'show_price',
-        'discount', 'stock_quantity', 'stock_status', 'status',
+        'name', 'sku', 'description', 'short_description', 'category',
+        'brand', 'base_price', 'stock_quantity', 'stock_status', 'status',
         'is_featured', 'is_active', 'meta_title', 'meta_description', 'meta_keywords'
     ]
 
@@ -174,27 +172,19 @@ class ProductCreateView(StaffRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context['title'] = _('إضافة منتج جديد')
         context['categories'] = Category.objects.all()
-        context['discounts'] = ProductDiscount.objects.filter(is_active=True)
         return context
 
     def form_valid(self, form):
         # تعيين معلومات المستخدم - Set user information
         form.instance.created_by = self.request.user
-        form.instance.updated_by = self.request.user
-
-        # تعيين الاسم من الترجمات - Set name from translations
-        form.instance.name = form.instance.name_ar  # استخدم الاسم العربي كاسم افتراضي
-
-        # تعيين الوصف من الترجمات - Set description from translations
-        form.instance.description = form.instance.description_ar  # استخدم الوصف العربي كوصف افتراضي
 
         # حفظ المنتج - Save the product
         response = super().form_valid(form)
 
         # إذا كانت الحالة "قيد المراجعة"، قم بتعيين مراجع - If status is "pending", assign a reviewer
-        if form.instance.status == 'pending':
+        if form.instance.status == 'pending_review':
             # البحث عن مراجعين متاحين - Find available reviewers
-            reviewers = User.objects.filter(is_product_reviewer=True, is_active=True)
+            reviewers = User.objects.filter(is_staff=True, is_active=True)
 
             if reviewers.exists():
                 # اختيار المراجع الذي لديه أقل عدد من المهام النشطة
@@ -239,9 +229,8 @@ class ProductUpdateView(StaffRequiredMixin, UpdateView):
     model = Product
     template_name = 'dashboard/products/form.html'
     fields = [
-        'name_ar', 'name_en', 'sku', 'description_ar', 'description_en',
-        'short_description', 'category', 'base_price', 'show_price',
-        'discount', 'stock_quantity', 'stock_status', 'status',
+        'name', 'sku', 'description', 'short_description', 'category',
+        'brand', 'base_price', 'stock_quantity', 'stock_status', 'status',
         'is_featured', 'is_active', 'meta_title', 'meta_description', 'meta_keywords'
     ]
 
@@ -249,20 +238,10 @@ class ProductUpdateView(StaffRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['title'] = _('تحديث المنتج')
         context['categories'] = Category.objects.all()
-        context['discounts'] = ProductDiscount.objects.filter(is_active=True)
         context['is_update'] = True
         return context
 
     def form_valid(self, form):
-        # تعيين معلومات المستخدم - Set user information
-        form.instance.updated_by = self.request.user
-
-        # تعيين الاسم من الترجمات - Set name from translations
-        form.instance.name = form.instance.name_ar  # استخدم الاسم العربي كاسم افتراضي
-
-        # تعيين الوصف من الترجمات - Set description from translations
-        form.instance.description = form.instance.description_ar  # استخدم الوصف العربي كوصف افتراضي
-
         # حفظ المنتج - Save the product
         response = super().form_valid(form)
 
@@ -324,13 +303,9 @@ class ProductReviewView(StaffRequiredMixin, UpdateView):
         return context
 
     def form_valid(self, form):
-        # تعيين معلومات المستخدم - Set user information
-        form.instance.updated_by = self.request.user
-
         # إذا كانت الحالة "منشور"، قم بتعيين معلومات الموافقة
         # If status is "published", set approval information
         if form.instance.status == 'published':
-            form.instance.approved_by = self.request.user
             form.instance.published_at = timezone.now()
 
         # حفظ المنتج - Save the product
@@ -380,7 +355,7 @@ class ProductVariantCreateView(StaffRequiredMixin, CreateView):
     """
     model = ProductVariant
     template_name = 'dashboard/products/variant_form.html'
-    fields = ['name_ar', 'name_en', 'color_code', 'price_adjustment', 'stock_quantity', 'is_active']
+    fields = ['name', 'sku', 'base_price', 'stock_quantity', 'is_active']
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -392,17 +367,8 @@ class ProductVariantCreateView(StaffRequiredMixin, CreateView):
         # تعيين المنتج - Set the product
         form.instance.product = get_object_or_404(Product, pk=self.kwargs['product_id'])
 
-        # تعيين الاسم من الترجمات - Set name from translations
-        form.instance.name = form.instance.name_ar  # استخدم الاسم العربي كاسم افتراضي
-
         # حفظ المتغير - Save the variant
         response = super().form_valid(form)
-
-        # تحديث المنتج - Update the product
-        product = form.instance.product
-        product.updated_by = self.request.user
-        product.updated_at = timezone.now()
-        product.save()
 
         # إنشاء رسالة نجاح - Create success message
         messages.success(self.request, _('تم إضافة متغير المنتج بنجاح.'))
@@ -419,7 +385,7 @@ class ProductVariantUpdateView(StaffRequiredMixin, UpdateView):
     """
     model = ProductVariant
     template_name = 'dashboard/products/variant_form.html'
-    fields = ['name_ar', 'name_en', 'color_code', 'price_adjustment', 'stock_quantity', 'is_active']
+    fields = ['name', 'sku', 'base_price', 'stock_quantity', 'is_active']
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -429,17 +395,8 @@ class ProductVariantUpdateView(StaffRequiredMixin, UpdateView):
         return context
 
     def form_valid(self, form):
-        # تعيين الاسم من الترجمات - Set name from translations
-        form.instance.name = form.instance.name_ar  # استخدم الاسم العربي كاسم افتراضي
-
         # حفظ المتغير - Save the variant
         response = super().form_valid(form)
-
-        # تحديث المنتج - Update the product
-        product = form.instance.product
-        product.updated_by = self.request.user
-        product.updated_at = timezone.now()
-        product.save()
 
         # إنشاء رسالة نجاح - Create success message
         messages.success(self.request, _('تم تحديث متغير المنتج بنجاح.'))
@@ -494,12 +451,6 @@ class ProductImageUploadView(StaffRequiredMixin, CreateView):
         # حفظ الصورة - Save the image
         response = super().form_valid(form)
 
-        # تحديث المنتج - Update the product
-        product = form.instance.product
-        product.updated_by = self.request.user
-        product.updated_at = timezone.now()
-        product.save()
-
         # إنشاء رسالة نجاح - Create success message
         messages.success(self.request, _('تم رفع صورة المنتج بنجاح.'))
 
@@ -543,7 +494,7 @@ class CategoryListView(StaffRequiredMixin, ListView):
     context_object_name = 'categories'
 
     def get_queryset(self):
-        return Category.objects.filter(level=1).order_by('name')
+        return Category.objects.filter(level=0).order_by('name')  # Root categories only
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -577,9 +528,6 @@ class CategoryDetailView(StaffRequiredMixin, DetailView):
         # عدد المنتجات - Product count
         context['product_count'] = Product.objects.filter(category=self.object).count()
 
-        # الخصومات النشطة - Active discounts
-        context['discounts'] = self.object.discounts.filter(is_active=True)
-
         return context
 
 class CategoryCreateView(StaffRequiredMixin, CreateView):
@@ -589,7 +537,7 @@ class CategoryCreateView(StaffRequiredMixin, CreateView):
     """
     model = Category
     template_name = 'dashboard/categories/form.html'
-    fields = ['name_ar', 'name_en', 'description', 'image', 'is_active', 'show_prices', 'parent']
+    fields = ['name', 'description', 'image', 'is_active', 'parent']
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -608,10 +556,6 @@ class CategoryCreateView(StaffRequiredMixin, CreateView):
     def form_valid(self, form):
         # تعيين معلومات المستخدم - Set user information
         form.instance.created_by = self.request.user
-        form.instance.updated_by = self.request.user
-
-        # تعيين الاسم من الترجمات - Set name from translations
-        form.instance.name = form.instance.name_ar  # استخدم الاسم العربي كاسم افتراضي
 
         # تعيين الأب من المعلمات إذا لم يتم تحديده في النموذج
         # Set parent from parameters if not specified in the form
@@ -639,7 +583,7 @@ class CategoryUpdateView(StaffRequiredMixin, UpdateView):
     """
     model = Category
     template_name = 'dashboard/categories/form.html'
-    fields = ['name_ar', 'name_en', 'description', 'image', 'is_active', 'show_prices', 'parent']
+    fields = ['name', 'description', 'image', 'is_active', 'parent']
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -652,20 +596,12 @@ class CategoryUpdateView(StaffRequiredMixin, UpdateView):
         subcategories = Category.objects.filter(parent=self.object)
         for subcategory in subcategories:
             exclude_ids.append(subcategory.id)
-            for subsubcategory in Category.objects.filter(parent=subcategory):
-                exclude_ids.append(subsubcategory.id)
 
         context['all_categories'] = Category.objects.exclude(id__in=exclude_ids)
 
         return context
 
     def form_valid(self, form):
-        # تعيين معلومات المستخدم - Set user information
-        form.instance.updated_by = self.request.user
-
-        # تعيين الاسم من الترجمات - Set name from translations
-        form.instance.name = form.instance.name_ar  # استخدم الاسم العربي كاسم افتراضي
-
         # حفظ الفئة - Save the category
         response = super().form_valid(form)
 
@@ -728,6 +664,7 @@ class CategoryDeleteView(StaffRequiredMixin, DeleteView):
 
 # ===== إدارة الخصومات ===== #
 # ===== Discount Management ===== #
+
 class DiscountListView(StaffRequiredMixin, ListView):
     """
     عرض قائمة الخصومات - يعرض قائمة الخصومات في لوحة التحكم
@@ -757,31 +694,13 @@ class DiscountListView(StaffRequiredMixin, ListView):
         if discount_type:
             queryset = queryset.filter(discount_type=discount_type)
 
-        # فلترة حسب حالة الانتهاء - Filter by expiry status
-        expiry_status = self.request.GET.get('expiry_status')
-        if expiry_status:
-            from django.utils import timezone
-            now = timezone.now()
-
-            if expiry_status == 'active':
-                queryset = queryset.filter(
-                    is_active=True,
-                    start_date__lte=now
-                ).filter(
-                    models.Q(end_date__isnull=True) | models.Q(end_date__gte=now)
-                )
-            elif expiry_status == 'expired':
-                queryset = queryset.filter(end_date__lt=now)
-            elif expiry_status == 'upcoming':
-                queryset = queryset.filter(start_date__gt=now)
-
         # البحث - Search
         search = self.request.GET.get('search')
         if search:
             queryset = queryset.filter(
-                models.Q(name__icontains=search) |
-                models.Q(description__icontains=search) |
-                models.Q(code__icontains=search)
+                Q(name__icontains=search) |
+                Q(description__icontains=search) |
+                Q(code__icontains=search)
             )
 
         return queryset
@@ -799,49 +718,9 @@ class DiscountListView(StaffRequiredMixin, ListView):
         context['current_is_active'] = self.request.GET.get('is_active', '')
         context['current_category'] = self.request.GET.get('category', '')
         context['current_discount_type'] = self.request.GET.get('discount_type', '')
-        context['current_expiry_status'] = self.request.GET.get('expiry_status', '')
         context['current_search'] = self.request.GET.get('search', '')
 
-        # إحصائيات سريعة - Quick statistics
-        from django.utils import timezone
-        now = timezone.now()
-
-        all_discounts = ProductDiscount.objects.all()
-        context['stats'] = {
-            'total_discounts': all_discounts.count(),
-            'active_discounts': all_discounts.filter(
-                is_active=True,
-                start_date__lte=now
-            ).filter(
-                models.Q(end_date__isnull=True) | models.Q(end_date__gte=now)
-            ).count(),
-            'expired_discounts': all_discounts.filter(end_date__lt=now).count(),
-            'upcoming_discounts': all_discounts.filter(start_date__gt=now).count(),
-        }
-
-        # تحديد حالة كل خصم - Determine status of each discount
-        for discount in context['discounts']:
-            discount.status = self.get_discount_status(discount)
-            discount.usage_percentage = discount.get_usage_percentage()
-
         return context
-
-    def get_discount_status(self, discount):
-        """Determine the status of a discount"""
-        from django.utils import timezone
-        now = timezone.now()
-
-        if not discount.is_active:
-            return 'inactive'
-        elif discount.start_date > now:
-            return 'upcoming'
-        elif discount.end_date and discount.end_date < now:
-            return 'expired'
-        elif discount.max_uses and discount.used_count >= discount.max_uses:
-            return 'exhausted'
-        else:
-            return 'active'
-
 
 class DiscountCreateView(StaffRequiredMixin, CreateView):
     """
@@ -857,7 +736,7 @@ class DiscountCreateView(StaffRequiredMixin, CreateView):
         'buy_quantity', 'get_quantity', 'get_discount_percentage',
         'is_active', 'is_stackable', 'requires_coupon_code', 'priority'
     ]
-    success_url = reverse_lazy('dashboard:discounts-list')
+    success_url = reverse_lazy('dashboard:discount_list')
 
     def form_valid(self, form):
         form.instance.created_by = self.request.user
@@ -869,7 +748,6 @@ class DiscountCreateView(StaffRequiredMixin, CreateView):
         context['categories'] = Category.objects.all()
         context['products'] = Product.objects.filter(is_active=True, status='published')
         return context
-
 
 class DiscountUpdateView(StaffRequiredMixin, UpdateView):
     """
@@ -885,7 +763,7 @@ class DiscountUpdateView(StaffRequiredMixin, UpdateView):
         'buy_quantity', 'get_quantity', 'get_discount_percentage',
         'is_active', 'is_stackable', 'requires_coupon_code', 'priority'
     ]
-    success_url = reverse_lazy('dashboard:discounts-list')
+    success_url = reverse_lazy('dashboard:discount_list')
 
     def form_valid(self, form):
         messages.success(self.request, _('تم تحديث الخصم بنجاح'))
@@ -897,7 +775,6 @@ class DiscountUpdateView(StaffRequiredMixin, UpdateView):
         context['products'] = Product.objects.filter(is_active=True, status='published')
         return context
 
-
 class DiscountDeleteView(StaffRequiredMixin, DeleteView):
     """
     حذف خصم
@@ -905,58 +782,11 @@ class DiscountDeleteView(StaffRequiredMixin, DeleteView):
     """
     model = ProductDiscount
     template_name = 'dashboard/discounts/delete.html'
-    success_url = reverse_lazy('dashboard:discounts-list')
+    success_url = reverse_lazy('dashboard:discount_list')
 
     def delete(self, request, *args, **kwargs):
         messages.success(request, _('تم حذف الخصم بنجاح'))
         return super().delete(request, *args, **kwargs)
-
-
-class DiscountDetailView(StaffRequiredMixin, DetailView):
-    """
-    تفاصيل الخصم
-    Discount details
-    """
-    model = ProductDiscount
-    template_name = 'dashboard/discounts/detail.html'
-    context_object_name = 'discount'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        # منتجات الخصم - Discount products
-        discount = self.object
-        if discount.application_type == 'all_products':
-            context['applicable_products'] = Product.objects.filter(is_active=True, status='published')[:10]
-        elif discount.application_type == 'category' and discount.category:
-            context['applicable_products'] = discount.category.products.filter(is_active=True, status='published')[:10]
-        elif discount.application_type == 'specific_products':
-            context['applicable_products'] = discount.products.filter(is_active=True, status='published')
-
-        # إحصائيات الاستخدام - Usage statistics
-        context['usage_stats'] = {
-            'usage_percentage': discount.get_usage_percentage(),
-            'remaining_uses': discount.max_uses - discount.used_count if discount.max_uses else None,
-            'is_exhausted': discount.max_uses and discount.used_count >= discount.max_uses,
-        }
-
-        return context
-
-
-class ToggleDiscountStatusView(StaffRequiredMixin, View):
-    """
-    تفعيل/إلغاء تفعيل الخصم
-    Toggle discount status
-    """
-    def post(self, request, pk):
-        discount = get_object_or_404(ProductDiscount, pk=pk)
-        discount.is_active = not discount.is_active
-        discount.save()
-
-        status_text = _('تم تفعيل الخصم') if discount.is_active else _('تم إلغاء تفعيل الخصم')
-        messages.success(request, status_text)
-
-        return redirect('dashboard:discounts-list')
 
 # ===== إدارة الطلبات ===== #
 # ===== Order Management ===== #
@@ -979,39 +809,14 @@ class OrderListView(StaffRequiredMixin, ListView):
         if status:
             queryset = queryset.filter(status=status)
 
-        # فلترة حسب حالة الدفع - Filter by payment status
-        payment_status = self.request.GET.get('payment_status')
-        if payment_status:
-            queryset = queryset.filter(payment_status=payment_status)
-
         # البحث - Search
         search = self.request.GET.get('search')
         if search:
             queryset = queryset.filter(
                 Q(order_number__icontains=search) |
-                Q(full_name__icontains=search) |
-                Q(email__icontains=search) |
-                Q(phone__icontains=search)
+                Q(user__username__icontains=search) |
+                Q(user__email__icontains=search)
             )
-
-        # فلترة حسب التاريخ - Filter by date
-        date_from = self.request.GET.get('date_from')
-        date_to = self.request.GET.get('date_to')
-
-        if date_from:
-            try:
-                date_from = datetime.strptime(date_from, '%Y-%m-%d')
-                queryset = queryset.filter(created_at__date__gte=date_from)
-            except ValueError:
-                pass
-
-        if date_to:
-            try:
-                date_to = datetime.strptime(date_to, '%Y-%m-%d')
-                date_to = date_to + timedelta(days=1)  # لتضمين اليوم المحدد بالكامل - To include the entire specified day
-                queryset = queryset.filter(created_at__date__lt=date_to)
-            except ValueError:
-                pass
 
         return queryset
 
@@ -1019,15 +824,11 @@ class OrderListView(StaffRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
 
         # خيارات الفلترة - Filter options
-        context['status_choices'] = Order.STATUS_CHOICES
-        context['payment_status_choices'] = Order.PAYMENT_STATUS_CHOICES
+        context['status_choices'] = Order.STATUS_CHOICES if hasattr(Order, 'STATUS_CHOICES') else []
 
         # الفلاتر الحالية - Current filters
         context['current_status'] = self.request.GET.get('status', '')
-        context['current_payment_status'] = self.request.GET.get('payment_status', '')
         context['current_search'] = self.request.GET.get('search', '')
-        context['current_date_from'] = self.request.GET.get('date_from', '')
-        context['current_date_to'] = self.request.GET.get('date_to', '')
 
         return context
 
@@ -1047,8 +848,7 @@ class OrderDetailView(StaffRequiredMixin, DetailView):
         context['order_items'] = self.object.items.all()
 
         # خيارات تحديث الحالة - Status update options
-        context['status_choices'] = Order.STATUS_CHOICES
-        context['payment_status_choices'] = Order.PAYMENT_STATUS_CHOICES
+        context['status_choices'] = Order.STATUS_CHOICES if hasattr(Order, 'STATUS_CHOICES') else []
 
         return context
 
@@ -1062,16 +862,9 @@ class OrderUpdateStatusView(StaffRequiredMixin, View):
 
         # تحديث حالة الطلب - Update order status
         status = request.POST.get('status')
-        if status and status in dict(Order.STATUS_CHOICES):
+        if status:
             order.status = status
-
-        # تحديث حالة الدفع - Update payment status
-        payment_status = request.POST.get('payment_status')
-        if payment_status and payment_status in dict(Order.PAYMENT_STATUS_CHOICES):
-            order.payment_status = payment_status
-
-        # حفظ الطلب - Save the order
-        order.save()
+            order.save()
 
         # إنشاء رسالة نجاح - Create success message
         messages.success(request, _('تم تحديث حالة الطلب بنجاح.'))
@@ -1087,8 +880,6 @@ class ExportProductsView(StaffRequiredMixin, View):
     Export products view - allows staff to export products to a CSV file
     """
     def get(self, request):
-        from django.http import HttpResponse
-
         # إنشاء استجابة CSV - Create CSV response
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="products.csv"'
@@ -1098,20 +889,20 @@ class ExportProductsView(StaffRequiredMixin, View):
 
         # كتابة رأس الملف - Write header
         writer.writerow([
-            'ID', 'SKU', 'Name (AR)', 'Name (EN)', 'Description (AR)', 'Description (EN)',
-            'Short Description', 'Category', 'Base Price', 'Show Price', 'Stock Quantity',
-            'Stock Status', 'Status', 'Is Featured', 'Is Active', 'Created At', 'Published At'
+            'ID', 'SKU', 'Name', 'Description', 'Short Description',
+            'Category', 'Base Price', 'Stock Quantity', 'Stock Status',
+            'Status', 'Is Featured', 'Is Active', 'Created At'
         ])
 
         # كتابة بيانات المنتجات - Write product data
         products = Product.objects.all().select_related('category')
         for product in products:
             writer.writerow([
-                str(product.id), product.sku, product.name_ar, product.name_en,
-                product.description_ar, product.description_en, product.short_description,
-                product.category.name, product.base_price, product.show_price,
-                product.stock_quantity, product.stock_status, product.status,
-                product.is_featured, product.is_active, product.created_at, product.published_at
+                str(product.id), product.sku, product.name,
+                product.description, product.short_description,
+                product.category.name if product.category else '',
+                product.base_price, product.stock_quantity, product.stock_status,
+                product.status, product.is_featured, product.is_active, product.created_at
             ])
 
         return response
@@ -1149,52 +940,42 @@ class ImportProductsView(StaffRequiredMixin, TemplateView):
                 try:
                     # الحصول على القيم من الصف - Get values from row
                     sku = row[1]
-                    name_ar = row[2]
-                    name_en = row[3]
-                    description_ar = row[4]
-                    description_en = row[5]
-                    short_description = row[6]
-                    category_name = row[7]
-                    base_price = float(row[8])
-                    show_price = row[9].lower() in ('true', 'yes', '1')
-                    stock_quantity = int(row[10])
-                    stock_status = row[11]
-                    status = row[12]
-                    is_featured = row[13].lower() in ('true', 'yes', '1')
-                    is_active = row[14].lower() in ('true', 'yes', '1')
+                    name = row[2]
+                    description = row[3]
+                    short_description = row[4]
+                    category_name = row[5]
+                    base_price = float(row[6]) if row[6] else 0
+                    stock_quantity = int(row[7]) if row[7] else 0
+                    stock_status = row[8] if row[8] else 'in_stock'
+                    status = row[9] if row[9] else 'draft'
+                    is_featured = row[10].lower() in ('true', 'yes', '1') if row[10] else False
+                    is_active = row[11].lower() in ('true', 'yes', '1') if row[11] else True
 
                     # البحث عن الفئة أو إنشاؤها - Find or create category
-                    category, created = Category.objects.get_or_create(
-                        name=category_name,
-                        defaults={
-                            'name_ar': category_name,
-                            'name_en': category_name,
-                            'created_by': request.user,
-                            'updated_by': request.user
-                        }
-                    )
+                    category = None
+                    if category_name:
+                        category, created = Category.objects.get_or_create(
+                            name=category_name,
+                            defaults={
+                                'created_by': request.user
+                            }
+                        )
 
                     # البحث عن المنتج بناءً على SKU - Find product based on SKU
                     product, created = Product.objects.get_or_create(
                         sku=sku,
                         defaults={
-                            'name': name_ar,
-                            'name_ar': name_ar,
-                            'name_en': name_en,
-                            'description': description_ar,
-                            'description_ar': description_ar,
-                            'description_en': description_en,
+                            'name': name,
+                            'description': description,
                             'short_description': short_description,
                             'category': category,
                             'base_price': base_price,
-                            'show_price': show_price,
                             'stock_quantity': stock_quantity,
                             'stock_status': stock_status,
                             'status': status,
                             'is_featured': is_featured,
                             'is_active': is_active,
-                            'created_by': request.user,
-                            'updated_by': request.user
+                            'created_by': request.user
                         }
                     )
 
@@ -1202,22 +983,16 @@ class ImportProductsView(StaffRequiredMixin, TemplateView):
                         products_created += 1
                     else:
                         # تحديث المنتج الموجود - Update existing product
-                        product.name = name_ar
-                        product.name_ar = name_ar
-                        product.name_en = name_en
-                        product.description = description_ar
-                        product.description_ar = description_ar
-                        product.description_en = description_en
+                        product.name = name
+                        product.description = description
                         product.short_description = short_description
                         product.category = category
                         product.base_price = base_price
-                        product.show_price = show_price
                         product.stock_quantity = stock_quantity
                         product.stock_status = stock_status
                         product.status = status
                         product.is_featured = is_featured
                         product.is_active = is_active
-                        product.updated_by = request.user
                         product.save()
                         products_updated += 1
 
