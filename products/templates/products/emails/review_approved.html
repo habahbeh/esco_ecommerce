@@ -1,0 +1,741 @@
+{% load static %}
+{% load i18n %}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% trans "تم نشر تقييمك!" %} - {{ site_settings.site_name|default:"ESCO" }}</title>
+
+    <style>
+        /* Reset styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background-color: #f8f9fa;
+            direction: rtl;
+            text-align: right;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        /* Header */
+        .email-header {
+            background: linear-gradient(135deg, #6f42c1 0%, #8e44ad 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header-stars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0.1;
+            background-image: radial-gradient(2px 2px at 20px 30px, white, transparent),
+                              radial-gradient(2px 2px at 40px 70px, white, transparent),
+                              radial-gradient(1px 1px at 90px 40px, white, transparent),
+                              radial-gradient(1px 1px at 130px 80px, white, transparent),
+                              radial-gradient(2px 2px at 160px 30px, white, transparent);
+            background-repeat: repeat;
+            background-size: 200px 100px;
+        }
+
+        .logo {
+            max-height: 50px;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-title {
+            font-size: 26px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Content */
+        .email-content {
+            padding: 30px 20px;
+        }
+
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .celebration-box {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            border: 2px solid #ff9800;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 25px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .celebration-box::before {
+            content: "🎊";
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            animation: confetti 3s ease-in-out infinite;
+        }
+
+        .celebration-box::after {
+            content: "🎉";
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 24px;
+            animation: confetti 3s ease-in-out infinite reverse;
+        }
+
+        @keyframes confetti {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(-10deg) scale(1.1); }
+            75% { transform: rotate(10deg) scale(0.9); }
+        }
+
+        .celebration-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-15px); }
+            60% { transform: translateY(-7px); }
+        }
+
+        .celebration-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #e65100;
+            margin-bottom: 10px;
+        }
+
+        .celebration-message {
+            font-size: 16px;
+            color: #bf360c;
+            margin-bottom: 20px;
+        }
+
+        .thank-you-badge {
+            background: #4caf50;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        /* Review Card */
+        .review-card {
+            background: #ffffff;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 25px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .review-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .review-product-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .review-product-image {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            border-radius: 10px;
+            background: white;
+            padding: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .review-product-details h3 {
+            font-size: 18px;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .review-product-details p {
+            font-size: 14px;
+            color: #6c757d;
+            margin: 0;
+        }
+
+        .review-content {
+            padding: 25px;
+        }
+
+        .review-rating {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .rating-stars {
+            font-size: 32px;
+            color: #ffc107;
+            margin-bottom: 10px;
+            letter-spacing: 5px;
+        }
+
+        .rating-text {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .review-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .review-comment {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #495057;
+            background: #ffffff;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            font-style: italic;
+            position: relative;
+        }
+
+        .review-comment::before {
+            content: """;
+            position: absolute;
+            top: -10px;
+            right: 15px;
+            font-size: 40px;
+            color: #6f42c1;
+            background: white;
+            padding: 0 5px;
+        }
+
+        .review-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .review-date {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .review-status {
+            background: #d4edda;
+            color: #155724;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-weight: bold;
+        }
+
+        /* Rewards Section */
+        .rewards-section {
+            background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+            border: 2px solid #ffc107;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            text-align: center;
+        }
+
+        .rewards-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ff8f00;
+            margin-bottom: 15px;
+        }
+
+        .rewards-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .reward-item {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .reward-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .reward-text {
+            font-size: 12px;
+            color: #ff8f00;
+            font-weight: bold;
+        }
+
+        .points-earned {
+            background: #4caf50;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 15px;
+        }
+
+        /* Social Sharing */
+        .social-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            text-align: center;
+        }
+
+        .social-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .social-message {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 20px;
+        }
+
+        .social-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .social-button {
+            display: inline-block;
+            padding: 12px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .social-facebook {
+            background: #3b5998;
+        }
+
+        .social-twitter {
+            background: #1da1f2;
+        }
+
+        .social-whatsapp {
+            background: #25d366;
+        }
+
+        .social-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        /* Call-to-Action */
+        .cta-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #6f42c1 0%, #8e44ad 100%);
+            color: white;
+            text-decoration: none;
+            padding: 16px 40px;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(111, 66, 193, 0.3);
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .cta-button:hover {
+            background: linear-gradient(135deg, #5a2d91 0%, #7b1fa2 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(111, 66, 193, 0.4);
+        }
+
+        .secondary-cta {
+            display: inline-block;
+            background: transparent;
+            color: #6f42c1;
+            text-decoration: none;
+            padding: 12px 30px;
+            border: 2px solid #6f42c1;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .secondary-cta:hover {
+            background: #6f42c1;
+            color: white;
+        }
+
+        /* Footer */
+        .email-footer {
+            background: #2c3e50;
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .footer-content {
+            margin-bottom: 20px;
+        }
+
+        .social-links {
+            margin: 20px 0;
+        }
+
+        .social-link {
+            display: inline-block;
+            width: 45px;
+            height: 45px;
+            background: #34495e;
+            color: white;
+            text-decoration: none;
+            border-radius: 50%;
+            line-height: 45px;
+            margin: 0 8px;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .social-link:hover {
+            background: #6f42c1;
+            transform: translateY(-3px);
+        }
+
+        .unsubscribe {
+            font-size: 12px;
+            color: #95a5a6;
+            margin-top: 20px;
+            border-top: 1px solid #34495e;
+            padding-top: 20px;
+        }
+
+        .unsubscribe a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .email-container {
+                margin: 10px;
+                border-radius: 8px;
+            }
+
+            .email-content {
+                padding: 20px 15px;
+            }
+
+            .header-title {
+                font-size: 22px;
+            }
+
+            .celebration-title {
+                font-size: 20px;
+            }
+
+            .review-product-info {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .rating-stars {
+                font-size: 28px;
+            }
+
+            .social-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .cta-button {
+                display: block;
+                margin: 10px 0;
+            }
+
+            .rewards-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="email-header">
+            <div class="header-stars"></div>
+            {% if site_settings.logo %}
+                <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name }}" class="logo">
+            {% endif %}
+            <div class="header-title">⭐ {% trans "تم نشر تقييمك!" %}</div>
+            <div class="header-subtitle">{% trans "شكراً لك على مشاركة تجربتك معنا" %}</div>
+        </div>
+
+        <!-- Content -->
+        <div class="email-content">
+            <div class="greeting">
+                {% trans "عزيزي/عزيزتي" %} {{ user_name|default:"العميل الكريم" }}،
+            </div>
+
+            <!-- Celebration -->
+            <div class="celebration-box">
+                <div class="celebration-icon">🎉</div>
+                <div class="celebration-title">{% trans "تهانينا!" %}</div>
+                <div class="celebration-message">
+                    {% trans "تم قبول ونشر تقييمك بنجاح. رأيك مهم جداً لنا وللعملاء الآخرين." %}
+                </div>
+                <span class="thank-you-badge">🙏 {% trans "شكراً لك" %}</span>
+            </div>
+
+            <!-- Review Card -->
+            <div class="review-card">
+                <div class="review-header">
+                    <div class="review-product-info">
+                        <img src="{{ product_image }}" alt="{{ product_name }}" class="review-product-image">
+                        <div class="review-product-details">
+                            <h3>{{ product_name }}</h3>
+                            <p>{{ product_category }}</p>
+                            <p><strong>{% trans "رقم المنتج:" %}</strong> {{ product_sku }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="review-content">
+                    <!-- Rating -->
+                    <div class="review-rating">
+                        <div class="rating-stars">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= review_rating %}
+                                    ⭐
+                                {% else %}
+                                    ☆
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="rating-text">
+                            {{ review_rating }} {% trans "من 5 نجوم" %}
+                        </div>
+                    </div>
+
+                    <!-- Review Title -->
+                    {% if review_title %}
+                        <div class="review-title">
+                            "{{ review_title }}"
+                        </div>
+                    {% endif %}
+
+                    <!-- Review Comment -->
+                    <div class="review-comment">
+                        {{ review_comment }}
+                    </div>
+
+                    <!-- Review Meta -->
+                    <div class="review-meta">
+                        <div class="review-date">
+                            📅 {% trans "تاريخ النشر:" %} {{ review_date|date:"d/m/Y" }}
+                        </div>
+                        <div class="review-status">
+                            ✅ {% trans "منشور" %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rewards Section -->
+            <div class="rewards-section">
+                <div class="rewards-title">🎁 {% trans "مكافآت خاصة لك!" %}</div>
+                <p>{% trans "كمكافأة لك على تقييمك المفيد، حصلت على المكافآت التالية:" %}</p>
+
+                <div class="rewards-list">
+                    <div class="reward-item">
+                        <div class="reward-icon">🏆</div>
+                        <div class="reward-text">{% trans "نقاط ولاء" %}</div>
+                    </div>
+                    <div class="reward-item">
+                        <div class="reward-icon">🎫</div>
+                        <div class="reward-text">{% trans "كوبون خصم" %}</div>
+                    </div>
+                    <div class="reward-item">
+                        <div class="reward-icon">⭐</div>
+                        <div class="reward-text">{% trans "شارة مراجع" %}</div>
+                    </div>
+                    <div class="reward-item">
+                        <div class="reward-icon">📧</div>
+                        <div class="reward-text">{% trans "عروض حصرية" %}</div>
+                    </div>
+                </div>
+
+                <div class="points-earned">
+                    🪙 {% trans "ربحت" %} {{ loyalty_points|default:"50" }} {% trans "نقطة ولاء" %}
+                </div>
+            </div>
+
+            <!-- Social Sharing -->
+            <div class="social-section">
+                <div class="social-title">📢 {% trans "شارك تجربتك" %}</div>
+                <div class="social-message">
+                    {% trans "ساعد الآخرين في اتخاذ قرار الشراء الصحيح من خلال مشاركة تقييمك" %}
+                </div>
+                <div class="social-buttons">
+                    <a href="{{ facebook_share_url }}" class="social-button social-facebook">
+                        📘 {% trans "فيسبوك" %}
+                    </a>
+                    <a href="{{ twitter_share_url }}" class="social-button social-twitter">
+                        🐦 {% trans "تويتر" %}
+                    </a>
+                    <a href="{{ whatsapp_share_url }}" class="social-button social-whatsapp">
+                        💬 {% trans "واتساب" %}
+                    </a>
+                </div>
+            </div>
+
+            <!-- Call to Action -->
+            <div class="cta-section">
+                <a href="{{ review_url }}" class="cta-button">
+                    👁️ {% trans "عرض التقييم" %}
+                </a>
+                <a href="{{ product_url }}" class="secondary-cta">
+                    🛍️ {% trans "عرض المنتج" %}
+                </a>
+                <a href="{{ similar_products_url }}" class="secondary-cta">
+                    🔍 {% trans "منتجات مشابهة" %}
+                </a>
+            </div>
+
+            <p>
+                {% trans "تقييمك يساعدنا على تحسين خدماتنا ويساعد العملاء الآخرين في اتخاذ قرارات شراء مدروسة. نقدر وقتك وثقتك بنا." %}
+            </p>
+
+            <p>
+                {% trans "إذا كان لديك أي استفسارات حول تقييمك أو تجربتك معنا، لا تتردد في التواصل معنا." %}
+            </p>
+
+            <p>
+                {% trans "نتطلع إلى خدمتك مرة أخرى قريباً!" %}
+                <br><br>
+                {% trans "مع أطيب التحيات," %}
+                <br>
+                {% trans "فريق" %} {{ site_settings.site_name|default:"ESCO" }}
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div class="email-footer">
+            <div class="footer-content">
+                <strong>{{ site_settings.site_name|default:"ESCO" }}</strong>
+                <br>
+                {% if site_settings.address %}
+                    📍 {{ site_settings.address }}
+                    <br>
+                {% endif %}
+                {% if site_settings.phone %}
+                    📞 {{ site_settings.phone }}
+                    <br>
+                {% endif %}
+                {% if site_settings.email %}
+                    ✉️ {{ site_settings.email }}
+                {% endif %}
+            </div>
+
+            <!-- Social Links -->
+            {% if site_settings.facebook or site_settings.twitter or site_settings.instagram %}
+                <div class="social-links">
+                    {% if site_settings.facebook %}
+                        <a href="{{ site_settings.facebook }}" class="social-link">📘</a>
+                    {% endif %}
+                    {% if site_settings.twitter %}
+                        <a href="{{ site_settings.twitter }}" class="social-link">🐦</a>
+                    {% endif %}
+                    {% if site_settings.instagram %}
+                        <a href="{{ site_settings.instagram }}" class="social-link">📷</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <!-- Unsubscribe -->
+            <div class="unsubscribe">
+                {% trans "تلقيت هذا الإيميل لأنك قمت بتقييم منتج على موقعنا." %}
+                <br>
+                <a href="{{ unsubscribe_url }}">{% trans "إلغاء الاشتراك" %}</a>
+                |
+                <a href="{{ settings_url }}">{% trans "إدارة التفضيلات" %}</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,486 @@
+{% load static %}
+{% load i18n %}
+
+<!-- Notify When Available Modal -->
+<div class="modal fade" id="notifyModal" tabindex="-1" aria-labelledby="notifyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="notifyModalLabel">
+                    <i class="fas fa-bell me-2 text-primary"></i>
+                    {% trans "إشعار عند التوفر" %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'إغلاق' %}"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Product Info -->
+                <div class="product-info-card mb-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="product-image">
+                            <img id="notifyProductImage" src="" alt="Product Image" class="img-fluid rounded">
+                        </div>
+                        <div class="product-details">
+                            <h6 class="mb-1" id="notifyProductName">اسم المنتج</h6>
+                            <p class="text-muted mb-1" id="notifyProductSKU">SKU: </p>
+                            <div class="product-price">
+                                <span class="h6 text-primary mb-0" id="notifyProductPrice">0.00 د.أ</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notification Form -->
+                <form id="notificationForm" class="needs-validation" novalidate>
+                    <div class="alert alert-info d-flex align-items-center">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <span>{% trans "سنرسل لك إشعاراً عبر البريد الإلكتروني أو الرسائل النصية عندما يصبح هذا المنتج متوفراً" %}</span>
+                    </div>
+
+                    <!-- Contact Method Selection -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="fas fa-paper-plane me-2"></i>
+                            {% trans "طريقة الإشعار" %}
+                        </label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check notification-method">
+                                    <input class="form-check-input" type="radio" name="notificationMethod" id="emailNotification" value="email" checked>
+                                    <label class="form-check-label" for="emailNotification">
+                                        <i class="fas fa-envelope text-primary me-2"></i>
+                                        {% trans "البريد الإلكتروني" %}
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check notification-method">
+                                    <input class="form-check-input" type="radio" name="notificationMethod" id="smsNotification" value="sms">
+                                    <label class="form-check-label" for="smsNotification">
+                                        <i class="fas fa-sms text-success me-2"></i>
+                                        {% trans "رسالة نصية" %}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Email Input -->
+                    <div class="mb-3" id="emailGroup">
+                        <label for="notifyEmail" class="form-label">
+                            <i class="fas fa-envelope me-2"></i>
+                            {% trans "البريد الإلكتروني" %}
+                            <span class="text-danger">*</span>
+                        </label>
+                        <input type="email"
+                               class="form-control"
+                               id="notifyEmail"
+                               name="email"
+                               placeholder="example@email.com"
+                               required>
+                        <div class="invalid-feedback">
+                            {% trans "يرجى إدخال بريد إلكتروني صحيح" %}
+                        </div>
+                    </div>
+
+                    <!-- Phone Input -->
+                    <div class="mb-3" id="phoneGroup" style="display: none;">
+                        <label for="notifyPhone" class="form-label">
+                            <i class="fas fa-phone me-2"></i>
+                            {% trans "رقم الهاتف" %}
+                            <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <img src="{% static 'images/jordan-flag.png' %}" alt="JO" class="country-flag">
+                                +962
+                            </span>
+                            <input type="tel"
+                                   class="form-control"
+                                   id="notifyPhone"
+                                   name="phone"
+                                   placeholder="79xxxxxxx"
+                                   pattern="[7][0-9]{8}"
+                                   maxlength="9">
+                        </div>
+                        <div class="invalid-feedback">
+                            {% trans "يرجى إدخال رقم هاتف صحيح (79xxxxxxx)" %}
+                        </div>
+                        <small class="form-text text-muted">
+                            {% trans "رقم الهاتف بدون رمز الدولة (مثل: 791234567)" %}
+                        </small>
+                    </div>
+
+                    <!-- Name Input -->
+                    <div class="mb-3">
+                        <label for="notifyName" class="form-label">
+                            <i class="fas fa-user me-2"></i>
+                            {% trans "الاسم" %}
+                            <span class="text-danger">*</span>
+                        </label>
+                        <input type="text"
+                               class="form-control"
+                               id="notifyName"
+                               name="name"
+                               placeholder="{% trans 'أدخل اسمك' %}"
+                               required
+                               minlength="2">
+                        <div class="invalid-feedback">
+                            {% trans "يرجى إدخال اسم صحيح (حرفين على الأقل)" %}
+                        </div>
+                    </div>
+
+                    <!-- Variant Selection (if applicable) -->
+                    <div class="mb-3" id="variantGroup" style="display: none;">
+                        <label for="notifyVariant" class="form-label">
+                            <i class="fas fa-palette me-2"></i>
+                            {% trans "المتغير المطلوب" %}
+                        </label>
+                        <select class="form-select" id="notifyVariant" name="variant_id">
+                            <option value="">{% trans "كل المتغيرات" %}</option>
+                        </select>
+                    </div>
+
+                    <!-- Additional Preferences -->
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="priceDropNotify" name="price_drop" value="1">
+                            <label class="form-check-label" for="priceDropNotify">
+                                <i class="fas fa-percentage text-success me-2"></i>
+                                {% trans "إشعاري أيضاً عند انخفاض السعر" %}
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Privacy Notice -->
+                    <div class="alert alert-light border">
+                        <div class="form-check mb-0">
+                            <input class="form-check-input" type="checkbox" id="privacyAgree" name="privacy_agree" required>
+                            <label class="form-check-label small" for="privacyAgree">
+                                {% trans "أوافق على" %}
+                                <a href="{% url 'core:privacy' %}" target="_blank" class="text-primary">{% trans "سياسة الخصوصية" %}</a>
+                                {% trans "وشروط الاستخدام" %}
+                                <span class="text-danger">*</span>
+                            </label>
+                            <div class="invalid-feedback">
+                                {% trans "يجب الموافقة على الشروط والأحكام" %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hidden Fields -->
+                    <input type="hidden" id="notifyProductId" name="product_id" value="">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                </form>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>
+                    {% trans "إلغاء" %}
+                </button>
+                <button type="button" class="btn btn-primary" id="submitNotification">
+                    <i class="fas fa-bell me-2"></i>
+                    {% trans "تفعيل الإشعار" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="notifySuccessModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-center">
+            <div class="modal-body p-5">
+                <div class="success-icon mb-4">
+                    <i class="fas fa-check-circle fa-4x text-success"></i>
+                </div>
+                <h4 class="mb-3">{% trans "تم تفعيل الإشعار بنجاح!" %}</h4>
+                <p class="text-muted mb-4">
+                    {% trans "سنرسل لك إشعاراً فور توفر المنتج" %}
+                </p>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                    {% trans "حسناً" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.product-info-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1rem;
+}
+
+.product-image img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    background: white;
+    padding: 0.5rem;
+}
+
+.notification-method {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.notification-method:hover {
+    background: rgba(var(--bs-primary-rgb), 0.05);
+}
+
+.notification-method input[type="radio"]:checked + label {
+    color: var(--bs-primary);
+    font-weight: 600;
+}
+
+.country-flag {
+    width: 20px;
+    height: auto;
+}
+
+.success-icon {
+    animation: bounce 0.6s ease;
+}
+
+@keyframes bounce {
+    0%, 20%, 60%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-10px);
+    }
+    80% {
+        transform: translateY(-5px);
+    }
+}
+
+/* Loading button state */
+.btn-loading {
+    position: relative;
+    color: transparent !important;
+}
+
+.btn-loading::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    color: white;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const notifyModal = document.getElementById('notifyModal');
+    const notificationForm = document.getElementById('notificationForm');
+    const submitBtn = document.getElementById('submitNotification');
+    const emailRadio = document.getElementById('emailNotification');
+    const smsRadio = document.getElementById('smsNotification');
+    const emailGroup = document.getElementById('emailGroup');
+    const phoneGroup = document.getElementById('phoneGroup');
+    const emailInput = document.getElementById('notifyEmail');
+    const phoneInput = document.getElementById('notifyPhone');
+
+    // Toggle notification method
+    function toggleNotificationMethod() {
+        if (emailRadio.checked) {
+            emailGroup.style.display = 'block';
+            phoneGroup.style.display = 'none';
+            emailInput.required = true;
+            phoneInput.required = false;
+            phoneInput.value = '';
+        } else {
+            emailGroup.style.display = 'none';
+            phoneGroup.style.display = 'block';
+            emailInput.required = false;
+            phoneInput.required = true;
+            emailInput.value = '';
+        }
+    }
+
+    emailRadio.addEventListener('change', toggleNotificationMethod);
+    smsRadio.addEventListener('change', toggleNotificationMethod);
+
+    // Pre-fill user data if logged in
+    {% if user.is_authenticated %}
+    emailInput.value = '{{ user.email }}';
+    document.getElementById('notifyName').value = '{{ user.get_full_name|default:user.username }}';
+    {% endif %}
+
+    // Phone number formatting
+    phoneInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 9) {
+            value = value.substr(0, 9);
+        }
+        e.target.value = value;
+    });
+
+    // Form submission
+    submitBtn.addEventListener('click', function() {
+        if (notificationForm.checkValidity()) {
+            submitNotificationRequest();
+        } else {
+            notificationForm.classList.add('was-validated');
+        }
+    });
+
+    function submitNotificationRequest() {
+        const formData = new FormData(notificationForm);
+
+        // Add loading state
+        submitBtn.classList.add('btn-loading');
+        submitBtn.disabled = true;
+
+        fetch('/products/api/notify-when-available/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Hide main modal
+                const modalInstance = bootstrap.Modal.getInstance(notifyModal);
+                modalInstance.hide();
+
+                // Show success modal
+                const successModal = new bootstrap.Modal(document.getElementById('notifySuccessModal'));
+                successModal.show();
+
+                // Reset form
+                notificationForm.reset();
+                notificationForm.classList.remove('was-validated');
+                toggleNotificationMethod();
+            } else {
+                // Show error message
+                showError(data.message || 'حدث خطأ غير متوقع');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showError('حدث خطأ في الاتصال');
+        })
+        .finally(() => {
+            // Remove loading state
+            submitBtn.classList.remove('btn-loading');
+            submitBtn.disabled = false;
+        });
+    }
+
+    function showError(message) {
+        // Create or update error alert
+        let errorAlert = document.querySelector('.notify-error-alert');
+        if (!errorAlert) {
+            errorAlert = document.createElement('div');
+            errorAlert.className = 'alert alert-danger notify-error-alert';
+            errorAlert.innerHTML = `
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <span class="error-message"></span>
+            `;
+            notificationForm.insertBefore(errorAlert, notificationForm.firstChild);
+        }
+        errorAlert.querySelector('.error-message').textContent = message;
+        errorAlert.style.display = 'block';
+
+        // Auto hide after 5 seconds
+        setTimeout(() => {
+            errorAlert.style.display = 'none';
+        }, 5000);
+    }
+
+    // Modal event handlers
+    notifyModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const productId = button.getAttribute('data-product-id');
+        const productName = button.getAttribute('data-product-name');
+        const productImage = button.getAttribute('data-product-image');
+        const productSKU = button.getAttribute('data-product-sku');
+        const productPrice = button.getAttribute('data-product-price');
+        const hasVariants = button.getAttribute('data-has-variants') === 'true';
+
+        // Update modal content
+        document.getElementById('notifyProductId').value = productId;
+        document.getElementById('notifyProductName').textContent = productName;
+        document.getElementById('notifyProductImage').src = productImage;
+        document.getElementById('notifyProductSKU').textContent = 'SKU: ' + productSKU;
+        document.getElementById('notifyProductPrice').textContent = productPrice;
+
+        // Show/hide variant selection
+        const variantGroup = document.getElementById('variantGroup');
+        if (hasVariants) {
+            variantGroup.style.display = 'block';
+            loadProductVariants(productId);
+        } else {
+            variantGroup.style.display = 'none';
+        }
+
+        // Reset form state
+        const errorAlert = document.querySelector('.notify-error-alert');
+        if (errorAlert) {
+            errorAlert.style.display = 'none';
+        }
+        notificationForm.classList.remove('was-validated');
+    });
+
+    function loadProductVariants(productId) {
+        fetch(`/products/api/product/${productId}/variants/`)
+            .then(response => response.json())
+            .then(data => {
+                const variantSelect = document.getElementById('notifyVariant');
+                variantSelect.innerHTML = '<option value="">{% trans "كل المتغيرات" %}</option>';
+
+                data.variants.forEach(variant => {
+                    const option = document.createElement('option');
+                    option.value = variant.id;
+                    option.textContent = variant.name;
+                    variantSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading variants:', error);
+            });
+    }
+});
+
+// Global function to open notification modal
+function openNotifyModal(productId, productName, productImage, productSKU, productPrice, hasVariants = false) {
+    const button = document.createElement('button');
+    button.setAttribute('data-product-id', productId);
+    button.setAttribute('data-product-name', productName);
+    button.setAttribute('data-product-image', productImage);
+    button.setAttribute('data-product-sku', productSKU);
+    button.setAttribute('data-product-price', productPrice);
+    button.setAttribute('data-has-variants', hasVariants);
+
+    const modal = new bootstrap.Modal(document.getElementById('notifyModal'));
+
+    // Trigger the show event manually
+    const event = new Event('show.bs.modal');
+    event.relatedTarget = button;
+    document.getElementById('notifyModal').dispatchEvent(event);
+
+    modal.show();
+}
+</script>

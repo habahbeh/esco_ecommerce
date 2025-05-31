@@ -1,0 +1,668 @@
+{% load static %}
+{% load i18n %}
+
+<!-- Quick View Content -->
+<div class="quick-view-content">
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Product Images -->
+            <div class="col-md-6">
+                <div class="product-gallery-quick">
+                    <!-- Main Image -->
+                    <div class="main-image-container position-relative">
+                        <img id="quickViewMainImage"
+                             src="{{ product.images.first.image.url|default:'/static/images/no-image.png' }}"
+                             alt="{{ product.name }}"
+                             class="img-fluid rounded">
+
+                        <!-- Zoom Button -->
+                        <button class="zoom-btn position-absolute top-0 end-0 m-3"
+                                onclick="openImageZoom(['{{ product.images.first.image.url }}'])">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
+
+                        <!-- Badges -->
+                        <div class="product-badges position-absolute top-0 start-0 m-3">
+                            {% if product.has_discount %}
+                                <span class="badge bg-danger">
+                                    {{ product.discount_percentage }}% {% trans "خصم" %}
+                                </span>
+                            {% endif %}
+                            {% if product.is_new %}
+                                <span class="badge bg-success ms-2">
+                                    {% trans "جديد" %}
+                                </span>
+                            {% endif %}
+                            {% if product.is_featured %}
+                                <span class="badge bg-warning ms-2">
+                                    {% trans "مميز" %}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Thumbnail Images -->
+                    {% if product.images.count > 1 %}
+                        <div class="thumbnail-gallery mt-3">
+                            <div class="row g-2">
+                                {% for image in product.images.all|slice:":4" %}
+                                    <div class="col-3">
+                                        <img src="{{ image.image.url }}"
+                                             alt="{{ image.alt_text|default:product.name }}"
+                                             class="img-fluid rounded thumbnail-image cursor-pointer"
+                                             onclick="changeQuickViewImage('{{ image.image.url }}')">
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Product Details -->
+            <div class="col-md-6">
+                <div class="product-details-quick">
+                    <!-- Product Title -->
+                    <h4 class="product-title mb-2">{{ product.name }}</h4>
+
+                    <!-- Product Meta -->
+                    <div class="product-meta mb-3">
+                        <span class="text-muted">
+                            <i class="fas fa-layer-group me-1"></i>
+                            <a href="{{ product.category.get_absolute_url }}" class="text-muted text-decoration-none">
+                                {{ product.category.name }}
+                            </a>
+                        </span>
+                        {% if product.brand %}
+                            <span class="text-muted ms-3">
+                                <i class="fas fa-tag me-1"></i>
+                                {{ product.brand.name }}
+                            </span>
+                        {% endif %}
+                        <span class="text-muted ms-3">
+                            <i class="fas fa-barcode me-1"></i>
+                            {{ product.sku }}
+                        </span>
+                    </div>
+
+                    <!-- Rating -->
+                    <div class="product-rating mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="stars me-2">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= product.rating %}
+                                        <i class="fas fa-star text-warning"></i>
+                                    {% else %}
+                                        <i class="far fa-star text-muted"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <span class="rating-value me-2">{{ product.rating|floatformat:1 }}</span>
+                            <span class="text-muted small">
+                                ({{ product.review_count }} {% trans "تقييم" %})
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Price -->
+                    <div class="product-price mb-4">
+                        {% if product.show_price and product.category.show_prices %}
+                            <div class="price-wrapper">
+                                <span class="current-price h4 text-primary fw-bold">
+                                    {{ product.current_price|floatformat:2 }} {% trans "د.أ" %}
+                                </span>
+                                {% if product.has_discount %}
+                                    <span class="original-price text-muted text-decoration-line-through ms-2">
+                                        {{ product.base_price|floatformat:2 }} {% trans "د.أ" %}
+                                    </span>
+                                    <span class="savings text-success ms-2">
+                                        {% trans "توفر" %} {{ product.savings_amount|floatformat:2 }} {% trans "د.أ" %}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <div class="price-wrapper">
+                                <span class="h5 text-primary">{% trans "اتصل للسعر" %}</span>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Short Description -->
+                    {% if product.short_description %}
+                        <div class="product-description mb-4">
+                            <p class="text-muted">{{ product.short_description|truncatewords:30 }}</p>
+                        </div>
+                    {% endif %}
+
+                    <!-- Stock Status -->
+                    <div class="stock-status mb-3">
+                        {% if product.in_stock %}
+                            <span class="badge bg-success-subtle text-success">
+                                <i class="fas fa-check me-1"></i>
+                                {% trans "متوفر في المخزون" %}
+                            </span>
+                            {% if product.track_inventory and product.stock_quantity <= product.min_stock_level %}
+                                <span class="text-warning small ms-2">
+                                    ({% trans "كمية محدودة" %})
+                                </span>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge bg-danger-subtle text-danger">
+                                <i class="fas fa-times me-1"></i>
+                                {% trans "غير متوفر" %}
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Variants -->
+                    {% if product.variants.exists %}
+                        <div class="product-variants mb-4">
+                            <h6 class="mb-3">{% trans "الخيارات المتاحة:" %}</h6>
+
+                            <!-- Colors -->
+                            {% if product.variants.values_list.color.distinct %}
+                                <div class="variant-group mb-3">
+                                    <label class="form-label small fw-bold">{% trans "اللون:" %}</label>
+                                    <div class="color-options">
+                                        {% for variant in product.variants.all %}
+                                            {% if variant.color %}
+                                                <button class="color-option"
+                                                        data-variant-id="{{ variant.id }}"
+                                                        data-color="{{ variant.color }}"
+                                                        title="{{ variant.get_color_display }}"
+                                                        style="background-color: {{ variant.color_code|default:'#ccc' }}">
+                                                </button>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            <!-- Sizes -->
+                            {% if product.variants.values_list.size.distinct %}
+                                <div class="variant-group mb-3">
+                                    <label class="form-label small fw-bold">{% trans "المقاس:" %}</label>
+                                    <div class="size-options">
+                                        {% for variant in product.variants.all %}
+                                            {% if variant.size %}
+                                                <button class="size-option btn btn-outline-secondary btn-sm me-2 mb-2"
+                                                        data-variant-id="{{ variant.id }}"
+                                                        data-size="{{ variant.size }}">
+                                                    {{ variant.get_size_display }}
+                                                </button>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Quantity Selector -->
+                    {% if product.in_stock %}
+                        <div class="quantity-section mb-4">
+                            <label class="form-label fw-bold">{% trans "الكمية:" %}</label>
+                            <div class="quantity-controls d-flex align-items-center">
+                                <button class="btn btn-outline-secondary btn-sm"
+                                        onclick="decreaseQuantity()"
+                                        type="button">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <input type="number"
+                                       id="quickViewQuantity"
+                                       class="form-control text-center mx-2"
+                                       value="1"
+                                       min="1"
+                                       max="{{ product.max_order_quantity }}"
+                                       style="width: 70px;">
+                                <button class="btn btn-outline-secondary btn-sm"
+                                        onclick="increaseQuantity()"
+                                        type="button">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Action Buttons -->
+                    <div class="action-buttons mb-4">
+                        <div class="row g-2">
+                            {% if product.in_stock %}
+                                <div class="col-md-8">
+                                    <button class="btn btn-primary w-100"
+                                            onclick="addToCartQuick({{ product.id }})"
+                                            id="addToCartQuickBtn">
+                                        <i class="fas fa-shopping-cart me-2"></i>
+                                        {% trans "إضافة للسلة" %}
+                                    </button>
+                                </div>
+                            {% else %}
+                                <div class="col-md-8">
+                                    <button class="btn btn-outline-primary w-100"
+                                            onclick="openNotifyModal({{ product.id }}, '{{ product.name }}', '{{ product.images.first.image.url }}', '{{ product.sku }}', '{{ product.current_price }} د.أ', {% if product.variants.exists %}true{% else %}false{% endif %})">
+                                        <i class="fas fa-bell me-2"></i>
+                                        {% trans "أشعرني عند التوفر" %}
+                                    </button>
+                                </div>
+                            {% endif %}
+
+                            <div class="col-md-4">
+                                <button class="btn btn-outline-secondary w-100 wishlist-btn"
+                                        onclick="toggleWishlistQuick({{ product.id }})"
+                                        data-product-id="{{ product.id }}">
+                                    <i class="fas fa-heart"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mt-2">
+                            <div class="col-md-6">
+                                <button class="btn btn-outline-info w-100"
+                                        onclick="addToComparisonQuick({{ product.id }})">
+                                    <i class="fas fa-exchange-alt me-2"></i>
+                                    {% trans "مقارنة" %}
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <a href="{{ product.get_absolute_url }}"
+                                   class="btn btn-outline-dark w-100">
+                                    <i class="fas fa-eye me-2"></i>
+                                    {% trans "تفاصيل أكثر" %}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Key Features -->
+                    {% if product.specifications %}
+                        <div class="key-features">
+                            <h6 class="mb-3">{% trans "المواصفات الرئيسية:" %}</h6>
+                            <ul class="list-unstyled">
+                                {% for key, value in product.specifications.items|slice:":5" %}
+                                    <li class="mb-1">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        <strong>{{ key }}:</strong> {{ value }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+
+                    <!-- Share Buttons -->
+                    <div class="share-section mt-4 pt-3 border-top">
+                        <h6 class="mb-3">{% trans "مشاركة:" %}</h6>
+                        <div class="share-buttons">
+                            <button class="btn btn-sm btn-outline-primary me-2"
+                                    onclick="shareProduct('facebook')"
+                                    title="{% trans 'مشاركة على فيسبوك' %}">
+                                <i class="fab fa-facebook-f"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-info me-2"
+                                    onclick="shareProduct('twitter')"
+                                    title="{% trans 'مشاركة على تويتر' %}">
+                                <i class="fab fa-twitter"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-success me-2"
+                                    onclick="shareProduct('whatsapp')"
+                                    title="{% trans 'مشاركة على واتساب' %}">
+                                <i class="fab fa-whatsapp"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary"
+                                    onclick="copyProductLink()"
+                                    title="{% trans 'نسخ الرابط' %}">
+                                <i class="fas fa-link"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.quick-view-content {
+    padding: 0;
+}
+
+.product-gallery-quick .main-image-container {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1rem;
+    min-height: 350px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.product-gallery-quick .main-image-container img {
+    max-height: 300px;
+    width: auto;
+    object-fit: contain;
+}
+
+.zoom-btn {
+    background: rgba(0,0,0,0.7);
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.zoom-btn:hover {
+    background: var(--bs-primary);
+    color: white;
+    transform: scale(1.1);
+}
+
+.thumbnail-image {
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    padding: 0.25rem;
+    background: #f8f9fa;
+}
+
+.thumbnail-image:hover,
+.thumbnail-image.active {
+    border-color: var(--bs-primary);
+    transform: scale(1.05);
+}
+
+.product-details-quick {
+    padding-left: 1rem;
+}
+
+.color-options {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.color-option {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.color-option:hover,
+.color-option.active {
+    border-color: var(--bs-primary);
+    transform: scale(1.1);
+}
+
+.size-options {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.size-option.active {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+    color: white;
+}
+
+.quantity-controls input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+.quantity-controls input[type="number"]::-webkit-outer-spin-button,
+.quantity-controls input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.share-buttons .btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+/* Responsive */
+@media (max-width: 767.98px) {
+    .product-details-quick {
+        padding-left: 0;
+        margin-top: 1rem;
+    }
+
+    .action-buttons .col-md-4,
+    .action-buttons .col-md-6,
+    .action-buttons .col-md-8 {
+        margin-bottom: 0.5rem;
+    }
+}
+</style>
+
+<script>
+// Change main image in quick view
+function changeQuickViewImage(imageSrc) {
+    const mainImage = document.getElementById('quickViewMainImage');
+    mainImage.src = imageSrc;
+
+    // Update active thumbnail
+    document.querySelectorAll('.thumbnail-image').forEach(thumb => {
+        thumb.classList.remove('active');
+        if (thumb.src === imageSrc) {
+            thumb.classList.add('active');
+        }
+    });
+}
+
+// Quantity controls
+function increaseQuantity() {
+    const input = document.getElementById('quickViewQuantity');
+    const max = parseInt(input.getAttribute('max'));
+    const current = parseInt(input.value);
+    if (current < max) {
+        input.value = current + 1;
+    }
+}
+
+function decreaseQuantity() {
+    const input = document.getElementById('quickViewQuantity');
+    const min = parseInt(input.getAttribute('min'));
+    const current = parseInt(input.value);
+    if (current > min) {
+        input.value = current - 1;
+    }
+}
+
+// Add to cart from quick view
+function addToCartQuick(productId) {
+    const quantity = document.getElementById('quickViewQuantity').value;
+    const variantId = getSelectedVariantId();
+    const button = document.getElementById('addToCartQuickBtn');
+
+    // Add loading state
+    button.classList.add('btn-loading');
+    button.disabled = true;
+
+    const data = {
+        product_id: productId,
+        quantity: quantity,
+        variant_id: variantId
+    };
+
+    fetch('/cart/add/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('success', 'تمت إضافة المنتج إلى السلة بنجاح');
+            updateCartCount(data.cart_count);
+        } else {
+            showNotification('error', data.message || 'حدث خطأ غير متوقع');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('error', 'حدث خطأ في الاتصال');
+    })
+    .finally(() => {
+        button.classList.remove('btn-loading');
+        button.disabled = false;
+    });
+}
+
+// Toggle wishlist from quick view
+function toggleWishlistQuick(productId) {
+    fetch(`/products/api/wishlist/toggle/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const btn = document.querySelector(`[data-product-id="${productId}"]`);
+            const icon = btn.querySelector('i');
+            if (data.in_wishlist) {
+                icon.classList.remove('far');
+                icon.classList.add('fas');
+                btn.classList.add('text-danger');
+            } else {
+                icon.classList.remove('fas');
+                icon.classList.add('far');
+                btn.classList.remove('text-danger');
+            }
+            showNotification('success', data.message);
+        } else {
+            showNotification('error', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('error', 'حدث خطأ في الاتصال');
+    });
+}
+
+// Add to comparison from quick view
+function addToComparisonQuick(productId) {
+    fetch('/products/api/compare/add/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({product_id: productId})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('success', data.message);
+            updateComparisonCount(data.comparison_count);
+        } else {
+            showNotification('error', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('error', 'حدث خطأ في الاتصال');
+    });
+}
+
+// Get selected variant ID
+function getSelectedVariantId() {
+    const selectedColor = document.querySelector('.color-option.active');
+    const selectedSize = document.querySelector('.size-option.active');
+
+    if (selectedColor && selectedSize) {
+        return selectedColor.dataset.variantId || selectedSize.dataset.variantId;
+    } else if (selectedColor) {
+        return selectedColor.dataset.variantId;
+    } else if (selectedSize) {
+        return selectedSize.dataset.variantId;
+    }
+
+    return null;
+}
+
+// Share product functions
+function shareProduct(platform) {
+    const url = window.location.origin + '{{ product.get_absolute_url }}';
+    const title = '{{ product.name|escapejs }}';
+
+    let shareUrl = '';
+
+    switch(platform) {
+        case 'facebook':
+            shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+            break;
+        case 'twitter':
+            shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`;
+            break;
+        case 'whatsapp':
+            shareUrl = `https://wa.me/?text=${encodeURIComponent(title + ' ' + url)}`;
+            break;
+    }
+
+    if (shareUrl) {
+        window.open(shareUrl, '_blank', 'width=600,height=400');
+    }
+}
+
+function copyProductLink() {
+    const url = window.location.origin + '{{ product.get_absolute_url }}';
+
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(() => {
+            showNotification('success', 'تم نسخ الرابط بنجاح');
+        });
+    } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = url;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showNotification('success', 'تم نسخ الرابط بنجاح');
+    }
+}
+
+// Initialize variant selection
+document.addEventListener('DOMContentLoaded', function() {
+    // Color option selection
+    document.querySelectorAll('.color-option').forEach(option => {
+        option.addEventListener('click', function() {
+            document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+
+    // Size option selection
+    document.querySelectorAll('.size-option').forEach(option => {
+        option.addEventListener('click', function() {
+            document.querySelectorAll('.size-option').forEach(opt => opt.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+
+    // Set first thumbnail as active
+    const firstThumbnail = document.querySelector('.thumbnail-image');
+    if (firstThumbnail) {
+        firstThumbnail.classList.add('active');
+    }
+});
+</script>

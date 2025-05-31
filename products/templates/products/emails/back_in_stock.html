@@ -1,0 +1,746 @@
+{% load static %}
+{% load i18n %}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% trans "المنتج متوفر الآن!" %} - {{ site_settings.site_name|default:"ESCO" }}</title>
+
+    <style>
+        /* Reset styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background-color: #f8f9fa;
+            direction: rtl;
+            text-align: right;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        /* Header */
+        .email-header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="white" opacity="0.3"><animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite"/></circle><circle cx="80" cy="40" r="1.5" fill="white" opacity="0.4"><animate attributeName="opacity" values="0.4;1;0.4" dur="1.5s" repeatCount="indefinite"/></circle><circle cx="60" cy="80" r="1" fill="white" opacity="0.2"><animate attributeName="opacity" values="0.2;0.8;0.2" dur="3s" repeatCount="indefinite"/></circle></svg>');
+        }
+
+        .logo {
+            max-height: 50px;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-title {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Content */
+        .email-content {
+            padding: 30px 20px;
+        }
+
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .notification-box {
+            background: linear-gradient(135deg, #d4edda 0%, #c8e6c9 100%);
+            border: 2px solid #28a745;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 25px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .notification-box::before {
+            content: "✨";
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            animation: sparkle 2s ease-in-out infinite;
+        }
+
+        @keyframes sparkle {
+            0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.7; }
+            50% { transform: scale(1.2) rotate(180deg); opacity: 1; }
+        }
+
+        .notification-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+            animation: bounce 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0px); }
+            to { transform: translateY(-10px); }
+        }
+
+        .notification-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #155724;
+            margin-bottom: 10px;
+        }
+
+        .notification-message {
+            font-size: 16px;
+            color: #155724;
+            margin-bottom: 20px;
+        }
+
+        .urgency-badge {
+            background: #dc3545;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: bold;
+            display: inline-block;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Product Card */
+        .product-card {
+            background: #ffffff;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 25px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+
+        .product-image-container {
+            text-align: center;
+            padding: 25px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            position: relative;
+        }
+
+        .stock-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #28a745;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .product-image {
+            max-width: 220px;
+            max-height: 220px;
+            object-fit: contain;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .product-details {
+            padding: 25px;
+        }
+
+        .product-name {
+            font-size: 22px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .product-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .product-category {
+            font-size: 14px;
+            color: #6c757d;
+            background: #f8f9fa;
+            padding: 5px 12px;
+            border-radius: 15px;
+        }
+
+        .product-sku {
+            font-size: 12px;
+            color: #6c757d;
+            font-family: monospace;
+        }
+
+        .product-price {
+            font-size: 24px;
+            font-weight: bold;
+            color: #28a745;
+            text-align: center;
+            padding: 15px;
+            background: #f8fff9;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .stock-info {
+            background: #e8f5e8;
+            border: 1px solid #c3e6cb;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .stock-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .stock-indicator {
+            width: 12px;
+            height: 12px;
+            background: #28a745;
+            border-radius: 50%;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .stock-quantity {
+            font-size: 14px;
+            color: #155724;
+            text-align: center;
+        }
+
+        /* Variants */
+        .variants-section {
+            margin: 20px 0;
+        }
+
+        .variants-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .variants-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .variant-item {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 8px 15px;
+            font-size: 14px;
+            color: #495057;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .variant-item.available {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        /* Call-to-Action */
+        .cta-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            text-decoration: none;
+            padding: 18px 50px;
+            border-radius: 35px;
+            font-size: 20px;
+            font-weight: bold;
+            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-button::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .cta-button:hover::before {
+            left: 100%;
+        }
+
+        .cta-button:hover {
+            background: linear-gradient(135deg, #bd2130 0%, #a71e2a 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
+        }
+
+        .secondary-buttons {
+            margin-top: 20px;
+        }
+
+        .secondary-cta {
+            display: inline-block;
+            background: transparent;
+            color: #1e88e5;
+            text-decoration: none;
+            padding: 12px 25px;
+            border: 2px solid #1e88e5;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: bold;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .secondary-cta:hover {
+            background: #1e88e5;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Features */
+        .features-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+
+        .features-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .feature-item {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .feature-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .feature-text {
+            font-size: 12px;
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        /* Timer */
+        .timer-section {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 2px solid #ffc107;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 25px 0;
+            text-align: center;
+        }
+
+        .timer-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #856404;
+            margin-bottom: 15px;
+        }
+
+        .timer-display {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .timer-unit {
+            background: #856404;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .timer-number {
+            font-size: 18px;
+            font-weight: bold;
+            display: block;
+        }
+
+        .timer-label {
+            font-size: 10px;
+            display: block;
+        }
+
+        .timer-message {
+            font-size: 14px;
+            color: #856404;
+        }
+
+        /* Footer */
+        .email-footer {
+            background: #2c3e50;
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .footer-content {
+            margin-bottom: 20px;
+        }
+
+        .social-links {
+            margin: 20px 0;
+        }
+
+        .social-link {
+            display: inline-block;
+            width: 45px;
+            height: 45px;
+            background: #34495e;
+            color: white;
+            text-decoration: none;
+            border-radius: 50%;
+            line-height: 45px;
+            margin: 0 8px;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .social-link:hover {
+            background: #1e88e5;
+            transform: translateY(-3px);
+        }
+
+        .unsubscribe {
+            font-size: 12px;
+            color: #95a5a6;
+            margin-top: 20px;
+            border-top: 1px solid #34495e;
+            padding-top: 20px;
+        }
+
+        .unsubscribe a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .email-container {
+                margin: 10px;
+                border-radius: 8px;
+            }
+
+            .email-content {
+                padding: 20px 15px;
+            }
+
+            .header-title {
+                font-size: 22px;
+            }
+
+            .notification-title {
+                font-size: 20px;
+            }
+
+            .product-name {
+                font-size: 18px;
+            }
+
+            .cta-button {
+                padding: 15px 35px;
+                font-size: 18px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .timer-display {
+                flex-wrap: wrap;
+            }
+
+            .product-meta {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="email-header">
+            <div class="header-animation"></div>
+            {% if site_settings.logo %}
+                <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name }}" class="logo">
+            {% endif %}
+            <div class="header-title">🎉 {% trans "متوفر الآن!" %}</div>
+            <div class="header-subtitle">{% trans "المنتج الذي كنت تنتظره عاد للمخزون" %}</div>
+        </div>
+
+        <!-- Content -->
+        <div class="email-content">
+            <div class="greeting">
+                {% trans "مرحباً" %} {{ user_name|default:"عزيزي العميل" }}،
+            </div>
+
+            <p>
+                {% trans "أخبار رائعة! المنتج الذي طلبت منا إشعارك عند توفره عاد إلى المخزون ومتاح الآن للطلب." %}
+            </p>
+
+            <!-- Notification Box -->
+            <div class="notification-box">
+                <div class="notification-icon">📦</div>
+                <div class="notification-title">{% trans "متوفر في المخزون!" %}</div>
+                <div class="notification-message">
+                    {% trans "لا تفوت الفرصة - قد ينفد المخزون بسرعة" %}
+                </div>
+                <span class="urgency-badge">⚡ {% trans "كمية محدودة" %}</span>
+            </div>
+
+            <!-- Product Card -->
+            <div class="product-card">
+                <div class="product-image-container">
+                    <div class="stock-badge">✅ {% trans "متوفر" %}</div>
+                    <img src="{{ product_image }}" alt="{{ product_name }}" class="product-image">
+                </div>
+                <div class="product-details">
+                    <div class="product-name">{{ product_name }}</div>
+
+                    <div class="product-meta">
+                        <div class="product-category">{{ product_category }}</div>
+                        <div class="product-sku">{{ product_sku }}</div>
+                    </div>
+
+                    {% if product_price %}
+                        <div class="product-price">
+                            💰 {{ product_price }} {% trans "د.أ" %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Stock Info -->
+                    <div class="stock-info">
+                        <div class="stock-status">
+                            <div class="stock-indicator"></div>
+                            <strong>{% trans "متوفر في المخزون" %}</strong>
+                        </div>
+                        {% if stock_quantity %}
+                            <div class="stock-quantity">
+                                {% trans "الكمية المتاحة:" %} {{ stock_quantity }} {% trans "قطعة" %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Variants -->
+                    {% if available_variants %}
+                        <div class="variants-section">
+                            <div class="variants-title">🎨 {% trans "المتغيرات المتاحة:" %}</div>
+                            <div class="variants-grid">
+                                {% for variant in available_variants %}
+                                    <div class="variant-item available">{{ variant }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Timer Section -->
+            {% if limited_time_offer %}
+                <div class="timer-section">
+                    <div class="timer-title">⏰ {% trans "عرض محدود الوقت!" %}</div>
+                    <div class="timer-display">
+                        <div class="timer-unit">
+                            <span class="timer-number">{{ hours_left|default:"12" }}</span>
+                            <span class="timer-label">{% trans "ساعة" %}</span>
+                        </div>
+                        <div class="timer-unit">
+                            <span class="timer-number">{{ minutes_left|default:"45" }}</span>
+                            <span class="timer-label">{% trans "دقيقة" %}</span>
+                        </div>
+                    </div>
+                    <div class="timer-message">
+                        {% trans "احجز طلبك قبل انتهاء العرض!" %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Call to Action -->
+            <div class="cta-section">
+                <a href="{{ product_url }}" class="cta-button">
+                    🛒 {% trans "اطلب الآن" %}
+                </a>
+
+                <div class="secondary-buttons">
+                    <a href="{{ product_url }}" class="secondary-cta">
+                        👁️ {% trans "عرض التفاصيل" %}
+                    </a>
+                    <a href="{{ wishlist_url }}" class="secondary-cta">
+                        ❤️ {% trans "إضافة للمفضلة" %}
+                    </a>
+                    <a href="{{ share_url }}" class="secondary-cta">
+                        📤 {% trans "مشاركة" %}
+                    </a>
+                </div>
+            </div>
+
+            <!-- Features -->
+            <div class="features-section">
+                <div class="features-title">🌟 {% trans "مميزات خاصة" %}</div>
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <div class="feature-icon">🚚</div>
+                        <div class="feature-text">{% trans "شحن مجاني" %}</div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🔄</div>
+                        <div class="feature-text">{% trans "استرداد مجاني" %}</div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🛡️</div>
+                        <div class="feature-text">{% trans "ضمان شامل" %}</div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">📞</div>
+                        <div class="feature-text">{% trans "دعم 24/7" %}</div>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                {% trans "نشكرك على صبرك وثقتك بنا. نحن متحمسون لتوصيل هذا المنتج إليك!" %}
+            </p>
+
+            <p>
+                {% trans "مع أطيب التحيات," %}
+                <br>
+                {% trans "فريق" %} {{ site_settings.site_name|default:"ESCO" }}
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div class="email-footer">
+            <div class="footer-content">
+                <strong>{{ site_settings.site_name|default:"ESCO" }}</strong>
+                <br>
+                {% if site_settings.address %}
+                    📍 {{ site_settings.address }}
+                    <br>
+                {% endif %}
+                {% if site_settings.phone %}
+                    📞 {{ site_settings.phone }}
+                    <br>
+                {% endif %}
+                {% if site_settings.email %}
+                    ✉️ {{ site_settings.email }}
+                {% endif %}
+            </div>
+
+            <!-- Social Links -->
+            {% if site_settings.facebook or site_settings.twitter or site_settings.instagram %}
+                <div class="social-links">
+                    {% if site_settings.facebook %}
+                        <a href="{{ site_settings.facebook }}" class="social-link">📘</a>
+                    {% endif %}
+                    {% if site_settings.twitter %}
+                        <a href="{{ site_settings.twitter }}" class="social-link">🐦</a>
+                    {% endif %}
+                    {% if site_settings.instagram %}
+                        <a href="{{ site_settings.instagram }}" class="social-link">📷</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <!-- Unsubscribe -->
+            <div class="unsubscribe">
+                {% trans "تلقيت هذا الإشعار لأنك طلبت إشعارك عند توفر هذا المنتج." %}
+                <br>
+                <a href="{{ unsubscribe_url }}">{% trans "إلغاء الاشتراك" %}</a>
+                |
+                <a href="{{ settings_url }}">{% trans "إدارة التفضيلات" %}</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

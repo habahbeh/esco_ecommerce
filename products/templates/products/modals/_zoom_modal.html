@@ -1,0 +1,733 @@
+{% load static %}
+{% load i18n %}
+
+<!-- Image Zoom Modal -->
+<div class="modal fade" id="imageZoomModal" tabindex="-1" aria-labelledby="imageZoomModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-white" id="imageZoomModalLabel">
+                    <i class="fas fa-search-plus me-2"></i>
+                    {% trans "عرض الصورة" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{% trans 'إغلاق' %}"></button>
+            </div>
+            <div class="modal-body p-0 position-relative">
+                <!-- Main Image Container -->
+                <div class="zoom-container" id="zoomContainer">
+                    <div class="zoom-wrapper" id="zoomWrapper">
+                        <img id="zoomImage" src="" alt="Product Image" class="zoom-image">
+                    </div>
+
+                    <!-- Zoom Controls -->
+                    <div class="zoom-controls">
+                        <div class="controls-group">
+                            <!-- Zoom In/Out -->
+                            <button class="zoom-control-btn" id="zoomInBtn" title="{% trans 'تكبير' %}">
+                                <i class="fas fa-search-plus"></i>
+                            </button>
+                            <span class="zoom-level" id="zoomLevel">100%</span>
+                            <button class="zoom-control-btn" id="zoomOutBtn" title="{% trans 'تصغير' %}">
+                                <i class="fas fa-search-minus"></i>
+                            </button>
+
+                            <!-- Reset -->
+                            <button class="zoom-control-btn" id="resetZoomBtn" title="{% trans 'إعادة تعيين' %}">
+                                <i class="fas fa-expand-arrows-alt"></i>
+                            </button>
+
+                            <!-- Fit to Screen -->
+                            <button class="zoom-control-btn" id="fitScreenBtn" title="{% trans 'ملء الشاشة' %}">
+                                <i class="fas fa-compress-arrows-alt"></i>
+                            </button>
+
+                            <!-- Rotate -->
+                            <button class="zoom-control-btn" id="rotateBtn" title="{% trans 'دوران' %}">
+                                <i class="fas fa-redo"></i>
+                            </button>
+
+                            <!-- Download -->
+                            <button class="zoom-control-btn" id="downloadBtn" title="{% trans 'تحميل' %}">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Arrows -->
+                    <button class="nav-arrow nav-arrow-prev" id="prevImageBtn" title="{% trans 'الصورة السابقة' %}">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="nav-arrow nav-arrow-next" id="nextImageBtn" title="{% trans 'الصورة التالية' %}">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+
+                    <!-- Image Counter -->
+                    <div class="image-counter">
+                        <span id="currentImageIndex">1</span> / <span id="totalImages">1</span>
+                    </div>
+
+                    <!-- Loading Spinner -->
+                    <div class="zoom-loading" id="zoomLoading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">{% trans "جاري التحميل..." %}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thumbnail Strip -->
+                <div class="thumbnail-strip" id="thumbnailStrip">
+                    <div class="thumbnail-container" id="thumbnailContainer">
+                        <!-- Thumbnails will be dynamically added here -->
+                    </div>
+                </div>
+
+                <!-- Instructions -->
+                <div class="zoom-instructions" id="zoomInstructions">
+                    <div class="instructions-content">
+                        <h6>{% trans "تعليمات الاستخدام:" %}</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-mouse me-2"></i>{% trans "اسحب الصورة للتحريك" %}</li>
+                            <li><i class="fas fa-scroll me-2"></i>{% trans "استخدم عجلة الماوس للتكبير/التصغير" %}</li>
+                            <li><i class="fas fa-hand-paper me-2"></i>{% trans "انقر مرتين للتكبير السريع" %}</li>
+                            <li><i class="fas fa-keyboard me-2"></i>{% trans "استخدم الأسهم للتنقل بين الصور" %}</li>
+                        </ul>
+                        <button class="btn btn-sm btn-primary" onclick="hideZoomInstructions()">
+                            {% trans "فهمت" %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.zoom-container {
+    position: relative;
+    width: 100%;
+    height: calc(100vh - 56px);
+    overflow: hidden;
+    cursor: grab;
+    user-select: none;
+    background: #000;
+}
+
+.zoom-container.dragging {
+    cursor: grabbing;
+}
+
+.zoom-wrapper {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: transform 0.3s ease;
+}
+
+.zoom-image {
+    max-width: none;
+    max-height: none;
+    display: block;
+    transition: transform 0.2s ease;
+    pointer-events: none;
+}
+
+.zoom-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+}
+
+.controls-group {
+    background: rgba(0,0,0,0.8);
+    border-radius: 30px;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    backdrop-filter: blur(10px);
+}
+
+.zoom-control-btn {
+    background: transparent;
+    border: 2px solid rgba(255,255,255,0.3);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.zoom-control-btn:hover {
+    background: var(--bs-primary);
+    border-color: var(--bs-primary);
+    transform: scale(1.1);
+}
+
+.zoom-level {
+    color: white;
+    font-weight: 600;
+    min-width: 50px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.nav-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.7);
+    color: white;
+    border: none;
+    width: 50px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+    font-size: 18px;
+}
+
+.nav-arrow:hover {
+    background: rgba(0,0,0,0.9);
+    color: var(--bs-primary);
+}
+
+.nav-arrow-prev {
+    left: 20px;
+    border-radius: 0 10px 10px 0;
+}
+
+.nav-arrow-next {
+    right: 20px;
+    border-radius: 10px 0 0 10px;
+}
+
+.image-counter {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    backdrop-filter: blur(5px);
+}
+
+.zoom-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+}
+
+.thumbnail-strip {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0,0,0,0.9);
+    padding: 15px;
+    max-height: 120px;
+    overflow: hidden;
+}
+
+.thumbnail-container {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 5px 0;
+    justify-content: center;
+}
+
+.thumbnail-item {
+    flex-shrink: 0;
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    background: #222;
+    padding: 5px;
+}
+
+.thumbnail-item:hover,
+.thumbnail-item.active {
+    border-color: var(--bs-primary);
+    transform: scale(1.05);
+}
+
+.thumbnail-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+.zoom-instructions {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.9);
+    color: white;
+    padding: 2rem;
+    border-radius: 15px;
+    z-index: 30;
+    max-width: 400px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.instructions-content h6 {
+    color: var(--bs-primary);
+    margin-bottom: 1rem;
+}
+
+.instructions-content ul li {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.instructions-content ul li i {
+    color: var(--bs-primary);
+    width: 20px;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .zoom-controls {
+        bottom: 80px;
+    }
+
+    .controls-group {
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 15px;
+    }
+
+    .zoom-control-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 12px;
+    }
+
+    .nav-arrow {
+        width: 40px;
+        height: 60px;
+        font-size: 16px;
+    }
+
+    .nav-arrow-prev {
+        left: 10px;
+    }
+
+    .nav-arrow-next {
+        right: 10px;
+    }
+
+    .image-counter {
+        top: 10px;
+        right: 10px;
+        font-size: 0.8rem;
+        padding: 6px 12px;
+    }
+
+    .thumbnail-strip {
+        padding: 10px;
+    }
+
+    .thumbnail-item {
+        width: 60px;
+        height: 60px;
+    }
+
+    .zoom-instructions {
+        padding: 1.5rem;
+        margin: 1rem;
+        max-width: none;
+    }
+}
+
+/* Keyboard focus styles */
+.zoom-control-btn:focus,
+.nav-arrow:focus {
+    outline: 2px solid var(--bs-primary);
+    outline-offset: 2px;
+}
+
+/* Animation for image transitions */
+.zoom-image.transitioning {
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+</style>
+
+<script>
+class ImageZoom {
+    constructor() {
+        this.currentImageIndex = 0;
+        this.images = [];
+        this.scale = 1;
+        this.rotation = 0;
+        this.translateX = 0;
+        this.translateY = 0;
+        this.isDragging = false;
+        this.startX = 0;
+        this.startY = 0;
+        this.minScale = 0.1;
+        this.maxScale = 5;
+
+        this.initializeElements();
+        this.bindEvents();
+    }
+
+    initializeElements() {
+        this.modal = document.getElementById('imageZoomModal');
+        this.container = document.getElementById('zoomContainer');
+        this.wrapper = document.getElementById('zoomWrapper');
+        this.image = document.getElementById('zoomImage');
+        this.loading = document.getElementById('zoomLoading');
+        this.thumbnailContainer = document.getElementById('thumbnailContainer');
+        this.currentIndexSpan = document.getElementById('currentImageIndex');
+        this.totalImagesSpan = document.getElementById('totalImages');
+        this.zoomLevelSpan = document.getElementById('zoomLevel');
+
+        // Control buttons
+        this.zoomInBtn = document.getElementById('zoomInBtn');
+        this.zoomOutBtn = document.getElementById('zoomOutBtn');
+        this.resetBtn = document.getElementById('resetZoomBtn');
+        this.fitScreenBtn = document.getElementById('fitScreenBtn');
+        this.rotateBtn = document.getElementById('rotateBtn');
+        this.downloadBtn = document.getElementById('downloadBtn');
+        this.prevBtn = document.getElementById('prevImageBtn');
+        this.nextBtn = document.getElementById('nextImageBtn');
+    }
+
+    bindEvents() {
+        // Mouse events
+        this.container.addEventListener('mousedown', (e) => this.startDrag(e));
+        this.container.addEventListener('mousemove', (e) => this.drag(e));
+        this.container.addEventListener('mouseup', () => this.endDrag());
+        this.container.addEventListener('mouseleave', () => this.endDrag());
+        this.container.addEventListener('wheel', (e) => this.handleWheel(e));
+        this.container.addEventListener('dblclick', (e) => this.handleDoubleClick(e));
+
+        // Touch events
+        this.container.addEventListener('touchstart', (e) => this.handleTouchStart(e));
+        this.container.addEventListener('touchmove', (e) => this.handleTouchMove(e));
+        this.container.addEventListener('touchend', () => this.endDrag());
+
+        // Control buttons
+        this.zoomInBtn.addEventListener('click', () => this.zoomIn());
+        this.zoomOutBtn.addEventListener('click', () => this.zoomOut());
+        this.resetBtn.addEventListener('click', () => this.reset());
+        this.fitScreenBtn.addEventListener('click', () => this.fitToScreen());
+        this.rotateBtn.addEventListener('click', () => this.rotate());
+        this.downloadBtn.addEventListener('click', () => this.download());
+        this.prevBtn.addEventListener('click', () => this.previousImage());
+        this.nextBtn.addEventListener('click', () => this.nextImage());
+
+        // Keyboard events
+        document.addEventListener('keydown', (e) => this.handleKeyboard(e));
+
+        // Modal events
+        this.modal.addEventListener('shown.bs.modal', () => {
+            setTimeout(() => this.showInstructions(), 1000);
+        });
+    }
+
+    loadImages(images, startIndex = 0) {
+        this.images = images;
+        this.currentImageIndex = startIndex;
+        this.updateThumbnails();
+        this.loadImage(startIndex);
+        this.updateNavigation();
+    }
+
+    loadImage(index) {
+        if (index < 0 || index >= this.images.length) return;
+
+        this.showLoading();
+        this.currentImageIndex = index;
+
+        const img = new Image();
+        img.onload = () => {
+            this.image.src = img.src;
+            this.hideLoading();
+            this.reset();
+            this.updateCounter();
+            this.updateThumbnailSelection();
+        };
+        img.onerror = () => {
+            this.hideLoading();
+            console.error('Failed to load image:', this.images[index]);
+        };
+        img.src = this.images[index];
+    }
+
+    updateThumbnails() {
+        this.thumbnailContainer.innerHTML = '';
+        this.images.forEach((src, index) => {
+            const thumb = document.createElement('div');
+            thumb.className = 'thumbnail-item';
+            thumb.innerHTML = `<img src="${src}" alt="Image ${index + 1}">`;
+            thumb.addEventListener('click', () => this.loadImage(index));
+            this.thumbnailContainer.appendChild(thumb);
+        });
+        this.totalImagesSpan.textContent = this.images.length;
+    }
+
+    updateThumbnailSelection() {
+        const thumbnails = this.thumbnailContainer.querySelectorAll('.thumbnail-item');
+        thumbnails.forEach((thumb, index) => {
+            thumb.classList.toggle('active', index === this.currentImageIndex);
+        });
+    }
+
+    updateCounter() {
+        this.currentIndexSpan.textContent = this.currentImageIndex + 1;
+    }
+
+    updateNavigation() {
+        this.prevBtn.style.display = this.images.length > 1 ? 'flex' : 'none';
+        this.nextBtn.style.display = this.images.length > 1 ? 'flex' : 'none';
+    }
+
+    showLoading() {
+        this.loading.style.display = 'block';
+    }
+
+    hideLoading() {
+        this.loading.style.display = 'none';
+    }
+
+    showInstructions() {
+        const instructions = document.getElementById('zoomInstructions');
+        if (instructions) {
+            instructions.style.display = 'block';
+        }
+    }
+
+    startDrag(e) {
+        e.preventDefault();
+        this.isDragging = true;
+        this.container.classList.add('dragging');
+        this.startX = e.clientX - this.translateX;
+        this.startY = e.clientY - this.translateY;
+    }
+
+    drag(e) {
+        if (!this.isDragging) return;
+        e.preventDefault();
+        this.translateX = e.clientX - this.startX;
+        this.translateY = e.clientY - this.startY;
+        this.updateTransform();
+    }
+
+    endDrag() {
+        this.isDragging = false;
+        this.container.classList.remove('dragging');
+    }
+
+    handleTouchStart(e) {
+        if (e.touches.length === 1) {
+            this.startDrag(e.touches[0]);
+        }
+    }
+
+    handleTouchMove(e) {
+        e.preventDefault();
+        if (e.touches.length === 1) {
+            this.drag(e.touches[0]);
+        }
+    }
+
+    handleWheel(e) {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.1 : 0.1;
+        this.zoom(delta, e.clientX, e.clientY);
+    }
+
+    handleDoubleClick(e) {
+        if (this.scale === 1) {
+            this.zoom(1, e.clientX, e.clientY);
+        } else {
+            this.reset();
+        }
+    }
+
+    handleKeyboard(e) {
+        if (!this.modal.classList.contains('show')) return;
+
+        switch(e.key) {
+            case 'ArrowLeft':
+                e.preventDefault();
+                this.previousImage();
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                this.nextImage();
+                break;
+            case '+':
+            case '=':
+                e.preventDefault();
+                this.zoomIn();
+                break;
+            case '-':
+                e.preventDefault();
+                this.zoomOut();
+                break;
+            case '0':
+                e.preventDefault();
+                this.reset();
+                break;
+            case 'r':
+                e.preventDefault();
+                this.rotate();
+                break;
+            case 'f':
+                e.preventDefault();
+                this.fitToScreen();
+                break;
+        }
+    }
+
+    zoom(delta, centerX = null, centerY = null) {
+        const oldScale = this.scale;
+        this.scale = Math.max(this.minScale, Math.min(this.maxScale, this.scale + delta));
+
+        if (centerX !== null && centerY !== null) {
+            const containerRect = this.container.getBoundingClientRect();
+            const offsetX = centerX - containerRect.left - containerRect.width / 2;
+            const offsetY = centerY - containerRect.top - containerRect.height / 2;
+
+            const scaleDiff = this.scale - oldScale;
+            this.translateX -= offsetX * scaleDiff;
+            this.translateY -= offsetY * scaleDiff;
+        }
+
+        this.updateTransform();
+        this.updateZoomLevel();
+    }
+
+    zoomIn() {
+        this.zoom(0.2);
+    }
+
+    zoomOut() {
+        this.zoom(-0.2);
+    }
+
+    reset() {
+        this.scale = 1;
+        this.rotation = 0;
+        this.translateX = 0;
+        this.translateY = 0;
+        this.updateTransform();
+        this.updateZoomLevel();
+    }
+
+    fitToScreen() {
+        const containerRect = this.container.getBoundingClientRect();
+        const imageRect = this.image.getBoundingClientRect();
+
+        const scaleX = containerRect.width / this.image.naturalWidth;
+        const scaleY = containerRect.height / this.image.naturalHeight;
+        this.scale = Math.min(scaleX, scaleY) * 0.9;
+
+        this.translateX = 0;
+        this.translateY = 0;
+        this.updateTransform();
+        this.updateZoomLevel();
+    }
+
+    rotate() {
+        this.rotation += 90;
+        if (this.rotation >= 360) this.rotation = 0;
+        this.updateTransform();
+    }
+
+    download() {
+        const link = document.createElement('a');
+        link.href = this.image.src;
+        link.download = `image-${this.currentImageIndex + 1}.jpg`;
+        link.click();
+    }
+
+    previousImage() {
+        if (this.currentImageIndex > 0) {
+            this.loadImage(this.currentImageIndex - 1);
+        } else {
+            this.loadImage(this.images.length - 1);
+        }
+    }
+
+    nextImage() {
+        if (this.currentImageIndex < this.images.length - 1) {
+            this.loadImage(this.currentImageIndex + 1);
+        } else {
+            this.loadImage(0);
+        }
+    }
+
+    updateTransform() {
+        this.wrapper.style.transform = `translate(-50%, -50%) translate(${this.translateX}px, ${this.translateY}px)`;
+        this.image.style.transform = `scale(${this.scale}) rotate(${this.rotation}deg)`;
+    }
+
+    updateZoomLevel() {
+        this.zoomLevelSpan.textContent = Math.round(this.scale * 100) + '%';
+    }
+}
+
+// Global zoom instance
+let imageZoomInstance = null;
+
+// Initialize zoom when modal is shown
+document.getElementById('imageZoomModal').addEventListener('show.bs.modal', function(event) {
+    if (!imageZoomInstance) {
+        imageZoomInstance = new ImageZoom();
+    }
+
+    const button = event.relatedTarget;
+    if (button) {
+        const images = JSON.parse(button.getAttribute('data-images') || '[]');
+        const startIndex = parseInt(button.getAttribute('data-start-index') || '0');
+        imageZoomInstance.loadImages(images, startIndex);
+    }
+});
+
+// Global function to hide instructions
+function hideZoomInstructions() {
+    const instructions = document.getElementById('zoomInstructions');
+    if (instructions) {
+        instructions.style.display = 'none';
+    }
+}
+
+// Global function to open zoom modal
+function openImageZoom(images, startIndex = 0) {
+    const modal = new bootstrap.Modal(document.getElementById('imageZoomModal'));
+
+    if (!imageZoomInstance) {
+        imageZoomInstance = new ImageZoom();
+    }
+
+    imageZoomInstance.loadImages(images, startIndex);
+    modal.show();
+}
+</script>
