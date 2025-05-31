@@ -1,0 +1,927 @@
+<!-- products/templates/products/tag_products.html -->
+{% extends 'core/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{{ tag.name }} | {% trans "الوسوم" %} | {{ site_settings.site_name|default:"ESCO" }}{% endblock %}
+
+{% block meta_description %}{% trans "تصفح المنتجات المرتبطة بوسم" %} {{ tag.name }}{% endblock %}
+{% block meta_keywords %}{{ tag.name }}, {% trans "منتجات" %}, {% trans "وسوم" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Tag Header */
+    .tag-header {
+        background: linear-gradient(135deg, #9c27b0 0%, #e1bee7 100%);
+        color: white;
+        padding: 4rem 0 3rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .tag-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+        background-size: 40px 40px;
+        animation: move-pattern 25s linear infinite;
+    }
+
+    @keyframes move-pattern {
+        0% { transform: translate(0, 0); }
+        100% { transform: translate(40px, 40px); }
+    }
+
+    .tag-hero {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+    }
+
+    .tag-icon {
+        width: 120px;
+        height: 120px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 2rem;
+        font-size: 3rem;
+        backdrop-filter: blur(10px);
+        border: 3px solid rgba(255,255,255,0.3);
+    }
+
+    .tag-title {
+        font-size: 3rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+
+    .tag-description {
+        font-size: 1.25rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .tag-stats {
+        display: flex;
+        justify-content: center;
+        gap: 3rem;
+        flex-wrap: wrap;
+    }
+
+    .stat-item {
+        text-align: center;
+        background: rgba(255,255,255,0.1);
+        padding: 1.5rem 2rem;
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.2);
+        min-width: 120px;
+    }
+
+    .stat-number {
+        display: block;
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        font-size: 0.95rem;
+        opacity: 0.8;
+    }
+
+    /* Content Section */
+    .tag-content {
+        padding: 4rem 0;
+        min-height: 60vh;
+    }
+
+    /* Related Tags */
+    .related-tags-section {
+        background: #f8f9fa;
+        padding: 3rem 0;
+        margin-bottom: 3rem;
+    }
+
+    .related-tags-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+
+    .related-tag {
+        background: white;
+        padding: 1rem 1.5rem;
+        border-radius: 25px;
+        text-align: center;
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .related-tag::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(156, 39, 176, 0.2), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .related-tag:hover::before {
+        left: 100%;
+    }
+
+    .related-tag:hover {
+        border-color: #9c27b0;
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(156, 39, 176, 0.2);
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .related-tag-name {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .related-tag-count {
+        font-size: 0.875rem;
+        color: #666;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 3rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e0e0e0;
+    }
+
+    .filter-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .filter-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #333;
+        margin: 0;
+    }
+
+    .active-tag-badge {
+        background: linear-gradient(135deg, #9c27b0, #ba68c8);
+        color: white;
+        padding: 0.5rem 1.5rem;
+        border-radius: 25px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filter-controls {
+        display: flex;
+        gap: 1.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .filter-select {
+        padding: 0.75rem 1.25rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        background: white;
+        cursor: pointer;
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: #9c27b0;
+        box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
+    }
+
+    /* View Toggle */
+    .view-toggle {
+        display: flex;
+        background: #f8f9fa;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 2px solid #e0e0e0;
+    }
+
+    .view-btn {
+        padding: 0.75rem 1rem;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        color: #666;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .view-btn.active {
+        background: #9c27b0;
+        color: white;
+    }
+
+    .view-btn:not(.active):hover {
+        background: rgba(156, 39, 176, 0.1);
+        color: #9c27b0;
+    }
+
+    /* Results Section */
+    .results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .results-info {
+        font-size: 1.125rem;
+        color: #666;
+    }
+
+    .results-count {
+        font-weight: 700;
+        color: #333;
+    }
+
+    .results-actions {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    /* Products Grid */
+    .products-grid {
+        display: grid;
+        gap: 2rem;
+        margin-bottom: 3rem;
+    }
+
+    .products-grid.grid-view {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+
+    .products-grid.list-view {
+        grid-template-columns: 1fr;
+    }
+
+    /* Empty State */
+    .empty-products {
+        text-align: center;
+        padding: 5rem 2rem;
+        background: white;
+        border-radius: 20px;
+        border: 2px dashed #ddd;
+    }
+
+    .empty-icon {
+        width: 120px;
+        height: 120px;
+        background: linear-gradient(135deg, #9c27b0, #ba68c8);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 2rem;
+        color: white;
+        font-size: 3rem;
+    }
+
+    .empty-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: #333;
+    }
+
+    .empty-description {
+        font-size: 1.125rem;
+        color: #666;
+        margin-bottom: 2rem;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+        line-height: 1.6;
+    }
+
+    .empty-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    /* Loading Animation */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255,255,255,0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        backdrop-filter: blur(5px);
+    }
+
+    .loading-spinner {
+        width: 60px;
+        height: 60px;
+        border: 4px solid rgba(156, 39, 176, 0.2);
+        border-top-color: #9c27b0;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 991.98px) {
+        .tag-title {
+            font-size: 2.5rem;
+        }
+
+        .tag-stats {
+            gap: 2rem;
+        }
+
+        .stat-item {
+            padding: 1rem 1.5rem;
+            min-width: 100px;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+        }
+
+        .filter-controls {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .filter-group {
+            justify-content: space-between;
+        }
+
+        .results-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .related-tags-grid {
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        .tag-title {
+            font-size: 2rem;
+        }
+
+        .tag-icon {
+            width: 80px;
+            height: 80px;
+            font-size: 2rem;
+        }
+
+        .tag-stats {
+            gap: 1rem;
+        }
+
+        .stat-item {
+            padding: 0.75rem 1rem;
+            min-width: 80px;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+        }
+
+        .filter-bar {
+            padding: 1.5rem;
+        }
+
+        .products-grid.grid-view {
+            grid-template-columns: 1fr;
+        }
+
+        .empty-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+    }
+
+    /* Dark Mode Support */
+    [data-bs-theme="dark"] .filter-bar,
+    [data-bs-theme="dark"] .empty-products {
+        background: #1e1e1e;
+        border-color: #404040;
+    }
+
+    [data-bs-theme="dark"] .related-tags-section {
+        background: #1a1a1a;
+    }
+
+    [data-bs-theme="dark"] .related-tag {
+        background: #2d2d2d;
+        color: #e0e0e0;
+    }
+
+    [data-bs-theme="dark"] .filter-select {
+        background: #2d2d2d;
+        border-color: #404040;
+        color: #e0e0e0;
+    }
+
+    [data-bs-theme="dark"] .view-toggle {
+        background: #2d2d2d;
+        border-color: #404040;
+    }
+
+    [data-bs-theme="dark"] .filter-title,
+    [data-bs-theme="dark"] .empty-title {
+        color: #e0e0e0;
+    }
+
+    [data-bs-theme="dark"] .results-count {
+        color: #e0e0e0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Tag Header -->
+<section class="tag-header">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'core:home' %}" class="text-white-50">{% trans "الرئيسية" %}</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'products:product_list' %}" class="text-white-50">{% trans "المنتجات" %}</a>
+                </li>
+                <li class="breadcrumb-item active text-white" aria-current="page">
+                    {% trans "الوسم:" %} {{ tag.name }}
+                </li>
+            </ol>
+        </nav>
+
+        <div class="tag-hero">
+            <div class="tag-icon" data-aos="zoom-in">
+                <i class="fas fa-tag"></i>
+            </div>
+
+            <h1 class="tag-title" data-aos="fade-up">{{ tag.name }}</h1>
+
+            {% if tag.description %}
+                <p class="tag-description" data-aos="fade-up" data-aos-delay="100">
+                    {{ tag.description }}
+                </p>
+            {% else %}
+                <p class="tag-description" data-aos="fade-up" data-aos-delay="100">
+                    {% trans "تصفح جميع المنتجات المرتبطة بوسم" %} "{{ tag.name }}"
+                </p>
+            {% endif %}
+
+            <div class="tag-stats" data-aos="fade-up" data-aos-delay="200">
+                <div class="stat-item">
+                    <span class="stat-number">{{ products_count }}</span>
+                    <span class="stat-label">{% trans "منتج" %}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ categories_count }}</span>
+                    <span class="stat-label">{% trans "فئة" %}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ brands_count }}</span>
+                    <span class="stat-label">{% trans "علامة تجارية" %}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Related Tags Section -->
+{% if related_tags %}
+<section class="related-tags-section">
+    <div class="container">
+        <h2 class="text-center mb-4" data-aos="fade-up">{% trans "وسوم ذات صلة" %}</h2>
+        <div class="related-tags-grid">
+            {% for related_tag in related_tags %}
+                <a href="{% url 'products:tag_products' related_tag.slug %}"
+                   class="related-tag"
+                   data-aos="fade-up"
+                   data-aos-delay="{{ forloop.counter0|add:1 }}00">
+                    <div class="related-tag-name">{{ related_tag.name }}</div>
+                    <div class="related-tag-count">{{ related_tag.product_count }} {% trans "منتج" %}</div>
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Main Content -->
+<section class="tag-content">
+    <div class="container">
+        <!-- Filter Bar -->
+        <div class="filter-bar" data-aos="fade-up">
+            <div class="filter-header">
+                <h3 class="filter-title">{% trans "تصفية النتائج" %}</h3>
+                <div class="active-tag-badge">
+                    <i class="fas fa-tag"></i>
+                    {{ tag.name }}
+                </div>
+            </div>
+
+            <form method="get" id="filterForm">
+                <input type="hidden" name="tag" value="{{ tag.slug }}">
+                <div class="filter-controls">
+                    <div class="filter-group">
+                        <label for="sortSelect">{% trans "ترتيب حسب:" %}</label>
+                        <select id="sortSelect" name="sort" class="filter-select" onchange="applyFilters()">
+                            <option value="newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>
+                                {% trans "الأحدث أولاً" %}
+                            </option>
+                            <option value="oldest" {% if request.GET.sort == 'oldest' %}selected{% endif %}>
+                                {% trans "الأقدم أولاً" %}
+                            </option>
+                            <option value="price_low" {% if request.GET.sort == 'price_low' %}selected{% endif %}>
+                                {% trans "السعر: منخفض لمرتفع" %}
+                            </option>
+                            <option value="price_high" {% if request.GET.sort == 'price_high' %}selected{% endif %}>
+                                {% trans "السعر: مرتفع لمنخفض" %}
+                            </option>
+                            <option value="name_az" {% if request.GET.sort == 'name_az' %}selected{% endif %}>
+                                {% trans "الاسم: أ-ي" %}
+                            </option>
+                            <option value="best_selling" {% if request.GET.sort == 'best_selling' %}selected{% endif %}>
+                                {% trans "الأكثر مبيعاً" %}
+                            </option>
+                            <option value="top_rated" {% if request.GET.sort == 'top_rated' %}selected{% endif %}>
+                                {% trans "الأعلى تقييماً" %}
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="perPageSelect">{% trans "عرض:" %}</label>
+                        <select id="perPageSelect" name="per_page" class="filter-select" onchange="applyFilters()">
+                            <option value="12" {% if request.GET.per_page == '12' %}selected{% endif %}>
+                                12 {% trans "منتج" %}
+                            </option>
+                            <option value="24" {% if request.GET.per_page == '24' %}selected{% endif %}>
+                                24 {% trans "منتج" %}
+                            </option>
+                            <option value="48" {% if request.GET.per_page == '48' %}selected{% endif %}>
+                                48 {% trans "منتج" %}
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="view-toggle">
+                        <button type="button" class="view-btn active" onclick="setView('grid')" data-view="grid">
+                            <i class="fas fa-th"></i>
+                            <span class="d-none d-md-inline">{% trans "شبكة" %}</span>
+                        </button>
+                        <button type="button" class="view-btn" onclick="setView('list')" data-view="list">
+                            <i class="fas fa-list"></i>
+                            <span class="d-none d-md-inline">{% trans "قائمة" %}</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results Header -->
+        <div class="results-header" data-aos="fade-up">
+            <div class="results-info">
+                {% if products %}
+                    {% trans "عرض" %} <span class="results-count">{{ page_obj.start_index }}-{{ page_obj.end_index }}</span>
+                    {% trans "من" %} <span class="results-count">{{ page_obj.paginator.count }}</span> {% trans "منتج" %}
+                {% else %}
+                    <span class="results-count">{% trans "لا توجد منتجات" %}</span>
+                {% endif %}
+            </div>
+
+            <div class="results-actions">
+                <button type="button" class="btn btn-outline-primary" onclick="clearFilters()">
+                    <i class="fas fa-undo me-2"></i>
+                    {% trans "مسح المرشحات" %}
+                </button>
+            </div>
+        </div>
+
+        <!-- Products Section -->
+        {% if products %}
+            <div class="products-grid grid-view" id="productsGrid" data-aos="fade-up">
+                {% for product in products %}
+                    <div class="product-item" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
+                        {% include 'products/_base_product.html' with product=product %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+                <nav aria-label="{% trans 'التنقل بين الصفحات' %}" data-aos="fade-up">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <!-- Empty State -->
+            <div class="empty-products" data-aos="fade-up">
+                <div class="empty-icon">
+                    <i class="fas fa-tags"></i>
+                </div>
+                <h3 class="empty-title">{% trans "لا توجد منتجات بهذا الوسم" %}</h3>
+                <p class="empty-description">
+                    {% trans "لم نجد أي منتجات مرتبطة بوسم" %} "{{ tag.name }}" {% trans "في الوقت الحالي." %}
+                    {% trans "جرب البحث في وسوم أخرى أو تصفح جميع المنتجات." %}
+                </p>
+                <div class="empty-actions">
+                    <a href="{% url 'products:product_list' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-shopping-bag me-2"></i>
+                        {% trans "تصفح جميع المنتجات" %}
+                    </a>
+                    {% if related_tags %}
+                        <a href="#related-tags" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-tags me-2"></i>
+                            {% trans "تصفح وسوم أخرى" %}
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize AOS
+    AOS.init({
+        duration: 600,
+        once: true,
+        offset: 50
+    });
+
+    // Filter functions
+    function applyFilters() {
+        showLoadingOverlay();
+        document.getElementById('filterForm').submit();
+    }
+
+    function setView(viewType) {
+        const grid = document.getElementById('productsGrid');
+        const buttons = document.querySelectorAll('.view-btn');
+
+        buttons.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.view === viewType) {
+                btn.classList.add('active');
+            }
+        });
+
+        if (viewType === 'list') {
+            grid.classList.remove('grid-view');
+            grid.classList.add('list-view');
+        } else {
+            grid.classList.remove('list-view');
+            grid.classList.add('grid-view');
+        }
+
+        // Save preference
+        localStorage.setItem('productViewType', viewType);
+    }
+
+    function clearFilters() {
+        // Keep only the tag parameter
+        const tagValue = '{{ tag.slug }}';
+        window.location.href = `{% url 'products:tag_products' tag.slug %}`;
+    }
+
+    function showLoadingOverlay() {
+        const overlay = document.createElement('div');
+        overlay.className = 'loading-overlay';
+        overlay.innerHTML = `
+            <div class="text-center">
+                <div class="loading-spinner"></div>
+                <p class="mt-3">{% trans "جاري تحميل النتائج..." %}</p>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    }
+
+    // Load saved view preference
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedView = localStorage.getItem('productViewType');
+        if (savedView) {
+            setView(savedView);
+        }
+
+        // Smooth scroll for anchor links
+        const anchorLinks = document.querySelectorAll('a[href^="#"]');
+        anchorLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add loading state to pagination links
+        const paginationLinks = document.querySelectorAll('.pagination a');
+        paginationLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                showLoadingOverlay();
+            });
+        });
+    });
+
+    // Advanced search functionality
+    function performAdvancedSearch() {
+        const searchParams = new URLSearchParams();
+
+        // Add tag
+        searchParams.append('tag', '{{ tag.slug }}');
+
+        // Add other filters from form
+        const form = document.getElementById('filterForm');
+        const formData = new FormData(form);
+
+        for (let [key, value] of formData.entries()) {
+            if (value && key !== 'tag') {
+                searchParams.append(key, value);
+            }
+        }
+
+        // Redirect to advanced search
+        window.location.href = `{% url 'products:advanced_search' %}?${searchParams.toString()}`;
+    }
+
+    // Share tag functionality
+    function shareTag() {
+        const url = window.location.href;
+        const title = `{% trans "تصفح منتجات" %} {{ tag.name }} {% trans "على ESCO" %}`;
+
+        if (navigator.share) {
+            navigator.share({
+                title: title,
+                url: url
+            });
+        } else {
+            // Fallback to copy URL
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('{% trans "تم نسخ الرابط" %}', 'success');
+            });
+        }
+    }
+
+    // Toast notification function
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
+        toast.style.zIndex = '9999';
+        toast.textContent = message;
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + F for search
+        if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+            e.preventDefault();
+            const searchInput = document.querySelector('.search-input');
+            if (searchInput) {
+                searchInput.focus();
+            }
+        }
+
+        // Escape to clear filters
+        if (e.key === 'Escape') {
+            clearFilters();
+        }
+    });
+
+    // Track user interactions for analytics
+    function trackTagInteraction(action, details = {}) {
+        // Analytics implementation
+        if (typeof gtag !== 'undefined') {
+            gtag('event', action, {
+                event_category: 'Tag Interaction',
+                event_label: '{{ tag.name }}',
+                ...details
+            });
+        }
+    }
+
+    // Track page view
+    trackTagInteraction('page_view', {
+        tag_name: '{{ tag.name }}',
+        products_count: {{ products_count|default:0 }}
+    });
+
+    // Track filter usage
+    document.getElementById('filterForm').addEventListener('change', function() {
+        trackTagInteraction('filter_used');
+    });
+</script>
+{% endblock %}
