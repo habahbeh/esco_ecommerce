@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}
+    {% if query %}
+        {% blocktrans %}البحث السريع: {{ query }}{% endblocktrans %}
+    {% else %}
+        {% trans "البحث السريع" %}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- رأس البحث السريع -->
+    <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-xl font-semibold text-gray-900">
+                    {% trans "البحث السريع" %}
+                </h1>
+                {% if query %}
+                    <p class="text-sm text-gray-600 mt-1">
+                        {% blocktrans %}البحث عن: "{{ query }}"{% endblocktrans %}
+                    </p>
+                {% endif %}
+            </div>
+            
+            <!-- نموذج البحث -->
+            <div class="flex-shrink-0">
+                <form method="get" class="flex">
+                    <input 
+                        type="text" 
+                        name="q" 
+                        value="{{ query }}" 
+                        placeholder="{% trans 'بحث سريع...' %}"
+                        class="w-64 px-3 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    >
+                    <button 
+                        type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-r-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    >
+                        {% trans "بحث" %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {% if query %}
+        {% if products %}
+            <!-- النتائج -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-medium text-gray-900">
+                        {% trans "النتائج" %} ({{ results_count|default:products|length }})
+                    </h2>
+                    
+                    <!-- رابط لعرض جميع النتائج -->
+                    <a 
+                        href="{% url 'products:product_search' %}?q={{ query|urlencode }}" 
+                        class="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    >
+                        {% trans "عرض جميع النتائج" %} →
+                    </a>
+                </div>
+                
+                <!-- شبكة المنتجات -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {% for product in products %}
+                        <div class="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200">
+                            <!-- صورة المنتج -->
+                            <div class="aspect-w-1 aspect-h-1 bg-gray-100">
+                                {% if product.main_image %}
+                                    <img 
+                                        src="{{ product.main_image.url }}" 
+                                        alt="{{ product.name }}" 
+                                        class="w-full h-32 object-cover"
+                                    >
+                                {% elif product.images.exists %}
+                                    {% with product.images.first as first_image %}
+                                        {% if first_image.image %}
+                                            <img 
+                                                src="{{ first_image.image.url }}" 
+                                                alt="{{ product.name }}" 
+                                                class="w-full h-32 object-cover"
+                                            >
+                                        {% endif %}
+                                    {% endwith %}
+                                {% else %}
+                                    <div class="w-full h-32 bg-gray-100 flex items-center justify-center">
+                                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                                        </svg>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- معلومات المنتج -->
+                            <div class="p-3">
+                                <h3 class="font-medium text-gray-900 text-sm mb-1 line-clamp-2">
+                                    {{ product.name }}
+                                </h3>
+                                
+                                <!-- السعر -->
+                                <div class="text-blue-600 font-semibold text-sm mb-2">
+                                    {% if product.current_price %}
+                                        {{ product.current_price }}
+                                    {% elif product.base_price %}
+                                        {{ product.base_price }}
+                                    {% else %}
+                                        {% trans "السعر غير محدد" %}
+                                    {% endif %}
+                                    <span class="text-xs text-gray-500">{% trans "ريال" %}</span>
+                                </div>
+                                
+                                <!-- معلومات إضافية -->
+                                <div class="flex items-center justify-between text-xs text-gray-500 mb-3">
+                                    {% if product.category %}
+                                        <span>{{ product.category.name }}</span>
+                                    {% endif %}
+                                    {% if product.brand %}
+                                        <span>{{ product.brand.name }}</span>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- رابط التفاصيل -->
+                                {% if product.get_absolute_url %}
+                                    <a 
+                                        href="{{ product.get_absolute_url }}" 
+                                        class="block w-full text-center bg-blue-50 text-blue-700 py-2 px-3 rounded text-xs font-medium hover:bg-blue-100 transition-colors duration-200"
+                                    >
+                                        {% trans "عرض التفاصيل" %}
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- رابط لعرض المزيد -->
+                <div class="mt-6 text-center">
+                    <a 
+                        href="{% url 'products:product_search' %}?q={{ query|urlencode }}" 
+                        class="inline-block bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors duration-200"
+                    >
+                        {% trans "عرض جميع النتائج في البحث المتقدم" %}
+                    </a>
+                </div>
+            </div>
+
+        {% else %}
+            <!-- لا توجد نتائج -->
+            <div class="bg-white rounded-lg shadow-sm p-8 text-center">
+                <div class="text-gray-400 mb-4">
+                    <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">
+                    {% trans "لم نجد أي منتجات" %}
+                </h3>
+                <p class="text-gray-600 mb-4">
+                    {% blocktrans %}لا توجد نتائج للبحث السريع عن "{{ query }}"{% endblocktrans %}
+                </p>
+                
+                <div class="space-x-2 space-x-reverse">
+                    <a 
+                        href="{% url 'products:product_search' %}?q={{ query|urlencode }}" 
+                        class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
+                    >
+                        {% trans "جرب البحث المتقدم" %}
+                    </a>
+                    <a 
+                        href="{% url 'products:product_list' %}" 
+                        class="inline-block bg-gray-100 text-gray-700 px-4 py-2 rounded hover:bg-gray-200 text-sm"
+                    >
+                        {% trans "تصفح جميع المنتجات" %}
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    {% else %}
+        <!-- عرض بدون بحث -->
+        <div class="bg-white rounded-lg shadow-sm p-8 text-center">
+            <div class="text-gray-400 mb-4">
+                <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                {% trans "البحث السريع" %}
+            </h2>
+            <p class="text-gray-600 mb-6">
+                {% trans "ابحث بسرعة عن المنتجات التي تريدها" %}
+            </p>
+            
+            <!-- روابط سريعة -->
+            <div class="flex flex-wrap justify-center gap-3">
+                <a href="{% url 'products:featured_products' %}" class="bg-blue-100 text-blue-700 px-3 py-2 rounded text-sm hover:bg-blue-200">
+                    {% trans "المنتجات المميزة" %}
+                </a>
+                <a href="{% url 'products:new_products' %}" class="bg-green-100 text-green-700 px-3 py-2 rounded text-sm hover:bg-green-200">
+                    {% trans "المنتجات الجديدة" %}
+                </a>
+                <a href="{% url 'products:special_offers' %}" class="bg-red-100 text-red-700 px-3 py-2 rounded text-sm hover:bg-red-200">
+                    {% trans "العروض الخاصة" %}
+                </a>
+                <a href="{% url 'products:advanced_search' %}" class="bg-gray-100 text-gray-700 px-3 py-2 rounded text-sm hover:bg-gray-200">
+                    {% trans "البحث المتقدم" %}
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- CSS إضافي للـ line-clamp -->
+<style>
+.line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+</style>
+{% endblock %}
