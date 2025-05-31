@@ -1,12 +1,12 @@
+# products/forms.py
 from django import forms
 from django.utils.translation import gettext_lazy as _
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator, MinLengthValidator
+from django.core.exceptions import ValidationError
+from decimal import Decimal
+import re
 
-from .models import ProductReview, Product
-
-from django import forms
-from django.core.validators import MinLengthValidator
-from .models import Product
+from .models import ProductReview, Product, Category, Brand, Tag
 
 
 class ProductReviewForm(forms.ModelForm):
@@ -218,6 +218,9 @@ class QuickAddToCartForm(forms.Form):
 
 
 class CompareProductsForm(forms.Form):
+    """
+    نموذج مقارنة المنتجات
+    """
     products = forms.ModelMultipleChoiceField(
         queryset=Product.objects.filter(is_active=True, status='published'),
         widget=forms.CheckboxSelectMultiple(attrs={
@@ -300,3 +303,264 @@ class ProductSearchForm(forms.Form):
         self.fields['brand'].queryset = Brand.objects.filter(
             is_active=True
         ).order_by('name')
+
+
+class NewsletterSubscriptionForm(forms.Form):
+    """
+    نموذج الاشتراك في النشرة الإخبارية
+    """
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': _('بريدك الإلكتروني'),
+            'required': True
+        }),
+        label=_('البريد الإلكتروني')
+    )
+
+    name = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': _('اسمك (اختياري)')
+        }),
+        label=_('الاسم')
+    )
+
+    interests = forms.MultipleChoiceField(
+        required=False,
+        choices=[
+            ('new_products', _('منتجات جديدة')),
+            ('offers', _('عروض وخصومات')),
+            ('industry_news', _('أخبار الصناعة')),
+            ('technical_tips', _('نصائح تقنية')),
+        ],
+        widget=forms.CheckboxSelectMultiple(attrs={
+            'class': 'form-check-input'
+        }),
+        label=_('الاهتمامات')
+    )
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        # Check for valid email format
+        if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+            raise ValidationError(_('يرجى إدخال بريد إلكتروني صحيح'))
+        return email
+
+
+class ContactSellerForm(forms.Form):
+    """
+    نموذج التواصل مع البائع
+    """
+    name = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': _('اسمك الكامل')
+        }),
+        label=_('الاسم')
+    )
+
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': _('بريدك الإلكتروني')
+        }),
+        label=_('البريد الإلكتروني')
+    )
+
+    phone = forms.CharField(
+        required=False,
+        max_length=20,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': _('رقم الهاتف (اختياري)')
+        }),
+        label=_('رقم الهاتف')
+    )
+
+    subject = forms.CharField(
+        max_length=200,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': _('موضوع الاستفسار')
+        }),
+        label=_('الموضوع')
+    )
+
+    message = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'placeholder': _('اكتب استفسارك هنا...'),
+            'rows': 5
+        }),
+        label=_('الرسالة'),
+        validators=[MinLengthValidator(20)]
+    )
+
+    product_id = forms.IntegerField(
+        widget=forms.HiddenInput(),
+        required=False
+    )
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        if phone:
+            # Remove all non-digit characters
+            phone_digits = re.sub(r'\D', '', phone)
+            if len(phone_digits) < 8:
+                raise ValidationError(_('رقم الهاتف قصير جداً'))
+            if len(phone_digits) > 15:
+                raise ValidationError(_('رقم الهاتف طويل جداً'))
+        return phone
+
+
+class BulkActionForm(forms.Form):
+    """
+    نموذج العمليات المجمعة للمنتجات
+    """
+    ACTION_CHOICES = [
+        ('', _('اختر عملية')),
+        ('activate', _('تفعيل')),
+        ('deactivate', _('إلغاء تفعيل')),
+        ('delete', _('حذف')),
+        ('export', _('تصدير')),
+        ('set_featured', _('جعل مميز')),
+        ('unset_featured', _('إلغاء مميز')),
+        ('apply_discount', _('تطبيق خصم')),
+    ]
+
+    action = forms.ChoiceField(
+        choices=ACTION_CHOICES,
+        widget=forms.Select(attrs={
+            'class': 'form-select'
+        }),
+        label=_('العملية')
+    )
+
+    product_ids = forms.CharField(
+        widget=forms.HiddenInput()
+    )
+
+    # Additional fields for specific actions
+    discount_percentage = forms.DecimalField(
+        required=False,
+        max_digits=5,
+        decimal_places=2,
+        min_value=0,
+        max_value=100,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'placeholder': _('نسبة الخصم (%)')
+        }),
+        label=_('نسبة الخصم')
+    )
+
+    def clean_product_ids(self):
+        product_ids = self.cleaned_data.get('product_ids')
+        if not product_ids:
+            raise ValidationError(_('يجب اختيار منتجات على الأقل'))
+
+        try:
+            ids = [int(id) for id in product_ids.split(',') if id.strip()]
+            if not ids:
+                raise ValidationError(_('لا توجد منتجات محددة'))
+            return ids
+        except ValueError:
+            raise ValidationError(_('معرفات المنتجات غير صحيحة'))
+
+    def clean(self):
+        cleaned_data = super().clean()
+        action = cleaned_data.get('action')
+
+        if action == 'apply_discount':
+            discount_percentage = cleaned_data.get('discount_percentage')
+            if not discount_percentage:
+                raise ValidationError({
+                    'discount_percentage': _('يجب تحديد نسبة الخصم')
+                })
+
+        return cleaned_data
+
+
+class ProductVariantForm(forms.Form):
+    """
+    نموذج اختيار متغيرات المنتج
+    """
+
+    def __init__(self, *args, **kwargs):
+        product = kwargs.pop('product', None)
+        super().__init__(*args, **kwargs)
+
+        if product and product.variants.filter(is_active=True).exists():
+            variants = product.variants.filter(is_active=True).order_by('sort_order')
+
+            # Group variants by type (color, size, etc.)
+            variant_groups = {}
+            for variant in variants:
+                if variant.color:
+                    if 'color' not in variant_groups:
+                        variant_groups['color'] = []
+                    variant_groups['color'].append((variant.id, variant.get_color_display()))
+
+                if variant.size:
+                    if 'size' not in variant_groups:
+                        variant_groups['size'] = []
+                    variant_groups['size'].append((variant.id, variant.get_size_display()))
+
+            # Create fields for each variant group
+            for group_name, choices in variant_groups.items():
+                field_name = f'{group_name}_variant'
+                self.fields[field_name] = forms.ChoiceField(
+                    choices=[('', f'اختر {group_name}')] + choices,
+                    required=False,
+                    widget=forms.Select(attrs={
+                        'class': 'form-select variant-select',
+                        'data-variant-type': group_name
+                    }),
+                    label=_(group_name.title())
+                )
+
+
+class ProductReportForm(forms.Form):
+    """
+    نموذج الإبلاغ عن منتج
+    """
+    REPORT_CHOICES = [
+        ('inappropriate', _('محتوى غير مناسب')),
+        ('fake', _('منتج مزيف')),
+        ('wrong_info', _('معلومات خاطئة')),
+        ('spam', _('بريد مزعج')),
+        ('copyright', _('انتهاك حقوق الطبع')),
+        ('other', _('أخرى')),
+    ]
+
+    reason = forms.ChoiceField(
+        choices=REPORT_CHOICES,
+        widget=forms.Select(attrs={
+            'class': 'form-select'
+        }),
+        label=_('سبب الإبلاغ')
+    )
+
+    description = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'placeholder': _('اكتب تفاصيل إضافية (اختياري)'),
+            'rows': 3
+        }),
+        required=False,
+        label=_('تفاصيل إضافية')
+    )
+
+    product_id = forms.IntegerField(widget=forms.HiddenInput())
+
+    def clean_description(self):
+        description = self.cleaned_data.get('description', '')
+        reason = self.cleaned_data.get('reason')
+
+        if reason == 'other' and not description:
+            raise ValidationError(_('يرجى كتابة تفاصيل عند اختيار "أخرى"'))
+
+        return description

@@ -1,10 +1,1098 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+<!-- products/templates/products/quick_view_modal.html -->
+{% load static %}
+{% load i18n %}
 
-</body>
-</html>
+<!-- Quick View Modal -->
+<div class="modal fade" id="quickViewModal" tabindex="-1" aria-labelledby="quickViewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content quick-view-content">
+            <!-- Modal Header -->
+            <div class="modal-header quick-view-header">
+                <h5 class="modal-title" id="quickViewModalLabel">
+                    <i class="fas fa-eye me-2"></i>
+                    {% trans "عرض سريع" %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'إغلاق' %}"></button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="modal-body quick-view-body">
+                <!-- Loading State -->
+                <div class="quick-view-loading text-center py-5" id="quickViewLoading">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">{% trans "جاري التحميل..." %}</span>
+                    </div>
+                    <p class="text-muted">{% trans "جاري تحميل تفاصيل المنتج..." %}</p>
+                </div>
+
+                <!-- Product Content -->
+                <div class="quick-view-content-area d-none" id="quickViewContent">
+                    <div class="row">
+                        <!-- Product Images -->
+                        <div class="col-lg-6">
+                            <div class="quick-view-gallery">
+                                <!-- Main Image -->
+                                <div class="main-image-container">
+                                    <img id="quickViewMainImage" src="" alt="" class="main-image img-fluid">
+
+                                    <!-- Zoom Overlay -->
+                                    <div class="zoom-overlay">
+                                        <i class="fas fa-search-plus"></i>
+                                        <span>{% trans "انقر للتكبير" %}</span>
+                                    </div>
+
+                                    <!-- Image Badges -->
+                                    <div class="image-badges" id="quickViewBadges">
+                                        <!-- Badges will be populated dynamically -->
+                                    </div>
+                                </div>
+
+                                <!-- Thumbnail Images -->
+                                <div class="thumbnail-gallery" id="quickViewThumbnails">
+                                    <!-- Thumbnails will be populated dynamically -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Product Information -->
+                        <div class="col-lg-6">
+                            <div class="quick-view-info">
+                                <!-- Product Category & Brand -->
+                                <div class="product-meta mb-3">
+                                    <span class="product-category" id="quickViewCategory"></span>
+                                    <span class="product-brand" id="quickViewBrand"></span>
+                                </div>
+
+                                <!-- Product Title -->
+                                <h2 class="product-title mb-3" id="quickViewTitle"></h2>
+
+                                <!-- Rating -->
+                                <div class="product-rating mb-3" id="quickViewRating">
+                                    <!-- Rating will be populated dynamically -->
+                                </div>
+
+                                <!-- Price -->
+                                <div class="product-pricing mb-4" id="quickViewPricing">
+                                    <!-- Pricing will be populated dynamically -->
+                                </div>
+
+                                <!-- Short Description -->
+                                <div class="product-description mb-4" id="quickViewDescription">
+                                    <!-- Description will be populated dynamically -->
+                                </div>
+
+                                <!-- Availability -->
+                                <div class="product-availability mb-4" id="quickViewAvailability">
+                                    <!-- Availability will be populated dynamically -->
+                                </div>
+
+                                <!-- Product Options -->
+                                <div class="product-options mb-4" id="quickViewOptions">
+                                    <!-- Options will be populated dynamically -->
+                                </div>
+
+                                <!-- Quantity Selector -->
+                                <div class="quantity-selector mb-4">
+                                    <label class="form-label">{% trans "الكمية:" %}</label>
+                                    <div class="quantity-input-group">
+                                        <button type="button" class="quantity-btn minus" onclick="updateQuantity(-1)">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <input type="number" id="quickViewQuantity" class="quantity-input" value="1" min="1" max="10">
+                                        <button type="button" class="quantity-btn plus" onclick="updateQuantity(1)">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="action-buttons">
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <button type="button" class="btn btn-primary btn-lg w-100" id="quickViewAddToCart">
+                                                <i class="fas fa-shopping-cart me-2"></i>
+                                                {% trans "أضف إلى السلة" %}
+                                            </button>
+                                        </div>
+                                        <div class="col-6">
+                                            <button type="button" class="btn btn-outline-secondary w-100" id="quickViewWishlist">
+                                                <i class="far fa-heart me-2"></i>
+                                                {% trans "قائمة الأمنيات" %}
+                                            </button>
+                                        </div>
+                                        <div class="col-6">
+                                            <button type="button" class="btn btn-outline-secondary w-100" id="quickViewCompare">
+                                                <i class="fas fa-exchange-alt me-2"></i>
+                                                {% trans "مقارنة" %}
+                                            </button>
+                                        </div>
+                                        <div class="col-12">
+                                            <a href="#" class="btn btn-outline-primary w-100" id="quickViewDetailsLink">
+                                                <i class="fas fa-info-circle me-2"></i>
+                                                {% trans "عرض التفاصيل الكاملة" %}
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Additional Info -->
+                                <div class="additional-info mt-4">
+                                    <div class="info-grid">
+                                        <div class="info-item" id="quickViewSku">
+                                            <i class="fas fa-barcode me-2"></i>
+                                            <span class="info-label">{% trans "رقم المنتج:" %}</span>
+                                            <span class="info-value"></span>
+                                        </div>
+                                        <div class="info-item" id="quickViewShipping">
+                                            <i class="fas fa-shipping-fast me-2"></i>
+                                            <span class="info-label">{% trans "الشحن:" %}</span>
+                                            <span class="info-value">{% trans "متوفر" %}</span>
+                                        </div>
+                                        <div class="info-item" id="quickViewWarranty">
+                                            <i class="fas fa-shield-alt me-2"></i>
+                                            <span class="info-label">{% trans "الضمان:" %}</span>
+                                            <span class="info-value">{% trans "سنة واحدة" %}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Share Options -->
+                                <div class="share-options mt-4">
+                                    <span class="share-label">{% trans "مشاركة:" %}</span>
+                                    <div class="share-buttons">
+                                        <button class="share-btn facebook" onclick="shareProduct('facebook')">
+                                            <i class="fab fa-facebook-f"></i>
+                                        </button>
+                                        <button class="share-btn twitter" onclick="shareProduct('twitter')">
+                                            <i class="fab fa-twitter"></i>
+                                        </button>
+                                        <button class="share-btn whatsapp" onclick="shareProduct('whatsapp')">
+                                            <i class="fab fa-whatsapp"></i>
+                                        </button>
+                                        <button class="share-btn copy" onclick="shareProduct('copy')">
+                                            <i class="fas fa-link"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Error State -->
+                <div class="quick-view-error text-center py-5 d-none" id="quickViewError">
+                    <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                    <h4>{% trans "حدث خطأ" %}</h4>
+                    <p class="text-muted">{% trans "لا يمكن تحميل تفاصيل المنتج في الوقت الحالي" %}</p>
+                    <button class="btn btn-primary" onclick="retryLoadProduct()">
+                        {% trans "إعادة المحاولة" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSS Styles -->
+<style>
+/* Modal Customization */
+.quick-view-content {
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+
+.quick-view-header {
+    background: linear-gradient(135deg, var(--bs-primary), rgba(var(--bs-primary-rgb), 0.8));
+    color: white;
+    border-radius: 20px 20px 0 0;
+    padding: 1.5rem 2rem;
+    border-bottom: none;
+}
+
+.quick-view-header .btn-close {
+    filter: invert(1);
+    opacity: 0.8;
+}
+
+.quick-view-header .btn-close:hover {
+    opacity: 1;
+}
+
+.quick-view-body {
+    padding: 2rem;
+}
+
+/* Gallery Styles */
+.quick-view-gallery {
+    position: relative;
+}
+
+.main-image-container {
+    position: relative;
+    height: 400px;
+    background: #f8f9fa;
+    border-radius: 15px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    cursor: zoom-in;
+}
+
+.main-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 20px;
+    transition: transform 0.3s ease;
+}
+
+.main-image-container:hover .main-image {
+    transform: scale(1.05);
+}
+
+.zoom-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 25px;
+    font-size: 0.875rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.main-image-container:hover .zoom-overlay {
+    opacity: 1;
+}
+
+.image-badges {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.image-badge {
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+}
+
+.badge-discount { background: rgba(255, 87, 34, 0.9); color: white; }
+.badge-new { background: rgba(76, 175, 80, 0.9); color: white; }
+.badge-featured { background: rgba(255, 193, 7, 0.9); color: #212529; }
+
+/* Thumbnail Gallery */
+.thumbnail-gallery {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 10px 0;
+}
+
+.thumbnail-item {
+    flex-shrink: 0;
+    width: 80px;
+    height: 80px;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.thumbnail-item.active {
+    border-color: var(--bs-primary);
+}
+
+.thumbnail-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Product Info Styles */
+.quick-view-info {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.product-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.875rem;
+}
+
+.product-category {
+    background: rgba(var(--bs-primary-rgb), 0.1);
+    color: var(--bs-primary);
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.product-brand {
+    color: #666;
+    font-weight: 500;
+}
+
+.product-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #333;
+    line-height: 1.3;
+}
+
+/* Rating */
+.product-rating {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.rating-stars {
+    color: #ffc107;
+    font-size: 1rem;
+}
+
+.rating-text {
+    font-weight: 600;
+    color: #333;
+}
+
+.rating-count {
+    color: #666;
+    font-size: 0.875rem;
+}
+
+/* Pricing */
+.pricing-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.current-price {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--bs-primary);
+}
+
+.original-price {
+    font-size: 1.25rem;
+    color: #999;
+    text-decoration: line-through;
+}
+
+.discount-badge {
+    background: #dc3545;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.savings-amount {
+    color: #28a745;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+/* Description */
+.product-description p {
+    margin: 0;
+    color: #666;
+    line-height: 1.6;
+}
+
+/* Availability */
+.availability-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.availability-icon {
+    width: 20px;
+    text-align: center;
+}
+
+.in-stock { color: #28a745; }
+.out-of-stock { color: #dc3545; }
+.low-stock { color: #ffc107; }
+
+/* Product Options */
+.option-group {
+    margin-bottom: 1rem;
+}
+
+.option-label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.option-values {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.option-value {
+    padding: 8px 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.option-value:hover {
+    border-color: var(--bs-primary);
+}
+
+.option-value.selected {
+    border-color: var(--bs-primary);
+    background: var(--bs-primary);
+    color: white;
+}
+
+.option-value.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Color options */
+.color-option {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 1px #ddd;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.color-option.selected {
+    box-shadow: 0 0 0 2px var(--bs-primary);
+    transform: scale(1.1);
+}
+
+/* Quantity Selector */
+.quantity-input-group {
+    display: flex;
+    align-items: center;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+    width: 140px;
+}
+
+.quantity-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: #f8f9fa;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.quantity-btn:hover {
+    background: var(--bs-primary);
+    color: white;
+}
+
+.quantity-input {
+    width: 60px;
+    height: 40px;
+    border: none;
+    text-align: center;
+    font-weight: 600;
+    outline: none;
+}
+
+/* Action Buttons */
+.action-buttons .btn {
+    font-weight: 600;
+    padding: 12px 20px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.action-buttons .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* Additional Info */
+.additional-info {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 1.5rem;
+}
+
+.info-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem;
+}
+
+.info-item i {
+    color: var(--bs-primary);
+    width: 20px;
+}
+
+.info-label {
+    font-weight: 600;
+    margin-right: 8px;
+}
+
+.info-value {
+    color: #666;
+}
+
+/* Share Options */
+.share-options {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.share-label {
+    font-weight: 600;
+    color: #666;
+}
+
+.share-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.share-btn {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    border: none;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.share-btn:hover {
+    transform: scale(1.1);
+}
+
+.share-btn.facebook { background: #1877f2; }
+.share-btn.twitter { background: #1da1f2; }
+.share-btn.whatsapp { background: #25d366; }
+.share-btn.copy { background: #6c757d; }
+
+/* Loading State */
+.quick-view-loading .spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* Responsive */
+@media (max-width: 991.98px) {
+    .quick-view-body {
+        padding: 1rem;
+    }
+
+    .main-image-container {
+        height: 300px;
+    }
+
+    .product-title {
+        font-size: 1.25rem;
+    }
+
+    .current-price {
+        font-size: 1.5rem;
+    }
+
+    .quantity-input-group {
+        width: 120px;
+    }
+
+    .info-grid {
+        gap: 8px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+
+    .quick-view-header {
+        padding: 1rem 1.5rem;
+    }
+
+    .main-image-container {
+        height: 250px;
+    }
+
+    .thumbnail-gallery {
+        gap: 5px;
+    }
+
+    .thumbnail-item {
+        width: 60px;
+        height: 60px;
+    }
+
+    .action-buttons .btn {
+        padding: 10px 15px;
+        font-size: 0.875rem;
+    }
+}
+
+/* Dark Mode */
+[data-bs-theme="dark"] .quick-view-content {
+    background: #1e1e1e;
+    color: #e0e0e0;
+}
+
+[data-bs-theme="dark"] .main-image-container {
+    background: #2d2d2d;
+}
+
+[data-bs-theme="dark"] .product-title {
+    color: #e0e0e0;
+}
+
+[data-bs-theme="dark"] .additional-info {
+    background: #2d2d2d;
+}
+
+[data-bs-theme="dark"] .quantity-btn {
+    background: #404040;
+    color: #e0e0e0;
+}
+
+[data-bs-theme="dark"] .option-value {
+    border-color: #555;
+    background: #2d2d2d;
+    color: #e0e0e0;
+}
+</style>
+
+<!-- JavaScript for Quick View Modal -->
+<script>
+// Global variables
+let currentProduct = null;
+let selectedVariant = null;
+
+// Show quick view modal
+function showQuickViewModal(productData) {
+    currentProduct = productData;
+
+    // Reset modal state
+    document.getElementById('quickViewLoading').classList.remove('d-none');
+    document.getElementById('quickViewContent').classList.add('d-none');
+    document.getElementById('quickViewError').classList.add('d-none');
+
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('quickViewModal'));
+    modal.show();
+
+    // Simulate loading delay
+    setTimeout(() => {
+        populateQuickView(productData);
+    }, 500);
+}
+
+// Populate quick view with product data
+function populateQuickView(data) {
+    try {
+        // Hide loading, show content
+        document.getElementById('quickViewLoading').classList.add('d-none');
+        document.getElementById('quickViewContent').classList.remove('d-none');
+
+        // Populate basic info
+        document.getElementById('quickViewTitle').textContent = data.name;
+        document.getElementById('quickViewCategory').textContent = data.category.name;
+
+        if (data.brand) {
+            document.getElementById('quickViewBrand').textContent = data.brand;
+        }
+
+        // Set main image
+        const mainImage = document.getElementById('quickViewMainImage');
+        mainImage.src = data.image;
+        mainImage.alt = data.name;
+
+        // Populate pricing
+        populatePricing(data);
+
+        // Populate description
+        if (data.short_description) {
+            document.getElementById('quickViewDescription').innerHTML =
+                `<p>${data.short_description}</p>`;
+        }
+
+        // Populate availability
+        populateAvailability(data);
+
+        // Populate rating
+        if (data.rating > 0) {
+            populateRating(data);
+        }
+
+        // Set action button data
+        setupActionButtons(data);
+
+        // Populate additional info
+        document.querySelector('#quickViewSku .info-value').textContent = data.id;
+
+        // Setup badges
+        setupBadges(data);
+
+    } catch (error) {
+        console.error('Error populating quick view:', error);
+        showQuickViewError();
+    }
+}
+
+// Populate pricing information
+function populatePricing(data) {
+    const pricingContainer = document.getElementById('quickViewPricing');
+    let pricingHTML = '';
+
+    if (data.has_discount) {
+        pricingHTML = `
+            <div class="pricing-container">
+                <span class="current-price">${parseFloat(data.price).toFixed(2)} {% trans "د.أ" %}</span>
+                <span class="original-price">${parseFloat(data.base_price).toFixed(2)}</span>
+                <span class="discount-badge">${data.discount_percentage}% {% trans "خصم" %}</span>
+            </div>
+            <div class="savings-amount mt-2">
+                <i class="fas fa-piggy-bank me-1"></i>
+                {% trans "توفر" %} ${(parseFloat(data.base_price) - parseFloat(data.price)).toFixed(2)} {% trans "د.أ" %}
+            </div>
+        `;
+    } else {
+        pricingHTML = `
+            <div class="pricing-container">
+                <span class="current-price">${parseFloat(data.price).toFixed(2)} {% trans "د.أ" %}</span>
+            </div>
+        `;
+    }
+
+    pricingContainer.innerHTML = pricingHTML;
+}
+
+// Populate availability information
+function populateAvailability(data) {
+    const availabilityContainer = document.getElementById('quickViewAvailability');
+    let availabilityHTML = '';
+
+    if (data.in_stock) {
+        availabilityHTML = `
+            <div class="availability-item in-stock">
+                <i class="fas fa-check-circle availability-icon"></i>
+                <span>{% trans "متوفر في المخزن" %}</span>
+            </div>
+        `;
+
+        if (data.stock_quantity && data.stock_quantity <= 5) {
+            availabilityHTML += `
+                <div class="availability-item low-stock">
+                    <i class="fas fa-exclamation-triangle availability-icon"></i>
+                    <span>{% trans "كمية محدودة - متبقي" %} ${data.stock_quantity}</span>
+                </div>
+            `;
+        }
+    } else {
+        availabilityHTML = `
+            <div class="availability-item out-of-stock">
+                <i class="fas fa-times-circle availability-icon"></i>
+                <span>{% trans "غير متوفر حالياً" %}</span>
+            </div>
+        `;
+    }
+
+    availabilityContainer.innerHTML = availabilityHTML;
+}
+
+// Populate rating information
+function populateRating(data) {
+    const ratingContainer = document.getElementById('quickViewRating');
+    const rating = parseFloat(data.rating);
+    let starsHTML = '';
+
+    for (let i = 1; i <= 5; i++) {
+        if (i <= rating) {
+            starsHTML += '<i class="fas fa-star"></i>';
+        } else if (i - 0.5 <= rating) {
+            starsHTML += '<i class="fas fa-star-half-alt"></i>';
+        } else {
+            starsHTML += '<i class="far fa-star"></i>';
+        }
+    }
+
+    ratingContainer.innerHTML = `
+        <div class="rating-stars">${starsHTML}</div>
+        <span class="rating-text">${rating.toFixed(1)}</span>
+        <span class="rating-count">(${data.review_count} {% trans "تقييم" %})</span>
+    `;
+}
+
+// Setup action buttons
+function setupActionButtons(data) {
+    const addToCartBtn = document.getElementById('quickViewAddToCart');
+    const wishlistBtn = document.getElementById('quickViewWishlist');
+    const compareBtn = document.getElementById('quickViewCompare');
+    const detailsLink = document.getElementById('quickViewDetailsLink');
+
+    // Set details link
+    detailsLink.href = data.url;
+
+    // Setup add to cart
+    if (data.in_stock) {
+        addToCartBtn.disabled = false;
+        addToCartBtn.onclick = () => addToCartQuickView(data.id);
+    } else {
+        addToCartBtn.disabled = true;
+        addToCartBtn.innerHTML = '<i class="fas fa-ban me-2"></i>{% trans "غير متوفر" %}';
+    }
+
+    // Setup wishlist
+    wishlistBtn.onclick = () => toggleWishlistQuickView(data.id);
+
+    // Setup compare
+    compareBtn.onclick = () => addToCompareQuickView(data.id);
+}
+
+// Setup badges
+function setupBadges(data) {
+    const badgesContainer = document.getElementById('quickViewBadges');
+    let badgesHTML = '';
+
+    if (data.has_discount) {
+        badgesHTML += `<span class="image-badge badge-discount">${data.discount_percentage}% {% trans "خصم" %}</span>`;
+    }
+
+    if (data.is_new) {
+        badgesHTML += `<span class="image-badge badge-new">{% trans "جديد" %}</span>`;
+    }
+
+    if (data.is_featured) {
+        badgesHTML += `<span class="image-badge badge-featured">{% trans "مميز" %}</span>`;
+    }
+
+    badgesContainer.innerHTML = badgesHTML;
+}
+
+// Show error state
+function showQuickViewError() {
+    document.getElementById('quickViewLoading').classList.add('d-none');
+    document.getElementById('quickViewContent').classList.add('d-none');
+    document.getElementById('quickViewError').classList.remove('d-none');
+}
+
+// Retry loading product
+function retryLoadProduct() {
+    if (currentProduct) {
+        showQuickViewModal(currentProduct);
+    }
+}
+
+// Update quantity
+function updateQuantity(change) {
+    const quantityInput = document.getElementById('quickViewQuantity');
+    let newValue = parseInt(quantityInput.value) + change;
+
+    if (newValue < 1) newValue = 1;
+    if (newValue > parseInt(quantityInput.max)) newValue = parseInt(quantityInput.max);
+
+    quantityInput.value = newValue;
+}
+
+// Quick view actions
+function addToCartQuickView(productId) {
+    const quantity = document.getElementById('quickViewQuantity').value;
+    const formData = new FormData();
+    formData.append('product_id', productId);
+    formData.append('quantity', quantity);
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+
+    fetch(`/cart/add/${productId}/`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('{% trans "تمت الإضافة للسلة" %}', 'success');
+            updateCartCount(data.cart_count);
+        } else {
+            showToast(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('{% trans "حدث خطأ" %}', 'error');
+    });
+}
+
+function toggleWishlistQuickView(productId) {
+    fetch(`/products/wishlist/toggle/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const btn = document.getElementById('quickViewWishlist');
+            const icon = btn.querySelector('i');
+
+            if (data.in_wishlist) {
+                icon.className = 'fas fa-heart me-2';
+                btn.innerHTML = '<i class="fas fa-heart me-2"></i>{% trans "في قائمة الأمنيات" %}';
+            } else {
+                icon.className = 'far fa-heart me-2';
+                btn.innerHTML = '<i class="far fa-heart me-2"></i>{% trans "قائمة الأمنيات" %}';
+            }
+
+            showToast(data.message, 'success');
+            updateWishlistCount(data.wishlist_count);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('{% trans "حدث خطأ" %}', 'error');
+    });
+}
+
+function addToCompareQuickView(productId) {
+    fetch('/products/compare/add/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `product_id=${productId}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        showToast(data.message, data.success ? 'success' : 'warning');
+        if (data.success) {
+            updateCompareCount(data.comparison_count);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('{% trans "حدث خطأ" %}', 'error');
+    });
+}
+
+// Share product
+function shareProduct(platform) {
+    if (!currentProduct) return;
+
+    const url = window.location.origin + currentProduct.url;
+    const title = currentProduct.name;
+
+    let shareUrl = '';
+
+    switch(platform) {
+        case 'facebook':
+            shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+            break;
+        case 'twitter':
+            shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`;
+            break;
+        case 'whatsapp':
+            shareUrl = `https://wa.me/?text=${encodeURIComponent(title + ' ' + url)}`;
+            break;
+        case 'copy':
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('{% trans "تم نسخ الرابط" %}', 'success');
+            });
+            return;
+    }
+
+    if (shareUrl) {
+        window.open(shareUrl, '_blank');
+    }
+}
+
+// Helper functions
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function showToast(message, type) {
+    // Implementation depends on your toast system
+    console.log(`${type}: ${message}`);
+}
+
+function updateCartCount(count) {
+    const badge = document.querySelector('.cart-count');
+    if (badge) {
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'block' : 'none';
+    }
+}
+
+function updateWishlistCount(count) {
+    const badge = document.querySelector('.wishlist-count');
+    if (badge) {
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'block' : 'none';
+    }
+}
+
+function updateCompareCount(count) {
+    const badge = document.querySelector('.compare-count');
+    if (badge) {
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'block' : 'none';
+    }
+}
+</script>
