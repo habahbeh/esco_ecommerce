@@ -1,0 +1,703 @@
+{% load static %}
+{% load i18n %}
+
+<div class="category-sidebar">
+    <div class="sidebar-widget">
+        <div class="widget-header">
+            <h5 class="widget-title">
+                <i class="fas fa-th-large text-primary me-2"></i>
+                {% trans "تصفح الفئات" %}
+            </h5>
+        </div>
+
+        <div class="widget-content">
+            <!-- Search in Categories -->
+            <div class="category-search mb-3">
+                <div class="input-group input-group-sm">
+                    <input type="text" class="form-control" id="categorySearch"
+                           placeholder="{% trans 'ابحث في الفئات...' %}">
+                    <button class="btn btn-outline-secondary" type="button">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Category Tree -->
+            <div class="category-tree" id="categoryTree">
+                {% if categories %}
+                    {% for category in categories %}
+                    <div class="category-item" data-category-name="{{ category.name|lower }}">
+                        <div class="category-main">
+                            <div class="category-info">
+                                <!-- Category Icon -->
+                                {% if category.icon %}
+                                    <i class="{{ category.icon }} category-icon"
+                                       {% if category.color %}style="color: {{ category.color }};"{% endif %}></i>
+                                {% else %}
+                                    <i class="fas fa-folder category-icon text-muted"></i>
+                                {% endif %}
+
+                                <!-- Category Link -->
+                                <a href="{{ category.get_absolute_url }}"
+                                   class="category-link {% if current_category and current_category.id == category.id %}active{% endif %}">
+                                    {{ category.name }}
+                                </a>
+
+                                <!-- Product Count -->
+                                <span class="product-count">
+                                    ({{ category.total_products_count }})
+                                </span>
+
+                                <!-- Toggle for subcategories -->
+                                {% if category.children.exists %}
+                                    <button class="category-toggle" data-bs-toggle="collapse"
+                                            data-bs-target="#category-{{ category.id }}"
+                                            aria-expanded="{% if current_category and current_category in category.get_all_children %}true{% else %}false{% endif %}">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                {% endif %}
+                            </div>
+
+                            <!-- Featured Badge -->
+                            {% if category.is_featured %}
+                                <span class="featured-badge">
+                                    <i class="fas fa-star"></i>
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Subcategories -->
+                        {% if category.children.exists %}
+                            <div class="collapse {% if current_category and current_category in category.get_all_children %}show{% endif %}"
+                                 id="category-{{ category.id }}">
+                                <div class="subcategories">
+                                    {% for subcategory in category.children.all %}
+                                        <div class="subcategory-item" data-category-name="{{ subcategory.name|lower }}">
+                                            <div class="subcategory-info">
+                                                <!-- Subcategory Icon -->
+                                                {% if subcategory.icon %}
+                                                    <i class="{{ subcategory.icon }} subcategory-icon"
+                                                       {% if subcategory.color %}style="color: {{ subcategory.color }};"{% endif %}></i>
+                                                {% else %}
+                                                    <i class="fas fa-circle subcategory-icon"></i>
+                                                {% endif %}
+
+                                                <!-- Subcategory Link -->
+                                                <a href="{{ subcategory.get_absolute_url }}"
+                                                   class="subcategory-link {% if current_category and current_category.id == subcategory.id %}active{% endif %}">
+                                                    {{ subcategory.name }}
+                                                </a>
+
+                                                <!-- Product Count -->
+                                                <span class="product-count">
+                                                    ({{ subcategory.total_products_count }})
+                                                </span>
+
+                                                <!-- Toggle for sub-subcategories -->
+                                                {% if subcategory.children.exists %}
+                                                    <button class="category-toggle" data-bs-toggle="collapse"
+                                                            data-bs-target="#subcategory-{{ subcategory.id }}"
+                                                            aria-expanded="{% if current_category and current_category in subcategory.get_all_children %}true{% else %}false{% endif %}">
+                                                        <i class="fas fa-chevron-down"></i>
+                                                    </button>
+                                                {% endif %}
+                                            </div>
+
+                                            <!-- Sub-subcategories -->
+                                            {% if subcategory.children.exists %}
+                                                <div class="collapse {% if current_category and current_category in subcategory.get_all_children %}show{% endif %}"
+                                                     id="subcategory-{{ subcategory.id }}">
+                                                    <div class="sub-subcategories">
+                                                        {% for subsubcategory in subcategory.children.all %}
+                                                            <div class="sub-subcategory-item" data-category-name="{{ subsubcategory.name|lower }}">
+                                                                <a href="{{ subsubcategory.get_absolute_url }}"
+                                                                   class="sub-subcategory-link {% if current_category and current_category.id == subsubcategory.id %}active{% endif %}">
+                                                                    <i class="fas fa-angle-right me-1"></i>
+                                                                    {{ subsubcategory.name }}
+                                                                    <span class="product-count">({{ subsubcategory.total_products_count }})</span>
+                                                                </a>
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-categories">
+                        <div class="text-center py-4">
+                            <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">{% trans "لا توجد فئات متاحة" %}</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- All Categories Link -->
+            <div class="widget-footer mt-3">
+                <a href="{% url 'products:category_list' %}" class="btn btn-outline-primary btn-sm w-100">
+                    <i class="fas fa-list me-2"></i>
+                    {% trans "عرض جميع الفئات" %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Featured Categories Widget -->
+    {% if featured_categories %}
+    <div class="sidebar-widget mt-4">
+        <div class="widget-header">
+            <h5 class="widget-title">
+                <i class="fas fa-star text-warning me-2"></i>
+                {% trans "فئات مميزة" %}
+            </h5>
+        </div>
+
+        <div class="widget-content">
+            <div class="featured-categories">
+                {% for featured in featured_categories %}
+                <div class="featured-category-item">
+                    <a href="{{ featured.get_absolute_url }}" class="featured-category-link">
+                        <div class="featured-category-content">
+                            {% if featured.image %}
+                                <div class="featured-category-image">
+                                    <img src="{{ featured.image.url }}" alt="{{ featured.name }}"
+                                         class="img-fluid rounded">
+                                </div>
+                            {% endif %}
+                            <div class="featured-category-info">
+                                <h6 class="featured-category-name">{{ featured.name }}</h6>
+                                <p class="featured-category-desc">
+                                    {{ featured.description|truncatewords:8|default:"تصفح منتجات هذه الفئة" }}
+                                </p>
+                                <span class="featured-category-count">
+                                    {{ featured.total_products_count }} {% trans "منتج" %}
+                                </span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Category Statistics Widget -->
+    <div class="sidebar-widget mt-4">
+        <div class="widget-header">
+            <h5 class="widget-title">
+                <i class="fas fa-chart-bar text-info me-2"></i>
+                {% trans "إحصائيات الفئات" %}
+            </h5>
+        </div>
+
+        <div class="widget-content">
+            <div class="category-stats">
+                <div class="stat-item">
+                    <div class="stat-icon">
+                        <i class="fas fa-layer-group text-primary"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value">{{ categories|length }}</span>
+                        <span class="stat-label">{% trans "فئة رئيسية" %}</span>
+                    </div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="stat-icon">
+                        <i class="fas fa-boxes text-success"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value">
+                            {% for category in categories %}{{ category.total_products_count|add:0 }}{% if not forloop.last %}+{% endif %}{% endfor %}
+                        </span>
+                        <span class="stat-label">{% trans "إجمالي المنتجات" %}</span>
+                    </div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="stat-icon">
+                        <i class="fas fa-tags text-warning"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value">{{ featured_categories|length|default:0 }}</span>
+                        <span class="stat-label">{% trans "فئة مميزة" %}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.category-sidebar {
+    position: sticky;
+    top: 140px;
+}
+
+.sidebar-widget {
+    background: var(--bs-body-bg);
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border: 1px solid rgba(0,0,0,0.06);
+    overflow: hidden;
+}
+
+.widget-header {
+    background: linear-gradient(135deg, rgba(var(--bs-primary-rgb), 0.1), rgba(var(--bs-primary-rgb), 0.05));
+    padding: 1rem;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+.widget-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--bs-body-color);
+}
+
+.widget-content {
+    padding: 1rem;
+}
+
+.widget-footer {
+    padding: 0 1rem 1rem;
+}
+
+/* Category Search */
+.category-search .form-control {
+    border-radius: 8px 0 0 8px;
+    border-right: none;
+}
+
+.category-search .btn {
+    border-radius: 0 8px 8px 0;
+    border-left: none;
+}
+
+/* Category Tree */
+.category-tree {
+    max-height: 400px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(var(--bs-primary-rgb), 0.3) transparent;
+}
+
+.category-tree::-webkit-scrollbar {
+    width: 4px;
+}
+
+.category-tree::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.category-tree::-webkit-scrollbar-thumb {
+    background: rgba(var(--bs-primary-rgb), 0.3);
+    border-radius: 2px;
+}
+
+.category-item {
+    margin-bottom: 8px;
+}
+
+.category-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.category-main:hover {
+    background: rgba(var(--bs-primary-rgb), 0.05);
+    border-color: rgba(var(--bs-primary-rgb), 0.2);
+}
+
+.category-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.category-icon {
+    font-size: 0.9rem;
+    width: 16px;
+    text-align: center;
+}
+
+.category-link {
+    color: var(--bs-body-color);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+    flex: 1;
+    transition: color 0.3s ease;
+}
+
+.category-link:hover,
+.category-link.active {
+    color: var(--bs-primary);
+}
+
+.product-count {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-left: 8px;
+}
+
+.category-toggle {
+    background: none;
+    border: none;
+    color: #6c757d;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.category-toggle:hover {
+    background: rgba(var(--bs-primary-rgb), 0.1);
+    color: var(--bs-primary);
+}
+
+.category-toggle[aria-expanded="true"] i {
+    transform: rotate(180deg);
+}
+
+.featured-badge {
+    color: #ffc107;
+    font-size: 0.8rem;
+}
+
+/* Subcategories */
+.subcategories {
+    padding-left: 20px;
+    border-left: 2px solid rgba(var(--bs-primary-rgb), 0.1);
+    margin-left: 12px;
+    margin-top: 8px;
+}
+
+.subcategory-item {
+    margin-bottom: 6px;
+}
+
+.subcategory-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    transition: background 0.3s ease;
+}
+
+.subcategory-info:hover {
+    background: rgba(var(--bs-primary-rgb), 0.03);
+}
+
+.subcategory-icon {
+    font-size: 0.7rem;
+    width: 12px;
+    text-align: center;
+}
+
+.subcategory-link {
+    color: var(--bs-body-color);
+    text-decoration: none;
+    font-size: 0.85rem;
+    flex: 1;
+    transition: color 0.3s ease;
+}
+
+.subcategory-link:hover,
+.subcategory-link.active {
+    color: var(--bs-primary);
+}
+
+/* Sub-subcategories */
+.sub-subcategories {
+    padding-left: 16px;
+    margin-top: 6px;
+}
+
+.sub-subcategory-item {
+    margin-bottom: 4px;
+}
+
+.sub-subcategory-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--bs-body-color);
+    text-decoration: none;
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.sub-subcategory-link:hover,
+.sub-subcategory-link.active {
+    color: var(--bs-primary);
+    background: rgba(var(--bs-primary-rgb), 0.05);
+}
+
+/* Featured Categories */
+.featured-categories {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.featured-category-item {
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+.featured-category-item:hover {
+    transform: translateY(-2px);
+}
+
+.featured-category-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.featured-category-content {
+    display: flex;
+    gap: 8px;
+    padding: 8px;
+    background: rgba(var(--bs-primary-rgb), 0.03);
+    border-radius: 8px;
+    transition: background 0.3s ease;
+}
+
+.featured-category-content:hover {
+    background: rgba(var(--bs-primary-rgb), 0.08);
+}
+
+.featured-category-image {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    overflow: hidden;
+    border-radius: 6px;
+}
+
+.featured-category-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.featured-category-info {
+    flex: 1;
+}
+
+.featured-category-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin: 0 0 2px 0;
+    color: var(--bs-body-color);
+}
+
+.featured-category-desc {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin: 0 0 4px 0;
+    line-height: 1.3;
+}
+
+.featured-category-count {
+    font-size: 0.7rem;
+    color: var(--bs-primary);
+    font-weight: 500;
+}
+
+/* Category Statistics */
+.category-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    background: rgba(var(--bs-primary-rgb), 0.03);
+    border-radius: 8px;
+}
+
+.stat-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(var(--bs-primary-rgb), 0.1);
+}
+
+.stat-icon i {
+    font-size: 0.9rem;
+}
+
+.stat-info {
+    flex: 1;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--bs-body-color);
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+/* No Categories */
+.no-categories {
+    text-align: center;
+    padding: 2rem 1rem;
+}
+
+/* Dark mode adjustments */
+[data-bs-theme="dark"] .sidebar-widget {
+    border-color: rgba(255,255,255,0.1);
+}
+
+[data-bs-theme="dark"] .widget-header {
+    border-color: rgba(255,255,255,0.1);
+}
+
+[data-bs-theme="dark"] .subcategories {
+    border-color: rgba(var(--bs-primary-rgb), 0.2);
+}
+
+/* RTL adjustments */
+html[dir="rtl"] .subcategories {
+    padding-left: 0;
+    padding-right: 20px;
+    border-left: none;
+    border-right: 2px solid rgba(var(--bs-primary-rgb), 0.1);
+    margin-left: 0;
+    margin-right: 12px;
+}
+
+html[dir="rtl"] .sub-subcategories {
+    padding-left: 0;
+    padding-right: 16px;
+}
+
+html[dir="rtl"] .category-search .form-control {
+    border-radius: 0 8px 8px 0;
+    border-right: 1px solid #ced4da;
+    border-left: none;
+}
+
+html[dir="rtl"] .category-search .btn {
+    border-radius: 8px 0 0 8px;
+    border-left: 1px solid #ced4da;
+    border-right: none;
+}
+
+/* Responsive */
+@media (max-width: 991.98px) {
+    .category-sidebar {
+        position: static;
+        top: auto;
+    }
+
+    .sidebar-widget {
+        margin-bottom: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .widget-content {
+        padding: 0.75rem;
+    }
+
+    .featured-category-content {
+        padding: 6px;
+    }
+
+    .featured-category-image {
+        width: 35px;
+        height: 35px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Category Search
+    const categorySearch = document.getElementById('categorySearch');
+    const categoryTree = document.getElementById('categoryTree');
+
+    if (categorySearch && categoryTree) {
+        categorySearch.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            const categoryItems = categoryTree.querySelectorAll('.category-item, .subcategory-item, .sub-subcategory-item');
+
+            categoryItems.forEach(item => {
+                const categoryName = item.getAttribute('data-category-name');
+                if (categoryName && categoryName.includes(searchTerm)) {
+                    item.style.display = 'block';
+                    // Show parent categories
+                    let parent = item.closest('.collapse');
+                    while (parent) {
+                        parent.classList.add('show');
+                        parent = parent.parentElement.closest('.collapse');
+                    }
+                } else {
+                    item.style.display = searchTerm ? 'none' : 'block';
+                }
+            });
+
+            // If search is empty, reset all collapses
+            if (!searchTerm) {
+                const collapses = categoryTree.querySelectorAll('.collapse');
+                collapses.forEach(collapse => {
+                    if (!collapse.classList.contains('show')) {
+                        collapse.classList.remove('show');
+                    }
+                });
+            }
+        });
+    }
+
+    // Smooth toggle animation
+    const toggleButtons = document.querySelectorAll('.category-toggle');
+    toggleButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const icon = this.querySelector('i');
+            setTimeout(() => {
+                if (this.getAttribute('aria-expanded') === 'true') {
+                    icon.style.transform = 'rotate(180deg)';
+                } else {
+                    icon.style.transform = 'rotate(0deg)';
+                }
+            }, 100);
+        });
+    });
+});
+</script>

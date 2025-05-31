@@ -1,0 +1,513 @@
+{% load static %}
+{% load i18n %}
+
+{% if recently_viewed %}
+<div class="recently-viewed-section mt-4">
+    <div class="section-header mb-3">
+        <h4 class="section-title d-flex align-items-center">
+            <i class="fas fa-history text-primary me-2"></i>
+            {% trans "شاهدت مؤخراً" %}
+            <span class="badge bg-primary ms-2">{{ recently_viewed|length }}</span>
+        </h4>
+    </div>
+
+    <div class="recently-viewed-container">
+        <div class="recently-viewed-slider">
+            <div class="slider-track" id="recentlyViewedTrack">
+                {% for product in recently_viewed %}
+                <div class="recently-viewed-item">
+                    <div class="product-mini-card" data-aos="fade-right" data-aos-delay="{{ forloop.counter0|add:50 }}">
+                        <div class="product-mini-image">
+                            <a href="{{ product.get_absolute_url }}" class="image-link">
+                                {% if product.default_image %}
+                                    <img src="{{ product.default_image.image.url }}"
+                                         alt="{{ product.name }}"
+                                         class="mini-image"
+                                         loading="lazy">
+                                {% else %}
+                                    <img src="{% static 'images/no-image.png' %}"
+                                         alt="{{ product.name }}"
+                                         class="mini-image"
+                                         loading="lazy">
+                                {% endif %}
+                            </a>
+
+                            <!-- Mini Badges -->
+                            {% if product.has_discount %}
+                                <div class="mini-badge sale-badge">
+                                    -{{ product.savings_percentage }}%
+                                </div>
+                            {% endif %}
+
+                            <!-- Quick Actions -->
+                            <div class="mini-actions">
+                                <button class="btn-mini-action quick-view-btn"
+                                        data-product-id="{{ product.id }}"
+                                        title="{% trans 'عرض سريع' %}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                {% if user.is_authenticated %}
+                                    <button class="btn-mini-action wishlist-btn"
+                                            data-product-id="{{ product.id }}"
+                                            title="{% trans 'إضافة للمفضلة' %}">
+                                        <i class="fas fa-heart"></i>
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="product-mini-info">
+                            <h6 class="mini-product-name">
+                                <a href="{{ product.get_absolute_url }}" class="mini-title-link">
+                                    {{ product.name|truncatechars:30 }}
+                                </a>
+                            </h6>
+
+                            <!-- Mini Rating -->
+                            {% if product.rating %}
+                                <div class="mini-rating mb-1">
+                                    {% for i in "12345"|make_list %}
+                                        {% if forloop.counter <= product.rating %}
+                                            <i class="fas fa-star"></i>
+                                        {% else %}
+                                            <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+
+                            <!-- Mini Price -->
+                            <div class="mini-price">
+                                {% if product.has_discount %}
+                                    <span class="mini-current-price">
+                                        {{ product.current_price }} {% trans "د.أ" %}
+                                    </span>
+                                    <span class="mini-original-price">
+                                        {{ product.base_price }}
+                                    </span>
+                                {% else %}
+                                    <span class="mini-current-price">
+                                        {{ product.current_price }} {% trans "د.أ" %}
+                                    </span>
+                                {% endif %}
+                            </div>
+
+                            <!-- Mini Add to Cart -->
+                            <div class="mini-cart-action mt-2">
+                                {% if product.in_stock %}
+                                    <button class="btn-mini-cart add-to-cart-btn"
+                                            data-product-id="{{ product.id }}">
+                                        <i class="fas fa-shopping-cart"></i>
+                                    </button>
+                                {% else %}
+                                    <button class="btn-mini-cart" disabled>
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Navigation Arrows -->
+        {% if recently_viewed|length > 4 %}
+            <button class="slider-arrow slider-arrow-left" id="recentlyViewedPrev">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="slider-arrow slider-arrow-right" id="recentlyViewedNext">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        {% endif %}
+    </div>
+
+    <!-- Clear History Link -->
+    <div class="text-center mt-3">
+        <button class="btn btn-outline-secondary btn-sm clear-history-btn" id="clearRecentlyViewed">
+            <i class="fas fa-trash-alt me-1"></i>
+            {% trans "مسح السجل" %}
+        </button>
+    </div>
+</div>
+
+<style>
+.recently-viewed-section {
+    background: linear-gradient(135deg, rgba(var(--bs-primary-rgb), 0.05), rgba(var(--bs-primary-rgb), 0.02));
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgba(var(--bs-primary-rgb), 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.recently-viewed-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--bs-primary), transparent);
+}
+
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0;
+    color: var(--bs-body-color);
+}
+
+.recently-viewed-container {
+    position: relative;
+    overflow: hidden;
+}
+
+.recently-viewed-slider {
+    overflow: hidden;
+    width: 100%;
+}
+
+.slider-track {
+    display: flex;
+    gap: 1rem;
+    transition: transform 0.3s ease;
+    width: fit-content;
+}
+
+.recently-viewed-item {
+    flex: 0 0 auto;
+    width: 200px;
+}
+
+.product-mini-card {
+    background: var(--bs-body-bg);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.06);
+}
+
+.product-mini-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+.product-mini-image {
+    position: relative;
+    height: 120px;
+    overflow: hidden;
+}
+
+.mini-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.product-mini-card:hover .mini-image {
+    transform: scale(1.1);
+}
+
+.mini-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    z-index: 2;
+}
+
+.sale-badge {
+    background: linear-gradient(45deg, #dc3545, #fd7e14);
+    color: white;
+}
+
+.mini-actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.product-mini-card:hover .mini-actions {
+    opacity: 1;
+}
+
+.btn-mini-action {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.9);
+    color: var(--bs-body-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.btn-mini-action:hover {
+    background: var(--bs-primary);
+    color: white;
+    transform: scale(1.1);
+}
+
+.product-mini-info {
+    padding: 0.75rem;
+}
+
+.mini-product-name {
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    line-height: 1.3;
+}
+
+.mini-title-link {
+    color: var(--bs-body-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.mini-title-link:hover {
+    color: var(--bs-primary);
+}
+
+.mini-rating {
+    display: flex;
+    gap: 1px;
+}
+
+.mini-rating i {
+    font-size: 0.7rem;
+    color: #ffc107;
+}
+
+.mini-price {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.mini-current-price {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--bs-primary);
+}
+
+.mini-original-price {
+    font-size: 0.75rem;
+    color: #6c757d;
+    text-decoration: line-through;
+}
+
+.mini-cart-action {
+    display: flex;
+    justify-content: center;
+}
+
+.btn-mini-cart {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    background: var(--bs-primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.btn-mini-cart:hover:not(:disabled) {
+    background: rgba(var(--bs-primary-rgb), 0.9);
+    transform: scale(1.1);
+}
+
+.btn-mini-cart:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+.slider-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    border: none;
+    background: var(--bs-primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 3;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.slider-arrow:hover {
+    background: rgba(var(--bs-primary-rgb), 0.9);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.slider-arrow-left {
+    left: -15px;
+}
+
+.slider-arrow-right {
+    right: -15px;
+}
+
+.clear-history-btn {
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+}
+
+.clear-history-btn:hover {
+    background: #dc3545;
+    border-color: #dc3545;
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* Dark mode adjustments */
+[data-bs-theme="dark"] .recently-viewed-section {
+    background: linear-gradient(135deg, rgba(var(--bs-primary-rgb), 0.1), rgba(var(--bs-primary-rgb), 0.05));
+    border-color: rgba(var(--bs-primary-rgb), 0.2);
+}
+
+[data-bs-theme="dark"] .product-mini-card {
+    border-color: rgba(255,255,255,0.1);
+}
+
+[data-bs-theme="dark"] .btn-mini-action {
+    background: rgba(0,0,0,0.8);
+    color: white;
+}
+
+/* RTL adjustments */
+html[dir="rtl"] .mini-badge {
+    left: auto;
+    right: 8px;
+}
+
+html[dir="rtl"] .mini-actions {
+    right: auto;
+    left: 8px;
+}
+
+html[dir="rtl"] .slider-arrow-left {
+    left: auto;
+    right: -15px;
+}
+
+html[dir="rtl"] .slider-arrow-right {
+    right: auto;
+    left: -15px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .recently-viewed-item {
+        width: 160px;
+    }
+
+    .product-mini-image {
+        height: 100px;
+    }
+
+    .recently-viewed-section {
+        padding: 1rem;
+    }
+
+    .section-title {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .recently-viewed-item {
+        width: 140px;
+    }
+
+    .product-mini-image {
+        height: 90px;
+    }
+
+    .slider-track {
+        gap: 0.5rem;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Recently Viewed Slider
+    const track = document.getElementById('recentlyViewedTrack');
+    const prevBtn = document.getElementById('recentlyViewedPrev');
+    const nextBtn = document.getElementById('recentlyViewedNext');
+    const clearBtn = document.getElementById('clearRecentlyViewed');
+
+    if (track && prevBtn && nextBtn) {
+        let currentPosition = 0;
+        const itemWidth = 220; // 200px width + 20px gap
+        const visibleItems = Math.floor(track.parentElement.offsetWidth / itemWidth);
+        const totalItems = track.children.length;
+        const maxPosition = Math.max(0, (totalItems - visibleItems) * itemWidth);
+
+        nextBtn.addEventListener('click', function() {
+            if (currentPosition < maxPosition) {
+                currentPosition = Math.min(currentPosition + itemWidth, maxPosition);
+                track.style.transform = `translateX(-${currentPosition}px)`;
+            }
+        });
+
+        prevBtn.addEventListener('click', function() {
+            if (currentPosition > 0) {
+                currentPosition = Math.max(currentPosition - itemWidth, 0);
+                track.style.transform = `translateX(-${currentPosition}px)`;
+            }
+        });
+    }
+
+    // Clear Recently Viewed
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+            if (confirm('{% trans "هل أنت متأكد من مسح سجل المشاهدة؟" %}')) {
+                // Send AJAX request to clear session
+                fetch('{% url "products:clear_recently_viewed" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/json',
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.querySelector('.recently-viewed-section').style.display = 'none';
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        });
+    }
+});
+</script>
+{% endif %}

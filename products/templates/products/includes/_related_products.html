@@ -1,0 +1,416 @@
+{% load static %}
+{% load i18n %}
+
+{% if related_products %}
+<div class="related-products-section mt-5">
+    <div class="section-header mb-4">
+        <h3 class="section-title">
+            <i class="fas fa-heart text-primary me-2"></i>
+            {% trans "منتجات ذات صلة" %}
+        </h3>
+        <p class="section-subtitle text-muted">
+            {% trans "منتجات قد تعجبك أيضاً" %}
+        </p>
+    </div>
+
+    <div class="row g-3">
+        {% for product in related_products %}
+        <div class="col-lg-3 col-md-4 col-sm-6">
+            <div class="product-card h-100" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:100 }}">
+                <div class="product-image-wrapper position-relative">
+                    <a href="{{ product.get_absolute_url }}" class="product-image-link">
+                        {% if product.default_image %}
+                            <img src="{{ product.default_image.image.url }}"
+                                 alt="{{ product.name }}"
+                                 class="product-image w-100"
+                                 loading="lazy">
+                        {% else %}
+                            <img src="{% static 'images/no-image.png' %}"
+                                 alt="{{ product.name }}"
+                                 class="product-image w-100"
+                                 loading="lazy">
+                        {% endif %}
+                    </a>
+
+                    <!-- Product Badges -->
+                    <div class="product-badges">
+                        {% if product.is_new %}
+                            <span class="badge badge-new">{% trans "جديد" %}</span>
+                        {% endif %}
+                        {% if product.has_discount %}
+                            <span class="badge badge-sale">
+                                -{{ product.savings_percentage }}%
+                            </span>
+                        {% endif %}
+                        {% if not product.in_stock %}
+                            <span class="badge badge-out-of-stock">{% trans "نفد المخزون" %}</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="product-actions">
+                        <button class="btn btn-action btn-sm quick-view-btn"
+                                data-product-id="{{ product.id }}"
+                                title="{% trans 'عرض سريع' %}">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        {% if user.is_authenticated %}
+                            <button class="btn btn-action btn-sm wishlist-btn"
+                                    data-product-id="{{ product.id }}"
+                                    title="{% trans 'إضافة للمفضلة' %}">
+                                <i class="fas fa-heart"></i>
+                            </button>
+                        {% endif %}
+                        <button class="btn btn-action btn-sm compare-btn"
+                                data-product-id="{{ product.id }}"
+                                title="{% trans 'إضافة للمقارنة' %}">
+                            <i class="fas fa-balance-scale"></i>
+                        </button>
+                    </div>
+
+                    <!-- Stock Status -->
+                    {% if product.track_inventory and product.low_stock and product.in_stock %}
+                        <div class="stock-alert">
+                            <small class="text-warning">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                {% trans "مخزون محدود" %}
+                            </small>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="product-info p-3">
+                    <!-- Category -->
+                    <div class="product-category mb-1">
+                        <a href="{{ product.category.get_absolute_url }}"
+                           class="category-link text-muted small">
+                            {{ product.category.name }}
+                        </a>
+                    </div>
+
+                    <!-- Product Name -->
+                    <h6 class="product-name mb-2">
+                        <a href="{{ product.get_absolute_url }}" class="product-title-link">
+                            {{ product.name|truncatechars:60 }}
+                        </a>
+                    </h6>
+
+                    <!-- Brand -->
+                    {% if product.brand %}
+                        <div class="product-brand mb-2">
+                            <small class="text-muted">
+                                <i class="fas fa-tag me-1"></i>
+                                {{ product.brand.name }}
+                            </small>
+                        </div>
+                    {% endif %}
+
+                    <!-- Rating -->
+                    {% if product.rating %}
+                        <div class="product-rating mb-2">
+                            <div class="rating-stars">
+                                {% for i in "12345"|make_list %}
+                                    {% if forloop.counter <= product.rating %}
+                                        <i class="fas fa-star text-warning"></i>
+                                    {% else %}
+                                        <i class="far fa-star text-muted"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <small class="rating-count text-muted ms-2">
+                                ({{ product.review_count }})
+                            </small>
+                        </div>
+                    {% endif %}
+
+                    <!-- Price -->
+                    <div class="product-price mb-3">
+                        {% if product.has_discount %}
+                            <div class="price-wrapper">
+                                <span class="current-price text-primary fw-bold">
+                                    {{ product.current_price }} {% trans "د.أ" %}
+                                </span>
+                                <span class="original-price text-muted text-decoration-line-through ms-2">
+                                    {{ product.base_price }} {% trans "د.أ" %}
+                                </span>
+                            </div>
+                            <div class="savings text-success small mt-1">
+                                {% trans "وفر" %} {{ product.savings_amount }} {% trans "د.أ" %}
+                            </div>
+                        {% else %}
+                            <span class="current-price text-primary fw-bold">
+                                {{ product.current_price }} {% trans "د.أ" %}
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Add to Cart -->
+                    <div class="product-actions-footer">
+                        {% if product.in_stock %}
+                            <button class="btn btn-primary btn-sm w-100 add-to-cart-btn"
+                                    data-product-id="{{ product.id }}">
+                                <i class="fas fa-shopping-cart me-2"></i>
+                                {% trans "أضف للسلة" %}
+                            </button>
+                        {% else %}
+                            <button class="btn btn-outline-secondary btn-sm w-100" disabled>
+                                <i class="fas fa-times me-2"></i>
+                                {% trans "غير متوفر" %}
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- View More Link -->
+    <div class="text-center mt-4">
+        <a href="{% url 'products:category_products' category_slug=product.category.slug %}"
+           class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>
+            {% trans "عرض المزيد من منتجات" %} {{ product.category.name }}
+        </a>
+    </div>
+</div>
+
+<style>
+.related-products-section {
+    background: var(--bs-body-bg);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.section-header {
+    text-align: center;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--bs-body-color);
+}
+
+.section-subtitle {
+    font-size: 0.95rem;
+    margin-bottom: 0;
+}
+
+.product-card {
+    background: var(--bs-body-bg);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.08);
+    position: relative;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.product-image-wrapper {
+    overflow: hidden;
+    height: 200px;
+}
+
+.product-image {
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.product-card:hover .product-image {
+    transform: scale(1.05);
+}
+
+.product-badges {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 2;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    margin-right: 4px;
+}
+
+.badge-new {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    color: white;
+}
+
+.badge-sale {
+    background: linear-gradient(45deg, #dc3545, #fd7e14);
+    color: white;
+}
+
+.badge-out-of-stock {
+    background: #6c757d;
+    color: white;
+}
+
+.product-actions {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.product-card:hover .product-actions {
+    opacity: 1;
+}
+
+.btn-action {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.9);
+    border: 1px solid rgba(0,0,0,0.1);
+    color: var(--bs-body-color);
+    transition: all 0.3s ease;
+}
+
+.btn-action:hover {
+    background: var(--bs-primary);
+    color: white;
+    transform: scale(1.1);
+}
+
+.stock-alert {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(255,255,255,0.9);
+    padding: 4px 8px;
+    border-radius: 6px;
+    backdrop-filter: blur(5px);
+}
+
+.product-info {
+    background: var(--bs-body-bg);
+}
+
+.category-link {
+    text-decoration: none;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.category-link:hover {
+    color: var(--bs-primary) !important;
+}
+
+.product-title-link {
+    color: var(--bs-body-color);
+    text-decoration: none;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.product-title-link:hover {
+    color: var(--bs-primary);
+}
+
+.rating-stars {
+    display: inline-flex;
+    gap: 2px;
+}
+
+.rating-stars i {
+    font-size: 0.8rem;
+}
+
+.price-wrapper {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.current-price {
+    font-size: 1.1rem;
+}
+
+.original-price {
+    font-size: 0.9rem;
+}
+
+.savings {
+    font-weight: 500;
+}
+
+.add-to-cart-btn {
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.add-to-cart-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(var(--bs-primary-rgb), 0.3);
+}
+
+/* Dark mode adjustments */
+[data-bs-theme="dark"] .product-card {
+    border-color: rgba(255,255,255,0.1);
+}
+
+[data-bs-theme="dark"] .btn-action {
+    background: rgba(0,0,0,0.8);
+    border-color: rgba(255,255,255,0.2);
+    color: white;
+}
+
+[data-bs-theme="dark"] .stock-alert {
+    background: rgba(0,0,0,0.8);
+}
+
+/* RTL adjustments */
+html[dir="rtl"] .product-badges {
+    left: auto;
+    right: 10px;
+}
+
+html[dir="rtl"] .product-actions {
+    right: auto;
+    left: 10px;
+}
+
+html[dir="rtl"] .stock-alert {
+    left: auto;
+    right: 10px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .related-products-section {
+        padding: 1rem;
+    }
+
+    .product-image-wrapper {
+        height: 180px;
+    }
+
+    .section-title {
+        font-size: 1.3rem;
+    }
+}
+</style>
+{% endif %}

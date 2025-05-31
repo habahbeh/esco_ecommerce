@@ -1,0 +1,832 @@
+{% load static %}
+{% load i18n %}
+
+<div class="no-products-found-section">
+    <div class="no-products-container" data-aos="fade-up">
+        <!-- Icon Animation -->
+        <div class="no-products-icon">
+            <div class="icon-wrapper">
+                <i class="fas fa-search icon-main"></i>
+                <div class="icon-overlay">
+                    <i class="fas fa-times"></i>
+                </div>
+            </div>
+            <div class="icon-ripples">
+                <div class="ripple ripple-1"></div>
+                <div class="ripple ripple-2"></div>
+                <div class="ripple ripple-3"></div>
+            </div>
+        </div>
+
+        <!-- Main Message -->
+        <div class="no-products-content">
+            <h3 class="no-products-title">
+                {% if request.GET.q %}
+                    {% trans "لم نجد منتجات مطابقة لبحثك" %}
+                {% elif active_filters %}
+                    {% trans "لا توجد منتجات تطابق الفلاتر المحددة" %}
+                {% elif current_category %}
+                    {% trans "لا توجد منتجات في هذه الفئة حالياً" %}
+                {% else %}
+                    {% trans "لا توجد منتجات متاحة" %}
+                {% endif %}
+            </h3>
+
+            <p class="no-products-subtitle">
+                {% if request.GET.q %}
+                    {% trans "لم نتمكن من العثور على منتجات تحتوي على" %} "<strong>{{ request.GET.q }}</strong>"
+                {% elif active_filters %}
+                    {% trans "جرب تعديل الفلاتر أو إزالة بعضها للحصول على نتائج أكثر" %}
+                {% elif current_category %}
+                    {% trans "هذه الفئة فارغة حالياً، لكن قد تتم إضافة منتجات جديدة قريباً" %}
+                {% else %}
+                    {% trans "نعمل على إضافة منتجات جديدة قريباً" %}
+                {% endif %}
+            </p>
+
+            <!-- Search Query Display -->
+            {% if request.GET.q %}
+            <div class="search-query-display">
+                <div class="query-box">
+                    <i class="fas fa-quote-left"></i>
+                    <span class="query-text">{{ request.GET.q }}</span>
+                    <i class="fas fa-quote-right"></i>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Suggestions -->
+        <div class="no-products-suggestions">
+            <h5 class="suggestions-title">
+                <i class="fas fa-lightbulb text-warning me-2"></i>
+                {% trans "اقتراحات للحصول على نتائج أفضل" %}
+            </h5>
+
+            <div class="suggestions-grid">
+                {% if request.GET.q %}
+                <!-- Search Suggestions -->
+                <div class="suggestion-item" data-aos="fade-up" data-aos-delay="100">
+                    <div class="suggestion-icon">
+                        <i class="fas fa-spell-check"></i>
+                    </div>
+                    <div class="suggestion-content">
+                        <h6>{% trans "تحقق من الإملاء" %}</h6>
+                        <p>{% trans "تأكد من كتابة الكلمات بشكل صحيح" %}</p>
+                    </div>
+                </div>
+
+                <div class="suggestion-item" data-aos="fade-up" data-aos-delay="200">
+                    <div class="suggestion-icon">
+                        <i class="fas fa-minus-circle"></i>
+                    </div>
+                    <div class="suggestion-content">
+                        <h6>{% trans "استخدم كلمات أقل" %}</h6>
+                        <p>{% trans "جرب البحث بكلمات أساسية أقل" %}</p>
+                    </div>
+                </div>
+
+                <div class="suggestion-item" data-aos="fade-up" data-aos-delay="300">
+                    <div class="suggestion-icon">
+                        <i class="fas fa-exchange-alt"></i>
+                    </div>
+                    <div class="suggestion-content">
+                        <h6>{% trans "استخدم مرادفات" %}</h6>
+                        <p>{% trans "جرب كلمات مشابهة أو مرادفة" %}</p>
+                    </div>
+                </div>
+                {% else %}
+                <!-- Filter Suggestions -->
+                <div class="suggestion-item" data-aos="fade-up" data-aos-delay="100">
+                    <div class="suggestion-icon">
+                        <i class="fas fa-filter"></i>
+                    </div>
+                    <div class="suggestion-content">
+                        <h6>{% trans "قلل الفلاتر" %}</h6>
+                        <p>{% trans "أزل بعض الفلاتر للحصول على نتائج أكثر" %}</p>
+                    </div>
+                </div>
+
+                <div class="suggestion-item" data-aos="fade-up" data-aos-delay="200">
+                    <div class="suggestion-icon">
+                        <i class="fas fa-th-large"></i>
+                    </div>
+                    <div class="suggestion-content">
+                        <h6>{% trans "تصفح الفئات" %}</h6>
+                        <p>{% trans "استكشف فئات المنتجات المختلفة" %}</p>
+                    </div>
+                </div>
+
+                <div class="suggestion-item" data-aos="fade-up" data-aos-delay="300">
+                    <div class="suggestion-icon">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <div class="suggestion-content">
+                        <h6>{% trans "وسع نطاق السعر" %}</h6>
+                        <p>{% trans "جرب نطاق أسعار أوسع" %}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="no-products-actions">
+            <div class="actions-row">
+                {% if request.GET.q %}
+                    <button class="btn btn-primary action-btn" id="clearSearchBtn">
+                        <i class="fas fa-times me-2"></i>
+                        {% trans "مسح البحث" %}
+                    </button>
+                    <button class="btn btn-outline-primary action-btn" id="searchSimilarBtn">
+                        <i class="fas fa-search me-2"></i>
+                        {% trans "بحث مشابه" %}
+                    </button>
+                {% elif active_filters %}
+                    <a href="{% url 'products:product_list' %}" class="btn btn-primary action-btn">
+                        <i class="fas fa-refresh me-2"></i>
+                        {% trans "مسح جميع الفلاتر" %}
+                    </a>
+                    <button class="btn btn-outline-primary action-btn" id="relaxFiltersBtn">
+                        <i class="fas fa-sliders-h me-2"></i>
+                        {% trans "تخفيف الفلاتر" %}
+                    </button>
+                {% else %}
+                    <a href="{% url 'products:category_list' %}" class="btn btn-primary action-btn">
+                        <i class="fas fa-th-large me-2"></i>
+                        {% trans "تصفح الفئات" %}
+                    </a>
+                    <a href="{% url 'products:product_list' %}" class="btn btn-outline-primary action-btn">
+                        <i class="fas fa-home me-2"></i>
+                        {% trans "العودة للرئيسية" %}
+                    </a>
+                {% endif %}
+            </div>
+
+            <!-- Secondary Actions -->
+            <div class="secondary-actions mt-3">
+                <button class="btn btn-link btn-sm" id="notifyWhenAvailable">
+                    <i class="fas fa-bell me-1"></i>
+                    {% trans "أخبرني عند توفر منتجات مطابقة" %}
+                </button>
+                <button class="btn btn-link btn-sm" id="requestProduct">
+                    <i class="fas fa-plus me-1"></i>
+                    {% trans "اطلب منتج محدد" %}
+                </button>
+            </div>
+        </div>
+
+        <!-- Alternative Options -->
+        <div class="alternative-options mt-4">
+            <h5 class="alternatives-title">
+                <i class="fas fa-compass text-info me-2"></i>
+                {% trans "أو جرب هذه البدائل" %}
+            </h5>
+
+            <div class="alternatives-grid">
+                <!-- Popular Categories -->
+                {% if categories %}
+                <div class="alternative-section">
+                    <h6 class="alt-section-title">{% trans "فئات شائعة" %}</h6>
+                    <div class="alt-items">
+                        {% for category in categories|slice:":4" %}
+                        <a href="{{ category.get_absolute_url }}" class="alt-item">
+                            {% if category.icon %}
+                                <i class="{{ category.icon }}"></i>
+                            {% else %}
+                                <i class="fas fa-folder"></i>
+                            {% endif %}
+                            {{ category.name }}
+                            <small>({{ category.total_products_count }})</small>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Popular Brands -->
+                {% if brands %}
+                <div class="alternative-section">
+                    <h6 class="alt-section-title">{% trans "علامات تجارية شائعة" %}</h6>
+                    <div class="alt-items">
+                        {% for brand in brands|slice:":4" %}
+                        <a href="{% url 'products:product_list' %}?brand={{ brand.id }}" class="alt-item">
+                            {% if brand.logo %}
+                                <img src="{{ brand.logo.url }}" alt="{{ brand.name }}" class="brand-mini-logo">
+                            {% else %}
+                                <i class="fas fa-tag"></i>
+                            {% endif %}
+                            {{ brand.name }}
+                            <small>({{ brand.product_count }})</small>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Recent Searches -->
+                <div class="alternative-section">
+                    <h6 class="alt-section-title">{% trans "عمليات بحث حديثة" %}</h6>
+                    <div class="alt-items" id="recentSearches">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.no-products-found-section {
+    background: linear-gradient(135deg, rgba(var(--bs-primary-rgb), 0.03), rgba(var(--bs-primary-rgb), 0.01));
+    border-radius: 16px;
+    padding: 3rem 2rem;
+    text-align: center;
+    min-height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.no-products-found-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(var(--bs-primary-rgb), 0.05) 0%, transparent 70%);
+    animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.no-products-container {
+    position: relative;
+    z-index: 2;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Icon Animation */
+.no-products-icon {
+    position: relative;
+    margin-bottom: 2rem;
+    display: inline-block;
+}
+
+.icon-wrapper {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, var(--bs-primary), rgba(var(--bs-primary-rgb), 0.7));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    box-shadow: 0 10px 30px rgba(var(--bs-primary-rgb), 0.3);
+}
+
+.icon-main {
+    font-size: 3rem;
+    color: white;
+    animation: bounce 2s infinite;
+}
+
+.icon-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    background: #dc3545;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeInOut 3s infinite;
+}
+
+.icon-overlay i {
+    color: white;
+    font-size: 1.2rem;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-10px); }
+    60% { transform: translateY(-5px); }
+}
+
+@keyframes fadeInOut {
+    0%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.icon-ripples {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.ripple {
+    position: absolute;
+    border: 2px solid rgba(var(--bs-primary-rgb), 0.3);
+    border-radius: 50%;
+    animation: ripple 2s infinite;
+}
+
+.ripple-1 {
+    width: 140px;
+    height: 140px;
+    animation-delay: 0s;
+}
+
+.ripple-2 {
+    width: 180px;
+    height: 180px;
+    animation-delay: 0.5s;
+}
+
+.ripple-3 {
+    width: 220px;
+    height: 220px;
+    animation-delay: 1s;
+}
+
+@keyframes ripple {
+    0% {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 0;
+    }
+}
+
+/* Content */
+.no-products-content {
+    margin-bottom: 2rem;
+}
+
+.no-products-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--bs-body-color);
+    margin-bottom: 1rem;
+    line-height: 1.3;
+}
+
+.no-products-subtitle {
+    font-size: 1.1rem;
+    color: #6c757d;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.search-query-display {
+    margin: 1rem 0;
+}
+
+.query-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(var(--bs-primary-rgb), 0.1);
+    border: 1px dashed rgba(var(--bs-primary-rgb), 0.3);
+    border-radius: 25px;
+    padding: 8px 16px;
+    font-family: monospace;
+    font-size: 1rem;
+}
+
+.query-text {
+    font-weight: 600;
+    color: var(--bs-primary);
+}
+
+/* Suggestions */
+.no-products-suggestions {
+    margin-bottom: 2rem;
+}
+
+.suggestions-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: var(--bs-body-color);
+}
+
+.suggestions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.suggestion-item {
+    background: var(--bs-body-bg);
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 12px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+    text-align: left;
+}
+
+.suggestion-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    border-color: rgba(var(--bs-primary-rgb), 0.3);
+}
+
+.suggestion-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(var(--bs-primary-rgb), 0.1);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+    color: var(--bs-primary);
+    font-size: 1.1rem;
+}
+
+.suggestion-content h6 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--bs-body-color);
+}
+
+.suggestion-content p {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Actions */
+.no-products-actions {
+    margin-bottom: 2rem;
+}
+
+.actions-row {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    font-size: 0.95rem;
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    transition: all 0.3s ease;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.secondary-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.secondary-actions .btn-link {
+    color: #6c757d;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: color 0.3s ease;
+}
+
+.secondary-actions .btn-link:hover {
+    color: var(--bs-primary);
+}
+
+/* Alternative Options */
+.alternative-options {
+    text-align: left;
+}
+
+.alternatives-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: var(--bs-body-color);
+    text-align: center;
+}
+
+.alternatives-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.alternative-section {
+    background: var(--bs-body-bg);
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 10px;
+    padding: 1rem;
+}
+
+.alt-section-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--bs-body-color);
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.alt-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.alt-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    color: var(--bs-body-color);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+}
+
+.alt-item:hover {
+    background: rgba(var(--bs-primary-rgb), 0.05);
+    color: var(--bs-primary);
+    transform: translateX(5px);
+}
+
+.alt-item i {
+    width: 16px;
+    text-align: center;
+    color: var(--bs-primary);
+}
+
+.brand-mini-logo {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+    border-radius: 2px;
+}
+
+.alt-item small {
+    margin-left: auto;
+    color: #6c757d;
+}
+
+/* Dark mode adjustments */
+[data-bs-theme="dark"] .no-products-found-section {
+    background: linear-gradient(135deg, rgba(var(--bs-primary-rgb), 0.05), rgba(var(--bs-primary-rgb), 0.02));
+}
+
+[data-bs-theme="dark"] .suggestion-item,
+[data-bs-theme="dark"] .alternative-section {
+    border-color: rgba(255,255,255,0.1);
+}
+
+/* RTL adjustments */
+html[dir="rtl"] .suggestion-item,
+html[dir="rtl"] .alternative-options {
+    text-align: right;
+}
+
+html[dir="rtl"] .alt-item:hover {
+    transform: translateX(-5px);
+}
+
+html[dir="rtl"] .alt-item small {
+    margin-left: 0;
+    margin-right: auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .no-products-found-section {
+        padding: 2rem 1rem;
+    }
+
+    .icon-wrapper {
+        width: 80px;
+        height: 80px;
+    }
+
+    .icon-main {
+        font-size: 2rem;
+    }
+
+    .no-products-title {
+        font-size: 1.4rem;
+    }
+
+    .no-products-subtitle {
+        font-size: 1rem;
+    }
+
+    .suggestions-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .actions-row {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .action-btn {
+        width: 100%;
+        max-width: 300px;
+    }
+
+    .alternatives-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 576px) {
+    .ripple-1, .ripple-2, .ripple-3 {
+        display: none;
+    }
+
+    .secondary-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    const searchSimilarBtn = document.getElementById('searchSimilarBtn');
+    const relaxFiltersBtn = document.getElementById('relaxFiltersBtn');
+    const notifyBtn = document.getElementById('notifyWhenAvailable');
+    const requestBtn = document.getElementById('requestProduct');
+    const recentSearches = document.getElementById('recentSearches');
+
+    // Clear search
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', function() {
+            const url = new URL(window.location);
+            url.searchParams.delete('q');
+            window.location.href = url.toString();
+        });
+    }
+
+    // Search similar
+    if (searchSimilarBtn) {
+        searchSimilarBtn.addEventListener('click', function() {
+            const query = new URLSearchParams(window.location.search).get('q');
+            if (query) {
+                // Generate similar search terms
+                const words = query.split(' ');
+                const similarTerms = [];
+
+                // Remove last word
+                if (words.length > 1) {
+                    similarTerms.push(words.slice(0, -1).join(' '));
+                }
+
+                // Use only first word
+                if (words.length > 1) {
+                    similarTerms.push(words[0]);
+                }
+
+                if (similarTerms.length > 0) {
+                    const url = new URL(window.location);
+                    url.searchParams.set('q', similarTerms[0]);
+                    window.location.href = url.toString();
+                }
+            }
+        });
+    }
+
+    // Relax filters
+    if (relaxFiltersBtn) {
+        relaxFiltersBtn.addEventListener('click', function() {
+            const url = new URL(window.location);
+
+            // Remove some filters to get more results
+            url.searchParams.delete('min_price');
+            url.searchParams.delete('max_price');
+            url.searchParams.delete('is_new');
+            url.searchParams.delete('is_featured');
+            url.searchParams.delete('min_rating');
+
+            window.location.href = url.toString();
+        });
+    }
+
+    // Notify when available
+    if (notifyBtn) {
+        notifyBtn.addEventListener('click', function() {
+            const email = prompt('{% trans "أدخل بريدك الإلكتروني للإشعار:" %}');
+            if (email && validateEmail(email)) {
+                // Send notification request
+                fetch('{% url "products:notify_when_available" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        search_params: window.location.search
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('{% trans "تم! سنرسل لك إشعار عند توفر منتجات مطابقة" %}');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        });
+    }
+
+    // Request product
+    if (requestBtn) {
+        requestBtn.addEventListener('click', function() {
+            const product = prompt('{% trans "اكتب تفاصيل المنتج المطلوب:" %}');
+            if (product) {
+                // Send product request
+                fetch('{% url "products:request_product" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        product_description: product,
+                        current_search: window.location.search
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('{% trans "شكراً! تم إرسال طلبك وسنتواصل معك قريباً" %}');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        });
+    }
+
+    // Load recent searches
+    if (recentSearches) {
+        const recent = JSON.parse(localStorage.getItem('recentSearches') || '[]');
+        if (recent.length > 0) {
+            recent.slice(0, 4).forEach(search => {
+                const link = document.createElement('a');
+                link.href = `{% url "products:product_search" %}?q=${encodeURIComponent(search)}`;
+                link.className = 'alt-item';
+                link.innerHTML = `
+                    <i class="fas fa-history"></i>
+                    ${search}
+                `;
+                recentSearches.appendChild(link);
+            });
+        } else {
+            recentSearches.innerHTML = '<p class="text-muted small">{% trans "لا توجد عمليات بحث حديثة" %}</p>';
+        }
+    }
+
+    // Email validation
+    function validateEmail(email) {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+    }
+
+    // Add some interaction effects
+    const suggestionItems = document.querySelectorAll('.suggestion-item');
+    suggestionItems.forEach((item, index) => {
+        item.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px) scale(1.02)';
+        });
+
+        item.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+});
+</script>

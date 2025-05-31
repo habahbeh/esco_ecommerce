@@ -1,0 +1,780 @@
+{% load static %}
+{% load i18n %}
+
+{% if active_filters or request.GET.q or request.GET.min_price or request.GET.max_price or request.GET.sort %}
+<div class="active-filters-section" id="activeFiltersSection">
+    <div class="filters-header">
+        <div class="filters-info">
+            <h6 class="filters-title">
+                <i class="fas fa-filter text-primary me-2"></i>
+                {% trans "الفلاتر النشطة" %}
+                <span class="filters-count badge bg-primary ms-2">
+                    {{ active_filters|length|add:request.GET.brand|length|add:request.GET.tag|length }}
+                    {% if request.GET.q %}+1{% endif %}
+                    {% if request.GET.min_price or request.GET.max_price %}+1{% endif %}
+                    {% if request.GET.sort and request.GET.sort != 'newest' %}+1{% endif %}
+                </span>
+            </h6>
+            <p class="filters-subtitle">
+                {% trans "النتائج المفلترة حسب اختياراتك" %}
+            </p>
+        </div>
+
+        <div class="filters-actions">
+            <button class="btn btn-outline-danger btn-sm clear-all-filters" id="clearAllFilters">
+                <i class="fas fa-times me-1"></i>
+                {% trans "مسح الكل" %}
+            </button>
+        </div>
+    </div>
+
+    <div class="filters-content">
+        <div class="active-filters-list">
+            <!-- Search Query Filter -->
+            {% if request.GET.q %}
+            <div class="filter-tag search-filter" data-filter-type="search">
+                <div class="filter-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="filter-content">
+                    <span class="filter-label">{% trans "البحث" %}:</span>
+                    <span class="filter-value">"{{ request.GET.q }}"</span>
+                </div>
+                <button class="filter-remove" data-filter="q" title="{% trans 'إزالة فلتر البحث' %}">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            {% endif %}
+
+            <!-- Price Range Filter -->
+            {% if request.GET.min_price or request.GET.max_price %}
+            <div class="filter-tag price-filter" data-filter-type="price">
+                <div class="filter-icon">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="filter-content">
+                    <span class="filter-label">{% trans "السعر" %}:</span>
+                    <span class="filter-value">
+                        {% if request.GET.min_price and request.GET.max_price %}
+                            {{ request.GET.min_price }} - {{ request.GET.max_price }} {% trans "د.أ" %}
+                        {% elif request.GET.min_price %}
+                            {% trans "من" %} {{ request.GET.min_price }} {% trans "د.أ" %}
+                        {% elif request.GET.max_price %}
+                            {% trans "حتى" %} {{ request.GET.max_price }} {% trans "د.أ" %}
+                        {% endif %}
+                    </span>
+                </div>
+                <button class="filter-remove" data-filter="price" title="{% trans 'إزالة فلتر السعر' %}">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            {% endif %}
+
+            <!-- Brand Filters -->
+            {% if request.GET.brand %}
+                {% for brand_id in request.GET.brand %}
+                    {% for brand in brands %}
+                        {% if brand.id|stringformat:"s" == brand_id %}
+                        <div class="filter-tag brand-filter" data-filter-type="brand" data-filter-value="{{ brand.id }}">
+                            <div class="filter-icon">
+                                {% if brand.logo %}
+                                    <img src="{{ brand.logo.url }}" alt="{{ brand.name }}" class="brand-filter-logo">
+                                {% else %}
+                                    <i class="fas fa-tag"></i>
+                                {% endif %}
+                            </div>
+                            <div class="filter-content">
+                                <span class="filter-label">{% trans "العلامة التجارية" %}:</span>
+                                <span class="filter-value">{{ brand.name }}</span>
+                            </div>
+                            <button class="filter-remove" data-filter="brand" data-value="{{ brand.id }}" title="{% trans 'إزالة فلتر العلامة التجارية' %}">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+            {% endif %}
+
+            <!-- Category Filter -->
+            {% if current_category %}
+            <div class="filter-tag category-filter" data-filter-type="category">
+                <div class="filter-icon">
+                    {% if current_category.icon %}
+                        <i class="{{ current_category.icon }}"></i>
+                    {% else %}
+                        <i class="fas fa-folder"></i>
+                    {% endif %}
+                </div>
+                <div class="filter-content">
+                    <span class="filter-label">{% trans "الفئة" %}:</span>
+                    <span class="filter-value">{{ current_category.name }}</span>
+                </div>
+                <button class="filter-remove" data-filter="category" title="{% trans 'إزالة فلتر الفئة' %}">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            {% endif %}
+
+            <!-- Tag Filters -->
+            {% if request.GET.tag %}
+                {% for tag_id in request.GET.tag %}
+                    {% for tag in popular_tags %}
+                        {% if tag.id|stringformat:"s" == tag_id %}
+                        <div class="filter-tag tag-filter" data-filter-type="tag" data-filter-value="{{ tag.id }}">
+                            <div class="filter-icon">
+                                <i class="fas fa-hashtag"></i>
+                            </div>
+                            <div class="filter-content">
+                                <span class="filter-label">{% trans "الوسم" %}:</span>
+                                <span class="filter-value">#{{ tag.name }}</span>
+                            </div>
+                            <button class="filter-remove" data-filter="tag" data-value="{{ tag.id }}" title="{% trans 'إزالة فلتر الوسم' %}">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+            {% endif %}
+
+            <!-- Feature Filters -->
+            {% if request.GET.is_new %}
+            <div class="filter-tag feature-filter" data-filter-type="is_new">
+                <div class="filter-icon">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="filter-content">
+                    <span class="filter-label">{% trans "الحالة" %}:</span>
+                    <span class="filter-value">{% trans "منتجات جديدة" %}</span>
+                </div>
+                <button class="filter-remove" data-filter="is_new" title="{% trans 'إزالة فلتر المنتجات الجديدة' %}">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            {% endif %}
+
+            {% if request.GET.is_featured %}
+            <div class="filter-tag feature-filter" data-filter-type="is_featured">
+                <div class="filter-icon">
+                    <i class="fas fa-award"></i>
+                </div>
+                <div class="filter-content">
+                    <span class="filter-label">{% trans "الحالة" %}:</span>
+                    <span class="filter-value">{% trans "منتجات مميزة" %}</span>
+                </div>
+                <button class="filter-remove" data-filter="is_featured" title="{% trans 'إزالة فلتر المنتجات المميزة' %}">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            {% endif %}
+
+            {% if request.GET.on_sale %}
+            <div class="filter-tag feature-filter" data-filter-type="on_sale">
+                <div class="filter-icon">
+                    <i class="fas fa-percent"></i>
+                </div>
+                <div class="filter-content">
+                    <span class="filter-label">{% trans "العروض" %}:</span>
+                    <span class="filter-value">{% trans "منتجات مخفضة" %}</span>
+                </div>
+                <button class="filter-remove" data-filter="on_sale" title="{% trans 'إزالة فلتر العروض' %}">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            {% endif %}
+
+            {% if request.GET.in_stock %}
+            <div class="filter-tag feature-filter" data-filter-type="in_stock">
+                <div class="filter-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="filter-content">
+                    <span class="filter-label">{% trans "التوفر" %}:</span>
+                    <span class="filter-value">{% trans "متوفر في المخزن" %}</span>
+                </div>
+                <button class="filter-remove" data-filter="in_stock" title="{% trans 'إزالة فلتر التوفر' %}">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            {% endif %}
+
+            <!-- Rating Filter -->
+            {% if request.GET.min_rating %}
+            <div class="filter-tag rating-filter" data-filter-type="min_rating">
+                <div class="filter-icon">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="filter-content">
+                    <span class="filter-label">{% trans "التقييم" %}:</span>
+                    <span class="filter-value">
+                        {{ request.GET.min_rating }}
+                        {% for i in "12345"|make_list %}
+                            {% if forloop.counter <= request.GET.min_rating|add:0 %}
+                                <i class="fas fa-star text-warning"></i>
+                            {% endif %}
+                        {% endfor %}
+                        {% trans "فأكثر" %}
+                    </span>
+                </div>
+                <button class="filter-remove" data-filter="min_rating" title="{% trans 'إزالة فلتر التقييم' %}">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            {% endif %}
+
+            <!-- Sort Filter -->
+            {% if request.GET.sort and request.GET.sort != 'newest' %}
+            <div class="filter-tag sort-filter" data-filter-type="sort">
+                <div class="filter-icon">
+                    <i class="fas fa-sort"></i>
+                </div>
+                <div class="filter-content">
+                    <span class="filter-label">{% trans "الترتيب" %}:</span>
+                    <span class="filter-value">
+                        {% if request.GET.sort == 'oldest' %}{% trans "الأقدم" %}
+                        {% elif request.GET.sort == 'price_low' %}{% trans "السعر: منخفض إلى مرتفع" %}
+                        {% elif request.GET.sort == 'price_high' %}{% trans "السعر: مرتفع إلى منخفض" %}
+                        {% elif request.GET.sort == 'name_az' %}{% trans "الاسم: أ-ي" %}
+                        {% elif request.GET.sort == 'name_za' %}{% trans "الاسم: ي-أ" %}
+                        {% elif request.GET.sort == 'best_selling' %}{% trans "الأكثر مبيعاً" %}
+                        {% elif request.GET.sort == 'most_viewed' %}{% trans "الأكثر مشاهدة" %}
+                        {% elif request.GET.sort == 'top_rated' %}{% trans "الأعلى تقييماً" %}
+                        {% else %}{{ request.GET.sort }}{% endif %}
+                    </span>
+                </div>
+                <button class="filter-remove" data-filter="sort" title="{% trans 'إزالة فلتر الترتيب' %}">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Filter Summary -->
+        <div class="filters-summary mt-3">
+            <div class="summary-stats">
+                <div class="stat-item">
+                    <i class="fas fa-filter text-primary me-1"></i>
+                    <span class="stat-value">{{ active_filters|length|add:request.GET.brand|length|add:request.GET.tag|length }}</span>
+                    <span class="stat-label">{% trans "فلتر نشط" %}</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-box-open text-success me-1"></i>
+                    <span class="stat-value">{{ total_count|default:0 }}</span>
+                    <span class="stat-label">{% trans "منتج موجود" %}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="filters-quick-actions mt-3">
+            <div class="row g-2">
+                <div class="col-auto">
+                    <button class="btn btn-outline-primary btn-sm save-filter-preset" id="saveFilterPreset">
+                        <i class="fas fa-bookmark me-1"></i>
+                        {% trans "حفظ الفلاتر" %}
+                    </button>
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-outline-info btn-sm share-filters" id="shareFilters">
+                        <i class="fas fa-share-alt me-1"></i>
+                        {% trans "مشاركة الرابط" %}
+                    </button>
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-outline-warning btn-sm export-results" id="exportResults">
+                        <i class="fas fa-download me-1"></i>
+                        {% trans "تصدير النتائج" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.active-filters-section {
+    background: linear-gradient(135deg, rgba(var(--bs-primary-rgb), 0.05), rgba(var(--bs-primary-rgb), 0.02));
+    border: 1px solid rgba(var(--bs-primary-rgb), 0.2);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.active-filters-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--bs-primary), transparent);
+}
+
+.filters-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.filters-info {
+    flex: 1;
+}
+
+.filters-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+    color: var(--bs-body-color);
+    display: flex;
+    align-items: center;
+}
+
+.filters-count {
+    font-size: 0.75rem;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.filters-subtitle {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin: 0;
+}
+
+.filters-actions {
+    flex-shrink: 0;
+}
+
+.clear-all-filters {
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.clear-all-filters:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+}
+
+/* Active Filters List */
+.active-filters-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 1rem;
+}
+
+.filter-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bs-body-bg);
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 25px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.filter-tag::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--bs-primary);
+}
+
+.filter-tag:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.filter-tag.search-filter::before { background: #17a2b8; }
+.filter-tag.price-filter::before { background: #28a745; }
+.filter-tag.brand-filter::before { background: #fd7e14; }
+.filter-tag.category-filter::before { background: #6f42c1; }
+.filter-tag.tag-filter::before { background: #e83e8c; }
+.filter-tag.feature-filter::before { background: #ffc107; }
+.filter-tag.rating-filter::before { background: #dc3545; }
+.filter-tag.sort-filter::before { background: #6c757d; }
+
+.filter-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(var(--bs-primary-rgb), 0.1);
+    color: var(--bs-primary);
+    font-size: 0.7rem;
+}
+
+.brand-filter-logo {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+    border-radius: 2px;
+}
+
+.filter-content {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+}
+
+.filter-label {
+    font-weight: 500;
+    color: #6c757d;
+}
+
+.filter-value {
+    font-weight: 600;
+    color: var(--bs-body-color);
+}
+
+.filter-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border: none;
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    border-radius: 50%;
+    font-size: 0.6rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-left: 4px;
+}
+
+.filter-remove:hover {
+    background: #dc3545;
+    color: white;
+    transform: scale(1.1);
+}
+
+/* Filter Summary */
+.filters-summary {
+    background: rgba(var(--bs-primary-rgb), 0.03);
+    border-radius: 8px;
+    padding: 8px 12px;
+    border: 1px solid rgba(var(--bs-primary-rgb), 0.1);
+}
+
+.summary-stats {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8rem;
+}
+
+.stat-value {
+    font-weight: 600;
+    color: var(--bs-body-color);
+}
+
+.stat-label {
+    color: #6c757d;
+}
+
+/* Quick Actions */
+.filters-quick-actions .btn {
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.filters-quick-actions .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Dark mode adjustments */
+[data-bs-theme="dark"] .active-filters-section {
+    background: linear-gradient(135deg, rgba(var(--bs-primary-rgb), 0.1), rgba(var(--bs-primary-rgb), 0.05));
+    border-color: rgba(var(--bs-primary-rgb), 0.3);
+}
+
+[data-bs-theme="dark"] .filter-tag {
+    border-color: rgba(255,255,255,0.2);
+}
+
+[data-bs-theme="dark"] .filters-summary {
+    background: rgba(var(--bs-primary-rgb), 0.08);
+    border-color: rgba(var(--bs-primary-rgb), 0.2);
+}
+
+/* RTL adjustments */
+html[dir="rtl"] .filter-remove {
+    margin-left: 0;
+    margin-right: 4px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .active-filters-section {
+        padding: 1rem;
+    }
+
+    .filters-header {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: stretch;
+    }
+
+    .filters-actions {
+        align-self: flex-end;
+    }
+
+    .summary-stats {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-start;
+    }
+
+    .filters-quick-actions {
+        margin-top: 0.75rem;
+    }
+
+    .filters-quick-actions .row {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 576px) {
+    .filter-tag {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+    }
+
+    .filter-icon {
+        width: 16px;
+        height: 16px;
+        font-size: 0.6rem;
+    }
+
+    .filter-remove {
+        width: 16px;
+        height: 16px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const clearAllBtn = document.getElementById('clearAllFilters');
+    const saveFilterBtn = document.getElementById('saveFilterPreset');
+    const shareFiltersBtn = document.getElementById('shareFilters');
+    const exportResultsBtn = document.getElementById('exportResults');
+
+    // Remove individual filters
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('filter-remove') || e.target.closest('.filter-remove')) {
+            const button = e.target.closest('.filter-remove');
+            const filterType = button.getAttribute('data-filter');
+            const filterValue = button.getAttribute('data-value');
+
+            removeFilter(filterType, filterValue);
+        }
+    });
+
+    // Clear all filters
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', function() {
+            if (confirm('{% trans "هل أنت متأكد من مسح جميع الفلاتر؟" %}')) {
+                const url = new URL(window.location);
+                const baseUrl = url.origin + url.pathname;
+                window.location.href = baseUrl;
+            }
+        });
+    }
+
+    // Remove specific filter
+    function removeFilter(filterType, filterValue) {
+        const url = new URL(window.location);
+
+        switch(filterType) {
+            case 'q':
+                url.searchParams.delete('q');
+                break;
+            case 'price':
+                url.searchParams.delete('min_price');
+                url.searchParams.delete('max_price');
+                break;
+            case 'brand':
+                if (filterValue) {
+                    const brands = url.searchParams.getAll('brand');
+                    url.searchParams.delete('brand');
+                    brands.forEach(brand => {
+                        if (brand !== filterValue) {
+                            url.searchParams.append('brand', brand);
+                        }
+                    });
+                } else {
+                    url.searchParams.delete('brand');
+                }
+                break;
+            case 'tag':
+                if (filterValue) {
+                    const tags = url.searchParams.getAll('tag');
+                    url.searchParams.delete('tag');
+                    tags.forEach(tag => {
+                        if (tag !== filterValue) {
+                            url.searchParams.append('tag', tag);
+                        }
+                    });
+                } else {
+                    url.searchParams.delete('tag');
+                }
+                break;
+            case 'category':
+                // Navigate to all products
+                window.location.href = '{% url "products:product_list" %}';
+                return;
+            case 'is_new':
+                url.searchParams.delete('is_new');
+                break;
+            case 'is_featured':
+                url.searchParams.delete('is_featured');
+                break;
+            case 'on_sale':
+                url.searchParams.delete('on_sale');
+                break;
+            case 'in_stock':
+                url.searchParams.delete('in_stock');
+                break;
+            case 'min_rating':
+                url.searchParams.delete('min_rating');
+                break;
+            case 'sort':
+                url.searchParams.delete('sort');
+                break;
+        }
+
+        window.location.href = url.toString();
+    }
+
+    // Save filter preset
+    if (saveFilterBtn) {
+        saveFilterBtn.addEventListener('click', function() {
+            const filterName = prompt('{% trans "اسم مجموعة الفلاتر:" %}');
+            if (filterName) {
+                // Save to localStorage or send to server
+                const filters = getCurrentFilters();
+                const savedFilters = JSON.parse(localStorage.getItem('savedFilters') || '[]');
+
+                savedFilters.push({
+                    name: filterName,
+                    filters: filters,
+                    created: new Date().toISOString()
+                });
+
+                localStorage.setItem('savedFilters', JSON.stringify(savedFilters));
+
+                this.innerHTML = '<i class="fas fa-check me-1"></i> {% trans "تم الحفظ" %}';
+                this.classList.remove('btn-outline-primary');
+                this.classList.add('btn-success');
+
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-bookmark me-1"></i> {% trans "حفظ الفلاتر" %}';
+                    this.classList.remove('btn-success');
+                    this.classList.add('btn-outline-primary');
+                }, 2000);
+            }
+        });
+    }
+
+    // Share filters
+    if (shareFiltersBtn) {
+        shareFiltersBtn.addEventListener('click', function() {
+            const url = window.location.href;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: '{% trans "فلاتر المنتجات" %}',
+                    text: '{% trans "شاهد هذه المنتجات المفلترة" %}',
+                    url: url
+                });
+            } else if (navigator.clipboard) {
+                navigator.clipboard.writeText(url).then(() => {
+                    this.innerHTML = '<i class="fas fa-check me-1"></i> {% trans "تم النسخ" %}';
+                    this.classList.remove('btn-outline-info');
+                    this.classList.add('btn-success');
+
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fas fa-share-alt me-1"></i> {% trans "مشاركة الرابط" %}';
+                        this.classList.remove('btn-success');
+                        this.classList.add('btn-outline-info');
+                    }, 2000);
+                });
+            }
+        });
+    }
+
+    // Export results
+    if (exportResultsBtn) {
+        exportResultsBtn.addEventListener('click', function() {
+            const url = new URL('{% url "products:export_filtered_products" %}', window.location.origin);
+            const currentParams = new URLSearchParams(window.location.search);
+
+            currentParams.forEach((value, key) => {
+                url.searchParams.append(key, value);
+            });
+
+            window.open(url.toString(), '_blank');
+        });
+    }
+
+    // Get current filters for saving
+    function getCurrentFilters() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const filters = {};
+
+        for (const [key, value] of urlParams.entries()) {
+            if (filters[key]) {
+                if (Array.isArray(filters[key])) {
+                    filters[key].push(value);
+                } else {
+                    filters[key] = [filters[key], value];
+                }
+            } else {
+                filters[key] = value;
+            }
+        }
+
+        return filters;
+    }
+
+    // Add smooth animations for filter removal
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('filter-remove') || e.target.closest('.filter-remove')) {
+            const filterTag = e.target.closest('.filter-tag');
+            filterTag.style.transform = 'scale(0.8)';
+            filterTag.style.opacity = '0.5';
+        }
+    });
+});
+</script>
+{% endif %}
