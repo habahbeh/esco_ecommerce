@@ -6,7 +6,7 @@ Handles search functionality, advanced search, and search analytics
 
 from typing import Dict, Any, List, Optional
 from django.shortcuts import render
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, ListView
 from django.utils.translation import gettext as _
 from django.utils import timezone
 from django.db.models import Q, Count, Avg, Min, Max
