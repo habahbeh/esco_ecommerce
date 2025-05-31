@@ -1,0 +1,168 @@
+{% load static %}
+{% load i18n %}
+
+<!-- Modern Header -->
+<header class="modern-header" id="header">
+    <div class="header-wrapper">
+        <div class="container">
+            <div class="nav-container">
+                <!-- Logo -->
+                <div class="logo-wrapper">
+                    <a href="{% url 'core:home' %}" aria-label="{% trans 'الصفحة الرئيسية' %}">
+                        {% if site_settings.logo %}
+                            <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name|default:'ESCO' }}">
+                        {% else %}
+                            <img src="{% static 'images/logo.png' %}" alt="ESCO">
+                        {% endif %}
+                    </a>
+                </div>
+
+                <!-- Desktop Search -->
+                <div class="search-container d-none d-lg-block">
+                    <form action="{% url 'products:product_search' %}" method="GET" role="search" class="search-form">
+                        <input type="search" name="q" class="search-input" placeholder="{% trans 'ابحث عن المنتجات...' %}" aria-label="{% trans 'بحث' %}" value="{{ request.GET.q|default:'' }}">
+                        <button type="submit" class="search-btn" aria-label="{% trans 'بحث' %}">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Header Actions -->
+                <div class="header-actions">
+                    <!-- Account Dropdown -->
+                    <div class="dropdown">
+                        <a href="#" class="action-btn" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user"></i>
+                            <span>
+                                {% if user.is_authenticated %}
+                                    {{ user.get_full_name|default:user.username|truncatechars:10 }}
+                                {% else %}
+                                    {% trans "الحساب" %}
+                                {% endif %}
+                            </span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            {% if user.is_authenticated %}
+                                <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="fas fa-user-circle me-2"></i> {% trans "الملف الشخصي" %}</a></li>
+                                <li><a class="dropdown-item" href="{% url 'accounts:order_history' %}"><i class="fas fa-box me-2"></i> {% trans "طلباتي" %}</a></li>
+                                {% if user.is_staff %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{% url 'dashboard:index' %}"><i class="fas fa-tachometer-alt me-2"></i> {% trans "لوحة التحكم" %}</a></li>
+                                {% endif %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'accounts:logout' %}"><i class="fas fa-sign-out-alt me-2"></i> {% trans "تسجيل الخروج" %}</a></li>
+                            {% else %}
+                                <li><a class="dropdown-item" href="{% url 'accounts:login' %}"><i class="fas fa-sign-in-alt me-2"></i> {% trans "تسجيل الدخول" %}</a></li>
+                                <li><a class="dropdown-item" href="{% url 'accounts:register' %}"><i class="fas fa-user-plus me-2"></i> {% trans "إنشاء حساب" %}</a></li>
+                            {% endif %}
+                        </ul>
+                    </div>
+
+                    <!-- Cart -->
+                    <a href="{% url 'cart:cart' %}" class="action-btn cart-btn">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>{% trans "السلة" %}</span>
+                        {% if cart and cart.items.count > 0 %}
+                            <span class="cart-badge">{{ cart.total_items }}</span>
+                        {% endif %}
+                    </a>
+
+                    <!-- Language Switcher -->
+                    <div class="dropdown">
+                        <button class="action-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-globe"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            {% get_current_language as CURRENT_LANGUAGE %}
+                            {% get_available_languages as AVAILABLE_LANGUAGES %}
+                            {% get_language_info_list for AVAILABLE_LANGUAGES as languages %}
+                            {% for language in languages %}
+                                <li>
+                                    <a class="dropdown-item{% if language.code == CURRENT_LANGUAGE %} active{% endif %}" href="{% url 'core:set_language' language.code %}">
+                                        {{ language.name_local }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <!-- Dark Mode Toggle -->
+                    {% if site_settings.enable_dark_mode %}
+                        <button class="action-btn" id="darkModeToggle" aria-label="{% trans 'تبديل الوضع الداكن' %}">
+                            <i class="fas fa-moon" id="darkModeIcon"></i>
+                        </button>
+                    {% endif %}
+
+                    <!-- Mobile Menu Toggle -->
+                    <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="{% trans 'فتح القائمة' %}">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Desktop Navigation -->
+        <nav class="main-nav d-none d-lg-block">
+            <div class="container">
+                <ul class="nav-menu">
+                    <li><a href="{% url 'core:home' %}" class="{% if request.path == '/' %}active{% endif %}"><i class="fas fa-home me-2"></i>{% trans "الرئيسية" %}</a></li>
+                    <li><a href="{% url 'products:category_list' %}" class="{% if '/products/categories/' in request.path %}active{% endif %}"><i class="fas fa-th-large me-2"></i>{% trans "التصنيفات" %}</a></li>
+                    <li><a href="{% url 'products:special_offers' %}" class="{% if '/products/special-offers/' in request.path %}active{% endif %}"><i class="fas fa-tags me-2"></i>{% trans "العروض الخاصة" %}</a></li>
+                    <li><a href="{% url 'core:about' %}" class="{% if '/about/' in request.path %}active{% endif %}"><i class="fas fa-info-circle me-2"></i>{% trans "من نحن" %}</a></li>
+                    <li><a href="{% url 'core:contact' %}" class="{% if '/contact/' in request.path %}active{% endif %}"><i class="fas fa-envelope me-2"></i>{% trans "اتصل بنا" %}</a></li>
+                </ul>
+            </div>
+        </nav>
+    </div>
+</header>
+
+<!-- Mobile Menu -->
+<div class="mobile-overlay" id="mobileOverlay"></div>
+<div class="mobile-menu" id="mobileMenu">
+    <div class="mobile-menu-header">
+        <div class="logo-wrapper">
+            {% if site_settings.logo %}
+                <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name|default:'ESCO' }}" height="30">
+            {% else %}
+                <img src="{% static 'images/logo.png' %}" alt="ESCO" height="30">
+            {% endif %}
+        </div>
+        <button class="mobile-menu-close" id="mobileMenuClose" aria-label="{% trans 'إغلاق القائمة' %}">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <div class="mobile-search">
+        <form action="{% url 'products:product_search' %}" method="GET" role="search" class="search-form">
+            <input type="search" name="q" class="search-input" placeholder="{% trans 'ابحث عن المنتجات...' %}" aria-label="{% trans 'بحث' %}" value="{{ request.GET.q|default:'' }}">
+            <button type="submit" class="search-btn" aria-label="{% trans 'بحث' %}">
+                <i class="fas fa-search"></i>
+            </button>
+        </form>
+    </div>
+
+    <ul class="mobile-nav-list">
+        <li><a href="{% url 'core:home' %}"><i class="fas fa-home"></i>{% trans "الرئيسية" %}</a></li>
+        <li><a href="{% url 'products:category_list' %}"><i class="fas fa-th-large"></i>{% trans "التصنيفات" %}</a></li>
+        <li><a href="{% url 'products:special_offers' %}"><i class="fas fa-tags"></i>{% trans "العروض الخاصة" %}</a></li>
+        <li><a href="{% url 'core:about' %}"><i class="fas fa-info-circle"></i>{% trans "من نحن" %}</a></li>
+        <li><a href="{% url 'core:contact' %}"><i class="fas fa-envelope"></i>{% trans "اتصل بنا" %}</a></li>
+        <li><a href="{% url 'orders:track_order' %}"><i class="fas fa-truck"></i>{% trans "تتبع الطلب" %}</a></li>
+    </ul>
+
+    {% if user.is_authenticated %}
+        <div class="mobile-nav-list mt-3 pt-3 border-top">
+            <a href="{% url 'accounts:profile' %}"><i class="fas fa-user-circle"></i>{% trans "الملف الشخصي" %}</a>
+            <a href="{% url 'accounts:order_history' %}"><i class="fas fa-box"></i>{% trans "طلباتي" %}</a>
+            {% if user.is_staff %}
+                <a href="{% url 'dashboard:index' %}"><i class="fas fa-tachometer-alt"></i>{% trans "لوحة التحكم" %}</a>
+            {% endif %}
+            <a href="{% url 'accounts:logout' %}" class="text-danger"><i class="fas fa-sign-out-alt"></i>{% trans "تسجيل الخروج" %}</a>
+        </div>
+    {% else %}
+        <div class="mobile-nav-list mt-3 pt-3 border-top">
+            <a href="{% url 'accounts:login' %}"><i class="fas fa-sign-in-alt"></i>{% trans "تسجيل الدخول" %}</a>
+            <a href="{% url 'accounts:register' %}"><i class="fas fa-user-plus"></i>{% trans "إنشاء حساب" %}</a>
+        </div>
+    {% endif %}
+</div>

@@ -31,10 +31,11 @@ class HomeView(TemplateView):
         ).select_related('category', 'brand').prefetch_related('images').order_by('-published_at')[:12]
 
         # الحصول على الفئات الرئيسية - Get main categories
+        # تغيير من level=1 إلى parent=None للحصول على الفئات الجذر
         context['main_categories'] = Category.objects.filter(
-            level=1,
+            parent=None,  # الفئات التي ليس لها أب (الفئات الرئيسية)
             is_active=True
-        ).order_by('name')
+        ).order_by('sort_order', 'name')  # استخدام sort_order أولاً ثم name
 
         # الحصول على المنتجات التي عليها خصم - Get discounted products (محسن)
         now = timezone.now()
