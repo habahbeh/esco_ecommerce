@@ -2,20 +2,33 @@
 {% load static %}
 {% load i18n %}
 
-{% block title %}{% trans "المنتجات" %} - {{ category.name|default:"جميع المنتجات" }} | {{ site_settings.site_name|default:"ESCO" }}{% endblock %}
+<!-- File: products/templates/products/product_list.html -->
+<!-- Modern Product List Page with Advanced Filtering -->
+
+{% block title %}
+    {% if category %}{{ category.name }}{% else %}{% trans "جميع المنتجات" %}{% endif %} | {{ site_settings.site_name|default:"ESCO" }}
+{% endblock %}
 
 {% block extra_css %}
 <style>
+    /* Modern Product List Styles */
+    .products-page {
+        background: #f9fafb;
+        min-height: 100vh;
+        padding-bottom: 3rem;
+    }
+
     /* Page Header */
-    .page-header {
-        background: linear-gradient(135deg, var(--bs-primary) 0%, rgba(var(--bs-primary-rgb), 0.8) 100%);
+    .page-header-modern {
+        background: linear-gradient(135deg, var(--bs-primary) 0%, #0056b3 100%);
         color: white;
-        padding: 4rem 0 3rem;
+        padding: 3rem 0;
+        margin-bottom: 2rem;
         position: relative;
         overflow: hidden;
     }
 
-    .page-header::before {
+    .page-header-modern::before {
         content: '';
         position: absolute;
         top: -50%;
@@ -24,46 +37,25 @@
         height: 200%;
         background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
         background-size: 50px 50px;
-        animation: move-pattern 20s linear infinite;
+        animation: moveBackground 20s linear infinite;
     }
 
-    @keyframes move-pattern {
+    @keyframes moveBackground {
         0% { transform: translate(0, 0); }
         100% { transform: translate(50px, 50px); }
     }
 
     .page-title {
-        font-size: 3rem;
-        font-weight: 800;
-        margin-bottom: 1rem;
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
         position: relative;
-        z-index: 1;
     }
 
-    .breadcrumb {
-        background: transparent;
-        padding: 0;
-        margin: 0;
+    .page-subtitle {
+        font-size: 1.125rem;
+        opacity: 0.9;
         position: relative;
-        z-index: 1;
-    }
-
-    .breadcrumb-item {
-        color: rgba(255,255,255,0.8);
-    }
-
-    .breadcrumb-item.active {
-        color: white;
-    }
-
-    .breadcrumb-item a {
-        color: rgba(255,255,255,0.8);
-        text-decoration: none;
-        transition: color 0.3s ease;
-    }
-
-    .breadcrumb-item a:hover {
-        color: white;
     }
 
     /* Filters Sidebar */
@@ -71,7 +63,7 @@
         background: white;
         border-radius: 20px;
         padding: 2rem;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         position: sticky;
         top: 100px;
         max-height: calc(100vh - 120px);
@@ -79,69 +71,69 @@
     }
 
     .filter-section {
-        margin-bottom: 2rem;
-        padding-bottom: 2rem;
-        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
     }
 
     .filter-section:last-child {
-        margin-bottom: 0;
-        padding-bottom: 0;
         border-bottom: none;
+        padding-bottom: 0;
+        margin-bottom: 0;
     }
 
     .filter-title {
         font-size: 1.125rem;
-        font-weight: 700;
+        font-weight: 600;
+        color: #111827;
         margin-bottom: 1rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
         cursor: pointer;
+        user-select: none;
     }
 
-    .filter-toggle {
+    .filter-toggle-icon {
         transition: transform 0.3s ease;
     }
 
-    .filter-section.collapsed .filter-toggle {
+    .filter-section.collapsed .filter-toggle-icon {
         transform: rotate(-90deg);
     }
 
     .filter-content {
-        max-height: 500px;
         overflow: hidden;
         transition: max-height 0.3s ease;
+        max-height: 500px;
     }
 
     .filter-section.collapsed .filter-content {
         max-height: 0;
     }
 
-    /* Custom Checkbox */
-    .filter-checkbox {
+    /* Filter Checkbox */
+    .filter-option {
         display: flex;
         align-items: center;
-        margin-bottom: 0.75rem;
+        padding: 0.5rem 0;
         cursor: pointer;
         transition: all 0.3s ease;
     }
 
-    .filter-checkbox:hover {
+    .filter-option:hover {
         color: var(--bs-primary);
     }
 
-    .filter-checkbox input[type="checkbox"] {
+    .filter-checkbox {
         width: 20px;
         height: 20px;
         margin-inline-end: 0.75rem;
-        cursor: pointer;
         accent-color: var(--bs-primary);
+        cursor: pointer;
     }
 
-    .filter-checkbox label {
-        cursor: pointer;
-        margin: 0;
+    .filter-label {
         flex: 1;
         display: flex;
         justify-content: space-between;
@@ -150,23 +142,33 @@
 
     .filter-count {
         font-size: 0.875rem;
-        color: var(--text-muted);
-        margin-inline-start: 0.5rem;
+        color: #6b7280;
+        background: #f3f4f6;
+        padding: 2px 8px;
+        border-radius: 12px;
     }
 
-    /* Price Range */
+    /* Price Range Filter */
+    .price-range-container {
+        padding: 1rem 0;
+    }
+
     .price-inputs {
         display: flex;
         gap: 1rem;
-        margin-bottom: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .price-input-group {
+        flex: 1;
     }
 
     .price-input {
-        flex: 1;
+        width: 100%;
         padding: 0.75rem;
-        border: 2px solid var(--border-color);
+        border: 2px solid #e5e7eb;
         border-radius: 10px;
-        font-size: 0.95rem;
+        font-size: 0.938rem;
         transition: all 0.3s ease;
     }
 
@@ -175,24 +177,24 @@
         border-color: var(--bs-primary);
     }
 
-    .price-range-track {
-        height: 6px;
-        background: var(--border-color);
-        border-radius: 3px;
+    .price-slider {
         position: relative;
+        height: 6px;
+        background: #e5e7eb;
+        border-radius: 3px;
         margin: 2rem 0;
     }
 
-    .price-range-fill {
+    .price-slider-fill {
         position: absolute;
         height: 100%;
         background: var(--bs-primary);
         border-radius: 3px;
         left: 20%;
-        right: 30%;
+        right: 20%;
     }
 
-    .price-range-thumb {
+    .price-slider-thumb {
         position: absolute;
         width: 20px;
         height: 20px;
@@ -202,307 +204,42 @@
         top: 50%;
         transform: translate(-50%, -50%);
         cursor: grab;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        transition: transform 0.3s ease;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     }
 
-    .price-range-thumb:active {
+    .price-slider-thumb:active {
         cursor: grabbing;
-        transform: translate(-50%, -50%) scale(1.2);
     }
 
-    /* Products Section */
-    .products-section {
-        padding: 3rem 0;
-    }
-
-    .products-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 2rem;
-        flex-wrap: wrap;
-        gap: 1rem;
-    }
-
-    .results-info {
-        font-size: 1.125rem;
-        color: var(--text-secondary);
-    }
-
-    .results-count {
-        font-weight: 700;
-        color: var(--text-primary);
-    }
-
-    .view-options {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .sort-select {
-        padding: 0.75rem 1rem;
-        border: 2px solid var(--border-color);
-        border-radius: 10px;
-        font-size: 0.95rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        background: white;
-    }
-
-    .sort-select:focus {
-        outline: none;
-        border-color: var(--bs-primary);
-    }
-
-    .view-toggle {
-        display: flex;
-        background: white;
-        border: 2px solid var(--border-color);
-        border-radius: 10px;
-        overflow: hidden;
-    }
-
-    .view-btn {
-        padding: 0.75rem 1rem;
-        background: transparent;
-        border: none;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        color: var(--text-secondary);
-    }
-
-    .view-btn.active {
-        background: var(--bs-primary);
-        color: white;
-    }
-
-    .view-btn:not(.active):hover {
-        background: rgba(var(--bs-primary-rgb), 0.1);
-        color: var(--bs-primary);
-    }
-
-    /* Product Grid */
-    .products-grid {
-        display: grid;
-        gap: 2rem;
-        margin-bottom: 3rem;
-    }
-
-    .products-grid.grid-view {
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    }
-
-    .products-grid.list-view {
-        grid-template-columns: 1fr;
-    }
-
-    /* List View Product Card */
-    .product-card-list {
-        background: white;
-        border-radius: 20px;
-        padding: 1.5rem;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-        display: flex;
-        gap: 2rem;
-        transition: all 0.3s ease;
-    }
-
-    .product-card-list:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.12);
-    }
-
-    .product-card-list .product-image {
-        width: 200px;
-        height: 200px;
-        flex-shrink: 0;
-        border-radius: 15px;
-        overflow: hidden;
-        background: #f8f9fa;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 1rem;
-    }
-
-    .product-card-list .product-image img {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-    }
-
-    .product-card-list .product-info {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .product-card-list .product-header {
-        margin-bottom: 1rem;
-    }
-
-    .product-card-list .product-category {
-        font-size: 0.875rem;
-        color: var(--text-muted);
-        margin-bottom: 0.5rem;
-    }
-
-    .product-card-list .product-name {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        margin-bottom: 0.5rem;
-    }
-
-    .product-card-list .product-description {
-        color: var(--text-secondary);
-        line-height: 1.6;
-        margin-bottom: 1rem;
-        flex: 1;
-    }
-
-    .product-card-list .product-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .product-card-list .product-price {
-        display: flex;
-        align-items: baseline;
-        gap: 0.5rem;
-    }
-
-    .product-card-list .product-actions {
-        display: flex;
-        gap: 0.5rem;
-    }
-
-    /* Pagination */
-    .pagination-wrapper {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 1rem;
-        margin-top: 3rem;
-    }
-
-    .pagination {
-        display: flex;
-        gap: 0.5rem;
-        margin: 0;
-    }
-
-    .page-link {
-        padding: 0.75rem 1rem;
-        border-radius: 10px;
-        border: 2px solid transparent;
-        background: white;
-        color: var(--text-primary);
-        font-weight: 600;
-        transition: all 0.3s ease;
-        min-width: 45px;
-        text-align: center;
-    }
-
-    .page-link:hover {
-        background: rgba(var(--bs-primary-rgb), 0.1);
-        color: var(--bs-primary);
-        border-color: var(--bs-primary);
-    }
-
-    .page-item.active .page-link {
-        background: var(--bs-primary);
-        color: white;
-        border-color: var(--bs-primary);
-    }
-
-    .page-item.disabled .page-link {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    .pagination-info {
-        color: var(--text-secondary);
-        font-size: 0.95rem;
-    }
-
-    /* Loading State */
-    .products-loading {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 400px;
-        color: var(--text-secondary);
-    }
-
-    .loading-spinner {
-        width: 50px;
-        height: 50px;
-        border: 3px solid rgba(var(--bs-primary-rgb), 0.2);
-        border-top-color: var(--bs-primary);
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-
-    /* Empty State */
-    .empty-state {
-        text-align: center;
-        padding: 5rem 2rem;
-    }
-
-    .empty-icon {
-        font-size: 5rem;
-        color: var(--text-muted);
-        margin-bottom: 1rem;
-    }
-
-    .empty-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-        color: var(--text-primary);
-    }
-
-    .empty-description {
-        color: var(--text-secondary);
-        margin-bottom: 2rem;
-    }
-
-    /* Filter Tags */
+    /* Active Filters */
     .active-filters {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-bottom: 2rem;
+        background: white;
+        border-radius: 16px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     }
 
     .filter-tag {
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        background: rgba(var(--bs-primary-rgb), 0.1);
+        background: #eff6ff;
         color: var(--bs-primary);
-        border-radius: 50px;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
         font-size: 0.875rem;
-        font-weight: 600;
+        font-weight: 500;
+        margin: 0.25rem;
     }
 
     .filter-tag button {
-        background: transparent;
+        background: none;
         border: none;
         color: var(--bs-primary);
         cursor: pointer;
         padding: 0;
-        font-size: 1rem;
+        margin-left: 0.25rem;
         transition: transform 0.3s ease;
     }
 
@@ -510,29 +247,226 @@
         transform: rotate(90deg);
     }
 
-    /* Mobile Filters */
-    .mobile-filters-btn {
-        display: none;
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 1rem 2rem;
-        background: var(--bs-primary);
-        color: white;
-        border: none;
-        border-radius: 50px;
+    /* Products Header */
+    .products-header {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .results-info {
+        font-size: 1rem;
+        color: #6b7280;
+    }
+
+    .results-count {
         font-weight: 600;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-        z-index: 100;
+        color: #111827;
+    }
+
+    /* View Options */
+    .view-controls {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .sort-dropdown {
+        position: relative;
+    }
+
+    .sort-button {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        background: white;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 0.938rem;
+        cursor: pointer;
         transition: all 0.3s ease;
     }
 
-    .mobile-filters-btn:active {
-        transform: translateX(-50%) scale(0.95);
+    .sort-button:hover {
+        border-color: var(--bs-primary);
     }
 
-    @media (max-width: 991.98px) {
+    .view-toggle {
+        display: flex;
+        background: #f3f4f6;
+        border-radius: 10px;
+        padding: 4px;
+    }
+
+    .view-btn {
+        padding: 0.5rem 0.75rem;
+        background: transparent;
+        border: none;
+        border-radius: 6px;
+        color: #6b7280;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .view-btn.active {
+        background: white;
+        color: var(--bs-primary);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Products Grid */
+    .products-container {
+        display: grid;
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+
+    .products-container.grid-view {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+
+    .products-container.list-view {
+        grid-template-columns: 1fr;
+    }
+
+    /* List View Product */
+    .product-list-item {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        display: flex;
+        gap: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .product-list-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .list-product-image {
+        width: 200px;
+        height: 200px;
+        flex-shrink: 0;
+        background: #f9fafb;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .list-product-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Loading Skeleton */
+    .product-skeleton {
+        background: white;
+        border-radius: 16px;
+        padding: 1rem;
+        animation: skeleton-loading 1.5s infinite;
+    }
+
+    @keyframes skeleton-loading {
+        0% { opacity: 0.7; }
+        50% { opacity: 1; }
+        100% { opacity: 0.7; }
+    }
+
+    .skeleton-image {
+        height: 200px;
+        background: #e5e7eb;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+    }
+
+    .skeleton-text {
+        height: 20px;
+        background: #e5e7eb;
+        border-radius: 4px;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 5rem 2rem;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .empty-icon {
+        font-size: 5rem;
+        color: #e5e7eb;
+        margin-bottom: 1rem;
+    }
+
+    /* Pagination */
+    .pagination-modern {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 3rem;
+    }
+
+    .page-link-modern {
+        min-width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid transparent;
+        background: white;
+        color: #6b7280;
+        border-radius: 10px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .page-link-modern:hover {
+        border-color: var(--bs-primary);
+        color: var(--bs-primary);
+    }
+
+    .page-link-modern.active {
+        background: var(--bs-primary);
+        color: white;
+        border-color: var(--bs-primary);
+    }
+
+    /* Mobile Filters */
+    .mobile-filter-btn {
+        display: none;
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--bs-primary);
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 50px;
+        border: none;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        font-weight: 600;
+        z-index: 100;
+    }
+
+    @media (max-width: 991px) {
         .filters-sidebar {
             position: fixed;
             top: 0;
@@ -542,22 +476,12 @@
             height: 100vh;
             z-index: 1050;
             transition: left 0.3s ease;
-            border-radius: 0;
+            border-radius: 0 20px 20px 0;
             overflow-y: auto;
         }
 
-        html[dir="rtl"] .filters-sidebar {
-            left: auto;
-            right: -100%;
-            transition: right 0.3s ease;
-        }
-
-        .filters-sidebar.active {
+        .filters-sidebar.show {
             left: 0;
-        }
-
-        html[dir="rtl"] .filters-sidebar.active {
-            right: 0;
         }
 
         .filters-overlay {
@@ -566,385 +490,464 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.5);
             z-index: 1049;
             display: none;
         }
 
-        .filters-overlay.active {
+        .filters-overlay.show {
             display: block;
         }
 
-        .mobile-filters-btn {
+        .mobile-filter-btn {
             display: block;
         }
 
-        .products-grid.list-view .product-card-list {
-            flex-direction: column;
+        .products-container.grid-view {
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
         }
-
-        .product-card-list .product-image {
-            width: 100%;
-            height: 200px;
-        }
-
-        .page-title {
-            font-size: 2rem;
-        }
-    }
-
-    /* Dark Mode Support */
-    [data-bs-theme="dark"] .filters-sidebar,
-    [data-bs-theme="dark"] .product-card-list,
-    [data-bs-theme="dark"] .sort-select,
-    [data-bs-theme="dark"] .view-toggle,
-    [data-bs-theme="dark"] .page-link {
-        background: #1e1e1e;
-        color: #e0e0e0;
-    }
-
-    [data-bs-theme="dark"] .filter-checkbox:hover,
-    [data-bs-theme="dark"] .page-link:hover {
-        color: var(--bs-primary);
-    }
-
-    [data-bs-theme="dark"] .price-input,
-    [data-bs-theme="dark"] .sort-select,
-    [data-bs-theme="dark"] .view-toggle {
-        border-color: #404040;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Page Header -->
-<section class="page-header">
-    <div class="container">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "الرئيسية" %}</a></li>
-                {% if category %}
-                    <li class="breadcrumb-item"><a href="{% url 'products:category_list' %}">{% trans "الفئات" %}</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">{{ category.name }}</li>
-                {% else %}
-                    <li class="breadcrumb-item active" aria-current="page">{% trans "جميع المنتجات" %}</li>
-                {% endif %}
-            </ol>
-        </nav>
-        
-        <h1 class="page-title" data-aos="fade-up">
-            {{ category.name|default:"جميع المنتجات" }}
-        </h1>
-        
-        {% if category and category.description %}
-            <p class="lead" data-aos="fade-up" data-aos-delay="100">{{ category.description }}</p>
-        {% endif %}
-    </div>
-</section>
+<div class="products-page">
+    <!-- Page Header -->
+    <div class="page-header-modern">
+        <div class="container">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-3" style="background: transparent;">
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'core:home' %}" style="color: rgba(255,255,255,0.8);">
+                            <i class="fas fa-home"></i>
+                        </a>
+                    </li>
+                    {% if category %}
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'products:category_list' %}" style="color: rgba(255,255,255,0.8);">
+                                {% trans "الفئات" %}
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active" style="color: white;">
+                            {{ category.name }}
+                        </li>
+                    {% else %}
+                        <li class="breadcrumb-item active" style="color: white;">
+                            {% trans "جميع المنتجات" %}
+                        </li>
+                    {% endif %}
+                </ol>
+            </nav>
 
-<!-- Products Section -->
-<section class="products-section">
+            <h1 class="page-title">
+                {% if category %}
+                    {{ category.name }}
+                {% else %}
+                    {% trans "جميع المنتجات" %}
+                {% endif %}
+            </h1>
+
+            {% if category and category.description %}
+                <p class="page-subtitle">{{ category.description }}</p>
+            {% endif %}
+
+            <div class="mt-3">
+                <span class="badge bg-white text-primary px-3 py-2">
+                    {{ paginator.count }} {% trans "منتج" %}
+                </span>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
         <div class="row">
             <!-- Filters Sidebar -->
             <div class="col-lg-3">
                 <div class="filters-sidebar" id="filtersSidebar">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h3 class="h5 mb-0">{% trans "تصفية النتائج" %}</h3>
-                        <button class="btn btn-sm btn-outline-secondary d-lg-none" onclick="closeFilters()">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="mb-0">
+                            <i class="fas fa-filter me-2"></i>{% trans "تصفية النتائج" %}
+                        </h5>
+                        <button class="btn btn-sm btn-light d-lg-none" onclick="closeFilters()">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
-                    
-                    <form id="filtersForm" class="product-filters">
-                        {% csrf_token %}
-                        
+
+                    <form id="filtersForm" method="get">
                         <!-- Categories Filter -->
                         {% if subcategories %}
-                        <div class="filter-section">
-                            <h4 class="filter-title" onclick="toggleFilter(this)">
-                                {% trans "الفئات الفرعية" %}
-                                <i class="fas fa-chevron-down filter-toggle"></i>
-                            </h4>
-                            <div class="filter-content">
-                                {% for subcategory in subcategories %}
-                                <div class="filter-checkbox">
-                                    <input type="checkbox" id="cat-{{ subcategory.id }}" name="subcategory" value="{{ subcategory.id }}">
-                                    <label for="cat-{{ subcategory.id }}">
-                                        {{ subcategory.name }}
-                                        <span class="filter-count">({{ subcategory.products.count }})</span>
-                                    </label>
+                            <div class="filter-section">
+                                <h6 class="filter-title" onclick="toggleFilterSection(this)">
+                                    {% trans "الفئات الفرعية" %}
+                                    <i class="fas fa-chevron-down filter-toggle-icon"></i>
+                                </h6>
+                                <div class="filter-content">
+                                    {% for subcat in subcategories %}
+                                        <div class="filter-option">
+                                            <input type="checkbox"
+                                                   class="filter-checkbox"
+                                                   id="cat-{{ subcat.id }}"
+                                                   name="subcategory"
+                                                   value="{{ subcat.id }}"
+                                                   {% if subcat.id|stringformat:"s" in request.GET.subcategory %}checked{% endif %}>
+                                            <label for="cat-{{ subcat.id }}" class="filter-label">
+                                                {{ subcat.name }}
+                                                <span class="filter-count">{{ subcat.products_count }}</span>
+                                            </label>
+                                        </div>
+                                    {% endfor %}
                                 </div>
-                                {% endfor %}
                             </div>
-                        </div>
                         {% endif %}
-                        
+
                         <!-- Price Range Filter -->
                         <div class="filter-section">
-                            <h4 class="filter-title" onclick="toggleFilter(this)">
+                            <h6 class="filter-title" onclick="toggleFilterSection(this)">
                                 {% trans "نطاق السعر" %}
-                                <i class="fas fa-chevron-down filter-toggle"></i>
-                            </h4>
+                                <i class="fas fa-chevron-down filter-toggle-icon"></i>
+                            </h6>
                             <div class="filter-content">
-                                <div class="price-inputs">
-                                    <input type="number" class="price-input price-min" placeholder="{% trans 'من' %}" min="0">
-                                    <input type="number" class="price-input price-max" placeholder="{% trans 'إلى' %}" min="0">
-                                </div>
-                                <div class="price-range-track">
-                                    <div class="price-range-fill"></div>
-                                    <div class="price-range-thumb" style="left: 20%;"></div>
-                                    <div class="price-range-thumb" style="left: 70%;"></div>
+                                <div class="price-range-container">
+                                    <div class="price-inputs">
+                                        <div class="price-input-group">
+                                            <label class="form-label small">{% trans "من" %}</label>
+                                            <input type="number"
+                                                   class="price-input"
+                                                   name="min_price"
+                                                   placeholder="0"
+                                                   value="{{ request.GET.min_price }}">
+                                        </div>
+                                        <div class="price-input-group">
+                                            <label class="form-label small">{% trans "إلى" %}</label>
+                                            <input type="number"
+                                                   class="price-input"
+                                                   name="max_price"
+                                                   placeholder="10000"
+                                                   value="{{ request.GET.max_price }}">
+                                        </div>
+                                    </div>
+                                    <div class="price-slider">
+                                        <div class="price-slider-fill"></div>
+                                        <div class="price-slider-thumb" style="left: 20%;"></div>
+                                        <div class="price-slider-thumb" style="left: 80%;"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Brand Filter -->
+                        {% if brands %}
+                            <div class="filter-section">
+                                <h6 class="filter-title" onclick="toggleFilterSection(this)">
+                                    {% trans "العلامة التجارية" %}
+                                    <i class="fas fa-chevron-down filter-toggle-icon"></i>
+                                </h6>
+                                <div class="filter-content">
+                                    {% for brand in brands %}
+                                        <div class="filter-option">
+                                            <input type="checkbox"
+                                                   class="filter-checkbox"
+                                                   id="brand-{{ brand.id }}"
+                                                   name="brand"
+                                                   value="{{ brand.id }}"
+                                                   {% if brand.id|stringformat:"s" in request.GET.brand %}checked{% endif %}>
+                                            <label for="brand-{{ brand.id }}" class="filter-label">
+                                                {{ brand.name }}
+                                                <span class="filter-count">{{ brand.product_count }}</span>
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <!-- Features Filter -->
                         <div class="filter-section">
-                            <h4 class="filter-title" onclick="toggleFilter(this)">
-                                {% trans "العلامة التجارية" %}
-                                <i class="fas fa-chevron-down filter-toggle"></i>
-                            </h4>
+                            <h6 class="filter-title" onclick="toggleFilterSection(this)">
+                                {% trans "المميزات" %}
+                                <i class="fas fa-chevron-down filter-toggle-icon"></i>
+                            </h6>
                             <div class="filter-content">
-                                {% for brand in brands %}
-                                <div class="filter-checkbox">
-                                    <input type="checkbox" id="brand-{{ brand.id }}" name="brand" value="{{ brand.id }}">
-                                    <label for="brand-{{ brand.id }}">
-                                        {{ brand.name }}
-                                        <span class="filter-count">({{ brand.product_count }})</span>
+                                <div class="filter-option">
+                                    <input type="checkbox"
+                                           class="filter-checkbox"
+                                           id="feat-new"
+                                           name="is_new"
+                                           value="1"
+                                           {% if request.GET.is_new %}checked{% endif %}>
+                                    <label for="feat-new" class="filter-label">
+                                        {% trans "منتجات جديدة" %}
                                     </label>
                                 </div>
+                                <div class="filter-option">
+                                    <input type="checkbox"
+                                           class="filter-checkbox"
+                                           id="feat-featured"
+                                           name="is_featured"
+                                           value="1"
+                                           {% if request.GET.is_featured %}checked{% endif %}>
+                                    <label for="feat-featured" class="filter-label">
+                                        {% trans "منتجات مميزة" %}
+                                    </label>
+                                </div>
+                                <div class="filter-option">
+                                    <input type="checkbox"
+                                           class="filter-checkbox"
+                                           id="feat-sale"
+                                           name="on_sale"
+                                           value="1"
+                                           {% if request.GET.on_sale %}checked{% endif %}>
+                                    <label for="feat-sale" class="filter-label">
+                                        {% trans "عروض وخصومات" %}
+                                    </label>
+                                </div>
+                                <div class="filter-option">
+                                    <input type="checkbox"
+                                           class="filter-checkbox"
+                                           id="feat-stock"
+                                           name="in_stock"
+                                           value="1"
+                                           {% if request.GET.in_stock %}checked{% endif %}>
+                                    <label for="feat-stock" class="filter-label">
+                                        {% trans "متوفر في المخزن" %}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rating Filter -->
+                        <div class="filter-section">
+                            <h6 class="filter-title" onclick="toggleFilterSection(this)">
+                                {% trans "التقييم" %}
+                                <i class="fas fa-chevron-down filter-toggle-icon"></i>
+                            </h6>
+                            <div class="filter-content">
+                                {% for i in "54321" %}
+                                    <div class="filter-option">
+                                        <input type="radio"
+                                               class="filter-checkbox"
+                                               id="rating-{{ i }}"
+                                               name="min_rating"
+                                               value="{{ i }}"
+                                               {% if request.GET.min_rating == i %}checked{% endif %}>
+                                        <label for="rating-{{ i }}" class="filter-label">
+                                            <div class="d-flex align-items-center">
+                                                {% for star in "12345" %}
+                                                    {% if star <= i %}
+                                                        <i class="fas fa-star text-warning"></i>
+                                                    {% else %}
+                                                        <i class="far fa-star text-muted"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                                <span class="ms-2">{% trans "فما فوق" %}</span>
+                                            </div>
+                                        </label>
+                                    </div>
                                 {% endfor %}
                             </div>
                         </div>
-                        
-                        <!-- Features Filter -->
-                        <div class="filter-section">
-                            <h4 class="filter-title" onclick="toggleFilter(this)">
-                                {% trans "الميزات" %}
-                                <i class="fas fa-chevron-down filter-toggle"></i>
-                            </h4>
-                            <div class="filter-content">
-                                <div class="filter-checkbox">
-                                    <input type="checkbox" id="feat-new" name="is_new" value="1">
-                                    <label for="feat-new">{% trans "منتجات جديدة" %}</label>
-                                </div>
-                                <div class="filter-checkbox">
-                                    <input type="checkbox" id="feat-featured" name="is_featured" value="1">
-                                    <label for="feat-featured">{% trans "منتجات مميزة" %}</label>
-                                </div>
-                                <div class="filter-checkbox">
-                                    <input type="checkbox" id="feat-sale" name="on_sale" value="1">
-                                    <label for="feat-sale">{% trans "عروض وخصومات" %}</label>
-                                </div>
-                                <div class="filter-checkbox">
-                                    <input type="checkbox" id="feat-stock" name="in_stock" value="1">
-                                    <label for="feat-stock">{% trans "متوفر في المخزن" %}</label>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Action Buttons -->
-                        <div class="d-flex gap-2 mt-4">
-                            <button type="submit" class="btn btn-primary flex-fill">
-                                <i class="fas fa-filter me-2"></i>{% trans "تطبيق" %}
+
+                        <!-- Filter Actions -->
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary w-100 mb-2">
+                                <i class="fas fa-filter me-2"></i>{% trans "تطبيق الفلاتر" %}
                             </button>
-                            <button type="reset" class="btn btn-outline-secondary flex-fill">
+                            <a href="{{ request.path }}" class="btn btn-outline-secondary w-100">
                                 <i class="fas fa-undo me-2"></i>{% trans "إعادة تعيين" %}
-                            </button>
+                            </a>
                         </div>
                     </form>
                 </div>
-                
-                <!-- Filters Overlay for Mobile -->
+
+                <!-- Filters Overlay -->
                 <div class="filters-overlay" onclick="closeFilters()"></div>
             </div>
-            
+
             <!-- Products Column -->
             <div class="col-lg-9">
+                <!-- Active Filters -->
+                {% if active_filters %}
+                    <div class="active-filters">
+                        <div class="d-flex align-items-center flex-wrap">
+                            <span class="me-2 text-muted">{% trans "الفلاتر النشطة:" %}</span>
+                            {% for filter in active_filters %}
+                                <span class="filter-tag">
+                                    {{ filter.label }}: {{ filter.value }}
+                                    <button onclick="removeFilter('{{ filter.type }}', '{{ filter.value }}')">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </span>
+                            {% endfor %}
+                            <a href="{{ request.path }}" class="ms-2 text-danger text-decoration-none">
+                                {% trans "مسح الكل" %}
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+
                 <!-- Products Header -->
                 <div class="products-header">
                     <div class="results-info">
-                        {% trans "عرض" %} <span class="results-count">{{ page_obj.start_index }}-{{ page_obj.end_index }}</span> 
-                        {% trans "من" %} <span class="results-count">{{ paginator.count }}</span> {% trans "منتج" %}
+                        {% trans "عرض" %}
+                        <span class="results-count">{{ page_obj.start_index }}-{{ page_obj.end_index }}</span>
+                        {% trans "من" %}
+                        <span class="results-count">{{ paginator.count }}</span>
+                        {% trans "منتج" %}
                     </div>
-                    
-                    <div class="view-options">
-                        <select class="sort-select" onchange="sortProducts(this.value)">
-                            <option value="newest">{% trans "الأحدث أولاً" %}</option>
-                            <option value="price_low">{% trans "السعر: منخفض لمرتفع" %}</option>
-                            <option value="price_high">{% trans "السعر: مرتفع لمنخفض" %}</option>
-                            <option value="name_az">{% trans "الاسم: أ-ي" %}</option>
-                            <option value="best_selling">{% trans "الأكثر مبيعاً" %}</option>
-                        </select>
-                        
+
+                    <div class="view-controls">
+                        <!-- Sort Dropdown -->
+                        <div class="sort-dropdown">
+                            <button class="sort-button"
+                                    type="button"
+                                    data-bs-toggle="dropdown">
+                                <i class="fas fa-sort-amount-down"></i>
+                                <span>{% trans "ترتيب حسب" %}</span>
+                                <i class="fas fa-chevron-down ms-auto"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="?sort=newest">
+                                        {% trans "الأحدث أولاً" %}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="?sort=price_low">
+                                        {% trans "السعر: منخفض لمرتفع" %}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="?sort=price_high">
+                                        {% trans "السعر: مرتفع لمنخفض" %}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="?sort=name_az">
+                                        {% trans "الاسم: أ-ي" %}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="?sort=best_rated">
+                                        {% trans "الأعلى تقييماً" %}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="?sort=best_selling">
+                                        {% trans "الأكثر مبيعاً" %}
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- View Toggle -->
                         <div class="view-toggle">
-                            <button class="view-btn active" onclick="setView('grid')" aria-label="{% trans 'عرض شبكي' %}">
+                            <button class="view-btn active"
+                                    onclick="setView('grid')"
+                                    data-view="grid"
+                                    title="{% trans 'عرض شبكي' %}">
                                 <i class="fas fa-th"></i>
                             </button>
-                            <button class="view-btn" onclick="setView('list')" aria-label="{% trans 'عرض قائمة' %}">
+                            <button class="view-btn"
+                                    onclick="setView('list')"
+                                    data-view="list"
+                                    title="{% trans 'عرض قائمة' %}">
                                 <i class="fas fa-list"></i>
                             </button>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Active Filters -->
-                {% if active_filters %}
-                <div class="active-filters">
-                    {% for filter in active_filters %}
-                    <div class="filter-tag">
-                        {{ filter.label }}: {{ filter.value }}
-                        <button onclick="removeFilter('{{ filter.type }}', '{{ filter.value }}')" aria-label="{% trans 'إزالة المرشح' %}">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    {% endfor %}
-                    <button class="btn btn-sm btn-link text-danger" onclick="clearAllFilters()">
-                        {% trans "مسح الكل" %}
-                    </button>
-                </div>
-                {% endif %}
-                
-                <!-- Products Grid/List -->
-                <div class="products-grid grid-view" id="productsContainer">
+
+                <!-- Products Container -->
+                <div class="products-container grid-view" id="productsContainer">
                     {% for product in products %}
-                        <!-- Grid View Card -->
-                        <div class="product-card-enhanced grid-item" data-aos="fade-up">
-                            <div class="product-badges">
-                                {% if product.has_discount %}
-                                    <span class="product-badge">{{ product.discount_percentage }}% {% trans "خصم" %}</span>
-                                {% elif product.is_new %}
-                                    <span class="product-badge bg-success">{% trans "جديد" %}</span>
-                                {% endif %}
-                                <button class="product-wishlist wishlist-btn" data-product-id="{{ product.id }}">
-                                    <i class="far fa-heart"></i>
-                                </button>
-                            </div>
-                            
-                            <div class="product-image-wrapper">
-                                <a href="{% url 'products:product_detail' product.slug %}">
-                                    {% if product.images.exists %}
-                                        <img src="{{ product.images.first.image.url }}" class="product-main-image" alt="{{ product.name }}">
-                                    {% else %}
-                                        <img src="{{ product.default_image.url }}" class="product-main-image" alt="{{ product.name }}">
-                                    {% endif %}
-                                </a>
-                                
-                                <div class="product-quick-actions">
-                                    <button class="quick-action-btn quick-view-btn" data-product-id="{{ product.id }}">
-                                        <i class="fas fa-eye me-2"></i> {% trans "عرض سريع" %}
-                                    </button>
-                                    <button class="quick-action-btn compare-btn" data-product-id="{{ product.id }}">
-                                        <i class="fas fa-exchange-alt me-2"></i> {% trans "مقارنة" %}
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div class="product-details">
-                                <p class="product-category">{{ product.category.name }}</p>
-                                <h4 class="product-name">
-                                    <a href="{% url 'products:product_detail' product.slug %}" class="text-dark text-decoration-none">
-                                        {{ product.name|truncatechars:50 }}
-                                    </a>
-                                </h4>
-                                
-                                <div class="product-rating">
-                                    <div class="stars">
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star"></i>
-                                        <i class="fas fa-star-half-alt"></i>
-                                    </div>
-                                    <span class="rating-count">({{ product.reviews.count }})</span>
-                                </div>
-                                
-                                <div class="product-price-wrapper">
-                                    <div class="product-price">
-                                        {% if product.show_price and product.category.show_prices %}
-                                            <span class="current-price">{{ product.current_price|floatformat:2 }} {% trans "د.أ" %}</span>
-                                            {% if product.has_discount %}
-                                                <span class="original-price">{{ product.base_price|floatformat:2 }}</span>
-                                            {% endif %}
-                                        {% else %}
-                                            <span class="current-price">{% trans "اتصل للسعر" %}</span>
-                                        {% endif %}
-                                    </div>
-                                    
-                                    <form action="{% url 'cart:add_to_cart' product.id %}" method="post" class="add-to-cart-form d-inline">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="quantity" value="1">
-                                        <button type="submit" class="add-to-cart-icon">
-                                            <i class="fas fa-shopping-cart"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
+                        <!-- Grid View -->
+                        <div class="product-grid-item">
+                            {% include 'products/base/_product_card.html' with product=product %}
                         </div>
-                        
-                        <!-- List View Card (Hidden by default) -->
-                        <div class="product-card-list list-item d-none" data-aos="fade-up">
-                            <div class="product-image">
-                                <a href="{% url 'products:product_detail' product.slug %}">
-                                    {% if product.images.exists %}
-                                        <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}">
+
+                        <!-- List View (Hidden by default) -->
+                        <div class="product-list-item d-none">
+                            <div class="list-product-image">
+                                <a href="{{ product.get_absolute_url }}">
+                                    {% if product.default_image %}
+                                        <img src="{{ product.default_image.image.url }}"
+                                             alt="{{ product.name }}"
+                                             class="img-fluid">
                                     {% else %}
-                                        <img src="{{ product.default_image.url }}" alt="{{ product.name }}">
+                                        <div class="no-image">
+                                            <i class="fas fa-image fa-3x text-muted"></i>
+                                        </div>
                                     {% endif %}
                                 </a>
                             </div>
-                            
-                            <div class="product-info">
-                                <div class="product-header">
-                                    <p class="product-category">{{ product.category.name }}</p>
-                                    <h4 class="product-name">
-                                        <a href="{% url 'products:product_detail' product.slug %}" class="text-dark text-decoration-none">
-                                            {{ product.name }}
+
+                            <div class="list-product-info">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <a href="{{ product.category.get_absolute_url }}"
+                                           class="text-muted text-decoration-none small">
+                                            {{ product.category.name }}
                                         </a>
-                                    </h4>
-                                    <div class="product-rating">
-                                        <div class="stars">
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star-half-alt"></i>
-                                        </div>
-                                        <span class="rating-count">({{ product.reviews.count }})</span>
+                                        <h5 class="mb-1">
+                                            <a href="{{ product.get_absolute_url }}"
+                                               class="text-decoration-none text-dark">
+                                                {{ product.name }}
+                                            </a>
+                                        </h5>
                                     </div>
-                                </div>
-                                
-                                <p class="product-description">
-                                    {{ product.description|truncatechars:200 }}
-                                </p>
-                                
-                                <div class="product-footer">
-                                    <div class="product-price">
-                                        {% if product.show_price and product.category.show_prices %}
-                                            <span class="current-price">{{ product.current_price|floatformat:2 }} {% trans "د.أ" %}</span>
-                                            {% if product.has_discount %}
-                                                <span class="original-price">{{ product.base_price|floatformat:2 }}</span>
-                                            {% endif %}
-                                        {% else %}
-                                            <span class="current-price">{% trans "اتصل للسعر" %}</span>
+
+                                    <div class="text-end">
+                                        {% if product.has_discount %}
+                                            <span class="badge bg-danger">
+                                                {{ product.discount_percentage }}% {% trans "خصم" %}
+                                            </span>
                                         {% endif %}
                                     </div>
-                                    
-                                    <div class="product-actions">
-                                        <button class="btn btn-outline-secondary wishlist-btn" data-product-id="{{ product.id }}">
+                                </div>
+
+                                {% if product.short_description %}
+                                    <p class="text-muted mb-3">
+                                        {{ product.short_description|truncatechars:150 }}
+                                    </p>
+                                {% endif %}
+
+                                {% if product.rating %}
+                                    <div class="mb-3">
+                                        {% include 'products/components/_rating_stars.html' with rating=product.rating small=True %}
+                                        <span class="text-muted small">({{ product.review_count }})</span>
+                                    </div>
+                                {% endif %}
+
+                                <div class="mt-auto d-flex justify-content-between align-items-end">
+                                    <div>
+                                        {% include 'products/components/_price_display.html' with product=product %}
+                                    </div>
+
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-outline-secondary btn-sm wishlist-btn"
+                                                data-product-id="{{ product.id }}">
                                             <i class="far fa-heart"></i>
                                         </button>
-                                        <button class="btn btn-outline-secondary compare-btn" data-product-id="{{ product.id }}">
+                                        <button class="btn btn-outline-secondary btn-sm compare-btn"
+                                                data-product-id="{{ product.id }}">
                                             <i class="fas fa-exchange-alt"></i>
                                         </button>
-                                        <form action="{% url 'cart:add_to_cart' product.id %}" method="post" class="add-to-cart-form d-inline">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="quantity" value="1">
-                                            <button type="submit" class="btn btn-primary">
-                                                <i class="fas fa-shopping-cart me-2"></i>{% trans "أضف للسلة" %}
+                                        {% if product.in_stock %}
+                                            <form action="{% url 'cart:add_to_cart' product.id %}"
+                                                  method="post"
+                                                  class="d-inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="quantity" value="1">
+                                                <button type="submit" class="btn btn-primary btn-sm">
+                                                    <i class="fas fa-shopping-cart me-1"></i>
+                                                    {% trans "أضف للسلة" %}
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            <button class="btn btn-secondary btn-sm" disabled>
+                                                {% trans "غير متوفر" %}
                                             </button>
-                                        </form>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -953,116 +956,137 @@
                         <div class="col-12">
                             <div class="empty-state">
                                 <i class="fas fa-box-open empty-icon"></i>
-                                <h3 class="empty-title">{% trans "لا توجد منتجات" %}</h3>
-                                <p class="empty-description">
+                                <h3 class="mb-3">{% trans "لا توجد منتجات" %}</h3>
+                                <p class="text-muted mb-4">
                                     {% trans "عذراً، لم نجد أي منتجات تطابق معايير البحث الخاصة بك." %}
                                 </p>
-                                <a href="{% url 'products:category_list' %}" class="btn btn-primary">
-                                    {% trans "تصفح جميع المنتجات" %}
+                                <a href="{{ request.path }}" class="btn btn-primary">
+                                    {% trans "إعادة تعيين الفلاتر" %}
                                 </a>
                             </div>
                         </div>
                     {% endfor %}
                 </div>
-                
+
+                <!-- Loading Skeleton (Hidden by default) -->
+                <div class="products-loading d-none">
+                    <div class="row">
+                        {% for i in "123456" %}
+                            <div class="col-md-4 mb-4">
+                                <div class="product-skeleton">
+                                    <div class="skeleton-image"></div>
+                                    <div class="skeleton-text" style="width: 60%;"></div>
+                                    <div class="skeleton-text" style="width: 80%;"></div>
+                                    <div class="skeleton-text" style="width: 40%;"></div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
                 <!-- Pagination -->
                 {% if paginator.num_pages > 1 %}
-                <div class="pagination-wrapper">
                     <nav aria-label="{% trans 'التنقل بين الصفحات' %}">
-                        <ul class="pagination">
+                        <ul class="pagination pagination-modern">
                             {% if page_obj.has_previous %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" aria-label="{% trans 'الصفحة الأولى' %}">
-                                        <i class="fas fa-angle-double-left"></i>
+                                <li>
+                                    <a class="page-link-modern"
+                                       href="?page=1{{ filter_params }}"
+                                       title="{% trans 'الصفحة الأولى' %}">
+                                        <i class="fas fa-angle-double-right"></i>
                                     </a>
                                 </li>
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" aria-label="{% trans 'الصفحة السابقة' %}">
-                                        <i class="fas fa-angle-left"></i>
-                                    </a>
-                                </li>
-                            {% endif %}
-                            
-                            {% for num in page_obj.paginator.page_range %}
-                                {% if page_obj.number == num %}
-                                    <li class="page-item active">
-                                        <span class="page-link">{{ num }}</span>
-                                    </li>
-                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ num }}</a>
-                                    </li>
-                                {% endif %}
-                            {% endfor %}
-                            
-                            {% if page_obj.has_next %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" aria-label="{% trans 'الصفحة التالية' %}">
+                                <li>
+                                    <a class="page-link-modern"
+                                       href="?page={{ page_obj.previous_page_number }}{{ filter_params }}"
+                                       title="{% trans 'الصفحة السابقة' %}">
                                         <i class="fas fa-angle-right"></i>
                                     </a>
                                 </li>
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" aria-label="{% trans 'الصفحة الأخيرة' %}">
-                                        <i class="fas fa-angle-double-right"></i>
+                            {% endif %}
+
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li>
+                                        <span class="page-link-modern active">{{ num }}</span>
+                                    </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li>
+                                        <a class="page-link-modern"
+                                           href="?page={{ num }}{{ filter_params }}">
+                                            {{ num }}
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                                <li>
+                                    <a class="page-link-modern"
+                                       href="?page={{ page_obj.next_page_number }}{{ filter_params }}"
+                                       title="{% trans 'الصفحة التالية' %}">
+                                        <i class="fas fa-angle-left"></i>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="page-link-modern"
+                                       href="?page={{ page_obj.paginator.num_pages }}{{ filter_params }}"
+                                       title="{% trans 'الصفحة الأخيرة' %}">
+                                        <i class="fas fa-angle-double-left"></i>
                                     </a>
                                 </li>
                             {% endif %}
                         </ul>
                     </nav>
-                    
-                    <span class="pagination-info">
-                        {% trans "صفحة" %} {{ page_obj.number }} {% trans "من" %} {{ page_obj.paginator.num_pages }}
-                    </span>
-                </div>
+                {% endif %}
+
+                <!-- Load More Button (Alternative) -->
+                {% if page_obj.has_next %}
+                    <div class="text-center mt-4">
+                        <button class="btn btn-outline-primary"
+                                onclick="loadMore()"
+                                data-next-page="{{ page_obj.next_page_number }}">
+                            <i class="fas fa-plus me-2"></i>
+                            {% trans "عرض المزيد" %}
+                        </button>
+                    </div>
                 {% endif %}
             </div>
         </div>
     </div>
-</section>
 
-<!-- Mobile Filters Button -->
-<button class="mobile-filters-btn" onclick="openFilters()">
-    <i class="fas fa-filter me-2"></i>{% trans "تصفية النتائج" %}
-</button>
+    <!-- Mobile Filter Button -->
+    <button class="mobile-filter-btn" onclick="openFilters()">
+        <i class="fas fa-filter me-2"></i>
+        {% trans "الفلاتر" %}
+        {% if active_filters %}
+            <span class="badge bg-white text-primary ms-2">{{ active_filters|length }}</span>
+        {% endif %}
+    </button>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Initialize AOS
-    AOS.init({
-        duration: 600,
-        once: true,
-        offset: 50
-    });
-
-    // Filter Functions
-    function toggleFilter(element) {
+    // Toggle Filter Section
+    function toggleFilterSection(element) {
         const section = element.parentElement;
         section.classList.toggle('collapsed');
-    }
-
-    function openFilters() {
-        document.getElementById('filtersSidebar').classList.add('active');
-        document.querySelector('.filters-overlay').classList.add('active');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeFilters() {
-        document.getElementById('filtersSidebar').classList.remove('active');
-        document.querySelector('.filters-overlay').classList.remove('active');
-        document.body.style.overflow = '';
     }
 
     // View Toggle
     function setView(viewType) {
         const container = document.getElementById('productsContainer');
-        const gridItems = container.querySelectorAll('.grid-item');
-        const listItems = container.querySelectorAll('.list-item');
+        const gridItems = container.querySelectorAll('.product-grid-item');
+        const listItems = container.querySelectorAll('.product-list-item');
         const viewBtns = document.querySelectorAll('.view-btn');
-        
-        viewBtns.forEach(btn => btn.classList.remove('active'));
-        event.target.closest('.view-btn').classList.add('active');
-        
+
+        // Update buttons
+        viewBtns.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.view === viewType);
+        });
+
+        // Update view
         if (viewType === 'grid') {
             container.classList.remove('list-view');
             container.classList.add('grid-view');
@@ -1074,77 +1098,86 @@
             gridItems.forEach(item => item.classList.add('d-none'));
             listItems.forEach(item => item.classList.remove('d-none'));
         }
+
+        // Save preference
+        localStorage.setItem('productViewType', viewType);
     }
 
-    // Sort Products
-    function sortProducts(sortBy) {
-        const currentUrl = new URL(window.location.href);
-        currentUrl.searchParams.set('sort', sortBy);
-        window.location.href = currentUrl.href;
+    // Mobile Filters
+    function openFilters() {
+        document.getElementById('filtersSidebar').classList.add('show');
+        document.querySelector('.filters-overlay').classList.add('show');
+        document.body.style.overflow = 'hidden';
     }
 
-    // Filter Functions
+    function closeFilters() {
+        document.getElementById('filtersSidebar').classList.remove('show');
+        document.querySelector('.filters-overlay').classList.remove('show');
+        document.body.style.overflow = '';
+    }
+
+    // Remove Filter
     function removeFilter(type, value) {
-        const currentUrl = new URL(window.location.href);
-        const params = currentUrl.searchParams.getAll(type);
-        const newParams = params.filter(p => p !== value);
-        
-        currentUrl.searchParams.delete(type);
-        newParams.forEach(p => currentUrl.searchParams.append(type, p));
-        
-        window.location.href = currentUrl.href;
+        const url = new URL(window.location.href);
+        const params = new URLSearchParams(url.search);
+
+        // Remove the specific filter
+        const currentValues = params.getAll(type);
+        const newValues = currentValues.filter(v => v !== value);
+
+        params.delete(type);
+        newValues.forEach(v => params.append(type, v));
+
+        // Reload with new params
+        window.location.href = url.pathname + '?' + params.toString();
     }
 
-    function clearAllFilters() {
-        const currentUrl = new URL(window.location.href);
-        const keepParams = ['page', 'sort'];
-        
-        Array.from(currentUrl.searchParams.keys()).forEach(key => {
-            if (!keepParams.includes(key)) {
-                currentUrl.searchParams.delete(key);
-            }
-        });
-        
-        window.location.href = currentUrl.href;
+    // Load More Products (AJAX)
+    function loadMore() {
+        const btn = event.target;
+        const nextPage = btn.dataset.nextPage;
+        const container = document.getElementById('productsContainer');
+        const loadingContainer = document.querySelector('.products-loading');
+
+        // Show loading
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري التحميل...';
+
+        // Fetch next page
+        fetch(`${window.location.pathname}?page=${nextPage}&ajax=1`)
+            .then(response => response.text())
+            .then(html => {
+                // Parse and append products
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newProducts = doc.querySelectorAll('.product-grid-item');
+
+                newProducts.forEach(product => {
+                    container.appendChild(product);
+                });
+
+                // Update or hide button
+                const hasMore = doc.querySelector('[data-next-page]');
+                if (hasMore) {
+                    btn.dataset.nextPage = hasMore.dataset.nextPage;
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-plus me-2"></i>عرض المزيد';
+                } else {
+                    btn.remove();
+                }
+            })
+            .catch(error => {
+                console.error('Error loading products:', error);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>حدث خطأ';
+            });
     }
 
-    // Form Submit Handler
-    document.getElementById('filtersForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const formData = new FormData(this);
-        const currentUrl = new URL(window.location.href);
-        
-        // Clear existing filter params
-        Array.from(currentUrl.searchParams.keys()).forEach(key => {
-            if (!['page', 'sort'].includes(key)) {
-                currentUrl.searchParams.delete(key);
-            }
-        });
-        
-        // Add new filter params
-        for (let [key, value] of formData.entries()) {
-            if (value && key !== 'csrfmiddlewaretoken') {
-                currentUrl.searchParams.append(key, value);
-            }
-        }
-        
-        // Reset to page 1 when applying filters
-        currentUrl.searchParams.set('page', '1');
-        
-        window.location.href = currentUrl.href;
-    });
-
-    // Price Range Slider (Basic Implementation)
-    const priceMin = document.querySelector('.price-min');
-    const priceMax = document.querySelector('.price-max');
-    const thumbs = document.querySelectorAll('.price-range-thumb');
-    const fill = document.querySelector('.price-range-fill');
-
+    // Price Range Slider
     let isDragging = false;
     let currentThumb = null;
 
-    thumbs.forEach((thumb, index) => {
+    document.querySelectorAll('.price-slider-thumb').forEach((thumb, index) => {
         thumb.addEventListener('mousedown', (e) => {
             isDragging = true;
             currentThumb = index;
@@ -1154,23 +1187,31 @@
 
     document.addEventListener('mousemove', (e) => {
         if (!isDragging) return;
-        
-        const track = document.querySelector('.price-range-track');
-        const rect = track.getBoundingClientRect();
+
+        const slider = document.querySelector('.price-slider');
+        const rect = slider.getBoundingClientRect();
         const percent = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
-        
+
+        const thumbs = document.querySelectorAll('.price-slider-thumb');
+        const fill = document.querySelector('.price-slider-fill');
+
         if (currentThumb === 0) {
             thumbs[0].style.left = percent + '%';
             fill.style.left = percent + '%';
-            // Update price input
-            const maxPrice = parseInt(priceMax.getAttribute('max') || 10000);
-            priceMin.value = Math.round((percent / 100) * maxPrice);
         } else {
             thumbs[1].style.left = percent + '%';
             fill.style.right = (100 - percent) + '%';
-            // Update price input
-            const maxPrice = parseInt(priceMax.getAttribute('max') || 10000);
-            priceMax.value = Math.round((percent / 100) * maxPrice);
+        }
+
+        // Update input values
+        const maxPrice = 10000;
+        const value = Math.round((percent / 100) * maxPrice);
+        const inputs = document.querySelectorAll('.price-input');
+
+        if (currentThumb === 0) {
+            inputs[0].value = value;
+        } else {
+            inputs[1].value = value;
         }
     });
 
@@ -1179,21 +1220,37 @@
         currentThumb = null;
     });
 
-    // Initialize filter states from URL
+    // Initialize view from localStorage
     document.addEventListener('DOMContentLoaded', function() {
-        const params = new URLSearchParams(window.location.search);
-        
-        // Set sort value
-        const sortSelect = document.querySelector('.sort-select');
-        if (params.get('sort') && sortSelect) {
-            sortSelect.value = params.get('sort');
+        const savedView = localStorage.getItem('productViewType');
+        if (savedView && savedView === 'list') {
+            setView('list');
         }
-        
-        // Set filter checkboxes
-        params.forEach((value, key) => {
-            const inputs = document.querySelectorAll(`input[name="${key}"][value="${value}"]`);
-            inputs.forEach(input => input.checked = true);
+
+        // Auto-submit filters on change
+        document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                // Delay to allow multiple selections
+                clearTimeout(window.filterTimeout);
+                window.filterTimeout = setTimeout(() => {
+                    document.getElementById('filtersForm').submit();
+                }, 1500);
+            });
         });
+    });
+
+    // Infinite scroll (optional enhancement)
+    let isLoading = false;
+    window.addEventListener('scroll', function() {
+        const loadMoreBtn = document.querySelector('[onclick="loadMore()"]');
+        if (!loadMoreBtn || isLoading) return;
+
+        const rect = loadMoreBtn.getBoundingClientRect();
+        if (rect.top < window.innerHeight * 1.5) {
+            isLoading = true;
+            loadMore();
+            setTimeout(() => isLoading = false, 1000);
+        }
     });
 </script>
 {% endblock %}
