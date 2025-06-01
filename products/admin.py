@@ -710,9 +710,11 @@ class ProductAdmin(admin.ModelAdmin):
         rating = obj.rating
         if rating > 0:
             stars = '⭐' * int(rating)
+            # Format the rating value before passing to format_html
+            rating_str = f'{float(rating):.1f}'
             return format_html(
-                '<span style="color: #f39c12;">{}</span> ({:.1f})',
-                stars, rating
+                '<span style="color: #f39c12;">{}</span> ({})',
+                stars, rating_str
             )
         return '—'
 

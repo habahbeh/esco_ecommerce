@@ -15,4 +15,7 @@ urlpatterns = [
 
     # تغيير اللغة - Language switching
     path('set-language/<str:lang_code>/', views.set_language, name='set_language'),
+
+    path('settings/', views.site_settings_view, name='site_settings'),
+    path('preview-color/', views.preview_color, name='preview_color'),
 ]

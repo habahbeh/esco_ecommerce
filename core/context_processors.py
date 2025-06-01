@@ -1,9 +1,21 @@
+from django.core.cache import cache
 from .models import SiteSettings
+
 
 def site_settings(request):
     """
-    معالج سياق لإعدادات الموقع - يضيف إعدادات الموقع إلى سياق القالب
-    Site settings context processor - adds site settings to template context
+    إضافة إعدادات الموقع لجميع القوالب مع التخزين المؤقت
+    Add site settings to all templates with caching
     """
-    settings = SiteSettings.get_settings()
-    return {'site_settings': settings}
+    # محاولة الحصول على الإعدادات من الكاش
+    settings = cache.get('site_settings')
+
+    if settings is None:
+        # إذا لم تكن في الكاش، احصل عليها من قاعدة البيانات
+        settings = SiteSettings.get_settings()
+        # حفظها في الكاش لمدة ساعة
+        cache.set('site_settings', settings, 3600)
+
+    return {
+        'site_settings': settings
+    }

@@ -491,9 +491,9 @@ html[dir="rtl"] .mobile-menu.active {
 }
 
 @media (min-width: 992px) {
-   /* body {
-        padding-top: calc(var(--header-height) + 50px);
-    }*/
+    body {
+        padding-top: calc(var(--header-height) + 5px);
+    }
 
     html[dir="rtl"] .search-btn {
         left: 5px;
@@ -757,4 +757,101 @@ a:focus {
     .logo-wrapper {
         transition: box-shadow 0.3s ease;
     }
+}
+
+
+
+
+/* تنسيق قائمة المستخدم المنسدلة */
+.dropdown-menu {
+    min-width: 200px;
+    border: none;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    border-radius: 12px;
+    padding: 0.5rem 0;
+}
+
+.dropdown-item {
+    padding: 0.75rem 1.25rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.dropdown-item i {
+    width: 20px;
+    text-align: center;
+    color: var(--bs-primary);
+}
+
+.dropdown-item:hover {
+    background: rgba(var(--bs-primary-rgb), 0.1);
+    padding-left: 1.5rem;
+}
+
+html[dir="rtl"] .dropdown-item:hover {
+    padding-left: 1.25rem;
+    padding-right: 1.5rem;
+}
+
+/* فاصل في القائمة */
+.nav-divider,
+.dropdown-divider {
+    margin: 0.5rem 0;
+    border-color: rgba(0,0,0,0.1);
+}
+
+/* تمييز روابط الإدارة */
+.dropdown-item[href*="settings"],
+.dropdown-item[href*="admin"],
+.mobile-nav-list a[href*="settings"],
+.mobile-nav-list a[href*="admin"] {
+    color: var(--bs-primary);
+    font-weight: 500;
+}
+
+.dropdown-item[href*="settings"] i,
+.dropdown-item[href*="admin"] i {
+    color: var(--bs-primary);
+}
+
+/* زر الإعدادات في شريط الأدوات */
+.action-btn[href*="settings"] {
+    background: rgba(var(--bs-primary-rgb), 0.1);
+    color: var(--bs-primary);
+}
+
+.action-btn[href*="settings"]:hover {
+    background: var(--bs-primary);
+    color: white;
+}
+
+/* إشارة للمسؤولين */
+@keyframes adminPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.action-btn[href*="settings"] i {
+    animation: adminPulse 3s infinite;
+}
+
+/* في الوضع الداكن */
+[data-bs-theme="dark"] .dropdown-menu {
+    background: #1a1a1a;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+}
+
+[data-bs-theme="dark"] .dropdown-item {
+    color: #e0e0e0;
+}
+
+[data-bs-theme="dark"] .dropdown-item:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+[data-bs-theme="dark"] .dropdown-divider {
+    border-color: rgba(255,255,255,0.1);
 }

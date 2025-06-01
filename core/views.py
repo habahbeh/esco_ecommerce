@@ -5,7 +5,10 @@ from django.utils.translation import get_language
 from django.db.models import Q
 from django.utils import timezone
 from products.models import Product, Category
+from django.contrib.admin.views.decorators import staff_member_required
 
+from .models import SiteSettings
+from .forms import SiteSettingsForm
 
 class HomeView(TemplateView):
     """
@@ -128,3 +131,56 @@ def set_language(request, lang_code):
     )
 
     return response
+
+
+@staff_member_required
+def site_settings_view(request):
+    """
+    عرض وتحديث إعدادات الموقع
+    View and update site settings
+    """
+    settings = SiteSettings.get_settings()
+
+    if request.method == 'POST':
+        form = SiteSettingsForm(request.POST, request.FILES, instance=settings)
+        if form.is_valid():
+            form.save()
+            # مسح الكاش لتطبيق التغييرات فوراً
+            cache.clear()
+            messages.success(request, 'تم حفظ الإعدادات بنجاح')
+            return redirect('site_settings')
+    else:
+        form = SiteSettingsForm(instance=settings)
+
+    context = {
+        'form': form,
+        'settings': settings,
+    }
+    return render(request, 'core/site_settings.html', context)
+
+
+def preview_color(request):
+    """
+    معاينة اللون قبل الحفظ (AJAX)
+    Preview color before saving (AJAX)
+    """
+    if request.method == 'POST' and request.is_ajax():
+        color = request.POST.get('color', '#1e88e5')
+
+        # تحويل اللون إلى RGB
+        hex_color = color.lstrip('#')
+        try:
+            r = int(hex_color[0:2], 16)
+            g = int(hex_color[2:4], 16)
+            b = int(hex_color[4:6], 16)
+            rgb = f"{r}, {g}, {b}"
+        except:
+            rgb = "30, 136, 229"
+
+        return JsonResponse({
+            'color': color,
+            'rgb': rgb,
+            'success': True
+        })
+
+    return JsonResponse({'success': False})
