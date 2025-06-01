@@ -390,7 +390,7 @@ class BaseProductDetailView(DetailView, OptimizedQueryMixin, BreadcrumbMixin):
 
         # Add product images
         if hasattr(product, 'images'):
-            context['product_images'] = product.images.filter(is_active=True).order_by('order')
+            context['product_images'] = product.images.order_by('sort_order')
 
         # Add product variants if available
         if hasattr(product, 'variants'):
