@@ -1,22 +1,61 @@
-<!-- products/templates/products/category_detail.html -->
+<!-- File: products/templates/products/category_detail.html -->
 {% extends 'core/base.html' %}
 {% load static %}
 {% load i18n %}
+{% load cache %}
 
 {% block title %}{{ category.name }} | {{ site_settings.site_name|default:"ESCO" }}{% endblock %}
 
 {% block meta_description %}{{ category.meta_description|default:category.description|truncatechars:160 }}{% endblock %}
-{% block meta_keywords %}{{ category.meta_keywords }}{% endblock %}
+{% block meta_keywords %}{{ category.meta_keywords|default:category.name }}{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "{{ category.name }}",
+    "description": "{{ category.description|truncatechars:160 }}",
+    "url": "{{ request.build_absolute_uri }}",
+    "numberOfItems": {{ products_count }},
+    "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "{% trans 'الرئيسية' %}",
+                "item": "{{ request.scheme }}://{{ request.get_host }}"
+            },
+            {% for ancestor in category.get_all_parents %}
+            {
+                "@type": "ListItem",
+                "position": {{ forloop.counter|add:1 }},
+                "name": "{{ ancestor.name }}",
+                "item": "{{ request.scheme }}://{{ request.get_host }}{{ ancestor.get_absolute_url }}"
+            },
+            {% endfor %}
+            {
+                "@type": "ListItem",
+                "position": {{ category.get_all_parents|length|add:2 }},
+                "name": "{{ category.name }}"
+            }
+        ]
+    }
+}
+</script>
+{% endblock %}
 
 {% block extra_css %}
 <style>
-    /* Category Header */
+    /* Category Header Enhanced */
     .category-header {
         background: linear-gradient(135deg, var(--bs-primary) 0%, rgba(var(--bs-primary-rgb), 0.8) 100%);
         color: white;
         padding: 4rem 0 3rem;
         position: relative;
         overflow: hidden;
+        min-height: 400px;
     }
 
     .category-header::before {
@@ -29,6 +68,16 @@
         background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
         background-size: 30px 30px;
         animation: move-pattern 20s linear infinite;
+    }
+
+    .category-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 100px;
+        background: linear-gradient(to top, rgba(255,255,255,0.1) 0%, transparent 100%);
     }
 
     @keyframes move-pattern {
@@ -45,12 +94,14 @@
         font-size: 3rem;
         font-weight: 800;
         margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
     }
 
     .category-description {
         font-size: 1.25rem;
         opacity: 0.9;
         line-height: 1.6;
+        max-width: 800px;
     }
 
     .category-stats {
@@ -62,6 +113,17 @@
 
     .stat-item {
         text-align: center;
+        background: rgba(255,255,255,0.1);
+        padding: 1rem 1.5rem;
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.2);
+        transition: all 0.3s ease;
+    }
+
+    .stat-item:hover {
+        background: rgba(255,255,255,0.2);
+        transform: translateY(-3px);
     }
 
     .stat-number {
@@ -76,40 +138,109 @@
         opacity: 0.8;
     }
 
-    /* Category Image */
+    /* Category Image Enhanced */
+    .category-image-container {
+        position: relative;
+        display: inline-block;
+    }
+
     .category-image {
         width: 150px;
         height: 150px;
         border-radius: 20px;
         object-fit: cover;
         border: 4px solid rgba(255,255,255,0.2);
-        margin-bottom: 1rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        transition: transform 0.3s ease;
     }
 
-    /* Breadcrumb */
+    .category-image:hover {
+        transform: scale(1.05);
+    }
+
+    .category-icon-large {
+        width: 150px;
+        height: 150px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 4rem;
+        border: 4px solid rgba(255,255,255,0.2);
+        backdrop-filter: blur(10px);
+    }
+
+    /* Breadcrumb Enhanced */
     .breadcrumb {
         background: transparent;
         padding: 0;
         margin: 0;
         position: relative;
         z-index: 1;
+        font-size: 0.95rem;
     }
 
     .breadcrumb-item a {
         color: rgba(255,255,255,0.8);
         text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .breadcrumb-item a:hover {
+        color: white;
     }
 
     .breadcrumb-item.active {
         color: white;
+        font-weight: 600;
     }
 
-    /* Content Section */
-    .category-content {
-        padding: 3rem 0;
+    .breadcrumb-item + .breadcrumb-item::before {
+        color: rgba(255,255,255,0.6);
     }
 
-    /* Subcategories */
+    /* Quick Actions Bar */
+    .quick-actions-bar {
+        background: white;
+        padding: 1.5rem 0;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        margin-bottom: 2rem;
+    }
+
+    .quick-action-btn {
+        padding: 0.5rem 1rem;
+        border: 2px solid var(--border-color);
+        background: white;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        color: var(--text-primary);
+        margin: 0.25rem;
+    }
+
+    .quick-action-btn:hover {
+        border-color: var(--bs-primary);
+        color: var(--bs-primary);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .quick-action-btn.active {
+        background: var(--bs-primary);
+        color: white;
+        border-color: var(--bs-primary);
+    }
+
+    /* Subcategories Enhanced */
     .subcategories-section {
         background: #f8f9fa;
         padding: 3rem 0;
@@ -131,6 +262,24 @@
         border: 2px solid transparent;
         text-decoration: none;
         color: inherit;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .subcategory-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--bs-primary), rgba(var(--bs-primary-rgb), 0.5));
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+
+    .subcategory-card:hover::before {
+        transform: translateX(0);
     }
 
     .subcategory-card:hover {
@@ -152,11 +301,17 @@
         margin: 0 auto 1rem;
         color: white;
         font-size: 1.5rem;
+        transition: transform 0.3s ease;
+    }
+
+    .subcategory-card:hover .subcategory-icon {
+        transform: rotate(-10deg) scale(1.1);
     }
 
     .subcategory-name {
         font-weight: 700;
         margin-bottom: 0.5rem;
+        font-size: 1rem;
     }
 
     .subcategory-count {
@@ -164,13 +319,28 @@
         font-size: 0.875rem;
     }
 
-    /* Filter Bar */
+    .subcategory-new-badge {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background: #28a745;
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    /* Filter Bar Enhanced */
     .filter-bar {
         background: white;
         border-radius: 15px;
         padding: 1.5rem;
         margin-bottom: 2rem;
         box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+        position: sticky;
+        top: 80px;
+        z-index: 90;
     }
 
     .filter-controls {
@@ -184,6 +354,15 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .filter-label {
+        font-weight: 600;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        white-space: nowrap;
     }
 
     .filter-select {
@@ -191,20 +370,49 @@
         border-radius: 10px;
         padding: 0.5rem 1rem;
         font-size: 0.95rem;
+        flex: 1;
+        background: white;
+        transition: all 0.3s ease;
     }
 
     .filter-select:focus {
         border-color: var(--bs-primary);
         outline: none;
+        box-shadow: 0 0 0 3px rgba(var(--bs-primary-rgb), 0.1);
     }
 
-    /* View Toggle */
+    /* Advanced Filters */
+    .advanced-filters {
+        display: none;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .advanced-filters.show {
+        display: block;
+    }
+
+    .filter-toggle {
+        background: none;
+        border: none;
+        color: var(--bs-primary);
+        cursor: pointer;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-left: auto;
+    }
+
+    /* View Toggle Enhanced */
     .view-toggle {
         display: flex;
         background: #f8f9fa;
         border-radius: 10px;
         overflow: hidden;
         border: 2px solid var(--border-color);
+        margin-left: auto;
     }
 
     .view-btn {
@@ -214,6 +422,19 @@
         cursor: pointer;
         transition: all 0.3s ease;
         color: var(--text-secondary);
+        position: relative;
+    }
+
+    .view-btn::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--bs-primary);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
     }
 
     .view-btn.active {
@@ -221,9 +442,14 @@
         color: white;
     }
 
-    /* Products Section */
+    .view-btn.active::after {
+        transform: scaleX(1);
+    }
+
+    /* Products Section Enhanced */
     .products-section {
         min-height: 500px;
+        position: relative;
     }
 
     .products-grid {
@@ -240,7 +466,39 @@
         grid-template-columns: 1fr;
     }
 
-    /* Results Info */
+    /* Loading State */
+    .products-loading {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255,255,255,0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+    }
+
+    .loading-spinner {
+        text-align: center;
+    }
+
+    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 3px solid rgba(var(--bs-primary-rgb), 0.2);
+        border-top-color: var(--bs-primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Results Info Enhanced */
     .results-info {
         display: flex;
         justify-content: space-between;
@@ -248,6 +506,9 @@
         margin-bottom: 2rem;
         flex-wrap: wrap;
         gap: 1rem;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 10px;
     }
 
     .results-count {
@@ -257,19 +518,34 @@
 
     .results-count strong {
         color: var(--text-primary);
+        font-weight: 700;
     }
 
-    /* Empty State */
+    .results-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    /* Empty State Enhanced */
     .empty-products {
         text-align: center;
         padding: 5rem 2rem;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
     }
 
     .empty-icon {
         font-size: 5rem;
         color: var(--text-muted);
         margin-bottom: 1rem;
-        opacity: 0.5;
+        opacity: 0.3;
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
     }
 
     .empty-title {
@@ -282,15 +558,52 @@
     .empty-description {
         color: var(--text-secondary);
         margin-bottom: 2rem;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
     }
 
-    /* Top Brands */
+    .empty-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    /* Brands Section Enhanced */
     .brands-section {
         background: white;
         border-radius: 20px;
         padding: 2rem;
         margin-bottom: 3rem;
         box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .section-link {
+        color: var(--bs-primary);
+        text-decoration: none;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: gap 0.3s ease;
+    }
+
+    .section-link:hover {
+        gap: 1rem;
     }
 
     .brands-grid {
@@ -307,6 +620,21 @@
         transition: all 0.3s ease;
         text-decoration: none;
         color: inherit;
+        background: white;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .brand-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, var(--bs-primary), rgba(var(--bs-primary-rgb), 0.5));
+        opacity: 0;
+        transition: opacity 0.3s ease;
     }
 
     .brand-item:hover {
@@ -314,6 +642,11 @@
         transform: translateY(-3px);
         color: inherit;
         text-decoration: none;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .brand-item:hover::before {
+        opacity: 0.1;
     }
 
     .brand-logo {
@@ -322,6 +655,11 @@
         object-fit: contain;
         margin-bottom: 0.5rem;
         border-radius: 8px;
+        transition: transform 0.3s ease;
+    }
+
+    .brand-item:hover .brand-logo {
+        transform: scale(1.1);
     }
 
     .brand-name {
@@ -335,35 +673,134 @@
         color: var(--text-muted);
     }
 
-    /* Loading State */
-    .loading-spinner {
+    /* Price Range Widget */
+    .price-range-widget {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+    }
+
+    .price-range-header {
         display: flex;
-        justify-content: center;
+        justify-content: space-between;
         align-items: center;
-        min-height: 300px;
+        margin-bottom: 1rem;
     }
 
-    .spinner {
-        width: 50px;
-        height: 50px;
-        border: 3px solid rgba(var(--bs-primary-rgb), 0.2);
-        border-top-color: var(--bs-primary);
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
+    .price-range-title {
+        font-weight: 600;
+        color: var(--text-primary);
     }
 
-    @keyframes spin {
-        to { transform: rotate(360deg); }
+    .price-range-values {
+        display: flex;
+        gap: 2rem;
     }
 
-    /* Responsive */
+    .price-value {
+        text-align: center;
+    }
+
+    .price-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+    }
+
+    .price-amount {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--bs-primary);
+    }
+
+    /* Pagination Enhanced */
+    .pagination {
+        gap: 0.5rem;
+    }
+
+    .page-link {
+        border-radius: 10px;
+        border: 2px solid var(--border-color);
+        padding: 0.5rem 1rem;
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+    }
+
+    .page-link:hover {
+        border-color: var(--bs-primary);
+        color: var(--bs-primary);
+        background: rgba(var(--bs-primary-rgb), 0.05);
+    }
+
+    .page-item.active .page-link {
+        background: var(--bs-primary);
+        border-color: var(--bs-primary);
+        color: white;
+    }
+
+    .page-item.disabled .page-link {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* Category Banner */
+    .category-banner {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .category-banner::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 2px, transparent 2px);
+        background-size: 40px 40px;
+        animation: move-pattern 30s linear infinite;
+    }
+
+    .banner-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .banner-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .banner-text {
+        opacity: 0.9;
+        margin-bottom: 1rem;
+    }
+
+    /* Responsive Enhanced */
     @media (max-width: 991.98px) {
         .category-title {
             font-size: 2.5rem;
         }
 
+        .quick-actions-bar {
+            position: static;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
         .subcategory-grid {
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        }
+
+        .filter-bar {
+            position: static;
         }
 
         .filter-controls {
@@ -373,11 +810,21 @@
 
         .filter-group {
             justify-content: space-between;
+            min-width: 100%;
+        }
+
+        .view-toggle {
+            margin-left: 0;
+            margin-top: 1rem;
         }
 
         .results-info {
             flex-direction: column;
             align-items: stretch;
+        }
+
+        .brands-grid {
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
         }
     }
 
@@ -386,23 +833,48 @@
             font-size: 2rem;
         }
 
+        .category-description {
+            font-size: 1rem;
+        }
+
         .category-stats {
             gap: 1rem;
+        }
+
+        .stat-item {
+            padding: 0.75rem 1rem;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
         }
 
         .subcategory-grid {
             grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
         }
 
+        .products-grid.grid-view {
+            grid-template-columns: 1fr;
+        }
+
         .brands-grid {
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .quick-action-btn {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.8rem;
         }
     }
 
-    /* Dark Mode */
+    /* Dark Mode Support */
     [data-bs-theme="dark"] .subcategory-card,
     [data-bs-theme="dark"] .filter-bar,
-    [data-bs-theme="dark"] .brands-section {
+    [data-bs-theme="dark"] .brands-section,
+    [data-bs-theme="dark"] .empty-products,
+    [data-bs-theme="dark"] .results-info,
+    [data-bs-theme="dark"] .price-range-widget,
+    [data-bs-theme="dark"] .quick-actions-bar {
         background: #1e1e1e;
     }
 
@@ -410,7 +882,9 @@
         background: #1a1a1a;
     }
 
-    [data-bs-theme="dark"] .filter-select {
+    [data-bs-theme="dark"] .filter-select,
+    [data-bs-theme="dark"] .quick-action-btn,
+    [data-bs-theme="dark"] .brand-item {
         background: #2d2d2d;
         border-color: #404040;
         color: #e0e0e0;
@@ -418,10 +892,6 @@
 
     [data-bs-theme="dark"] .view-toggle {
         background: #2d2d2d;
-        border-color: #404040;
-    }
-
-    [data-bs-theme="dark"] .brand-item {
         border-color: #404040;
     }
 </style>
@@ -467,29 +937,73 @@
                         <span class="stat-label">{% trans "علامة تجارية" %}</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-number">{{ category.views_count }}</span>
+                        <span class="stat-number">{{ category.views_count|floatformat:0 }}</span>
                         <span class="stat-label">{% trans "مشاهدة" %}</span>
                     </div>
                 </div>
             </div>
 
-            {% if category.image %}
-                <div class="col-lg-4 text-center" data-aos="zoom-in" data-aos-delay="300">
-                    <img src="{{ category.image.url }}" alt="{{ category.name }}" class="category-image">
+            <div class="col-lg-4 text-center" data-aos="zoom-in" data-aos-delay="300">
+                <div class="category-image-container">
+                    {% if category.image %}
+                        <img src="{{ category.image.url }}" alt="{{ category.name }}" class="category-image">
+                    {% else %}
+                        <div class="category-icon-large">
+                            <i class="fas fa-{{ category.icon|default:'folder' }}"></i>
+                        </div>
+                    {% endif %}
                 </div>
-            {% endif %}
+            </div>
         </div>
     </div>
 </section>
 
+<!-- Quick Actions Bar -->
+<div class="quick-actions-bar">
+    <div class="container">
+        <div class="quick-actions-wrapper">
+            <a href="#products" class="quick-action-btn">
+                <i class="fas fa-box"></i>
+                {% trans "المنتجات" %}
+            </a>
+            {% if subcategories %}
+            <a href="#subcategories" class="quick-action-btn">
+                <i class="fas fa-layer-group"></i>
+                {% trans "الفئات الفرعية" %}
+            </a>
+            {% endif %}
+            {% if top_brands %}
+            <a href="#brands" class="quick-action-btn">
+                <i class="fas fa-tags"></i>
+                {% trans "العلامات التجارية" %}
+            </a>
+            {% endif %}
+            <button class="quick-action-btn" onclick="showFilters()">
+                <i class="fas fa-filter"></i>
+                {% trans "فلترة" %}
+            </button>
+            <button class="quick-action-btn" onclick="shareCategory()">
+                <i class="fas fa-share-alt"></i>
+                {% trans "مشاركة" %}
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Subcategories Section -->
 {% if subcategories %}
-<section class="subcategories-section">
+<section class="subcategories-section" id="subcategories">
     <div class="container">
         <h2 class="text-center mb-4" data-aos="fade-up">{% trans "الفئات الفرعية" %}</h2>
         <div class="subcategory-grid">
             {% for subcategory in subcategories %}
-                <a href="{{ subcategory.get_absolute_url }}" class="subcategory-card" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
+                <a href="{{ subcategory.get_absolute_url }}"
+                   class="subcategory-card"
+                   data-aos="fade-up"
+                   data-aos-delay="{{ forloop.counter0|add:1 }}00">
+                    {% if subcategory.is_new %}
+                        <span class="subcategory-new-badge">{% trans "جديد" %}</span>
+                    {% endif %}
                     <div class="subcategory-icon">
                         <i class="fas fa-{{ subcategory.icon|default:'folder' }}"></i>
                     </div>
@@ -502,40 +1016,117 @@
 </section>
 {% endif %}
 
+<!-- Category Banner (if exists) -->
+{% if category.banner_image %}
+<section class="container">
+    <div class="category-banner" style="background-image: url('{{ category.banner_image.url }}');">
+        <div class="banner-content">
+            <h3 class="banner-title">{% trans "عروض خاصة في" %} {{ category.name }}</h3>
+            <p class="banner-text">{% trans "اكتشف أحدث العروض والمنتجات المميزة" %}</p>
+            <a href="#products" class="btn btn-light">{% trans "تسوق الآن" %}</a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
 <!-- Products Section -->
 <section class="category-content">
     <div class="container">
+        <!-- Price Range Widget -->
+        {% if price_range %}
+        <div class="price-range-widget" data-aos="fade-up">
+            <div class="price-range-header">
+                <h3 class="price-range-title">{% trans "نطاق الأسعار" %}</h3>
+            </div>
+            <div class="price-range-values">
+                <div class="price-value">
+                    <div class="price-label">{% trans "من" %}</div>
+                    <div class="price-amount">{{ price_range.min_price|floatformat:0 }} {% trans "ج.م" %}</div>
+                </div>
+                <div class="price-value">
+                    <div class="price-label">{% trans "إلى" %}</div>
+                    <div class="price-amount">{{ price_range.max_price|floatformat:0 }} {% trans "ج.م" %}</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Filter Bar -->
-        <div class="filter-bar" data-aos="fade-up">
+        <div class="filter-bar" data-aos="fade-up" id="filterBar">
             <form method="get" id="filterForm">
                 <div class="filter-controls">
                     <div class="filter-group">
-                        <label for="sortSelect">{% trans "ترتيب حسب:" %}</label>
+                        <label class="filter-label" for="sortSelect">{% trans "ترتيب:" %}</label>
                         <select id="sortSelect" name="sort" class="filter-select" onchange="applyFilters()">
                             <option value="newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>{% trans "الأحدث" %}</option>
                             <option value="price_low" {% if request.GET.sort == 'price_low' %}selected{% endif %}>{% trans "السعر: منخفض لمرتفع" %}</option>
                             <option value="price_high" {% if request.GET.sort == 'price_high' %}selected{% endif %}>{% trans "السعر: مرتفع لمنخفض" %}</option>
                             <option value="best_selling" {% if request.GET.sort == 'best_selling' %}selected{% endif %}>{% trans "الأكثر مبيعاً" %}</option>
                             <option value="top_rated" {% if request.GET.sort == 'top_rated' %}selected{% endif %}>{% trans "الأعلى تقييماً" %}</option>
+                            <option value="discount" {% if request.GET.sort == 'discount' %}selected{% endif %}>{% trans "أعلى خصم" %}</option>
                         </select>
                     </div>
 
                     <div class="filter-group">
-                        <label for="perPageSelect">{% trans "عرض:" %}</label>
+                        <label class="filter-label" for="perPageSelect">{% trans "عرض:" %}</label>
                         <select id="perPageSelect" name="per_page" class="filter-select" onchange="applyFilters()">
-                            <option value="12" {% if request.GET.per_page == '12' %}selected{% endif %}>12 {% trans "منتج" %}</option>
-                            <option value="24" {% if request.GET.per_page == '24' %}selected{% endif %}>24 {% trans "منتج" %}</option>
-                            <option value="48" {% if request.GET.per_page == '48' %}selected{% endif %}>48 {% trans "منتج" %}</option>
+                            <option value="12" {% if request.GET.per_page == '12' %}selected{% endif %}>12</option>
+                            <option value="24" {% if request.GET.per_page == '24' %}selected{% endif %}>24</option>
+                            <option value="48" {% if request.GET.per_page == '48' %}selected{% endif %}>48</option>
+                            <option value="96" {% if request.GET.per_page == '96' %}selected{% endif %}>96</option>
                         </select>
                     </div>
 
-                    <div class="view-toggle ms-auto">
+                    <button type="button" class="filter-toggle" onclick="toggleAdvancedFilters()">
+                        <i class="fas fa-sliders-h"></i>
+                        {% trans "فلاتر متقدمة" %}
+                    </button>
+
+                    <div class="view-toggle">
                         <button type="button" class="view-btn active" onclick="setView('grid')" data-view="grid">
                             <i class="fas fa-th"></i>
                         </button>
                         <button type="button" class="view-btn" onclick="setView('list')" data-view="list">
                             <i class="fas fa-list"></i>
                         </button>
+                    </div>
+                </div>
+
+                <!-- Advanced Filters -->
+                <div class="advanced-filters" id="advancedFilters">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label class="filter-label">{% trans "السعر:" %}</label>
+                            <div class="d-flex gap-2">
+                                <input type="number" name="min_price" class="form-control" placeholder="{% trans 'من' %}" value="{{ request.GET.min_price }}">
+                                <input type="number" name="max_price" class="form-control" placeholder="{% trans 'إلى' %}" value="{{ request.GET.max_price }}">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="filter-label">{% trans "العلامة التجارية:" %}</label>
+                            <select name="brand" class="filter-select">
+                                <option value="">{% trans "الكل" %}</option>
+                                {% for brand in top_brands %}
+                                    <option value="{{ brand.id }}" {% if request.GET.brand == brand.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ brand.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="filter-label">{% trans "التوفر:" %}</label>
+                            <select name="availability" class="filter-select">
+                                <option value="">{% trans "الكل" %}</option>
+                                <option value="in_stock" {% if request.GET.availability == 'in_stock' %}selected{% endif %}>{% trans "متوفر" %}</option>
+                                <option value="out_of_stock" {% if request.GET.availability == 'out_of_stock' %}selected{% endif %}>{% trans "غير متوفر" %}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search me-2"></i>
+                                {% trans "تطبيق الفلاتر" %}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </form>
@@ -551,10 +1142,23 @@
                     {% trans "لا توجد منتجات" %}
                 {% endif %}
             </div>
+            <div class="results-actions">
+                <button class="btn btn-sm btn-outline-secondary" onclick="clearFilters()">
+                    <i class="fas fa-times me-1"></i>
+                    {% trans "إلغاء الفلاتر" %}
+                </button>
+            </div>
         </div>
 
         <!-- Products Grid -->
-        <div class="products-section">
+        <div class="products-section" id="products">
+            <div class="products-loading" style="display: none;">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>{% trans "جاري التحميل..." %}</p>
+                </div>
+            </div>
+
             {% if products %}
                 <div class="products-grid grid-view" id="productsGrid">
                     {% for product in products %}
@@ -616,9 +1220,16 @@
                     <p class="empty-description">
                         {% trans "لم يتم إضافة أي منتجات لهذه الفئة بعد. تصفح الفئات الأخرى أو عد لاحقاً." %}
                     </p>
-                    <a href="{% url 'products:category_list' %}" class="btn btn-primary">
-                        {% trans "تصفح الفئات الأخرى" %}
-                    </a>
+                    <div class="empty-actions">
+                        <a href="{% url 'products:category_list' %}" class="btn btn-primary">
+                            <i class="fas fa-layer-group me-2"></i>
+                            {% trans "تصفح الفئات الأخرى" %}
+                        </a>
+                        <button class="btn btn-outline-primary" onclick="window.history.back()">
+                            <i class="fas fa-arrow-right me-2"></i>
+                            {% trans "العودة" %}
+                        </button>
+                    </div>
                 </div>
             {% endif %}
         </div>
@@ -627,12 +1238,21 @@
 
 <!-- Top Brands Section -->
 {% if top_brands %}
-<section class="container">
+<section class="container" id="brands">
     <div class="brands-section" data-aos="fade-up">
-        <h3 class="mb-4 text-center">{% trans "أهم العلامات التجارية في هذه الفئة" %}</h3>
+        <div class="section-header">
+            <h3 class="section-title">{% trans "أهم العلامات التجارية في هذه الفئة" %}</h3>
+            <a href="{% url 'products:product_list' %}?category={{ category.id }}" class="section-link">
+                {% trans "عرض الكل" %}
+                <i class="fas fa-arrow-left"></i>
+            </a>
+        </div>
         <div class="brands-grid">
             {% for brand in top_brands %}
-                <a href="{% url 'products:product_list' %}?brand={{ brand.id }}&category={{ category.id }}" class="brand-item">
+                <a href="{% url 'products:product_list' %}?brand={{ brand.id }}&category={{ category.id }}"
+                   class="brand-item"
+                   data-aos="zoom-in"
+                   data-aos-delay="{{ forloop.counter0|multiply:50 }}">
                     {% if brand.logo %}
                         <img src="{{ brand.logo.url }}" alt="{{ brand.name }}" class="brand-logo">
                     {% else %}
@@ -652,6 +1272,7 @@
 
 {% block extra_js %}
 <script>
+document.addEventListener('DOMContentLoaded', function() {
     // Initialize AOS
     AOS.init({
         duration: 600,
@@ -659,64 +1280,232 @@
         offset: 50
     });
 
-    // Increment category views
-    fetch(`/products/api/category/{{ category.id }}/increment-views/`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken')
-        }
-    });
-
-    // Filter functions
-    function applyFilters() {
-        document.getElementById('filterForm').submit();
-    }
-
-    function setView(viewType) {
-        const grid = document.getElementById('productsGrid');
-        const buttons = document.querySelectorAll('.view-btn');
-
-        buttons.forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.dataset.view === viewType) {
-                btn.classList.add('active');
+    // Increment category views (with rate limiting)
+    const viewIncremented = sessionStorage.getItem('category_{{ category.id }}_viewed');
+    if (!viewIncremented) {
+        fetch(`/products/api/category/{{ category.id }}/increment-views/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
             }
         });
-
-        if (viewType === 'list') {
-            grid.classList.remove('grid-view');
-            grid.classList.add('list-view');
-        } else {
-            grid.classList.remove('list-view');
-            grid.classList.add('grid-view');
-        }
-
-        // Save preference
-        localStorage.setItem('productViewType', viewType);
+        sessionStorage.setItem('category_{{ category.id }}_viewed', 'true');
     }
 
     // Load saved view preference
-    document.addEventListener('DOMContentLoaded', function() {
-        const savedView = localStorage.getItem('productViewType');
-        if (savedView) {
-            setView(savedView);
+    const savedView = localStorage.getItem('productViewType');
+    if (savedView) {
+        setView(savedView);
+    }
+
+    // Smooth scroll to sections
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+
+    // Lazy load products on scroll
+    let loadingMore = false;
+    let nextPage = {{ page_obj.next_page_number|default:"null" }};
+
+    window.addEventListener('scroll', function() {
+        if (loadingMore || !nextPage) return;
+
+        const scrollPosition = window.innerHeight + window.scrollY;
+        const threshold = document.body.offsetHeight - 1000;
+
+        if (scrollPosition >= threshold) {
+            loadMoreProducts();
         }
     });
 
-    // Helper function
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
+    function loadMoreProducts() {
+        loadingMore = true;
+        const loadingEl = document.querySelector('.products-loading');
+        loadingEl.style.display = 'flex';
+
+        const currentParams = new URLSearchParams(window.location.search);
+        currentParams.set('page', nextPage);
+
+        fetch(`${window.location.pathname}?${currentParams.toString()}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            const newProducts = doc.querySelectorAll('.product-item');
+            const grid = document.getElementById('productsGrid');
+
+            newProducts.forEach((product, index) => {
+                product.style.opacity = '0';
+                grid.appendChild(product);
+
+                setTimeout(() => {
+                    product.style.transition = 'opacity 0.5s ease';
+                    product.style.opacity = '1';
+                }, index * 50);
+            });
+
+            // Update pagination info
+            const nextPageEl = doc.querySelector('.page-item.active + .page-item a');
+            nextPage = nextPageEl ? parseInt(nextPageEl.textContent) : null;
+
+            loadingEl.style.display = 'none';
+            loadingMore = false;
+        })
+        .catch(error => {
+            console.error('Error loading more products:', error);
+            loadingEl.style.display = 'none';
+            loadingMore = false;
+        });
+    }
+});
+
+// Filter functions
+function applyFilters() {
+    document.getElementById('filterForm').submit();
+}
+
+function clearFilters() {
+    const form = document.getElementById('filterForm');
+    form.reset();
+    // Keep only essential parameters
+    const params = new URLSearchParams();
+    params.set('sort', 'newest');
+    params.set('per_page', '24');
+    window.location.search = params.toString();
+}
+
+function toggleAdvancedFilters() {
+    const advancedFilters = document.getElementById('advancedFilters');
+    advancedFilters.classList.toggle('show');
+
+    // Update icon
+    const icon = event.target.querySelector('i');
+    if (advancedFilters.classList.contains('show')) {
+        icon.classList.remove('fa-sliders-h');
+        icon.classList.add('fa-times');
+    } else {
+        icon.classList.remove('fa-times');
+        icon.classList.add('fa-sliders-h');
+    }
+}
+
+function setView(viewType) {
+    const grid = document.getElementById('productsGrid');
+    const buttons = document.querySelectorAll('.view-btn');
+
+    buttons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.view === viewType) {
+            btn.classList.add('active');
+        }
+    });
+
+    if (viewType === 'list') {
+        grid.classList.remove('grid-view');
+        grid.classList.add('list-view');
+    } else {
+        grid.classList.remove('list-view');
+        grid.classList.add('grid-view');
+    }
+
+    // Save preference
+    localStorage.setItem('productViewType', viewType);
+}
+
+function showFilters() {
+    const filterBar = document.getElementById('filterBar');
+    filterBar.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // Add highlight effect
+    filterBar.style.boxShadow = '0 0 20px rgba(var(--bs-primary-rgb), 0.5)';
+    setTimeout(() => {
+        filterBar.style.boxShadow = '';
+    }, 1000);
+}
+
+function shareCategory() {
+    if (navigator.share) {
+        navigator.share({
+            title: '{{ category.name }}',
+            text: '{{ category.description|truncatechars:100 }}',
+            url: window.location.href
+        }).catch(err => console.log('Error sharing:', err));
+    } else {
+        // Fallback: Copy to clipboard
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            showToast('{% trans "تم نسخ الرابط" %}', 'success');
+        });
+    }
+}
+
+// Helper functions
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
             }
         }
-        return cookieValue;
     }
+    return cookieValue;
+}
+
+function showToast(message, type = 'info') {
+    // Implement toast notification
+    const toast = document.createElement('div');
+    toast.className = `toast-notification toast-${type}`;
+    toast.textContent = message;
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#28a745' : '#17a2b8'};
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        z-index: 9999;
+        animation: slideIn 0.3s ease;
+    `;
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Add CSS for toast animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
 </script>
 {% endblock %}

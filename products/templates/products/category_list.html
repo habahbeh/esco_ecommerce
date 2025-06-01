@@ -1,12 +1,17 @@
+<!-- File: products/templates/products/category_list.html -->
 {% extends 'core/base.html' %}
 {% load static %}
 {% load i18n %}
+{% load cache %}
 
 {% block title %}{% trans "جميع الفئات" %} | {{ site_settings.site_name|default:"ESCO" }}{% endblock %}
 
+{% block meta_description %}{% trans "تصفح جميع فئات المنتجات في متجرنا. اكتشف مجموعة واسعة من المنتجات الصناعية عالية الجودة مصنفة حسب الفئات." %}{% endblock %}
+{% block meta_keywords %}فئات, منتجات, تصنيف, صناعي, تجاري{% endblock %}
+
 {% block extra_css %}
 <style>
-    /* Page Header */
+    /* Page Header Enhanced */
     .page-header {
         background: linear-gradient(135deg, var(--bs-primary) 0%, rgba(var(--bs-primary-rgb), 0.8) 100%);
         color: white;
@@ -48,9 +53,76 @@
         z-index: 1;
     }
 
-    /* Category Grid */
+    /* Stats Bar */
+    .stats-bar {
+        background: white;
+        padding: 2rem 0;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        margin-bottom: 3rem;
+    }
+
+    .stat-card {
+        text-align: center;
+        padding: 1rem;
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, var(--bs-primary), rgba(var(--bs-primary-rgb), 0.7));
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        color: white;
+        font-size: 1.5rem;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+    }
+
+    /* Filter & Sort Bar */
+    .filter-sort-bar {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        margin-bottom: 2rem;
+    }
+
+    .view-options {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .view-btn {
+        padding: 0.5rem 1rem;
+        border: 2px solid var(--border-color);
+        background: white;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .view-btn.active {
+        background: var(--bs-primary);
+        color: white;
+        border-color: var(--bs-primary);
+    }
+
+    /* Category Grid Enhanced */
     .categories-section {
-        padding: 5rem 0;
+        padding: 3rem 0 5rem;
         background: #f8f9fa;
     }
 
@@ -61,7 +133,11 @@
         margin-bottom: 4rem;
     }
 
-    /* Category Card */
+    .category-grid.list-view {
+        grid-template-columns: 1fr;
+    }
+
+    /* Category Card Enhanced */
     .category-card {
         background: white;
         border-radius: 20px;
@@ -72,11 +148,31 @@
         height: 100%;
         display: flex;
         flex-direction: column;
+        opacity: 0;
+        animation: fadeInUp 0.6s ease forwards;
     }
 
     .category-card:hover {
         transform: translateY(-10px);
         box-shadow: 0 20px 50px rgba(0,0,0,0.12);
+    }
+
+    /* List View Styles */
+    .category-grid.list-view .category-card {
+        flex-direction: row;
+        height: auto;
+    }
+
+    .category-grid.list-view .category-image-wrapper {
+        width: 200px;
+        height: 150px;
+        flex-shrink: 0;
+    }
+
+    .category-grid.list-view .category-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }
 
     .category-image-wrapper {
@@ -122,6 +218,23 @@
         border-radius: 50px;
         font-weight: 600;
         font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .view-count-badge {
+        position: absolute;
+        bottom: 1rem;
+        left: 1rem;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
 
     .category-content {
@@ -136,6 +249,14 @@
         font-weight: 700;
         margin-bottom: 0.5rem;
         color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .category-icon-inline {
+        color: var(--bs-primary);
+        font-size: 1.25rem;
     }
 
     .category-description {
@@ -179,14 +300,14 @@
         gap: 1rem;
     }
 
-    /* Subcategories List */
-    .subcategories-list {
+    /* Subcategories Pills */
+    .subcategories-pills {
         margin-top: 1rem;
         padding-top: 1rem;
         border-top: 1px solid var(--border-color);
     }
 
-    .subcategory-item {
+    .subcategory-pill {
         display: inline-block;
         padding: 0.25rem 0.75rem;
         margin: 0.25rem;
@@ -196,27 +317,59 @@
         font-size: 0.875rem;
         text-decoration: none;
         transition: all 0.3s ease;
+        position: relative;
     }
 
-    .subcategory-item:hover {
+    .subcategory-pill:hover {
         background: var(--bs-primary);
         color: white;
         transform: translateY(-2px);
     }
 
-    /* Featured Categories */
+    .subcategory-count {
+        background: rgba(0,0,0,0.1);
+        padding: 0.1rem 0.4rem;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        margin-left: 0.25rem;
+    }
+
+    /* Featured Categories Enhanced */
     .featured-section {
         padding: 5rem 0;
         background: white;
     }
 
-    .featured-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 2rem;
+    .featured-header {
+        text-align: center;
+        margin-bottom: 3rem;
     }
 
-    .featured-category {
+    .featured-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .featured-subtitle {
+        font-size: 1.125rem;
+        color: var(--text-muted);
+    }
+
+    .featured-carousel {
+        position: relative;
+        overflow: hidden;
+        padding: 1rem 0;
+    }
+
+    .featured-track {
+        display: flex;
+        gap: 2rem;
+        transition: transform 0.5s ease;
+    }
+
+    .featured-card {
+        flex: 0 0 250px;
         text-align: center;
         padding: 2rem;
         border-radius: 20px;
@@ -224,12 +377,16 @@
         border: 2px solid var(--border-color);
         transition: all 0.3s ease;
         cursor: pointer;
+        text-decoration: none;
+        color: inherit;
     }
 
-    .featured-category:hover {
+    .featured-card:hover {
         border-color: var(--bs-primary);
         transform: translateY(-5px);
         box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        color: inherit;
+        text-decoration: none;
     }
 
     .featured-icon {
@@ -246,7 +403,7 @@
         transition: all 0.3s ease;
     }
 
-    .featured-category:hover .featured-icon {
+    .featured-card:hover .featured-icon {
         transform: rotate(-5deg) scale(1.1);
     }
 
@@ -260,9 +417,27 @@
     .featured-count {
         color: var(--text-muted);
         font-size: 0.875rem;
+        margin-bottom: 0.5rem;
     }
 
-    /* Search Bar */
+    .featured-trend {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.75rem;
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .featured-trend.down {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+    }
+
+    /* Search Bar Enhanced */
     .category-search {
         max-width: 600px;
         margin: 3rem auto;
@@ -296,7 +471,133 @@
         font-size: 1.25rem;
     }
 
-    /* Responsive */
+    .search-suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 2px solid var(--border-color);
+        border-radius: 15px;
+        margin-top: 0.5rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        display: none;
+        z-index: 1000;
+    }
+
+    .search-suggestions.show {
+        display: block;
+    }
+
+    .suggestion-item {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .suggestion-item:hover {
+        background: #f8f9fa;
+    }
+
+    .suggestion-item:last-child {
+        border-bottom: none;
+    }
+
+    .suggestion-category {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+
+    .suggestion-count {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        z-index: 1000;
+    }
+
+    .action-btn {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: var(--bs-primary);
+        color: white;
+        border: none;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+
+    .action-btn:hover {
+        transform: scale(1.1);
+    }
+
+    /* Loading Skeleton Enhanced */
+    .category-skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+        border-radius: 20px;
+        height: 400px;
+    }
+
+    @keyframes loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+
+    /* Empty State Enhanced */
+    .empty-state {
+        text-align: center;
+        padding: 5rem 2rem;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+
+    .empty-icon {
+        font-size: 5rem;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+
+    .empty-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+    }
+
+    .empty-description {
+        color: var(--text-secondary);
+        margin-bottom: 2rem;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Responsive Enhanced */
     @media (max-width: 991.98px) {
         .page-title {
             font-size: 2.5rem;
@@ -311,9 +612,17 @@
             height: 200px;
         }
 
-        .featured-grid {
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 1rem;
+        .stats-bar {
+            overflow-x: auto;
+        }
+
+        .featured-card {
+            flex: 0 0 200px;
+        }
+
+        .quick-actions {
+            bottom: 1rem;
+            right: 1rem;
         }
     }
 
@@ -326,64 +635,65 @@
             grid-template-columns: 1fr;
         }
 
+        .stat-card {
+            padding: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+        }
+
+        .filter-sort-bar {
+            padding: 1rem;
+        }
+
         .featured-icon {
             width: 60px;
             height: 60px;
             font-size: 2rem;
         }
-    }
 
-    /* Loading State */
-    .category-skeleton {
-        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-        background-size: 200% 100%;
-        animation: loading 1.5s infinite;
-        border-radius: 20px;
-        height: 400px;
-    }
-
-    @keyframes loading {
-        0% { background-position: 200% 0; }
-        100% { background-position: -200% 0; }
-    }
-
-    /* Empty State */
-    .empty-state {
-        text-align: center;
-        padding: 5rem 2rem;
-    }
-
-    .empty-icon {
-        font-size: 5rem;
-        color: var(--text-muted);
-        margin-bottom: 1rem;
-    }
-
-    .empty-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-        color: var(--text-primary);
-    }
-
-    .empty-description {
-        color: var(--text-secondary);
-    }
-
-    /* Animation */
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
+        .category-grid.list-view .category-image-wrapper {
+            width: 120px;
+            height: 100px;
         }
     }
 
-    .animate-fade-in {
-        animation: fadeInUp 0.6s ease forwards;
+    /* Dark Mode Support */
+    [data-bs-theme="dark"] .stats-bar,
+    [data-bs-theme="dark"] .filter-sort-bar,
+    [data-bs-theme="dark"] .category-card,
+    [data-bs-theme="dark"] .featured-card,
+    [data-bs-theme="dark"] .empty-state,
+    [data-bs-theme="dark"] .search-suggestions {
+        background: #1e1e1e;
+        color: #e0e0e0;
+    }
+
+    [data-bs-theme="dark"] .view-btn {
+        background: #2d2d2d;
+        border-color: #404040;
+    }
+
+    [data-bs-theme="dark"] .suggestion-item:hover {
+        background: #2d2d2d;
+    }
+
+    /* Print Styles */
+    @media print {
+        .page-header,
+        .stats-bar,
+        .filter-sort-bar,
+        .quick-actions,
+        .search-suggestions {
+            display: none;
+        }
+
+        .category-card {
+            break-inside: avoid;
+            box-shadow: none;
+            border: 1px solid #ddd;
+        }
     }
 </style>
 {% endblock %}
@@ -399,28 +709,108 @@
     </div>
 </section>
 
+<!-- Stats Bar -->
+<section class="stats-bar">
+    <div class="container">
+        <div class="row">
+            <div class="col-6 col-md-3">
+                <div class="stat-card" data-aos="zoom-in">
+                    <div class="stat-icon">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                    <div class="stat-value">{{ categories|length }}</div>
+                    <div class="stat-label">{% trans "فئة رئيسية" %}</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card" data-aos="zoom-in" data-aos-delay="100">
+                    <div class="stat-icon">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                    <div class="stat-value" id="totalProducts">0</div>
+                    <div class="stat-label">{% trans "إجمالي المنتجات" %}</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card" data-aos="zoom-in" data-aos-delay="200">
+                    <div class="stat-icon">
+                        <i class="fas fa-tags"></i>
+                    </div>
+                    <div class="stat-value">{{ featured_categories|length|default:0 }}</div>
+                    <div class="stat-label">{% trans "فئة مميزة" %}</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="stat-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-value">{{ active_offers|default:0 }}</div>
+                    <div class="stat-label">{% trans "عروض نشطة" %}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 <!-- Categories Section -->
 <section class="categories-section">
     <div class="container">
         <!-- Search Bar -->
         <div class="category-search" data-aos="fade-up">
             <div class="search-input-wrapper">
-                <input type="text" 
-                       class="category-search-input" 
+                <input type="text"
+                       class="category-search-input"
                        id="categorySearch"
                        placeholder="{% trans 'ابحث عن فئة...' %}"
-                       aria-label="{% trans 'البحث في الفئات' %}">
+                       aria-label="{% trans 'البحث في الفئات' %}"
+                       autocomplete="off">
                 <i class="fas fa-search search-icon"></i>
+                <div class="search-suggestions" id="searchSuggestions"></div>
+            </div>
+        </div>
+
+        <!-- Filter & Sort Bar -->
+        <div class="filter-sort-bar" data-aos="fade-up">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <select class="form-select" id="sortSelect">
+                        <option value="name">{% trans "ترتيب حسب: الاسم" %}</option>
+                        <option value="products">{% trans "ترتيب حسب: عدد المنتجات" %}</option>
+                        <option value="newest">{% trans "ترتيب حسب: الأحدث" %}</option>
+                        <option value="popular">{% trans "ترتيب حسب: الأكثر مشاهدة" %}</option>
+                    </select>
+                </div>
+                <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                    <div class="view-options">
+                        <button class="view-btn active" data-view="grid" title="{% trans 'عرض شبكي' %}">
+                            <i class="fas fa-th"></i>
+                        </button>
+                        <button class="view-btn" data-view="list" title="{% trans 'عرض قائمة' %}">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Main Categories Grid -->
         <div class="category-grid" id="categoryGrid">
+            {% cache 600 category_list_grid %}
             {% for category in categories %}
-                <div class="category-card" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
+                <div class="category-card"
+                     data-aos="fade-up"
+                     data-aos-delay="{{ forloop.counter0|add:1 }}00"
+                     data-name="{{ category.name }}"
+                     data-products="{{ category.total_products }}"
+                     data-views="{{ category.views_count }}"
+                     style="animation-delay: {{ forloop.counter0|multiply:0.1 }}s">
                     <div class="category-image-wrapper">
                         {% if category.image %}
-                            <img src="{{ category.image.url }}" class="category-image" alt="{{ category.name }}">
+                            <img src="{{ category.image.url }}"
+                                 class="category-image"
+                                 alt="{{ category.name }}"
+                                 loading="lazy">
                         {% else %}
                             <div class="category-image d-flex align-items-center justify-content-center">
                                 <i class="fas fa-{{ category.icon|default:'cube' }} fa-4x text-muted opacity-25"></i>
@@ -429,31 +819,47 @@
                         <div class="category-overlay"></div>
                         {% if category.is_featured %}
                             <span class="category-badge">
-                                <i class="fas fa-star me-1"></i>{% trans "مميز" %}
+                                <i class="fas fa-star"></i>
+                                {% trans "مميز" %}
+                            </span>
+                        {% endif %}
+                        {% if category.views_count > 1000 %}
+                            <span class="view-count-badge">
+                                <i class="fas fa-eye"></i>
+                                {{ category.views_count|floatformat:0 }}
                             </span>
                         {% endif %}
                     </div>
-                    
+
                     <div class="category-content">
-                        <h3 class="category-name">{{ category.name }}</h3>
+                        <h3 class="category-name">
+                            {% if category.icon %}
+                                <i class="{{ category.icon }} category-icon-inline"></i>
+                            {% endif %}
+                            {{ category.name }}
+                        </h3>
                         {% if category.description %}
                             <p class="category-description">{{ category.description|truncatechars:150 }}</p>
                         {% endif %}
-                        
+
                         {% if category.children.exists %}
-                            <div class="subcategories-list">
+                            <div class="subcategories-pills">
                                 <h6 class="text-muted mb-2">{% trans "الفئات الفرعية:" %}</h6>
-                                {% for subcategory in category.children.all|slice:":5" %}
-                                    <a href="{% url 'products:category_products' subcategory.slug %}" class="subcategory-item">
+                                {% for subcategory in category.children.all|slice:":4" %}
+                                    <a href="{% url 'products:category_products' subcategory.slug %}"
+                                       class="subcategory-pill">
                                         {{ subcategory.name }}
+                                        <span class="subcategory-count">{{ subcategory.products_count }}</span>
                                     </a>
                                 {% endfor %}
-                                {% if category.children.count > 5 %}
-                                    <span class="text-muted">{% trans "و" %} {{ category.children.count|add:"-5" }} {% trans "أخرى" %}</span>
+                                {% if category.children.count > 4 %}
+                                    <span class="text-muted">
+                                        {% trans "و" %} {{ category.children.count|add:"-4" }} {% trans "أخرى" %}
+                                    </span>
                                 {% endif %}
                             </div>
                         {% endif %}
-                        
+
                         <div class="category-stats">
                             <div class="product-count">
                                 <i class="fas fa-box"></i>
@@ -473,9 +879,13 @@
                         <p class="empty-description">
                             {% trans "لم يتم إضافة أي فئات بعد." %}
                         </p>
+                        <a href="{% url 'core:home' %}" class="btn btn-primary">
+                            {% trans "العودة للرئيسية" %}
+                        </a>
                     </div>
                 </div>
             {% endfor %}
+            {% endcache %}
         </div>
     </div>
 </section>
@@ -484,29 +894,51 @@
 {% if featured_categories %}
 <section class="featured-section">
     <div class="container">
-        <div class="text-center mb-5" data-aos="fade-up">
-            <h2 class="display-5 fw-bold mb-3">{% trans "الفئات المميزة" %}</h2>
-            <p class="lead text-muted">{% trans "أكثر الفئات طلباً وشعبية" %}</p>
+        <div class="featured-header" data-aos="fade-up">
+            <h2 class="featured-title">{% trans "الفئات المميزة" %}</h2>
+            <p class="featured-subtitle">{% trans "أكثر الفئات طلباً وشعبية" %}</p>
         </div>
-        
-        <div class="featured-grid">
-            {% for category in featured_categories %}
-                <a href="{% url 'products:category_products' category.slug %}" class="featured-category text-decoration-none" data-aos="zoom-in" data-aos-delay="{{ forloop.counter0|add:1 }}00">
-                    <div class="featured-icon">
-                        <i class="fas fa-{{ category.icon|default:'cube' }}"></i>
-                    </div>
-                    <h4 class="featured-name">{{ category.name }}</h4>
-                    <p class="featured-count">{{ category.total_products }} {% trans "منتج" %}</p>
-                </a>
-            {% endfor %}
+
+        <div class="featured-carousel" data-aos="fade-up">
+            <div class="featured-track">
+                {% for category in featured_categories %}
+                    <a href="{% url 'products:category_products' category.slug %}"
+                       class="featured-card"
+                       data-aos="zoom-in"
+                       data-aos-delay="{{ forloop.counter0|add:1 }}00">
+                        <div class="featured-icon">
+                            <i class="fas fa-{{ category.icon|default:'cube' }}"></i>
+                        </div>
+                        <h4 class="featured-name">{{ category.name }}</h4>
+                        <p class="featured-count">{{ category.total_products }} {% trans "منتج" %}</p>
+                        {% if category.trend %}
+                            <span class="featured-trend {% if category.trend < 0 %}down{% endif %}">
+                                <i class="fas fa-{% if category.trend > 0 %}arrow-up{% else %}arrow-down{% endif %}"></i>
+                                {{ category.trend|floatformat:0 }}%
+                            </span>
+                        {% endif %}
+                    </a>
+                {% endfor %}
+            </div>
         </div>
     </div>
 </section>
 {% endif %}
+
+<!-- Quick Actions -->
+<div class="quick-actions">
+    <button class="action-btn" id="scrollTop" title="{% trans 'الصعود للأعلى' %}">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+    <button class="action-btn" id="toggleDark" title="{% trans 'تبديل الوضع الليلي' %}">
+        <i class="fas fa-moon"></i>
+    </button>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+document.addEventListener('DOMContentLoaded', function() {
     // Initialize AOS
     AOS.init({
         duration: 600,
@@ -514,68 +946,257 @@
         offset: 50
     });
 
-    // Category Search
+    // Calculate total products with animation
+    const totalProductsEl = document.getElementById('totalProducts');
+    let totalProducts = 0;
+    document.querySelectorAll('.category-card').forEach(card => {
+        totalProducts += parseInt(card.dataset.products || 0);
+    });
+
+    // Animate counter
+    let currentCount = 0;
+    const increment = Math.ceil(totalProducts / 50);
+    const timer = setInterval(() => {
+        currentCount += increment;
+        if (currentCount >= totalProducts) {
+            currentCount = totalProducts;
+            clearInterval(timer);
+        }
+        totalProductsEl.textContent = currentCount.toLocaleString('ar-SA');
+    }, 20);
+
+    // Enhanced Category Search with suggestions
     const searchInput = document.getElementById('categorySearch');
+    const suggestionsBox = document.getElementById('searchSuggestions');
     const categoryCards = document.querySelectorAll('.category-card');
 
-    if (searchInput) {
-        searchInput.addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-            
-            categoryCards.forEach(card => {
-                const categoryName = card.querySelector('.category-name').textContent.toLowerCase();
-                const categoryDescription = card.querySelector('.category-description')?.textContent.toLowerCase() || '';
-                const subcategories = Array.from(card.querySelectorAll('.subcategory-item')).map(el => el.textContent.toLowerCase()).join(' ');
-                
-                const searchContent = categoryName + ' ' + categoryDescription + ' ' + subcategories;
-                
-                if (searchContent.includes(searchTerm)) {
-                    card.style.display = '';
-                    card.classList.add('animate-fade-in');
-                } else {
-                    card.style.display = 'none';
-                    card.classList.remove('animate-fade-in');
-                }
-            });
-            
-            // Show/hide empty state
-            const visibleCards = document.querySelectorAll('.category-card:not([style*="display: none"])');
-            const emptyState = document.querySelector('.empty-state');
-            
-            if (visibleCards.length === 0 && searchTerm.length > 0) {
-                if (!emptyState) {
-                    const grid = document.getElementById('categoryGrid');
-                    grid.innerHTML = `
-                        <div class="col-12">
-                            <div class="empty-state">
-                                <i class="fas fa-search empty-icon"></i>
-                                <h3 class="empty-title">{% trans "لا توجد نتائج" %}</h3>
-                                <p class="empty-description">
-                                    {% trans "لم نجد أي فئات تطابق بحثك عن" %} "${searchTerm}"
-                                </p>
-                            </div>
-                        </div>
-                    `;
-                }
-            } else if (emptyState) {
-                emptyState.parentElement.remove();
+    let searchTimeout;
+    searchInput.addEventListener('input', function(e) {
+        clearTimeout(searchTimeout);
+        const searchTerm = e.target.value.toLowerCase().trim();
+
+        searchTimeout = setTimeout(() => {
+            if (searchTerm.length > 1) {
+                showSuggestions(searchTerm);
+            } else {
+                hideSuggestions();
+            }
+
+            filterCategories(searchTerm);
+        }, 300);
+    });
+
+    function showSuggestions(searchTerm) {
+        const suggestions = [];
+        categoryCards.forEach(card => {
+            const categoryName = card.dataset.name.toLowerCase();
+            if (categoryName.includes(searchTerm)) {
+                suggestions.push({
+                    name: card.dataset.name,
+                    products: card.dataset.products
+                });
             }
         });
+
+        if (suggestions.length > 0) {
+            suggestionsBox.innerHTML = suggestions.slice(0, 5).map(s => `
+                <div class="suggestion-item" data-name="${s.name}">
+                    <div class="suggestion-category">${s.name}</div>
+                    <div class="suggestion-count">${s.products} منتج</div>
+                </div>
+            `).join('');
+            suggestionsBox.classList.add('show');
+
+            // Add click handlers to suggestions
+            suggestionsBox.querySelectorAll('.suggestion-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    searchInput.value = this.dataset.name;
+                    filterCategories(this.dataset.name.toLowerCase());
+                    hideSuggestions();
+                });
+            });
+        } else {
+            hideSuggestions();
+        }
+    }
+
+    function hideSuggestions() {
+        suggestionsBox.classList.remove('show');
+    }
+
+    function filterCategories(searchTerm) {
+        let visibleCount = 0;
+        categoryCards.forEach(card => {
+            const categoryName = card.dataset.name.toLowerCase();
+            const categoryDescription = card.querySelector('.category-description')?.textContent.toLowerCase() || '';
+            const subcategories = Array.from(card.querySelectorAll('.subcategory-pill')).map(el => el.textContent.toLowerCase()).join(' ');
+
+            const searchContent = categoryName + ' ' + categoryDescription + ' ' + subcategories;
+
+            if (!searchTerm || searchContent.includes(searchTerm)) {
+                card.style.display = '';
+                card.style.animationDelay = `${visibleCount * 0.1}s`;
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Show/hide empty state
+        const grid = document.getElementById('categoryGrid');
+        if (visibleCount === 0 && searchTerm) {
+            if (!grid.querySelector('.empty-state')) {
+                const emptyState = `
+                    <div class="col-12">
+                        <div class="empty-state">
+                            <i class="fas fa-search empty-icon"></i>
+                            <h3 class="empty-title">{% trans "لا توجد نتائج" %}</h3>
+                            <p class="empty-description">
+                                {% trans "لم نجد أي فئات تطابق بحثك عن" %} "${searchTerm}"
+                            </p>
+                            <button class="btn btn-primary" onclick="clearSearch()">
+                                {% trans "إلغاء البحث" %}
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.insertAdjacentHTML('beforeend', emptyState);
+            }
+        } else {
+            const emptyState = grid.querySelector('.empty-state')?.parentElement;
+            if (emptyState) emptyState.remove();
+        }
+    }
+
+    // Close suggestions when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+            hideSuggestions();
+        }
+    });
+
+    // Sort functionality
+    const sortSelect = document.getElementById('sortSelect');
+    sortSelect.addEventListener('change', function() {
+        const sortBy = this.value;
+        const cards = Array.from(categoryCards);
+        const grid = document.getElementById('categoryGrid');
+
+        cards.sort((a, b) => {
+            switch(sortBy) {
+                case 'name':
+                    return a.dataset.name.localeCompare(b.dataset.name, 'ar');
+                case 'products':
+                    return parseInt(b.dataset.products) - parseInt(a.dataset.products);
+                case 'newest':
+                    return parseInt(b.dataset.created) - parseInt(a.dataset.created);
+                case 'popular':
+                    return parseInt(b.dataset.views) - parseInt(a.dataset.views);
+                default:
+                    return 0;
+            }
+        });
+
+        // Re-append sorted cards
+        cards.forEach((card, index) => {
+            card.style.animationDelay = `${index * 0.1}s`;
+            grid.appendChild(card);
+        });
+    });
+
+    // View toggle functionality
+    const viewButtons = document.querySelectorAll('.view-btn');
+    const categoryGrid = document.getElementById('categoryGrid');
+
+    viewButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const view = this.dataset.view;
+
+            // Update active button
+            viewButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            // Update grid class
+            if (view === 'list') {
+                categoryGrid.classList.add('list-view');
+            } else {
+                categoryGrid.classList.remove('list-view');
+            }
+
+            // Save preference
+            localStorage.setItem('categoryViewPreference', view);
+        });
+    });
+
+    // Load saved view preference
+    const savedView = localStorage.getItem('categoryViewPreference');
+    if (savedView === 'list') {
+        document.querySelector('[data-view="list"]').click();
+    }
+
+    // Quick Actions
+    const scrollTopBtn = document.getElementById('scrollTop');
+    scrollTopBtn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // Show/hide scroll top button
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 300) {
+            scrollTopBtn.style.display = 'flex';
+        } else {
+            scrollTopBtn.style.display = 'none';
+        }
+    });
+
+    // Dark mode toggle
+    const toggleDarkBtn = document.getElementById('toggleDark');
+    toggleDarkBtn.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-bs-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+
+        // Update icon
+        const icon = toggleDarkBtn.querySelector('i');
+        icon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+    });
+
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+        document.documentElement.setAttribute('data-bs-theme', savedTheme);
+        const icon = toggleDarkBtn.querySelector('i');
+        icon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
     }
 
     // Lazy load images
-    const images = document.querySelectorAll('.category-image[data-src]');
-    const imageObserver = new IntersectionObserver((entries, observer) => {
+    const imageObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 const img = entry.target;
-                img.src = img.dataset.src;
-                img.removeAttribute('data-src');
-                observer.unobserve(img);
+                if (img.dataset.src) {
+                    img.src = img.dataset.src;
+                    img.removeAttribute('data-src');
+                }
+                imageObserver.unobserve(img);
             }
         });
     });
 
-    images.forEach(img => imageObserver.observe(img));
+    document.querySelectorAll('img[data-src]').forEach(img => {
+        imageObserver.observe(img);
+    });
+});
+
+// Global function to clear search
+function clearSearch() {
+    document.getElementById('categorySearch').value = '';
+    document.querySelectorAll('.category-card').forEach(card => {
+        card.style.display = '';
+    });
+    const emptyState = document.querySelector('.empty-state')?.parentElement;
+    if (emptyState) emptyState.remove();
+}
 </script>
 {% endblock %}
