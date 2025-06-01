@@ -81,7 +81,7 @@
             <!-- Quick Add to Cart - Visible on Hover -->
             {% if product.in_stock %}
                 <div class="quick-add-cart">
-                    <form class="add-to-cart-form" action="{% url 'cart:add_to_cart' %}" method="post">
+                    <form class="add-to-cart-form" action="{% url 'cart:add_to_cart' product.id %}" method="post">
                         {% csrf_token %}
                         <input type="hidden" name="product_id" value="{{ product.id }}">
                         <input type="hidden" name="quantity" value="1">
