@@ -23,6 +23,16 @@ from .views.product_views import (
     ProductVariantDetailView,
 )
 
+from .views.review_views import (
+    SubmitReviewView,
+    ProductReviewListView,
+    VoteReviewHelpfulView,
+    ReportReviewView,
+    UserReviewsView,
+    EditReviewView,
+    DeleteReviewView,
+)
+
 # Import search views
 try:
     from .views.search_views import (
@@ -168,6 +178,16 @@ urlpatterns = [
     # تفاصيل المنتج
     path('<slug:slug>/', ProductDetailView.as_view(), name='product_detail'),
     path('variant/<int:variant_id>/', ProductVariantDetailView.as_view(), name='variant_detail'),
+
+    # URLs التقييمات - أضف هذه الأسطر الجديدة
+    path('product/<int:product_id>/add-review/', SubmitReviewView.as_view(), name='add_review'),
+    path('product/<slug:product_slug>/reviews/', ProductReviewListView.as_view(), name='product_reviews'),
+    path('review/<int:review_id>/vote/', VoteReviewHelpfulView.as_view(), name='vote_review'),
+    path('review/<int:review_id>/report/', ReportReviewView.as_view(), name='report_review'),
+    path('review/<int:review_id>/edit/', EditReviewView.as_view(), name='edit_review'),
+    path('review/<int:review_id>/delete/', DeleteReviewView.as_view(), name='delete_review'),
+    path('my-reviews/', UserReviewsView.as_view(), name='user_reviews'),
+
 ]
 
 # URLs محسنة مع التخزين المؤقت للإنتاج

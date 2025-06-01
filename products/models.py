@@ -1215,6 +1215,68 @@ class Product(TimeStampedModel, SEOModel):
 
         return count
 
+    # =================== دوال التقييمات الجديدة ===================
+
+    @property
+    def average_rating(self):
+        """حساب متوسط التقييم - استخدم rating property الموجود"""
+        return self.rating
+
+    @property
+    def rating_distribution(self):
+        """توزيع التقييمات حسب النجوم"""
+        distribution = {}
+        total = self.review_count
+
+        for i in range(1, 6):
+            count = self.reviews.filter(rating=i, is_approved=True).count()
+            percentage = (count / total * 100) if total > 0 else 0
+            distribution[i] = {
+                'count': count,
+                'percentage': int(percentage)
+            }
+
+        return distribution
+
+    def can_user_review(self, user):
+        """التحقق من إمكانية المستخدم إضافة تقييم"""
+        if not user.is_authenticated or not self.allow_reviews:
+            return False
+
+        # التحقق من عدم وجود تقييم سابق
+        return not self.reviews.filter(user=user).exists()
+
+    def get_verified_purchase_status(self, user):
+        """التحقق من شراء المستخدم للمنتج"""
+        if not user.is_authenticated:
+            return False
+
+        # هنا يمكنك إضافة منطق التحقق من الطلبات
+        # مثال:
+        # from orders.models import Order
+        # return Order.objects.filter(
+        #     user=user,
+        #     items__product=self,
+        #     status='completed'
+        # ).exists()
+
+        return False  # مؤقتاً
+
+    def get_featured_reviews(self, limit=3):
+        """الحصول على التقييمات المميزة"""
+        return self.reviews.filter(
+            is_approved=True,
+            is_featured=True
+        ).select_related('user').order_by('-helpful_votes')[:limit]
+
+    def get_recent_reviews(self, limit=5):
+        """الحصول على أحدث التقييمات"""
+        return self.reviews.filter(
+            is_approved=True
+        ).select_related('user').order_by('-created_at')[:limit]
+
+    # =================== نهاية دوال التقييمات ===================
+
     def increment_views(self):
         """Increment view count atomically"""
         Product.objects.filter(pk=self.pk).update(views_count=F('views_count') + 1)
@@ -1260,16 +1322,8 @@ class Product(TimeStampedModel, SEOModel):
         )
 
     def can_review(self, user):
-        """Check if user can review this product"""
-        if not user.is_authenticated or not self.allow_reviews:
-            return False
-
-        # Check if user already reviewed
-        if self.reviews.filter(user=user).exists():
-            return False
-
-        # Check if user purchased this product (implement based on your order system)
-        return True
+        """Check if user can review this product - استخدم can_user_review"""
+        return self.can_user_review(user)
 
     def get_related_products(self, limit=4):
         """Get related products with fallback"""
@@ -2642,3 +2696,76 @@ class DiscountUsage(TimeStampedModel):
         if self.original_amount > 0:
             return int((self.discount_amount / self.original_amount) * 100)
         return 0
+
+
+class ReviewImage(TimeStampedModel):
+    """
+    نموذج صور التقييمات
+    Review Images model
+    """
+    review = models.ForeignKey(
+        ProductReview,
+        on_delete=models.CASCADE,
+        related_name='images',
+        verbose_name=_("التقييم")
+    )
+    image = models.ImageField(
+        _("الصورة"),
+        upload_to=upload_review_image,
+        help_text=_("صورة مرفقة مع التقييم")
+    )
+    caption = models.CharField(
+        _("وصف الصورة"),
+        max_length=200,
+        blank=True,
+        help_text=_("وصف اختياري للصورة")
+    )
+    sort_order = models.PositiveIntegerField(
+        _("الترتيب"),
+        default=0
+    )
+
+    class Meta:
+        verbose_name = _("صورة تقييم")
+        verbose_name_plural = _("صور التقييمات")
+        ordering = ['sort_order', 'created_at']
+        indexes = [
+            models.Index(fields=['review']),
+            models.Index(fields=['sort_order']),
+        ]
+
+    def __str__(self):
+        return f"صورة للتقييم: {self.review.id}"
+
+    def save(self, *args, **kwargs):
+        """معالجة الصورة قبل الحفظ"""
+        super().save(*args, **kwargs)
+
+        # تحسين حجم الصورة إذا لزم الأمر
+        if self.image:
+            self.optimize_image()
+
+    def optimize_image(self):
+        """تحسين حجم الصورة"""
+        try:
+            from PIL import Image as PILImage
+            import os
+
+            # فتح الصورة
+            img = PILImage.open(self.image.path)
+
+            # تحديد الحد الأقصى للأبعاد
+            max_size = (1200, 1200)
+
+            # تغيير الحجم إذا كانت أكبر من الحد المسموح
+            if img.width > max_size[0] or img.height > max_size[1]:
+                img.thumbnail(max_size, PILImage.Resampling.LANCZOS)
+
+                # حفظ الصورة المحسنة
+                img.save(self.image.path, optimize=True, quality=85)
+
+        except Exception as e:
+            # في حالة الخطأ، تسجيل الخطأ فقط دون إيقاف العملية
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Failed to optimize review image {self.id}: {e}")
