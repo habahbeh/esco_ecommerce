@@ -1,199 +1,476 @@
 {% load static i18n %}
 
-<div class="product-gallery" id="productGallery">
-    <!-- Main Image -->
-    <div class="main-image-wrapper">
+<!-- File: products/templates/products/components/_product_gallery.html -->
+<!-- Modern Product Gallery with Enhanced UX -->
+
+<div class="product-gallery-modern" id="productGallery">
+    <!-- Main Image Viewer -->
+    <div class="main-image-viewer">
         {% if product.images.exists %}
             {% with main_image=product.default_image %}
-                <div class="main-image" data-zoom-image="{{ main_image.image.url }}">
+                <div class="main-image-container" data-zoom-image="{{ main_image.image.url }}">
+                    <!-- Loading Spinner -->
+                    <div class="image-loading-spinner">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">{% trans "جاري التحميل..." %}</span>
+                        </div>
+                    </div>
+
+                    <!-- Main Product Image -->
                     <img src="{{ main_image.image.url }}"
                          alt="{{ main_image.alt_text|default:product.name }}"
-                         class="img-fluid"
-                         id="mainProductImage">
+                         class="main-product-image"
+                         id="mainProductImage"
+                         data-high-res="{{ main_image.image.url }}">
 
-                    <!-- Badges -->
-                    <div class="product-badges">
+                    <!-- Product Badges Overlay -->
+                    <div class="gallery-badges">
                         {% if product.is_new %}
-                            <span class="badge bg-success">{% trans "جديد" %}</span>
+                            <span class="badge-overlay badge-new">
+                                <i class="fas fa-sparkles"></i> {% trans "جديد" %}
+                            </span>
                         {% endif %}
                         {% if product.has_discount %}
-                            <span class="badge bg-danger">{{ product.savings_percentage }}% {% trans "خصم" %}</span>
+                            <span class="badge-overlay badge-discount">
+                                <i class="fas fa-percentage"></i> {{ product.discount_percentage }}% {% trans "خصم" %}
+                            </span>
                         {% endif %}
                         {% if product.is_featured %}
-                            <span class="badge bg-primary">{% trans "مميز" %}</span>
+                            <span class="badge-overlay badge-featured">
+                                <i class="fas fa-crown"></i> {% trans "مميز" %}
+                            </span>
                         {% endif %}
                     </div>
 
-                    <!-- 360 View Button -->
-                    {% if product.images.filter.exists %}
-                        <button class="btn-360-view" data-bs-toggle="modal" data-bs-target="#view360Modal">
-                            <i class="fas fa-sync"></i> {% trans "عرض 360°" %}
+                    <!-- Gallery Controls -->
+                    <div class="gallery-controls">
+                        <!-- Zoom Button -->
+                        <button class="gallery-btn zoom-btn"
+                                data-bs-toggle="tooltip"
+                                title="{% trans 'تكبير الصورة' %}"
+                                onclick="openImageZoom()">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
+
+                        <!-- 360 View Button -->
+                        {% if product.has_360_view %}
+                            <button class="gallery-btn view-360-btn"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#view360Modal"
+                                    data-bs-tooltip="tooltip"
+                                    title="{% trans 'عرض 360°' %}">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        {% endif %}
+
+                        <!-- Video Button -->
+                        {% if product.video_url %}
+                            <button class="gallery-btn video-btn"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#productVideoModal"
+                                    data-video-url="{{ product.video_url }}"
+                                    data-bs-tooltip="tooltip"
+                                    title="{% trans 'مشاهدة الفيديو' %}">
+                                <i class="fas fa-play"></i>
+                            </button>
+                        {% endif %}
+
+                        <!-- Fullscreen Button -->
+                        <button class="gallery-btn fullscreen-btn"
+                                onclick="openFullscreen()"
+                                data-bs-toggle="tooltip"
+                                title="{% trans 'ملء الشاشة' %}">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+
+                    <!-- Image Counter -->
+                    <div class="image-counter">
+                        <span id="currentImageIndex">1</span> / <span id="totalImages">{{ product.images.count }}</span>
+                    </div>
+
+                    <!-- Navigation Arrows for Main Image -->
+                    {% if product.images.count > 1 %}
+                        <button class="main-nav-arrow prev-arrow" onclick="navigateImage(-1)">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="main-nav-arrow next-arrow" onclick="navigateImage(1)">
+                            <i class="fas fa-chevron-right"></i>
                         </button>
                     {% endif %}
                 </div>
             {% endwith %}
         {% else %}
-            <div class="main-image">
-                <img src="{% static 'images/no-image.png' %}"
-                     alt="{% trans 'لا توجد صورة' %}"
-                     class="img-fluid">
+            <!-- No Image Available -->
+            <div class="no-image-container">
+                <div class="no-image-content">
+                    <i class="fas fa-image fa-4x text-muted"></i>
+                    <p class="mt-3 text-muted">{% trans "لا توجد صورة متاحة" %}</p>
+                </div>
             </div>
         {% endif %}
 
-        <!-- Zoom Icon -->
-        <div class="zoom-hint">
-            <i class="fas fa-search-plus"></i>
+        <!-- Zoom Preview Container -->
+        <div class="zoom-preview" id="zoomPreview">
+            <img src="" alt="Zoom preview" id="zoomPreviewImage">
         </div>
     </div>
 
-    <!-- Thumbnails -->
+    <!-- Thumbnails Section -->
     {% if product.images.count > 1 %}
-        <div class="thumbnail-wrapper">
-            <button class="thumbnail-nav prev" aria-label="{% trans 'السابق' %}">
+        <div class="thumbnails-section">
+            <!-- Thumbnails Navigation -->
+            <button class="thumb-nav thumb-prev"
+                    aria-label="{% trans 'السابق' %}"
+                    onclick="scrollThumbnails(-1)">
                 <i class="fas fa-chevron-left"></i>
             </button>
 
-            <div class="thumbnail-container">
-                <div class="thumbnail-list">
+            <div class="thumbnails-container">
+                <div class="thumbnails-track" id="thumbnailsTrack">
                     {% for image in product.images.all %}
                         <div class="thumbnail-item {% if image.is_primary %}active{% endif %}"
                              data-image-url="{{ image.image.url }}"
-                             data-image-alt="{{ image.alt_text|default:product.name }}">
+                             data-image-alt="{{ image.alt_text|default:product.name }}"
+                             data-index="{{ forloop.counter }}"
+                             onclick="changeMainImage(this)">
                             <img src="{{ image.image.url }}"
                                  alt="{{ image.alt_text|default:product.name }}"
-                                 class="img-fluid">
+                                 loading="lazy">
+
+                            <!-- Video Indicator for Video Thumbnails -->
+                            {% if image.is_video_thumbnail %}
+                                <div class="video-indicator">
+                                    <i class="fas fa-play-circle"></i>
+                                </div>
+                            {% endif %}
                         </div>
                     {% endfor %}
                 </div>
             </div>
 
-            <button class="thumbnail-nav next" aria-label="{% trans 'التالي' %}">
+            <button class="thumb-nav thumb-next"
+                    aria-label="{% trans 'التالي' %}"
+                    onclick="scrollThumbnails(1)">
                 <i class="fas fa-chevron-right"></i>
             </button>
+        </div>
+
+        <!-- Dots Indicator for Mobile -->
+        <div class="dots-indicator d-md-none">
+            {% for image in product.images.all %}
+                <span class="dot {% if image.is_primary %}active{% endif %}"
+                      data-index="{{ forloop.counter }}"
+                      onclick="goToImage({{ forloop.counter }})"></span>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Color Variants Gallery (if applicable) -->
+    {% if product.color_variants %}
+        <div class="color-variants-gallery mt-3">
+            <h6 class="variants-title">{% trans "الألوان المتاحة" %}:</h6>
+            <div class="color-options">
+                {% for variant in product.color_variants %}
+                    <div class="color-option {% if variant.is_selected %}selected{% endif %}"
+                         data-variant-id="{{ variant.id }}"
+                         data-images="{{ variant.images_json }}"
+                         onclick="switchColorVariant(this)"
+                         data-bs-toggle="tooltip"
+                         title="{{ variant.color_name }}">
+                        {% if variant.color_code %}
+                            <div class="color-swatch" style="background-color: {{ variant.color_code }};">
+                                {% if variant.is_selected %}
+                                    <i class="fas fa-check"></i>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <img src="{{ variant.thumbnail.url }}" alt="{{ variant.color_name }}">
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
         </div>
     {% endif %}
 </div>
 
+<!-- Fullscreen Gallery Modal -->
+<div class="modal fade" id="fullscreenGalleryModal" tabindex="-1">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-white">{{ product.name }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="fullscreen-gallery-container">
+                    <img src="" alt="" id="fullscreenImage" class="fullscreen-image">
+                    <button class="fullscreen-nav prev" onclick="fullscreenNavigate(-1)">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="fullscreen-nav next" onclick="fullscreenNavigate(1)">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
-.product-gallery {
+/* Modern Product Gallery Styles */
+.product-gallery-modern {
     position: relative;
+    user-select: none;
 }
 
-.main-image-wrapper {
+/* Main Image Viewer */
+.main-image-viewer {
     position: relative;
-    overflow: hidden;
-    border-radius: var(--radius-lg);
     background: #f8f9fa;
-    margin-bottom: 1rem;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
 }
 
-.main-image {
+.main-image-container {
     position: relative;
+    padding-top: 100%; /* 1:1 Aspect Ratio */
+    background: white;
     cursor: zoom-in;
 }
 
-.main-image img {
+.main-product-image {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    height: auto;
+    height: 100%;
+    object-fit: contain;
+    padding: 2rem;
     transition: transform 0.3s ease;
 }
 
-.product-badges {
+/* Loading Spinner */
+.image-loading-spinner {
     position: absolute;
-    top: 1rem;
-    left: 1rem;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    display: none;
+}
+
+.main-image-container.loading .image-loading-spinner {
+    display: block;
+}
+
+.main-image-container.loading .main-product-image {
+    opacity: 0.5;
+}
+
+/* Gallery Badges */
+.gallery-badges {
+    position: absolute;
+    top: 20px;
+    left: 20px;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    z-index: 2;
+    gap: 10px;
+    z-index: 5;
 }
 
-.btn-360-view {
-    position: absolute;
-    bottom: 1rem;
-    right: 1rem;
-    background: rgba(0,0,0,0.7);
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius-pill);
+.badge-overlay {
+    padding: 8px 16px;
+    border-radius: 25px;
     font-size: 0.875rem;
-    transition: all 0.3s ease;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.btn-360-view:hover {
-    background: var(--bs-primary);
-    transform: scale(1.05);
-}
-
-.zoom-hint {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    background: rgba(0,0,0,0.6);
+.badge-new {
+    background: rgba(34, 197, 94, 0.9);
     color: white;
-    width: 40px;
-    height: 40px;
+}
+
+.badge-discount {
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+}
+
+.badge-featured {
+    background: rgba(251, 191, 36, 0.9);
+    color: #1f2937;
+}
+
+/* Gallery Controls */
+.gallery-controls {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 5;
+}
+
+.gallery-btn {
+    width: 45px;
+    height: 45px;
     border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #374151;
     display: flex;
     align-items: center;
     justify-content: center;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.main-image:hover .zoom-hint {
+.gallery-btn:hover {
+    background: var(--bs-primary);
+    color: white;
+    transform: scale(1.1);
+}
+
+/* Image Counter */
+.image-counter {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    backdrop-filter: blur(10px);
+}
+
+/* Navigation Arrows */
+.main-nav-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border: none;
+    border-radius: 50%;
+    color: #374151;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+}
+
+.main-image-container:hover .main-nav-arrow {
     opacity: 1;
 }
 
-.thumbnail-wrapper {
-    position: relative;
+.prev-arrow {
+    left: 20px;
+}
+
+.next-arrow {
+    right: 20px;
+}
+
+.main-nav-arrow:hover {
+    background: var(--bs-primary);
+    color: white;
+    transform: translateY(-50%) scale(1.1);
+}
+
+/* Zoom Preview */
+.zoom-preview {
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    border: 2px solid var(--bs-primary);
+    border-radius: 10px;
+    background: white;
+    overflow: hidden;
+    display: none;
+    z-index: 1000;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    pointer-events: none;
+}
+
+.zoom-preview img {
+    position: absolute;
+    width: 200%;
+    height: 200%;
+}
+
+/* Thumbnails Section */
+.thumbnails-section {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 15px;
+    position: relative;
 }
 
-.thumbnail-container {
+.thumbnails-container {
     flex: 1;
     overflow: hidden;
+    border-radius: 15px;
 }
 
-.thumbnail-list {
+.thumbnails-track {
     display: flex;
-    gap: 0.5rem;
+    gap: 10px;
     transition: transform 0.3s ease;
+    padding: 5px;
 }
 
 .thumbnail-item {
     flex: 0 0 80px;
     height: 80px;
-    border: 2px solid transparent;
-    border-radius: var(--radius-md);
+    border-radius: 12px;
     overflow: hidden;
     cursor: pointer;
+    border: 3px solid transparent;
     transition: all 0.3s ease;
-    background: #f8f9fa;
-}
-
-.thumbnail-item:hover,
-.thumbnail-item.active {
-    border-color: var(--bs-primary);
-    transform: scale(1.05);
+    position: relative;
+    background: white;
 }
 
 .thumbnail-item img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
+    padding: 5px;
 }
 
-.thumbnail-nav {
-    background: white;
-    border: 1px solid var(--border-color);
+.thumbnail-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+}
+
+.thumbnail-item.active {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 2px rgba(var(--bs-primary-rgb), 0.2);
+}
+
+/* Thumbnail Navigation */
+.thumb-nav {
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    width: 36px;
-    height: 36px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    color: #6b7280;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -202,33 +479,533 @@
     flex-shrink: 0;
 }
 
-.thumbnail-nav:hover {
+.thumb-nav:hover {
     background: var(--bs-primary);
     color: white;
     border-color: var(--bs-primary);
 }
 
-.thumbnail-nav:disabled {
+.thumb-nav:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
-@media (max-width: 767.98px) {
-    .product-badges {
-        top: 0.5rem;
-        left: 0.5rem;
+/* Video Indicator */
+.video-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 1.5rem;
+    background: rgba(0, 0, 0, 0.6);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Dots Indicator */
+.dots-indicator {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 1rem;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #d1d5db;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.dot.active {
+    background: var(--bs-primary);
+    width: 24px;
+    border-radius: 4px;
+}
+
+/* Color Variants Gallery */
+.color-variants-gallery {
+    padding: 1.5rem;
+    background: #f9fafb;
+    border-radius: 15px;
+}
+
+.variants-title {
+    font-size: 0.938rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #374151;
+}
+
+.color-options {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.color-option {
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.color-swatch {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.color-option:hover .color-swatch {
+    transform: scale(1.1);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+}
+
+.color-option.selected .color-swatch {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 3px rgba(var(--bs-primary-rgb), 0.2);
+}
+
+.color-swatch i {
+    color: white;
+    font-size: 1rem;
+}
+
+/* No Image Container */
+.no-image-container {
+    position: relative;
+    padding-top: 100%;
+    background: #f8f9fa;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.no-image-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+/* Fullscreen Gallery */
+.fullscreen-gallery-container {
+    position: relative;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fullscreen-image {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+}
+
+.fullscreen-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.fullscreen-nav:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.fullscreen-nav.prev {
+    left: 30px;
+}
+
+.fullscreen-nav.next {
+    right: 30px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .gallery-badges {
+        top: 10px;
+        left: 10px;
     }
 
-    .product-badges .badge {
+    .badge-overlay {
+        padding: 6px 12px;
         font-size: 0.75rem;
-        padding: 0.25rem 0.5rem;
     }
 
-    .btn-360-view {
-        bottom: 0.5rem;
-        right: 0.5rem;
-        padding: 0.375rem 0.75rem;
-        font-size: 0.75rem;
+    .gallery-controls {
+        top: 10px;
+        right: 10px;
+        gap: 8px;
+    }
+
+    .gallery-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .main-product-image {
+        padding: 1rem;
+    }
+
+    .thumbnail-item {
+        flex: 0 0 60px;
+        height: 60px;
+    }
+
+    .main-nav-arrow {
+        opacity: 1;
+        width: 40px;
+        height: 40px;
+    }
+
+    .zoom-preview {
+        display: none !important;
     }
 }
+
+@media (max-width: 576px) {
+    .thumbnails-section {
+        display: none;
+    }
+
+    .main-image-viewer {
+        margin-bottom: 1rem;
+    }
+}
+
+/* RTL Support */
+[dir="rtl"] .gallery-badges {
+    left: auto;
+    right: 20px;
+}
+
+[dir="rtl"] .gallery-controls {
+    right: auto;
+    left: 20px;
+}
+
+[dir="rtl"] .image-counter {
+    right: auto;
+    left: 20px;
+}
+
+[dir="rtl"] .prev-arrow {
+    left: auto;
+    right: 20px;
+}
+
+[dir="rtl"] .next-arrow {
+    right: auto;
+    left: 20px;
+}
+
+/* Touch Device Support */
+@media (hover: none) {
+    .main-nav-arrow {
+        opacity: 1;
+    }
+}
+
+/* Animation for image change */
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.main-product-image.changing {
+    animation: fadeIn 0.3s ease;
+}
 </style>
+
+<script>
+let currentImageIndex = 1;
+let totalImages = {{ product.images.count }};
+let isZooming = false;
+let zoomLevel = 1;
+
+// Initialize gallery on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Setup zoom functionality
+    setupImageZoom();
+
+    // Setup touch gestures for mobile
+    setupTouchGestures();
+
+    // Preload images
+    preloadImages();
+});
+
+// Change main image when thumbnail is clicked
+function changeMainImage(thumbnail) {
+    const imageUrl = thumbnail.dataset.imageUrl;
+    const imageAlt = thumbnail.dataset.imageAlt;
+    const index = parseInt(thumbnail.dataset.index);
+
+    // Update main image with loading state
+    const mainImage = document.getElementById('mainProductImage');
+    const container = mainImage.parentElement;
+
+    container.classList.add('loading');
+
+    // Update image
+    mainImage.src = imageUrl;
+    mainImage.alt = imageAlt;
+    mainImage.dataset.highRes = imageUrl;
+
+    // Update active thumbnail
+    document.querySelectorAll('.thumbnail-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    thumbnail.classList.add('active');
+
+    // Update counter
+    currentImageIndex = index;
+    document.getElementById('currentImageIndex').textContent = currentImageIndex;
+
+    // Update dots indicator
+    updateDotsIndicator(index);
+
+    // Add animation
+    mainImage.classList.add('changing');
+
+    mainImage.onload = function() {
+        container.classList.remove('loading');
+        setTimeout(() => mainImage.classList.remove('changing'), 300);
+    };
+}
+
+// Navigate images with arrows
+function navigateImage(direction) {
+    let newIndex = currentImageIndex + direction;
+
+    if (newIndex < 1) newIndex = totalImages;
+    if (newIndex > totalImages) newIndex = 1;
+
+    const targetThumbnail = document.querySelector(`.thumbnail-item[data-index="${newIndex}"]`);
+    if (targetThumbnail) {
+        changeMainImage(targetThumbnail);
+        scrollToThumbnail(targetThumbnail);
+    }
+}
+
+// Scroll thumbnails
+function scrollThumbnails(direction) {
+    const container = document.querySelector('.thumbnails-track');
+    const scrollAmount = 90; // thumbnail width + gap
+
+    container.scrollBy({
+        left: scrollAmount * direction,
+        behavior: 'smooth'
+    });
+}
+
+// Scroll to specific thumbnail
+function scrollToThumbnail(thumbnail) {
+    const container = document.querySelector('.thumbnails-track');
+    const containerRect = container.getBoundingClientRect();
+    const thumbRect = thumbnail.getBoundingClientRect();
+
+    if (thumbRect.left < containerRect.left || thumbRect.right > containerRect.right) {
+        thumbnail.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+}
+
+// Setup image zoom
+function setupImageZoom() {
+    const mainContainer = document.querySelector('.main-image-container');
+    const mainImage = document.getElementById('mainProductImage');
+    const zoomPreview = document.getElementById('zoomPreview');
+    const zoomImage = document.getElementById('zoomPreviewImage');
+
+    if (!mainContainer || !mainImage) return;
+
+    mainContainer.addEventListener('mouseenter', function() {
+        if (window.innerWidth > 768) {
+            mainContainer.style.cursor = 'zoom-in';
+        }
+    });
+
+    mainContainer.addEventListener('mousemove', function(e) {
+        if (window.innerWidth <= 768) return;
+
+        const rect = mainContainer.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        // Position zoom preview
+        zoomPreview.style.display = 'block';
+        zoomPreview.style.left = e.pageX + 20 + 'px';
+        zoomPreview.style.top = e.pageY - 150 + 'px';
+
+        // Adjust position to keep preview in viewport
+        if (e.clientX > window.innerWidth / 2) {
+            zoomPreview.style.left = e.pageX - 320 + 'px';
+        }
+
+        // Set zoom image
+        zoomImage.src = mainImage.dataset.highRes || mainImage.src;
+
+        // Calculate zoom position
+        const percentX = (x / rect.width) * 100;
+        const percentY = (y / rect.height) * 100;
+
+        zoomImage.style.left = -percentX + '%';
+        zoomImage.style.top = -percentY + '%';
+    });
+
+    mainContainer.addEventListener('mouseleave', function() {
+        zoomPreview.style.display = 'none';
+    });
+}
+
+// Open image zoom modal
+function openImageZoom() {
+    // Implementation for zoom modal
+    console.log('Opening zoom modal');
+}
+
+// Open fullscreen gallery
+function openFullscreen() {
+    const modal = new bootstrap.Modal(document.getElementById('fullscreenGalleryModal'));
+    const fullscreenImage = document.getElementById('fullscreenImage');
+    const mainImage = document.getElementById('mainProductImage');
+
+    fullscreenImage.src = mainImage.dataset.highRes || mainImage.src;
+    modal.show();
+}
+
+// Navigate in fullscreen mode
+function fullscreenNavigate(direction) {
+    navigateImage(direction);
+    const mainImage = document.getElementById('mainProductImage');
+    const fullscreenImage = document.getElementById('fullscreenImage');
+
+    setTimeout(() => {
+        fullscreenImage.src = mainImage.src;
+    }, 100);
+}
+
+// Switch color variant
+function switchColorVariant(element) {
+    // Remove selected from all
+    document.querySelectorAll('.color-option').forEach(opt => {
+        opt.classList.remove('selected');
+    });
+
+    // Add selected to clicked
+    element.classList.add('selected');
+
+    // Load variant images
+    const variantImages = JSON.parse(element.dataset.images || '[]');
+
+    // Update gallery with variant images
+    // Implementation depends on backend structure
+    console.log('Switching to variant:', element.dataset.variantId);
+}
+
+// Update dots indicator
+function updateDotsIndicator(index) {
+    document.querySelectorAll('.dot').forEach((dot, i) => {
+        dot.classList.toggle('active', i + 1 === index);
+    });
+}
+
+// Go to specific image
+function goToImage(index) {
+    const targetThumbnail = document.querySelector(`.thumbnail-item[data-index="${index}"]`);
+    if (targetThumbnail) {
+        changeMainImage(targetThumbnail);
+    }
+}
+
+// Setup touch gestures for mobile
+function setupTouchGestures() {
+    const mainContainer = document.querySelector('.main-image-container');
+    if (!mainContainer) return;
+
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    mainContainer.addEventListener('touchstart', function(e) {
+        touchStartX = e.changedTouches[0].screenX;
+    });
+
+    mainContainer.addEventListener('touchend', function(e) {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    });
+
+    function handleSwipe() {
+        const swipeThreshold = 50;
+        const diff = touchStartX - touchEndX;
+
+        if (Math.abs(diff) > swipeThreshold) {
+            if (diff > 0) {
+                // Swipe left - next image
+                navigateImage(1);
+            } else {
+                // Swipe right - previous image
+                navigateImage(-1);
+            }
+        }
+    }
+}
+
+// Preload images for smooth transitions
+function preloadImages() {
+    const thumbnails = document.querySelectorAll('.thumbnail-item');
+    thumbnails.forEach(thumb => {
+        const img = new Image();
+        img.src = thumb.dataset.imageUrl;
+    });
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowLeft') {
+        navigateImage(-1);
+    } else if (e.key === 'ArrowRight') {
+        navigateImage(1);
+    } else if (e.key === 'Escape') {
+        // Close any open modals
+        const modals = document.querySelectorAll('.modal.show');
+        modals.forEach(modal => {
+            const bsModal = bootstrap.Modal.getInstance(modal);
+            if (bsModal) bsModal.hide();
+        });
+    }
+});
+</script>
