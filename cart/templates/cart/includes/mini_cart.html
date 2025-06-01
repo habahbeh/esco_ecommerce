@@ -1,0 +1,18 @@
+<!-- cart/templates/cart/includes/mini_cart.html -->
+<div class="mini-cart">
+    {% if cart_is_empty %}
+        <p>السلة فارغة</p>
+    {% else %}
+        {% for item in cart_items %}
+            <div class="mini-cart-item">
+                <span>{{ item.product.name|truncatechars:20 }}</span>
+                <span>{{ item.quantity }} × {{ item.price|floatformat:2 }}</span>
+            </div>
+        {% endfor %}
+        {% if show_more %}
+            <p class="text-muted small">ومنتجات أخرى...</p>
+        {% endif %}
+        <hr>
+        <strong>المجموع: {{ cart_total|floatformat:2 }} د.أ</strong>
+    {% endif %}
+</div>
