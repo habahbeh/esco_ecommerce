@@ -63,6 +63,87 @@
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
 
     {% block extra_css %}{% endblock %}
+
+<!-- Meta tags ديناميكية -->
+<meta name="description" content="{{ site_settings.site_description }}">
+
+
+<style>
+    /* Dynamic CSS from Site Settings */
+    :root {
+        /* تطبيق اللون الرئيسي من الإعدادات */
+        --bs-primary: {{ site_settings.primary_color }};
+        --bs-primary-rgb: {{ site_settings.primary_color_rgb }};
+
+        /* تحديث ألوان Bootstrap */
+        --bs-link-color: {{ site_settings.primary_color }};
+        --bs-link-hover-color: {{ site_settings.primary_color }};
+        --bs-btn-focus-shadow-rgb: {{ site_settings.primary_color_rgb }};
+    }
+
+    /* تطبيق اللون على العناصر الأساسية */
+    .btn-primary {
+        --bs-btn-bg: {{ site_settings.primary_color }};
+        --bs-btn-border-color: {{ site_settings.primary_color }};
+        --bs-btn-hover-bg: {{ site_settings.primary_color }};
+        --bs-btn-hover-border-color: {{ site_settings.primary_color }};
+        --bs-btn-focus-shadow-rgb: {{ site_settings.primary_color_rgb }};
+        --bs-btn-active-bg: {{ site_settings.primary_color }};
+        --bs-btn-active-border-color: {{ site_settings.primary_color }};
+        --bs-btn-disabled-bg: {{ site_settings.primary_color }};
+        --bs-btn-disabled-border-color: {{ site_settings.primary_color }};
+    }
+
+    .bg-primary {
+        background-color: {{ site_settings.primary_color }} !important;
+    }
+
+    .text-primary {
+        color: {{ site_settings.primary_color }} !important;
+    }
+
+    .border-primary {
+        border-color: {{ site_settings.primary_color }} !important;
+    }
+
+    /* تطبيق على عناصر الموقع المخصصة */
+    .main-nav {
+        background: {{ site_settings.primary_color }};
+    }
+
+    .search-btn {
+        background: {{ site_settings.primary_color }};
+    }
+
+    .action-btn.cart-btn {
+        background: {{ site_settings.primary_color }};
+    }
+
+    .scroll-to-top {
+        background: {{ site_settings.primary_color }};
+    }
+
+    /* Focus states */
+    .form-control:focus {
+        border-color: {{ site_settings.primary_color }};
+        box-shadow: 0 0 0 0.25rem rgba({{ site_settings.primary_color_rgb }}, 0.25);
+    }
+
+    /* Selection */
+    ::selection {
+        background-color: {{ site_settings.primary_color }};
+        color: white;
+    }
+
+    /* Scrollbar (for webkit browsers) */
+    ::-webkit-scrollbar-thumb {
+        background-color: {{ site_settings.primary_color }};
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background-color: rgba({{ site_settings.primary_color_rgb }}, 0.8);
+    }
+</style>
 </head>
 <body>
     <!-- Page Loader -->

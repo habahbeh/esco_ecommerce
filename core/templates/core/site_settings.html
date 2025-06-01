@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{{ site_settings.site_name }} - إعدادات الموقع{% endblock %}
+
+{% block extra_css %}
+<style>
+    .color-preview {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: inline-block;
+        vertical-align: middle;
+        margin-left: 10px;
+        border: 2px solid #ddd;
+        transition: all 0.3s ease;
+    }
+    
+    .color-option {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px;
+    }
+    
+    .color-box {
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        margin-left: 10px;
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .settings-section {
+        background: var(--bs-body-bg);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    
+    .settings-section h5 {
+        margin-bottom: 1.5rem;
+        color: var(--bs-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .preview-panel {
+        position: sticky;
+        top: 100px;
+    }
+    
+    .preview-header {
+        background: var(--preview-color, var(--bs-primary));
+        color: white;
+        padding: 1rem;
+        border-radius: 8px 8px 0 0;
+        text-align: center;
+    }
+    
+    .preview-body {
+        background: var(--bs-body-bg);
+        border: 1px solid #dee2e6;
+        border-top: none;
+        padding: 1.5rem;
+        border-radius: 0 0 8px 8px;
+    }
+    
+    .logo-preview {
+        max-width: 200px;
+        max-height: 100px;
+        object-fit: contain;
+    }
+    
+    .favicon-preview {
+        width: 32px;
+        height: 32px;
+        object-fit: contain;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="fas fa-cog"></i> إعدادات الموقع
+            </h1>
+        </div>
+    </div>
+    
+    <form method="post" enctype="multipart/form-data" id="settings-form">
+        {% csrf_token %}
+        
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- المعلومات الأساسية -->
+                <div class="settings-section">
+                    <h5><i class="fas fa-info-circle"></i> المعلومات الأساسية</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.site_name.label }}</label>
+                            {{ form.site_name }}
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label class="form-label">{{ form.site_description.label }}</label>
+                            {{ form.site_description }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- الهوية البصرية -->
+                <div class="settings-section">
+                    <h5><i class="fas fa-palette"></i> الهوية البصرية</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.logo.label }}</label>
+                            {{ form.logo }}
+                            {% if settings.logo %}
+                            <div class="mt-2">
+                                <img src="{{ settings.logo.url }}" alt="Logo" class="logo-preview">
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.favicon.label }}</label>
+                            {{ form.favicon }}
+                            {% if settings.favicon %}
+                            <div class="mt-2">
+                                <img src="{{ settings.favicon.url }}" alt="Favicon" class="favicon-preview">
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.primary_color.label }}</label>
+                            <div class="input-group">
+                                {{ form.primary_color }}
+                                <span class="color-preview" id="color-preview" style="background-color: {{ settings.primary_color }}"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- معلومات التواصل -->
+                <div class="settings-section">
+                    <h5><i class="fas fa-address-card"></i> معلومات التواصل</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.email.label }}</label>
+                            {{ form.email }}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.phone.label }}</label>
+                            {{ form.phone }}
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label class="form-label">{{ form.address.label }}</label>
+                            {{ form.address }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- وسائل التواصل الاجتماعي -->
+                <div class="settings-section">
+                    <h5><i class="fas fa-share-alt"></i> وسائل التواصل الاجتماعي</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><i class="fab fa-facebook"></i> {{ form.facebook.label }}</label>
+                            {{ form.facebook }}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><i class="fab fa-twitter"></i> {{ form.twitter.label }}</label>
+                            {{ form.twitter }}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><i class="fab fa-instagram"></i> {{ form.instagram.label }}</label>
+                            {{ form.instagram }}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><i class="fab fa-linkedin"></i> {{ form.linkedin.label }}</label>
+                            {{ form.linkedin }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- إعدادات المظهر -->
+                <div class="settings-section">
+                    <h5><i class="fas fa-moon"></i> إعدادات المظهر</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                {{ form.enable_dark_mode }}
+                                <label class="form-check-label" for="{{ form.enable_dark_mode.id_for_label }}">
+                                    {{ form.enable_dark_mode.label }}
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                {{ form.default_dark_mode }}
+                                <label class="form-check-label" for="{{ form.default_dark_mode.id_for_label }}">
+                                    {{ form.default_dark_mode.label }}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- أزرار الحفظ -->
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> حفظ الإعدادات
+                    </button>
+                    <a href="{% url 'home' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> إلغاء
+                    </a>
+                </div>
+            </div>
+            
+            <!-- معاينة مباشرة -->
+            <div class="col-lg-4">
+                <div class="preview-panel">
+                    <div class="preview-header" id="preview-header">
+                        <h5 class="mb-0">معاينة مباشرة</h5>
+                    </div>
+                    <div class="preview-body">
+                        <p class="text-muted">
+                            شاهد كيف ستظهر التغييرات على موقعك
+                        </p>
+                        
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-primary btn-sm">
+                                زر أساسي
+                            </button>
+                            <button type="button" class="btn btn-outline-primary btn-sm">
+                                زر محدد
+                            </button>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <a href="#" style="color: var(--preview-color, var(--bs-primary))">رابط نموذجي</a>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" checked>
+                            <label class="form-check-label">
+                                خيار محدد
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // معاينة اللون
+    const colorSelect = document.querySelector('.color-select');
+    const colorPreview = document.getElementById('color-preview');
+    const previewHeader = document.getElementById('preview-header');
+    
+    if (colorSelect) {
+        // تحديث اللون في الـ select options
+        colorSelect.querySelectorAll('option').forEach(option => {
+            const color = option.value;
+            option.style.backgroundColor = color;
+            option.style.color = '#fff';
+        });
+        
+        colorSelect.addEventListener('change', function() {
+            const selectedColor = this.value;
+            colorPreview.style.backgroundColor = selectedColor;
+            previewHeader.style.backgroundColor = selectedColor;
+            document.documentElement.style.setProperty('--preview-color', selectedColor);
+            
+            // معاينة مباشرة على العناصر
+            document.querySelectorAll('.btn-primary').forEach(btn => {
+                btn.style.setProperty('--bs-btn-bg', selectedColor);
+                btn.style.setProperty('--bs-btn-border-color', selectedColor);
+            });
+        });
+    }
+    
+    // معاينة الشعار
+    const logoInput = document.getElementById('{{ form.logo.id_for_label }}');
+    if (logoInput) {
+        logoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    let preview = document.querySelector('.logo-preview');
+                    if (!preview) {
+                        preview = document.createElement('img');
+                        preview.className = 'logo-preview mt-2';
+                        logoInput.parentElement.appendChild(preview);
+                    }
+                    preview.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    
+    // معاينة Favicon
+    const faviconInput = document.getElementById('{{ form.favicon.id_for_label }}');
+    if (faviconInput) {
+        faviconInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    let preview = document.querySelector('.favicon-preview');
+                    if (!preview) {
+                        preview = document.createElement('img');
+                        preview.className = 'favicon-preview mt-2';
+                        faviconInput.parentElement.appendChild(preview);
+                    }
+                    preview.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

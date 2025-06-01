@@ -316,9 +316,13 @@ class BaseProductListView(ListView, OptimizedQueryMixin, PaginationMixin, Filter
         context['sort_options'] = self.get_sort_options()
         context['current_sort'] = self.request.GET.get('sort', 'newest')
 
-        # Add pagination info
-        if self.is_paginated:
-            context['page_range'] = self.get_page_range(context['paginator'], context['page_obj'])
+        # Add pagination info - تحقق من وجود pagination
+        if hasattr(self, 'paginate_by') and self.paginate_by:
+            # تحقق من وجود paginator و page_obj في السياق
+            if 'paginator' in context and 'page_obj' in context:
+                context['is_paginated'] = context['paginator'].num_pages > 1
+                if context['is_paginated']:
+                    context['page_range'] = self.get_page_range(context['paginator'], context['page_obj'])
 
         return context
 

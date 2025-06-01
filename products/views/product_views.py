@@ -35,8 +35,8 @@ class ProductListView(BaseProductListView):
         if category_slug:
             try:
                 category = Category.objects.get(slug=category_slug, is_active=True)
-                # Include subcategories for better UX
-                categories = [category] + list(category.get_descendants())
+                # Use get_all_children() instead of get_descendants()
+                categories = category.get_all_children(include_self=True)
                 queryset = queryset.filter(category__in=categories)
 
                 # Store category for context
@@ -62,7 +62,7 @@ class ProductListView(BaseProductListView):
             context['subcategories'] = Category.objects.filter(
                 parent=None,
                 is_active=True
-            ).order_by('order', 'name')
+            ).order_by('sort_order', 'name')
 
         # Results count
         context['total_count'] = self.get_queryset().count()
@@ -115,7 +115,7 @@ class CategoryListView(BaseProductListView):
                     products__status='published'
                 )
             )
-        ).order_by('order', 'name')
+        ).order_by('sort_order', 'name')  # تم التصحيح هنا
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -124,7 +124,7 @@ class CategoryListView(BaseProductListView):
         context['featured_categories'] = Category.objects.filter(
             is_featured=True,
             is_active=True
-        ).order_by('order')[:6]
+        ).order_by('sort_order')[:6]  # تم التصحيح هنا أيضاً
 
         return context
 
