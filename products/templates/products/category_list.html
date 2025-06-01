@@ -804,7 +804,7 @@
                      data-name="{{ category.name }}"
                      data-products="{{ category.total_products }}"
                      data-views="{{ category.views_count }}"
-                     style="animation-delay: {{ forloop.counter0|multiply:0.1 }}s">
+                     style="animation-delay: calc({{ forloop.counter0 }} * 0.1s)">
                     <div class="category-image-wrapper">
                         {% if category.image %}
                             <img src="{{ category.image.url }}"
