@@ -1,3 +1,4 @@
+<!-- core/templates/core/includes/header.html -->
 {% load static %}
 {% load i18n %}
 
@@ -59,13 +60,54 @@
                     </div>
 
                     <!-- Cart -->
-                    <a href="{% url 'cart:cart' %}" class="action-btn cart-btn">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span>{% trans "السلة" %}</span>
-                        {% if cart and cart.items.count > 0 %}
-                            <span class="cart-badge">{{ cart.total_items }}</span>
+                    <div class="cart-widget">
+                        <a href="{% url 'cart:cart_detail' %}" class="action-btn cart-btn">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>{% trans "السلة" %}</span>
+                            {% if cart_count > 0 %}
+                                <span class="cart-badge">{{ cart_count }}</span>
+                            {% endif %}
+                        </a>
+
+                        <!-- Cart Dropdown Preview -->
+                        {% if cart_has_items %}
+                        <div class="cart-dropdown">
+                            <div class="cart-dropdown-header">
+                                <h6>{% trans "سلة التسوق" %} ({{ cart_count }})</h6>
+                            </div>
+
+                            <div class="cart-dropdown-items">
+                                {% for item in cart_items|slice:":3" %}
+                                <div class="cart-item-mini">
+                                    {% if item.image %}
+                                        <img src="{{ item.image }}" alt="{{ item.product.name }}">
+                                    {% endif %}
+                                    <div class="item-info">
+                                        <h6>{{ item.product.name|truncatechars:30 }}</h6>
+                                        <small>{{ item.quantity }} × {{ item.price|floatformat:2 }} {% trans "د.أ" %}</small>
+                                    </div>
+                                </div>
+                                {% endfor %}
+
+                                {% if cart_count > 3 %}
+                                <div class="text-center text-muted small py-2">
+                                    {% trans "و" %} {{ cart_count|add:"-3" }} {% trans "منتجات أخرى" %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="cart-dropdown-footer">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <strong>{% trans "المجموع:" %}</strong>
+                                    <strong>{{ cart_total|floatformat:2 }} {% trans "د.أ" %}</strong>
+                                </div>
+                                <a href="{% url 'cart:cart_detail' %}" class="btn btn-primary btn-sm w-100">
+                                    {% trans "عرض السلة" %}
+                                </a>
+                            </div>
+                        </div>
                         {% endif %}
-                    </a>
+                    </div>
 
                     <!-- Language Switcher -->
                     <div class="dropdown">
@@ -166,3 +208,162 @@
         </div>
     {% endif %}
 </div>
+
+<style>
+/* Cart Widget Styles */
+.cart-widget {
+    position: relative;
+}
+
+/* Cart Dropdown */
+.cart-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 320px;
+    background: var(--bs-body-bg);
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    display: none;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.cart-widget:hover .cart-dropdown {
+    display: block;
+}
+
+.cart-dropdown::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    right: 20px;
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 10px solid var(--bs-body-bg);
+    z-index: 1;
+}
+
+.cart-dropdown-header {
+    padding: 1rem;
+    background: rgba(var(--bs-primary-rgb), 0.05);
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+
+.cart-dropdown-header h6 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.cart-dropdown-items {
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.cart-item-mini {
+    display: flex;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    transition: background 0.2s ease;
+}
+
+.cart-item-mini:hover {
+    background: rgba(var(--bs-primary-rgb), 0.03);
+}
+
+.cart-item-mini:last-child {
+    border-bottom: none;
+}
+
+.cart-item-mini img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-right: 0.75rem;
+}
+
+html[dir="rtl"] .cart-item-mini img {
+    margin-right: 0;
+    margin-left: 0.75rem;
+}
+
+.item-info {
+    flex: 1;
+    overflow: hidden;
+}
+
+.item-info h6 {
+    margin: 0 0 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.item-info small {
+    color: var(--bs-secondary);
+    font-size: 0.8rem;
+}
+
+.cart-dropdown-footer {
+    padding: 1rem;
+    background: rgba(var(--bs-primary-rgb), 0.03);
+    border-top: 1px solid rgba(0,0,0,0.08);
+}
+
+/* Dark mode support */
+[data-bs-theme="dark"] .cart-dropdown {
+    background: #1e1e1e;
+    border-color: rgba(255,255,255,0.1);
+}
+
+[data-bs-theme="dark"] .cart-dropdown::before {
+    border-bottom-color: #1e1e1e;
+}
+
+[data-bs-theme="dark"] .cart-dropdown-header {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.08);
+}
+
+[data-bs-theme="dark"] .cart-item-mini {
+    border-color: rgba(255,255,255,0.05);
+}
+
+[data-bs-theme="dark"] .cart-item-mini:hover {
+    background: rgba(255,255,255,0.03);
+}
+
+[data-bs-theme="dark"] .cart-dropdown-footer {
+    background: rgba(255,255,255,0.03);
+    border-color: rgba(255,255,255,0.08);
+}
+
+/* RTL Support */
+html[dir="rtl"] .cart-dropdown {
+    right: auto;
+    left: 0;
+}
+
+html[dir="rtl"] .cart-dropdown::before {
+    right: auto;
+    left: 20px;
+}
+
+/* Mobile responsive */
+@media (max-width: 576px) {
+    .cart-dropdown {
+        width: calc(100vw - 40px);
+        right: -10px;
+    }
+
+    html[dir="rtl"] .cart-dropdown {
+        left: -10px;
+    }
+}
+</style>

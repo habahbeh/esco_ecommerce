@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from pathlib import Path
 from django.utils.translation import gettext_lazy as _
+from decimal import Decimal
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,6 +39,7 @@ INSTALLED_APPS = [
     'cart.apps.CartConfig',
     'orders.apps.OrdersConfig',
     'dashboard.apps.DashboardConfig',
+    'checkout',
 
     # تطبيقات Django المدمجة - Django built-in apps
     'django.contrib.admin',
@@ -95,7 +97,9 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.i18n',  # لدعم الترجمة - For translation support
                 'core.context_processors.site_settings',  # معالج إعدادات الموقع - Site settings processor
-                'cart.context_processors.cart',  # معالج سلة التسوق - Cart processor
+                # Cart context processors
+                'cart.context_processors.cart_context',  # Full cart context
+                'cart.context_processors.cart_preview_context',  # Lightweight preview
             ],
             'loaders': [
                 'django.template.loaders.filesystem.Loader',
@@ -208,11 +212,19 @@ AUTHENTICATION_BACKENDS = [
 # حجم أقصى للصور
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
 
-# Cache configuration (اختياري)
+# 4. Cache configuration for cart (optional but recommended)
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': 'unique-snowflake',
+    },
+    'cart': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'cart-cache',
+        'TIMEOUT': 300,  # 5 minutes
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000
+        }
     }
 }
 
@@ -247,5 +259,32 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
+        'cart': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
     },
 }
+
+
+# 3. Session Configuration
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 86400 * 7  # 7 days
+SESSION_SAVE_EVERY_REQUEST = True  # Save session on every request
+SESSION_COOKIE_NAME = 'esco_sessionid'
+SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+SESSION_COOKIE_HTTPONLY = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+
+# 4. إعدادات إضافية للسلة (اختياري)
+CART_SESSION_ID = 'cart'  # معرف السلة في الجلسة
+
+
+# Cart Settings
+DEFAULT_TAX_RATE = Decimal('0.16')
+BASE_SHIPPING_COST = Decimal('5.00')
+SHIPPING_WEIGHT_RATE = Decimal('0.50')
+FREE_SHIPPING_THRESHOLD = Decimal('50.00')
+MAX_CART_QUANTITY_PER_ITEM = 10
+

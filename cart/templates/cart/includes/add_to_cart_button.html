@@ -1,0 +1,14 @@
+<!-- cart/templates/cart/includes/add_to_cart_button.html -->
+<form action="{% url 'cart:add_to_cart' product.id %}" method="post" class="add-to-cart-form">
+    {% csrf_token %}
+    <input type="hidden" name="quantity" value="{{ quantity }}">
+    {% if variant %}
+        <input type="hidden" name="variant_id" value="{{ variant.id }}">
+    {% endif %}
+    <button type="submit" class="{{ css_class }}" {% if not in_stock %}disabled{% endif %}>
+        <i class="fas fa-shopping-cart"></i>
+        {% if show_text %}
+            {% if in_stock %}أضف للسلة{% else %}غير متوفر{% endif %}
+        {% endif %}
+    </button>
+</form>

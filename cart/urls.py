@@ -1,21 +1,26 @@
+# cart/urls.py
 from django.urls import path
-from . import views
+from .views import (
+    CartDetailView,
+    AddToCartView,
+    UpdateCartItemView,
+    RemoveFromCartView,
+    ClearCartView,
+    ApplyCouponView,
+    RemoveCouponView,
+)
 
 app_name = 'cart'
 
 urlpatterns = [
-    # عرض سلة التسوق - View shopping cart
-    path('', views.CartView.as_view(), name='cart'),
+    # Cart views
+    path('', CartDetailView.as_view(), name='cart_detail'),
+    path('add/<int:product_id>/', AddToCartView.as_view(), name='add_to_cart'),
+    path('update/<int:item_id>/', UpdateCartItemView.as_view(), name='update_cart_item'),
+    path('remove/<int:item_id>/', RemoveFromCartView.as_view(), name='remove_from_cart'),
+    path('clear/', ClearCartView.as_view(), name='clear_cart'),
 
-    # إضافة منتج إلى السلة - Add product to cart
-    path('add/<uuid:product_id>/', views.AddToCartView.as_view(), name='add_to_cart'),
-
-    # تحديث كمية عنصر في السلة - Update item quantity in cart
-    path('update/<int:item_id>/', views.UpdateCartView.as_view(), name='update_cart'),
-
-    # إزالة عنصر من السلة - Remove item from cart
-    path('remove/<int:item_id>/', views.RemoveFromCartView.as_view(), name='remove_from_cart'),
-
-    # الدفع - Checkout
-    path('checkout/', views.CheckoutView.as_view(), name='checkout'),
+    # Coupon views
+    path('apply-coupon/', ApplyCouponView.as_view(), name='apply_coupon'),
+    path('remove-coupon/', RemoveCouponView.as_view(), name='remove_coupon'),
 ]
