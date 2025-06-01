@@ -1,0 +1,631 @@
+<!-- File: products/templates/products/components/_product_reviews.html -->
+<!-- Product Reviews Component for Modern E-commerce -->
+
+{% load i18n %}
+{% load static %}
+
+<div class="product-reviews-section">
+    <!-- Reviews Summary -->
+    <div class="reviews-summary mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-4">
+                <div class="rating-overview text-center">
+                    <h2 class="rating-number mb-0">{{ product.average_rating|default:"4.5" }}</h2>
+                    <div class="rating-stars mb-2">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= product.average_rating|default:4.5|floatformat:0 %}
+                                <i class="fas fa-star text-warning"></i>
+                            {% elif forloop.counter|add:"-0.5" <= product.average_rating|default:4.5 %}
+                                <i class="fas fa-star-half-alt text-warning"></i>
+                            {% else %}
+                                <i class="far fa-star text-muted"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <p class="text-muted mb-0">
+                        {% trans "بناءً على" %} <strong>{{ product.review_count|default:"23" }}</strong> {% trans "تقييم" %}
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-5">
+                <div class="rating-breakdown">
+                    {% for rating in "54321" %}
+                        <div class="rating-bar-item d-flex align-items-center mb-2">
+                            <span class="rating-label">{{ rating }} <i class="fas fa-star text-warning small"></i></span>
+                            <div class="progress flex-grow-1 mx-3">
+                                <div class="progress-bar bg-warning"
+                                     role="progressbar"
+                                     style="width: {% if rating == "5" %}65{% elif rating == "4" %}20{% elif rating == "3" %}10{% elif rating == "2" %}3{% else %}2{% endif %}%">
+                                </div>
+                            </div>
+                            <span class="rating-count text-muted">
+                                {% if rating == "5" %}15{% elif rating == "4" %}5{% elif rating == "3" %}2{% elif rating == "2" %}1{% else %}0{% endif %}
+                            </span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="col-md-3 text-center">
+                <button type="button"
+                        class="btn btn-primary btn-lg w-100"
+                        data-bs-toggle="modal"
+                        data-bs-target="#writeReviewModal">
+                    <i class="fas fa-pen me-2"></i>{% trans "اكتب تقييماً" %}
+                </button>
+                <p class="text-muted small mt-2 mb-0">
+                    {% trans "شارك تجربتك مع هذا المنتج" %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Filters -->
+    <div class="review-filters mb-4">
+        <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-outline-secondary btn-sm active">
+                {% trans "جميع التقييمات" %} ({{ product.review_count|default:"23" }})
+            </button>
+            <button class="btn btn-outline-secondary btn-sm">
+                {% trans "بالصور" %} (8)
+            </button>
+            <button class="btn btn-outline-secondary btn-sm">
+                {% trans "مشتري موثق" %} (18)
+            </button>
+            <button class="btn btn-outline-secondary btn-sm">
+                5 <i class="fas fa-star text-warning"></i> (15)
+            </button>
+            <button class="btn btn-outline-secondary btn-sm">
+                4 <i class="fas fa-star text-warning"></i> (5)
+            </button>
+        </div>
+    </div>
+
+    <!-- Reviews List -->
+    <div class="reviews-list">
+        {% if product.reviews.exists %}
+            {% for review in product.reviews.all|slice:":5" %}
+                <div class="review-item">
+                    <div class="review-header d-flex justify-content-between mb-3">
+                        <div class="reviewer-info d-flex align-items-center">
+                            <div class="reviewer-avatar me-3">
+                                <i class="fas fa-user-circle fa-2x text-muted"></i>
+                            </div>
+                            <div>
+                                <h6 class="reviewer-name mb-0">{{ review.user.get_full_name|default:review.user.username }}</h6>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="review-rating">
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= review.rating %}
+                                                <i class="fas fa-star text-warning small"></i>
+                                            {% else %}
+                                                <i class="far fa-star text-muted small"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    {% if review.verified_purchase %}
+                                        <span class="badge bg-success-subtle text-success">
+                                            <i class="fas fa-check-circle me-1"></i>{% trans "مشتري موثق" %}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <span class="review-date text-muted">{{ review.created_at|date:"d M Y" }}</span>
+                    </div>
+
+                    {% if review.title %}
+                        <h6 class="review-title mb-2">{{ review.title }}</h6>
+                    {% endif %}
+
+                    <p class="review-text mb-3">{{ review.content }}</p>
+
+                    {% if review.images.exists %}
+                        <div class="review-images mb-3">
+                            <div class="d-flex gap-2 flex-wrap">
+                                {% for image in review.images.all|slice:":4" %}
+                                    <img src="{{ image.image.url }}"
+                                         alt="Review image"
+                                         class="review-image-thumb"
+                                         onclick="openImageModal('{{ image.image.url }}')">
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <div class="review-actions">
+                        <button class="btn btn-sm btn-link text-decoration-none">
+                            <i class="far fa-thumbs-up me-1"></i>
+                            {% trans "مفيد" %} ({{ review.helpful_count|default:"3" }})
+                        </button>
+                        <button class="btn btn-sm btn-link text-decoration-none text-muted">
+                            <i class="far fa-thumbs-down me-1"></i>
+                            {% trans "غير مفيد" %}
+                        </button>
+                        <button class="btn btn-sm btn-link text-decoration-none text-muted">
+                            <i class="fas fa-flag me-1"></i>
+                            {% trans "إبلاغ" %}
+                        </button>
+                    </div>
+                </div>
+            {% endfor %}
+
+            {% if product.review_count > 5 %}
+                <div class="text-center mt-4">
+                    <button class="btn btn-outline-primary">
+                        {% trans "عرض المزيد من التقييمات" %}
+                        <i class="fas fa-chevron-down ms-2"></i>
+                    </button>
+                </div>
+            {% endif %}
+        {% else %}
+            <!-- No Reviews State -->
+            <div class="no-reviews-state text-center py-5">
+                <i class="fas fa-comments fa-4x text-muted mb-3"></i>
+                <h5 class="mb-3">{% trans "لا توجد تقييمات بعد" %}</h5>
+                <p class="text-muted mb-4">{% trans "كن أول من يقيم هذا المنتج ويشارك تجربته" %}</p>
+                <button type="button"
+                        class="btn btn-primary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#writeReviewModal">
+                    <i class="fas fa-pen me-2"></i>{% trans "اكتب أول تقييم" %}
+                </button>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Write Review Modal -->
+<div class="modal fade" id="writeReviewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-pen me-2"></i>{% trans "اكتب تقييمك" %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reviewForm" method="post" action="{% url 'products:add_review' product.id %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <!-- Rating Selection -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">{% trans "تقييمك للمنتج" %} *</label>
+                        <div class="rating-select">
+                            <div class="d-flex gap-2 align-items-center">
+                                <div class="star-rating-input">
+                                    {% for i in "12345" %}
+                                        <input type="radio"
+                                               name="rating"
+                                               id="star{{ i }}"
+                                               value="{{ i }}"
+                                               {% if i == "5" %}checked{% endif %}>
+                                        <label for="star{{ i }}" class="star-label">
+                                            <i class="fas fa-star"></i>
+                                        </label>
+                                    {% endfor %}
+                                </div>
+                                <span class="rating-text ms-3">{% trans "ممتاز" %}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Review Title -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">{% trans "عنوان التقييم" %}</label>
+                        <input type="text"
+                               class="form-control"
+                               name="title"
+                               placeholder="{% trans 'اكتب عنواناً مختصراً لتقييمك' %}">
+                    </div>
+
+                    <!-- Review Text -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">{% trans "تقييمك" %} *</label>
+                        <textarea class="form-control"
+                                  name="content"
+                                  rows="4"
+                                  required
+                                  placeholder="{% trans 'شارك تجربتك مع هذا المنتج...' %}"></textarea>
+                    </div>
+
+                    <!-- Recommend Product -->
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox"
+                                   class="form-check-input"
+                                   id="recommendProduct"
+                                   name="recommend"
+                                   value="1"
+                                   checked>
+                            <label class="form-check-label" for="recommendProduct">
+                                {% trans "أوصي بهذا المنتج" %}
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Image Upload -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">{% trans "أضف صورة (اختياري)" %}</label>
+                        <div class="image-upload-area">
+                            <input type="file"
+                                   name="image"
+                                   id="reviewImage"
+                                   accept="image/*"
+                                   class="d-none">
+                            <label for="reviewImage" class="upload-label">
+                                <i class="fas fa-camera fa-2x mb-2"></i>
+                                <p class="mb-0">{% trans "اضغط لإضافة صورة" %}</p>
+                                <small class="text-muted">{% trans "صورة واحدة (حتى 5 ميجابايت)" %}</small>
+                            </label>
+                        </div>
+                        <div id="imagePreview" class="image-preview-container mt-3"></div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn btn-primary w-100">
+                        {% trans "نشر التقييم" %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <img src="" id="modalImage" class="img-fluid w-100">
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Reviews Section Styles */
+.product-reviews-section {
+    padding: 2rem 0;
+}
+
+/* Rating Overview */
+.rating-overview {
+    padding: 2rem;
+    background: #f9fafb;
+    border-radius: 16px;
+}
+
+.rating-number {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.rating-stars {
+    font-size: 1.25rem;
+}
+
+/* Rating Breakdown */
+.rating-breakdown {
+    padding: 1rem 0;
+}
+
+.rating-bar-item {
+    margin-bottom: 0.75rem;
+}
+
+.rating-label {
+    min-width: 50px;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+.progress {
+    height: 8px;
+    background-color: #e5e7eb;
+}
+
+.rating-count {
+    min-width: 30px;
+    text-align: right;
+    font-size: 0.875rem;
+}
+
+/* Review Filters */
+.review-filters .btn-outline-secondary {
+    border-color: #e5e7eb;
+    color: #6b7280;
+    border-radius: 50px;
+    padding: 0.375rem 1rem;
+}
+
+.review-filters .btn-outline-secondary:hover,
+.review-filters .btn-outline-secondary.active {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+    color: white;
+}
+
+/* Review Item */
+.review-item {
+    padding: 2rem 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.review-item:last-child {
+    border-bottom: none;
+}
+
+.reviewer-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.reviewer-name {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.review-rating {
+    font-size: 0.875rem;
+}
+
+.review-title {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.review-text {
+    color: #4b5563;
+    line-height: 1.6;
+}
+
+/* Review Images */
+.review-images {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.review-image-thumb {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.review-image-thumb:hover {
+    transform: scale(1.05);
+}
+
+/* Review Actions */
+.review-actions {
+    display: flex;
+    gap: 1rem;
+    padding-top: 1rem;
+}
+
+.review-actions .btn-link {
+    color: #6b7280;
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.review-actions .btn-link:hover {
+    color: var(--bs-primary);
+}
+
+/* No Reviews State */
+.no-reviews-state {
+    padding: 3rem 0;
+}
+
+/* Star Rating Input */
+.star-rating-input {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+}
+
+.star-rating-input input {
+    display: none;
+}
+
+.star-label {
+    cursor: pointer;
+    font-size: 1.5rem;
+    color: #d1d5db;
+    margin: 0 0.125rem;
+    transition: color 0.2s;
+}
+
+.star-rating-input input:checked ~ label,
+.star-rating-input label:hover,
+.star-rating-input label:hover ~ label {
+    color: #fbbf24;
+}
+
+/* Image Upload Area */
+.image-upload-area {
+    border: 2px dashed #e5e7eb;
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.image-upload-area:hover {
+    border-color: var(--bs-primary);
+    background: #f9fafb;
+}
+
+.upload-label {
+    cursor: pointer;
+    color: #6b7280;
+}
+
+.image-preview-container {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.image-preview-item {
+    position: relative;
+    width: 100px;
+    height: 100px;
+}
+
+.image-preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.image-preview-item .remove-image {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+/* RTL Support */
+[dir="rtl"] .reviewer-avatar {
+    margin-right: 0;
+    margin-left: 1rem;
+}
+
+[dir="rtl"] .star-rating-input {
+    flex-direction: row;
+}
+
+[dir="rtl"] .review-actions {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .rating-count {
+    text-align: left;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .reviews-summary .row {
+        gap: 2rem;
+    }
+
+    .rating-overview {
+        margin-bottom: 2rem;
+    }
+
+    .review-filters {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .review-filters .d-flex {
+        flex-wrap: nowrap;
+        padding-bottom: 0.5rem;
+    }
+}
+</style>
+
+<script>
+// Rating text mapping
+const ratingTexts = {
+    1: "{% trans 'ضعيف' %}",
+    2: "{% trans 'مقبول' %}",
+    3: "{% trans 'جيد' %}",
+    4: "{% trans 'جيد جداً' %}",
+    5: "{% trans 'ممتاز' %}"
+};
+
+// Update rating text on selection
+document.querySelectorAll('input[name="rating"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const ratingText = document.querySelector('.rating-text');
+        if (ratingText) {
+            ratingText.textContent = ratingTexts[this.value];
+        }
+    });
+});
+
+// Image preview handling
+document.getElementById('reviewImage')?.addEventListener('change', function(e) {
+    const preview = document.getElementById('imagePreview');
+    preview.innerHTML = '';
+
+    const file = e.target.files[0];
+
+    if (file) {
+        // Check file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('{% trans "حجم الصورة يجب أن يكون أقل من 5 ميجابايت" %}');
+            e.target.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const div = document.createElement('div');
+            div.className = 'image-preview-item';
+            div.innerHTML = `
+                <img src="${e.target.result}" alt="Preview">
+                <button type="button" class="remove-image" onclick="removeImage()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            preview.appendChild(div);
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// Remove image from preview
+function removeImage() {
+    const input = document.getElementById('reviewImage');
+    input.value = '';
+    document.getElementById('imagePreview').innerHTML = '';
+}
+
+// Open image in modal
+function openImageModal(imageSrc) {
+    document.getElementById('modalImage').src = imageSrc;
+    const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+    modal.show();
+}
+
+// Handle review form submission
+document.getElementById('reviewForm')?.addEventListener('submit', function(e) {
+    // لا نمنع الإرسال الافتراضي - دع النموذج يرسل بشكل طبيعي
+
+    // Show loading state
+    const btn = this.querySelector('button[type="submit"]');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{% trans "جاري النشر..." %}';
+});
+</script>
