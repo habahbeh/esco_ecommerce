@@ -107,6 +107,8 @@ urlpatterns += i18n_patterns(
     path('careers/', TemplateView.as_view(template_name='pages/careers.html'), name='careers'),
     path('news/', TemplateView.as_view(template_name='pages/news.html'), name='news'),
 
+    path('payment/', include('payment.urls', namespace='payment')),
+    path('checkout/', RedirectView.as_view(url='/payment/', permanent=True)),
     # Maintenance mode (يمكن تفعيلها عند الحاجة)
     # path('maintenance/', TemplateView.as_view(template_name='maintenance.html'), name='maintenance'),
 

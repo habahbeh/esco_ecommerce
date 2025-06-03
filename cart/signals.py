@@ -9,6 +9,8 @@ from django.db.models.signals import pre_save, post_save
 from django.contrib.auth.signals import user_logged_in
 from django.core.cache import cache
 import logging
+from .models import Cart, CartItem
+from orders.models import Order
 
 logger = logging.getLogger('cart')
 
@@ -181,3 +183,41 @@ def emit_cart_cleared(request):
         request=request
     )
 
+
+@receiver(post_save, sender=Order)
+def update_cart_after_order_creation(sender, instance, created, **kwargs):
+    """
+    تحديث سلة التسوق بعد إنشاء الطلب
+    Update cart after order creation
+    """
+    if created and instance.cart:
+        # تحديث حالة السلة إلى "تم تحويلها إلى طلب"
+        cart = instance.cart
+        cart.converted_to_order = True
+        cart.is_active = False
+        cart.save(update_fields=['converted_to_order', 'is_active'])
+
+        # إضافة سجل نشاط للمستخدم (اختياري)
+        if instance.user:
+            from accounts.models import UserActivity
+            UserActivity.objects.create(
+                user=instance.user,
+                activity_type='order_created',
+                description=f'تم إنشاء طلب جديد رقم {instance.order_number}',
+                object_id=instance.id,
+                content_type='order'
+            )
+
+
+@receiver(post_save, sender=Order)
+def create_new_cart_after_order(sender, instance, created, **kwargs):
+    """
+    إنشاء سلة تسوق جديدة بعد إنشاء الطلب
+    Create new cart after order creation
+    """
+    if created and instance.user:
+        # إنشاء سلة جديدة للمستخدم بعد تحويل السلة الحالية إلى طلب
+        # نتحقق أولاً من عدم وجود سلة نشطة أخرى
+        from .models import Cart
+        if not Cart.objects.filter(user=instance.user, is_active=True).exists():
+            Cart.objects.create(user=instance.user)

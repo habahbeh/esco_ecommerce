@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'orders.apps.OrdersConfig',
     'dashboard.apps.DashboardConfig',
     'checkout',
+    'payment',
 
     # تطبيقات Django المدمجة - Django built-in apps
     'django.contrib.admin',
