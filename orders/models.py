@@ -176,11 +176,31 @@ class OrderItem(models.Model):
     """
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items',
                               verbose_name=_("الطلب"))
+
+    # مراجع للمنتجات بدلاً من تخزين النصوص فقط
+    product = models.ForeignKey(
+        'products.Product',
+        on_delete=models.SET_NULL,  # حتى لو حُذف المنتج، لن يتأثر الطلب
+        null=True,
+        related_name='order_items',
+        verbose_name=_("المنتج")
+    )
+    variant = models.ForeignKey(
+        'products.ProductVariant',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='order_items',
+        verbose_name=_("المتغير")
+    )
+
+    # نحتفظ بالأسماء لأغراض العرض والتاريخ
     product_name = models.CharField(_("اسم المنتج"), max_length=255)
-    product_id = models.CharField(_("معرف المنتج"), max_length=100)
     variant_name = models.CharField(_("اسم المتغير"), max_length=100, blank=True)
-    variant_id = models.CharField(_("معرف المتغير"), max_length=100, blank=True)
+
     quantity = models.PositiveIntegerField(_("الكمية"), default=1)
+
+    # أسعار في وقت الطلب - مهمة للسجل التاريخي
     unit_price = models.DecimalField(_("سعر الوحدة"), max_digits=10, decimal_places=2)
     total_price = models.DecimalField(_("السعر الإجمالي"), max_digits=10, decimal_places=2)
 
@@ -205,8 +225,3 @@ class OrderItem(models.Model):
         Calculate the total after applying discount
         """
         return max(0, self.total_price - self.discount_amount)
-
-    def save(self, *args, **kwargs):
-        # حساب السعر الإجمالي - Calculate total price
-        self.total_price = self.unit_price * self.quantity
-        super().save(*args, **kwargs)

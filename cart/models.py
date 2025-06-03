@@ -87,13 +87,15 @@ class Cart(models.Model):
         for cart_item in self.items.all():
             OrderItem.objects.create(
                 order=order,
+                product=cart_item.product,  # مرجع للمنتج
+                variant=cart_item.variant,  # مرجع للمتغير
                 product_name=cart_item.product.name,
-                product_id=str(cart_item.product.id),
                 variant_name=cart_item.variant.name if cart_item.variant else '',
-                variant_id=str(cart_item.variant.id) if cart_item.variant else '',
                 quantity=cart_item.quantity,
                 unit_price=cart_item.unit_price,
-                total_price=cart_item.total_price
+                total_price=cart_item.total_price,
+                discount=cart_item.applied_discount if hasattr(cart_item, 'applied_discount') else None,
+                discount_amount=cart_item.discount_amount if hasattr(cart_item, 'discount_amount') else 0
             )
 
         # تحديث حالة السلة
