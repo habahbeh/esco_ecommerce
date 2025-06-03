@@ -162,6 +162,7 @@ urlpatterns = [
 
     # قوائم المنتجات الخاصة
     path('categories/', CategoryListView.as_view(), name='category_list'),
+    path('category/<slug:slug>/', CategoryDetailView.as_view(), name='category_detail'),
     path('featured/', FeaturedProductsView.as_view(), name='featured_products'),
     path('new/', NewProductsView.as_view(), name='new_products'),
     path('bestsellers/', BestSellersView.as_view(), name='best_sellers'),

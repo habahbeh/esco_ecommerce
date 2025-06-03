@@ -11,84 +11,33 @@
 
 {% block extra_css %}
 <style>
-    /* Page Header Enhanced */
-    .page-header {
-        background: linear-gradient(135deg, var(--bs-primary) 0%, rgba(var(--bs-primary-rgb), 0.8) 100%);
-        color: white;
-        padding: 4rem 0 3rem;
-        text-align: center;
-        position: relative;
-        overflow: hidden;
+    /* CSS variables from site_settings */
+    :root {
+        --primary-color: {{ site_settings.primary_color|default:"#0d6efd" }};
+        --secondary-color: {{ site_settings.secondary_color|default:"#6c757d" }};
+        --accent-color: {{ site_settings.accent_color|default:"#ffc107" }};
+        --text-color: {{ site_settings.text_color|default:"#212529" }};
+        --bg-color: {{ site_settings.bg_color|default:"#f8f9fa" }};
+        --border-color: {{ site_settings.border_color|default:"#dee2e6" }};
     }
 
-    .page-header::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
-        background-size: 50px 50px;
-        animation: move-pattern 20s linear infinite;
+    /* Breadcrumb Navigation */
+    .breadcrumb-section {
+        background-color: var(--bg-color);
+        padding: 1.5rem 0;
+        border-bottom: 1px solid var(--border-color);
     }
 
-    @keyframes move-pattern {
-        0% { transform: translate(0, 0); }
-        100% { transform: translate(50px, 50px); }
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: ">";
+        color: var(--secondary-color);
     }
 
-    .page-title {
-        font-size: 3.5rem;
-        font-weight: 800;
-        margin-bottom: 1rem;
-        position: relative;
-        z-index: 1;
-    }
-
-    .page-subtitle {
-        font-size: 1.25rem;
-        opacity: 0.9;
-        position: relative;
-        z-index: 1;
-    }
-
-    /* Stats Bar */
-    .stats-bar {
-        background: white;
-        padding: 2rem 0;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        margin-bottom: 3rem;
-    }
-
-    .stat-card {
-        text-align: center;
-        padding: 1rem;
-    }
-
-    .stat-icon {
-        width: 60px;
-        height: 60px;
-        background: linear-gradient(135deg, var(--bs-primary), rgba(var(--bs-primary-rgb), 0.7));
-        border-radius: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 1rem;
-        color: white;
-        font-size: 1.5rem;
-    }
-
-    .stat-value {
-        font-size: 2rem;
+    .breadcrumb-title {
+        font-size: 1.75rem;
         font-weight: 700;
-        color: var(--text-primary);
-        margin-bottom: 0.25rem;
-    }
-
-    .stat-label {
-        color: var(--text-muted);
-        font-size: 0.875rem;
+        margin-top: 1rem;
+        color: var(--text-color);
     }
 
     /* Filter & Sort Bar */
@@ -98,6 +47,7 @@
         border-radius: 15px;
         box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         margin-bottom: 2rem;
+        border: 1px solid var(--border-color);
     }
 
     .view-options {
@@ -115,15 +65,15 @@
     }
 
     .view-btn.active {
-        background: var(--bs-primary);
+        background: var(--primary-color);
         color: white;
-        border-color: var(--bs-primary);
+        border-color: var(--primary-color);
     }
 
     /* Category Grid Enhanced */
     .categories-section {
         padding: 3rem 0 5rem;
-        background: #f8f9fa;
+        background: var(--bg-color);
     }
 
     .category-grid {
@@ -150,11 +100,13 @@
         flex-direction: column;
         opacity: 0;
         animation: fadeInUp 0.6s ease forwards;
+        border: 1px solid var(--border-color);
     }
 
     .category-card:hover {
         transform: translateY(-10px);
         box-shadow: 0 20px 50px rgba(0,0,0,0.12);
+        border-color: var(--primary-color);
     }
 
     /* List View Styles */
@@ -164,8 +116,8 @@
     }
 
     .category-grid.list-view .category-image-wrapper {
-        width: 200px;
-        height: 150px;
+        width: 300px;
+        height: 200px;
         flex-shrink: 0;
     }
 
@@ -173,8 +125,10 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        flex: 1;
     }
 
+    /* Image styling */
     .category-image-wrapper {
         position: relative;
         height: 250px;
@@ -212,8 +166,8 @@
         position: absolute;
         top: 1rem;
         right: 1rem;
-        background: var(--bs-primary);
-        color: white;
+        background: var(--accent-color);
+        color: var(--text-color);
         padding: 0.5rem 1rem;
         border-radius: 50px;
         font-weight: 600;
@@ -248,19 +202,19 @@
         font-size: 1.5rem;
         font-weight: 700;
         margin-bottom: 0.5rem;
-        color: var(--text-primary);
+        color: var(--text-color);
         display: flex;
         align-items: center;
         gap: 0.5rem;
     }
 
     .category-icon-inline {
-        color: var(--bs-primary);
+        color: var(--primary-color);
         font-size: 1.25rem;
     }
 
     .category-description {
-        color: var(--text-secondary);
+        color: var(--secondary-color);
         margin-bottom: 1.5rem;
         flex: 1;
         line-height: 1.6;
@@ -278,19 +232,19 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        color: var(--text-muted);
+        color: var(--secondary-color);
         font-size: 0.95rem;
     }
 
     .product-count i {
-        color: var(--bs-primary);
+        color: var(--primary-color);
     }
 
     .category-link {
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
-        color: var(--bs-primary);
+        color: var(--primary-color);
         text-decoration: none;
         font-weight: 600;
         transition: gap 0.3s ease;
@@ -300,175 +254,29 @@
         gap: 1rem;
     }
 
-    /* Subcategories Pills */
-    .subcategories-pills {
-        margin-top: 1rem;
-        padding-top: 1rem;
-        border-top: 1px solid var(--border-color);
-    }
-
-    .subcategory-pill {
-        display: inline-block;
-        padding: 0.25rem 0.75rem;
-        margin: 0.25rem;
-        background: rgba(var(--bs-primary-rgb), 0.1);
-        color: var(--bs-primary);
-        border-radius: 50px;
-        font-size: 0.875rem;
-        text-decoration: none;
-        transition: all 0.3s ease;
-        position: relative;
-    }
-
-    .subcategory-pill:hover {
-        background: var(--bs-primary);
-        color: white;
-        transform: translateY(-2px);
-    }
-
-    .subcategory-count {
-        background: rgba(0,0,0,0.1);
-        padding: 0.1rem 0.4rem;
-        border-radius: 10px;
-        font-size: 0.75rem;
-        margin-left: 0.25rem;
-    }
-
-    /* Featured Categories Enhanced */
-    .featured-section {
-        padding: 5rem 0;
-        background: white;
-    }
-
-    .featured-header {
-        text-align: center;
-        margin-bottom: 3rem;
-    }
-
-    .featured-title {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
-    }
-
-    .featured-subtitle {
-        font-size: 1.125rem;
-        color: var(--text-muted);
-    }
-
-    .featured-carousel {
-        position: relative;
-        overflow: hidden;
-        padding: 1rem 0;
-    }
-
-    .featured-track {
-        display: flex;
-        gap: 2rem;
-        transition: transform 0.5s ease;
-    }
-
-    .featured-card {
-        flex: 0 0 250px;
-        text-align: center;
-        padding: 2rem;
-        border-radius: 20px;
-        background: white;
-        border: 2px solid var(--border-color);
-        transition: all 0.3s ease;
-        cursor: pointer;
-        text-decoration: none;
-        color: inherit;
-    }
-
-    .featured-card:hover {
-        border-color: var(--bs-primary);
-        transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        color: inherit;
-        text-decoration: none;
-    }
-
-    .featured-icon {
-        width: 80px;
-        height: 80px;
-        margin: 0 auto 1.5rem;
-        background: linear-gradient(135deg, var(--bs-primary), rgba(var(--bs-primary-rgb), 0.7));
-        border-radius: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2.5rem;
-        color: white;
-        transition: all 0.3s ease;
-    }
-
-    .featured-card:hover .featured-icon {
-        transform: rotate(-5deg) scale(1.1);
-    }
-
-    .featured-name {
-        font-size: 1.125rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-        color: var(--text-primary);
-    }
-
-    .featured-count {
-        color: var(--text-muted);
-        font-size: 0.875rem;
-        margin-bottom: 0.5rem;
-    }
-
-    .featured-trend {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-        padding: 0.25rem 0.75rem;
-        background: rgba(40, 167, 69, 0.1);
-        color: #28a745;
-        border-radius: 50px;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-
-    .featured-trend.down {
-        background: rgba(220, 53, 69, 0.1);
-        color: #dc3545;
-    }
-
-    /* Search Bar Enhanced */
-    .category-search {
-        max-width: 600px;
-        margin: 3rem auto;
-    }
-
+    /* Search in filter bar */
     .search-input-wrapper {
         position: relative;
     }
 
-    .category-search-input {
-        width: 100%;
-        padding: 1rem 3rem 1rem 1.5rem;
-        border: 2px solid var(--border-color);
-        border-radius: 50px;
-        font-size: 1.125rem;
+    .search-input-wrapper .form-control {
+        padding: 0.8rem 2.5rem 0.8rem 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
         transition: all 0.3s ease;
     }
 
-    .category-search-input:focus {
-        outline: none;
-        border-color: var(--bs-primary);
-        box-shadow: 0 0 0 3px rgba(var(--bs-primary-rgb), 0.1);
+    .search-input-wrapper .form-control:focus {
+        box-shadow: 0 0 0 0.2rem rgba(var(--primary-color-rgb), 0.25);
+        border-color: var(--primary-color);
     }
 
     .search-icon {
         position: absolute;
-        right: 1.5rem;
+        right: 1rem;
         top: 50%;
         transform: translateY(-50%);
-        color: var(--text-muted);
-        font-size: 1.25rem;
+        color: var(--secondary-color);
     }
 
     .search-suggestions {
@@ -477,12 +285,14 @@
         left: 0;
         right: 0;
         background: white;
-        border: 2px solid var(--border-color);
-        border-radius: 15px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
         margin-top: 0.5rem;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         display: none;
-        z-index: 1000;
+        z-index: 100;
+        max-height: 300px;
+        overflow-y: auto;
     }
 
     .search-suggestions.show {
@@ -490,14 +300,14 @@
     }
 
     .suggestion-item {
-        padding: 1rem 1.5rem;
+        padding: 0.75rem 1rem;
         border-bottom: 1px solid var(--border-color);
         cursor: pointer;
-        transition: background 0.3s ease;
+        transition: background 0.2s ease;
     }
 
     .suggestion-item:hover {
-        background: #f8f9fa;
+        background: var(--bg-color);
     }
 
     .suggestion-item:last-child {
@@ -506,12 +316,12 @@
 
     .suggestion-category {
         font-weight: 600;
-        color: var(--text-primary);
+        color: var(--text-color);
         margin-bottom: 0.25rem;
     }
 
     .suggestion-count {
-        color: var(--text-muted);
+        color: var(--secondary-color);
         font-size: 0.875rem;
     }
 
@@ -527,7 +337,7 @@
         width: 50px;
         height: 50px;
         border-radius: 50%;
-        background: var(--bs-primary);
+        background: var(--primary-color);
         color: white;
         border: none;
         box-shadow: 0 5px 20px rgba(0,0,0,0.2);
@@ -543,20 +353,6 @@
         transform: scale(1.1);
     }
 
-    /* Loading Skeleton Enhanced */
-    .category-skeleton {
-        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-        background-size: 200% 100%;
-        animation: loading 1.5s infinite;
-        border-radius: 20px;
-        height: 400px;
-    }
-
-    @keyframes loading {
-        0% { background-position: 200% 0; }
-        100% { background-position: -200% 0; }
-    }
-
     /* Empty State Enhanced */
     .empty-state {
         text-align: center;
@@ -568,7 +364,7 @@
 
     .empty-icon {
         font-size: 5rem;
-        color: var(--text-muted);
+        color: var(--secondary-color);
         margin-bottom: 1rem;
         opacity: 0.3;
     }
@@ -577,11 +373,11 @@
         font-size: 1.5rem;
         font-weight: 700;
         margin-bottom: 0.5rem;
-        color: var(--text-primary);
+        color: var(--text-color);
     }
 
     .empty-description {
-        color: var(--text-secondary);
+        color: var(--secondary-color);
         margin-bottom: 2rem;
     }
 
@@ -599,25 +395,17 @@
 
     /* Responsive Enhanced */
     @media (max-width: 991.98px) {
-        .page-title {
-            font-size: 2.5rem;
-        }
-
         .category-grid {
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
             gap: 1.5rem;
         }
 
-        .category-image-wrapper {
-            height: 200px;
+        .category-icon-wrapper {
+            height: 150px;
         }
 
-        .stats-bar {
-            overflow-x: auto;
-        }
-
-        .featured-card {
-            flex: 0 0 200px;
+        .category-icon {
+            font-size: 4rem;
         }
 
         .quick-actions {
@@ -627,47 +415,39 @@
     }
 
     @media (max-width: 575.98px) {
-        .page-title {
-            font-size: 2rem;
+        .breadcrumb-title {
+            font-size: 1.5rem;
         }
 
         .category-grid {
             grid-template-columns: 1fr;
         }
 
-        .stat-card {
-            padding: 0.5rem;
-        }
-
-        .stat-value {
-            font-size: 1.5rem;
-        }
-
         .filter-sort-bar {
             padding: 1rem;
         }
 
-        .featured-icon {
-            width: 60px;
-            height: 60px;
-            font-size: 2rem;
+        .category-grid.list-view .category-icon-wrapper {
+            width: 100px;
+            height: 100px;
         }
 
-        .category-grid.list-view .category-image-wrapper {
-            width: 120px;
-            height: 100px;
+        .category-icon {
+            font-size: 3rem;
         }
     }
 
     /* Dark Mode Support */
-    [data-bs-theme="dark"] .stats-bar,
     [data-bs-theme="dark"] .filter-sort-bar,
     [data-bs-theme="dark"] .category-card,
-    [data-bs-theme="dark"] .featured-card,
     [data-bs-theme="dark"] .empty-state,
     [data-bs-theme="dark"] .search-suggestions {
         background: #1e1e1e;
         color: #e0e0e0;
+    }
+
+    [data-bs-theme="dark"] .breadcrumb-section {
+        background: #121212;
     }
 
     [data-bs-theme="dark"] .view-btn {
@@ -681,8 +461,7 @@
 
     /* Print Styles */
     @media print {
-        .page-header,
-        .stats-bar,
+        .breadcrumb-section,
         .filter-sort-bar,
         .quick-actions,
         .search-suggestions {
@@ -699,81 +478,40 @@
 {% endblock %}
 
 {% block content %}
-<!-- Page Header -->
-<section class="page-header">
+<!-- Breadcrumb Navigation -->
+<section class="breadcrumb-section">
     <div class="container">
-        <h1 class="page-title animate-fade-in">{% trans "جميع الفئات" %}</h1>
-        <p class="page-subtitle animate-fade-in" style="animation-delay: 0.2s;">
-            {% trans "اكتشف مجموعتنا الواسعة من المنتجات الصناعية عالية الجودة" %}
-        </p>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "الرئيسية" %}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{% trans "الفئات" %}</li>
+            </ol>
+        </nav>
+        <h1 class="breadcrumb-title">{% trans "جميع الفئات" %}</h1>
     </div>
 </section>
 
-<!-- Stats Bar -->
-<section class="stats-bar">
+<!-- Filter, Sort and Search Bar Combined in One Section -->
+<section class="filter-search-section mb-4">
     <div class="container">
-        <div class="row">
-            <div class="col-6 col-md-3">
-                <div class="stat-card" data-aos="zoom-in">
-                    <div class="stat-icon">
-                        <i class="fas fa-layer-group"></i>
-                    </div>
-                    <div class="stat-value">{{ categories|length }}</div>
-                    <div class="stat-label">{% trans "فئة رئيسية" %}</div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="stat-card" data-aos="zoom-in" data-aos-delay="100">
-                    <div class="stat-icon">
-                        <i class="fas fa-boxes"></i>
-                    </div>
-                    <div class="stat-value" id="totalProducts">0</div>
-                    <div class="stat-label">{% trans "إجمالي المنتجات" %}</div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="stat-card" data-aos="zoom-in" data-aos-delay="200">
-                    <div class="stat-icon">
-                        <i class="fas fa-tags"></i>
-                    </div>
-                    <div class="stat-value">{{ featured_categories|length|default:0 }}</div>
-                    <div class="stat-label">{% trans "فئة مميزة" %}</div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="stat-card" data-aos="zoom-in" data-aos-delay="300">
-                    <div class="stat-icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <div class="stat-value">{{ active_offers|default:0 }}</div>
-                    <div class="stat-label">{% trans "عروض نشطة" %}</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Categories Section -->
-<section class="categories-section">
-    <div class="container">
-        <!-- Search Bar -->
-        <div class="category-search" data-aos="fade-up">
-            <div class="search-input-wrapper">
-                <input type="text"
-                       class="category-search-input"
-                       id="categorySearch"
-                       placeholder="{% trans 'ابحث عن فئة...' %}"
-                       aria-label="{% trans 'البحث في الفئات' %}"
-                       autocomplete="off">
-                <i class="fas fa-search search-icon"></i>
-                <div class="search-suggestions" id="searchSuggestions"></div>
-            </div>
-        </div>
-
-        <!-- Filter & Sort Bar -->
         <div class="filter-sort-bar" data-aos="fade-up">
             <div class="row align-items-center">
-                <div class="col-md-6">
+                <!-- Search Bar -->
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <div class="search-input-wrapper">
+                        <input type="text"
+                               class="form-control"
+                               id="categorySearch"
+                               placeholder="{% trans 'ابحث عن فئة...' %}"
+                               aria-label="{% trans 'البحث في الفئات' %}"
+                               autocomplete="off">
+                        <i class="fas fa-search search-icon"></i>
+                        <div class="search-suggestions" id="searchSuggestions"></div>
+                    </div>
+                </div>
+
+                <!-- Sort Options -->
+                <div class="col-md-4">
                     <select class="form-select" id="sortSelect">
                         <option value="name">{% trans "ترتيب حسب: الاسم" %}</option>
                         <option value="products">{% trans "ترتيب حسب: عدد المنتجات" %}</option>
@@ -781,7 +519,9 @@
                         <option value="popular">{% trans "ترتيب حسب: الأكثر مشاهدة" %}</option>
                     </select>
                 </div>
-                <div class="col-md-6 text-md-end mt-3 mt-md-0">
+
+                <!-- View Toggle -->
+                <div class="col-md-2 text-md-end mt-3 mt-md-0">
                     <div class="view-options">
                         <button class="view-btn active" data-view="grid" title="{% trans 'عرض شبكي' %}">
                             <i class="fas fa-th"></i>
@@ -793,177 +533,26 @@
                 </div>
             </div>
         </div>
-
-        <!-- Main Categories Grid -->
-        <div class="category-grid" id="categoryGrid">
-            {% cache 600 category_list_grid %}
-            {% for category in categories %}
-                <div class="category-card"
-                     data-aos="fade-up"
-                     data-aos-delay="{{ forloop.counter0|add:1 }}00"
-                     data-name="{{ category.name }}"
-                     data-products="{{ category.total_products }}"
-                     data-views="{{ category.views_count }}"
-                     style="animation-delay: calc({{ forloop.counter0 }} * 0.1s)">
-                    <div class="category-image-wrapper">
-                        {% if category.image %}
-                            <img src="{{ category.image.url }}"
-                                 class="category-image"
-                                 alt="{{ category.name }}"
-                                 loading="lazy">
-                        {% else %}
-                            <div class="category-image d-flex align-items-center justify-content-center">
-                                <i class="fas fa-{{ category.icon|default:'cube' }} fa-4x text-muted opacity-25"></i>
-                            </div>
-                        {% endif %}
-                        <div class="category-overlay"></div>
-                        {% if category.is_featured %}
-                            <span class="category-badge">
-                                <i class="fas fa-star"></i>
-                                {% trans "مميز" %}
-                            </span>
-                        {% endif %}
-                        {% if category.views_count > 1000 %}
-                            <span class="view-count-badge">
-                                <i class="fas fa-eye"></i>
-                                {{ category.views_count|floatformat:0 }}
-                            </span>
-                        {% endif %}
-                    </div>
-
-                    <div class="category-content">
-                        <h3 class="category-name">
-                            {% if category.icon %}
-                                <i class="{{ category.icon }} category-icon-inline"></i>
-                            {% endif %}
-                            {{ category.name }}
-                        </h3>
-                        {% if category.description %}
-                            <p class="category-description">{{ category.description|truncatechars:150 }}</p>
-                        {% endif %}
-
-                        {% if category.children.exists %}
-                            <div class="subcategories-pills">
-                                <h6 class="text-muted mb-2">{% trans "الفئات الفرعية:" %}</h6>
-                                {% for subcategory in category.children.all|slice:":4" %}
-                                    <a href="{% url 'products:category_products' subcategory.slug %}"
-                                       class="subcategory-pill">
-                                        {{ subcategory.name }}
-                                        <span class="subcategory-count">{{ subcategory.products_count }}</span>
-                                    </a>
-                                {% endfor %}
-                                {% if category.children.count > 4 %}
-                                    <span class="text-muted">
-                                        {% trans "و" %} {{ category.children.count|add:"-4" }} {% trans "أخرى" %}
-                                    </span>
-                                {% endif %}
-                            </div>
-                        {% endif %}
-
-                        <div class="category-stats">
-                            <div class="product-count">
-                                <i class="fas fa-box"></i>
-                                <span>{{ category.total_products }} {% trans "منتج" %}</span>
-                            </div>
-                            <a href="{% url 'products:category_products' category.slug %}" class="category-link">
-                                {% trans "عرض المنتجات" %} <i class="fas fa-arrow-right"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            {% empty %}
-                <div class="col-12">
-                    <div class="empty-state">
-                        <i class="fas fa-folder-open empty-icon"></i>
-                        <h3 class="empty-title">{% trans "لا توجد فئات" %}</h3>
-                        <p class="empty-description">
-                            {% trans "لم يتم إضافة أي فئات بعد." %}
-                        </p>
-                        <a href="{% url 'core:home' %}" class="btn btn-primary">
-                            {% trans "العودة للرئيسية" %}
-                        </a>
-                    </div>
-                </div>
-            {% endfor %}
-            {% endcache %}
-        </div>
     </div>
 </section>
 
-<!-- Featured Categories Section -->
-{% if featured_categories %}
-<section class="featured-section">
-    <div class="container">
-        <div class="featured-header" data-aos="fade-up">
-            <h2 class="featured-title">{% trans "الفئات المميزة" %}</h2>
-            <p class="featured-subtitle">{% trans "أكثر الفئات طلباً وشعبية" %}</p>
-        </div>
-
-        <div class="featured-carousel" data-aos="fade-up">
-            <div class="featured-track">
-                {% for category in featured_categories %}
-                    <a href="{% url 'products:category_products' category.slug %}"
-                       class="featured-card"
-                       data-aos="zoom-in"
-                       data-aos-delay="{{ forloop.counter0|add:1 }}00">
-                        <div class="featured-icon">
-                            <i class="fas fa-{{ category.icon|default:'cube' }}"></i>
-                        </div>
-                        <h4 class="featured-name">{{ category.name }}</h4>
-                        <p class="featured-count">{{ category.total_products }} {% trans "منتج" %}</p>
-                        {% if category.trend %}
-                            <span class="featured-trend {% if category.trend < 0 %}down{% endif %}">
-                                <i class="fas fa-{% if category.trend > 0 %}arrow-up{% else %}arrow-down{% endif %}"></i>
-                                {{ category.trend|floatformat:0 }}%
-                            </span>
-                        {% endif %}
-                    </a>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-</section>
-{% endif %}
+{% include 'products/includes/category_grid.html' %}
 
 <!-- Quick Actions -->
-<div class="quick-actions">
-    <button class="action-btn" id="scrollTop" title="{% trans 'الصعود للأعلى' %}">
-        <i class="fas fa-arrow-up"></i>
-    </button>
-    <button class="action-btn" id="toggleDark" title="{% trans 'تبديل الوضع الليلي' %}">
-        <i class="fas fa-moon"></i>
-    </button>
-</div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize AOS
-    AOS.init({
-        duration: 600,
-        once: true,
-        offset: 50
-    });
-
-    // Calculate total products with animation
-    const totalProductsEl = document.getElementById('totalProducts');
-    let totalProducts = 0;
-    document.querySelectorAll('.category-card').forEach(card => {
-        totalProducts += parseInt(card.dataset.products || 0);
-    });
-
-    // Animate counter
-    let currentCount = 0;
-    const increment = Math.ceil(totalProducts / 50);
-    const timer = setInterval(() => {
-        currentCount += increment;
-        if (currentCount >= totalProducts) {
-            currentCount = totalProducts;
-            clearInterval(timer);
-        }
-        totalProductsEl.textContent = currentCount.toLocaleString('ar-SA');
-    }, 20);
+    if (typeof AOS !== 'undefined') {
+        AOS.init({
+            duration: 600,
+            once: true,
+            offset: 50
+        });
+    }
 
     // Enhanced Category Search with suggestions
     const searchInput = document.getElementById('categorySearch');
@@ -1029,9 +618,7 @@ document.addEventListener('DOMContentLoaded', function() {
         categoryCards.forEach(card => {
             const categoryName = card.dataset.name.toLowerCase();
             const categoryDescription = card.querySelector('.category-description')?.textContent.toLowerCase() || '';
-            const subcategories = Array.from(card.querySelectorAll('.subcategory-pill')).map(el => el.textContent.toLowerCase()).join(' ');
-
-            const searchContent = categoryName + ' ' + categoryDescription + ' ' + subcategories;
+            const searchContent = categoryName + ' ' + categoryDescription;
 
             if (!searchTerm || searchContent.includes(searchTerm)) {
                 card.style.display = '';
@@ -1169,24 +756,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const icon = toggleDarkBtn.querySelector('i');
         icon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
     }
-
-    // Lazy load images
-    const imageObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const img = entry.target;
-                if (img.dataset.src) {
-                    img.src = img.dataset.src;
-                    img.removeAttribute('data-src');
-                }
-                imageObserver.unobserve(img);
-            }
-        });
-    });
-
-    document.querySelectorAll('img[data-src]').forEach(img => {
-        imageObserver.observe(img);
-    });
 });
 
 // Global function to clear search

@@ -1,0 +1,84 @@
+<!-- File: products/templates/products/includes/category_grid.html -->
+{% load i18n %}
+{% load cache %}
+<!-- Main Categories Grid -->
+<section class="categories-grid-section">
+    <div class="container">
+        <div class="category-grid" id="categoryGrid">
+            {% cache 600 category_list_grid %}
+            {% for category in categories %}
+                <div class="category-card"
+                     data-aos="fade-up"
+                     data-aos-delay="{{ forloop.counter0|add:1 }}00"
+                     data-name="{{ category.name }}"
+                     data-products="{{ category.total_products }}"
+                     data-views="{{ category.views_count }}"
+                     style="animation-delay: calc({{ forloop.counter0 }} * 0.1s)">
+                    <!-- Using image -->
+                    <div class="category-image-wrapper">
+                        {% if category.image %}
+                            <img src="{{ category.image.url }}"
+                                 class="category-image"
+                                 alt="{{ category.name }}"
+                                 loading="lazy">
+                        {% else %}
+                            <div class="category-image d-flex align-items-center justify-content-center">
+                                <i class="fas fa-{{ category.icon|default:'cube' }} fa-4x text-muted opacity-25"></i>
+                            </div>
+                        {% endif %}
+                        <div class="category-overlay"></div>
+                    </div>
+
+                    {% if category.is_featured %}
+                        <span class="category-badge">
+                            <i class="fas fa-star"></i>
+                            {% trans "مميز" %}
+                        </span>
+                    {% endif %}
+
+                    {% if category.views_count > 1000 %}
+                        <span class="view-count-badge">
+                            <i class="fas fa-eye"></i>
+                            {{ category.views_count|floatformat:0 }}
+                        </span>
+                    {% endif %}
+
+                    <div class="category-content">
+                        <h3 class="category-name">
+                            <i class="fas fa-{{ category.icon|default:'folder' }} category-icon-inline"></i>
+                            {{ category.name }}
+                        </h3>
+
+                        {% if category.description %}
+                            <p class="category-description">{{ category.description|truncatechars:150 }}</p>
+                        {% endif %}
+
+                        <div class="category-stats">
+                            <div class="product-count">
+                                <i class="fas fa-box"></i>
+                                <span>{{ category.total_products }} {% trans "منتج" %}</span>
+                            </div>
+                            <a href="{% url 'products:category_products' category.slug %}" class="category-link">
+                                {% trans "عرض المنتجات" %} <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <div class="empty-state">
+                        <i class="fas fa-folder-open empty-icon"></i>
+                        <h3 class="empty-title">{% trans "لا توجد فئات" %}</h3>
+                        <p class="empty-description">
+                            {% trans "لم يتم إضافة أي فئات بعد." %}
+                        </p>
+                        <a href="{% url 'core:home' %}" class="btn btn-primary">
+                            {% trans "العودة للرئيسية" %}
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+            {% endcache %}
+        </div>
+    </div>
+</section>
