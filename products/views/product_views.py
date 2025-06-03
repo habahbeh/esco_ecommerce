@@ -10,13 +10,11 @@ from django.db.models import Q, Avg, Count, Min, Max, Prefetch
 from django.utils.translation import gettext as _
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404
 import logging
 
 from .base_views import BaseProductListView, BaseProductDetailView, CachedMixin
 from ..models import Product, Category, Brand, ProductImage, Tag
-from django.views.generic import ListView
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +114,7 @@ class CategoryListView(BaseProductListView):
                     products__status='published'
                 )
             )
-        ).order_by('sort_order', 'name')  # تم التصحيح هنا
+        ).order_by('sort_order', 'name')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -125,7 +123,7 @@ class CategoryListView(BaseProductListView):
         context['featured_categories'] = Category.objects.filter(
             is_featured=True,
             is_active=True
-        ).order_by('sort_order')[:6]  # تم التصحيح هنا أيضاً
+        ).order_by('sort_order')[:6]
 
         return context
 
@@ -431,14 +429,3 @@ class ProductVariantDetailView(BaseProductDetailView):
             context['selected_variant'] = None
 
         return context
-
-# دالة الاستيراد المتأخر في بداية الملف
-def get_product_model():
-    from ..models import Product
-    return Product
-
-class ProductListView(ListView):
-    def get_queryset(self):
-        # استخدام الدالة عند الحاجة
-        Product = get_product_model()
-        return Product.objects.filter(is_active=True)

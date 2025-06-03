@@ -7,6 +7,7 @@ Using professional search views
 from django.urls import path
 from django.views.decorators.cache import cache_page
 from django.http import JsonResponse
+from .views.debug_category_view import DebugCategoryView
 
 # Import product views
 from .views.product_views import (
@@ -84,50 +85,6 @@ def fallback_search_view(request):
     })
 
 
-def search_suggestions_api(request):
-    """
-    API لاقتراحات البحث - إرجاع JSON
-    Search suggestions API - returns JSON
-    """
-    query = request.GET.get('q', '').strip()
-    suggestions = []
-
-    if len(query) >= 2:
-        from .models import Product, Category, Brand
-
-        # البحث في المنتجات
-        products = Product.objects.filter(
-            Q(name__icontains=query) | Q(name_en__icontains=query),
-            is_active=True,
-            status='published'
-        ).select_related('category', 'brand')[:5]
-
-        for product in products:
-            suggestions.append({
-                'type': 'product',
-                'title': product.name,
-                'url': product.get_absolute_url() if hasattr(product, 'get_absolute_url') else '#',
-                'image': product.main_image.url if hasattr(product, 'main_image') and product.main_image else '',
-                'price': str(getattr(product, 'current_price', getattr(product, 'base_price', 0))),
-            })
-
-        # البحث في الفئات
-        categories = Category.objects.filter(
-            Q(name__icontains=query) | Q(name_en__icontains=query),
-            is_active=True
-        )[:3]
-
-        for category in categories:
-            suggestions.append({
-                'type': 'category',
-                'title': category.name,
-                'url': category.get_absolute_url() if hasattr(category, 'get_absolute_url') else '#',
-                'count': category.products.filter(is_active=True, status='published').count(),
-            })
-
-    return JsonResponse({'suggestions': suggestions})
-
-
 # Main URL patterns
 urlpatterns = [
     # البحث - استخدام الـ views المحترفة إذا كانت متوفرة
@@ -149,10 +106,10 @@ urlpatterns = [
 
     # APIs للبحث
     path('api/search/suggestions/',
-         search_suggestions if SEARCH_VIEWS_AVAILABLE else search_suggestions_api,
+         search_suggestions if SEARCH_VIEWS_AVAILABLE else fallback_search_view,
          name='search_suggestions'),
 
-    # API للبحث السريع (إضافية)
+    # API للبحث السريع
     path('api/search/quick/',
          quick_search_simple if SEARCH_VIEWS_AVAILABLE else fallback_search_view,
          name='api_quick_search'),
@@ -170,7 +127,6 @@ urlpatterns = [
 
     # المنتجات حسب الفئة
     path('category/<slug:category_slug>/', ProductListView.as_view(), name='category_products'),
-    path('category/<slug:slug>/detail/', CategoryDetailView.as_view(), name='category_detail'),
 
     # المنتجات حسب العلامة التجارية والوسوم
     path('brand/<slug:brand_slug>/', BrandProductsView.as_view(), name='brand_products'),
@@ -180,7 +136,7 @@ urlpatterns = [
     path('<slug:slug>/', ProductDetailView.as_view(), name='product_detail'),
     path('variant/<int:variant_id>/', ProductVariantDetailView.as_view(), name='variant_detail'),
 
-    # URLs التقييمات - أضف هذه الأسطر الجديدة
+    # URLs التقييمات
     path('product/<int:product_id>/add-review/', SubmitReviewView.as_view(), name='add_review'),
     path('product/<slug:product_slug>/reviews/', ProductReviewListView.as_view(), name='product_reviews'),
     path('review/<int:review_id>/vote/', VoteReviewHelpfulView.as_view(), name='vote_review'),
@@ -188,31 +144,24 @@ urlpatterns = [
     path('review/<int:review_id>/edit/', EditReviewView.as_view(), name='edit_review'),
     path('review/<int:review_id>/delete/', DeleteReviewView.as_view(), name='delete_review'),
     path('my-reviews/', UserReviewsView.as_view(), name='user_reviews'),
-
 ]
 
 # URLs محسنة مع التخزين المؤقت للإنتاج
-cached_urlpatterns = [
-    # تخزين مؤقت لقائمة المنتجات لمدة 5 دقائق
-    path('cached/', cache_page(300)(ProductListView.as_view()), name='cached_product_list'),
-
-    # تخزين مؤقت للفئات لمدة 10 دقائق
-    path('cached/categories/', cache_page(600)(CategoryListView.as_view()), name='cached_category_list'),
-
-    # تخزين مؤقت للعروض لمدة 15 دقيقة
-    path('cached/offers/', cache_page(900)(SpecialOffersView.as_view()), name='cached_special_offers'),
-
-    # تخزين مؤقت للبحث لمدة 5 دقائق
-    path('cached/search/',
-         cache_page(300)(SearchView.as_view() if SEARCH_VIEWS_AVAILABLE else fallback_search_view),
-         name='cached_search'),
-]
+cached_urls = {
+    'product_list': cache_page(300)(ProductListView.as_view()),
+    'category_list': cache_page(600)(CategoryListView.as_view()),
+    'special_offers': cache_page(900)(SpecialOffersView.as_view()),
+    'product_search': cache_page(300)(SearchView.as_view() if SEARCH_VIEWS_AVAILABLE else fallback_search_view),
+}
 
 # إضافة URLs المخزنة مؤقتاً في الإنتاج
 from django.conf import settings
 
 if not settings.DEBUG:
-    urlpatterns.extend(cached_urlpatterns)
+    for name, view in cached_urls.items():
+        urlpatterns.append(
+            path(f'cached/{name}/', view, name=f'cached_{name}')
+        )
 
 
 # Helper functions for URL generation
@@ -265,22 +214,13 @@ if settings.DEBUG:
     urlpatterns += [
         # URLs للاختبار
         path('debug/list/', ProductListView.as_view(paginate_by=5), name='debug_product_list'),
-        path('debug/search/', fallback_search_view, name='debug_search'),
 
         # اختبار الـ views المحترفة
         path('debug/advanced-search/',
              AdvancedSearchView.as_view() if SEARCH_VIEWS_AVAILABLE else fallback_search_view,
              name='debug_advanced_search'),
 
-        # اختبار البحث السريع
-        path('debug/quick-search/',
-             QuickSearchView.as_view() if SEARCH_VIEWS_AVAILABLE else fallback_search_view,
-             name='debug_quick_search'),
-
-        # اختبار APIs
-        path('debug/api/suggestions/',
-             search_suggestions if SEARCH_VIEWS_AVAILABLE else search_suggestions_api,
-             name='debug_search_suggestions'),
+        path('debug/categories/', DebugCategoryView.as_view(), name='debug_categories'),
     ]
 
 # معلومات للمطور
@@ -309,7 +249,7 @@ if SEARCH_VIEWS_AVAILABLE:
 else:
     logger.warning("Products URLs: Using fallback search views - check search_views.py")
 
-# في النهاية، تصدير معلومات مفيدة
+# تصدير معلومات مفيدة
 __all__ = [
     'urlpatterns',
     'get_product_url',
@@ -319,5 +259,4 @@ __all__ = [
     'VIEW_STATUS',
     'SEARCH_VIEWS_AVAILABLE',
     'fallback_search_view',
-    'search_suggestions_api',
 ]

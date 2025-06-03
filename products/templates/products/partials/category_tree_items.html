@@ -1,0 +1,37 @@
+{% load i18n %}
+
+{% if categories %}
+    {% for category in categories %}
+    <li class="category-item" data-category-id="{{ category.id }}">
+        <div class="category-item-content">
+            {% if category.has_children %}
+            <span class="toggle-icon">
+                <i class="fas fa-plus-circle expand-icon"></i>
+                <i class="fas fa-minus-circle collapse-icon"></i>
+            </span>
+            {% else %}
+            <span class="no-toggle-icon">
+                <i class="fas fa-circle"></i>
+            </span>
+            {% endif %}
+
+            <a href="{% url 'products:category_detail' category.slug %}" class="category-link">
+                {{ category.name }}
+                <span class="badge rounded-pill bg-light text-dark">{{ category.products_count }}</span>
+            </a>
+        </div>
+
+        {% if category.has_children %}
+        <ul class="subcategory-list" style="display: none;">
+            {% include 'products/partials/category_tree_items.html' with categories=category.children %}
+        </ul>
+        {% endif %}
+    </li>
+    {% endfor %}
+{% else %}
+    <li class="no-categories">
+        <div class="no-categories-message p-3 text-muted">
+            {% trans "لا توجد فئات متاحة" %}
+        </div>
+    </li>
+{% endif %}

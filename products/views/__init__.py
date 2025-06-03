@@ -36,8 +36,6 @@ from .product_views import (
     # Main product views
     ProductListView,
     ProductDetailView,
-    # CategoryListView,
-    # CategoryDetailView,
 
     # Specialized product views
     SpecialOffersView,
@@ -60,7 +58,7 @@ from .api_views import (
     Product360View,
     ProductStockCheckView,
 
-    # Legacy function views
+    # Function views
     search_suggestions,
     product_quick_view,
     get_variant_details,
@@ -77,12 +75,6 @@ from .wishlist_views import (
     ClearWishlistView,
     WishlistStatusView,
     WishlistProductsView,
-
-    # Legacy function views
-    wishlist_view,
-    add_to_wishlist,
-    remove_from_wishlist,
-    toggle_wishlist,
 )
 
 from .comparison_views import (
@@ -92,10 +84,6 @@ from .comparison_views import (
     RemoveFromComparisonView,
     ClearComparisonView,
     ComparisonStatusView,
-
-    # Legacy function views
-    add_to_comparison,
-    comparison_view,
 )
 
 from .review_views import (
@@ -107,11 +95,6 @@ from .review_views import (
     UserReviewsView,
     EditReviewView,
     DeleteReviewView,
-
-    # Legacy function views
-    submit_review,
-    vote_review_helpful,
-    report_review,
 )
 
 from .search_views import (
@@ -119,8 +102,11 @@ from .search_views import (
     SearchView,
     AdvancedSearchView,
     SearchSuggestionsPageView,
+    QuickSearchView,
 
-    # Legacy function views
+    # Function views
+    search_suggestions,
+    quick_search_simple,
     advanced_search_view,
 )
 
@@ -131,21 +117,12 @@ from .admin_views import (
     ReviewModerationView,
     ReviewModerationAPIView,
     ProductAnalyticsView,
-
-    # Admin function views
-    bulk_action_products,
-    reset_product_stats,
-    duplicate_product,
 )
 
 from .export_views import (
     # Export view classes
     ExportProductsView,
     ExportReviewsView,
-
-    # Legacy function views
-    export_products,
-    export_reviews,
 )
 
 from .utils import (
@@ -234,10 +211,6 @@ __all__ = [
     'ClearWishlistView',
     'WishlistStatusView',
     'WishlistProductsView',
-    'wishlist_view',
-    'add_to_wishlist',
-    'remove_from_wishlist',
-    'toggle_wishlist',
 
     # Comparison views
     'ComparisonView',
@@ -245,8 +218,6 @@ __all__ = [
     'RemoveFromComparisonView',
     'ClearComparisonView',
     'ComparisonStatusView',
-    'add_to_comparison',
-    'comparison_view',
 
     # Review views
     'ProductReviewListView',
@@ -256,14 +227,14 @@ __all__ = [
     'UserReviewsView',
     'EditReviewView',
     'DeleteReviewView',
-    'submit_review',
-    'vote_review_helpful',
-    'report_review',
 
     # Search views
     'SearchView',
     'AdvancedSearchView',
     'SearchSuggestionsPageView',
+    'QuickSearchView',
+    'search_suggestions',
+    'quick_search_simple',
     'advanced_search_view',
 
     # Admin views
@@ -272,15 +243,10 @@ __all__ = [
     'ReviewModerationView',
     'ReviewModerationAPIView',
     'ProductAnalyticsView',
-    'bulk_action_products',
-    'reset_product_stats',
-    'duplicate_product',
 
     # Export views
     'ExportProductsView',
     'ExportReviewsView',
-    'export_products',
-    'export_reviews',
 
     # Utils
     'ajax_required',
@@ -304,20 +270,6 @@ __all__ = [
     'get_recommended_products',
     'PerformanceMonitor',
 ]
-
-# Backward compatibility - import commonly used views at package level
-# This allows imports like: from products.views import ProductListView
-# instead of: from products.views.product_views import ProductListView
-
-# Main views that are frequently imported
-ProductList = ProductListView
-ProductDetail = ProductDetailView
-CategoryList = CategoryListView
-CategoryDetail = CategoryDetailView
-
-# API endpoints
-ProductQuickView = ProductQuickViewView
-SearchSuggestions = SearchSuggestionsView
 
 # Convenience imports for URLs
 product_list = ProductListView.as_view()

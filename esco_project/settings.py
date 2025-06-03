@@ -214,22 +214,6 @@ AUTHENTICATION_BACKENDS = [
 # حجم أقصى للصور
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
 
-# 4. Cache configuration for cart (optional but recommended)
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
-    },
-    'cart': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'cart-cache',
-        'TIMEOUT': 300,  # 5 minutes
-        'OPTIONS': {
-            'MAX_ENTRIES': 1000
-        }
-    }
-}
-
 # Logging configuration
 LOGGING = {
     'version': 1,
@@ -289,4 +273,3 @@ BASE_SHIPPING_COST = Decimal('5.00')
 SHIPPING_WEIGHT_RATE = Decimal('0.50')
 FREE_SHIPPING_THRESHOLD = Decimal('50.00')
 MAX_CART_QUANTITY_PER_ITEM = 10
-
