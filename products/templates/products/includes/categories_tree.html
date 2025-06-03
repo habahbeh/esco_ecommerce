@@ -1,24 +1,229 @@
 <!-- File: products/templates/products/includes/categories_tree.html -->
 {% load i18n %}
 
-{% for node in nodes %}
-    <li class="category-item {% if node.children.exists %}has-children{% endif %} {% if node.id == current_category.id %}active{% endif %}" data-category-id="{{ node.id }}">
-        <div class="category-header">
-            <a href="{% url 'products:category_detail' node.slug %}" class="category-link">
-                <i class="fas fa-{{ node.icon|default:'folder' }} category-icon"></i>
-                <span>{{ node.name }}</span>
-            </a>
-            {% if node.children.exists %}
-            <button class="toggle-btn" aria-label="توسيع الفئة">
-                <i class="fas fa-chevron-down"></i>
-            </button>
-            {% endif %}
-        </div>
+<div class="categories-tree-component" id="categoriesTreeComponent">
+    <ul class="categories-tree-list root-level">
+        {% for node in categories %}
+            <li class="category-tree-item {% if node.children.exists %}has-children{% endif %} {% if node.id == current_category.id %}active{% endif %}"
+                data-category-id="{{ node.id }}">
+                <div class="category-item-header">
+                    {% if node.children.exists %}
+                        <button class="expand-toggle"
+                                type="button"
+                                aria-expanded="{% if node.id == current_category.id or node.id in expanded_categories %}true{% else %}false{% endif %}"
+                                aria-label="{% trans 'توسيع الفئة' %}">
+                            <i class="fas fa-chevron-{% if node.id == current_category.id or node.id in expanded_categories %}down{% else %}left{% endif %}"></i>
+                        </button>
+                    {% else %}
+                        <span class="expand-placeholder"></span>
+                    {% endif %}
 
-        {% if node.children.exists %}
-        <ul class="subcategories-list">
-            {% include 'products/includes/categories_tree.html' with nodes=node.children.all current_category=current_category %}
-        </ul>
-        {% endif %}
-    </li>
-{% endfor %}
+                    <span class="category-icon" role="img" aria-hidden="true">
+                        <i class="fas fa-{{ node.icon|default:'folder' }}"></i>
+                    </span>
+
+                    <a href="{{ node.get_absolute_url }}" class="category-name">
+                        {{ node.name }}
+                        {% if node.products_count > 0 %}
+                            <span class="products-count">({{ node.products_count }})</span>
+                        {% endif %}
+                    </a>
+                </div>
+
+                {% if node.children.exists %}
+                    <div class="subcategories-container {% if node.id == current_category.id or node.id in expanded_categories %}show{% endif %}">
+                        <ul class="categories-tree-list level-1">
+                            {% with template_name="products/includes/categories_tree.html" %}
+                                {% with categories=node.children.all current_category=current_category expanded_categories=expanded_categories level=1 %}
+                                    {% include template_name %}
+                                {% endwith %}
+                            {% endwith %}
+                        </ul>
+                    </div>
+                {% endif %}
+            </li>
+        {% empty %}
+            <li class="no-categories">
+                <p>{% trans "لا توجد فئات متاحة" %}</p>
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+
+<style>
+/* أنماط شجرة الفئات */
+.categories-tree-component {
+    font-family: 'Cairo', sans-serif;
+    direction: rtl;
+}
+
+.categories-tree-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.categories-tree-list.level-1 {
+    margin-right: 1.5rem;
+    border-right: 2px solid rgba(13, 110, 253, 0.1);
+    padding-right: 0.5rem;
+}
+
+.categories-tree-list.level-2 {
+    margin-right: 1.5rem;
+    border-right: 1px dashed rgba(13, 110, 253, 0.1);
+    padding-right: 0.5rem;
+}
+
+.category-tree-item {
+    margin-bottom: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.category-item-header {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.category-item-header:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+.category-tree-item.active > .category-item-header {
+    background-color: rgba(13, 110, 253, 0.1);
+    font-weight: 600;
+}
+
+.expand-toggle, .expand-placeholder {
+    width: 24px;
+    height: 24px;
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+    margin-left: 0.5rem;
+}
+
+.expand-toggle:hover {
+    color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.1);
+    border-radius: 4px;
+}
+
+.category-icon {
+    margin-left: 0.5rem;
+    color: #0d6efd;
+    width: 20px;
+    text-align: center;
+}
+
+.category-name {
+    flex: 1;
+    color: #212529;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.95rem;
+}
+
+.category-tree-item.active > .category-item-header .category-name {
+    color: #0d6efd;
+}
+
+.category-name:hover {
+    color: #0d6efd;
+}
+
+.products-count {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-right: 0.5rem;
+}
+
+.subcategories-container {
+    margin-top: 0.5rem;
+    display: none;
+}
+
+.subcategories-container.show {
+    display: block;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.no-categories {
+    padding: 2rem;
+    text-align: center;
+    color: #6c757d;
+}
+
+/* تحسينات للأجهزة المحمولة */
+@media (max-width: 767.98px) {
+    .categories-tree-list.level-1,
+    .categories-tree-list.level-2 {
+        margin-right: 1rem;
+    }
+
+    .category-item-header {
+        padding: 0.5rem 0.25rem;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // تعامل مع أزرار التوسيع في شجرة الفئات
+    const expandToggles = document.querySelectorAll('.expand-toggle');
+
+    expandToggles.forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            const categoryItem = this.closest('.category-tree-item');
+            const subcategoriesContainer = categoryItem.querySelector('.subcategories-container');
+            const isExpanded = this.getAttribute('aria-expanded') === 'true';
+
+            // تغيير حالة التوسيع
+            this.setAttribute('aria-expanded', !isExpanded);
+            this.querySelector('i').className = `fas fa-chevron-${!isExpanded ? 'down' : 'left'}`;
+
+            if (subcategoriesContainer) {
+                subcategoriesContainer.classList.toggle('show');
+            }
+
+            // حفظ حالة التوسيع في localStorage
+            const categoryId = categoryItem.dataset.categoryId;
+            let expandedCategories = getExpandedCategories();
+
+            if (!isExpanded) {
+                if (!expandedCategories.includes(categoryId)) {
+                    expandedCategories.push(categoryId);
+                }
+            } else {
+                expandedCategories = expandedCategories.filter(id => id !== categoryId);
+            }
+
+            localStorage.setItem('expandedCategories', JSON.stringify(expandedCategories));
+        });
+    });
+
+    // استعادة حالة التوسيع المحفوظة
+    function getExpandedCategories() {
+        const stored = localStorage.getItem('expandedCategories');
+        return stored ? JSON.parse(stored) : [];
+    }
+});
+</script>

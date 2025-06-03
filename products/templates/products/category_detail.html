@@ -33,13 +33,6 @@
         color: var(--secondary-color);
     }
 
-    .breadcrumb-title {
-        font-size: 1.75rem;
-        font-weight: 700;
-        margin-top: 1rem;
-        color: var(--text-color);
-    }
-
     /* Category header */
     .category-header {
         background-color: white;
@@ -115,6 +108,7 @@
     .sidebar {
         width: 280px;
         flex-shrink: 0;
+        position: relative;
     }
 
     .main-content {
@@ -129,6 +123,8 @@
         box-shadow: 0 5px 15px rgba(0,0,0,0.05);
         border: 1px solid var(--border-color);
         margin-bottom: 2rem;
+        position: sticky;
+        top: 100px;
     }
 
     .sidebar-title {
@@ -151,91 +147,32 @@
         border-radius: 4px;
     }
 
-    .categories-tree {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    .category-item {
-        margin-bottom: 0.5rem;
-    }
-
-    .category-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .category-link {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 0.5rem;
-        color: var(--text-color);
-        text-decoration: none;
-        font-weight: 500;
-        transition: all 0.2s ease;
-        flex: 1;
-    }
-
-    .category-link:hover {
-        color: var(--primary-color);
-    }
-
-    .category-icon {
-        color: var(--primary-color);
-        font-size: 1rem;
-        width: 20px;
-        text-align: center;
-    }
-
-    .toggle-btn {
-        background: none;
-        border: none;
-        color: var(--text-color);
-        cursor: pointer;
-        width: 30px;
-        height: 30px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-    }
-
-    .toggle-btn:hover {
-        color: var(--primary-color);
-    }
-
-    .toggle-btn.expanded i {
-        transform: rotate(180deg);
-    }
-
-    .subcategories-list {
-        list-style: none;
-        padding-right: 2rem;
-        margin-top: 0.5rem;
-        margin-bottom: 0.5rem;
+    /* Sidebar Mobile Controls */
+    .sidebar-mobile-controls {
         display: none;
     }
 
-    .category-item.expanded > .subcategories-list {
-        display: block;
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0,0,0,0.5);
+        z-index: 998;
     }
 
-    .has-children > .category-header {
+    .sidebar-close {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: var(--secondary-color);
         cursor: pointer;
-    }
-
-    /* نمط أوضح للمستوى الفرعي الثاني */
-    .subcategories-list .subcategories-list {
-        border-right: 2px solid rgba(var(--primary-color-rgb), 0.1);
-    }
-
-    /* نمط الفئة النشطة */
-    .category-item.active > .category-header .category-link {
-        color: var(--primary-color);
-        font-weight: 700;
+        display: none;
     }
 
     /* Subcategories grid */
@@ -307,7 +244,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(135deg, var(--primary-color) 0%, rgba(var(--primary-color-rgb), 0.7) 100%);
+        background: linear-gradient(135deg, var(--primary-color) 0%, rgba(13, 110, 253, 0.7) 100%);
         color: white;
     }
 
@@ -361,32 +298,93 @@
         gap: 0.75rem;
     }
 
-    /* Featured products */
-    .featured-products-section {
-        padding: 3rem 0;
-        background-color: var(--bg-color);
-        margin: 3rem 0;
+    /* Products Control Bar */
+    .products-control-bar {
+        background-color: white;
         border-radius: 15px;
-    }
-
-    .section-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        border: 1px solid var(--border-color);
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
     }
 
-    .view-all-link {
-        color: var(--primary-color);
-        text-decoration: none;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
+    .view-options {
+        display: flex;
         gap: 0.5rem;
     }
 
-    .view-all-link:hover {
-        text-decoration: underline;
+    .view-btn {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        color: #6c757d;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .view-btn.active {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    /* Products Grid */
+    .products-grid-container {
+        margin-bottom: 2rem;
+    }
+
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .products-grid.list-view {
+        grid-template-columns: 1fr;
+    }
+
+    /* Mobile Toggle Button */
+    .mobile-filters-btn {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        padding: 0.75rem 1.5rem;
+        display: none;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        z-index: 100;
+        cursor: pointer;
+    }
+
+    /* Empty State */
+    .empty-state {
+        background: white;
+        border-radius: 15px;
+        padding: 4rem 2rem;
+        text-align: center;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        border: 1px solid var(--border-color);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        color: #dee2e6;
+        margin-bottom: 1.5rem;
     }
 
     /* Responsive */
@@ -396,16 +394,48 @@
         }
 
         .sidebar {
-            width: 100%;
-            margin-bottom: 2rem;
+            position: fixed;
+            top: 0;
+            right: -350px;
+            width: 85%;
+            max-width: 350px;
+            height: 100vh;
+            z-index: 999;
+            transition: right 0.3s ease;
+            background-color: white;
+            overflow-y: auto;
+        }
+
+        .sidebar.mobile-visible {
+            right: 0;
+        }
+
+        .sidebar-overlay.show {
+            display: block;
+        }
+
+        .sidebar-close {
+            display: block;
+        }
+
+        .sidebar-mobile-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .mobile-filters-btn {
+            display: flex;
+        }
+
+        .subcategories-grid {
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
         }
     }
 
     @media (max-width: 767px) {
-        .subcategories-grid {
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        }
-
         .category-stats {
             flex-direction: column;
             gap: 0.75rem;
@@ -415,6 +445,27 @@
             flex-direction: column;
             align-items: center;
             text-align: center;
+        }
+
+        .products-control-bar {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .sort-options {
+            width: 100%;
+        }
+
+        .view-options {
+            margin-top: 1rem;
+        }
+
+        .products-grid {
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        }
+
+        .products-grid.list-view .product-card {
+            flex-direction: column;
         }
     }
 </style>
@@ -490,14 +541,25 @@
     <div class="container">
         <div class="main-content-with-sidebar">
             <!-- Sidebar - Categories Navigation -->
-            <aside class="sidebar">
+            <aside class="sidebar" id="categoriesSidebar">
+                <div class="sidebar-mobile-controls">
+                    <h5 class="mb-0">{% trans "تصفح الفئات" %}</h5>
+                    <button class="sidebar-close" id="closeSidebarBtn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
                 <div class="sidebar-categories">
                     <h3 class="sidebar-title">{% trans "الفئات" %}</h3>
 
-                    <ul class="categories-tree" id="categoriesTree">
-                        {% include 'products/includes/categories_tree.html' with nodes=root_categories current_category=category %}
-                    </ul>
+                    {% cache 300 categories_tree root_categories %}
+                        {% with expanded_categories=expanded_categories|default:'' %}
+                            {% include 'products/includes/categories_tree.html' with categories=root_categories current_category=category %}
+                        {% endwith %}
+                    {% endcache %}
                 </div>
+
+                <!-- Sidebar Overlay -->
+                <div class="sidebar-overlay" id="sidebarOverlay"></div>
             </aside>
 
             <!-- Main Content -->
@@ -532,7 +594,7 @@
                                     {% endif %}
 
                                     <a href="{% url 'products:category_detail' subcategory.slug %}" class="subcategory-link">
-                                        {% trans "تصفح المنتجات" %} <i class="fas fa-arrow-right"></i>
+                                        {% trans "تصفح المنتجات" %} <i class="fas fa-arrow-left"></i>
                                     </a>
                                 </div>
                             </div>
@@ -544,137 +606,208 @@
                 {% if category_products %}
                 <!-- Products in this Category -->
                 <section class="category-products-section">
-                    <div class="section-header">
-                        <h2 class="section-title">{% trans "منتجات في هذه الفئة" %}</h2>
-                        <a href="{% url 'products:category_products' category.slug %}" class="view-all-link">
-                            {% trans "عرض جميع المنتجات" %} <i class="fas fa-arrow-right"></i>
-                        </a>
+                    <div class="products-control-bar">
+                        <h2 class="section-title mb-0">{% trans "منتجات في هذه الفئة" %}</h2>
+
+                        <div class="control-actions">
+                            <div class="sort-options">
+                                <select class="form-select" id="productSortSelect">
+                                    <option value="newest">{% trans "الأحدث" %}</option>
+                                    <option value="price_low">{% trans "السعر: من الأقل للأعلى" %}</option>
+                                    <option value="price_high">{% trans "السعر: من الأعلى للأقل" %}</option>
+                                    <option value="name">{% trans "الاسم: أ-ي" %}</option>
+                                    <option value="rating">{% trans "التقييم" %}</option>
+                                </select>
+                            </div>
+
+                            <div class="view-options">
+                                <button class="view-btn active" data-view="grid" title="{% trans 'عرض شبكي' %}">
+                                    <i class="fas fa-th-large"></i>
+                                </button>
+                                <button class="view-btn" data-view="list" title="{% trans 'عرض قائمة' %}">
+                                    <i class="fas fa-list"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="products-grid">
-                        {% include 'products/includes/product_grid.html' with products=category_products %}
+                    <div class="products-grid-container">
+                        <div class="products-grid" id="productsGrid">
+                            {% include 'products/includes/product_grid.html' with products=category_products %}
+                        </div>
                     </div>
+
+                    {% if total_products > category_products|length %}
+                        <div class="text-center mt-4">
+                            <a href="{% url 'products:category_products' category.slug %}" class="btn btn-primary">
+                                {% trans "عرض جميع المنتجات" %} <i class="fas fa-arrow-left ms-2"></i>
+                            </a>
+                        </div>
+                    {% endif %}
                 </section>
+                {% endif %}
+
+                {% if not subcategories and not category_products %}
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-box-open"></i>
+                        </div>
+                        <h3>{% trans "لا توجد منتجات في هذه الفئة" %}</h3>
+                        <p>{% trans "لم يتم العثور على منتجات أو فئات فرعية في هذه الفئة حالياً." %}</p>
+                    </div>
                 {% endif %}
             </div>
         </div>
     </div>
 </section>
 
+<!-- Mobile Filters Toggle Button -->
+<button class="mobile-filters-btn" id="mobileFiltersBtn">
+    <i class="fas fa-bars"></i>
+    <span>{% trans "الفئات" %}</span>
+</button>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // تعامل مع النقر على أزرار التوسيع في القائمة الجانبية
-    const toggleButtons = document.querySelectorAll('.toggle-btn');
-    toggleButtons.forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
+    // تهيئة التوسيع التلقائي للفئات
+    initializeExpandedCategories();
 
-            // الوصول إلى عنصر الفئة الأب
-            const categoryItem = this.closest('.category-item');
+    // تهيئة التبديل بين طرق عرض المنتجات
+    initializeViewModes();
 
-            // تبديل حالة التوسيع
-            categoryItem.classList.toggle('expanded');
-            this.classList.toggle('expanded');
+    // تهيئة فتح/إغلاق القائمة الجانبية على الجوال
+    initializeMobileSidebar();
 
-            // تحديث أيقونة الزر
-            const icon = this.querySelector('i');
-            if (categoryItem.classList.contains('expanded')) {
-                icon.className = 'fas fa-chevron-up';
-            } else {
-                icon.className = 'fas fa-chevron-down';
-            }
+    // تهيئة ترتيب المنتجات
+    initializeProductSorting();
 
-            // حفظ حالة التوسيع في localStorage
-            saveExpandedState();
-        });
-    });
+    // دالة لتهيئة الفئات الموسعة
+    function initializeExpandedCategories() {
+        // العثور على الفئة الحالية وآبائها
+        const currentCategory = {{ category.id }};
+        const ancestorIds = [{% for ancestor in category.get_ancestors %}{{ ancestor.id }}{% if not forloop.last %},{% endif %}{% endfor %}];
 
-    // يمكن أيضًا النقر على رأس الفئة لتوسيعها
-    const categoryHeaders = document.querySelectorAll('.has-children > .category-header');
-    categoryHeaders.forEach(header => {
-        header.addEventListener('click', function(e) {
-            // تجاهل النقر على الرابط نفسه
-            if (e.target.closest('a.category-link')) {
-                return;
-            }
+        // جلب الفئات الموسعة من التخزين المحلي
+        let expandedCategories = getExpandedCategories();
 
-            // تنفيذ نفس سلوك زر التوسيع
-            const toggleBtn = this.querySelector('.toggle-btn');
-            if (toggleBtn) {
-                toggleBtn.click();
-            }
-        });
-    });
+        // إضافة الفئة الحالية وآبائها إلى القائمة
+        if (!expandedCategories.includes(currentCategory)) {
+            expandedCategories.push(currentCategory);
+        }
 
-    // توسيع الفئات التي تم حفظها سابقًا
-    loadExpandedState();
-
-    // توسيع الفئة الحالية وآبائها تلقائيًا
-    expandCurrentCategory();
-
-    // حفظ حالة التوسيع
-    function saveExpandedState() {
-        const expandedCategories = [];
-        document.querySelectorAll('.category-item.expanded').forEach(item => {
-            if (item.dataset.categoryId) {
-                expandedCategories.push(item.dataset.categoryId);
+        ancestorIds.forEach(id => {
+            if (!expandedCategories.includes(id)) {
+                expandedCategories.push(id);
             }
         });
 
+        // حفظ القائمة المحدثة
         localStorage.setItem('expandedCategories', JSON.stringify(expandedCategories));
     }
 
-    // استعادة حالة التوسيع
-    function loadExpandedState() {
-        try {
-            const expandedCategories = JSON.parse(localStorage.getItem('expandedCategories')) || [];
-            expandedCategories.forEach(categoryId => {
-                const item = document.querySelector(`.category-item[data-category-id="${categoryId}"]`);
-                if (item) {
-                    item.classList.add('expanded');
-                    const btn = item.querySelector('.toggle-btn');
-                    if (btn) {
-                        btn.classList.add('expanded');
-                        const icon = btn.querySelector('i');
-                        if (icon) {
-                            icon.className = 'fas fa-chevron-up';
-                        }
-                    }
-                }
+    // دالة لجلب الفئات الموسعة من التخزين المحلي
+    function getExpandedCategories() {
+        const stored = localStorage.getItem('expandedCategories');
+        return stored ? JSON.parse(stored) : [];
+    }
+
+    // دالة لتهيئة طرق العرض
+    function initializeViewModes() {
+        const viewButtons = document.querySelectorAll('.view-btn');
+        const productsGrid = document.getElementById('productsGrid');
+
+        if (viewButtons.length && productsGrid) {
+            // استرجاع نمط العرض المحفوظ
+            const savedView = localStorage.getItem('categoryViewMode');
+            if (savedView) {
+                setViewMode(savedView);
+            }
+
+            // إضافة معالجات الأحداث لأزرار تغيير العرض
+            viewButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const viewMode = this.dataset.view;
+                    setViewMode(viewMode);
+                    localStorage.setItem('categoryViewMode', viewMode);
+                });
             });
-        } catch (e) {
-            console.error('Error loading expanded state:', e);
+        }
+
+        function setViewMode(mode) {
+            // تحديث حالة الأزرار
+            viewButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.view === mode);
+            });
+
+            // تحديث طريقة العرض
+            if (mode === 'grid') {
+                productsGrid.classList.remove('list-view');
+            } else if (mode === 'list') {
+                productsGrid.classList.add('list-view');
+            }
         }
     }
 
-    // توسيع الفئة الحالية وآبائها تلقائيًا
-    function expandCurrentCategory() {
-        const currentCategoryItems = document.querySelectorAll('.category-item.active');
-        currentCategoryItems.forEach(item => {
-            // توسيع جميع العناصر الأب
-            let parent = item.parentElement;
-            while (parent && parent.classList.contains('subcategories-list')) {
-                const parentItem = parent.closest('.category-item');
-                if (parentItem) {
-                    parentItem.classList.add('expanded');
-                    const btn = parentItem.querySelector('.toggle-btn');
-                    if (btn) {
-                        btn.classList.add('expanded');
-                        const icon = btn.querySelector('i');
-                        if (icon) {
-                            icon.className = 'fas fa-chevron-up';
-                        }
-                    }
-                }
-                parent = parentItem ? parentItem.parentElement : null;
-            }
-        });
+    // دالة لتهيئة القائمة الجانبية على الجوال
+    function initializeMobileSidebar() {
+        const mobileFiltersBtn = document.getElementById('mobileFiltersBtn');
+        const sidebar = document.getElementById('categoriesSidebar');
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
 
-        // حفظ الحالة بعد التوسيع التلقائي
-        saveExpandedState();
+        if (mobileFiltersBtn && sidebar && closeSidebarBtn && sidebarOverlay) {
+            mobileFiltersBtn.addEventListener('click', openSidebar);
+            closeSidebarBtn.addEventListener('click', closeSidebar);
+            sidebarOverlay.addEventListener('click', closeSidebar);
+        }
+
+        function openSidebar() {
+            sidebar.classList.add('mobile-visible');
+            sidebarOverlay.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('mobile-visible');
+            sidebarOverlay.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+    }
+
+    // دالة لتهيئة ترتيب المنتجات
+    function initializeProductSorting() {
+        const sortSelect = document.getElementById('productSortSelect');
+        const productsGrid = document.getElementById('productsGrid');
+
+        if (sortSelect && productsGrid) {
+            sortSelect.addEventListener('change', function() {
+                const sortBy = this.value;
+                const productCards = Array.from(productsGrid.querySelectorAll('.product-card'));
+
+                productCards.sort((a, b) => {
+                    switch(sortBy) {
+                        case 'price_low':
+                            return parseFloat(a.dataset.price) - parseFloat(b.dataset.price);
+                        case 'price_high':
+                            return parseFloat(b.dataset.price) - parseFloat(a.dataset.price);
+                        case 'name':
+                            return a.dataset.name.localeCompare(b.dataset.name);
+                        case 'rating':
+                            return parseFloat(b.dataset.rating || 0) - parseFloat(a.dataset.rating || 0);
+                        case 'newest':
+                        default:
+                            return parseFloat(b.dataset.date || 0) - parseFloat(a.dataset.date || 0);
+                    }
+                });
+
+                // إعادة ترتيب البطاقات في العرض
+                productCards.forEach(card => {
+                    productsGrid.appendChild(card);
+                });
+            });
+        }
     }
 });
 </script>
