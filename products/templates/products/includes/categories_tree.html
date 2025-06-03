@@ -1,0 +1,26 @@
+<!-- File: products/templates/products/includes/categories_tree.html -->
+{% load i18n %}
+
+{% for node in nodes %}
+    {% with node_is_current=node.id == current_category.id node_is_ancestor=node.id|in_list:current_category.get_ancestors|map:'id' node_is_descendant=current_category.id|in_list:node.get_descendants|map:'id' %}
+    <li class="category-item {% if node.children.exists %}has-children{% endif %} {% if node_is_current %}active{% endif %}" data-category-id="{{ node.id }}">
+        <div class="category-header">
+            <a href="{% url 'products:category_detail' node.slug %}" class="category-link">
+                <i class="fas fa-{{ node.icon|default:'folder' }} category-icon"></i>
+                <span>{{ node.name }}</span>
+            </a>
+            {% if node.children.exists %}
+            <button class="toggle-btn" aria-label="توسيع الفئة">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+            {% endif %}
+        </div>
+
+        {% if node.children.exists %}
+        <ul class="subcategories-list">
+            {% include 'products/includes/categories_tree.html' with nodes=node.children.all current_category=current_category %}
+        </ul>
+        {% endif %}
+    </li>
+    {% endwith %}
+{% endfor %}
