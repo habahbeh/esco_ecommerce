@@ -4,36 +4,20 @@ Base views for products app
 Contains common functionality and mixins used across different views
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Union
 from django.views.generic import ListView, DetailView
-from django.db.models import Q, Count, Avg, Min, Max, Prefetch
+from django.db.models import Q, Count, Avg, Min, Max, Prefetch, QuerySet
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils.translation import gettext as _
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_headers
 from django.conf import settings
 from django.utils import timezone
-import logging
-from django.views.decorators.vary import vary_on_headers
-from django.contrib.auth.mixins import LoginRequiredMixin
-
-
-
-from typing import Optional, Dict, Any, List
-from django.views.generic import ListView, DetailView
-from django.db.models import Q, QuerySet, Prefetch
 from django.core.cache import cache
-from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
-from django.views.decorators.vary import vary_on_headers
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.utils.translation import gettext as _
 from decimal import Decimal
 import logging
-
-
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +31,15 @@ class CachedMixin:
     @method_decorator(cache_page(cache_timeout))
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
+
+    def get_cached_data(self, cache_key, default=None):
+        """Get data from cache"""
+        return cache.get(cache_key, default)
+
+    def set_cached_data(self, cache_key, data, timeout=None):
+        """Set data in cache"""
+        timeout = timeout or self.cache_timeout
+        cache.set(cache_key, data, timeout)
 
 
 class OptimizedQueryMixin:
@@ -316,9 +309,8 @@ class BaseProductListView(ListView, OptimizedQueryMixin, PaginationMixin, Filter
         context['sort_options'] = self.get_sort_options()
         context['current_sort'] = self.request.GET.get('sort', 'newest')
 
-        # Add pagination info - تحقق من وجود pagination
+        # Add pagination info
         if hasattr(self, 'paginate_by') and self.paginate_by:
-            # تحقق من وجود paginator و page_obj في السياق
             if 'paginator' in context and 'page_obj' in context:
                 context['is_paginated'] = context['paginator'].num_pages > 1
                 if context['is_paginated']:
@@ -431,6 +423,7 @@ class BaseProductDetailView(DetailView, OptimizedQueryMixin, BreadcrumbMixin):
             related = list(related) + list(additional[:limit - related.count()])
 
         return related[:limit]
+
 
 @method_decorator([cache_page(300), vary_on_headers('User-Agent')], name='dispatch')
 class CachedListView(BaseProductListView):

@@ -1,0 +1,179 @@
+/* File: products/static/products/css/category_tree.css */
+
+/* تنسيق شجرة الفئات */
+.category-tree {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.category-tree-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.category-item {
+    margin-bottom: 3px;
+}
+
+.category-item-content {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    transition: background-color 0.2s;
+    border-radius: 4px;
+}
+
+.category-item-content:hover {
+    background-color: #f8f9fa;
+}
+
+.toggle-icon, .no-toggle-icon {
+    margin-right: 8px;
+    width: 16px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    color: #6c757d;
+}
+
+.toggle-icon:hover {
+    color: #007bff;
+}
+
+.collapse-icon {
+    display: none;
+}
+
+.expanded .expand-icon {
+    display: none;
+}
+
+.expanded .collapse-icon {
+    display: inline-block;
+}
+
+.category-link {
+    flex-grow: 1;
+    text-decoration: none;
+    color: #212529;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.subcategory-list {
+    list-style: none;
+    padding-left: 24px;
+    margin-top: 3px;
+}
+
+/* فئة نشطة */
+.category-active > .category-item-content {
+    background-color: #e9f3ff;
+    font-weight: bold;
+}
+
+.category-active > .category-item-content .category-link {
+    color: #007bff;
+}
+
+/* مسار الفئة الحالية */
+.category-path > .category-item-content {
+    background-color: #f0f8ff;
+}
+
+/* تنسيق عرض الفئات */
+.category-placeholder {
+    height: 150px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f8f9fa;
+    color: #adb5bd;
+}
+
+.featured-category {
+    border-color: #ffc107;
+}
+
+.featured-category .card-header {
+    background-color: #fff3cd;
+}
+
+/* تنسيق عرض المنتجات */
+.product-card {
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.product-image {
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.product-image img {
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.product-placeholder {
+    height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f8f9fa;
+    color: #adb5bd;
+}
+
+.product-price {
+    margin-bottom: 10px;
+}
+
+.original-price {
+    text-decoration: line-through;
+    color: #6c757d;
+    margin-right: 8px;
+    font-size: 0.9em;
+}
+
+.current-price {
+    font-weight: bold;
+    color: #dc3545;
+}
+
+.discount-badge {
+    background-color: #dc3545;
+    color: white;
+    padding: 2px 5px;
+    font-size: 0.75em;
+    border-radius: 3px;
+    margin-left: 5px;
+}
+
+/* تخصيص النمط للعربية */
+html[lang="ar"] .toggle-icon,
+html[lang="ar"] .no-toggle-icon {
+    margin-right: 0;
+    margin-left: 8px;
+}
+
+html[lang="ar"] .subcategory-list {
+    padding-left: 0;
+    padding-right: 24px;
+}
+
+/* تنسيق لشاشات الجوال */
+@media (max-width: 767.98px) {
+    .category-tree {
+        max-height: 300px;
+    }
+}

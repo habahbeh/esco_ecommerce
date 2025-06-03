@@ -13,6 +13,7 @@ from django.db.models import Q, Count, Avg, Min, Max
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
+from django.http import JsonResponse
 from django.conf import settings
 import logging
 import re
@@ -97,7 +98,7 @@ class SearchMixin:
         recent_searches = recent_searches[:10]
         request.session[session_key] = recent_searches
 
-        # Log search for analytics (implement SearchLog model if needed)
+        # Log search for analytics
         logger.info(f"Search query: '{query}' - Results: {results_count}")
 
 
@@ -518,266 +519,6 @@ class SearchSuggestionsPageView(TemplateView):
         return context
 
 
-# Legacy function-based view for backward compatibility
-def advanced_search_view(request):
-    """Legacy function view for advanced search"""
-    view = AdvancedSearchView.as_view()
-    return view(request)
-
-
-class ProductSearchView(BaseProductListView):
-    """
-    عرض البحث في المنتجات - يتيح البحث المتقدم في المنتجات
-    Product search view - allows advanced product searching
-    """
-    template_name = 'products/search_results.html'
-    context_object_name = 'products'
-    paginate_by = 12
-
-    def get_queryset(self):
-        """الحصول على نتائج البحث مع التصفية"""
-        queryset = super().get_queryset()
-
-        # الحصول على كلمة البحث
-        self.query = self.request.GET.get('q', '').strip()
-
-        if not self.query:
-            return queryset.none()  # لا توجد نتائج إذا لم تكن هناك كلمة بحث
-
-        # البحث في المنتجات
-        search_queryset = self.perform_search(queryset, self.query)
-
-        # تطبيق التصفيات الإضافية
-        search_queryset = self.apply_filters(search_queryset)
-
-        return search_queryset
-
-    def perform_search(self, queryset, query):
-        """تنفيذ البحث في المنتجات"""
-        search_fields = Q()
-
-        # تقسيم كلمة البحث إلى كلمات منفصلة
-        search_terms = query.split()
-
-        for term in search_terms:
-            term_search = Q()
-
-            # البحث في اسم المنتج
-            term_search |= Q(name__icontains=term)
-            term_search |= Q(name_en__icontains=term)
-
-            # البحث في الوصف
-            term_search |= Q(description__icontains=term)
-            term_search |= Q(description_en__icontains=term)
-
-            # البحث في الوصف القصير
-            term_search |= Q(short_description__icontains=term)
-            term_search |= Q(short_description_en__icontains=term)
-
-            # البحث في SKU
-            term_search |= Q(sku__icontains=term)
-
-            # البحث في العلامة التجارية
-            term_search |= Q(brand__name__icontains=term)
-            term_search |= Q(brand__name_en__icontains=term)
-
-            # البحث في الفئة
-            term_search |= Q(category__name__icontains=term)
-            term_search |= Q(category__name_en__icontains=term)
-
-            # البحث في الوسوم
-            term_search |= Q(tags__name__icontains=term)
-            term_search |= Q(tags__name_en__icontains=term)
-
-            search_fields &= term_search
-
-        return queryset.filter(search_fields).distinct()
-
-    def apply_filters(self, queryset):
-        """تطبيق التصفيات الإضافية"""
-        # تصفية حسب الفئة
-        category = self.request.GET.get('category')
-        if category:
-            try:
-                category_obj = Category.objects.get(slug=category, is_active=True)
-                # تشمل الفئات الفرعية
-                categories = [category_obj] + list(category_obj.get_descendants())
-                queryset = queryset.filter(category__in=categories)
-            except Category.DoesNotExist:
-                pass
-
-        # تصفية حسب العلامة التجارية
-        brand = self.request.GET.get('brand')
-        if brand:
-            try:
-                brand_obj = Brand.objects.get(slug=brand, is_active=True)
-                queryset = queryset.filter(brand=brand_obj)
-            except Brand.DoesNotExist:
-                pass
-
-        # تصفية حسب السعر
-        min_price = self.request.GET.get('min_price')
-        max_price = self.request.GET.get('max_price')
-
-        if min_price:
-            try:
-                queryset = queryset.filter(base_price__gte=float(min_price))
-            except (ValueError, TypeError):
-                pass
-
-        if max_price:
-            try:
-                queryset = queryset.filter(base_price__lte=float(max_price))
-            except (ValueError, TypeError):
-                pass
-
-        # تصفية حسب التقييم
-        min_rating = self.request.GET.get('min_rating')
-        if min_rating:
-            try:
-                queryset = queryset.annotate(
-                    avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True))
-                ).filter(avg_rating__gte=float(min_rating))
-            except (ValueError, TypeError):
-                pass
-
-        # تصفية المنتجات المميزة
-        if self.request.GET.get('featured') == '1':
-            queryset = queryset.filter(is_featured=True)
-
-        # تصفية المنتجات الجديدة
-        if self.request.GET.get('new') == '1':
-            queryset = queryset.filter(is_new=True)
-
-        # تصفية المنتجات المخفضة
-        if self.request.GET.get('discounted') == '1':
-            queryset = queryset.filter(
-                Q(discount_percentage__gt=0) | Q(discount_amount__gt=0)
-            )
-
-        return queryset
-
-    def get_context_data(self, **kwargs):
-        """إضافة السياق الخاص بالبحث"""
-        context = super().get_context_data(**kwargs)
-
-        # معلومات البحث
-        context['query'] = getattr(self, 'query', '')
-        context['search_results_count'] = self.get_queryset().count()
-
-        # إحصائيات البحث
-        if hasattr(self, 'query') and self.query:
-            # الفئات ذات الصلة
-            context['related_categories'] = Category.objects.filter(
-                products__in=self.get_queryset(),
-                is_active=True
-            ).annotate(
-                products_count=Count('products', distinct=True)
-            ).order_by('-products_count')[:10]
-
-            # العلامات التجارية ذات الصلة
-            context['related_brands'] = Brand.objects.filter(
-                products__in=self.get_queryset(),
-                is_active=True
-            ).annotate(
-                products_count=Count('products', distinct=True)
-            ).order_by('-products_count')[:10]
-
-            # نطاق الأسعار
-            price_range = self.get_queryset().aggregate(
-                min_price=Min('base_price'),
-                max_price=Max('base_price')
-            )
-            context['price_range'] = price_range
-
-        # الفلاتر الحالية
-        context['current_filters'] = {
-            'category': self.request.GET.get('category', ''),
-            'brand': self.request.GET.get('brand', ''),
-            'min_price': self.request.GET.get('min_price', ''),
-            'max_price': self.request.GET.get('max_price', ''),
-            'min_rating': self.request.GET.get('min_rating', ''),
-            'featured': self.request.GET.get('featured', ''),
-            'new': self.request.GET.get('new', ''),
-            'discounted': self.request.GET.get('discounted', ''),
-        }
-
-        return context
-
-
-def ajax_search_suggestions(request):
-    """
-    اقتراحات البحث عبر AJAX - يعطي اقتراحات سريعة للبحث
-    AJAX search suggestions - provides quick search suggestions
-    """
-    query = request.GET.get('q', '').strip()
-
-    if len(query) < 2:
-        return JsonResponse({'suggestions': []})
-
-    try:
-        # البحث في المنتجات
-        products = Product.objects.filter(
-            Q(name__icontains=query) | Q(name_en__icontains=query),
-            is_active=True,
-            status='published'
-        ).select_related('category', 'brand')[:5]
-
-        # البحث في الفئات
-        categories = Category.objects.filter(
-            Q(name__icontains=query) | Q(name_en__icontains=query),
-            is_active=True
-        )[:3]
-
-        # البحث في العلامات التجارية
-        brands = Brand.objects.filter(
-            Q(name__icontains=query) | Q(name_en__icontains=query),
-            is_active=True
-        )[:3]
-
-        suggestions = []
-
-        # إضافة المنتجات
-        for product in products:
-            suggestions.append({
-                'type': 'product',
-                'title': product.name,
-                'url': product.get_absolute_url(),
-                'image': product.main_image.url if product.main_image else '',
-                'price': str(product.current_price),
-            })
-
-        # إضافة الفئات
-        for category in categories:
-            suggestions.append({
-                'type': 'category',
-                'title': category.name,
-                'url': category.get_absolute_url(),
-                'count': category.products.filter(
-                    is_active=True,
-                    status='published'
-                ).count(),
-            })
-
-        # إضافة العلامات التجارية
-        for brand in brands:
-            suggestions.append({
-                'type': 'brand',
-                'title': brand.name,
-                'url': brand.get_absolute_url() if hasattr(brand, 'get_absolute_url') else '#',
-                'count': brand.products.filter(
-                    is_active=True,
-                    status='published'
-                ).count(),
-            })
-
-        return JsonResponse({'suggestions': suggestions})
-
-    except Exception as e:
-        logger.error(f"Error in search suggestions: {e}")
-        return JsonResponse({'suggestions': []})
-
-
 class QuickSearchView(ListView, OptimizedQueryMixin):
     """
     البحث السريع - للبحث السريع في الرأس
@@ -807,7 +548,6 @@ class QuickSearchView(ListView, OptimizedQueryMixin):
         return context
 
 
-# إصلاح للدالة search_suggestions أيضاً:
 def search_suggestions(request):
     """
     اقتراحات البحث عبر AJAX - يعطي اقتراحات سريعة للبحث
@@ -902,7 +642,6 @@ def search_suggestions(request):
         return JsonResponse({'suggestions': []})
 
 
-# إضافة view بسيط للبحث السريع إذا كان مطلوباً:
 def quick_search_simple(request):
     """
     عرض بسيط للبحث السريع
@@ -925,3 +664,7 @@ def quick_search_simple(request):
         'products': products,
         'results_count': len(products),
     })
+
+
+# أسماء الدوال للتوافق مع urls.py
+advanced_search_view = AdvancedSearchView.as_view()
