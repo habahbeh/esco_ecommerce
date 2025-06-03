@@ -164,7 +164,7 @@ class CategoryDetailView(BaseProductDetailView):
         context['subcategories'] = category.children.filter(
             is_active=True
         ).annotate(
-            products_count=Count(
+            subcategory_products_count=Count(
                 'products',
                 filter=Q(
                     products__is_active=True,

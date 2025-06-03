@@ -36,8 +36,8 @@ from .product_views import (
     # Main product views
     ProductListView,
     ProductDetailView,
-    CategoryListView,
-    CategoryDetailView,
+    # CategoryListView,
+    # CategoryDetailView,
 
     # Specialized product views
     SpecialOffersView,
@@ -174,6 +174,11 @@ from .utils import (
 
     # Classes
     PerformanceMonitor,
+)
+
+from .category_views import (
+    CategoryListView,
+    CategoryDetailView,
 )
 
 # Version info
