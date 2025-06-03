@@ -16,6 +16,7 @@ import logging
 
 from .base_views import BaseProductListView, BaseProductDetailView, CachedMixin
 from ..models import Product, Category, Brand, ProductImage, Tag
+from django.views.generic import ListView
 
 logger = logging.getLogger(__name__)
 
@@ -430,3 +431,14 @@ class ProductVariantDetailView(BaseProductDetailView):
             context['selected_variant'] = None
 
         return context
+
+# دالة الاستيراد المتأخر في بداية الملف
+def get_product_model():
+    from ..models import Product
+    return Product
+
+class ProductListView(ListView):
+    def get_queryset(self):
+        # استخدام الدالة عند الحاجة
+        Product = get_product_model()
+        return Product.objects.filter(is_active=True)
