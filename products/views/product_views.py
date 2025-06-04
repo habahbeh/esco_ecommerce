@@ -8,20 +8,19 @@ from typing import Optional, Dict, Any
 from django.shortcuts import get_object_or_404
 from django.db.models import Q, Avg, Count, Min, Max, Prefetch
 from django.utils.translation import gettext as _
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
 from django.http import Http404
 import logging
 
 from .base_views import BaseProductListView, BaseProductDetailView
 from ..models import Product, Category, Brand, ProductImage, Tag
+from .category_views import CategoryListView
 
 logger = logging.getLogger(__name__)
 
 
 class ProductListView(BaseProductListView):
     """
-    Enhanced product list view with advanced filtering and caching
+    Enhanced product list view with advanced filtering
     """
     template_name = 'products/product_list.html'
 
@@ -66,6 +65,11 @@ class ProductListView(BaseProductListView):
         # Results count
         context['total_count'] = self.get_queryset().count()
 
+        # إضافة شجرة الفئات
+        category_view = CategoryListView()
+        category_view.request = self.request
+        context['category_tree'] = category_view.build_category_tree()
+
         return context
 
 
@@ -84,159 +88,12 @@ class ProductDetailView(BaseProductDetailView):
             from ..forms import ProductReviewForm
             context['review_form'] = ProductReviewForm()
 
-        return context
-
-
-@method_decorator(cache_page(600), name='dispatch')  # Cache for 10 minutes
-class CategoryListView(BaseProductListView):
-    """
-    Display main categories with product counts
-    """
-    model = Category
-    template_name = 'products/category_list.html'
-    context_object_name = 'categories'
-
-    def get_queryset(self):
-        """Get main categories with product counts"""
-        return Category.objects.filter(
-            parent=None,
-            is_active=True
-        ).prefetch_related(
-            Prefetch(
-                'children',
-                queryset=Category.objects.filter(is_active=True)
-            )
-        ).annotate(
-            total_products=Count(
-                'products',
-                filter=Q(
-                    products__is_active=True,
-                    products__status='published'
-                )
-            )
-        ).order_by('sort_order', 'name')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        # Featured categories
-        context['featured_categories'] = Category.objects.filter(
-            is_featured=True,
-            is_active=True
-        ).order_by('sort_order')[:6]
+        # إضافة شجرة الفئات
+        category_view = CategoryListView()
+        category_view.request = self.request
+        context['category_tree'] = category_view.build_category_tree()
 
         return context
-
-
-class CategoryDetailView(BaseProductDetailView):
-    """
-    Category detail view with products
-    """
-    model = Category
-    template_name = 'products/category_detail.html'
-    context_object_name = 'category'
-    slug_field = 'slug'
-
-    def get_queryset(self):
-        """Get active categories"""
-        return Category.objects.filter(is_active=True).select_related('parent')
-
-    def get(self, request, *args, **kwargs):
-        """Handle GET request and increment views"""
-        response = super(BaseProductDetailView, self).get(request, *args, **kwargs)
-
-        # Increment category view count
-        try:
-            self.object.increment_views()
-        except Exception as e:
-            logger.warning(f"Failed to increment views for category {self.object.id}: {e}")
-
-        return response
-
-    def get_context_data(self, **kwargs):
-        """Add category-specific context"""
-        context = super(BaseProductDetailView, self).get_context_data(**kwargs)
-        category = self.object
-
-        # Subcategories
-        context['subcategories'] = category.children.filter(
-            is_active=True
-        ).annotate(
-            subcategory_products_count=Count(
-                'products',
-                filter=Q(
-                    products__is_active=True,
-                    products__status='published'
-                )
-            )
-        )
-
-        # Products in this category
-        products_queryset = Product.objects.filter(
-            category=category,
-            is_active=True,
-            status='published'
-        ).select_related('category', 'brand').prefetch_related('images')
-
-        # Apply sorting
-        sort_by = self.request.GET.get('sort', 'newest')
-        products_queryset = self.apply_category_sorting(products_queryset, sort_by)
-
-        # Pagination
-        from .base_views import PaginationMixin
-        pagination_mixin = PaginationMixin()
-        pagination_mixin.request = self.request
-        products_page, paginator = pagination_mixin.get_paginated_objects(products_queryset)
-
-        context['products'] = products_page
-        context['page_obj'] = products_page
-        context['paginator'] = paginator
-        context['is_paginated'] = products_page.has_other_pages()
-
-        # Statistics
-        context['products_count'] = category.products.filter(
-            is_active=True,
-            status='published'
-        ).count()
-        context['subcategories_count'] = context['subcategories'].count()
-
-        # Top brands in this category
-        context['top_brands'] = Brand.objects.filter(
-            products__category=category,
-            products__is_active=True,
-            products__status='published',
-            is_active=True
-        ).annotate(
-            product_count=Count(
-                'products',
-                filter=Q(
-                    products__category=category,
-                    products__is_active=True,
-                    products__status='published'
-                )
-            )
-        ).order_by('-product_count')[:10]
-
-        context['brands_count'] = context['top_brands'].count()
-
-        return context
-
-    def apply_category_sorting(self, queryset, sort_by: str):
-        """Apply sorting specific to category view"""
-        if sort_by == 'newest':
-            return queryset.order_by('-created_at')
-        elif sort_by == 'price_low':
-            return queryset.order_by('base_price')
-        elif sort_by == 'price_high':
-            return queryset.order_by('-base_price')
-        elif sort_by == 'best_selling':
-            return queryset.order_by('-sales_count')
-        elif sort_by == 'top_rated':
-            return queryset.annotate(
-                avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True))
-            ).order_by('-avg_rating')
-
-        return queryset.order_by('-created_at')
 
 
 class SpecialOffersView(BaseProductListView):
@@ -271,6 +128,11 @@ class SpecialOffersView(BaseProductListView):
         )
         context['total_savings'] = total_savings
 
+        # إضافة شجرة الفئات
+        category_view = CategoryListView()
+        category_view.request = self.request
+        context['category_tree'] = category_view.build_category_tree()
+
         return context
 
 
@@ -295,6 +157,11 @@ class TagProductsView(BaseProductListView):
         context = super().get_context_data(**kwargs)
         context['tag'] = self.tag
         context['title'] = f'{_("منتجات بوسم")}: {self.tag.name}'
+
+        # إضافة شجرة الفئات
+        category_view = CategoryListView()
+        category_view.request = self.request
+        context['category_tree'] = category_view.build_category_tree()
 
         return context
 
@@ -339,6 +206,11 @@ class BrandProductsView(BaseProductListView):
             )['avg_rating'] or 0
         }
 
+        # إضافة شجرة الفئات
+        category_view = CategoryListView()
+        category_view.request = self.request
+        context['category_tree'] = category_view.build_category_tree()
+
         return context
 
 
@@ -356,6 +228,11 @@ class NewProductsView(BaseProductListView):
         context = super().get_context_data(**kwargs)
         context['title'] = _('المنتجات الجديدة')
 
+        # إضافة شجرة الفئات
+        category_view = CategoryListView()
+        category_view.request = self.request
+        context['category_tree'] = category_view.build_category_tree()
+
         return context
 
 
@@ -372,6 +249,11 @@ class FeaturedProductsView(BaseProductListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = _('المنتجات المميزة')
+
+        # إضافة شجرة الفئات
+        category_view = CategoryListView()
+        category_view.request = self.request
+        context['category_tree'] = category_view.build_category_tree()
 
         return context
 
@@ -391,6 +273,11 @@ class BestSellersView(BaseProductListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = _('الأكثر مبيعاً')
+
+        # إضافة شجرة الفئات
+        category_view = CategoryListView()
+        category_view.request = self.request
+        context['category_tree'] = category_view.build_category_tree()
 
         return context
 
@@ -427,5 +314,10 @@ class ProductVariantDetailView(BaseProductDetailView):
             context['selected_variant'] = variant
         except:
             context['selected_variant'] = None
+
+        # إضافة شجرة الفئات
+        category_view = CategoryListView()
+        category_view.request = self.request
+        context['category_tree'] = category_view.build_category_tree()
 
         return context
