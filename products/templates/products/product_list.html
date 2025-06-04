@@ -2,30 +2,36 @@
 {% load static %}
 {% load i18n %}
 
-{% block title %}{% trans "جميع المنتجات" %}{% endblock %}
+{% block title %}
+    {% if category %}
+        {{ category.name }} - {% trans "المنتجات" %}
+    {% else %}
+        {% trans "جميع المنتجات" %}
+    {% endif %}
+{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'products/css/category_tree.css' %}">
 <style>
-    /* تصميم صفحة المنتجات الجديدة */
+    /* تصميم صفحة المنتجات */
     .products-container {
         background: #f9fafb;
         min-height: 100vh;
-        padding: 30px 0;
+        padding: 20px 0 30px;
     }
 
-    /* رأس الصفحة */
-    .page-header {
+    /* تصميم رأس الصفحة المصغر */
+    .page-header-compact {
         background: linear-gradient(135deg, var(--bs-primary) 0%, #0056b3 100%);
         color: white;
-        padding: 2.5rem 0;
+        padding: 1.5rem 0;
         margin-bottom: 2rem;
+        border-radius: 0.5rem;
         position: relative;
-        border-radius: 0 0 20px 20px;
         overflow: hidden;
     }
 
-    .page-header::before {
+    .page-header-compact::before {
         content: '';
         position: absolute;
         top: -50%;
@@ -34,19 +40,31 @@
         height: 200%;
         background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
         background-size: 20px 20px;
+        opacity: 0.5;
     }
 
-    .page-title {
-        font-size: 2.2rem;
+    .page-title-compact {
+        font-size: 1.75rem;
         font-weight: 700;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.25rem;
         position: relative;
     }
 
-    .page-subtitle {
-        font-size: 1.1rem;
+    .page-subtitle-compact {
+        font-size: 0.95rem;
         opacity: 0.9;
         position: relative;
+    }
+
+    .products-count-badge {
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(5px);
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
 
     /* شجرة الفئات */
@@ -126,7 +144,7 @@
 
     .subcategory-list {
         list-style: none;
-        padding-left: 28px;
+        padding-right: 28px;
         margin-top: 5px;
     }
 
@@ -171,10 +189,14 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 20px;
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
 
     .products-count {
-        font-size: 1.1rem;
+        font-size: 1rem;
         color: #555;
     }
 
@@ -189,12 +211,16 @@
 
     .sort-label {
         margin-right: 10px;
+        color: #555;
+        font-weight: 500;
     }
 
     .sort-select {
         padding: 8px 15px;
         border-radius: 10px;
         border: 1px solid #ddd;
+        background-color: #f8f9fa;
+        font-size: 0.9rem;
     }
 
     /* عرض المنتجات في شبكة */
@@ -207,6 +233,33 @@
         margin-top: 40px;
         display: flex;
         justify-content: center;
+    }
+
+    /* مسار التنقل */
+    .breadcrumb {
+        background-color: #f8f9fa;
+        padding: 0.75rem 1rem;
+        border-radius: 0.375rem;
+        margin-bottom: 1rem;
+        font-size: 0.9rem;
+    }
+
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: "›";
+        color: #6c757d;
+    }
+
+    .breadcrumb-item a {
+        color: var(--bs-primary);
+        text-decoration: none;
+    }
+
+    .breadcrumb-item a:hover {
+        text-decoration: underline;
+    }
+
+    .breadcrumb-item.active {
+        color: #6c757d;
     }
 
     /* الشاشات الصغيرة */
@@ -222,12 +275,13 @@
     .categories-collapse-btn {
         display: none;
         width: 100%;
-        text-align: left;
+        text-align: right;
         padding: 12px 15px;
         background: white;
         border: 1px solid #ddd;
         border-radius: 10px;
         margin-bottom: 20px;
+        font-weight: 500;
     }
 
     @media (max-width: 767px) {
@@ -240,20 +294,78 @@
         .category-sidebar.show {
             display: block;
         }
+        .page-title-compact {
+            font-size: 1.5rem;
+        }
+
+        .page-subtitle-compact {
+            font-size: 0.85rem;
+        }
+
+        .products-count-badge {
+            display: none;
+        }
+        .products-header {
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-start;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- رأس الصفحة -->
-<div class="page-header">
-    <div class="container">
-        <h1 class="page-title">{% trans "جميع المنتجات" %}</h1>
-        <p class="page-subtitle">{% trans "تصفح تشكيلتنا الواسعة من المنتجات المميزة" %}</p>
-        <div class="mt-3">
-            <span class="badge bg-white text-primary px-3 py-2">
-                <i class="fas fa-box-open me-2"></i>{{ products_count }} {% trans "منتج" %}
-            </span>
+<!-- مسار التنقل (Breadcrumbs) -->
+<div class="container mt-4">
+    <nav aria-label="{% trans 'مسار التنقل' %}">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'core:home' %}">
+                    <i class="fas fa-home"></i>
+                    {% trans "الرئيسية" %}
+                </a>
+            </li>
+            {% if category %}
+                <li class="breadcrumb-item">
+                    <a href="{% url 'products:product_list' %}">{% trans "المنتجات" %}</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">
+                    {{ category.name }}
+                </li>
+            {% else %}
+                <li class="breadcrumb-item active" aria-current="page">
+                    {% trans "المنتجات" %}
+                </li>
+            {% endif %}
+        </ol>
+    </nav>
+</div>
+
+<!-- رأس الصفحة المصغر -->
+<div class="container">
+    <div class="page-header-compact">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h1 class="page-title-compact">
+                        {% if category %}
+                            {{ category.name }}
+                        {% else %}
+                            {% trans "منتجاتنا" %}
+                        {% endif %}
+                    </h1>
+                    <p class="page-subtitle-compact mb-0">
+                        {% if category %}
+                            {{ category.description|truncatechars:100|default:"تصفح المنتجات في هذه الفئة" }}
+                        {% else %}
+                            {% trans "تصفح تشكيلتنا من المنتجات المميزة" %}
+                        {% endif %}
+                    </p>
+                </div>
+                <span class="products-count-badge">
+                    <i class="fas fa-box-open me-1"></i>{{ products_count }}
+                </span>
+            </div>
         </div>
     </div>
 </div>
@@ -292,6 +404,14 @@
                         <h5><i class="fas fa-filter"></i>{% trans "تصفية النتائج" %}</h5>
 
                         <form action="" method="get" id="filterForm">
+                            <!-- الحفاظ على معايير البحث الحالية -->
+                            {% if request.GET.q %}
+                                <input type="hidden" name="q" value="{{ request.GET.q }}">
+                            {% endif %}
+                            {% if request.GET.sort %}
+                                <input type="hidden" name="sort" value="{{ request.GET.sort }}">
+                            {% endif %}
+
                             <!-- تصفية حسب السعر -->
                             <div class="filter-group mb-4">
                                 <div class="filter-heading" data-bs-toggle="collapse" data-bs-target="#priceFilter">
@@ -326,7 +446,7 @@
                                 <div class="filter-content collapse show" id="brandFilter">
                                     {% for brand in brands %}
                                     <div class="filter-option">
-                                        <input type="checkbox" class="filter-checkbox form-check-input" id="brand-{{ brand.id }}" name="brand" value="{{ brand.id }}" {% if brand.id|stringformat:"s" in request.GET.brand %}checked{% endif %}>
+                                        <input type="checkbox" class="filter-checkbox form-check-input" id="brand-{{ brand.id }}" name="brand" value="{{ brand.id }}" {% if brand.id|stringformat:"s" in request.GET.getlist.brand %}checked{% endif %}>
                                         <label class="form-check-label w-100 d-flex justify-content-between" for="brand-{{ brand.id }}">
                                             {{ brand.name }}
                                             <span class="badge bg-light text-dark">{{ brand.product_count }}</span>
@@ -379,6 +499,9 @@
                 <div class="products-header">
                     <div class="products-count">
                         {% trans "عرض" %} <strong>{{ products_count }}</strong> {% trans "منتج" %}
+                        {% if request.GET.q %}
+                            {% trans "لـ" %} "<strong>{{ request.GET.q }}</strong>"
+                        {% endif %}
                     </div>
                     <div class="sort-options">
                         <label class="sort-label">{% trans "ترتيب حسب:" %}</label>
@@ -413,9 +536,9 @@
 
                 <!-- شبكة المنتجات -->
                 <div class="products-grid">
-                    <div class="row">
+                    <div class="row g-4">
                         {% for product in products %}
-                            <div class="col-md-4 col-sm-6 mb-4">
+                            <div class="col-md-4 col-sm-6">
                                 {% include 'products/base/_product_card.html' with product=product %}
                             </div>
                         {% empty %}
@@ -438,12 +561,12 @@
                         <ul class="pagination">
                             {% if page_obj.has_previous %}
                                 <li class="page-item">
-                                    <a class="page-link" href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" aria-label="First">
+                                    <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="First">
                                         <span aria-hidden="true">&laquo;&laquo;</span>
                                     </a>
                                 </li>
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" aria-label="Previous">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous">
                                         <span aria-hidden="true">&laquo;</span>
                                     </a>
                                 </li>
@@ -454,7 +577,7 @@
                                     <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
                                 {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
                                     <li class="page-item">
-                                        <a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                                        <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
                                             {{ num }}
                                         </a>
                                     </li>
@@ -463,12 +586,12 @@
 
                             {% if page_obj.has_next %}
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" aria-label="Next">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next">
                                         <span aria-hidden="true">&raquo;</span>
                                     </a>
                                 </li>
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ paginator.num_pages }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" aria-label="Last">
+                                    <a class="page-link" href="?page={{ paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Last">
                                         <span aria-hidden="true">&raquo;&raquo;</span>
                                     </a>
                                 </li>
