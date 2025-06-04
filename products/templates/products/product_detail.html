@@ -8,11 +8,451 @@
 <link rel="stylesheet" href="{% static 'products/css/category_tree.css' %}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/magnific-popup.js/1.1.0/magnific-popup.min.css">
 <style>
-    /* تصميم صفحة تفاصيل المنتج */
+    /* تصميم صفحة تفاصيل المنتج - نمط أمازون */
     .product-detail-page {
-        background: #f9fafb;
+        background-color: #fff;
         min-height: 100vh;
-        padding: 30px 0;
+        padding: 20px 0 40px;
+    }
+
+    /* شريط التنقل والمسار */
+    .breadcrumb-nav {
+        background-color: #f8f9fa;
+        padding: 10px 0;
+        margin-bottom: 20px;
+        border-radius: 8px;
+    }
+
+    .breadcrumb-item a {
+        color: #555;
+        text-decoration: none;
+    }
+
+    .breadcrumb-item.active {
+        color: #232f3e;
+        font-weight: 500;
+    }
+
+    /* قسم الصور - معرض أمازون */
+    .product-images-section {
+        margin-bottom: 30px;
+    }
+
+    .product-gallery-container {
+        display: flex;
+        flex-direction: row;
+        gap: 15px;
+    }
+
+    /* قائمة الصور المصغرة */
+    .thumbnail-container {
+        display: flex;
+        flex-direction: column;
+        width: 80px;
+        gap: 8px;
+        max-height: 500px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+    }
+
+    .thumbnail-container::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .thumbnail-container::-webkit-scrollbar-thumb {
+        background-color: #d5d5d5;
+        border-radius: 10px;
+    }
+
+    .thumbnail-item {
+        width: 70px;
+        height: 70px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        cursor: pointer;
+        opacity: 0.7;
+        transition: all 0.2s ease;
+        padding: 3px;
+    }
+
+    .thumbnail-item:hover {
+        opacity: 1;
+        border-color: var(--bs-primary);
+    }
+
+    .thumbnail-item.active {
+        opacity: 1;
+        border: 2px solid var(--bs-primary);
+    }
+
+    .thumbnail-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    /* صورة العرض الرئيسية */
+    .main-image-container {
+        flex: 1;
+        position: relative;
+        height: 500px;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #fff;
+    }
+
+    .main-image-container img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        transition: transform 0.3s ease;
+    }
+
+    .main-image-container:hover img {
+        transform: scale(1.05);
+    }
+
+    .image-zoom-overlay {
+        position: absolute;
+        bottom: 15px;
+        right: 15px;
+        background-color: rgba(255, 255, 255, 0.7);
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        color: #555;
+    }
+
+    /* تصميم معلومات المنتج */
+    .product-info-card {
+        background-color: #fff;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .product-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+        color: #232f3e;
+    }
+
+    .product-meta {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 15px;
+        color: #666;
+    }
+
+    .product-meta .item {
+        display: flex;
+        align-items: center;
+    }
+
+    .product-meta .item i {
+        margin-left: 5px;
+        color: var(--bs-primary);
+    }
+
+    .product-rating {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .product-rating .stars {
+        color: #f90;
+    }
+
+    .product-rating .count {
+        color: var(--bs-primary);
+        text-decoration: none;
+    }
+
+    /* قسم السعر */
+    .price-section {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .price-tag {
+        flex: 1;
+    }
+
+    .current-price {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: #b12704;
+        line-height: 1;
+    }
+
+    .original-price {
+        font-size: 1.2rem;
+        color: #6b7280;
+        text-decoration: line-through;
+        margin-left: 10px;
+    }
+
+    .discount-badge-large {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 50px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .price-notice {
+        font-size: 0.9rem;
+        color: #555;
+        margin-top: 5px;
+    }
+
+    .savings-amount {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background-color: #e6f4ea;
+        color: #137333;
+        padding: 5px 10px;
+        border-radius: 6px;
+        font-weight: 600;
+    }
+
+    /* قسم الشراء */
+    .purchase-section {
+        background-color: #f7f9fc;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .delivery-info {
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px dashed #ddd;
+    }
+
+    .delivery-info .location {
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .stock-status {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin: 10px 0;
+    }
+
+    .stock-status.in-stock {
+        color: #137333;
+    }
+
+    .stock-status.out-of-stock {
+        color: #b12704;
+    }
+
+    .quantity-selector {
+        display: flex;
+        align-items: center;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        width: fit-content;
+        margin-bottom: 15px;
+    }
+
+    .quantity-btn {
+        width: 40px;
+        height: 40px;
+        border: none;
+        background: white;
+        color: #6b7280;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .quantity-btn:hover {
+        background: var(--bs-primary);
+        color: white;
+    }
+
+    .quantity-input {
+        width: 60px;
+        text-align: center;
+        border: none;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    /* زر إضافة للسلة بتصميم أمازون */
+    .amazon-style-button {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 10px;
+        font-weight: 600;
+        font-size: 1rem;
+        border-radius: 50px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-add-to-cart {
+        background: linear-gradient(to bottom, #febd69, #f8a547);
+        border: 1px solid #e68e22;
+        color: #111;
+    }
+
+    .btn-add-to-cart:hover {
+        background: linear-gradient(to bottom, #f5b05a, #e68e22);
+    }
+
+    .btn-buy-now {
+        background: linear-gradient(to bottom, #fa8900, #e47911);
+        border: 1px solid #c45500;
+        color: #fff;
+    }
+
+    .btn-buy-now:hover {
+        background: linear-gradient(to bottom, #e47911, #c45500);
+    }
+
+    .secondary-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .action-btn {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        background: none;
+        border: none;
+        color: var(--bs-primary);
+        font-size: 0.9rem;
+        cursor: pointer;
+        padding: 5px 0;
+    }
+
+    .action-btn:hover {
+        text-decoration: underline;
+    }
+
+    /* قسم الميزات السريعة */
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .feature-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 15px;
+        background-color: #f9fafb;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .feature-item:hover {
+        background-color: #f0f9ff;
+        transform: translateY(-2px);
+    }
+
+    .feature-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--bs-primary);
+        color: white;
+        border-radius: 50%;
+        font-size: 1.2rem;
+    }
+
+    .feature-text {
+        font-weight: 500;
+        color: #333;
+    }
+
+    /* تبويبات المنتج */
+    .product-tabs-container {
+        margin-top: 40px;
+    }
+
+    .product-tabs-modern {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .amazon-tabs {
+        display: flex;
+        border-bottom: 1px solid #ddd;
+        margin-bottom: 20px;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .amazon-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .amazon-tab {
+        padding: 12px 20px;
+        font-weight: 600;
+        color: #555;
+        cursor: pointer;
+        position: relative;
+        white-space: nowrap;
+    }
+
+    .amazon-tab.active {
+        color: var(--bs-primary);
+    }
+
+    .amazon-tab.active::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background-color: var(--bs-primary);
+        border-radius: 3px 3px 0 0;
+    }
+
+    .tab-content-wrapper {
+        padding: 15px 0;
+        min-height: 200px;
     }
 
     /* شجرة الفئات */
@@ -22,7 +462,7 @@
         background: white;
         border-radius: 15px;
         padding: 20px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
         max-height: calc(100vh - 120px);
         overflow-y: auto;
     }
@@ -39,219 +479,64 @@
         margin-right: 0.5rem;
     }
 
-    /* تحسين شجرة الفئات */
-    .category-tree {
-        margin-top: 15px;
+    /* قسم المنتجات ذات الصلة */
+    .related-products-section {
+        margin-top: 40px;
+        background-color: #fff;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
     }
 
-    .category-tree-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    .category-item {
-        margin-bottom: 8px;
-    }
-
-    .category-item-content {
-        display: flex;
-        align-items: center;
-        padding: 8px 0;
-        cursor: pointer;
-    }
-
-    .toggle-icon, .no-toggle-icon {
-        margin-right: 8px;
-        width: 20px;
-        text-align: center;
-    }
-
-    .collapse-icon {
-        display: none;
-    }
-
-    .category-link {
-        flex: 1;
-        text-decoration: none;
-        color: #333;
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .category-link:hover {
-        color: var(--bs-primary);
-    }
-
-    .category-link.active {
-        color: var(--bs-primary);
+    .section-title {
+        font-size: 1.4rem;
         font-weight: 700;
-    }
-
-    .subcategory-list {
-        list-style: none;
-        padding-left: 28px;
-        margin-top: 5px;
-    }
-
-    /* تصميم عرض المنتج */
-    .product-main-section {
-        background: white;
-        border-radius: 20px;
-        padding: 2rem;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        margin-bottom: 2rem;
-    }
-
-    /* Price Section Enhancement */
-    .price-section {
-        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-        border-radius: 16px;
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-    }
-
-    .current-price {
-        font-size: 2.5rem;
-        font-weight: 800;
-        color: var(--bs-primary);
-        line-height: 1;
-    }
-
-    .original-price {
-        font-size: 1.5rem;
-        color: #9ca3af;
-        text-decoration: line-through;
-        margin-left: 1rem;
-    }
-
-    .discount-badge-large {
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin-left: 1rem;
-    }
-
-    /* Purchase Actions */
-    .purchase-section {
-        background: #f3f4f6;
-        border-radius: 16px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-    }
-
-    .quantity-selector {
+        margin-bottom: 20px;
+        color: #232f3e;
         display: flex;
         align-items: center;
-        background: white;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        gap: 10px;
     }
 
-    .quantity-btn {
-        width: 50px;
-        height: 50px;
-        border: none;
-        background: white;
-        color: #6b7280;
-        font-size: 1.25rem;
-        cursor: pointer;
+    .product-card {
         transition: all 0.3s ease;
-    }
-
-    .quantity-btn:hover {
-        background: var(--bs-primary);
-        color: white;
-    }
-
-    .quantity-input {
-        width: 80px;
-        text-align: center;
-        border: none;
-        font-size: 1.125rem;
-        font-weight: 600;
-    }
-
-    .add-to-cart-main {
-        width: 100%;
-        padding: 1rem 2rem;
-        font-size: 1.125rem;
-        font-weight: 600;
-        border-radius: 12px;
-        transition: all 0.3s ease;
-    }
-
-    .add-to-cart-main:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    }
-
-    /* Tabs Section */
-    .product-tabs-modern {
-        background: white;
-        border-radius: 20px;
-        padding: 2rem;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        margin-bottom: 2rem;
-    }
-
-    .nav-tabs-modern {
-        border: none;
-        background: #f3f4f6;
-        border-radius: 12px;
-        padding: 0.25rem;
-        margin-bottom: 2rem;
-    }
-
-    .nav-tabs-modern .nav-link {
-        border: none;
-        border-radius: 8px;
-        padding: 0.75rem 1.5rem;
-        color: #6b7280;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        margin: 0 0.125rem;
-    }
-
-    .nav-tabs-modern .nav-link:hover {
-        color: var(--bs-primary);
-    }
-
-    .nav-tabs-modern .nav-link.active {
-        background: white;
-        color: var(--bs-primary);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
-
-    /* زر فتح الفئات في الشاشات الصغيرة */
-    .categories-collapse-btn {
-        display: none;
-        width: 100%;
-        text-align: left;
-        padding: 12px 15px;
-        background: white;
-        border: 1px solid #ddd;
+        height: 100%;
         border-radius: 10px;
-        margin-bottom: 20px;
+        overflow: hidden;
+        border: 1px solid #eee;
     }
 
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    /* تحسينات للهواتف المحمولة */
     @media (max-width: 767px) {
-        .categories-collapse-btn {
-            display: block;
+        .product-gallery-container {
+            flex-direction: column-reverse;
         }
-        .category-sidebar {
-            display: none;
+
+        .thumbnail-container {
+            flex-direction: row;
+            width: 100%;
+            max-height: unset;
+            overflow-x: auto;
+            overflow-y: hidden;
+            margin-top: 10px;
         }
-        .category-sidebar.show {
-            display: block;
+
+        .main-image-container {
+            height: 300px;
+        }
+
+        .amazon-tabs {
+            gap: 5px;
+        }
+
+        .amazon-tab {
+            padding: 10px 12px;
+            font-size: 0.9rem;
         }
     }
 </style>
@@ -260,16 +545,425 @@
 {% block content %}
 <div class="product-detail-page">
     <div class="container">
-        <!-- زر فتح الفئات في الشاشات الصغيرة -->
-        <button class="categories-collapse-btn d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#categorySidebar">
-            <i class="fas fa-list me-2"></i>{% trans "عرض الفئات" %}
-            <i class="fas fa-chevron-down float-end mt-1"></i>
-        </button>
+        <!-- شريط التنقل والمسار -->
+        <nav aria-label="breadcrumb" class="breadcrumb-nav">
+            <div class="container">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "الرئيسية" %}</a></li>
+                    {% if product.category %}
+                        <li class="breadcrumb-item"><a href="{{ product.category.get_absolute_url }}">{{ product.category.name }}</a></li>
+                    {% endif %}
+                    <li class="breadcrumb-item active">{{ product.name }}</li>
+                </ol>
+            </div>
+        </nav>
 
         <div class="row">
-            <!-- عمود شجرة الفئات -->
-            <div class="col-lg-3">
-                <div class="category-sidebar" id="categorySidebar">
+            <!-- القسم الرئيسي للمنتج -->
+            <div class="col-lg-9 order-lg-1 order-2">
+                <!-- قسم صور المنتج - معرض أمازون -->
+                <div class="product-images-section">
+                    <div class="product-gallery-container">
+                        <!-- قائمة الصور المصغرة -->
+                        <div class="thumbnail-container">
+                            {% if product.images.all %}
+                                {% for image in product.images.all %}
+                                    <div class="thumbnail-item {% if forloop.first %}active{% endif %}" data-image-id="{{ image.id }}">
+                                        <img src="{{ image.image.url }}" alt="{{ product.name }} - {% trans 'صورة' %} {{ forloop.counter }}">
+                                    </div>
+                                {% endfor %}
+                            {% elif product.default_image %}
+                                <div class="thumbnail-item active">
+                                    <img src="{{ product.default_image.image.url }}" alt="{{ product.name }}">
+                                </div>
+                            {% else %}
+                                <div class="thumbnail-item active">
+                                    <img src="{% static 'products/images/no-image.png' %}" alt="{{ product.name }}">
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- صورة العرض الرئيسية -->
+                        <div class="main-image-container">
+                            {% if product.images.all %}
+                                <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" id="mainProductImage" class="main-product-image">
+                            {% elif product.default_image %}
+                                <img src="{{ product.default_image.image.url }}" alt="{{ product.name }}" id="mainProductImage" class="main-product-image">
+                            {% else %}
+                                <img src="{% static 'products/images/no-image.png' %}" alt="{{ product.name }}" id="mainProductImage">
+                            {% endif %}
+                            <div class="image-zoom-overlay">
+                                <i class="fas fa-search-plus"></i> {% trans "انقر للتكبير" %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- معلومات المنتج الأساسية -->
+                <div class="product-info-card">
+                    <h1 class="product-title">{{ product.name }}</h1>
+
+                    <div class="product-meta">
+                        {% if product.brand %}
+                        <div class="item">
+                            <i class="fas fa-tag"></i>
+                            <span>{% trans "الماركة" %}: <a href="{% url 'products:brand_products' brand_slug=product.brand.slug %}">{{ product.brand.name }}</a></span>
+                        </div>
+                        {% endif %}
+
+                        <div class="item">
+                            <i class="fas fa-barcode"></i>
+                            <span>{% trans "رمز المنتج" %}: {{ product.sku }}</span>
+                        </div>
+
+                        <div class="product-rating">
+                            <div class="stars">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= product.average_rating %}
+                                        <i class="fas fa-star"></i>
+                                    {% elif forloop.counter <= product.average_rating|add:"0.5" %}
+                                        <i class="fas fa-star-half-alt"></i>
+                                    {% else %}
+                                        <i class="far fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <a href="#reviews" class="count">{{ product.review_count }} {% trans "تقييم" %}</a>
+                        </div>
+                    </div>
+
+                    <!-- وصف مختصر للمنتج -->
+                    <div class="short-description">
+                        {% if product.short_description %}
+                            <p>{{ product.short_description }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- قسم السعر -->
+                <div class="price-section">
+                    <div class="price-tag">
+                        {% if product.show_price and product.category.show_prices %}
+                            <div class="d-flex align-items-center flex-wrap">
+                                <span class="current-price">
+                                    {{ product.current_price|floatformat:2 }} {% trans "د.أ" %}
+                                </span>
+                                {% if product.has_discount %}
+                                    <span class="original-price">
+                                        {{ product.base_price|floatformat:2 }}
+                                    </span>
+                                    <span class="discount-badge-large">
+                                        <i class="fas fa-percentage"></i>
+                                        {{ product.discount_percentage }}% {% trans "خصم" %}
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <div class="price-notice">{% trans "شامل ضريبة القيمة المضافة" %}</div>
+                            {% if product.has_discount %}
+                                <div class="mt-2">
+                                    <span class="savings-amount">
+                                        <i class="fas fa-piggy-bank"></i>
+                                        {% trans "توفر" %} {{ product.savings_amount|floatformat:2 }} {% trans "د.أ" %}
+                                    </span>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="text-center py-3">
+                                <h3 class="text-primary mb-2">{% trans "للحصول على السعر" %}</h3>
+                                <p class="text-muted mb-3">{% trans "يرجى التواصل معنا للحصول على أفضل سعر" %}</p>
+                                <a href="tel:{{ site_settings.phone }}" class="btn btn-primary">
+                                    <i class="fas fa-phone me-2"></i>{% trans "اتصل الآن" %}
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- قسم الشراء -->
+                <div class="purchase-section">
+                    <!-- معلومات التوصيل -->
+                    <div class="delivery-info">
+                        <div class="location">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>{% trans "التوصيل إلى" %}: {% trans "عمّان، الأردن" %}</span>
+                            <a href="#" class="ms-2 text-primary small">{% trans "تغيير" %}</a>
+                        </div>
+                        <div class="delivery-time mt-2">
+                            <i class="fas fa-truck text-success me-2"></i>
+                            <span>{% trans "موعد التسليم المتوقع" %}: 2-3 {% trans "أيام عمل" %}</span>
+                        </div>
+                    </div>
+
+                    <!-- حالة المخزون -->
+                    {% if product.in_stock %}
+                        <div class="stock-status in-stock">
+                            <i class="fas fa-check-circle"></i>
+                            <span>{% trans "متوفر" %}</span>
+                            {% if product.track_inventory and product.stock_quantity %}
+                                <span class="ms-2 small">({{ product.stock_quantity }} {% trans "قطعة متبقية" %})</span>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="stock-status out-of-stock">
+                            <i class="fas fa-times-circle"></i>
+                            <span>{% trans "غير متوفر حالياً" %}</span>
+                        </div>
+                    {% endif %}
+
+                    <!-- نموذج إضافة للسلة -->
+                    <form action="{% url 'cart:add_to_cart' product.id %}" method="post" id="addToCartForm">
+                        {% csrf_token %}
+                        <input type="hidden" name="variant_id" id="selectedVariantId" value="">
+
+                        <!-- المتغيرات إذا وجدت -->
+                        {% if product.variants.exists %}
+                            <div class="variants-section my-3">
+                                {% include 'products/components/_product_variants.html' %}
+                            </div>
+                        {% endif %}
+
+                        <!-- محدد الكمية -->
+                        <div class="mb-3 mt-3">
+                            <label class="form-label fw-bold">{% trans "الكمية" %}:</label>
+                            <div class="quantity-selector">
+                                <button type="button" class="quantity-btn" onclick="changeQuantity(-1)">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <input type="number"
+                                       class="quantity-input"
+                                       id="quantity"
+                                       name="quantity"
+                                       value="1"
+                                       min="1"
+                                       max="{{ product.stock_quantity|default:999 }}">
+                                <button type="button" class="quantity-btn" onclick="changeQuantity(1)">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- أزرار الشراء -->
+                        {% if product.in_stock %}
+                            <button type="submit" class="amazon-style-button btn-add-to-cart">
+                                <i class="fas fa-shopping-cart me-2"></i>
+                                {% trans "إضافة إلى السلة" %}
+                            </button>
+                            <button type="button" class="amazon-style-button btn-buy-now">
+                                <i class="fas fa-bolt me-2"></i>
+                                {% trans "شراء الآن" %}
+                            </button>
+                        {% else %}
+                            <button type="button" class="amazon-style-button btn-add-to-cart" disabled>
+                                <i class="fas fa-times-circle me-2"></i>
+                                {% trans "غير متوفر حالياً" %}
+                            </button>
+                            <button type="button"
+                                    class="btn btn-outline-primary w-100 mt-2"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#notifyModal">
+                                <i class="fas fa-bell me-2"></i>
+                                {% trans "أبلغني عند التوفر" %}
+                            </button>
+                        {% endif %}
+
+                        <!-- الإجراءات الثانوية -->
+                        <div class="secondary-actions">
+                            <button type="button" class="action-btn" onclick="addToWishlist({{ product.id }})">
+                                <i class="far fa-heart"></i>
+                                <span>{% trans "أضف للمفضلة" %}</span>
+                            </button>
+                            <button type="button" class="action-btn" onclick="addToCompare({{ product.id }})">
+                                <i class="fas fa-exchange-alt"></i>
+                                <span>{% trans "أضف للمقارنة" %}</span>
+                            </button>
+                            <button type="button" class="action-btn" onclick="shareProduct()">
+                                <i class="fas fa-share-alt"></i>
+                                <span>{% trans "مشاركة" %}</span>
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- ميزات المنتج السريعة -->
+                    <div class="features-grid">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-shipping-fast"></i>
+                            </div>
+                            <div class="feature-text">{% trans "شحن سريع" %}</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="feature-text">{% trans "ضمان أصلي" %}</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-undo"></i>
+                            </div>
+                            <div class="feature-text">{% trans "إرجاع سهل خلال 30 يوم" %}</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-headset"></i>
+                            </div>
+                            <div class="feature-text">{% trans "دعم متواصل" %}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- تبويبات المنتج -->
+                <div class="product-tabs-container">
+                    <div class="product-tabs-modern">
+                        <div class="amazon-tabs" id="amazonTabs">
+                            <div class="amazon-tab active" data-tab="description">
+                                <i class="fas fa-info-circle me-2"></i>{% trans "الوصف" %}
+                            </div>
+                            <div class="amazon-tab" data-tab="specifications">
+                                <i class="fas fa-list-ul me-2"></i>{% trans "المواصفات" %}
+                            </div>
+                            <div class="amazon-tab" data-tab="reviews">
+                                <i class="fas fa-star me-2"></i>{% trans "التقييمات" %}
+                                {% if product.review_count > 0 %}
+                                    <span class="badge bg-primary ms-1">{{ product.review_count }}</span>
+                                {% endif %}
+                            </div>
+                            {% if product.video_url or product.manual_file %}
+                                <div class="amazon-tab" data-tab="media">
+                                    <i class="fas fa-photo-video me-2"></i>{% trans "الوسائط" %}
+                                </div>
+                            {% endif %}
+                            <div class="amazon-tab" data-tab="shipping">
+                                <i class="fas fa-truck me-2"></i>{% trans "الشحن والإرجاع" %}
+                            </div>
+                        </div>
+
+                        <div id="tabContent">
+                            <!-- محتوى تبويب الوصف -->
+                            <div class="tab-content-wrapper" id="description-content">
+                                {% if product.description %}
+                                    <div class="product-description">
+                                        {{ product.description|safe }}
+                                    </div>
+                                {% else %}
+                                    <p class="text-muted text-center py-4">
+                                        <i class="fas fa-info-circle fa-3x mb-3 d-block"></i>
+                                        {% trans "لا يوجد وصف متاح لهذا المنتج حالياً." %}
+                                    </p>
+                                {% endif %}
+                            </div>
+
+                            <!-- محتوى تبويب المواصفات -->
+                            <div class="tab-content-wrapper" id="specifications-content" style="display: none;">
+                                {% include 'products/components/_product_specs.html' %}
+                            </div>
+
+                            <!-- محتوى تبويب التقييمات -->
+                            <div class="tab-content-wrapper" id="reviews-content" style="display: none;">
+                                {% include 'products/components/_product_reviews.html' %}
+                            </div>
+
+                            <!-- محتوى تبويب الوسائط -->
+                            {% if product.video_url or product.manual_file %}
+                                <div class="tab-content-wrapper" id="media-content" style="display: none;">
+                                    <div class="row">
+                                        {% if product.video_url %}
+                                            <div class="col-md-6 mb-4">
+                                                <h5 class="mb-3">
+                                                    <i class="fas fa-video me-2"></i>{% trans "فيديو المنتج" %}
+                                                </h5>
+                                                <div class="ratio ratio-16x9">
+                                                    <iframe src="{{ product.video_url }}"
+                                                            title="Product Video"
+                                                            allowfullscreen></iframe>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+
+                                        {% if product.manual_file %}
+                                            <div class="col-md-6 mb-4">
+                                                <h5 class="mb-3">
+                                                    <i class="fas fa-file-pdf me-2"></i>{% trans "دليل المستخدم" %}
+                                                </h5>
+                                                <div class="manual-download-card">
+                                                    <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
+                                                    <h6>{% trans "دليل استخدام" %} {{ product.name }}</h6>
+                                                    <p class="text-muted">{% trans "حجم الملف" %}: 2.5 MB</p>
+                                                    <a href="{{ product.manual_file.url }}"
+                                                       class="btn btn-primary"
+                                                       download>
+                                                        <i class="fas fa-download me-2"></i>{% trans "تحميل الدليل" %}
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            <!-- محتوى تبويب الشحن والإرجاع -->
+                            <div class="tab-content-wrapper" id="shipping-content" style="display: none;">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h5 class="mb-3">
+                                            <i class="fas fa-shipping-fast me-2"></i>{% trans "معلومات الشحن" %}
+                                        </h5>
+                                        <ul class="shipping-info-list">
+                                            <li>{% trans "شحن سريع خلال 2-3 أيام عمل داخل عمّان" %}</li>
+                                            <li>{% trans "شحن خلال 4-5 أيام للمحافظات الأخرى" %}</li>
+                                            <li>{% trans "إمكانية الشحن الدولي (حسب الوجهة)" %}</li>
+                                            <li>{% trans "تتبع الشحنة أونلاين" %}</li>
+                                            <li>{% trans "تغليف آمن ومحكم" %}</li>
+                                        </ul>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <h5 class="mb-3">
+                                            <i class="fas fa-undo me-2"></i>{% trans "سياسة الإرجاع" %}
+                                        </h5>
+                                        <ul class="return-policy-list">
+                                            <li>{% trans "إرجاع مجاني خلال 30 يوم" %}</li>
+                                            <li>{% trans "المنتج يجب أن يكون في حالته الأصلية" %}</li>
+                                            <li>{% trans "مع جميع الملحقات والفاتورة الأصلية" %}</li>
+                                            <li>{% trans "استرداد المبلغ خلال 7-10 أيام عمل" %}</li>
+                                            <li>{% trans "إمكانية الاستبدال بمنتج آخر" %}</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- المنتجات ذات الصلة -->
+                {% if related_products %}
+                    <div class="related-products-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-th-large"></i>
+                            {% trans "منتجات ذات صلة" %}
+                        </h3>
+
+                        <div class="row">
+                            {% for related in related_products|slice:":4" %}
+                                <div class="col-md-3 col-6 mb-4">
+                                    {% include 'products/base/_product_card.html' with product=related %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- عمود الفئات -->
+            <div class="col-lg-3 order-lg-2 order-1">
+                <!-- زر فتح الفئات في الشاشات الصغيرة -->
+                <button class="categories-collapse-btn d-lg-none mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#categorySidebar">
+                    <i class="fas fa-list me-2"></i>{% trans "عرض الفئات" %}
+                    <i class="fas fa-chevron-down float-end mt-1"></i>
+                </button>
+
+                <!-- شريط الفئات -->
+                <div class="category-sidebar collapse d-lg-block" id="categorySidebar">
                     <h5><i class="fas fa-th-list"></i>{% trans "فئات المنتجات" %}</h5>
 
                     <!-- شجرة الفئات -->
@@ -313,345 +1007,6 @@
                     </div>
                     {% endif %}
                 </div>
-            </div>
-
-            <!-- عمود تفاصيل المنتج -->
-            <div class="col-lg-9">
-                <!-- Main Product Section -->
-                <div class="product-main-section">
-                    <div class="row">
-                        <!-- Product Gallery Column -->
-                        <div class="col-lg-6 mb-4 mb-lg-0">
-                            {% include 'products/components/_product_gallery.html' %}
-                        </div>
-
-                        <!-- Product Info Column -->
-                        <div class="col-lg-6">
-                            <!-- Product Basic Info -->
-                            {% include 'products/components/_product_info.html' %}
-
-                            <!-- Price Section -->
-                            <div class="price-section">
-                                {% if product.show_price and product.category.show_prices %}
-                                    <div class="d-flex align-items-center flex-wrap">
-                                        <span class="current-price">
-                                            {{ product.current_price|floatformat:2 }} {% trans "د.أ" %}
-                                        </span>
-                                        {% if product.has_discount %}
-                                            <span class="original-price">
-                                                {{ product.base_price|floatformat:2 }}
-                                            </span>
-                                            <span class="discount-badge-large">
-                                                <i class="fas fa-percentage"></i>
-                                                {{ product.discount_percentage }}% {% trans "خصم" %}
-                                            </span>
-                                        {% endif %}
-                                    </div>
-                                    {% if product.has_discount %}
-                                        <div class="mt-2">
-                                            <span class="text-success fw-bold">
-                                                <i class="fas fa-piggy-bank me-1"></i>
-                                                {% trans "توفر" %} {{ product.savings_amount|floatformat:2 }} {% trans "د.أ" %}
-                                            </span>
-                                        </div>
-                                    {% endif %}
-                                {% else %}
-                                    <div class="text-center py-3">
-                                        <h3 class="text-primary mb-2">{% trans "للحصول على السعر" %}</h3>
-                                        <p class="text-muted mb-3">{% trans "يرجى التواصل معنا للحصول على أفضل سعر" %}</p>
-                                        <a href="tel:{{ site_settings.phone }}" class="btn btn-primary">
-                                            <i class="fas fa-phone me-2"></i>{% trans "اتصل الآن" %}
-                                        </a>
-                                    </div>
-                                {% endif %}
-                            </div>
-
-                            <!-- Product Variants -->
-                            {% if product.variants.exists %}
-                                <div class="variants-section mb-4">
-                                    {% include 'products/components/_product_variants.html' %}
-                                </div>
-                            {% endif %}
-
-                            <!-- Purchase Section -->
-                            <div class="purchase-section">
-                                <form action="{% url 'cart:add_to_cart' product.id %}" method="post" id="addToCartForm">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="variant_id" id="selectedVariantId" value="">
-
-                                    <!-- Quantity Selector -->
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold">{% trans "الكمية" %}:</label>
-                                        <div class="d-flex align-items-center gap-3">
-                                            <div class="quantity-selector">
-                                                <button type="button" class="quantity-btn" onclick="changeQuantity(-1)">
-                                                    <i class="fas fa-minus"></i>
-                                                </button>
-                                                <input type="number"
-                                                       class="quantity-input"
-                                                       id="quantity"
-                                                       name="quantity"
-                                                       value="1"
-                                                       min="1"
-                                                       max="{{ product.stock_quantity|default:999 }}">
-                                                <button type="button" class="quantity-btn" onclick="changeQuantity(1)">
-                                                    <i class="fas fa-plus"></i>
-                                                </button>
-                                            </div>
-                                            {% if product.track_inventory and product.stock_quantity %}
-                                                <small class="text-muted">
-                                                    {% trans "متوفر" %}: {{ product.stock_quantity }} {% trans "قطعة" %}
-                                                </small>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-
-                                    <!-- Add to Cart Button -->
-                                    {% if product.in_stock %}
-                                        <button type="submit" class="btn btn-primary add-to-cart-main">
-                                            <i class="fas fa-shopping-cart me-2"></i>
-                                            {% trans "إضافة إلى السلة" %}
-                                        </button>
-                                    {% else %}
-                                        <button type="button" class="btn btn-secondary add-to-cart-main" disabled>
-                                            <i class="fas fa-times-circle me-2"></i>
-                                            {% trans "غير متوفر حالياً" %}
-                                        </button>
-                                        <button type="button"
-                                                class="btn btn-outline-primary w-100 mt-2"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#notifyModal">
-                                            <i class="fas fa-bell me-2"></i>
-                                            {% trans "أبلغني عند التوفر" %}
-                                        </button>
-                                    {% endif %}
-
-                                    <!-- Secondary Actions -->
-                                    <div class="d-flex gap-2 mt-3">
-                                        <button type="button" class="btn btn-outline-secondary flex-fill" onclick="addToWishlist({{ product.id }})">
-                                            <i class="far fa-heart me-1"></i>
-                                            <span>{% trans "المفضلة" %}</span>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-secondary flex-fill" onclick="addToCompare({{ product.id }})">
-                                            <i class="fas fa-exchange-alt me-1"></i>
-                                            <span>{% trans "مقارنة" %}</span>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-secondary flex-fill" onclick="shareProduct()">
-                                            <i class="fas fa-share-alt me-1"></i>
-                                            <span>{% trans "مشاركة" %}</span>
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-
-                            <!-- Product Highlights -->
-                            <div class="row g-2 mt-2">
-                                <div class="col-6">
-                                    <div class="bg-light p-3 text-center rounded">
-                                        <i class="fas fa-shipping-fast text-primary mb-2"></i>
-                                        <div class="small">{% trans "شحن سريع" %}</div>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="bg-light p-3 text-center rounded">
-                                        <i class="fas fa-shield-alt text-primary mb-2"></i>
-                                        <div class="small">{% trans "ضمان أصلي" %}</div>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="bg-light p-3 text-center rounded">
-                                        <i class="fas fa-undo text-primary mb-2"></i>
-                                        <div class="small">{% trans "إرجاع سهل" %}</div>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="bg-light p-3 text-center rounded">
-                                        <i class="fas fa-headset text-primary mb-2"></i>
-                                        <div class="small">{% trans "دعم متواصل" %}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Product Tabs Section -->
-                <div class="product-tabs-modern">
-                    <ul class="nav nav-tabs nav-tabs-modern" id="productTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active"
-                                    id="description-tab"
-                                    data-bs-toggle="tab"
-                                    data-bs-target="#description"
-                                    type="button">
-                                <i class="fas fa-info-circle me-2"></i>{% trans "الوصف" %}
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link"
-                                    id="specifications-tab"
-                                    data-bs-toggle="tab"
-                                    data-bs-target="#specifications"
-                                    type="button">
-                                <i class="fas fa-list-ul me-2"></i>{% trans "المواصفات" %}
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link"
-                                    id="reviews-tab"
-                                    data-bs-toggle="tab"
-                                    data-bs-target="#reviews"
-                                    type="button">
-                                <i class="fas fa-star me-2"></i>{% trans "التقييمات" %}
-                                {% if product.review_count > 0 %}
-                                    <span class="badge bg-primary ms-1">{{ product.review_count }}</span>
-                                {% endif %}
-                            </button>
-                        </li>
-                        {% if product.video_url or product.manual_file %}
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link"
-                                        id="media-tab"
-                                        data-bs-toggle="tab"
-                                        data-bs-target="#media"
-                                        type="button">
-                                    <i class="fas fa-photo-video me-2"></i>{% trans "الوسائط" %}
-                                </button>
-                            </li>
-                        {% endif %}
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link"
-                                    id="shipping-tab"
-                                    data-bs-toggle="tab"
-                                    data-bs-target="#shipping"
-                                    type="button">
-                                <i class="fas fa-truck me-2"></i>{% trans "الشحن والإرجاع" %}
-                            </button>
-                        </li>
-                    </ul>
-
-                    <div class="tab-content" id="productTabsContent">
-                        <!-- Description Tab -->
-                        <div class="tab-pane fade show active" id="description" role="tabpanel">
-                            <div class="tab-content-wrapper">
-                                {% if product.description %}
-                                    <div class="product-description">
-                                        {{ product.description|safe }}
-                                    </div>
-                                {% else %}
-                                    <p class="text-muted text-center py-4">
-                                        <i class="fas fa-info-circle fa-3x mb-3 d-block"></i>
-                                        {% trans "لا يوجد وصف متاح لهذا المنتج حالياً." %}
-                                    </p>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <!-- Specifications Tab -->
-                        <div class="tab-pane fade" id="specifications" role="tabpanel">
-                            <div class="tab-content-wrapper">
-                                {% include 'products/components/_product_specs.html' %}
-                            </div>
-                        </div>
-
-                        <!-- Reviews Tab -->
-                        <div class="tab-pane fade" id="reviews" role="tabpanel">
-                            <div class="tab-content-wrapper">
-                                {% include 'products/components/_product_reviews.html' %}
-                            </div>
-                        </div>
-
-                        <!-- Media Tab -->
-                        {% if product.video_url or product.manual_file %}
-                            <div class="tab-pane fade" id="media" role="tabpanel">
-                                <div class="tab-content-wrapper">
-                                    <div class="row">
-                                        {% if product.video_url %}
-                                            <div class="col-md-6 mb-4">
-                                                <h5 class="mb-3">
-                                                    <i class="fas fa-video me-2"></i>{% trans "فيديو المنتج" %}
-                                                </h5>
-                                                <div class="ratio ratio-16x9">
-                                                    <iframe src="{{ product.video_url }}"
-                                                            title="Product Video"
-                                                            allowfullscreen></iframe>
-                                                </div>
-                                            </div>
-                                        {% endif %}
-
-                                        {% if product.manual_file %}
-                                            <div class="col-md-6 mb-4">
-                                                <h5 class="mb-3">
-                                                    <i class="fas fa-file-pdf me-2"></i>{% trans "دليل المستخدم" %}
-                                                </h5>
-                                                <div class="manual-download-card">
-                                                    <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
-                                                    <h6>{% trans "دليل استخدام" %} {{ product.name }}</h6>
-                                                    <p class="text-muted">{% trans "حجم الملف" %}: 2.5 MB</p>
-                                                    <a href="{{ product.manual_file.url }}"
-                                                       class="btn btn-primary"
-                                                       download>
-                                                        <i class="fas fa-download me-2"></i>{% trans "تحميل الدليل" %}
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                        {% endif %}
-
-                        <!-- Shipping Tab -->
-                        <div class="tab-pane fade" id="shipping" role="tabpanel">
-                            <div class="tab-content-wrapper">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <h5 class="mb-3">
-                                            <i class="fas fa-shipping-fast me-2"></i>{% trans "معلومات الشحن" %}
-                                        </h5>
-                                        <ul class="shipping-info-list">
-                                            <li>{% trans "شحن سريع خلال 2-3 أيام عمل داخل عمّان" %}</li>
-                                            <li>{% trans "شحن خلال 4-5 أيام للمحافظات الأخرى" %}</li>
-                                            <li>{% trans "إمكانية الشحن الدولي (حسب الوجهة)" %}</li>
-                                            <li>{% trans "تتبع الشحنة أونلاين" %}</li>
-                                            <li>{% trans "تغليف آمن ومحكم" %}</li>
-                                        </ul>
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <h5 class="mb-3">
-                                            <i class="fas fa-undo me-2"></i>{% trans "سياسة الإرجاع" %}
-                                        </h5>
-                                        <ul class="return-policy-list">
-                                            <li>{% trans "إرجاع مجاني خلال 30 يوم" %}</li>
-                                            <li>{% trans "المنتج يجب أن يكون في حالته الأصلية" %}</li>
-                                            <li>{% trans "مع جميع الملحقات والفاتورة الأصلية" %}</li>
-                                            <li>{% trans "استرداد المبلغ خلال 7-10 أيام عمل" %}</li>
-                                            <li>{% trans "إمكانية الاستبدال بمنتج آخر" %}</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Related Products -->
-                {% if related_products %}
-                    <div class="related-products-section bg-white p-4 rounded-3 shadow-sm mb-4">
-                        <h3 class="section-title mb-4">
-                            <i class="fas fa-th-large me-2"></i>{% trans "منتجات ذات صلة" %}
-                        </h3>
-
-                        <div class="row">
-                            {% for related in related_products|slice:":4" %}
-                                <div class="col-md-3 col-6 mb-4">
-                                    {% include 'products/base/_product_card.html' with product=related %}
-                                </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                {% endif %}
             </div>
         </div>
     </div>
@@ -753,7 +1108,73 @@
     document.addEventListener('DOMContentLoaded', function() {
         // تمكين شجرة الفئات
         initCategoryTree();
+
+        // تهيئة التبويبات
+        initTabs();
+
+        // تهيئة معرض الصور
+        initImageGallery();
     });
+
+    // دالة لتهيئة التبويبات
+    function initTabs() {
+        const tabs = document.querySelectorAll('.amazon-tab');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                // إزالة الفئة النشطة من جميع التبويبات
+                tabs.forEach(t => t.classList.remove('active'));
+
+                // إضافة الفئة النشطة للتبويب المحدد
+                this.classList.add('active');
+
+                // إخفاء جميع محتويات التبويبات
+                const contents = document.querySelectorAll('.tab-content-wrapper');
+                contents.forEach(content => {
+                    content.style.display = 'none';
+                });
+
+                // إظهار المحتوى المحدد
+                const tabId = this.getAttribute('data-tab');
+                const activeContent = document.getElementById(tabId + '-content');
+                if (activeContent) {
+                    activeContent.style.display = 'block';
+                }
+            });
+        });
+    }
+
+    // دالة لتهيئة معرض الصور
+    function initImageGallery() {
+        // تهيئة معرض الصور
+        $('.main-image-container').magnificPopup({
+            delegate: '.main-product-image',
+            type: 'image',
+            gallery: {
+                enabled: true,
+                navigateByImgClick: true,
+                preload: [0,1]
+            }
+        });
+
+        // التبديل بين الصور المصغرة
+        const thumbnails = document.querySelectorAll('.thumbnail-item');
+        thumbnails.forEach(thumb => {
+            thumb.addEventListener('click', function() {
+                // إزالة الفئة النشطة من جميع الصور المصغرة
+                thumbnails.forEach(t => t.classList.remove('active'));
+
+                // إضافة الفئة النشطة للصورة المصغرة المحددة
+                this.classList.add('active');
+
+                // تحديث الصورة الرئيسية
+                const mainImage = document.getElementById('mainProductImage');
+                const thumbImage = this.querySelector('img');
+                if (mainImage && thumbImage) {
+                    mainImage.src = thumbImage.src;
+                }
+            });
+        });
+    }
 
     // دالة لتهيئة شجرة الفئات
     function initCategoryTree() {
@@ -822,7 +1243,7 @@
         }
     }
 
-    // Quantity Controls
+    // التحكم بالكمية
     function changeQuantity(change) {
         const input = document.getElementById('quantity');
         const currentValue = parseInt(input.value) || 1;
@@ -834,54 +1255,54 @@
         }
     }
 
-    // Add to Cart Form
+    // نموذج إضافة المنتج للسلة
     document.getElementById('addToCartForm').addEventListener('submit', function(e) {
         e.preventDefault();
 
         const btn = this.querySelector('button[type="submit"]');
         const originalText = btn.innerHTML;
 
-        // Show loading state
+        // إظهار حالة التحميل
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري الإضافة...';
 
-        // Simulate API call
+        // محاكاة طلب API
         setTimeout(() => {
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-check me-2"></i>تمت الإضافة بنجاح';
 
-            // Show success notification
+            // إظهار إشعار النجاح
             showNotification('success', 'تمت إضافة المنتج إلى السلة بنجاح');
 
-            // Update cart count
+            // تحديث عدد العناصر في السلة
             updateCartCount();
 
-            // Reset button after 2 seconds
+            // إعادة تعيين الزر بعد ثانيتين
             setTimeout(() => {
                 btn.innerHTML = originalText;
             }, 2000);
         }, 1000);
     });
 
-    // Wishlist Function
+    // دالة المفضلة
     function addToWishlist(productId) {
-        // Implementation
+        // التنفيذ
         showNotification('success', 'تمت إضافة المنتج إلى قائمة الأمنيات');
     }
 
-    // Compare Function
+    // دالة المقارنة
     function addToCompare(productId) {
-        // Implementation
+        // التنفيذ
         showNotification('info', 'تمت إضافة المنتج إلى المقارنة');
     }
 
-    // Share Function
+    // دالة المشاركة
     function shareProduct() {
         const modal = new bootstrap.Modal(document.getElementById('shareModal'));
         modal.show();
     }
 
-    // Copy Link
+    // نسخ الرابط
     function copyLink() {
         const input = document.getElementById('productLink');
         input.select();
@@ -890,29 +1311,7 @@
         showNotification('success', 'تم نسخ الرابط بنجاح');
     }
 
-    // Initialize Magnific Popup for gallery
-    $('.product-gallery-modern').magnificPopup({
-        delegate: '.main-product-image',
-        type: 'image',
-        gallery: {
-            enabled: true,
-            navigateByImgClick: true,
-            preload: [0,1]
-        },
-        image: {
-            tError: '<a href="%url%">The image #%curr%</a> could not be loaded.',
-        }
-    });
-
-    // Tab change animation
-    document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
-        tab.addEventListener('shown.bs.tab', function (e) {
-            const targetPane = document.querySelector(e.target.getAttribute('data-bs-target'));
-            targetPane.style.animation = 'fadeIn 0.3s ease';
-        });
-    });
-
-    // Notification Function
+    // دالة الإشعارات
     function showNotification(type, message) {
         const toast = document.createElement('div');
         toast.className = `toast-notification toast-${type}`;
@@ -933,19 +1332,19 @@
 
         document.body.appendChild(toast);
 
-        // Show toast
+        // إظهار الإشعار
         setTimeout(() => toast.classList.add('show'), 100);
 
-        // Remove after 3 seconds
+        // إزالة بعد 3 ثواني
         setTimeout(() => {
             toast.classList.remove('show');
             setTimeout(() => toast.remove(), 300);
         }, 3000);
     }
 
-    // Update Cart Count
+    // تحديث عدد العناصر في السلة
     function updateCartCount() {
-        // Update cart count in header
+        // تحديث عدد العناصر في السلة في الهيدر
         const cartBadge = document.querySelector('.cart-count');
         if (cartBadge) {
             const currentCount = parseInt(cartBadge.textContent) || 0;
@@ -955,7 +1354,7 @@
 </script>
 
 <style>
-/* Toast Notifications */
+/* إشعارات التوست */
 .toast-notification {
     position: fixed;
     bottom: 2rem;
@@ -984,7 +1383,7 @@
 .toast-info i { color: #3b82f6; }
 .toast-warning i { color: #f59e0b; }
 
-/* Share Buttons Grid */
+/* شبكة أزرار المشاركة */
 .share-buttons-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -1014,19 +1413,13 @@
 .share-button.whatsapp { background: #25d366; }
 .share-button.email { background: #6c757d; }
 
-/* Copy Link Section */
+/* قسم نسخ الرابط */
 .copy-link-section {
     padding-top: 1rem;
     border-top: 1px solid #e5e7eb;
 }
 
-/* Animation for Tab Panes */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Shipping and Return Lists */
+/* قوائم الشحن والإرجاع */
 .shipping-info-list,
 .return-policy-list {
     list-style: none;
@@ -1050,27 +1443,6 @@
     color: #10b981;
 }
 
-/* RTL Support */
-[dir="rtl"] .toast-notification {
-    right: auto;
-    left: 2rem;
-    transform: translateX(-400px);
-}
 
-[dir="rtl"] .toast-notification.show {
-    transform: translateX(0);
-}
-
-[dir="rtl"] .shipping-info-list li,
-[dir="rtl"] .return-policy-list li {
-    padding-left: 0;
-    padding-right: 2rem;
-}
-
-[dir="rtl"] .shipping-info-list li::before,
-[dir="rtl"] .return-policy-list li::before {
-    left: auto;
-    right: 0;
-}
 </style>
 {% endblock %}
