@@ -317,7 +317,7 @@ class Category(TimeStampedModel, SEOModel):
         super().delete(*args, **kwargs)
 
     def get_absolute_url(self):
-        return reverse('products:category_detail', kwargs={'slug': self.slug})
+        return reverse('products:category_products', kwargs={'category_slug': self.slug})
 
     def update_products_count(self):
         """Update products count for this category"""

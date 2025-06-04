@@ -13,7 +13,7 @@
                 </a>
             </li>
             <li class="breadcrumb-item">
-                <a href="{% url 'products:category_detail' product.category.slug %}">
+                <a href="{% url 'products:category_products' product.category.slug %}">
                     {{ product.category.name }}
                 </a>
             </li>
@@ -125,7 +125,7 @@
         {% endif %}
         <div class="meta-item">
             <span class="meta-label">{% trans "التصنيف" %}</span>
-            <a href="{% url 'products:category_detail' product.category.slug %}" class="meta-value category-link">
+            <a href="{% url 'products:category_products' product.category.slug %}" class="meta-value category-link">
                 {{ product.category.name }}
             </a>
         </div>
