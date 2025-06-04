@@ -24,7 +24,7 @@ from ..models import Product, Category, Brand, ProductVariant, ProductReview
 logger = logging.getLogger(__name__)
 
 
-class BaseAPIView(View, CachedMixin):
+class BaseAPIView(View):
     """Base class for API views"""
 
     def dispatch(self, request, *args, **kwargs):
