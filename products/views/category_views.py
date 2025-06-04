@@ -2,14 +2,11 @@
 
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import DetailView, ListView
-from django.db.models import Q, Count, Min, Max, Avg, Prefetch
+from django.db.models import Q, Count, Min, Max
 from django.utils.translation import gettext as _
 from django.http import Http404
-import logging
 
-from ..models import Category, Product, Brand
-
-logger = logging.getLogger(__name__)
+from ..models import Category, Product
 
 
 class CategoryListView(ListView):
@@ -25,11 +22,6 @@ class CategoryListView(ListView):
         return Category.objects.filter(
             parent=None,
             is_active=True
-        ).prefetch_related(
-            Prefetch(
-                'children',
-                queryset=Category.objects.filter(is_active=True)
-            )
         ).annotate(
             total_products=Count(
                 'products',
@@ -118,6 +110,7 @@ class CategoryListView(ListView):
 class CategoryDetailView(DetailView):
     """
     عرض تفاصيل الفئة مع المنتجات
+    تم استبدالها بالاعتماد على ProductListView مع فلتر الفئة
     """
     model = Category
     template_name = 'products/category_detail.html'
@@ -129,90 +122,19 @@ class CategoryDetailView(DetailView):
         return Category.objects.filter(is_active=True).select_related('parent')
 
     def get(self, request, *args, **kwargs):
-        """معالجة طلب GET وزيادة عدد المشاهدات"""
-        response = super().get(request, *args, **kwargs)
+        """تمت إعادة توجيه هذا العرض إلى ProductListView"""
+        # يمكن إضافة رمز هنا للتعامل مع الحالات الخاصة إذا لزم الأمر
+        from django.shortcuts import redirect
+        from django.urls import reverse
+
+        # الحصول على الكائن
+        self.object = self.get_object()
 
         # زيادة عدد مشاهدات الفئة
         try:
             self.object.increment_views()
         except Exception as e:
-            logger.warning(f"فشل في زيادة عدد المشاهدات للفئة {self.object.id}: {e}")
+            pass
 
-        return response
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        category = self.object
-
-        # شجرة الفئات الكاملة
-        view = CategoryListView()
-        view.request = self.request  # تمرير الطلب الحالي للعرض
-        context['category_tree'] = view.build_category_tree()  # استدعاء build_category_tree بدلاً من "test"
-
-        # المسار الحالي للفئة (لتمييز الفئة الحالية في الشجرة)
-        current_category_path = []
-        current = category
-        while current:
-            current_category_path.append(current.id)
-            current = current.parent
-
-        context['current_category_path'] = current_category_path
-
-        # الفئات الفرعية المباشرة
-        context['subcategories'] = category.children.filter(is_active=True).annotate(
-            subcategory_products_count=Count(
-                'products',
-                filter=Q(
-                    products__is_active=True,
-                    products__status='published'
-                )
-            )
-        ).order_by('sort_order', 'name')
-
-        # المنتجات في هذه الفئة
-        products_queryset = Product.objects.filter(
-            category=category,
-            is_active=True,
-            status='published'
-        ).select_related('category', 'brand').prefetch_related('images')
-
-        # تطبيق الترتيب
-        sort_by = self.request.GET.get('sort', 'newest')
-
-        if sort_by == 'newest':
-            products_queryset = products_queryset.order_by('-created_at')
-        elif sort_by == 'price_low':
-            products_queryset = products_queryset.order_by('base_price')
-        elif sort_by == 'price_high':
-            products_queryset = products_queryset.order_by('-base_price')
-        elif sort_by == 'best_selling':
-            products_queryset = products_queryset.order_by('-sales_count')
-        elif sort_by == 'top_rated':
-            products_queryset = products_queryset.annotate(
-                avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True))
-            ).order_by('-avg_rating')
-
-        context['products'] = products_queryset
-        context['products_count'] = products_queryset.count()
-        context['subcategories_count'] = context['subcategories'].count()
-
-        # العلامات التجارية الأكثر شيوعاً في هذه الفئة
-        context['top_brands'] = Brand.objects.filter(
-            products__category=category,
-            products__is_active=True,
-            products__status='published',
-            is_active=True
-        ).annotate(
-            product_count=Count(
-                'products',
-                filter=Q(
-                    products__category=category,
-                    products__is_active=True,
-                    products__status='published'
-                )
-            )
-        ).order_by('-product_count')[:10]
-
-        context['brands_count'] = context['top_brands'].count()
-
-        return context
+        # إعادة التوجيه إلى عرض المنتجات مع فلتر الفئة
+        return redirect(reverse('products:category_products', kwargs={'category_slug': self.object.slug}))

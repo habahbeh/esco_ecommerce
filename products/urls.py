@@ -1,13 +1,12 @@
 # File: products/urls.py
 """
 Updated URLs configuration for products app
-Using professional search views
 """
 
 from django.urls import path
 from django.http import JsonResponse
 
-# استيراد عروض المنتجات
+# Import product views
 from .views.product_views import (
     ProductListView,
     ProductDetailView,
@@ -20,13 +19,6 @@ from .views.product_views import (
     ProductVariantDetailView,
 )
 
-# استيراد عروض الفئات
-from .views.category_views import (
-    CategoryListView,
-    CategoryDetailView,
-)
-
-# استيراد عروض التقييمات
 from .views.review_views import (
     SubmitReviewView,
     ProductReviewListView,
@@ -121,15 +113,12 @@ urlpatterns = [
     path('', ProductListView.as_view(), name='product_list'),
 
     # قوائم المنتجات الخاصة
-    path('categories/', CategoryListView.as_view(), name='category_list'),
-    path('category/<slug:slug>/', CategoryDetailView.as_view(), name='category_detail'),
+    path('categories/', ProductListView.as_view(), name='category_list'),  # تغيير من CategoryListView إلى ProductListView
+    path('category/<slug:category_slug>/', ProductListView.as_view(), name='category_products'),
     path('featured/', FeaturedProductsView.as_view(), name='featured_products'),
     path('new/', NewProductsView.as_view(), name='new_products'),
     path('bestsellers/', BestSellersView.as_view(), name='best_sellers'),
     path('offers/', SpecialOffersView.as_view(), name='special_offers'),
-
-    # المنتجات حسب الفئة
-    path('category/<slug:category_slug>/', ProductListView.as_view(), name='category_products'),
 
     # المنتجات حسب العلامة التجارية والوسوم
     path('brand/<slug:brand_slug>/', BrandProductsView.as_view(), name='brand_products'),
@@ -148,6 +137,7 @@ urlpatterns = [
     path('review/<int:review_id>/delete/', DeleteReviewView.as_view(), name='delete_review'),
     path('my-reviews/', UserReviewsView.as_view(), name='user_reviews'),
 ]
+
 
 # URLs للتطوير والاختبار
 from django.conf import settings
@@ -214,7 +204,7 @@ VIEW_STATUS = {
     'quick_search_available': SEARCH_VIEWS_AVAILABLE,
     'advanced_search_available': SEARCH_VIEWS_AVAILABLE,
     'search_api_available': SEARCH_VIEWS_AVAILABLE,
-    'cache_enabled': False,  # تم تغييره من not settings.DEBUG إلى False
+    'cache_enabled': False,  # تم تغييره إلى False لإزالة التخزين المؤقت
     'imported_views': [
         'SearchView' if SEARCH_VIEWS_AVAILABLE else None,
         'QuickSearchView' if SEARCH_VIEWS_AVAILABLE else None,
