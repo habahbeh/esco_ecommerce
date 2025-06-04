@@ -4,7 +4,6 @@ from django.shortcuts import render, get_object_or_404
 from django.views.generic import DetailView, ListView
 from django.db.models import Q, Count, Min, Max
 from django.utils.translation import gettext as _
-from django.core.cache import cache
 
 from ..models import Category, Product
 
@@ -20,8 +19,8 @@ class CategoryListView(ListView):
 
     def get_queryset(self):
         """الحصول على الفئات الرئيسية مع عدد المنتجات"""
-        # مسح الكاش المتعلق بالفئات
-        self.clear_category_cache()
+
+
 
         return Category.objects.filter(
             parent=None,
@@ -39,16 +38,13 @@ class CategoryListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # مسح الكاش المتعلق بالفئات
-        self.clear_category_cache()
-
         # إضافة جميع الفئات للشجرة (بما في ذلك الفئات الفرعية)
         context['all_categories'] = Category.objects.filter(
             is_active=True
         ).select_related('parent')
 
         # بناء هيكل الشجرة للفئات
-        context['category_tree'] = self.build_category_tree()
+        context['category_tree'] = "test" #self.build_category_tree()
 
         # الفئات المميزة
         context['featured_categories'] = Category.objects.filter(
@@ -59,27 +55,10 @@ class CategoryListView(ListView):
         context['title'] = _('جميع الفئات')
         return context
 
-    def clear_category_cache(self):
-        """مسح الكاش المتعلق بالفئات"""
-        # مسح كاش محدد
-        cache_keys = [
-            "category_tree",
-            "categories_menu",
-            "featured_categories",
-        ]
-
-        # مسح كاش يبدأ بـ category_
-        cache_keys.extend([k for k in cache._cache.keys() if k.startswith('category_')])
-
-        # مسح الكاش
-        cache.delete_many(cache_keys)
-
-        # مسح الكاش الكامل إذا لزم الأمر
-        # cache.clear()
 
     def build_category_tree(self):
         """بناء هيكل الشجرة للفئات"""
-        # الحصول على جميع الفئات
+        # الحصول على جميع الفئات النشطة
         all_categories = Category.objects.filter(
             is_active=True
         ).select_related('parent').order_by('sort_order', 'name')
@@ -87,26 +66,24 @@ class CategoryListView(ListView):
         # بناء قاموس للفئات الفرعية
         children_map = {}
         for category in all_categories:
-            parent_id = category.parent_id if category.parent_id else 0
+            parent_id = category.parent_id if category.parent_id else None  # استخدام None بدلاً من 0
             if parent_id not in children_map:
                 children_map[parent_id] = []
             children_map[parent_id].append(category)
 
         # بناء شجرة الفئات بشكل تكراري
-        def build_tree(parent_id=0):
+        def build_tree(parent_id=None):  # استخدام None بدلاً من 0
             if parent_id not in children_map:
                 return []
 
             result = []
             for category in children_map[parent_id]:
-                # حساب عدد المنتجات لهذه الفئة
-                products_count = Product.objects.filter(
-                    category=category,
-                    is_active=True,
-                    status='published'
-                ).count()
+                # استخدام products_count المخزن مسبقًا
+                products_count = category.products_count
 
+                # التحقق من وجود أطفال
                 children = build_tree(category.id)
+
                 result.append({
                     'id': category.id,
                     'name': category.name,
@@ -119,6 +96,13 @@ class CategoryListView(ListView):
 
         # بناء الشجرة بدءاً من الفئات الرئيسية
         tree = build_tree()
+
+        # طباعة معلومات التصحيح إذا كانت الشجرة فارغة
+        if not tree and children_map:
+            print("WARNING: Tree is empty but children_map has data:")
+            print(f"Keys in children_map: {list(children_map.keys())}")
+            if None in children_map:
+                print(f"Root categories count: {len(children_map[None])}")
 
         return tree
 
@@ -136,7 +120,6 @@ class CategoryDetailView(DetailView):
         """الحصول على الفئات النشطة"""
         # مسح الكاش المتعلق بالفئات
         view = CategoryListView()
-        view.clear_category_cache()
 
         return Category.objects.filter(is_active=True).select_related('parent')
 
@@ -147,7 +130,8 @@ class CategoryDetailView(DetailView):
         # شجرة الفئات الكاملة
         view = CategoryListView()
         view.request = self.request  # تمرير الطلب الحالي للعرض
-        context['category_tree'] = view.build_category_tree()
+        context['category_tree'] = "test"#view.build_category_tree()
+        print("#"*100)
 
         # المسار الحالي للفئة (لتمييز الفئة الحالية في الشجرة)
         current_category_path = []

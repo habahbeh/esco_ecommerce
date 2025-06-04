@@ -14,7 +14,6 @@ from django.views.decorators.cache import cache_page
 from django.views.decorators.vary import vary_on_headers
 from django.conf import settings
 from django.utils import timezone
-from django.core.cache import cache
 from django.contrib.auth.mixins import LoginRequiredMixin
 from decimal import Decimal
 import logging
@@ -22,24 +21,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class CachedMixin:
-    """
-    Mixin for caching functionality
-    """
-    cache_timeout = 300  # 5 minutes default
 
-    @method_decorator(cache_page(cache_timeout))
-    def dispatch(self, *args, **kwargs):
-        return super().dispatch(*args, **kwargs)
-
-    def get_cached_data(self, cache_key, default=None):
-        """Get data from cache"""
-        return cache.get(cache_key, default)
-
-    def set_cached_data(self, cache_key, data, timeout=None):
-        """Set data in cache"""
-        timeout = timeout or self.cache_timeout
-        cache.set(cache_key, data, timeout)
 
 
 class OptimizedQueryMixin:
