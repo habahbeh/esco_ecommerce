@@ -13,7 +13,7 @@ from django.views.decorators.cache import cache_page
 from django.http import Http404
 import logging
 
-from .base_views import BaseProductListView, BaseProductDetailView, CachedMixin
+from .base_views import BaseProductListView, BaseProductDetailView
 from ..models import Product, Category, Brand, ProductImage, Tag
 
 logger = logging.getLogger(__name__)

@@ -255,13 +255,13 @@ LOGGING = {
 
 
 # 3. Session Configuration
-SESSION_ENGINE = 'django.contrib.sessions.backends.db'
-SESSION_COOKIE_AGE = 86400 * 7  # 7 days
-SESSION_SAVE_EVERY_REQUEST = True  # Save session on every request
-SESSION_COOKIE_NAME = 'esco_sessionid'
-SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
-SESSION_COOKIE_HTTPONLY = True
-SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+# SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+# SESSION_COOKIE_AGE = 86400 * 7  # 7 days
+# SESSION_SAVE_EVERY_REQUEST = True  # Save session on every request
+# SESSION_COOKIE_NAME = 'esco_sessionid'
+# SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+# SESSION_COOKIE_HTTPONLY = True
+# SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 # 4. إعدادات إضافية للسلة (اختياري)
 CART_SESSION_ID = 'cart'  # معرف السلة في الجلسة
@@ -273,3 +273,9 @@ BASE_SHIPPING_COST = Decimal('5.00')
 SHIPPING_WEIGHT_RATE = Decimal('0.50')
 FREE_SHIPPING_THRESHOLD = Decimal('50.00')
 MAX_CART_QUANTITY_PER_ITEM = 10
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    }
+}

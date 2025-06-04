@@ -5,9 +5,7 @@ Using professional search views
 """
 
 from django.urls import path
-from django.views.decorators.cache import cache_page
 from django.http import JsonResponse
-from .views.debug_category_view import DebugCategoryView
 
 # Import product views
 from .views.product_views import (
@@ -146,22 +144,10 @@ urlpatterns = [
     path('my-reviews/', UserReviewsView.as_view(), name='user_reviews'),
 ]
 
-# URLs محسنة مع التخزين المؤقت للإنتاج
-cached_urls = {
-    'product_list': cache_page(300)(ProductListView.as_view()),
-    'category_list': cache_page(600)(CategoryListView.as_view()),
-    'special_offers': cache_page(900)(SpecialOffersView.as_view()),
-    'product_search': cache_page(300)(SearchView.as_view() if SEARCH_VIEWS_AVAILABLE else fallback_search_view),
-}
+
 
 # إضافة URLs المخزنة مؤقتاً في الإنتاج
 from django.conf import settings
-
-if not settings.DEBUG:
-    for name, view in cached_urls.items():
-        urlpatterns.append(
-            path(f'cached/{name}/', view, name=f'cached_{name}')
-        )
 
 
 # Helper functions for URL generation

@@ -19,7 +19,6 @@ This package provides a clean structure for product views:
 # Import all view classes and functions for easy access
 from .base_views import (
     # Mixins
-    CachedMixin,
     OptimizedQueryMixin,
     FilterMixin,
     BreadcrumbMixin,

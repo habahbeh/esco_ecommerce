@@ -85,7 +85,6 @@ def bad_request_view(request, exception):
     return response
 
 
-@cache_page(60 * 15)  # Cache for 15 minutes
 def health_check_view(request):
     """
     Health check endpoint

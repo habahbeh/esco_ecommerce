@@ -20,7 +20,6 @@ import json
 import logging
 
 from ..models import Product, Category, Brand, ProductVariant, ProductReview
-from .base_views import CachedMixin
 
 logger = logging.getLogger(__name__)
 
