@@ -206,7 +206,6 @@ if settings.DEBUG:
              AdvancedSearchView.as_view() if SEARCH_VIEWS_AVAILABLE else fallback_search_view,
              name='debug_advanced_search'),
 
-        path('debug/categories/', DebugCategoryView.as_view(), name='debug_categories'),
     ]
 
 # معلومات للمطور

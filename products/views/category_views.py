@@ -44,7 +44,7 @@ class CategoryListView(ListView):
         ).select_related('parent')
 
         # بناء هيكل الشجرة للفئات
-        context['category_tree'] = "test" #self.build_category_tree()
+        context['category_tree'] = self.build_category_tree()
 
         # الفئات المميزة
         context['featured_categories'] = Category.objects.filter(
