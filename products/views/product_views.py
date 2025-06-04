@@ -20,12 +20,12 @@ logger = logging.getLogger(__name__)
 
 class ProductListView(BaseProductListView):
     """
-    Enhanced product list view with advanced filtering
+    Enhanced product list view with category tree sidebar
     """
     template_name = 'products/product_list.html'
 
     def get_queryset(self):
-        """Get queryset with category filtering"""
+        """Get queryset with filtering options"""
         queryset = super().get_queryset()
 
         # Category filter
@@ -33,10 +33,9 @@ class ProductListView(BaseProductListView):
         if category_slug:
             try:
                 category = Category.objects.get(slug=category_slug, is_active=True)
-                # Use get_all_children() instead of get_descendants()
+                # Get current category and all its children
                 categories = category.get_all_children(include_self=True)
                 queryset = queryset.filter(category__in=categories)
-
                 # Store category for context
                 self.category = category
             except Category.DoesNotExist:
@@ -44,31 +43,86 @@ class ProductListView(BaseProductListView):
         else:
             self.category = None
 
+        # Brand filter
+        brand_ids = self.request.GET.getlist('brand')
+        if brand_ids:
+            queryset = queryset.filter(brand_id__in=brand_ids)
+
+        # Price range filter
+        min_price = self.request.GET.get('min_price')
+        max_price = self.request.GET.get('max_price')
+        if min_price:
+            queryset = queryset.filter(current_price__gte=min_price)
+        if max_price:
+            queryset = queryset.filter(current_price__lte=max_price)
+
+        # Feature filters
+        if self.request.GET.get('is_new'):
+            queryset = queryset.filter(is_new=True)
+        if self.request.GET.get('on_sale'):
+            queryset = queryset.filter(has_discount=True)
+        if self.request.GET.get('in_stock'):
+            queryset = queryset.filter(in_stock=True)
+
+        # Sort products
+        sort_by = self.request.GET.get('sort', 'newest')
+        queryset = self.apply_sorting(queryset, sort_by)
+
         return queryset
 
+    def apply_sorting(self, queryset, sort_by: str):
+        """Apply sorting to product queryset"""
+        if sort_by == 'newest':
+            return queryset.order_by('-created_at')
+        elif sort_by == 'price_low':
+            return queryset.order_by('current_price')
+        elif sort_by == 'price_high':
+            return queryset.order_by('-current_price')
+        elif sort_by == 'name_az':
+            return queryset.order_by('name')
+        elif sort_by == 'best_rated':
+            return queryset.annotate(
+                avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True))
+            ).order_by('-avg_rating', '-created_at')
+
+        # Default to newest
+        return queryset.order_by('-created_at')
+
     def get_context_data(self, **kwargs):
-        """Add category-specific context"""
+        """Add enhanced context data for product list with category tree"""
         context = super().get_context_data(**kwargs)
 
-        # Category context
-        if hasattr(self, 'category') and self.category:
-            context['category'] = self.category
-            context['subcategories'] = self.category.children.filter(is_active=True)
-            context['breadcrumbs'] = self.get_breadcrumbs(self.category)
-        else:
-            context['category'] = None
-            context['subcategories'] = Category.objects.filter(
-                parent=None,
-                is_active=True
-            ).order_by('sort_order', 'name')
+        # Get total products count
+        context['products_count'] = self.get_queryset().count()
 
-        # Results count
-        context['total_count'] = self.get_queryset().count()
-
-        # إضافة شجرة الفئات
+        # Get category tree using the category_views.py implementation
         category_view = CategoryListView()
         category_view.request = self.request
         context['category_tree'] = category_view.build_category_tree()
+
+        # Current category path for highlighting active category
+        if hasattr(self, 'category') and self.category:
+            context['category'] = self.category
+
+            # Build current category path
+            current_category_path = []
+            current = self.category
+            while current:
+                current_category_path.append(current.id)
+                current = current.parent
+            context['current_category_path'] = current_category_path
+
+        # Get available brands with product counts for filtering
+        context['brands'] = Brand.objects.filter(
+            is_active=True,
+            products__is_active=True,
+            products__status='published'
+        ).annotate(
+            product_count=Count('products', filter=Q(
+                products__is_active=True,
+                products__status='published'
+            ))
+        ).filter(product_count__gt=0).order_by('-product_count')
 
         return context
 
@@ -88,10 +142,19 @@ class ProductDetailView(BaseProductDetailView):
             from ..forms import ProductReviewForm
             context['review_form'] = ProductReviewForm()
 
-        # إضافة شجرة الفئات
+        # Add category tree for sidebar navigation
         category_view = CategoryListView()
         category_view.request = self.request
         context['category_tree'] = category_view.build_category_tree()
+
+        # Current category path for highlighting in tree
+        product = self.object
+        current_category_path = []
+        current = product.category
+        while current:
+            current_category_path.append(current.id)
+            current = current.parent
+        context['current_category_path'] = current_category_path
 
         return context
 
@@ -119,6 +182,11 @@ class SpecialOffersView(BaseProductListView):
         context = super().get_context_data(**kwargs)
         context['title'] = _('العروض الخاصة')
 
+        # Add category tree for sidebar navigation
+        category_view = CategoryListView()
+        category_view.request = self.request
+        context['category_tree'] = category_view.build_category_tree()
+
         # Calculate total savings
         products = self.get_queryset()
         total_savings = sum(
@@ -127,11 +195,7 @@ class SpecialOffersView(BaseProductListView):
             if product.has_discount
         )
         context['total_savings'] = total_savings
-
-        # إضافة شجرة الفئات
-        category_view = CategoryListView()
-        category_view.request = self.request
-        context['category_tree'] = category_view.build_category_tree()
+        context['products_count'] = products.count()
 
         return context
 
@@ -140,7 +204,7 @@ class TagProductsView(BaseProductListView):
     """
     Products filtered by tag
     """
-    template_name = 'products/tag_products.html'
+    template_name = 'products/product_list.html'  # Use same template as main product list
 
     def get_queryset(self):
         """Get products filtered by tag"""
@@ -158,10 +222,12 @@ class TagProductsView(BaseProductListView):
         context['tag'] = self.tag
         context['title'] = f'{_("منتجات بوسم")}: {self.tag.name}'
 
-        # إضافة شجرة الفئات
+        # Add category tree for sidebar navigation
         category_view = CategoryListView()
         category_view.request = self.request
         context['category_tree'] = category_view.build_category_tree()
+
+        context['products_count'] = self.get_queryset().count()
 
         return context
 
@@ -170,7 +236,7 @@ class BrandProductsView(BaseProductListView):
     """
     Products filtered by brand
     """
-    template_name = 'products/brand_products.html'
+    template_name = 'products/product_list.html'  # Use same template as main product list
 
     def get_queryset(self):
         """Get products filtered by brand"""
@@ -187,6 +253,13 @@ class BrandProductsView(BaseProductListView):
         context = super().get_context_data(**kwargs)
         context['brand'] = self.brand
         context['title'] = f'{_("منتجات")}: {self.brand.name}'
+
+        # Add category tree for sidebar navigation
+        category_view = CategoryListView()
+        category_view.request = self.request
+        context['category_tree'] = category_view.build_category_tree()
+
+        context['products_count'] = self.get_queryset().count()
 
         # Brand statistics
         context['brand_stats'] = {
@@ -206,11 +279,6 @@ class BrandProductsView(BaseProductListView):
             )['avg_rating'] or 0
         }
 
-        # إضافة شجرة الفئات
-        category_view = CategoryListView()
-        category_view.request = self.request
-        context['category_tree'] = category_view.build_category_tree()
-
         return context
 
 
@@ -218,7 +286,7 @@ class NewProductsView(BaseProductListView):
     """
     View for new products
     """
-    template_name = 'products/new_products.html'
+    template_name = 'products/product_list.html'  # Use same template as main product list
 
     def get_queryset(self):
         """Get new products"""
@@ -228,10 +296,12 @@ class NewProductsView(BaseProductListView):
         context = super().get_context_data(**kwargs)
         context['title'] = _('المنتجات الجديدة')
 
-        # إضافة شجرة الفئات
+        # Add category tree for sidebar navigation
         category_view = CategoryListView()
         category_view.request = self.request
         context['category_tree'] = category_view.build_category_tree()
+
+        context['products_count'] = self.get_queryset().count()
 
         return context
 
@@ -240,7 +310,7 @@ class FeaturedProductsView(BaseProductListView):
     """
     View for featured products
     """
-    template_name = 'products/featured_products.html'
+    template_name = 'products/product_list.html'  # Use same template as main product list
 
     def get_queryset(self):
         """Get featured products"""
@@ -250,10 +320,12 @@ class FeaturedProductsView(BaseProductListView):
         context = super().get_context_data(**kwargs)
         context['title'] = _('المنتجات المميزة')
 
-        # إضافة شجرة الفئات
+        # Add category tree for sidebar navigation
         category_view = CategoryListView()
         category_view.request = self.request
         context['category_tree'] = category_view.build_category_tree()
+
+        context['products_count'] = self.get_queryset().count()
 
         return context
 
@@ -262,7 +334,7 @@ class BestSellersView(BaseProductListView):
     """
     View for best selling products
     """
-    template_name = 'products/best_sellers.html'
+    template_name = 'products/product_list.html'  # Use same template as main product list
 
     def get_queryset(self):
         """Get best selling products"""
@@ -274,10 +346,12 @@ class BestSellersView(BaseProductListView):
         context = super().get_context_data(**kwargs)
         context['title'] = _('الأكثر مبيعاً')
 
-        # إضافة شجرة الفئات
+        # Add category tree for sidebar navigation
         category_view = CategoryListView()
         category_view.request = self.request
         context['category_tree'] = category_view.build_category_tree()
+
+        context['products_count'] = self.get_queryset().count()
 
         return context
 
@@ -315,7 +389,7 @@ class ProductVariantDetailView(BaseProductDetailView):
         except:
             context['selected_variant'] = None
 
-        # إضافة شجرة الفئات
+        # Add category tree for sidebar navigation
         category_view = CategoryListView()
         category_view.request = self.request
         context['category_tree'] = category_view.build_category_tree()
