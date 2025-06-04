@@ -7,12 +7,10 @@ Using professional search views
 from django.urls import path
 from django.http import JsonResponse
 
-# Import product views
+# استيراد عروض المنتجات
 from .views.product_views import (
     ProductListView,
     ProductDetailView,
-    CategoryListView,
-    CategoryDetailView,
     SpecialOffersView,
     TagProductsView,
     BrandProductsView,
@@ -22,6 +20,13 @@ from .views.product_views import (
     ProductVariantDetailView,
 )
 
+# استيراد عروض الفئات
+from .views.category_views import (
+    CategoryListView,
+    CategoryDetailView,
+)
+
+# استيراد عروض التقييمات
 from .views.review_views import (
     SubmitReviewView,
     ProductReviewListView,
@@ -144,11 +149,19 @@ urlpatterns = [
     path('my-reviews/', UserReviewsView.as_view(), name='user_reviews'),
 ]
 
-
-
-# إضافة URLs المخزنة مؤقتاً في الإنتاج
+# URLs للتطوير والاختبار
 from django.conf import settings
 
+if settings.DEBUG:
+    urlpatterns += [
+        # URLs للاختبار
+        path('debug/list/', ProductListView.as_view(paginate_by=5), name='debug_product_list'),
+
+        # اختبار الـ views المحترفة
+        path('debug/advanced-search/',
+             AdvancedSearchView.as_view() if SEARCH_VIEWS_AVAILABLE else fallback_search_view,
+             name='debug_advanced_search'),
+    ]
 
 # Helper functions for URL generation
 def get_product_url(product):
@@ -194,20 +207,6 @@ def get_advanced_search_url(**filters):
         url += f'?{params.urlencode()}'
     return url
 
-
-# URLs للتطوير والاختبار
-if settings.DEBUG:
-    urlpatterns += [
-        # URLs للاختبار
-        path('debug/list/', ProductListView.as_view(paginate_by=5), name='debug_product_list'),
-
-        # اختبار الـ views المحترفة
-        path('debug/advanced-search/',
-             AdvancedSearchView.as_view() if SEARCH_VIEWS_AVAILABLE else fallback_search_view,
-             name='debug_advanced_search'),
-
-    ]
-
 # معلومات للمطور
 VIEW_STATUS = {
     'search_views_available': SEARCH_VIEWS_AVAILABLE,
@@ -215,7 +214,7 @@ VIEW_STATUS = {
     'quick_search_available': SEARCH_VIEWS_AVAILABLE,
     'advanced_search_available': SEARCH_VIEWS_AVAILABLE,
     'search_api_available': SEARCH_VIEWS_AVAILABLE,
-    'cache_enabled': not settings.DEBUG,
+    'cache_enabled': False,  # تم تغييره من not settings.DEBUG إلى False
     'imported_views': [
         'SearchView' if SEARCH_VIEWS_AVAILABLE else None,
         'QuickSearchView' if SEARCH_VIEWS_AVAILABLE else None,
