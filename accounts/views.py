@@ -31,6 +31,7 @@ from django.conf import settings
 from django.http import HttpResponseRedirect, Http404
 from django.contrib.sites.shortcuts import get_current_site
 from django.db.models import Q
+from django import forms
 
 from .models import User, UserProfile, UserAddress, UserActivity, Role
 from .forms import (

@@ -1,0 +1,718 @@
+{# templates/accounts/profile/notification_preferences.html #}
+{% extends 'core/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "تفضيلات الإشعارات" %} | {{ site_settings.site_name|default:"ESCO" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-container {
+        background-color: var(--bs-body-bg);
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+    
+    .profile-header {
+        background: linear-gradient(135deg, var(--bs-primary) 0%, rgba(var(--bs-primary-rgb), 0.7) 100%);
+        color: white;
+        padding: 3rem 2rem;
+        position: relative;
+        text-align: center;
+    }
+    
+    .profile-nav {
+        background-color: var(--bs-body-bg);
+        padding: 0;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .profile-nav .nav-link {
+        padding: 1rem 1.5rem;
+        color: var(--bs-body-color);
+        font-weight: 500;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s ease;
+    }
+    
+    .profile-nav .nav-link.active {
+        border-bottom-color: var(--bs-primary);
+        color: var(--bs-primary);
+    }
+    
+    .profile-nav .nav-link:hover {
+        background-color: rgba(var(--bs-primary-rgb), 0.05);
+    }
+    
+    .profile-content {
+        padding: 2rem;
+    }
+    
+    .profile-section {
+        margin-bottom: 2rem;
+    }
+    
+    .profile-section-title {
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        color: var(--bs-primary);
+        display: flex;
+        align-items: center;
+    }
+    
+    .profile-section-title i {
+        margin-right: 0.75rem;
+    }
+    
+    /* Notification preferences styles */
+    .notification-group {
+        margin-bottom: 2rem;
+        border-radius: 15px;
+        padding: 1.5rem;
+        background-color: rgba(var(--bs-primary-rgb), 0.03);
+        border: 1px solid rgba(var(--bs-primary-rgb), 0.1);
+    }
+    
+    .notification-group-title {
+        margin-bottom: 1.5rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+    
+    .notification-group-title i {
+        margin-right: 0.75rem;
+        color: var(--bs-primary);
+    }
+    
+    .notification-item {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .notification-item:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+    
+    .notification-item-info {
+        flex: 1;
+    }
+    
+    .notification-item-title {
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+    }
+    
+    .notification-item-description {
+        color: var(--bs-secondary);
+        font-size: 0.9rem;
+        margin-bottom: 0;
+    }
+    
+    .notification-channel-options {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .notification-toggle {
+        position: relative;
+        width: 50px;
+        height: 24px;
+    }
+    
+    .notification-toggle input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .notification-toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .3s;
+        border-radius: 24px;
+    }
+    
+    .notification-toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .3s;
+        border-radius: 50%;
+    }
+    
+    input:checked + .notification-toggle-slider {
+        background-color: var(--bs-primary);
+    }
+    
+    input:checked + .notification-toggle-slider:before {
+        transform: translateX(26px);
+    }
+    
+    .notification-channel {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .notification-channel i {
+        color: var(--bs-primary);
+    }
+    
+    .notification-frequency {
+        margin-top: 1rem;
+    }
+    
+    .notification-frequency select {
+        border-radius: 10px;
+        border: 1px solid rgba(0,0,0,0.1);
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .schedule-option {
+        margin-top: 1rem;
+        padding: 1rem;
+        border-radius: 10px;
+        background-color: rgba(var(--bs-primary-rgb), 0.03);
+    }
+    
+    .schedule-option-title {
+        font-weight: 500;
+        margin-bottom: 0.75rem;
+    }
+    
+    .day-selector {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .day-selector label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background-color: rgba(var(--bs-primary-rgb), 0.05);
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.3s ease;
+    }
+    
+    .day-selector input[type="checkbox"] {
+        display: none;
+    }
+    
+    .day-selector input[type="checkbox"]:checked + label {
+        background-color: var(--bs-primary);
+        color: white;
+    }
+    
+    .quiet-hours {
+        padding: 1rem;
+        border-radius: 10px;
+        background-color: rgba(0,0,0,0.03);
+        margin-top: 1rem;
+    }
+    
+    .quiet-hours-title {
+        font-weight: 500;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .quiet-hours-title i {
+        margin-right: 0.5rem;
+    }
+    
+    .time-range {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .time-input {
+        flex: 1;
+    }
+    
+    .time-input label {
+        font-size: 0.9rem;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+    
+    .time-input input {
+        width: 100%;
+        border-radius: 8px;
+        border: 1px solid rgba(0,0,0,0.1);
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    /* Dark mode adjustments */
+    [data-bs-theme="dark"] .profile-container {
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    }
+    
+    [data-bs-theme="dark"] .profile-nav {
+        border-bottom-color: rgba(255,255,255,0.1);
+    }
+    
+    [data-bs-theme="dark"] .notification-group {
+        background-color: rgba(255,255,255,0.03);
+        border-color: rgba(255,255,255,0.1);
+    }
+    
+    [data-bs-theme="dark"] .notification-item {
+        border-bottom-color: rgba(255,255,255,0.05);
+    }
+    
+    [data-bs-theme="dark"] .notification-toggle-slider {
+        background-color: #555;
+    }
+    
+    [data-bs-theme="dark"] .schedule-option,
+    [data-bs-theme="dark"] .quiet-hours {
+        background-color: rgba(255,255,255,0.03);
+    }
+    
+    [data-bs-theme="dark"] .day-selector label {
+        background-color: rgba(255,255,255,0.05);
+    }
+    
+    @media (max-width: 767.98px) {
+        .profile-header {
+            padding: 2rem 1rem;
+        }
+        
+        .profile-content {
+            padding: 1.5rem;
+        }
+        
+        .notification-group {
+            padding: 1rem;
+        }
+        
+        .notification-channel-options {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .day-selector {
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "الرئيسية" %}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'accounts:profile' %}">{% trans "الملف الشخصي" %}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{% trans "تفضيلات الإشعارات" %}</li>
+                </ol>
+            </nav>
+            
+            <div class="profile-container">
+                <div class="profile-header">
+                    <h2><i class="fas fa-bell me-3"></i>{% trans "تفضيلات الإشعارات" %}</h2>
+                    <p>{% trans "تحكم في كيفية وتوقيت استلام الإشعارات" %}</p>
+                </div>
+                
+                <div class="profile-nav">
+                    <ul class="nav nav-tabs border-0">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:profile' %}">
+                                <i class="fas fa-user me-2"></i>{% trans "الملف الشخصي" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:address_list' %}">
+                                <i class="fas fa-map-marker-alt me-2"></i>{% trans "العناوين" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:order_history' %}">
+                                <i class="fas fa-box me-2"></i>{% trans "الطلبات" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:change_password' %}">
+                                <i class="fas fa-lock me-2"></i>{% trans "كلمة المرور" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="{% url 'accounts:notification_preferences' %}">
+                                <i class="fas fa-bell me-2"></i>{% trans "الإشعارات" %}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="profile-content">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="profile-section">
+                            <h3 class="profile-section-title">
+                                <i class="fas fa-sliders-h"></i>{% trans "إعدادات عامة" %}
+                            </h3>
+                            
+                            <div class="notification-group">
+                                <div class="notification-item">
+                                    <div class="notification-item-info">
+                                        <h5 class="notification-item-title">{% trans "تمكين جميع الإشعارات" %}</h5>
+                                        <p class="notification-item-description">{% trans "تفعيل أو تعطيل جميع الإشعارات مرة واحدة" %}</p>
+                                    </div>
+                                    <label class="notification-toggle">
+                                        <input type="checkbox" name="enable_all_notifications" id="enable_all_notifications" {% if notification_preferences.email_notifications or notification_preferences.sms_notifications %}checked{% endif %}>
+                                        <span class="notification-toggle-slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <div class="notification-item">
+                                    <div class="notification-item-info">
+                                        <h5 class="notification-item-title">{% trans "قنوات الإشعارات" %}</h5>
+                                        <p class="notification-item-description">{% trans "حدد الطرق التي ترغب في استلام الإشعارات من خلالها" %}</p>
+                                        
+                                        <div class="notification-channel-options">
+                                            <div class="notification-channel">
+                                                <label class="notification-toggle">
+                                                    <input type="checkbox" name="email_notifications" id="email_notifications" {% if notification_preferences.email_notifications %}checked{% endif %}>
+                                                    <span class="notification-toggle-slider"></span>
+                                                </label>
+                                                <span><i class="fas fa-envelope"></i> {% trans "البريد الإلكتروني" %}</span>
+                                            </div>
+                                            
+                                            <div class="notification-channel">
+                                                <label class="notification-toggle">
+                                                    <input type="checkbox" name="sms_notifications" id="sms_notifications" {% if notification_preferences.sms_notifications %}checked{% endif %}>
+                                                    <span class="notification-toggle-slider"></span>
+                                                </label>
+                                                <span><i class="fas fa-sms"></i> {% trans "الرسائل النصية" %}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="notification-item">
+                                    <div class="notification-item-info">
+                                        <h5 class="notification-item-title">{% trans "تكرار الإشعارات" %}</h5>
+                                        <p class="notification-item-description">{% trans "حدد عدد المرات التي ترغب في استلام الإشعارات بها" %}</p>
+                                        
+                                        <div class="notification-frequency">
+                                            <select name="notification_frequency" class="form-select">
+                                                <option value="immediate" {% if notification_preferences.frequency == 'immediate' %}selected{% endif %}>{% trans "فوري - استلام كل إشعار على حدة" %}</option>
+                                                <option value="hourly" {% if notification_preferences.frequency == 'hourly' %}selected{% endif %}>{% trans "ساعي - تجميع الإشعارات كل ساعة" %}</option>
+                                                <option value="daily" {% if notification_preferences.frequency == 'daily' %}selected{% endif %}>{% trans "يومي - ملخص يومي واحد" %}</option>
+                                                <option value="weekly" {% if notification_preferences.frequency == 'weekly' %}selected{% endif %}>{% trans "أسبوعي - ملخص أسبوعي واحد" %}</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="schedule-option" id="weekly-schedule" style="display: {% if notification_preferences.frequency == 'weekly' %}block{% else %}none{% endif %};">
+                                            <h6 class="schedule-option-title">{% trans "اختر يوم استلام الملخص الأسبوعي" %}</h6>
+                                            <div class="day-selector">
+                                                <input type="radio" id="day-sun" name="weekly_day" value="0" {% if notification_preferences.weekly_day == '0' %}checked{% endif %}>
+                                                <label for="day-sun">{% trans "أحد" %}</label>
+                                                
+                                                <input type="radio" id="day-mon" name="weekly_day" value="1" {% if notification_preferences.weekly_day == '1' %}checked{% endif %}>
+                                                <label for="day-mon">{% trans "اثن" %}</label>
+                                                
+                                                <input type="radio" id="day-tue" name="weekly_day" value="2" {% if notification_preferences.weekly_day == '2' %}checked{% endif %}>
+                                                <label for="day-tue">{% trans "ثلا" %}</label>
+                                                
+                                                <input type="radio" id="day-wed" name="weekly_day" value="3" {% if notification_preferences.weekly_day == '3' %}checked{% endif %}>
+                                                <label for="day-wed">{% trans "أرب" %}</label>
+                                                
+                                                <input type="radio" id="day-thu" name="weekly_day" value="4" {% if notification_preferences.weekly_day == '4' %}checked{% endif %}>
+                                                <label for="day-thu">{% trans "خمي" %}</label>
+                                                
+                                                <input type="radio" id="day-fri" name="weekly_day" value="5" {% if notification_preferences.weekly_day == '5' %}checked{% endif %}>
+                                                <label for="day-fri">{% trans "جمع" %}</label>
+                                                
+                                                <input type="radio" id="day-sat" name="weekly_day" value="6" {% if notification_preferences.weekly_day == '6' %}checked{% endif %}>
+                                                <label for="day-sat">{% trans "سبت" %}</label>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="schedule-option" id="daily-schedule" style="display: {% if notification_preferences.frequency == 'daily' %}block{% else %}none{% endif %};">
+                                            <h6 class="schedule-option-title">{% trans "اختر وقت استلام الملخص اليومي" %}</h6>
+                                            <input type="time" name="daily_time" class="form-control" value="{{ notification_preferences.daily_time|default:'18:00' }}">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="notification-item">
+                                    <div class="notification-item-info">
+                                        <h5 class="notification-item-title">{% trans "وقت الهدوء" %}</h5>
+                                        <p class="notification-item-description">{% trans "حدد فترة زمنية لا ترغب في استلام إشعارات خلالها" %}</p>
+                                        
+                                        <div class="notification-channel-options">
+                                            <div class="notification-channel">
+                                                <label class="notification-toggle">
+                                                    <input type="checkbox" name="enable_quiet_hours" id="enable_quiet_hours" {% if notification_preferences.enable_quiet_hours %}checked{% endif %}>
+                                                    <span class="notification-toggle-slider"></span>
+                                                </label>
+                                                <span><i class="fas fa-moon"></i> {% trans "تفعيل وقت الهدوء" %}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="quiet-hours" id="quiet-hours-settings" style="display: {% if notification_preferences.enable_quiet_hours %}block{% else %}none{% endif %};">
+                                            <div class="time-range">
+                                                <div class="time-input">
+                                                    <label>{% trans "من" %}</label>
+                                                    <input type="time" name="quiet_hours_start" value="{{ notification_preferences.quiet_hours_start|default:'22:00' }}">
+                                                </div>
+                                                <div class="time-input">
+                                                    <label>{% trans "إلى" %}</label>
+                                                    <input type="time" name="quiet_hours_end" value="{{ notification_preferences.quiet_hours_end|default:'07:00' }}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="profile-section">
+                            <h3 class="profile-section-title">
+                                <i class="fas fa-shopping-cart"></i>{% trans "إشعارات الطلبات والمنتجات" %}
+                            </h3>
+                            
+                            <div class="notification-group">
+                                <h4 class="notification-group-title">
+                                    <i class="fas fa-box"></i>{% trans "إشعارات الطلبات" %}
+                                </h4>
+                                
+                                <div class="notification-item">
+                                    <div class="notification-item-info">
+                                        <h5 class="notification-item-title">{% trans "تحديثات الطلبات" %}</h5>
+                                        <p class="notification-item-description">{% trans "الحصول على إشعارات عن حالة طلباتك وشحنها وتسليمها" %}</p>
+                                    </div>
+                                    <label class="notification-toggle">
+                                        <input type="checkbox" name="order_updates" {% if notification_preferences.order_updates %}checked{% endif %}>
+                                        <span class="notification-toggle-slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <div class="notification-item">
+                                    <div class="notification-item-info">
+                                        <h5 class="notification-item-title">{% trans "تأكيد الطلبات" %}</h5>
+                                        <p class="notification-item-description">{% trans "استلام تأكيد عند إتمام الطلب" %}</p>
+                                    </div>
+                                    <label class="notification-toggle">
+                                        <input type="checkbox" name="order_confirmations" {% if notification_preferences.order_confirmations %}checked{% endif %}>
+                                        <span class="notification-toggle-slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <div class="notification-item">
+                                    <div class="notification-item-info">
+                                        <h5 class="notification-item-title">{% trans "تنبيهات الشحن" %}</h5>
+                                        <p class="notification-item-description">{% trans "الحصول على إشعارات عند شحن طلبك وتغيير حالته" %}</p>
+                                    </div>
+                                    <label class="notification-toggle">
+                                        <input type="checkbox" name="shipping_updates" {% if notification_preferences.shipping_updates %}checked{% endif %}>
+                                        <span class="notification-toggle-slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <div class="notification-item">
+                                    <div class="notification-item-info">
+                                        <h5 class="notification-item-title">{% trans "تذكيرات المراجعة" %}</h5>
+                                        <p class="notification-item-description">{% trans "تذكير بتقديم مراجعة للمنتجات التي اشتريتها" %}</p>
+                                    </div>
+                                    <label class="notification-toggle">
+                                        <input type="checkbox" name="review_reminders" {% if notification_preferences.review_reminders %}checked{% endif %}>
+                                        <span class="notification-toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="notification-group">
+                                <h4 class="notification-group-title">
+                                    <i class="fas fa-tag"></i>{% trans "إشعارات المنتجات" %}
+                                </h4>
+                                
+                                <div class="notification-item">
+                                    <div class="notification-item-info">
+                                        <h5 class="notification-item-title">{% trans "إعادة التوفر" %}</h5>
+                                        <p class="notification-item-description">{% trans "إشعارك عندما يتوفر منتج من قائمة الانتظار" %}</p>
+                                    </div>
+                                    <label class="notification-toggle">
+                                        <input type="checkbox" name="back_in_stock" {% if notification_preferences.back_in_stock %}checked{% endif %}>
+                                        <span class="notification-toggle-slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <div class="notification-item">
+                                    <div class="notification-item-info">
+                                        <h5 class="notification-item-title">{% trans "تغييرات الأسعار" %}</h5>
+                                        <p class="notification-item-description">{% trans "إعلامك بتغييرات الأسعار للمنتجات التي تتابعها" %}</p>
+                                    </div>
+                                    <label class="notification-toggle">
+                                        <input type="checkbox" name="price_alerts" {% if notification_preferences.price_alerts %}checked{% endif %}>
+                                        <span class="notification-toggle-slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <div class="notification-item">
+                                    <div class="notification-item-info">
+                                        <h5 class="notification-item-title">{% trans "منتجات جديدة" %}</h5>
+                                        <p class="notification-item-description">{% trans "إشعارك بالمنتجات الجديدة في الفئات التي تهمك" %}</p>
+                                    </div>
+                                    <label class="notification-toggle">
+                                        <input type="checkbox" name="new_products" {% if notification_preferences.new_products %}checked{% endif %}>
+                                        <span class="notification-toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="profile-section">
+                            <h3 class="profile-section-title">
+                                <i class="fas fa-bullhorn"></i>{% trans "المحتوى التسويقي" %}
+                            </h3>
+                            
+                            <div class="notification-group">
+                                <div class="notification-item">
+                                    <div class="notification-item-info">
+                                        <h5 class="notification-item-title">{% trans "رسائل تسويقية" %}</h5>
+                                        <p class="notification-item-description">{% trans "استلام عروض وإعلانات ونشرات إخبارية عن منتجاتنا" %}</p>
+                                    </div>
+                                    <label class="notification-toggle">
+                                        <input type="checkbox" name="marketing_emails" {% if notification_preferences.marketing_emails %}checked{% endif %}>
+                                        <span class="notification-toggle-slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <div class="notification-item">
+                                    <div class="notification-item-info">
+                                        <h5 class="notification-item-title">{% trans "عروض خاصة" %}</h5>
+                                        <p class="notification-item-description">{% trans "إشعارات بالخصومات والعروض الخاصة" %}</p>
+                                    </div>
+                                    <label class="notification-toggle">
+                                        <input type="checkbox" name="special_offers" {% if notification_preferences.special_offers %}checked{% endif %}>
+                                        <span class="notification-toggle-slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <div class="notification-item">
+                                    <div class="notification-item-info">
+                                        <h5 class="notification-item-title">{% trans "النشرة الإخبارية" %}</h5>
+                                        <p class="notification-item-description">{% trans "استلام النشرة الإخبارية الدورية حول أخبار الشركة والصناعة" %}</p>
+                                    </div>
+                                    <label class="notification-toggle">
+                                        <input type="checkbox" name="newsletters" {% if notification_preferences.newsletters %}checked{% endif %}>
+                                        <span class="notification-toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>{% trans "حفظ التغييرات" %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // التحكم في عرض خيارات الجدول الزمني
+        const notificationFrequency = document.querySelector('[name="notification_frequency"]');
+        const weeklySchedule = document.getElementById('weekly-schedule');
+        const dailySchedule = document.getElementById('daily-schedule');
+        
+        notificationFrequency.addEventListener('change', function() {
+            if (this.value === 'weekly') {
+                weeklySchedule.style.display = 'block';
+                dailySchedule.style.display = 'none';
+            } else if (this.value === 'daily') {
+                weeklySchedule.style.display = 'none';
+                dailySchedule.style.display = 'block';
+            } else {
+                weeklySchedule.style.display = 'none';
+                dailySchedule.style.display = 'none';
+            }
+        });
+        
+        // التحكم في عرض إعدادات وقت الهدوء
+        const enableQuietHours = document.getElementById('enable_quiet_hours');
+        const quietHoursSettings = document.getElementById('quiet-hours-settings');
+        
+        enableQuietHours.addEventListener('change', function() {
+            quietHoursSettings.style.display = this.checked ? 'block' : 'none';
+        });
+        
+        // التحكم في تمكين/تعطيل جميع الإشعارات
+        const enableAllNotifications = document.getElementById('enable_all_notifications');
+        const emailNotifications = document.getElementById('email_notifications');
+        const smsNotifications = document.getElementById('sms_notifications');
+        
+        enableAllNotifications.addEventListener('change', function() {
+            if (this.checked) {
+                // تفعيل قناة واحدة على الأقل عند تفعيل جميع الإشعارات
+                if (!emailNotifications.checked && !smsNotifications.checked) {
+                    emailNotifications.checked = true;
+                }
+            } else {
+                // تعطيل جميع القنوات عند تعطيل جميع الإشعارات
+                emailNotifications.checked = false;
+                smsNotifications.checked = false;
+            }
+        });
+        
+        // التأكد من تحديث حالة زر تمكين جميع الإشعارات
+        const updateEnableAllStatus = function() {
+            enableAllNotifications.checked = emailNotifications.checked || smsNotifications.checked;
+        };
+        
+        emailNotifications.addEventListener('change', updateEnableAllStatus);
+        smsNotifications.addEventListener('change', updateEnableAllStatus);
+    });
+</script>
+{% endblock %}
