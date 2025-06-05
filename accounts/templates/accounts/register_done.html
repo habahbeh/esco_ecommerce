@@ -1,0 +1,64 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block account_title %}{% trans "تم إنشاء الحساب بنجاح" %}{% endblock %}
+
+{% block account_content %}
+<div class="auth-container text-center">
+    <div class="auth-header">
+        <div class="auth-logo">
+            {% if site_settings.logo %}
+                <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name|default:'ESCO' }}">
+            {% else %}
+                <img src="{% static 'images/logo.png' %}" alt="ESCO">
+            {% endif %}
+        </div>
+        <div class="my-4">
+            <span class="verification-icon success">
+                <i class="fas fa-check-circle"></i>
+            </span>
+        </div>
+        <h2>{% trans "تم إنشاء حسابك بنجاح!" %}</h2>
+        <p class="mb-4">{% trans "لقد أرسلنا رسالة تحقق إلى بريدك الإلكتروني. يرجى التحقق من صندوق الوارد الخاص بك والنقر على رابط التحقق لتفعيل حسابك." %}</p>
+    </div>
+
+    <div class="alert alert-info" role="alert">
+        <i class="fas fa-info-circle me-2"></i>
+        {% trans "إذا لم تستلم بريد التفعيل خلال بضع دقائق، يرجى التحقق من مجلد البريد غير المرغوب فيه أو طلب إرسال رابط تفعيل جديد." %}
+    </div>
+
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{% url 'accounts:resend_verification' %}" class="btn btn-outline-primary">
+            <i class="fas fa-paper-plane me-2"></i>{% trans "إعادة إرسال رابط التفعيل" %}
+        </a>
+        <a href="{% url 'accounts:login' %}" class="btn btn-primary ms-2">
+            <i class="fas fa-sign-in-alt me-2"></i>{% trans "تسجيل الدخول" %}
+        </a>
+    </div>
+
+    <div class="auth-help mt-4">
+        <p>{% trans "هل تواجه مشكلة؟" %} <a href="{% url 'core:contact' %}">{% trans "تواصل مع فريق الدعم" %}</a></p>
+    </div>
+</div>
+
+<script>
+    // تحديث شريط التقدم
+    document.addEventListener('DOMContentLoaded', function() {
+        const progressBar = document.getElementById('progressBar');
+        let width = 0;
+        const interval = setInterval(function() {
+            if (width >= 100) {
+                clearInterval(interval);
+            } else {
+                width++;
+                progressBar.style.width = width + '%';
+            }
+        }, 30); // 30ms * 100 = ~3 seconds
+    });
+</script>
+{% endblock %}
