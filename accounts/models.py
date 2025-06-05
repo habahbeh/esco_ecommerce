@@ -4,11 +4,35 @@
 User and Profile models
 """
 
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
+from django.conf import settings
+from django.utils import timezone
 import uuid
+import secrets
+
+
+class Role(models.Model):
+    """
+    نموذج الأدوار المخصصة في النظام
+    Custom roles model
+    """
+    name = models.CharField(_("اسم الدور"), max_length=100)
+    description = models.TextField(_("وصف الدور"), blank=True)
+    permissions = models.ManyToManyField(
+        Permission,
+        verbose_name=_("الصلاحيات"),
+        blank=True,
+    )
+
+    class Meta:
+        verbose_name = _("دور")
+        verbose_name_plural = _("الأدوار")
+
+    def __str__(self):
+        return self.name
 
 
 class User(AbstractUser):
@@ -70,11 +94,48 @@ class User(AbstractUser):
     country = models.CharField(_("الدولة"), max_length=100, blank=True)
     postal_code = models.CharField(_("الرمز البريدي"), max_length=20, blank=True)
 
-    # Status and permissions
+    # Email verification
     is_verified = models.BooleanField(
         _("موثق"),
         default=False,
         help_text=_("هل تم تأكيد البريد الإلكتروني؟")
+    )
+
+    verification_token = models.CharField(
+        _("رمز التحقق"),
+        max_length=100,
+        blank=True,
+        null=True
+    )
+
+    verification_token_expires = models.DateTimeField(
+        _("تاريخ انتهاء رمز التحقق"),
+        blank=True,
+        null=True
+    )
+
+    # Password reset
+    password_reset_token = models.CharField(
+        _("رمز إعادة تعيين كلمة المرور"),
+        max_length=100,
+        blank=True,
+        null=True
+    )
+
+    password_reset_expires = models.DateTimeField(
+        _("تاريخ انتهاء رمز إعادة تعيين كلمة المرور"),
+        blank=True,
+        null=True
+    )
+
+    # Role-based permissions
+    role = models.ForeignKey(
+        Role,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name=_("الدور"),
+        related_name="users"
     )
 
     is_product_reviewer = models.BooleanField(
@@ -169,6 +230,50 @@ class User(AbstractUser):
     def can_access_dashboard(self):
         """Check if user can access dashboard"""
         return self.is_staff or self.is_superuser
+
+    def generate_verification_token(self):
+        """إنشاء رمز تحقق جديد للبريد الإلكتروني"""
+        self.verification_token = secrets.token_urlsafe(32)
+        self.verification_token_expires = timezone.now() + timezone.timedelta(days=1)
+        self.save(update_fields=['verification_token', 'verification_token_expires'])
+        return self.verification_token
+
+    def verify_email(self, token):
+        """التحقق من صحة رمز التحقق وتفعيل البريد الإلكتروني"""
+        if (self.verification_token == token and
+                self.verification_token_expires and
+                self.verification_token_expires > timezone.now()):
+            self.is_verified = True
+            self.verification_token = None
+            self.verification_token_expires = None
+            self.save(update_fields=['is_verified', 'verification_token', 'verification_token_expires'])
+            return True
+        return False
+
+    def generate_password_reset_token(self):
+        """إنشاء رمز إعادة تعيين كلمة المرور"""
+        self.password_reset_token = secrets.token_urlsafe(32)
+        self.password_reset_expires = timezone.now() + timezone.timedelta(hours=24)
+        self.save(update_fields=['password_reset_token', 'password_reset_expires'])
+        return self.password_reset_token
+
+    def verify_password_reset_token(self, token):
+        """التحقق من صحة رمز إعادة تعيين كلمة المرور"""
+        if (self.password_reset_token == token and
+                self.password_reset_expires and
+                self.password_reset_expires > timezone.now()):
+            return True
+        return False
+
+    def reset_password(self, token, new_password):
+        """إعادة تعيين كلمة المرور باستخدام الرمز"""
+        if self.verify_password_reset_token(token):
+            self.set_password(new_password)
+            self.password_reset_token = None
+            self.password_reset_expires = None
+            self.save(update_fields=['password', 'password_reset_token', 'password_reset_expires'])
+            return True
+        return False
 
 
 class UserProfile(models.Model):
@@ -387,24 +492,6 @@ class UserAddress(models.Model):
         ]
         return ", ".join([part for part in parts if part])
 
-
-# Signal handlers for profile creation
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-
-
-@receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    """Create user profile when user is created"""
-    if created:
-        UserProfile.objects.create(user=instance)
-
-
-@receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    """Save user profile when user is saved"""
-    if hasattr(instance, 'profile'):
-        instance.profile.save()
 
 class UserActivity(models.Model):
     """

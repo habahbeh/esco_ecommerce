@@ -21,7 +21,15 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-
+class CachedMixin:
+    """
+    ميكسن لإضافة التخزين المؤقت للمشاهدات
+    Mixin for adding caching to views
+    """
+    @method_decorator(cache_page(300))
+    @method_decorator(vary_on_headers('User-Agent'))
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
 
 class OptimizedQueryMixin:
