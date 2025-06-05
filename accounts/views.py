@@ -1051,3 +1051,35 @@ class UserActivityListView(StaffRequiredMixin, ListView):
         context['current_date_to'] = self.request.GET.get('date_to', '')
 
         return context
+
+class SecurityView(LoginRequiredMixin, TemplateView):
+    """
+    عرض إعدادات الأمان - يتيح للمستخدمين إدارة إعدادات أمان حساباتهم
+    Security settings view - allows users to manage their account security settings
+    """
+    template_name = 'accounts/profile/security.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # يمكنك إضافة أي بيانات سياق إضافية هنا
+        return context
+
+class UpdateAvatarView(LoginRequiredMixin, View):
+    """
+    عرض تحديث الصورة الشخصية - يتيح للمستخدمين تحديث صورهم الشخصية
+    Avatar update view - allows users to update their profile picture
+    """
+    def post(self, request):
+        if 'avatar' in request.FILES:
+            user = request.user
+            user.avatar = request.FILES['avatar']
+            user.save()
+
+            return JsonResponse({
+                'success': True,
+                'avatar_url': user.avatar.url
+            })
+        return JsonResponse({
+            'success': False,
+            'error': _('لم يتم توفير صورة')
+        })

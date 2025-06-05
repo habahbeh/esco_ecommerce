@@ -1,0 +1,448 @@
+{# templates/accounts/addresses/create.html #}
+{% extends 'core/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "إضافة عنوان جديد" %} | {{ site_settings.site_name|default:"ESCO" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-container {
+        background-color: var(--bs-body-bg);
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+    
+    .profile-header {
+        background: linear-gradient(135deg, var(--bs-primary) 0%, rgba(var(--bs-primary-rgb), 0.7) 100%);
+        color: white;
+        padding: 3rem 2rem;
+        position: relative;
+        text-align: center;
+    }
+    
+    .profile-nav {
+        background-color: var(--bs-body-bg);
+        padding: 0;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .profile-nav .nav-link {
+        padding: 1rem 1.5rem;
+        color: var(--bs-body-color);
+        font-weight: 500;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s ease;
+    }
+    
+    .profile-nav .nav-link.active {
+        border-bottom-color: var(--bs-primary);
+        color: var(--bs-primary);
+    }
+    
+    .profile-nav .nav-link:hover {
+        background-color: rgba(var(--bs-primary-rgb), 0.05);
+    }
+    
+    .profile-content {
+        padding: 2rem;
+    }
+    
+    .profile-section {
+        margin-bottom: 2rem;
+    }
+    
+    .profile-section-title {
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        color: var(--bs-primary);
+        display: flex;
+        align-items: center;
+    }
+    
+    .profile-section-title i {
+        margin-right: 0.75rem;
+    }
+    
+    .address-form .form-control,
+    .address-form .form-select {
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+    }
+    
+    .address-form .form-label {
+        font-weight: 500;
+    }
+    
+    .address-type-selector {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .address-type-card {
+        flex: 1;
+        padding: 1rem;
+        border: 2px solid rgba(0,0,0,0.1);
+        border-radius: 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .address-type-card:hover {
+        border-color: var(--bs-primary);
+        background-color: rgba(var(--bs-primary-rgb), 0.05);
+    }
+    
+    .address-type-card.selected {
+        border-color: var(--bs-primary);
+        background-color: rgba(var(--bs-primary-rgb), 0.1);
+    }
+    
+    .address-type-card i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        color: var(--bs-primary);
+    }
+    
+    .address-type-card h5 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+    
+    .address-options {
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    /* Dark mode adjustments */
+    [data-bs-theme="dark"] .profile-container {
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    }
+    
+    [data-bs-theme="dark"] .profile-nav {
+        border-bottom-color: rgba(255,255,255,0.1);
+    }
+    
+    [data-bs-theme="dark"] .address-type-card {
+        border-color: rgba(255,255,255,0.1);
+    }
+    
+    [data-bs-theme="dark"] .address-options {
+        border-top-color: rgba(255,255,255,0.1);
+    }
+    
+    @media (max-width: 767.98px) {
+        .profile-header {
+            padding: 2rem 1rem;
+        }
+        
+        .profile-content {
+            padding: 1.5rem;
+        }
+        
+        .address-type-selector {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "الرئيسية" %}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'accounts:profile' %}">{% trans "الملف الشخصي" %}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'accounts:address_list' %}">{% trans "العناوين" %}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{% trans "إضافة عنوان جديد" %}</li>
+                </ol>
+            </nav>
+            
+            <div class="profile-container">
+                <div class="profile-header">
+                    <h2><i class="fas fa-plus-circle me-3"></i>{% trans "إضافة عنوان جديد" %}</h2>
+                    <p>{% trans "أضف عنوانًا جديدًا للشحن أو الفوترة" %}</p>
+                </div>
+                
+                <div class="profile-nav">
+                    <ul class="nav nav-tabs border-0">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:profile' %}">
+                                <i class="fas fa-user me-2"></i>{% trans "الملف الشخصي" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="{% url 'accounts:address_list' %}">
+                                <i class="fas fa-map-marker-alt me-2"></i>{% trans "العناوين" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:order_history' %}">
+                                <i class="fas fa-box me-2"></i>{% trans "الطلبات" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:change_password' %}">
+                                <i class="fas fa-lock me-2"></i>{% trans "كلمة المرور" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:notification_preferences' %}">
+                                <i class="fas fa-bell me-2"></i>{% trans "الإشعارات" %}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="profile-content">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <div class="address-type-selector">
+                        <div class="address-type-card selected" data-type="home">
+                            <i class="fas fa-home"></i>
+                            <h5>{% trans "المنزل" %}</h5>
+                        </div>
+                        <div class="address-type-card" data-type="work">
+                            <i class="fas fa-building"></i>
+                            <h5>{% trans "العمل" %}</h5>
+                        </div>
+                        <div class="address-type-card" data-type="other">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <h5>{% trans "آخر" %}</h5>
+                        </div>
+                    </div>
+                    
+                    <form method="post" class="address-form needs-validation" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="type" id="address_type" value="home">
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_label" class="form-label">{% trans "تسمية العنوان" %} *</label>
+                                <input type="text" name="label" id="id_label" class="form-control" required value="{{ form.label.value|default:'المنزل' }}">
+                                <div class="invalid-feedback">
+                                    {% trans "يرجى إدخال تسمية للعنوان" %}
+                                </div>
+                                {% if form.label.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.label.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_phone_number" class="form-label">{% trans "رقم الهاتف" %} *</label>
+                                <input type="tel" name="phone_number" id="id_phone_number" class="form-control" required value="{{ form.phone_number.value|default:'' }}">
+                                <div class="invalid-feedback">
+                                    {% trans "يرجى إدخال رقم هاتف صحيح" %}
+                                </div>
+                                {% if form.phone_number.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.phone_number.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_first_name" class="form-label">{% trans "الاسم الأول" %} *</label>
+                                <input type="text" name="first_name" id="id_first_name" class="form-control" required value="{{ form.first_name.value|default:user.first_name }}">
+                                <div class="invalid-feedback">
+                                    {% trans "يرجى إدخال الاسم الأول" %}
+                                </div>
+                                {% if form.first_name.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.first_name.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_last_name" class="form-label">{% trans "اسم العائلة" %} *</label>
+                                <input type="text" name="last_name" id="id_last_name" class="form-control" required value="{{ form.last_name.value|default:user.last_name }}">
+                                <div class="invalid-feedback">
+                                    {% trans "يرجى إدخال اسم العائلة" %}
+                                </div>
+                                {% if form.last_name.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.last_name.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_address_line_1" class="form-label">{% trans "سطر العنوان الأول" %} *</label>
+                            <input type="text" name="address_line_1" id="id_address_line_1" class="form-control" required value="{{ form.address_line_1.value|default:'' }}">
+                            <div class="invalid-feedback">
+                                {% trans "يرجى إدخال العنوان" %}
+                            </div>
+                            {% if form.address_line_1.errors %}
+                            <div class="text-danger mt-1">
+                                {% for error in form.address_line_1.errors %}{{ error }}{% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_address_line_2" class="form-label">{% trans "سطر العنوان الثاني" %} <small class="text-muted">({% trans "اختياري" %})</small></label>
+                            <input type="text" name="address_line_2" id="id_address_line_2" class="form-control" value="{{ form.address_line_2.value|default:'' }}">
+                            {% if form.address_line_2.errors %}
+                            <div class="text-danger mt-1">
+                                {% for error in form.address_line_2.errors %}{{ error }}{% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_city" class="form-label">{% trans "المدينة" %} *</label>
+                                <input type="text" name="city" id="id_city" class="form-control" required value="{{ form.city.value|default:'' }}">
+                                <div class="invalid-feedback">
+                                    {% trans "يرجى إدخال المدينة" %}
+                                </div>
+                                {% if form.city.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.city.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_state" class="form-label">{% trans "الولاية/المنطقة" %}</label>
+                                <input type="text" name="state" id="id_state" class="form-control" value="{{ form.state.value|default:'' }}">
+                                {% if form.state.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.state.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_postal_code" class="form-label">{% trans "الرمز البريدي" %} *</label>
+                                <input type="text" name="postal_code" id="id_postal_code" class="form-control" required value="{{ form.postal_code.value|default:'' }}">
+                                <div class="invalid-feedback">
+                                    {% trans "يرجى إدخال الرمز البريدي" %}
+                                </div>
+                                {% if form.postal_code.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.postal_code.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_country" class="form-label">{% trans "الدولة" %} *</label>
+                                <input type="text" name="country" id="id_country" class="form-control" required value="{{ form.country.value|default:'' }}">
+                                <div class="invalid-feedback">
+                                    {% trans "يرجى إدخال الدولة" %}
+                                </div>
+                                {% if form.country.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.country.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="address-options">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="id_is_default" name="is_default" {% if form.is_default.value %}checked{% endif %}>
+                                <label class="form-check-label" for="id_is_default">
+                                    {% trans "تعيين كعنوان افتراضي" %}
+                                </label>
+                                {% if form.is_default.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.is_default.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="id_is_shipping_default" name="is_shipping_default" {% if form.is_shipping_default.value %}checked{% endif %}>
+                                <label class="form-check-label" for="id_is_shipping_default">
+                                    {% trans "تعيين كعنوان شحن افتراضي" %}
+                                </label>
+                                {% if form.is_shipping_default.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.is_shipping_default.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="id_is_billing_default" name="is_billing_default" {% if form.is_billing_default.value %}checked{% endif %}>
+                                <label class="form-check-label" for="id_is_billing_default">
+                                    {% trans "تعيين كعنوان فوترة افتراضي" %}
+                                </label>
+                                {% if form.is_billing_default.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.is_billing_default.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>{% trans "حفظ العنوان" %}
+                            </button>
+                            <a href="{% url 'accounts:address_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>{% trans "إلغاء" %}
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // تحديد نوع العنوان
+        const addressTypeCards = document.querySelectorAll('.address-type-card');
+        const addressTypeInput = document.getElementById('address_type');
+        const addressLabelInput = document.getElementById('id_label');
+        
+        addressTypeCards.forEach(card => {
+            card.addEventListener('click', function() {
+                addressTypeCards.forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+                
+                const type = this.dataset.type;
+                addressTypeInput.value = type;
+                
+                // تغيير التسمية الافتراضية بناءً على النوع
+                if (type === 'home') {
+                    addressLabelInput.value = '{% trans "المنزل" %}';
+                } else if (type === 'work') {
+                    addressLabelInput.value = '{% trans "العمل" %}';
+                } else {
+                    addressLabelInput.value = '{% trans "عنوان آخر" %}';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
