@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}" dir="{% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% trans "تفعيل حسابك" %} - {{ site_name }}</title>
+    <style>
+        /* عام */
+        body {
+            font-family: 'Tajawal', 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f5f7;
+            {% if LANGUAGE_CODE == 'ar' %}
+            direction: rtl;
+            text-align: right;
+            {% else %}
+            direction: ltr;
+            text-align: left;
+            {% endif %}
+        }
+        /* الحاوية */
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        /* الترويسة */
+        .email-header {
+            background-color: #1e88e5;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .email-header img {
+            max-width: 200px;
+            height: auto;
+            margin-bottom: 15px;
+        }
+        .email-header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+        }
+        /* المحتوى */
+        .email-content {
+            padding: 30px;
+        }
+        .greeting {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .message {
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #1e88e5;
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        .button:hover {
+            background-color: #1976d2;
+        }
+        .note {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            color: #666;
+            margin-top: 30px;
+        }
+        .link-fallback {
+            word-break: break-all;
+            color: #1e88e5;
+            font-size: 14px;
+            margin-top: 15px;
+        }
+        /* التذييل */
+        .email-footer {
+            background-color: #f4f5f7;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+        .social-links {
+            margin: 20px 0;
+        }
+        .social-link {
+            display: inline-block;
+            margin: 0 5px;
+            color: #1e88e5;
+            font-size: 18px;
+            text-decoration: none;
+        }
+        .unsubscribe {
+            color: #999;
+            text-decoration: none;
+            font-size: 12px;
+        }
+        /* تجاوب */
+        @media screen and (max-width: 600px) {
+            .email-container {
+                width: 100%;
+                border-radius: 0;
+            }
+            .email-header, .email-content, .email-footer {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <img src="https://via.placeholder.com/200x70/1e88e5/ffffff?text={{ site_name|default:'ESCO' }}" alt="{{ site_name|default:'ESCO' }}" />
+            <h1>{% trans "تفعيل حسابك" %}</h1>
+        </div>
+
+        <div class="email-content">
+            <div class="greeting">
+                {% trans "مرحباً" %}, {{ user.get_full_name|default:user.username }}
+            </div>
+
+            <div class="message">
+                <p>{% trans "شكراً لتسجيلك في" %} {{ site_name }}. {% trans "لإكمال عملية التسجيل وتفعيل حسابك، يرجى النقر على الزر أدناه:" %}</p>
+            </div>
+
+            <div class="button-container">
+                <a href="{{ verification_link }}" class="button">{% trans "تفعيل حسابي" %}</a>
+            </div>
+
+            <div class="message">
+                <p>{% trans "إذا لم تقم بإنشاء هذا الحساب، يمكنك تجاهل هذه الرسالة." %}</p>
+                <p>{% trans "سينتهي رابط التفعيل خلال" %} {{ expiry_hours }} {% trans "ساعة" %}.</p>
+            </div>
+
+            <div class="note">
+                <p>{% trans "إذا واجهت مشكلة في النقر على الزر، يمكنك نسخ ولصق الرابط التالي في متصفحك:" %}</p>
+                <div class="link-fallback">{{ verification_link }}</div>
+            </div>
+        </div>
+
+        <div class="email-footer">
+            <div class="social-links">
+                <a href="#" class="social-link">Facebook</a> |
+                <a href="#" class="social-link">Twitter</a> |
+                <a href="#" class="social-link">Instagram</a>
+            </div>
+            <p>© {% now "Y" %} {{ site_name|default:"ESCO" }}. {% trans "جميع الحقوق محفوظة." %}</p>
+            <p>{% trans "هذه رسالة آلية، يرجى عدم الرد عليها." %}</p>
+            <a href="#" class="unsubscribe">{% trans "إلغاء الاشتراك" %}</a>
+        </div>
+    </div>
+</body>
+</html>

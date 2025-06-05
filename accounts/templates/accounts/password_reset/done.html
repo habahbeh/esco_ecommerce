@@ -1,0 +1,41 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block account_title %}{% trans "تم إرسال رابط إعادة التعيين" %}{% endblock %}
+
+{% block account_content %}
+<div class="auth-container text-center">
+    <div class="auth-header">
+        <div class="auth-logo">
+            {% if site_settings.logo %}
+                <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name|default:'ESCO' }}">
+            {% else %}
+                <img src="{% static 'images/logo.png' %}" alt="ESCO">
+            {% endif %}
+        </div>
+        <div class="my-4">
+            <span class="verification-icon success">
+                <i class="fas fa-envelope"></i>
+            </span>
+        </div>
+        <h2>{% trans "تم إرسال بريد إعادة تعيين كلمة المرور" %}</h2>
+        <p class="mb-4">{% trans "لقد أرسلنا لك تعليمات حول كيفية إعادة تعيين كلمة المرور إلى بريدك الإلكتروني. ستتلقى الرسالة قريباً." %}</p>
+    </div>
+
+    <div class="alert alert-info" role="alert">
+        <i class="fas fa-info-circle me-2"></i>
+        {% trans "إذا لم تستلم بريد إعادة التعيين خلال بضع دقائق، يرجى التحقق من مجلد البريد غير المرغوب فيه أو التأكد من أن البريد الإلكتروني الذي أدخلته صحيح." %}
+    </div>
+
+    <div class="mt-4">
+        <a href="{% url 'accounts:login' %}" class="btn btn-primary">
+            <i class="fas fa-sign-in-alt me-2"></i>{% trans "العودة إلى تسجيل الدخول" %}
+        </a>
+    </div>
+
+    <div class="auth-help mt-4">
+        <p>{% trans "هل تواجه مشكلة؟" %} <a href="{% url 'core:contact' %}">{% trans "تواصل مع فريق الدعم" %}</a></p>
+    </div>
+</div>
+{% endblock %}

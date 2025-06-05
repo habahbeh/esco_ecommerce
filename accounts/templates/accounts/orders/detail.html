@@ -1,0 +1,973 @@
+{# templates/accounts/orders/detail.html #}
+{% extends 'core/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "تفاصيل الطلب" %} | {{ site_settings.site_name|default:"ESCO" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-container {
+        background-color: var(--bs-body-bg);
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .profile-header {
+        background: linear-gradient(135deg, var(--bs-primary) 0%, rgba(var(--bs-primary-rgb), 0.7) 100%);
+        color: white;
+        padding: 3rem 2rem;
+        position: relative;
+        text-align: center;
+    }
+
+    .profile-nav {
+        background-color: var(--bs-body-bg);
+        padding: 0;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .profile-nav .nav-link {
+        padding: 1rem 1.5rem;
+        color: var(--bs-body-color);
+        font-weight: 500;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+    .profile-nav .nav-link.active {
+        border-bottom-color: var(--bs-primary);
+        color: var(--bs-primary);
+    }
+
+    .profile-nav .nav-link:hover {
+        background-color: rgba(var(--bs-primary-rgb), 0.05);
+    }
+
+    .profile-content {
+        padding: 2rem;
+    }
+
+    .profile-section {
+        margin-bottom: 2rem;
+    }
+
+    .profile-section-title {
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        color: var(--bs-primary);
+        display: flex;
+        align-items: center;
+    }
+
+    .profile-section-title i {
+        margin-right: 0.75rem;
+    }
+
+    /* Order details styles */
+    .order-header {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .order-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 0;
+    }
+
+    .order-status {
+        display: inline-block;
+        padding: 0.35rem 1rem;
+        border-radius: 50px;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .order-status.pending {
+        background-color: rgba(255, 193, 7, 0.2);
+        color: #e6ac00;
+    }
+
+    .order-status.processing {
+        background-color: rgba(13, 110, 253, 0.2);
+        color: #0b5ed7;
+    }
+
+    .order-status.shipped {
+        background-color: rgba(13, 202, 240, 0.2);
+        color: #0aa2c0;
+    }
+
+    .order-status.delivered {
+        background-color: rgba(25, 135, 84, 0.2);
+        color: #157347;
+    }
+
+    .order-status.cancelled {
+        background-color: rgba(220, 53, 69, 0.2);
+        color: #bb2d3b;
+    }
+
+    .order-status.refunded {
+        background-color: rgba(108, 117, 125, 0.2);
+        color: #565e64;
+    }
+
+    .order-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .order-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .order-meta-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(var(--bs-primary-rgb), 0.1);
+        color: var(--bs-primary);
+        font-size: 1.25rem;
+    }
+
+    .order-meta-content h6 {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--bs-secondary);
+    }
+
+    .order-meta-content p {
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .order-timeline {
+        position: relative;
+        margin-bottom: 2rem;
+    }
+
+    .timeline-track {
+        position: absolute;
+        top: 40px;
+        left: 20px;
+        bottom: 0;
+        width: 2px;
+        background-color: var(--bs-primary);
+    }
+
+    .timeline-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        position: relative;
+    }
+
+    .timeline-step {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .timeline-step-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: var(--bs-primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .timeline-step.incomplete .timeline-step-icon {
+        background-color: #e9ecef;
+        color: #adb5bd;
+    }
+
+    .timeline-step.active .timeline-step-icon {
+        background-color: var(--bs-primary);
+        box-shadow: 0 0 0 4px rgba(var(--bs-primary-rgb), 0.2);
+    }
+
+    .timeline-step-content {
+        flex: 1;
+        padding-top: 0.5rem;
+    }
+
+    .timeline-step-title {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .timeline-step-description {
+        color: var(--bs-secondary);
+        font-size: 0.9rem;
+        margin-bottom: 0;
+    }
+
+    .timeline-step-date {
+        font-size: 0.85rem;
+        color: var(--bs-secondary);
+    }
+
+    .order-items {
+        margin-bottom: 2rem;
+    }
+
+    .order-item {
+        display: flex;
+        padding: 1.25rem;
+        border: 1px solid rgba(0,0,0,0.1);
+        border-radius: 12px;
+        margin-bottom: 1rem;
+    }
+
+    .order-item-image {
+        width: 100px;
+        height: 100px;
+        border-radius: 8px;
+        overflow: hidden;
+        background-color: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .order-item-image img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+
+    .order-item-details {
+        flex: 1;
+        padding: 0 1.25rem;
+    }
+
+    .order-item-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .order-item-variant {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        background-color: rgba(0,0,0,0.05);
+        border-radius: 4px;
+        font-size: 0.8rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .order-item-price {
+        display: flex;
+        flex-direction: column;
+        text-align: right;
+        justify-content: center;
+    }
+
+    .order-item-price-unit {
+        font-size: 0.9rem;
+        color: var(--bs-secondary);
+    }
+
+    .order-item-price-total {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--bs-primary);
+    }
+
+    .order-item-quantity {
+        font-size: 0.9rem;
+        color: var(--bs-secondary);
+    }
+
+    .order-summary {
+        border: 1px solid rgba(0,0,0,0.1);
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .order-summary-header {
+        padding: 1rem 1.25rem;
+        background-color: rgba(var(--bs-primary-rgb), 0.05);
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .order-summary-header h5 {
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .order-summary-body {
+        padding: 1.25rem;
+    }
+
+    .order-summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+    }
+
+    .order-summary-row:last-child {
+        margin-bottom: 0;
+    }
+
+    .order-summary-label {
+        color: var(--bs-secondary);
+    }
+
+    .order-summary-value {
+        font-weight: 600;
+    }
+
+    .order-summary-total {
+        border-top: 1px solid rgba(0,0,0,0.1);
+        margin-top: 1rem;
+        padding-top: 1rem;
+    }
+
+    .order-summary-total .order-summary-label {
+        font-weight: 600;
+        color: var(--bs-body-color);
+        font-size: 1.1rem;
+    }
+
+    .order-summary-total .order-summary-value {
+        color: var(--bs-primary);
+        font-size: 1.25rem;
+    }
+
+    .order-details-card {
+        border: 1px solid rgba(0,0,0,0.1);
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+
+    .order-details-header {
+        padding: 1rem 1.25rem;
+        background-color: rgba(var(--bs-primary-rgb), 0.05);
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .order-details-header h5 {
+        margin: 0;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .order-details-body {
+        padding: 1.25rem;
+    }
+
+    .order-action-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 2rem;
+    }
+
+    /* Dark mode adjustments */
+    [data-bs-theme="dark"] .profile-container {
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    }
+
+    [data-bs-theme="dark"] .profile-nav {
+        border-bottom-color: rgba(255,255,255,0.1);
+    }
+
+    [data-bs-theme="dark"] .order-header {
+        border-bottom-color: rgba(255,255,255,0.1);
+    }
+
+    [data-bs-theme="dark"] .timeline-track {
+        background-color: var(--bs-primary);
+    }
+
+    [data-bs-theme="dark"] .timeline-step.incomplete .timeline-step-icon {
+        background-color: #343a40;
+        color: #6c757d;
+    }
+
+    [data-bs-theme="dark"] .order-item,
+    [data-bs-theme="dark"] .order-summary,
+    [data-bs-theme="dark"] .order-details-card {
+        border-color: rgba(255,255,255,0.1);
+    }
+
+    [data-bs-theme="dark"] .order-item-image {
+        background-color: #2a2a2a;
+    }
+
+    [data-bs-theme="dark"] .order-item-variant {
+        background-color: rgba(255,255,255,0.1);
+    }
+
+    [data-bs-theme="dark"] .order-summary-header,
+    [data-bs-theme="dark"] .order-details-header {
+        background-color: rgba(255,255,255,0.05);
+        border-bottom-color: rgba(255,255,255,0.1);
+    }
+
+    [data-bs-theme="dark"] .order-summary-total {
+        border-top-color: rgba(255,255,255,0.1);
+    }
+
+    @media (max-width: 767.98px) {
+        .profile-header {
+            padding: 2rem 1rem;
+        }
+
+        .profile-content {
+            padding: 1.5rem;
+        }
+
+        .order-item {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .order-item-image {
+            width: 80px;
+            height: 80px;
+        }
+
+        .order-item-details {
+            padding: 0;
+        }
+
+        .order-item-price {
+            text-align: left;
+            flex-direction: row;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .order-meta {
+            gap: 1rem;
+        }
+
+        .order-meta-item {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "الرئيسية" %}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'accounts:profile' %}">{% trans "الملف الشخصي" %}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'accounts:order_history' %}">{% trans "الطلبات" %}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{% trans "تفاصيل الطلب" %} {{ order.order_number }}</li>
+                </ol>
+            </nav>
+
+            <div class="profile-container">
+                <div class="profile-header">
+                    <h2><i class="fas fa-receipt me-3"></i>{% trans "تفاصيل الطلب" %}</h2>
+                    <p>{% trans "رقم الطلب:" %} {{ order.order_number }}</p>
+                </div>
+
+                <div class="profile-nav">
+                    <ul class="nav nav-tabs border-0">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:profile' %}">
+                                <i class="fas fa-user me-2"></i>{% trans "الملف الشخصي" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:address_list' %}">
+                                <i class="fas fa-map-marker-alt me-2"></i>{% trans "العناوين" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="{% url 'accounts:order_history' %}">
+                                <i class="fas fa-box me-2"></i>{% trans "الطلبات" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:change_password' %}">
+                                <i class="fas fa-lock me-2"></i>{% trans "كلمة المرور" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:notification_preferences' %}">
+                                <i class="fas fa-bell me-2"></i>{% trans "الإشعارات" %}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="profile-content">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <div class="order-header">
+                        <div>
+                            <h3 class="order-title">
+                                <i class="fas fa-receipt text-primary"></i>
+                                {% trans "طلب رقم:" %} {{ order.order_number }}
+                            </h3>
+                            <p class="text-muted mb-0">{% trans "تم الطلب في" %} {{ order.created_at|date:"j F Y, g:i a" }}</p>
+                        </div>
+                        <div>
+                            <span class="order-status {{ order.status }}">
+                                {% if order.status == 'pending' %}
+                                    {% trans "قيد الانتظار" %}
+                                {% elif order.status == 'processing' %}
+                                    {% trans "قيد المعالجة" %}
+                                {% elif order.status == 'shipped' %}
+                                    {% trans "تم الشحن" %}
+                                {% elif order.status == 'delivered' %}
+                                    {% trans "تم التوصيل" %}
+                                {% elif order.status == 'cancelled' %}
+                                    {% trans "ملغى" %}
+                                {% elif order.status == 'refunded' %}
+                                    {% trans "مسترد" %}
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="order-meta">
+                        <div class="order-meta-item">
+                            <div class="order-meta-icon">
+                                <i class="fas fa-calendar-day"></i>
+                            </div>
+                            <div class="order-meta-content">
+                                <h6>{% trans "تاريخ الطلب" %}</h6>
+                                <p>{{ order.created_at|date:"j F Y" }}</p>
+                            </div>
+                        </div>
+
+                        <div class="order-meta-item">
+                            <div class="order-meta-icon">
+                                <i class="fas fa-credit-card"></i>
+                            </div>
+                            <div class="order-meta-content">
+                                <h6>{% trans "طريقة الدفع" %}</h6>
+                                <p>{{ order.payment_method }}</p>
+                            </div>
+                        </div>
+
+                        <div class="order-meta-item">
+                            <div class="order-meta-icon">
+                                <i class="fas fa-truck"></i>
+                            </div>
+                            <div class="order-meta-content">
+                                <h6>{% trans "طريقة الشحن" %}</h6>
+                                <p>{{ order.shipping_method|default:_("توصيل قياسي") }}</p>
+                            </div>
+                        </div>
+
+                        {% if order.tracking_number %}
+                            <div class="order-meta-item">
+                                <div class="order-meta-icon">
+                                    <i class="fas fa-barcode"></i>
+                                </div>
+                                <div class="order-meta-content">
+                                    <h6>{% trans "رقم التتبع" %}</h6>
+                                    <p>{{ order.tracking_number }}</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-lg-8">
+                            {% if order.status != 'cancelled' and order.status != 'refunded' %}
+                                <div class="order-timeline mb-4">
+                                    <div class="timeline-track"></div>
+                                    <div class="timeline-steps">
+                                        <div class="timeline-step {% if order.status %}active{% else %}incomplete{% endif %}">
+                                            <div class="timeline-step-icon">
+                                                <i class="fas fa-shopping-cart"></i>
+                                            </div>
+                                            <div class="timeline-step-content">
+                                                <div class="timeline-step-title">{% trans "تم الطلب" %}</div>
+                                                <p class="timeline-step-description">{% trans "تم استلام طلبك وتأكيده" %}</p>
+                                                <div class="timeline-step-date">{{ order.created_at|date:"j F Y, g:i a" }}</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="timeline-step {% if order.status == 'processing' or order.status == 'shipped' or order.status == 'delivered' %}active{% else %}incomplete{% endif %}">
+                                            <div class="timeline-step-icon">
+                                                <i class="fas fa-cog"></i>
+                                            </div>
+                                            <div class="timeline-step-content">
+                                                <div class="timeline-step-title">{% trans "قيد المعالجة" %}</div>
+                                                <p class="timeline-step-description">{% trans "يتم تجهيز طلبك حالياً" %}</p>
+                                                {% if order.status == 'processing' or order.status == 'shipped' or order.status == 'delivered' %}
+                                                    <div class="timeline-step-date">{{ order.processing_date|date:"j F Y, g:i a"|default:"" }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+
+                                        <div class="timeline-step {% if order.status == 'shipped' or order.status == 'delivered' %}active{% else %}incomplete{% endif %}">
+                                            <div class="timeline-step-icon">
+                                                <i class="fas fa-truck"></i>
+                                            </div>
+                                            <div class="timeline-step-content">
+                                                <div class="timeline-step-title">{% trans "تم الشحن" %}</div>
+                                                <p class="timeline-step-description">{% trans "طلبك في الطريق إليك" %}</p>
+                                                {% if order.status == 'shipped' or order.status == 'delivered' %}
+                                                    <div class="timeline-step-date">{{ order.shipped_date|date:"j F Y, g:i a"|default:"" }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+
+                                        <div class="timeline-step {% if order.status == 'delivered' %}active{% else %}incomplete{% endif %}">
+                                            <div class="timeline-step-icon">
+                                                <i class="fas fa-check"></i>
+                                            </div>
+                                            <div class="timeline-step-content">
+                                                <div class="timeline-step-title">{% trans "تم التوصيل" %}</div>
+                                                <p class="timeline-step-description">{% trans "تم توصيل طلبك بنجاح" %}</p>
+                                                {% if order.status == 'delivered' %}
+                                                    <div class="timeline-step-date">{{ order.delivered_date|date:"j F Y, g:i a"|default:"" }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% elif order.status == 'cancelled' %}
+                                <div class="alert alert-danger mb-4">
+                                    <h5 class="alert-heading"><i class="fas fa-times-circle me-2"></i>{% trans "تم إلغاء هذا الطلب" %}</h5>
+                                    <p class="mb-0">{% trans "تم إلغاء هذا الطلب في" %} {{ order.cancelled_date|date:"j F Y, g:i a" }}</p>
+                                    {% if order.cancellation_reason %}
+                                        <hr>
+                                        <p class="mb-0">{% trans "سبب الإلغاء:" %} {{ order.cancellation_reason }}</p>
+                                    {% endif %}
+                                </div>
+                            {% elif order.status == 'refunded' %}
+                                <div class="alert alert-warning mb-4">
+                                    <h5 class="alert-heading"><i class="fas fa-undo-alt me-2"></i>{% trans "تم استرداد هذا الطلب" %}</h5>
+                                    <p class="mb-0">{% trans "تم استرداد هذا الطلب في" %} {{ order.refunded_date|date:"j F Y, g:i a" }}</p>
+                                    {% if order.refund_reason %}
+                                        <hr>
+                                        <p class="mb-0">{% trans "سبب الاسترداد:" %} {{ order.refund_reason }}</p>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+
+                            <h4 class="profile-section-title">
+                                <i class="fas fa-shopping-basket"></i>{% trans "المنتجات المطلوبة" %}
+                            </h4>
+
+                            <div class="order-items">
+                                {% for item in order.items.all %}
+                                    <div class="order-item">
+                                        <div class="order-item-image">
+                                            {% if item.product.get_first_image %}
+                                                <img src="{{ item.product.get_first_image.image.url }}" alt="{{ item.product.name }}">
+                                            {% else %}
+                                                <i class="fas fa-box fa-2x text-muted"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div class="order-item-details">
+                                            <h5 class="order-item-title">{{ item.product.name }}</h5>
+                                            {% if item.variant_info %}
+                                                <div class="order-item-variant">{{ item.variant_info }}</div>
+                                            {% endif %}
+                                            <div class="order-item-quantity">{% trans "الكمية:" %} {{ item.quantity }}</div>
+                                        </div>
+                                        <div class="order-item-price">
+                                            <div class="order-item-price-unit">{{ item.unit_price|floatformat:2 }} {% trans "د.أ" %} × {{ item.quantity }}</div>
+                                            <div class="order-item-price-total">{{ item.total_price|floatformat:2 }} {% trans "د.أ" %}</div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-4">
+                                    <div class="order-details-card">
+                                        <div class="order-details-header">
+                                            <h5><i class="fas fa-map-marker-alt me-2"></i>{% trans "عنوان الشحن" %}</h5>
+                                        </div>
+                                        <div class="order-details-body">
+                                            <p class="mb-1"><strong>{{ order.shipping_address.full_name }}</strong></p>
+                                            <p class="mb-1">{{ order.shipping_address.address_line_1 }}</p>
+                                            {% if order.shipping_address.address_line_2 %}
+                                                <p class="mb-1">{{ order.shipping_address.address_line_2 }}</p>
+                                            {% endif %}
+                                            <p class="mb-1">{{ order.shipping_address.city }}{% if order.shipping_address.state %}, {{ order.shipping_address.state }}{% endif %} {{ order.shipping_address.postal_code }}</p>
+                                            <p class="mb-1">{{ order.shipping_address.country }}</p>
+                                            {% if order.shipping_address.phone_number %}
+                                                <p class="mb-0"><i class="fas fa-phone me-2"></i>{{ order.shipping_address.phone_number }}</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 mb-4">
+                                    <div class="order-details-card">
+                                        <div class="order-details-header">
+                                            <h5><i class="fas fa-file-invoice me-2"></i>{% trans "عنوان الفوترة" %}</h5>
+                                        </div>
+                                        <div class="order-details-body">
+                                            <p class="mb-1"><strong>{{ order.billing_address.full_name }}</strong></p>
+                                            <p class="mb-1">{{ order.billing_address.address_line_1 }}</p>
+                                            {% if order.billing_address.address_line_2 %}
+                                                <p class="mb-1">{{ order.billing_address.address_line_2 }}</p>
+                                            {% endif %}
+                                            <p class="mb-1">{{ order.billing_address.city }}{% if order.billing_address.state %}, {{ order.billing_address.state }}{% endif %} {{ order.billing_address.postal_code }}</p>
+                                            <p class="mb-1">{{ order.billing_address.country }}</p>
+                                            {% if order.billing_address.phone_number %}
+                                                <p class="mb-0"><i class="fas fa-phone me-2"></i>{{ order.billing_address.phone_number }}</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% if order.notes %}
+                                <div class="order-details-card">
+                                    <div class="order-details-header">
+                                        <h5><i class="fas fa-sticky-note me-2"></i>{% trans "ملاحظات الطلب" %}</h5>
+                                    </div>
+                                    <div class="order-details-body">
+                                        <p class="mb-0">{{ order.notes }}</p>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            <div class="order-action-buttons">
+                                <a href="{% url 'accounts:order_history' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-right me-2"></i>{% trans "العودة إلى الطلبات" %}
+                                </a>
+
+                                {% if order.status == 'pending' or order.status == 'processing' %}
+                                    <a href="{% url 'orders:track_order' %}?order_number={{ order.order_number }}" class="btn btn-primary">
+                                        <i class="fas fa-truck me-2"></i>{% trans "تتبع الطلب" %}
+                                    </a>
+
+                                    {% if order.status == 'pending' %}
+                                        <a href="{% url 'orders:cancel_order' order.id %}" class="btn btn-danger">
+                                            <i class="fas fa-times me-2"></i>{% trans "إلغاء الطلب" %}
+                                        </a>
+                                    {% endif %}
+                                {% endif %}
+
+                                {% if order.status == 'delivered' and order.can_review %}
+                                    <a href="{% url 'products:review_order' order.id %}" class="btn btn-outline-primary">
+                                        <i class="fas fa-star me-2"></i>{% trans "تقييم المنتجات" %}
+                                    </a>
+                                {% endif %}
+
+                                {% if order.invoice %}
+                                    <a href="{{ order.invoice.url }}" class="btn btn-outline-primary" target="_blank">
+                                        <i class="fas fa-file-invoice me-2"></i>{% trans "تحميل الفاتورة" %}
+                                    </a>
+                                {% endif %}
+
+                                {% if order.status == 'delivered' %}
+                                    <a href="{% url 'orders:reorder' order.id %}" class="btn btn-primary">
+                                        <i class="fas fa-redo me-2"></i>{% trans "إعادة الطلب" %}
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col-lg-4">
+                            <div class="order-summary">
+                                <div class="order-summary-header">
+                                    <h5>{% trans "ملخص الطلب" %}</h5>
+                                </div>
+                                <div class="order-summary-body">
+                                    <div class="order-summary-row">
+                                        <div class="order-summary-label">{% trans "المجموع الفرعي" %}</div>
+                                        <div class="order-summary-value">{{ order.subtotal_amount|floatformat:2 }} {% trans "د.أ" %}</div>
+                                    </div>
+
+                                    <div class="order-summary-row">
+                                        <div class="order-summary-label">{% trans "الشحن" %}</div>
+                                        <div class="order-summary-value">{{ order.shipping_amount|floatformat:2 }} {% trans "د.أ" %}</div>
+                                    </div>
+
+                                    {% if order.tax_amount > 0 %}
+                                        <div class="order-summary-row">
+                                            <div class="order-summary-label">{% trans "الضريبة" %}</div>
+                                            <div class="order-summary-value">{{ order.tax_amount|floatformat:2 }} {% trans "د.أ" %}</div>
+                                        </div>
+                                    {% endif %}
+
+                                    {% if order.discount_amount > 0 %}
+                                        <div class="order-summary-row">
+                                            <div class="order-summary-label">{% trans "الخصم" %}</div>
+                                            <div class="order-summary-value text-success">-{{ order.discount_amount|floatformat:2 }} {% trans "د.أ" %}</div>
+                                        </div>
+
+                                        {% if order.coupon_code %}
+                                            <div class="order-summary-row">
+                                                <div class="order-summary-label">{% trans "رمز القسيمة" %}</div>
+                                                <div class="order-summary-value">{{ order.coupon_code }}</div>
+                                            </div>
+                                        {% endif %}
+                                    {% endif %}
+
+                                    <div class="order-summary-row order-summary-total">
+                                        <div class="order-summary-label">{% trans "المجموع الكلي" %}</div>
+                                        <div class="order-summary-value">{{ order.total_amount|floatformat:2 }} {% trans "د.أ" %}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% if order.payments.exists %}
+                                <div class="order-details-card">
+                                    <div class="order-details-header">
+                                        <h5><i class="fas fa-money-check me-2"></i>{% trans "معلومات الدفع" %}</h5>
+                                    </div>
+                                    <div class="order-details-body">
+                                        {% for payment in order.payments.all %}
+                                            <div class="mb-3 {% if not forloop.last %}pb-3 border-bottom{% endif %}">
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <strong>{% trans "رقم المعاملة:" %}</strong>
+                                                    <span>{{ payment.transaction_id }}</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <strong>{% trans "طريقة الدفع:" %}</strong>
+                                                    <span>{{ payment.payment_method }}</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <strong>{% trans "المبلغ:" %}</strong>
+                                                    <span>{{ payment.amount|floatformat:2 }} {% trans "د.أ" %}</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <strong>{% trans "الحالة:" %}</strong>
+                                                    <span class="badge {% if payment.status == 'successful' %}bg-success{% elif payment.status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                                        {% if payment.status == 'successful' %}
+                                                            {% trans "ناجح" %}
+                                                        {% elif payment.status == 'pending' %}
+                                                            {% trans "قيد المعالجة" %}
+                                                        {% else %}
+                                                            {% trans "فاشل" %}
+                                                        {% endif %}
+                                                    </span>
+                                                </div>
+                                                <div class="d-flex justify-content-between">
+                                                    <strong>{% trans "تاريخ الدفع:" %}</strong>
+                                                    <span>{{ payment.created_at|date:"j F Y, g:i a" }}</span>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            {% if order.status == 'shipped' and order.tracking_number %}
+                                <div class="order-details-card">
+                                    <div class="order-details-header">
+                                        <h5><i class="fas fa-truck me-2"></i>{% trans "تتبع الشحن" %}</h5>
+                                    </div>
+                                    <div class="order-details-body">
+                                        <p>{% trans "يمكنك تتبع شحنتك باستخدام رقم التتبع التالي:" %}</p>
+                                        <div class="input-group mb-3">
+                                            <input type="text" class="form-control" value="{{ order.tracking_number }}" readonly>
+                                            <button class="btn btn-outline-secondary" type="button" id="copyTrackingNumber">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                        <a href="{% url 'orders:track_order' %}?order_number={{ order.order_number }}" class="btn btn-primary w-100">
+                                            <i class="fas fa-truck me-2"></i>{% trans "تتبع الشحنة" %}
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            {% if order.status == 'delivered' %}
+                                <div class="order-details-card">
+                                    <div class="order-details-header">
+                                        <h5><i class="fas fa-star me-2"></i>{% trans "تقييم المنتجات" %}</h5>
+                                    </div>
+                                    <div class="order-details-body">
+                                        {% if order.can_review %}
+                                            <p>{% trans "شاركنا رأيك حول المنتجات التي اشتريتها. تقييمك يساعد المستخدمين الآخرين على اتخاذ قرارات شرائية أفضل." %}</p>
+                                            <a href="{% url 'products:review_order' order.id %}" class="btn btn-outline-primary w-100">
+                                                <i class="fas fa-star me-2"></i>{% trans "تقييم المنتجات" %}
+                                            </a>
+                                        {% else %}
+                                            <p>{% trans "شكراً لتقييمك للمنتجات! تقييماتك تساعد المستخدمين الآخرين." %}</p>
+                                            <a href="{% url 'products:my_reviews' %}" class="btn btn-outline-secondary w-100">
+                                                <i class="fas fa-list me-2"></i>{% trans "عرض تقييماتي" %}
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            <div class="order-details-card">
+                                <div class="order-details-header">
+                                    <h5><i class="fas fa-question-circle me-2"></i>{% trans "هل تحتاج مساعدة؟" %}</h5>
+                                </div>
+                                <div class="order-details-body">
+                                    <p>{% trans "إذا كان لديك أي استفسار بخصوص طلبك، لا تتردد في التواصل مع فريق خدمة العملاء." %}</p>
+                                    <a href="{% url 'core:contact' %}" class="btn btn-outline-primary w-100">
+                                        <i class="fas fa-headset me-2"></i>{% trans "اتصل بنا" %}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // نسخ رقم التتبع
+        const copyButton = document.getElementById('copyTrackingNumber');
+        if (copyButton) {
+            copyButton.addEventListener('click', function() {
+                const trackingInput = this.parentElement.querySelector('input');
+                trackingInput.select();
+                document.execCommand('copy');
+
+                const originalContent = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-check"></i>';
+
+                setTimeout(() => {
+                    this.innerHTML = originalContent;
+                }, 2000);
+            });
+        }
+    });
+</script>
+{% endblock %}

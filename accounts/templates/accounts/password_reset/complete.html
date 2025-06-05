@@ -1,0 +1,41 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block account_title %}{% trans "تم تغيير كلمة المرور بنجاح" %}{% endblock %}
+
+{% block account_content %}
+<div class="auth-container text-center">
+    <div class="auth-header">
+        <div class="auth-logo">
+            {% if site_settings.logo %}
+                <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name|default:'ESCO' }}">
+            {% else %}
+                <img src="{% static 'images/logo.png' %}" alt="ESCO">
+            {% endif %}
+        </div>
+        <div class="my-4">
+            <span class="verification-icon success">
+                <i class="fas fa-check-circle"></i>
+            </span>
+        </div>
+        <h2>{% trans "تم تغيير كلمة المرور بنجاح" %}</h2>
+        <p class="mb-4">{% trans "تم إعادة تعيين كلمة المرور الخاصة بك بنجاح. يمكنك الآن تسجيل الدخول باستخدام كلمة المرور الجديدة." %}</p>
+    </div>
+
+    <div class="alert alert-success" role="alert">
+        <i class="fas fa-shield-alt me-2"></i>
+        {% trans "تم تأمين حسابك بنجاح. تذكر دائماً استخدام كلمة مرور قوية وفريدة لكل موقع تستخدمه." %}
+    </div>
+
+    <div class="mt-4">
+        <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-lg">
+            <i class="fas fa-sign-in-alt me-2"></i>{% trans "تسجيل الدخول" %}
+        </a>
+    </div>
+
+    <div class="auth-help mt-4">
+        <p>{% trans "هل تواجه مشكلة؟" %} <a href="{% url 'core:contact' %}">{% trans "تواصل مع فريق الدعم" %}</a></p>
+    </div>
+</div>
+{% endblock %}
