@@ -1,0 +1,61 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block account_title %}{% trans "استعادة كلمة المرور" %}{% endblock %}
+
+{% block account_content %}
+<div class="auth-container">
+    <div class="auth-header">
+        <div class="auth-logo">
+            {% if site_settings.logo %}
+                <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name|default:'ESCO' }}">
+            {% else %}
+                <img src="{% static 'images/logo.png' %}" alt="ESCO">
+            {% endif %}
+        </div>
+        <h2>{% trans "استعادة كلمة المرور" %}</h2>
+        <p>{% trans "أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيين كلمة المرور" %}</p>
+    </div>
+
+    <form method="post" class="auth-form needs-validation" novalidate>
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="mb-4">
+            <label for="id_email" class="form-label">{% trans "البريد الإلكتروني" %} *</label>
+            <input type="email" name="email" id="id_email" class="form-control" required
+                   placeholder="{% trans 'أدخل بريدك الإلكتروني' %}">
+            <div class="invalid-feedback">
+                {% trans "يرجى إدخال بريد إلكتروني صحيح" %}
+            </div>
+            {% if form.email.errors %}
+            <div class="text-danger mt-1">
+                {% for error in form.email.errors %}{{ error }}{% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-key me-2"></i>{% trans "إرسال رابط إعادة التعيين" %}
+        </button>
+    </form>
+
+    <div class="auth-footer">
+        <a href="{% url 'accounts:login' %}">
+            <i class="fas fa-arrow-right me-1"></i>{% trans "العودة إلى تسجيل الدخول" %}
+        </a>
+    </div>
+
+    <div class="auth-help">
+        <p>{% trans "هل تذكرت كلمة المرور؟" %} <a href="{% url 'accounts:login' %}">{% trans "تسجيل الدخول" %}</a></p>
+    </div>
+</div>
+{% endblock %}

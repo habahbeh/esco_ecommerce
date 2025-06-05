@@ -1,0 +1,298 @@
+{# templates/accounts/addresses/delete.html #}
+{% extends 'core/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "حذف العنوان" %} | {{ site_settings.site_name|default:"ESCO" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-container {
+        background-color: var(--bs-body-bg);
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+    
+    .profile-header {
+        background: linear-gradient(135deg, var(--bs-primary) 0%, rgba(var(--bs-primary-rgb), 0.7) 100%);
+        color: white;
+        padding: 3rem 2rem;
+        position: relative;
+        text-align: center;
+    }
+    
+    .profile-nav {
+        background-color: var(--bs-body-bg);
+        padding: 0;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .profile-nav .nav-link {
+        padding: 1rem 1.5rem;
+        color: var(--bs-body-color);
+        font-weight: 500;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s ease;
+    }
+    
+    .profile-nav .nav-link.active {
+        border-bottom-color: var(--bs-primary);
+        color: var(--bs-primary);
+    }
+    
+    .profile-nav .nav-link:hover {
+        background-color: rgba(var(--bs-primary-rgb), 0.05);
+    }
+    
+    .profile-content {
+        padding: 2rem;
+    }
+    
+    .profile-section {
+        margin-bottom: 2rem;
+    }
+    
+    .profile-section-title {
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        color: var(--bs-primary);
+        display: flex;
+        align-items: center;
+    }
+    
+    .profile-section-title i {
+        margin-right: 0.75rem;
+    }
+    
+    .confirmation-container {
+        text-align: center;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 2rem;
+        background-color: rgba(220, 53, 69, 0.05);
+        border-radius: 15px;
+    }
+    
+    .confirmation-icon {
+        font-size: 4rem;
+        color: #dc3545;
+        margin-bottom: 1.5rem;
+    }
+    
+    .address-card {
+        border-radius: 12px;
+        border: 1px solid rgba(0,0,0,0.1);
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        background-color: var(--bs-body-bg);
+    }
+    
+    .address-card .address-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .address-card .address-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(var(--bs-primary-rgb), 0.1);
+        color: var(--bs-primary);
+        margin-right: 1rem;
+        font-size: 1.25rem;
+    }
+    
+    .address-card .address-title {
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .address-card .address-content {
+        color: var(--bs-body-color);
+    }
+    
+    .address-card .address-badge {
+        display: inline-block;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .confirmation-buttons {
+        margin-top: 2rem;
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+    
+    /* Dark mode adjustments */
+    [data-bs-theme="dark"] .profile-container {
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    }
+    
+    [data-bs-theme="dark"] .profile-nav {
+        border-bottom-color: rgba(255,255,255,0.1);
+    }
+    
+    [data-bs-theme="dark"] .confirmation-container {
+        background-color: rgba(220, 53, 69, 0.1);
+    }
+    
+    [data-bs-theme="dark"] .address-card {
+        border-color: rgba(255,255,255,0.1);
+        background-color: rgba(255,255,255,0.03);
+    }
+    
+    @media (max-width: 767.98px) {
+        .profile-header {
+            padding: 2rem 1rem;
+        }
+        
+        .profile-content {
+            padding: 1.5rem;
+        }
+        
+        .confirmation-buttons {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "الرئيسية" %}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'accounts:profile' %}">{% trans "الملف الشخصي" %}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'accounts:address_list' %}">{% trans "العناوين" %}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{% trans "حذف العنوان" %}</li>
+                </ol>
+            </nav>
+            
+            <div class="profile-container">
+                <div class="profile-header">
+                    <h2><i class="fas fa-trash-alt me-3"></i>{% trans "حذف العنوان" %}</h2>
+                    <p>{% trans "تأكيد حذف العنوان" %}</p>
+                </div>
+                
+                <div class="profile-nav">
+                    <ul class="nav nav-tabs border-0">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:profile' %}">
+                                <i class="fas fa-user me-2"></i>{% trans "الملف الشخصي" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="{% url 'accounts:address_list' %}">
+                                <i class="fas fa-map-marker-alt me-2"></i>{% trans "العناوين" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:order_history' %}">
+                                <i class="fas fa-box me-2"></i>{% trans "الطلبات" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:change_password' %}">
+                                <i class="fas fa-lock me-2"></i>{% trans "كلمة المرور" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:notification_preferences' %}">
+                                <i class="fas fa-bell me-2"></i>{% trans "الإشعارات" %}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="profile-content">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <div class="confirmation-container">
+                        <div class="confirmation-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        
+                        <h3>{% trans "هل أنت متأكد من حذف هذا العنوان؟" %}</h3>
+                        <p class="text-muted">{% trans "هذا الإجراء نهائي ولا يمكن التراجع عنه. سيتم حذف العنوان بشكل دائم من حسابك." %}</p>
+                        
+                        <div class="address-card">
+                            <div class="address-header">
+                                <div class="address-icon">
+                                    {% if address.type == 'home' %}
+                                        <i class="fas fa-home"></i>
+                                    {% elif address.type == 'work' %}
+                                        <i class="fas fa-building"></i>
+                                    {% else %}
+                                        <i class="fas fa-map-marker-alt"></i>
+                                    {% endif %}
+                                </div>
+                                <h5 class="address-title">{{ address.label }}</h5>
+                            </div>
+                            
+                            <div class="address-content">
+                                {% if address.is_default %}
+                                    <span class="address-badge badge bg-primary">{% trans "العنوان الافتراضي" %}</span>
+                                {% endif %}
+                                {% if address.is_billing_default %}
+                                    <span class="address-badge badge bg-info">{% trans "عنوان الفوترة الافتراضي" %}</span>
+                                {% endif %}
+                                {% if address.is_shipping_default %}
+                                    <span class="address-badge badge bg-success">{% trans "عنوان الشحن الافتراضي" %}</span>
+                                {% endif %}
+                                
+                                <p class="mb-1 mt-2"><strong>{{ address.full_name }}</strong></p>
+                                <p class="mb-1">{{ address.address_line_1 }}</p>
+                                {% if address.address_line_2 %}
+                                    <p class="mb-1">{{ address.address_line_2 }}</p>
+                                {% endif %}
+                                <p class="mb-1">{{ address.city }}{% if address.state %}, {{ address.state }}{% endif %} {{ address.postal_code }}</p>
+                                <p class="mb-1">{{ address.country }}</p>
+                                {% if address.phone_number %}
+                                    <p class="mb-0"><i class="fas fa-phone me-2"></i>{{ address.phone_number }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if address.is_default or address.is_billing_default or address.is_shipping_default %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                {% trans "تنبيه: هذا العنوان مُعين كعنوان افتراضي. بعد الحذف، ستحتاج إلى تعيين عنوان افتراضي آخر." %}
+                            </div>
+                        {% endif %}
+                        
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="confirmation-buttons">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-trash-alt me-2"></i>{% trans "نعم، احذف العنوان" %}
+                                </button>
+                                <a href="{% url 'accounts:address_list' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-2"></i>{% trans "إلغاء" %}
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
