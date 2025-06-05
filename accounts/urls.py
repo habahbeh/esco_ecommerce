@@ -31,6 +31,9 @@ urlpatterns = [
     path('profile/', views.ProfileView.as_view(), name='profile'),
     path('profile/password/', views.ChangePasswordView.as_view(), name='change_password'),
     path('profile/notifications/', views.NotificationPreferencesView.as_view(), name='notification_preferences'),
+    path('profile/security/', views.SecurityView.as_view(), name='security'),
+    path('profile/update-avatar/', views.UpdateAvatarView.as_view(), name='update_avatar'),
+
 
     # العناوين - Addresses
     path('addresses/', views.AddressListView.as_view(), name='address_list'),
