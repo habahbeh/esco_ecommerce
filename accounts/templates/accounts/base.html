@@ -1,0 +1,253 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}
+    {% block account_title %}{% endblock %} | {{ site_settings.site_name|default:"ESCO" }}
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/accounts.css' %}">
+<style>
+    /* تنسيقات إضافية خاصة بصفحات الحسابات */
+    .auth-container {
+        max-width: 500px;
+        margin: 2rem auto;
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        background-color: var(--bs-body-bg);
+    }
+
+    .auth-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .auth-header .auth-logo {
+        margin-bottom: 1.5rem;
+    }
+
+    .auth-header .auth-logo img {
+        height: 70px;
+        width: auto;
+    }
+
+    .auth-header h2 {
+        font-weight: 700;
+        color: var(--bs-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .auth-header p {
+        color: var(--bs-secondary);
+    }
+
+    .auth-form label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .auth-form .form-control {
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+    }
+
+    .auth-form .form-check {
+        margin-bottom: 1.5rem;
+    }
+
+    .auth-form .btn-primary {
+        width: 100%;
+        padding: 0.75rem;
+        font-weight: 600;
+        border-radius: 10px;
+        margin-top: 1rem;
+    }
+
+    .auth-footer {
+        text-align: center;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .auth-footer a {
+        font-weight: 500;
+    }
+
+    .auth-social {
+        margin: 2rem 0;
+        text-align: center;
+    }
+
+    .auth-social-divider {
+        display: flex;
+        align-items: center;
+        margin: 1rem 0;
+    }
+
+    .auth-social-divider::before,
+    .auth-social-divider::after {
+        content: "";
+        flex: 1;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .auth-social-divider span {
+        padding: 0 1rem;
+        color: var(--bs-secondary);
+    }
+
+    .auth-social-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .auth-social-buttons .btn {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        padding: 0;
+        font-size: 1.25rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-google {
+        background-color: #DB4437;
+        color: white;
+    }
+
+    .btn-facebook {
+        background-color: #4267B2;
+        color: white;
+    }
+
+    .btn-twitter {
+        background-color: #1DA1F2;
+        color: white;
+    }
+
+    .auth-help {
+        margin-top: 2rem;
+        text-align: center;
+    }
+
+    .auth-help a {
+        color: var(--bs-primary);
+        font-weight: 500;
+    }
+
+    /* تنسيقات الوضع الداكن */
+    [data-bs-theme="dark"] .auth-container {
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    [data-bs-theme="dark"] .auth-footer {
+        border-top-color: rgba(255,255,255,0.1);
+    }
+
+    [data-bs-theme="dark"] .auth-social-divider::before,
+    [data-bs-theme="dark"] .auth-social-divider::after {
+        border-bottom-color: rgba(255,255,255,0.1);
+    }
+
+    /* تنسيقات تفعيل البريد الإلكتروني */
+    .verification-card {
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .verification-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+
+    .verification-icon.success {
+        color: #28a745;
+    }
+
+    .verification-icon.warning {
+        color: #ffc107;
+    }
+
+    .verification-icon.error {
+        color: #dc3545;
+    }
+
+    .progress-container {
+        height: 8px;
+        background-color: #e9ecef;
+        border-radius: 4px;
+        margin: 2rem 0;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        height: 100%;
+        background-color: var(--bs-primary);
+        width: 0;
+        transition: width 0.5s ease;
+    }
+
+    @media (max-width: 576px) {
+        .auth-container {
+            margin: 1rem auto;
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            {% block account_content %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // تفعيل التحقق من صحة النماذج
+    (function() {
+        'use strict';
+        const forms = document.querySelectorAll('.needs-validation');
+        
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    })();
+
+    // تبديل عرض كلمة المرور
+    document.querySelectorAll('.toggle-password').forEach(button => {
+        button.addEventListener('click', function() {
+            const input = document.getElementById(this.getAttribute('data-target'));
+            const icon = this.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+    });
+</script>
+{% endblock %}
