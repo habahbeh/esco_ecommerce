@@ -1,0 +1,625 @@
+{# templates/accounts/profile/index.html #}
+{% extends 'core/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "الملف الشخصي" %} | {{ site_settings.site_name|default:"ESCO" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-container {
+        background-color: var(--bs-body-bg);
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .profile-header {
+        background: linear-gradient(135deg, var(--bs-primary) 0%, rgba(var(--bs-primary-rgb), 0.7) 100%);
+        color: white;
+        padding: 3rem 2rem;
+        position: relative;
+        text-align: center;
+    }
+
+    .profile-avatar {
+        position: relative;
+        width: 150px;
+        height: 150px;
+        margin: 0 auto 1.5rem;
+    }
+
+    .profile-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 5px solid rgba(255,255,255,0.3);
+    }
+
+    .avatar-edit {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        background: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--bs-primary);
+        cursor: pointer;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+    }
+
+    .avatar-edit:hover {
+        transform: scale(1.1);
+    }
+
+    .profile-user-info h2 {
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .profile-user-info p {
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+
+    .profile-stats {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin-top: 1.5rem;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+
+    .profile-nav {
+        background-color: var(--bs-body-bg);
+        padding: 0;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .profile-nav .nav-link {
+        padding: 1rem 1.5rem;
+        color: var(--bs-body-color);
+        font-weight: 500;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+    .profile-nav .nav-link.active {
+        border-bottom-color: var(--bs-primary);
+        color: var(--bs-primary);
+    }
+
+    .profile-nav .nav-link:hover {
+        background-color: rgba(var(--bs-primary-rgb), 0.05);
+    }
+
+    .profile-content {
+        padding: 2rem;
+    }
+
+    .profile-section {
+        margin-bottom: 2rem;
+    }
+
+    .profile-section-title {
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        color: var(--bs-primary);
+        display: flex;
+        align-items: center;
+    }
+
+    .profile-section-title i {
+        margin-right: 0.75rem;
+    }
+
+    .profile-form .form-control {
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+    }
+
+    .profile-form .form-label {
+        font-weight: 500;
+    }
+
+    .card-hover {
+        transition: all 0.3s ease;
+    }
+
+    .card-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+    .social-link {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+        margin-bottom: 0.75rem;
+        background-color: rgba(var(--bs-primary-rgb), 0.05);
+        color: var(--bs-body-color);
+        transition: all 0.3s ease;
+    }
+
+    .social-link i {
+        font-size: 1.25rem;
+        width: 24px;
+        text-align: center;
+    }
+
+    .social-link:hover {
+        background-color: rgba(var(--bs-primary-rgb), 0.1);
+    }
+
+    /* Dark mode adjustments */
+    [data-bs-theme="dark"] .profile-container {
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    }
+
+    [data-bs-theme="dark"] .profile-nav {
+        border-bottom-color: rgba(255,255,255,0.1);
+    }
+
+    @media (max-width: 767.98px) {
+        .profile-header {
+            padding: 2rem 1rem;
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+        }
+
+        .profile-stats {
+            gap: 1rem;
+        }
+
+        .profile-content {
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "الرئيسية" %}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{% trans "الملف الشخصي" %}</li>
+                </ol>
+            </nav>
+
+            <div class="profile-container">
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        {% if user.avatar %}
+                            <img src="{{ user.avatar.url }}" alt="{{ user.get_full_name }}">
+                        {% else %}
+                            <img src="{% static 'images/default-avatar.png' %}" alt="{{ user.get_full_name }}">
+                        {% endif %}
+                        <label for="avatar-upload" class="avatar-edit">
+                            <i class="fas fa-camera"></i>
+                        </label>
+                        <form id="avatar-form" style="display: none;">
+                            <input type="file" id="avatar-upload" name="avatar" accept="image/*">
+                        </form>
+                    </div>
+
+                    <div class="profile-user-info">
+                        <h2>{{ user.get_full_name }}</h2>
+                        <p>{{ user.email }}</p>
+                        {% if user.phone_number %}
+                            <p><i class="fas fa-phone me-2"></i>{{ user.phone_number }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="profile-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">{{ user.total_orders }}</div>
+                            <div class="stat-label">{% trans "الطلبات" %}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">{{ user.date_joined|date:"M Y" }}</div>
+                            <div class="stat-label">{% trans "تاريخ الانضمام" %}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">{{ user.total_spent|floatformat:2 }}</div>
+                            <div class="stat-label">{% trans "د.أ" %}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-nav">
+                    <ul class="nav nav-tabs border-0">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="{% url 'accounts:profile' %}">
+                                <i class="fas fa-user me-2"></i>{% trans "الملف الشخصي" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:address_list' %}">
+                                <i class="fas fa-map-marker-alt me-2"></i>{% trans "العناوين" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:order_history' %}">
+                                <i class="fas fa-box me-2"></i>{% trans "الطلبات" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:change_password' %}">
+                                <i class="fas fa-lock me-2"></i>{% trans "كلمة المرور" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:notification_preferences' %}">
+                                <i class="fas fa-bell me-2"></i>{% trans "الإشعارات" %}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="profile-content">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <div class="profile-section">
+                                <h3 class="profile-section-title">
+                                    <i class="fas fa-user-edit"></i>{% trans "المعلومات الشخصية" %}
+                                </h3>
+                                <form method="post" class="profile-form needs-validation" enctype="multipart/form-data" novalidate>
+                                    {% csrf_token %}
+
+                                    {% if form.non_field_errors %}
+                                        <div class="alert alert-danger">
+                                            {% for error in form.non_field_errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+
+                                    <div class="row mb-3">
+                                        <div class="col-md-6 mb-3 mb-md-0">
+                                            <label for="id_first_name" class="form-label">{% trans "الاسم الأول" %}</label>
+                                            <input type="text" name="first_name" id="id_first_name" class="form-control" value="{{ form.first_name.value|default:user.first_name }}" required>
+                                            {% if form.first_name.errors %}
+                                                <div class="text-danger mt-1">
+                                                    {% for error in form.first_name.errors %}{{ error }}{% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="id_last_name" class="form-label">{% trans "اسم العائلة" %}</label>
+                                            <input type="text" name="last_name" id="id_last_name" class="form-control" value="{{ form.last_name.value|default:user.last_name }}" required>
+                                            {% if form.last_name.errors %}
+                                                <div class="text-danger mt-1">
+                                                    {% for error in form.last_name.errors %}{{ error }}{% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-md-6 mb-3 mb-md-0">
+                                            <label for="id_email" class="form-label">{% trans "البريد الإلكتروني" %}</label>
+                                            <input type="email" name="email" id="id_email" class="form-control" value="{{ form.email.value|default:user.email }}" required>
+                                            {% if form.email.errors %}
+                                                <div class="text-danger mt-1">
+                                                    {% for error in form.email.errors %}{{ error }}{% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="id_phone_number" class="form-label">{% trans "رقم الهاتف" %}</label>
+                                            <input type="tel" name="phone_number" id="id_phone_number" class="form-control" value="{{ form.phone_number.value|default:user.phone_number }}">
+                                            {% if form.phone_number.errors %}
+                                                <div class="text-danger mt-1">
+                                                    {% for error in form.phone_number.errors %}{{ error }}{% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-md-6 mb-3 mb-md-0">
+                                            <label for="id_birth_date" class="form-label">{% trans "تاريخ الميلاد" %}</label>
+                                            <input type="date" name="birth_date" id="id_birth_date" class="form-control" value="{{ form.birth_date.value|default:user.birth_date|date:'Y-m-d' }}">
+                                            {% if form.birth_date.errors %}
+                                                <div class="text-danger mt-1">
+                                                    {% for error in form.birth_date.errors %}{{ error }}{% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="id_gender" class="form-label">{% trans "الجنس" %}</label>
+                                            <select name="gender" id="id_gender" class="form-select">
+                                                <option value="">{% trans "اختر..." %}</option>
+                                                <option value="M" {% if user.gender == 'M' %}selected{% endif %}>{% trans "ذكر" %}</option>
+                                                <option value="F" {% if user.gender == 'F' %}selected{% endif %}>{% trans "أنثى" %}</option>
+                                                <option value="O" {% if user.gender == 'O' %}selected{% endif %}>{% trans "آخر" %}</option>
+                                            </select>
+                                            {% if form.gender.errors %}
+                                                <div class="text-danger mt-1">
+                                                    {% for error in form.gender.errors %}{{ error }}{% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-md-6 mb-3 mb-md-0">
+                                            <label for="id_language" class="form-label">{% trans "اللغة المفضلة" %}</label>
+                                            <select name="language" id="id_language" class="form-select">
+                                                <option value="ar" {% if user.language == 'ar' %}selected{% endif %}>{% trans "العربية" %}</option>
+                                                <option value="en" {% if user.language == 'en' %}selected{% endif %}>{% trans "الإنجليزية" %}</option>
+                                            </select>
+                                            {% if form.language.errors %}
+                                                <div class="text-danger mt-1">
+                                                    {% for error in form.language.errors %}{{ error }}{% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="id_timezone" class="form-label">{% trans "المنطقة الزمنية" %}</label>
+                                            <input type="text" name="timezone" id="id_timezone" class="form-control" value="{{ form.timezone.value|default:user.timezone }}">
+                                            {% if form.timezone.errors %}
+                                                <div class="text-danger mt-1">
+                                                    {% for error in form.timezone.errors %}{{ error }}{% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <input type="hidden" name="form_type" value="user_form">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>{% trans "حفظ التغييرات" %}
+                                    </button>
+                                </form>
+                            </div>
+
+                            <div class="profile-section">
+                                <h3 class="profile-section-title">
+                                    <i class="fas fa-info-circle"></i>{% trans "نبذة شخصية" %}
+                                </h3>
+                                <form method="post" class="profile-form">
+                                    {% csrf_token %}
+
+                                    <div class="mb-3">
+                                        <label for="id_bio" class="form-label">{% trans "نبذة مختصرة عنك" %}</label>
+                                        <textarea name="bio" id="id_bio" class="form-control" rows="4">{{ profile_form.bio.value|default:user.profile.bio }}</textarea>
+                                        {% if profile_form.bio.errors %}
+                                            <div class="text-danger mt-1">
+                                                {% for error in profile_form.bio.errors %}{{ error }}{% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="id_interests" class="form-label">{% trans "الاهتمامات" %}</label>
+                                        <textarea name="interests" id="id_interests" class="form-control" rows="3" placeholder="{% trans 'اهتماماتك مفصولة بفواصل...' %}">{{ profile_form.interests.value|default:user.profile.interests }}</textarea>
+                                        {% if profile_form.interests.errors %}
+                                            <div class="text-danger mt-1">
+                                                {% for error in profile_form.interests.errors %}{{ error }}{% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-md-6 mb-3 mb-md-0">
+                                            <label for="id_profession" class="form-label">{% trans "المهنة" %}</label>
+                                            <input type="text" name="profession" id="id_profession" class="form-control" value="{{ profile_form.profession.value|default:user.profile.profession }}">
+                                            {% if profile_form.profession.errors %}
+                                                <div class="text-danger mt-1">
+                                                    {% for error in profile_form.profession.errors %}{{ error }}{% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="id_company" class="form-label">{% trans "الشركة" %}</label>
+                                            <input type="text" name="company" id="id_company" class="form-control" value="{{ profile_form.company.value|default:user.profile.company }}">
+                                            {% if profile_form.company.errors %}
+                                                <div class="text-danger mt-1">
+                                                    {% for error in profile_form.company.errors %}{{ error }}{% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <input type="hidden" name="form_type" value="profile_form">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>{% trans "حفظ التغييرات" %}
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-4">
+                            <div class="profile-section">
+                                <h3 class="profile-section-title">
+                                    <i class="fas fa-link"></i>{% trans "روابط التواصل" %}
+                                </h3>
+                                <form method="post" class="profile-form">
+                                    {% csrf_token %}
+
+                                    <div class="mb-3">
+                                        <label for="id_website" class="form-label">{% trans "الموقع الشخصي" %}</label>
+                                        <input type="url" name="website" id="id_website" class="form-control" value="{{ profile_form.website.value|default:user.profile.website }}">
+                                        {% if profile_form.website.errors %}
+                                            <div class="text-danger mt-1">
+                                                {% for error in profile_form.website.errors %}{{ error }}{% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="id_twitter" class="form-label">{% trans "تويتر" %}</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fab fa-twitter"></i></span>
+                                            <input type="text" name="twitter" id="id_twitter" class="form-control" value="{{ profile_form.twitter.value|default:user.profile.twitter }}">
+                                        </div>
+                                        {% if profile_form.twitter.errors %}
+                                            <div class="text-danger mt-1">
+                                                {% for error in profile_form.twitter.errors %}{{ error }}{% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="id_facebook" class="form-label">{% trans "فيسبوك" %}</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fab fa-facebook-f"></i></span>
+                                            <input type="text" name="facebook" id="id_facebook" class="form-control" value="{{ profile_form.facebook.value|default:user.profile.facebook }}">
+                                        </div>
+                                        {% if profile_form.facebook.errors %}
+                                            <div class="text-danger mt-1">
+                                                {% for error in profile_form.facebook.errors %}{{ error }}{% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="id_instagram" class="form-label">{% trans "انستغرام" %}</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fab fa-instagram"></i></span>
+                                            <input type="text" name="instagram" id="id_instagram" class="form-control" value="{{ profile_form.instagram.value|default:user.profile.instagram }}">
+                                        </div>
+                                        {% if profile_form.instagram.errors %}
+                                            <div class="text-danger mt-1">
+                                                {% for error in profile_form.instagram.errors %}{{ error }}{% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="id_linkedin" class="form-label">{% trans "لينكد إن" %}</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fab fa-linkedin-in"></i></span>
+                                            <input type="text" name="linkedin" id="id_linkedin" class="form-control" value="{{ profile_form.linkedin.value|default:user.profile.linkedin }}">
+                                        </div>
+                                        {% if profile_form.linkedin.errors %}
+                                            <div class="text-danger mt-1">
+                                                {% for error in profile_form.linkedin.errors %}{{ error }}{% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <input type="hidden" name="form_type" value="social_form">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>{% trans "حفظ التغييرات" %}
+                                    </button>
+                                </form>
+                            </div>
+
+                            <div class="profile-section">
+                                <h3 class="profile-section-title">
+                                    <i class="fas fa-shield-alt"></i>{% trans "أمان الحساب" %}
+                                </h3>
+
+                                <div class="card mb-3 card-hover">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{% trans "كلمة المرور" %}</h5>
+                                        <p class="card-text text-muted">{% trans "قم بتغيير كلمة المرور الخاصة بك" %}</p>
+                                        <a href="{% url 'accounts:change_password' %}" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-key me-2"></i>{% trans "تغيير كلمة المرور" %}
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div class="card mb-3 card-hover">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{% trans "الإشعارات" %}</h5>
+                                        <p class="card-text text-muted">{% trans "إدارة تفضيلات الإشعارات" %}</p>
+                                        <a href="{% url 'accounts:notification_preferences' %}" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-bell me-2"></i>{% trans "إعدادات الإشعارات" %}
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div class="card card-hover">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{% trans "إعدادات الأمان" %}</h5>
+                                        <p class="card-text text-muted">{% trans "إدارة إعدادات أمان الحساب" %}</p>
+                                        <a href="{% url 'accounts:security' %}" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-lock me-2"></i>{% trans "إعدادات الأمان" %}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // تحديث الصورة الشخصية عند اختيارها
+    document.addEventListener('DOMContentLoaded', function() {
+        const avatarUpload = document.getElementById('avatar-upload');
+        const avatarForm = document.getElementById('avatar-form');
+
+        if (avatarUpload) {
+            avatarUpload.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const formData = new FormData(avatarForm);
+                    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+                    // إظهار حالة التحميل
+                    const avatarImage = document.querySelector('.profile-avatar img');
+                    avatarImage.style.opacity = '0.5';
+
+                    // رفع الصورة باستخدام AJAX
+                    fetch('{% url "accounts:update_avatar" %}', {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'same-origin'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // تحديث الصورة
+                            avatarImage.src = data.avatar_url + '?t=' + new Date().getTime();
+                            avatarImage.style.opacity = '1';
+                        } else {
+                            alert(data.error || 'حدث خطأ أثناء تحديث الصورة');
+                            avatarImage.style.opacity = '1';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        avatarImage.style.opacity = '1';
+                        alert('حدث خطأ أثناء تحديث الصورة');
+                    });
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

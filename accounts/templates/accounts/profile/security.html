@@ -1,0 +1,1030 @@
+{# templates/accounts/profile/security.html #}
+{% extends 'core/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "إعدادات الأمان" %} | {{ site_settings.site_name|default:"ESCO" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-container {
+        background-color: var(--bs-body-bg);
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+    
+    .profile-header {
+        background: linear-gradient(135deg, var(--bs-primary) 0%, rgba(var(--bs-primary-rgb), 0.7) 100%);
+        color: white;
+        padding: 3rem 2rem;
+        position: relative;
+        text-align: center;
+    }
+    
+    .profile-nav {
+        background-color: var(--bs-body-bg);
+        padding: 0;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .profile-nav .nav-link {
+        padding: 1rem 1.5rem;
+        color: var(--bs-body-color);
+        font-weight: 500;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s ease;
+    }
+    
+    .profile-nav .nav-link.active {
+        border-bottom-color: var(--bs-primary);
+        color: var(--bs-primary);
+    }
+    
+    .profile-nav .nav-link:hover {
+        background-color: rgba(var(--bs-primary-rgb), 0.05);
+    }
+    
+    .profile-content {
+        padding: 2rem;
+    }
+    
+    .profile-section {
+        margin-bottom: 2rem;
+    }
+    
+    .profile-section-title {
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        color: var(--bs-primary);
+        display: flex;
+        align-items: center;
+    }
+    
+    .profile-section-title i {
+        margin-right: 0.75rem;
+    }
+    
+    /* Security styles */
+    .security-card {
+        border-radius: 15px;
+        border: 1px solid rgba(0,0,0,0.1);
+        overflow: hidden;
+        margin-bottom: 2rem;
+        transition: all 0.3s ease;
+    }
+    
+    .security-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    
+    .security-card-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.25rem;
+        background-color: rgba(var(--bs-primary-rgb), 0.05);
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .security-card-icon {
+        width: 50px;
+        height: 50px;
+        background: var(--bs-primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        border-radius: 12px;
+    }
+    
+    .security-card-title {
+        margin: 0;
+    }
+    
+    .security-card-body {
+        padding: 1.5rem;
+    }
+    
+    .security-card-description {
+        margin-bottom: 1.5rem;
+    }
+    
+    .security-card-status {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 0.5rem;
+    }
+    
+    .status-active {
+        background-color: #28a745;
+    }
+    
+    .status-inactive {
+        background-color: #dc3545;
+    }
+    
+    .status-warning {
+        background-color: #ffc107;
+    }
+    
+    .security-toggle {
+        position: relative;
+        width: 50px;
+        height: 24px;
+    }
+    
+    .security-toggle input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .security-toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .3s;
+        border-radius: 24px;
+    }
+    
+    .security-toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .3s;
+        border-radius: 50%;
+    }
+    
+    input:checked + .security-toggle-slider {
+        background-color: var(--bs-primary);
+    }
+    
+    input:checked + .security-toggle-slider:before {
+        transform: translateX(26px);
+    }
+    
+    .session-list {
+        margin-top: 1.5rem;
+    }
+    
+    .session-item {
+        padding: 1rem;
+        border-radius: 10px;
+        background-color: rgba(var(--bs-primary-rgb), 0.03);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .session-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .session-device-icon {
+        font-size: 1.5rem;
+        color: var(--bs-primary);
+    }
+    
+    .session-details h6 {
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .session-details p {
+        margin: 0;
+        font-size: 0.875rem;
+        color: var(--bs-secondary);
+    }
+    
+    .session-actions button {
+        background: none;
+        border: none;
+        color: var(--bs-danger);
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+    
+    .session-actions button:hover {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+    
+    .connected-app {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        border-radius: 10px;
+        background-color: rgba(var(--bs-primary-rgb), 0.03);
+        margin-bottom: 1rem;
+    }
+    
+    .app-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .app-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.25rem;
+    }
+    
+    .app-icon.google {
+        background-color: #DB4437;
+    }
+    
+    .app-icon.facebook {
+        background-color: #4267B2;
+    }
+    
+    .app-icon.twitter {
+        background-color: #1DA1F2;
+    }
+    
+    .app-details h6 {
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .app-details p {
+        margin: 0;
+        font-size: 0.875rem;
+        color: var(--bs-secondary);
+    }
+    
+    .verification-methods {
+        margin-top: 1.5rem;
+    }
+    
+    .verification-method {
+        border: 1px solid rgba(0,0,0,0.1);
+        border-radius: 10px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .verification-method:hover {
+        background-color: rgba(var(--bs-primary-rgb), 0.05);
+    }
+    
+    .verification-method.active {
+        border-color: var(--bs-primary);
+        background-color: rgba(var(--bs-primary-rgb), 0.05);
+    }
+    
+    .verification-method-header {
+        display: flex;
+        align-items: center;
+    }
+    
+    .verification-method-radio {
+        margin-right: 1rem;
+    }
+    
+    .verification-method-title {
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .verification-method-description {
+        margin: 0.5rem 0 0 2.25rem;
+        color: var(--bs-secondary);
+    }
+    
+    .security-alert {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        border-radius: 10px;
+        background-color: rgba(255, 193, 7, 0.2);
+        margin-bottom: 1.5rem;
+    }
+    
+    .security-alert-icon {
+        font-size: 1.5rem;
+        color: #ffc107;
+    }
+    
+    .security-alert-content {
+        flex: 1;
+    }
+    
+    .security-alert-title {
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .security-alert-message {
+        margin: 0;
+    }
+    
+    /* Dark mode adjustments */
+    [data-bs-theme="dark"] .profile-container {
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    }
+    
+    [data-bs-theme="dark"] .profile-nav {
+        border-bottom-color: rgba(255,255,255,0.1);
+    }
+    
+    [data-bs-theme="dark"] .security-card {
+        border-color: rgba(255,255,255,0.1);
+    }
+    
+    [data-bs-theme="dark"] .security-card-header {
+        background-color: rgba(255,255,255,0.05);
+        border-bottom-color: rgba(255,255,255,0.1);
+    }
+    
+    [data-bs-theme="dark"] .security-toggle-slider {
+        background-color: #555;
+    }
+    
+    [data-bs-theme="dark"] .session-item,
+    [data-bs-theme="dark"] .connected-app,
+    [data-bs-theme="dark"] .verification-method {
+        background-color: rgba(255,255,255,0.03);
+        border-color: rgba(255,255,255,0.1);
+    }
+    
+    [data-bs-theme="dark"] .verification-method:hover,
+    [data-bs-theme="dark"] .verification-method.active {
+        background-color: rgba(255,255,255,0.05);
+    }
+    
+    [data-bs-theme="dark"] .security-alert {
+        background-color: rgba(255, 193, 7, 0.1);
+    }
+    
+    @media (max-width: 767.98px) {
+        .profile-header {
+            padding: 2rem 1rem;
+        }
+        
+        .profile-content {
+            padding: 1.5rem;
+        }
+        
+        .security-card-header {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .session-item,
+        .connected-app {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .session-info,
+        .app-info {
+            flex-direction: column;
+            margin-bottom: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "الرئيسية" %}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'accounts:profile' %}">{% trans "الملف الشخصي" %}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{% trans "إعدادات الأمان" %}</li>
+                </ol>
+            </nav>
+            
+            <div class="profile-container">
+                <div class="profile-header">
+                    <h2><i class="fas fa-shield-alt me-3"></i>{% trans "إعدادات الأمان" %}</h2>
+                    <p>{% trans "تحكم في أمان حسابك وطرق التحقق" %}</p>
+                </div>
+                
+                <div class="profile-nav">
+                    <ul class="nav nav-tabs border-0">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:profile' %}">
+                                <i class="fas fa-user me-2"></i>{% trans "الملف الشخصي" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:address_list' %}">
+                                <i class="fas fa-map-marker-alt me-2"></i>{% trans "العناوين" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:order_history' %}">
+                                <i class="fas fa-box me-2"></i>{% trans "الطلبات" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:change_password' %}">
+                                <i class="fas fa-lock me-2"></i>{% trans "كلمة المرور" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:notification_preferences' %}">
+                                <i class="fas fa-bell me-2"></i>{% trans "الإشعارات" %}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="profile-content">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <div class="security-alert">
+                        <div class="security-alert-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="security-alert-content">
+                            <h5 class="security-alert-title">{% trans "درجة أمان حسابك: متوسطة" %}</h5>
+                            <p class="security-alert-message">{% trans "قم بتفعيل التحقق بخطوتين لزيادة أمان حسابك." %}</p>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-warning">{% trans "تحسين" %}</button>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-lg-7">
+                            <div class="profile-section">
+                                <h3 class="profile-section-title">
+                                    <i class="fas fa-lock"></i>{% trans "خيارات الأمان" %}
+                                </h3>
+                                
+                                <div class="security-card">
+                                    <div class="security-card-header">
+                                        <div class="security-card-icon">
+                                            <i class="fas fa-key"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="security-card-title">{% trans "كلمة المرور" %}</h4>
+                                        </div>
+                                    </div>
+                                    <div class="security-card-body">
+                                        <p class="security-card-description">
+                                            {% trans "تم تغيير كلمة المرور الخاصة بك آخر مرة قبل" %} {{ user.password_changed_at|timeuntil }}.
+                                        </p>
+                                        
+                                        <div class="security-card-status">
+                                            <span class="status-indicator status-warning"></span>
+                                            <span>{% trans "مستوى أمان كلمة المرور: متوسط" %}</span>
+                                        </div>
+                                        
+                                        <a href="{% url 'accounts:change_password' %}" class="btn btn-primary">
+                                            <i class="fas fa-lock me-2"></i>{% trans "تغيير كلمة المرور" %}
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                                <div class="security-card">
+                                    <div class="security-card-header">
+                                        <div class="security-card-icon">
+                                            <i class="fas fa-shield-alt"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="security-card-title">{% trans "التحقق بخطوتين" %}</h4>
+                                        </div>
+                                    </div>
+                                    <div class="security-card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-4">
+                                            <p class="security-card-description mb-0">
+                                                {% trans "تأمين حسابك بطبقة إضافية من الحماية عند تسجيل الدخول." %}
+                                            </p>
+                                            <label class="security-toggle">
+                                                <input type="checkbox" name="two_factor_auth" id="two_factor_auth" {% if user.profile.two_factor_enabled %}checked{% endif %}>
+                                                <span class="security-toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="security-card-status">
+                                            <span class="status-indicator {% if user.profile.two_factor_enabled %}status-active{% else %}status-inactive{% endif %}"></span>
+                                            <span>{% if user.profile.two_factor_enabled %}{% trans "مفعل" %}{% else %}{% trans "غير مفعل" %}{% endif %}</span>
+                                        </div>
+                                        
+                                        <div class="verification-methods" id="verification-methods" style="display: {% if user.profile.two_factor_enabled %}block{% else %}none{% endif %};">
+                                            <h5>{% trans "طريقة التحقق" %}</h5>
+                                            
+                                            <div class="verification-method {% if user.profile.verification_method == 'app' %}active{% endif %}">
+                                                <div class="verification-method-header">
+                                                    <div class="verification-method-radio">
+                                                        <input type="radio" name="verification_method" id="method-app" value="app" {% if user.profile.verification_method == 'app' %}checked{% endif %}>
+                                                    </div>
+                                                    <label for="method-app" class="verification-method-title">{% trans "تطبيق المصادقة" %}</label>
+                                                </div>
+                                                <p class="verification-method-description">
+                                                    {% trans "استخدم تطبيقات مثل Google Authenticator أو Microsoft Authenticator لإنشاء رموز التحقق." %}
+                                                </p>
+                                            </div>
+                                            
+                                            <div class="verification-method {% if user.profile.verification_method == 'sms' %}active{% endif %}">
+                                                <div class="verification-method-header">
+                                                    <div class="verification-method-radio">
+                                                        <input type="radio" name="verification_method" id="method-sms" value="sms" {% if user.profile.verification_method == 'sms' %}checked{% endif %}>
+                                                    </div>
+                                                    <label for="method-sms" class="verification-method-title">{% trans "رسائل نصية (SMS)" %}</label>
+                                                </div>
+                                                <p class="verification-method-description">
+                                                    {% trans "استلم رمز تحقق عبر رسالة نصية على رقم هاتفك المحمول." %}
+                                                </p>
+                                            </div>
+                                            
+                                            <div class="verification-method {% if user.profile.verification_method == 'email' %}active{% endif %}">
+                                                <div class="verification-method-header">
+                                                    <div class="verification-method-radio">
+                                                        <input type="radio" name="verification_method" id="method-email" value="email" {% if user.profile.verification_method == 'email' %}checked{% endif %}>
+                                                    </div>
+                                                    <label for="method-email" class="verification-method-title">{% trans "البريد الإلكتروني" %}</label>
+                                                </div>
+                                                <p class="verification-method-description">
+                                                    {% trans "استلم رمز تحقق عبر البريد الإلكتروني." %}
+                                                </p>
+                                            </div>
+                                            
+                                            <button class="btn btn-primary mt-3" id="setup-2fa">
+                                                <i class="fas fa-cog me-2"></i>{% trans "إعداد طريقة التحقق" %}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="security-card">
+                                    <div class="security-card-header">
+                                        <div class="security-card-icon">
+                                            <i class="fas fa-envelope"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="security-card-title">{% trans "تأكيد البريد الإلكتروني" %}</h4>
+                                        </div>
+                                    </div>
+                                    <div class="security-card-body">
+                                        <p class="security-card-description">
+                                            {% trans "البريد الإلكتروني المؤكد هو طريقة أساسية لاسترداد حسابك وتلقي تنبيهات الأمان." %}
+                                        </p>
+                                        
+                                        <div class="security-card-status">
+                                            <span class="status-indicator {% if user.is_verified %}status-active{% else %}status-inactive{% endif %}"></span>
+                                            <span>{% if user.is_verified %}{% trans "تم التأكيد" %}{% else %}{% trans "غير مؤكد" %}{% endif %}</span>
+                                        </div>
+                                        
+                                        {% if not user.is_verified %}
+                                            <a href="{% url 'accounts:resend_verification' %}" class="btn btn-primary">
+                                                <i class="fas fa-paper-plane me-2"></i>{% trans "إعادة إرسال رابط التأكيد" %}
+                                            </a>
+                                        {% else %}
+                                            <button class="btn btn-outline-primary" disabled>
+                                                <i class="fas fa-check-circle me-2"></i>{% trans "تم التأكيد" %}
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-5">
+                            <div class="profile-section">
+                                <h3 class="profile-section-title">
+                                    <i class="fas fa-sign-in-alt"></i>{% trans "جلسات تسجيل الدخول" %}
+                                </h3>
+                                
+                                <div class="security-card">
+                                    <div class="security-card-header">
+                                        <div class="security-card-icon">
+                                            <i class="fas fa-laptop"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="security-card-title">{% trans "الأجهزة النشطة" %}</h4>
+                                        </div>
+                                    </div>
+                                    <div class="security-card-body">
+                                        <p class="security-card-description">
+                                            {% trans "الأجهزة التي قمت بتسجيل الدخول إليها مؤخرًا." %}
+                                        </p>
+                                        
+                                        <div class="session-list">
+                                            <div class="session-item">
+                                                <div class="session-info">
+                                                    <div class="session-device-icon">
+                                                        <i class="fas fa-desktop"></i>
+                                                    </div>
+                                                    <div class="session-details">
+                                                        <h6>{% trans "هذا الجهاز" %}</h6>
+                                                        <p>Windows 10 - Chrome</p>
+                                                        <p><small>IP: 192.168.1.1 - {% trans "آخر نشاط:" %} {% now "j F Y, H:i" %}</small></p>
+                                                    </div>
+                                                </div>
+                                                <div class="session-actions">
+                                                    <button disabled>{% trans "الجلسة الحالية" %}</button>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="session-item">
+                                                <div class="session-info">
+                                                    <div class="session-device-icon">
+                                                        <i class="fas fa-mobile-alt"></i>
+                                                    </div>
+                                                    <div class="session-details">
+                                                        <h6>iPhone 12</h6>
+                                                        <p>iOS 15 - Safari</p>
+                                                        <p><small>IP: 192.168.1.2 - {% trans "آخر نشاط:" %} {% now "j F Y, H:i" %}</small></p>
+                                                    </div>
+                                                </div>
+                                                <div class="session-actions">
+                                                    <button class="text-danger">{% trans "إنهاء الجلسة" %}</button>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="session-item">
+                                                <div class="session-info">
+                                                    <div class="session-device-icon">
+                                                        <i class="fas fa-tablet-alt"></i>
+                                                    </div>
+                                                    <div class="session-details">
+                                                        <h6>iPad Pro</h6>
+                                                        <p>iPadOS 15 - Chrome</p>
+                                                        <p><small>IP: 192.168.1.3 - {% trans "آخر نشاط:" %} {% now "j F Y, H:i" %}</small></p>
+                                                    </div>
+                                                </div>
+                                                <div class="session-actions">
+                                                    <button class="text-danger">{% trans "إنهاء الجلسة" %}</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <button class="btn btn-outline-danger mt-3">
+                                            <i class="fas fa-sign-out-alt me-2"></i>{% trans "إنهاء جميع الجلسات الأخرى" %}
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="profile-section">
+                                    <h3 class="profile-section-title">
+                                        <i class="fas fa-plug"></i>{% trans "التطبيقات المتصلة" %}
+                                    </h3>
+                                    
+                                    <div class="security-card">
+                                        <div class="security-card-header">
+                                            <div class="security-card-icon">
+                                                <i class="fas fa-share-alt"></i>
+                                            </div>
+                                            <div>
+                                                <h4 class="security-card-title">{% trans "حسابات خارجية" %}</h4>
+                                            </div>
+                                        </div>
+                                        <div class="security-card-body">
+                                            <p class="security-card-description">
+                                                {% trans "التطبيقات والمواقع التي قمت بمنحها إمكانية الوصول إلى حسابك." %}
+                                            </p>
+                                            
+                                            <div class="connected-apps">
+                                                <div class="connected-app">
+                                                    <div class="app-info">
+                                                        <div class="app-icon google">
+                                                            <i class="fab fa-google"></i>
+                                                        </div>
+                                                        <div class="app-details">
+                                                            <h6>Google</h6>
+                                                            <p>{% trans "متصل منذ" %} 15/03/2023</p>
+                                                        </div>
+                                                    </div>
+                                                    <button class="btn btn-sm btn-outline-danger">
+                                                        {% trans "إلغاء الربط" %}
+                                                    </button>
+                                                </div>
+                                                
+                                                <div class="connected-app">
+                                                    <div class="app-info">
+                                                        <div class="app-icon facebook">
+                                                            <i class="fab fa-facebook-f"></i>
+                                                        </div>
+                                                        <div class="app-details">
+                                                            <h6>Facebook</h6>
+                                                            <p>{% trans "متصل منذ" %} 20/05/2023</p>
+                                                        </div>
+                                                    </div>
+                                                    <button class="btn btn-sm btn-outline-danger">
+                                                        {% trans "إلغاء الربط" %}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            
+                                            <button class="btn btn-outline-primary mt-3">
+                                                <i class="fas fa-plus me-2"></i>{% trans "ربط حساب جديد" %}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="profile-section">
+                                    <h3 class="profile-section-title">
+                                        <i class="fas fa-trash-alt"></i>{% trans "حذف الحساب" %}
+                                    </h3>
+                                    
+                                    <div class="security-card">
+                                        <div class="security-card-header">
+                                            <div class="security-card-icon" style="background-color: #dc3545;">
+                                                <i class="fas fa-user-slash"></i>
+                                            </div>
+                                            <div>
+                                                <h4 class="security-card-title">{% trans "حذف حسابك" %}</h4>
+                                            </div>
+                                        </div>
+                                        <div class="security-card-body">
+                                            <p class="security-card-description">
+                                                {% trans "سيؤدي حذف حسابك إلى إزالة جميع بياناتك الشخصية بشكل دائم من نظامنا." %}
+                                            </p>
+                                            
+                                            <div class="alert alert-danger">
+                                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                                {% trans "تحذير: هذا الإجراء لا يمكن التراجع عنه!" %}
+                                            </div>
+                                            
+                                            <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+                                                <i class="fas fa-trash-alt me-2"></i>{% trans "حذف حسابي" %}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Account Deletion -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteAccountModalLabel">{% trans "تأكيد حذف الحساب" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <i class="fas fa-exclamation-triangle text-danger fa-4x mb-3"></i>
+                    <h5>{% trans "هل أنت متأكد من رغبتك في حذف حسابك؟" %}</h5>
+                    <p>{% trans "هذا الإجراء دائم ولا يمكن التراجع عنه. ستفقد جميع بياناتك ومعلوماتك الشخصية." %}</p>
+                </div>
+                
+                <form id="delete-account-form">
+                    <div class="mb-3">
+                        <label for="delete-reason" class="form-label">{% trans "يرجى إخبارنا بسبب مغادرتك (اختياري)" %}</label>
+                        <select id="delete-reason" class="form-select mb-3">
+                            <option value="">{% trans "اختر سبباً..." %}</option>
+                            <option value="not_useful">{% trans "لم أعد بحاجة للخدمة" %}</option>
+                            <option value="found_alternative">{% trans "وجدت بديلاً أفضل" %}</option>
+                            <option value="privacy_concerns">{% trans "مخاوف تتعلق بالخصوصية" %}</option>
+                            <option value="user_experience">{% trans "تجربة مستخدم سيئة" %}</option>
+                            <option value="other">{% trans "سبب آخر" %}</option>
+                        </select>
+                        
+                        <div id="other-reason-container" class="mb-3" style="display: none;">
+                            <label for="other-reason" class="form-label">{% trans "سبب آخر" %}</label>
+                            <textarea id="other-reason" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password-confirm" class="form-label">{% trans "أدخل كلمة المرور للتأكيد" %}*</label>
+                        <input type="password" id="password-confirm" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="confirm-delete" required>
+                        <label class="form-check-label" for="confirm-delete">
+                            {% trans "أؤكد أنني أريد حذف حسابي نهائياً وأفهم أن هذا الإجراء لا يمكن التراجع عنه" %}
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "إلغاء" %}</button>
+                <button type="button" class="btn btn-danger" id="confirm-delete-btn" disabled>{% trans "حذف الحساب" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // التحقق بخطوتين
+        const twoFactorToggle = document.getElementById('two_factor_auth');
+        const verificationMethods = document.getElementById('verification-methods');
+        
+        twoFactorToggle.addEventListener('change', function() {
+            verificationMethods.style.display = this.checked ? 'block' : 'none';
+            
+            // إرسال طلب AJAX لتحديث الإعداد
+            fetch('{% url "accounts:update_security_settings" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    setting: 'two_factor_enabled',
+                    value: this.checked
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (this.checked) {
+                        document.getElementById('setup-2fa').scrollIntoView({ behavior: 'smooth' });
+                    }
+                } else {
+                    // إعادة القيمة إلى حالتها السابقة إذا فشل الطلب
+                    this.checked = !this.checked;
+                    verificationMethods.style.display = this.checked ? 'block' : 'none';
+                    alert(data.error || '{% trans "حدث خطأ أثناء تحديث الإعدادات" %}');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // إعادة القيمة إلى حالتها السابقة
+                this.checked = !this.checked;
+                verificationMethods.style.display = this.checked ? 'block' : 'none';
+                alert('{% trans "حدث خطأ أثناء الاتصال بالخادم" %}');
+            });
+        });
+        
+        // طريقة التحقق
+        document.querySelectorAll('input[name="verification_method"]').forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                document.querySelectorAll('.verification-method').forEach(function(method) {
+                    method.classList.remove('active');
+                });
+                
+                this.closest('.verification-method').classList.add('active');
+                
+                // إرسال طلب AJAX لتحديث طريقة التحقق
+                fetch('{% url "accounts:update_security_settings" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        setting: 'verification_method',
+                        value: this.value
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.success) {
+                        alert(data.error || '{% trans "حدث خطأ أثناء تحديث طريقة التحقق" %}');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('{% trans "حدث خطأ أثناء الاتصال بالخادم" %}');
+                });
+            });
+        });
+        
+        // إعداد التحقق بخطوتين
+        document.getElementById('setup-2fa').addEventListener('click', function() {
+            const method = document.querySelector('input[name="verification_method"]:checked').value;
+            
+            // إرسال طلب AJAX لبدء عملية الإعداد
+            fetch('{% url "accounts:setup_2fa" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    method: method
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (method === 'app') {
+                        // عرض رمز QR لتطبيق المصادقة
+                        const modal = new bootstrap.Modal(document.getElementById('qrCodeModal'));
+                        document.getElementById('qrCodeImage').src = data.qr_code;
+                        document.getElementById('secretKey').textContent = data.secret_key;
+                        modal.show();
+                    } else if (method === 'sms' || method === 'email') {
+                        // إرسال رمز التحقق وعرض نموذج التحقق
+                        const modal = new bootstrap.Modal(document.getElementById('verificationCodeModal'));
+                        document.getElementById('verification-message').textContent = data.message;
+                        modal.show();
+                    }
+                } else {
+                    alert(data.error || '{% trans "حدث خطأ أثناء إعداد التحقق بخطوتين" %}');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('{% trans "حدث خطأ أثناء الاتصال بالخادم" %}');
+            });
+        });
+        
+        // حذف الحساب
+        const deleteReason = document.getElementById('delete-reason');
+        const otherReasonContainer = document.getElementById('other-reason-container');
+        const confirmDeleteCheckbox = document.getElementById('confirm-delete');
+        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+        const passwordConfirm = document.getElementById('password-confirm');
+        
+        deleteReason.addEventListener('change', function() {
+            otherReasonContainer.style.display = this.value === 'other' ? 'block' : 'none';
+        });
+        
+        // تفعيل زر التأكيد عند ملء جميع الحقول المطلوبة
+        function updateDeleteButtonState() {
+            confirmDeleteBtn.disabled = !(confirmDeleteCheckbox.checked && passwordConfirm.value.length > 0);
+        }
+        
+        confirmDeleteCheckbox.addEventListener('change', updateDeleteButtonState);
+        passwordConfirm.addEventListener('input', updateDeleteButtonState);
+        
+        // إنهاء جلسة
+        document.querySelectorAll('.session-actions button').forEach(function(button) {
+            if (button.textContent.trim() === '{% trans "إنهاء الجلسة" %}') {
+                button.addEventListener('click', function() {
+                    const sessionItem = this.closest('.session-item');
+                    const sessionId = sessionItem.dataset.sessionId;
+                    
+                    if (confirm('{% trans "هل أنت متأكد من رغبتك في إنهاء هذه الجلسة؟" %}')) {
+                        // إرسال طلب AJAX لإنهاء الجلسة
+                        fetch('{% url "accounts:terminate_session" %}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            },
+                            body: JSON.stringify({
+                                session_id: sessionId
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                sessionItem.remove();
+                            } else {
+                                alert(data.error || '{% trans "حدث خطأ أثناء إنهاء الجلسة" %}');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('{% trans "حدث خطأ أثناء الاتصال بالخادم" %}');
+                        });
+                    }
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}
