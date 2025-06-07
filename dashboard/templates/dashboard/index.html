@@ -9,44 +9,276 @@
 
 {% block extra_css %}
 <style>
+    /* أنماط خاصة بالصفحة الرئيسية */
     .stat-card {
         transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
     }
+
     .stat-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 10px 20px rgba(0,0,0,0.1);
     }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 50%);
+        pointer-events: none;
+    }
+
     .stat-icon {
         font-size: 2.5rem;
         opacity: 0.8;
+        transition: all 0.3s ease;
     }
+
+    .stat-card:hover .stat-icon {
+        transform: scale(1.1);
+    }
+
     .percent-badge {
         font-size: 0.8rem;
+        font-weight: 500;
+        padding: 0.25em 0.5em;
+        border-radius: 0.375rem;
     }
+
     .percent-up {
         color: #28a745;
     }
+
     .percent-down {
         color: #dc3545;
     }
+
     .chart-container {
         position: relative;
         height: 300px;
     }
+
     .latest-item {
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
     }
+
     .latest-item:hover {
-        background-color: rgba(0,0,0,0.03);
+        background-color: rgba(0,0,0,0.02);
+        transform: translateX(5px);
     }
+
     .dashboard-widget {
         height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .dashboard-widget .card-body {
+        flex: 1;
+    }
+
+    .status-badge {
+        padding: 0.35em 0.65em;
+        font-size: 0.75em;
+        font-weight: 500;
+        border-radius: 20px;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .status-badge i {
+        margin-right: 0.25rem;
+        font-size: 0.7rem;
+    }
+
+    [dir="rtl"] .status-badge i {
+        margin-right: 0;
+        margin-left: 0.25rem;
+    }
+
+    .product-image {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 4px;
+    }
+
+    .progress {
+        height: 8px;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .quick-action-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+        height: 100%;
+    }
+
+    .quick-action-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .quick-action-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        color: rgba(0,0,0,0.6);
+    }
+
+    .quick-action-card:hover .quick-action-icon {
+        transform: scale(1.2);
+    }
+
+    /* تنسيق الرسوم البيانية */
+    .chart-legend {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 1rem;
+    }
+
+    .chart-legend-item {
+        display: flex;
+        align-items: center;
+        margin: 0 0.75rem;
+        font-size: 0.85rem;
+    }
+
+    .chart-legend-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 0.5rem;
+    }
+
+    [dir="rtl"] .chart-legend-color {
+        margin-right: 0;
+        margin-left: 0.5rem;
+    }
+
+    /* تنسيق البطاقات الجديدة */
+    .revenue-stat {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        padding: 1.5rem;
+        height: 100%;
+        background-color: #fff;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s ease;
+    }
+
+    .revenue-stat:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    .revenue-stat-icon {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        font-size: 1.5rem;
+        color: rgba(0, 0, 0, 0.1);
+    }
+
+    [dir="rtl"] .revenue-stat-icon {
+        right: auto;
+        left: 1rem;
+    }
+
+    .revenue-stat-title {
+        color: #6b7280;
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .revenue-stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .revenue-stat-percent {
+        display: flex;
+        align-items: center;
+        font-size: 0.875rem;
+    }
+
+    .revenue-stat-percent i {
+        margin-right: 0.25rem;
+    }
+
+    [dir="rtl"] .revenue-stat-percent i {
+        margin-right: 0;
+        margin-left: 0.25rem;
+    }
+
+    .revenue-stat-positive {
+        color: #10b981;
+    }
+
+    .revenue-stat-negative {
+        color: #ef4444;
+    }
+
+    /* تحسين الرسوم البيانية الإضافية */
+    .mini-chart {
+        position: absolute;
+        bottom: 1rem;
+        right: 1rem;
+        width: 80px;
+        height: 30px;
+    }
+
+    [dir="rtl"] .mini-chart {
+        right: auto;
+        left: 1rem;
+    }
+
+    /* تنسيق البطاقات الجانبية */
+    .side-card {
+        position: relative;
+        overflow: hidden;
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+
+    .side-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .side-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 5px;
+        height: 100%;
+        background-color: var(--primary-color);
+        opacity: 0.5;
+    }
+
+    .side-card-header {
+        position: relative;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .side-card-body {
+        padding: 1.25rem 1.5rem;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Stats Overview -->
+<!-- Quick Stats Overview -->
 <div class="row mb-4">
     <!-- Total Sales -->
     <div class="col-xl-3 col-md-6 mb-4">
@@ -55,7 +287,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="text-muted mb-2">{% trans 'إجمالي المبيعات' %}</h6>
-                        <h3 class="mb-0">{{ total_sales|floatformat:2 }} ر.س</h3>
+                        <h3 class="mb-0">{{ total_sales|floatformat:2 }} د.ا</h3>
                         <div class="mt-2">
                             {% if monthly_sales_change > 0 %}
                             <span class="badge bg-success-subtle text-success percent-badge">
@@ -73,10 +305,13 @@
                         <i class="fas fa-dollar-sign"></i>
                     </div>
                 </div>
+                <div class="mini-chart">
+                    <canvas id="salesMiniChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Total Orders -->
     <div class="col-xl-3 col-md-6 mb-4">
         <div class="card stat-card border-0 shadow-sm h-100">
@@ -102,10 +337,13 @@
                         <i class="fas fa-shopping-cart"></i>
                     </div>
                 </div>
+                <div class="mini-chart">
+                    <canvas id="ordersMiniChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Total Products -->
     <div class="col-xl-3 col-md-6 mb-4">
         <div class="card stat-card border-0 shadow-sm h-100">
@@ -125,10 +363,13 @@
                         <i class="fas fa-box"></i>
                     </div>
                 </div>
+                <div class="mini-chart">
+                    <canvas id="productsMiniChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Total Customers -->
     <div class="col-xl-3 col-md-6 mb-4">
         <div class="card stat-card border-0 shadow-sm h-100">
@@ -147,6 +388,83 @@
                     <div class="stat-icon text-warning">
                         <i class="fas fa-users"></i>
                     </div>
+                </div>
+                <div class="mini-chart">
+                    <canvas id="usersMiniChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions Row -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">{% trans 'إجراءات سريعة' %}</h5>
+            </div>
+            <div class="card-body py-2">
+                <div class="row">
+                    {% if perms.products.add_product %}
+                    <div class="col-md-3 col-sm-6 p-2">
+                        <a href="{% url 'dashboard:dashboard_product_create' %}" class="text-decoration-none">
+                            <div class="card quick-action-card border-0 shadow-sm">
+                                <div class="card-body text-center p-3">
+                                    <div class="quick-action-icon">
+                                        <i class="fas fa-plus-circle text-success"></i>
+                                    </div>
+                                    <h6 class="mb-0">{% trans 'إضافة منتج جديد' %}</h6>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    {% endif %}
+
+                    {% if perms.orders.add_order %}
+                    <div class="col-md-3 col-sm-6 p-2">
+                        <a href="{% url 'dashboard:dashboard_order_create' %}" class="text-decoration-none">
+                            <div class="card quick-action-card border-0 shadow-sm">
+                                <div class="card-body text-center p-3">
+                                    <div class="quick-action-icon">
+                                        <i class="fas fa-shopping-cart text-primary"></i>
+                                    </div>
+                                    <h6 class="mb-0">{% trans 'إنشاء طلب جديد' %}</h6>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    {% endif %}
+
+                    {% if perms.accounts.add_user %}
+                    <div class="col-md-3 col-sm-6 p-2">
+                        <a href="{% url 'dashboard:dashboard_user_create' %}" class="text-decoration-none">
+                            <div class="card quick-action-card border-0 shadow-sm">
+                                <div class="card-body text-center p-3">
+                                    <div class="quick-action-icon">
+                                        <i class="fas fa-user-plus text-info"></i>
+                                    </div>
+                                    <h6 class="mb-0">{% trans 'إضافة مستخدم جديد' %}</h6>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    {% endif %}
+
+                    {% if perms.dashboard.view_reports %}
+                    <div class="col-md-3 col-sm-6 p-2">
+                        <a href="{% url 'dashboard:dashboard_export_report' %}" class="text-decoration-none">
+                            <div class="card quick-action-card border-0 shadow-sm">
+                                <div class="card-body text-center p-3">
+                                    <div class="quick-action-icon">
+                                        <i class="fas fa-file-export text-warning"></i>
+                                    </div>
+                                    <h6 class="mb-0">{% trans 'تصدير التقارير' %}</h6>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -178,7 +496,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Latest Orders -->
     <div class="col-xl-4 col-lg-5 mb-4">
         <div class="card border-0 shadow-sm h-100">
@@ -196,8 +514,10 @@
                                 <small class="text-muted">{{ order.full_name }}</small>
                             </div>
                             <div class="text-end">
-                                <div class="mb-1">{{ order.grand_total|floatformat:2 }} ر.س</div>
-                                <span class="badge bg-{{ order.status_badge_class }}">{{ order.get_status_display }}</span>
+                                <div class="mb-1">{{ order.grand_total|floatformat:2 }} د.ا</div>
+                                <span class="status-badge bg-{{ order.status_badge_class }}-subtle text-{{ order.status_badge_class }}">
+                                    <i class="fas fa-circle"></i> {{ order.get_status_display }}
+                                </span>
                             </div>
                         </div>
                     </a>
@@ -207,6 +527,65 @@
                     </div>
                     {% endfor %}
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Revenue Stats Row -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="revenue-stat">
+            <div class="revenue-stat-icon">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <div class="revenue-stat-title">{% trans 'إجمالي الإيرادات اليومية' %}</div>
+            <div class="revenue-stat-value">{{ daily_revenue|floatformat:2 }} د.ا</div>
+            <div class="revenue-stat-percent {% if daily_revenue_change > 0 %}revenue-stat-positive{% else %}revenue-stat-negative{% endif %}">
+                <i class="fas fa-{% if daily_revenue_change > 0 %}arrow-up{% else %}arrow-down{% endif %}"></i>
+                {{ daily_revenue_change|abs|floatformat:1 }}% {% trans 'مقارنة بالأمس' %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="revenue-stat">
+            <div class="revenue-stat-icon">
+                <i class="fas fa-calendar-week"></i>
+            </div>
+            <div class="revenue-stat-title">{% trans 'إجمالي الإيرادات الأسبوعية' %}</div>
+            <div class="revenue-stat-value">{{ weekly_revenue|floatformat:2 }} د.ا</div>
+            <div class="revenue-stat-percent {% if weekly_revenue_change > 0 %}revenue-stat-positive{% else %}revenue-stat-negative{% endif %}">
+                <i class="fas fa-{% if weekly_revenue_change > 0 %}arrow-up{% else %}arrow-down{% endif %}"></i>
+                {{ weekly_revenue_change|abs|floatformat:1 }}% {% trans 'مقارنة بالأسبوع الماضي' %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="revenue-stat">
+            <div class="revenue-stat-icon">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+            <div class="revenue-stat-title">{% trans 'إجمالي الإيرادات الشهرية' %}</div>
+            <div class="revenue-stat-value">{{ monthly_revenue|floatformat:2 }} د.ا</div>
+            <div class="revenue-stat-percent {% if monthly_revenue_change > 0 %}revenue-stat-positive{% else %}revenue-stat-negative{% endif %}">
+                <i class="fas fa-{% if monthly_revenue_change > 0 %}arrow-up{% else %}arrow-down{% endif %}"></i>
+                {{ monthly_revenue_change|abs|floatformat:1 }}% {% trans 'مقارنة بالشهر الماضي' %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="revenue-stat">
+            <div class="revenue-stat-icon">
+                <i class="fas fa-shopping-bag"></i>
+            </div>
+            <div class="revenue-stat-title">{% trans 'متوسط قيمة الطلب' %}</div>
+            <div class="revenue-stat-value">{{ average_order_value|floatformat:2 }} د.ا</div>
+            <div class="revenue-stat-percent {% if average_order_change > 0 %}revenue-stat-positive{% else %}revenue-stat-negative{% endif %}">
+                <i class="fas fa-{% if average_order_change > 0 %}arrow-up{% else %}arrow-down{% endif %}"></i>
+                {{ average_order_change|abs|floatformat:1 }}% {% trans 'مقارنة بالشهر الماضي' %}
             </div>
         </div>
     </div>
@@ -228,7 +607,7 @@
                         <div class="d-flex w-100 justify-content-between align-items-center">
                             <div class="d-flex align-items-center">
                                 {% if product.default_image %}
-                                <img src="{{ product.default_image.image.url }}" alt="{{ product.name }}" class="rounded me-3" width="40" height="40">
+                                <img src="{{ product.default_image.image.url }}" alt="{{ product.name }}" class="product-image me-3">
                                 {% else %}
                                 <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center" style="width:40px;height:40px">
                                     <i class="fas fa-box text-secondary"></i>
@@ -241,7 +620,7 @@
                             </div>
                             <div class="text-end">
                                 <div class="mb-1">{{ product.sales_count }} {% trans 'مبيعات' %}</div>
-                                <div class="text-success">{{ product.current_price|floatformat:2 }} ر.س</div>
+                                <div class="text-success">{{ product.current_price|floatformat:2 }} د.ا</div>
                             </div>
                         </div>
                     </a>
@@ -254,7 +633,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Recent Users -->
     <div class="col-xl-4 col-md-6 mb-4">
         <div class="card border-0 shadow-sm dashboard-widget">
@@ -294,45 +673,68 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Order Status & Stock Status -->
     <div class="col-xl-4 mb-4">
-        <div class="card border-0 shadow-sm dashboard-widget">
-            <div class="card-header bg-transparent border-0">
+        <div class="card border-0 shadow-sm side-card dashboard-widget">
+            <div class="side-card-header">
                 <h5 class="mb-0">{% trans 'إحصائيات الطلبات والمخزون' %}</h5>
             </div>
-            <div class="card-body">
+            <div class="side-card-body">
                 <!-- Order Status Donut Chart -->
                 <h6 class="text-muted mb-3">{% trans 'حالة الطلبات' %}</h6>
                 <div class="chart-container" style="height: 180px;">
                     <canvas id="orderStatusChart"></canvas>
                 </div>
-                
+
+                <div class="chart-legend mb-4">
+                    <div class="chart-legend-item">
+                        <div class="chart-legend-color" style="background-color: #6c757d;"></div>
+                        <span>{% trans "جديد" %}</span>
+                    </div>
+                    <div class="chart-legend-item">
+                        <div class="chart-legend-color" style="background-color: #17a2b8;"></div>
+                        <span>{% trans "قيد المعالجة" %}</span>
+                    </div>
+                    <div class="chart-legend-item">
+                        <div class="chart-legend-color" style="background-color: #ffc107;"></div>
+                        <span>{% trans "تم الشحن" %}</span>
+                    </div>
+                    <div class="chart-legend-item">
+                        <div class="chart-legend-color" style="background-color: #28a745;"></div>
+                        <span>{% trans "تم التسليم" %}</span>
+                    </div>
+                    <div class="chart-legend-item">
+                        <div class="chart-legend-color" style="background-color: #dc3545;"></div>
+                        <span>{% trans "ملغي" %}</span>
+                    </div>
+                </div>
+
                 <hr class="my-4">
-                
+
                 <!-- Stock Status -->
                 <h6 class="text-muted mb-3">{% trans 'حالة المخزون' %}</h6>
                 <div class="d-flex justify-content-between mb-2">
                     <span>{% trans 'متوفر' %}</span>
                     <span class="text-success">{{ in_stock_count }} ({{ in_stock_percent|floatformat }}%)</span>
                 </div>
-                <div class="progress mb-3" style="height: 8px;">
+                <div class="progress mb-3">
                     <div class="progress-bar bg-success" role="progressbar" style="width: {{ in_stock_percent }}%"></div>
                 </div>
-                
+
                 <div class="d-flex justify-content-between mb-2">
                     <span>{% trans 'منخفض المخزون' %}</span>
                     <span class="text-warning">{{ low_stock_count }} ({{ low_stock_percent|floatformat }}%)</span>
                 </div>
-                <div class="progress mb-3" style="height: 8px;">
+                <div class="progress mb-3">
                     <div class="progress-bar bg-warning" role="progressbar" style="width: {{ low_stock_percent }}%"></div>
                 </div>
-                
+
                 <div class="d-flex justify-content-between mb-2">
                     <span>{% trans 'نفذت الكمية' %}</span>
                     <span class="text-danger">{{ out_of_stock_count }} ({{ out_of_stock_percent|floatformat }}%)</span>
                 </div>
-                <div class="progress" style="height: 8px;">
+                <div class="progress">
                     <div class="progress-bar bg-danger" role="progressbar" style="width: {{ out_of_stock_percent }}%"></div>
                 </div>
             </div>
@@ -343,7 +745,102 @@
 
 {% block extra_js %}
 <script>
-    // Sales Chart
+    // بيانات المخططات المصغرة
+    const miniChartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                enabled: false
+            }
+        },
+        scales: {
+            x: {
+                display: false
+            },
+            y: {
+                display: false
+            }
+        },
+        elements: {
+            line: {
+                tension: 0.4,
+                borderWidth: 2
+            },
+            point: {
+                radius: 0
+            }
+        }
+    };
+
+    // المخطط المصغر للمبيعات
+    const salesMiniChartCtx = document.getElementById('salesMiniChart').getContext('2d');
+    const salesMiniChart = new Chart(salesMiniChartCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+            datasets: [{
+                data: [50, 60, 45, 70, 65, 80, 95],
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                fill: true
+            }]
+        },
+        options: miniChartOptions
+    });
+
+    // المخطط المصغر للطلبات
+    const ordersMiniChartCtx = document.getElementById('ordersMiniChart').getContext('2d');
+    const ordersMiniChart = new Chart(ordersMiniChartCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+            datasets: [{
+                data: [20, 25, 18, 30, 28, 35, 40],
+                backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                borderColor: 'rgba(40, 167, 69, 1)',
+                fill: true
+            }]
+        },
+        options: miniChartOptions
+    });
+
+    // المخطط المصغر للمنتجات
+    const productsMiniChartCtx = document.getElementById('productsMiniChart').getContext('2d');
+    const productsMiniChart = new Chart(productsMiniChartCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+            datasets: [{
+                data: [100, 110, 120, 125, 130, 140, 150],
+                backgroundColor: 'rgba(23, 162, 184, 0.2)',
+                borderColor: 'rgba(23, 162, 184, 1)',
+                fill: true
+            }]
+        },
+        options: miniChartOptions
+    });
+
+    // المخطط المصغر للمستخدمين
+    const usersMiniChartCtx = document.getElementById('usersMiniChart').getContext('2d');
+    const usersMiniChart = new Chart(usersMiniChartCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+            datasets: [{
+                data: [80, 90, 95, 105, 115, 125, 140],
+                backgroundColor: 'rgba(255, 193, 7, 0.2)',
+                borderColor: 'rgba(255, 193, 7, 1)',
+                fill: true
+            }]
+        },
+        options: miniChartOptions
+    });
+
+    // مخطط المبيعات الرئيسي
     const salesChartCtx = document.getElementById('salesChart').getContext('2d');
     const salesChart = new Chart(salesChartCtx, {
         type: 'line',
@@ -397,15 +894,15 @@
                     beginAtZero: true,
                     ticks: {
                         callback: function(value) {
-                            return value.toLocaleString() + ' ر.س';
+                            return value.toLocaleString() + ' د.ا';
                         }
                     }
                 }
             }
         }
     });
-    
-    // Order Status Chart
+
+    // مخطط حالة الطلبات
     const orderStatusCtx = document.getElementById('orderStatusChart').getContext('2d');
     const orderStatusChart = new Chart(orderStatusCtx, {
         type: 'doughnut',
@@ -432,7 +929,8 @@
                     '#28a745',
                     '#dc3545'
                 ],
-                borderWidth: 0
+                borderWidth: 0,
+                hoverOffset: 4
             }]
         },
         options: {
@@ -440,35 +938,31 @@
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'right',
-                    labels: {
-                        boxWidth: 12,
-                        padding: 15
-                    }
+                    display: false
                 }
             },
             cutout: '70%'
         }
     });
-    
-    // Period Change for Sales Chart
+
+    // تغيير فترة مخطط المبيعات
     document.querySelectorAll('[data-period]').forEach(item => {
         item.addEventListener('click', e => {
             e.preventDefault();
-            
-            // Update active state in dropdown
+
+            // تحديث حالة النشاط في القائمة المنسدلة
             document.querySelectorAll('[data-period]').forEach(el => {
                 el.classList.remove('active');
             });
             e.target.classList.add('active');
-            
-            // Update dropdown button text
+
+            // تحديث نص زر القائمة المنسدلة
             document.getElementById('salesChartOptions').innerText = e.target.innerText;
-            
-            // Get period value
+
+            // الحصول على قيمة الفترة
             const period = e.target.dataset.period;
-            
-            // AJAX call to get new data
+
+            // طلب AJAX للحصول على البيانات الجديدة
             $.ajax({
                 url: '{% url "dashboard:dashboard_chart_data" %}',
                 data: {
@@ -476,7 +970,7 @@
                     'period': period
                 },
                 success: function(response) {
-                    // Update chart data
+                    // تحديث بيانات المخطط
                     salesChart.data.labels = response.labels;
                     salesChart.data.datasets[0].data = response.datasets[0].data;
                     salesChart.update();
