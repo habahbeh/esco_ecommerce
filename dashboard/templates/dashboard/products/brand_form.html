@@ -1,0 +1,769 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+{% if brand %}
+{% trans 'تعديل العلامة التجارية' %}: {{ brand.name }}
+{% else %}
+{% trans 'إضافة علامة تجارية جديدة' %}
+{% endif %}
+{% endblock %}
+
+{% block page_title %}
+{% if brand %}
+{% trans 'تعديل العلامة التجارية' %}
+{% else %}
+{% trans 'إضافة علامة تجارية جديدة' %}
+{% endif %}
+{% endblock %}
+
+{% block current_page %}
+{% if brand %}
+{{ brand.name }}
+{% else %}
+{% trans 'علامة تجارية جديدة' %}
+{% endif %}
+{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_products' %}">{% trans 'المنتجات' %}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_brands' %}">{% trans 'العلامات التجارية' %}</a></li>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+<style>
+    .form-section {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .form-section:last-child {
+        border-bottom: none;
+    }
+    .form-section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #333;
+    }
+    .image-preview {
+        width: 150px;
+        height: 150px;
+        border: 2px dashed #ddd;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        overflow: hidden;
+        position: relative;
+        cursor: pointer;
+    }
+    .image-preview img {
+        max-width: 100%;
+        max-height: 100%;
+    }
+    .image-preview-placeholder {
+        color: #aaa;
+        text-align: center;
+    }
+    .image-preview-placeholder i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+    .image-preview-actions {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        display: flex;
+        gap: 5px;
+        background-color: rgba(255, 255, 255, 0.8);
+        padding: 3px;
+        border-radius: 3px;
+    }
+    [dir="rtl"] .image-preview-actions {
+        right: auto;
+        left: 5px;
+    }
+    .image-preview-actions button {
+        border: none;
+        background: transparent;
+        padding: 0;
+        font-size: 0.8rem;
+        cursor: pointer;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6c757d;
+        border-radius: 3px;
+    }
+    .image-preview-actions button:hover {
+        background-color: rgba(0, 0, 0, 0.1);
+    }
+    .social-link-input {
+        margin-bottom: 15px;
+    }
+    .social-link-input .input-group-text {
+        width: 40px;
+        justify-content: center;
+    }
+    .color-preview {
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        border-radius: 5px;
+        margin-right: 10px;
+        vertical-align: middle;
+        border: 1px solid #dee2e6;
+    }
+    [dir="rtl"] .color-preview {
+        margin-right: 0;
+        margin-left: 10px;
+    }
+    .seo-preview {
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        padding: 1rem;
+        margin-top: 1rem;
+        background-color: #f8f9fa;
+    }
+    .seo-preview-title {
+        color: #1a0dab;
+        font-size: 1.25rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .seo-preview-url {
+        color: #006621;
+        font-size: 0.875rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .seo-preview-description {
+        color: #545454;
+        font-size: 0.875rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+    .sticky-submit {
+        position: sticky;
+        bottom: 1rem;
+        z-index: 1000;
+        background-color: #fff;
+        box-shadow: 0 -5px 10px rgba(0, 0, 0, 0.1);
+        border-radius: 0.25rem;
+        padding: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<form method="post" enctype="multipart/form-data" id="brand-form">
+    {% csrf_token %}
+
+    <div class="row">
+        <div class="col-lg-9">
+            <!-- البطاقة الرئيسية -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <ul class="nav nav-tabs card-header-tabs" id="brandTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link active" id="basic-tab" data-bs-toggle="tab" href="#basic" role="tab" aria-controls="basic" aria-selected="true">
+                                <i class="fa fa-info-circle me-1"></i> {% trans 'المعلومات الأساسية' %}
+                            </a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="contact-tab" data-bs-toggle="tab" href="#contact" role="tab" aria-controls="contact" aria-selected="false">
+                                <i class="fa fa-address-card me-1"></i> {% trans 'معلومات الاتصال' %}
+                            </a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="media-tab" data-bs-toggle="tab" href="#media" role="tab" aria-controls="media" aria-selected="false">
+                                <i class="fa fa-images me-1"></i> {% trans 'الوسائط' %}
+                            </a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="seo-tab" data-bs-toggle="tab" href="#seo" role="tab" aria-controls="seo" aria-selected="false">
+                                <i class="fa fa-search me-1"></i> {% trans 'SEO' %}
+                            </a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="social-tab" data-bs-toggle="tab" href="#social" role="tab" aria-controls="social" aria-selected="false">
+                                <i class="fa fa-share-alt me-1"></i> {% trans 'التواصل الاجتماعي' %}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body p-0">
+                    <div class="tab-content" id="brandTabsContent">
+                        <!-- المعلومات الأساسية -->
+                        <div class="tab-pane fade show active" id="basic" role="tabpanel" aria-labelledby="basic-tab">
+                            <div class="p-4">
+                                <div class="form-section">
+                                    <h5 class="form-section-title">{% trans 'معلومات العلامة التجارية الأساسية' %}</h5>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="name" class="form-label">{% trans 'اسم العلامة التجارية' %} <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="name" name="name" value="{{ brand.name|default:'' }}" required>
+                                            <div class="form-text">{% trans 'اسم العلامة التجارية الرئيسي (باللغة العربية)' %}</div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="name_en" class="form-label">{% trans 'اسم العلامة التجارية (الإنجليزية)' %}</label>
+                                            <input type="text" class="form-control" id="name_en" name="name_en" value="{{ brand.name_en|default:'' }}" dir="ltr">
+                                            <div class="form-text">{% trans 'اسم العلامة التجارية باللغة الإنجليزية (اختياري)' %}</div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="slug" class="form-label">{% trans 'معرف URL' %}</label>
+                                        <input type="text" class="form-control" id="slug" name="slug" value="{{ brand.slug|default:'' }}" dir="ltr">
+                                        <div class="form-text">{% trans 'سيتم إنشاؤه تلقائياً من الاسم إذا تركته فارغاً' %}</div>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <h5 class="form-section-title">{% trans 'وصف العلامة التجارية' %}</h5>
+                                    <div class="mb-3">
+                                        <label for="description" class="form-label">{% trans 'الوصف' %}</label>
+                                        <textarea class="form-control" id="description" name="description" rows="5">{{ brand.description|default:'' }}</textarea>
+                                        <div class="form-text">{% trans 'وصف مختصر للعلامة التجارية وتاريخها' %}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="history" class="form-label">{% trans 'تاريخ العلامة التجارية' %}</label>
+                                        <textarea class="form-control" id="history" name="history" rows="3">{{ brand.history|default:'' }}</textarea>
+                                        <div class="form-text">{% trans 'نبذة عن تاريخ العلامة التجارية (اختياري)' %}</div>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <h5 class="form-section-title">{% trans 'إعدادات العرض' %}</h5>
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if brand.is_active %}checked{% endif %}>
+                                                <label class="form-check-label" for="is_active">{% trans 'العلامة التجارية نشطة' %}</label>
+                                            </div>
+                                            <div class="form-text">{% trans 'تفعيل/تعطيل ظهور العلامة التجارية في الموقع' %}</div>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="is_featured" name="is_featured" {% if brand.is_featured %}checked{% endif %}>
+                                                <label class="form-check-label" for="is_featured">{% trans 'علامة تجارية مميزة' %}</label>
+                                            </div>
+                                            <div class="form-text">{% trans 'عرض العلامة التجارية في قسم العلامات التجارية المميزة' %}</div>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="is_verified" name="is_verified" {% if brand.is_verified %}checked{% endif %}>
+                                                <label class="form-check-label" for="is_verified">{% trans 'علامة تجارية موثقة' %}</label>
+                                            </div>
+                                            <div class="form-text">{% trans 'الإشارة إلى أن العلامة التجارية موثقة وأصلية' %}</div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="sort_order" class="form-label">{% trans 'ترتيب العرض' %}</label>
+                                        <input type="number" class="form-control" id="sort_order" name="sort_order" value="{{ brand.sort_order|default:'0' }}" min="0">
+                                        <div class="form-text">{% trans 'ترتيب عرض العلامة التجارية (الأرقام الأصغر تظهر أولاً)' %}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- معلومات الاتصال -->
+                        <div class="tab-pane fade" id="contact" role="tabpanel" aria-labelledby="contact-tab">
+                            <div class="p-4">
+                                <div class="form-section">
+                                    <h5 class="form-section-title">{% trans 'الموقع والعنوان' %}</h5>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="country" class="form-label">{% trans 'البلد' %}</label>
+                                            <input type="text" class="form-control" id="country" name="country" value="{{ brand.country|default:'' }}">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="city" class="form-label">{% trans 'المدينة' %}</label>
+                                            <input type="text" class="form-control" id="city" name="city" value="{{ brand.city|default:'' }}">
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="address" class="form-label">{% trans 'العنوان' %}</label>
+                                        <textarea class="form-control" id="address" name="address" rows="2">{{ brand.address|default:'' }}</textarea>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <h5 class="form-section-title">{% trans 'بيانات الاتصال' %}</h5>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="website" class="form-label">{% trans 'الموقع الإلكتروني' %}</label>
+                                            <input type="url" class="form-control" id="website" name="website" value="{{ brand.website|default:'' }}" dir="ltr">
+                                            <div class="form-text">{% trans 'رابط الموقع الرسمي للعلامة التجارية (مثال: https://www.example.com)' %}</div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="email" class="form-label">{% trans 'البريد الإلكتروني' %}</label>
+                                            <input type="email" class="form-control" id="email" name="email" value="{{ brand.email|default:'' }}" dir="ltr">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="phone" class="form-label">{% trans 'رقم الهاتف' %}</label>
+                                            <input type="tel" class="form-control" id="phone" name="phone" value="{{ brand.phone|default:'' }}" dir="ltr">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="fax" class="form-label">{% trans 'رقم الفاكس' %}</label>
+                                            <input type="tel" class="form-control" id="fax" name="fax" value="{{ brand.fax|default:'' }}" dir="ltr">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- الوسائط -->
+                        <div class="tab-pane fade" id="media" role="tabpanel" aria-labelledby="media-tab">
+                            <div class="p-4">
+                                <div class="form-section">
+                                    <h5 class="form-section-title">{% trans 'صور العلامة التجارية' %}</h5>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">{% trans 'شعار العلامة التجارية' %}</label>
+                                            <div class="image-preview" id="logo-preview">
+                                                {% if brand.logo %}
+                                                <img src="{{ brand.logo.url }}" alt="{{ brand.name }}">
+                                                <div class="image-preview-actions">
+                                                    <button type="button" class="btn-remove-image" data-target="logo">
+                                                        <i class="fa fa-trash text-danger"></i>
+                                                    </button>
+                                                </div>
+                                                {% else %}
+                                                <div class="image-preview-placeholder">
+                                                    <i class="fa fa-image"></i>
+                                                    <div>{% trans 'انقر لإضافة شعار' %}</div>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            <input type="file" id="logo" name="logo" class="d-none" accept="image/*">
+                                            <div class="form-text">{% trans 'شعار العلامة التجارية (الأبعاد المثالية: 200×200 بكسل)' %}</div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">{% trans 'صورة البانر' %}</label>
+                                            <div class="image-preview" id="banner-image-preview">
+                                                {% if brand.banner_image %}
+                                                <img src="{{ brand.banner_image.url }}" alt="{{ brand.name }}">
+                                                <div class="image-preview-actions">
+                                                    <button type="button" class="btn-remove-image" data-target="banner_image">
+                                                        <i class="fa fa-trash text-danger"></i>
+                                                    </button>
+                                                </div>
+                                                {% else %}
+                                                <div class="image-preview-placeholder">
+                                                    <i class="fa fa-image"></i>
+                                                    <div>{% trans 'انقر لإضافة صورة بانر' %}</div>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            <input type="file" id="banner_image" name="banner_image" class="d-none" accept="image/*">
+                                            <div class="form-text">{% trans 'صورة بانر العلامة التجارية (الأبعاد المثالية: 1200×300 بكسل)' %}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SEO -->
+                        <div class="tab-pane fade" id="seo" role="tabpanel" aria-labelledby="seo-tab">
+                            <div class="p-4">
+                                <div class="form-section">
+                                    <h5 class="form-section-title">{% trans 'تحسين محركات البحث (SEO)' %}</h5>
+                                    <div class="mb-3">
+                                        <label for="meta_title" class="form-label">{% trans 'عنوان SEO' %}</label>
+                                        <input type="text" class="form-control" id="meta_title" name="meta_title" value="{{ brand.meta_title|default:'' }}">
+                                        <div class="form-text">{% trans 'عنوان الصفحة الذي سيظهر في نتائج البحث (60-70 حرف)' %}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="meta_description" class="form-label">{% trans 'وصف SEO' %}</label>
+                                        <textarea class="form-control" id="meta_description" name="meta_description" rows="3">{{ brand.meta_description|default:'' }}</textarea>
+                                        <div class="form-text">{% trans 'وصف مختصر للصفحة الذي سيظهر في نتائج البحث (150-160 حرف)' %}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="meta_keywords" class="form-label">{% trans 'الكلمات المفتاحية' %}</label>
+                                        <input type="text" class="form-control" id="meta_keywords" name="meta_keywords" value="{{ brand.meta_keywords|default:'' }}">
+                                        <div class="form-text">{% trans 'الكلمات المفتاحية مفصولة بفواصل' %}</div>
+                                    </div>
+
+                                    <div class="seo-preview">
+                                        <h6>{% trans 'معاينة ظهور الصفحة في محركات البحث:' %}</h6>
+                                        <div class="seo-preview-title" id="seo-preview-title">
+                                            {{ brand.meta_title|default:brand.name|default:'اسم العلامة التجارية' }}
+                                        </div>
+                                        <div class="seo-preview-url">
+                                            www.example.com/brands/{{ brand.slug|default:'brand-name' }}
+                                        </div>
+                                        <div class="seo-preview-description" id="seo-preview-description">
+                                            {{ brand.meta_description|default:brand.description|default:'وصف العلامة التجارية سيظهر هنا. قم بإضافة وصف مختصر وجذاب للعلامة التجارية.' }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- التواصل الاجتماعي -->
+                        <div class="tab-pane fade" id="social" role="tabpanel" aria-labelledby="social-tab">
+                            <div class="p-4">
+                                <div class="form-section">
+                                    <h5 class="form-section-title">{% trans 'روابط وسائل التواصل الاجتماعي' %}</h5>
+                                    <div class="social-link-input">
+                                        <label for="social_facebook" class="form-label">{% trans 'فيسبوك' %}</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fab fa-facebook-f"></i></span>
+                                            <input type="url" class="form-control" id="social_facebook" name="social_facebook" value="{{ brand.social_links.facebook|default:'' }}" dir="ltr">
+                                        </div>
+                                    </div>
+                                    <div class="social-link-input">
+                                        <label for="social_twitter" class="form-label">{% trans 'تويتر' %}</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fab fa-twitter"></i></span>
+                                            <input type="url" class="form-control" id="social_twitter" name="social_twitter" value="{{ brand.social_links.twitter|default:'' }}" dir="ltr">
+                                        </div>
+                                    </div>
+                                    <div class="social-link-input">
+                                        <label for="social_instagram" class="form-label">{% trans 'انستغرام' %}</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fab fa-instagram"></i></span>
+                                            <input type="url" class="form-control" id="social_instagram" name="social_instagram" value="{{ brand.social_links.instagram|default:'' }}" dir="ltr">
+                                        </div>
+                                    </div>
+                                    <div class="social-link-input">
+                                        <label for="social_linkedin" class="form-label">{% trans 'لينكد إن' %}</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fab fa-linkedin-in"></i></span>
+                                            <input type="url" class="form-control" id="social_linkedin" name="social_linkedin" value="{{ brand.social_links.linkedin|default:'' }}" dir="ltr">
+                                        </div>
+                                    </div>
+                                    <div class="social-link-input">
+                                        <label for="social_youtube" class="form-label">{% trans 'يوتيوب' %}</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fab fa-youtube"></i></span>
+                                            <input type="url" class="form-control" id="social_youtube" name="social_youtube" value="{{ brand.social_links.youtube|default:'' }}" dir="ltr">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- زر الحفظ الثابت -->
+            <div class="sticky-submit">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa fa-save me-1"></i>
+                            {% if brand %}
+                                {% trans 'حفظ التغييرات' %}
+                            {% else %}
+                                {% trans 'إنشاء العلامة التجارية' %}
+                            {% endif %}
+                        </button>
+                    </div>
+                    <a href="{% url 'dashboard:dashboard_brands' %}" class="btn btn-outline-secondary">
+                        <i class="fa fa-times me-1"></i> {% trans 'إلغاء' %}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3">
+            <!-- حالة العلامة التجارية -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">{% trans 'حالة العلامة التجارية' %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="status_switch" {% if brand.is_active %}checked{% endif %}>
+                            <label class="form-check-label" for="status_switch">
+                                <span id="status_label">
+                                    {% if brand.is_active %}
+                                        <i class="fa fa-eye text-success me-1"></i> {% trans 'نشطة' %}
+                                    {% else %}
+                                        <i class="fa fa-eye-slash text-secondary me-1"></i> {% trans 'غير نشطة' %}
+                                    {% endif %}
+                                </span>
+                            </label>
+                        </div>
+
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="featured_switch" {% if brand.is_featured %}checked{% endif %}>
+                            <label class="form-check-label" for="featured_switch">
+                                <span id="featured_label">
+                                    {% if brand.is_featured %}
+                                        <i class="fa fa-star text-warning me-1"></i> {% trans 'مميزة' %}
+                                    {% else %}
+                                        <i class="fa fa-star text-secondary me-1"></i> {% trans 'غير مميزة' %}
+                                    {% endif %}
+                                </span>
+                            </label>
+                        </div>
+
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="verified_switch" {% if brand.is_verified %}checked{% endif %}>
+                            <label class="form-check-label" for="verified_switch">
+                                <span id="verified_label">
+                                    {% if brand.is_verified %}
+                                        <i class="fa fa-check-circle text-success me-1"></i> {% trans 'موثقة' %}
+                                    {% else %}
+                                        <i class="fa fa-check-circle text-secondary me-1"></i> {% trans 'غير موثقة' %}
+                                    {% endif %}
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="mb-3">
+                        {% if brand %}
+                        <div class="text-muted mb-2">
+                            <small>
+                                <i class="fa fa-calendar me-1"></i> {% trans 'تاريخ الإنشاء:' %} {{ brand.created_at|date:"Y/m/d H:i" }}
+                            </small>
+                        </div>
+                        <div class="text-muted mb-2">
+                            <small>
+                                <i class="fa fa-edit me-1"></i> {% trans 'آخر تحديث:' %} {{ brand.updated_at|date:"Y/m/d H:i" }}
+                            </small>
+                        </div>
+                        {% if brand.products_count > 0 %}
+                        <div class="text-muted">
+                            <small>
+                                <i class="fa fa-box me-1"></i> {% trans 'عدد المنتجات:' %} {{ brand.products_count }}
+                            </small>
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <div class="text-muted">
+                            <small>
+                                <i class="fa fa-info-circle me-1"></i> {% trans 'سيتم إنشاء العلامة التجارية بعد الحفظ' %}
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- معلومات إضافية -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">{% trans 'معلومات إضافية' %}</h5>
+                </div>
+                <div class="card-body">
+                    {% if brand %}
+                    <dl class="row mb-0">
+                        <dt class="col-sm-6">{% trans 'الرابط:' %}</dt>
+                        <dd class="col-sm-6">
+                            <a href="#" class="small" dir="ltr">/brands/{{ brand.slug }}</a>
+                        </dd>
+
+                        <dt class="col-sm-6">{% trans 'التقييم:' %}</dt>
+                        <dd class="col-sm-6">
+                            <div>
+                                <i class="fa fa-star text-warning"></i>
+                                {{ brand.rating|default:'0.0' }} / 5
+                            </div>
+                        </dd>
+                    </dl>
+                    {% else %}
+                    <div class="text-center text-muted">
+                        <i class="fa fa-building fa-2x mb-2"></i>
+                        <p class="mb-0">{% trans 'ستظهر معلومات العلامة التجارية هنا بعد الإنشاء' %}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // تهيئة حقول Select2
+        $('.select2').select2({
+            dir: $('html').attr('dir'),
+            placeholder: "{% trans 'اختر...' %}",
+            allowClear: true,
+            width: '100%'
+        });
+
+        // تحديث معاينة SEO
+        $('#meta_title').on('input', function() {
+            let title = $(this).val() || $('#name').val() || "{% trans 'اسم العلامة التجارية' %}";
+            $('#seo-preview-title').text(title);
+        });
+
+        $('#meta_description').on('input', function() {
+            let description = $(this).val() || $('#description').val() || "{% trans 'وصف العلامة التجارية سيظهر هنا. قم بإضافة وصف مختصر وجذاب للعلامة التجارية.' %}";
+            $('#seo-preview-description').text(description);
+        });
+
+        // مؤثرات المفاتيح
+        $('#status_switch').change(function() {
+            if ($(this).is(':checked')) {
+                $('#is_active').prop('checked', true);
+                $('#status_label').html('<i class="fa fa-eye text-success me-1"></i> {% trans "نشطة" %}');
+            } else {
+                $('#is_active').prop('checked', false);
+                $('#status_label').html('<i class="fa fa-eye-slash text-secondary me-1"></i> {% trans "غير نشطة" %}');
+            }
+        });
+
+        $('#featured_switch').change(function() {
+            if ($(this).is(':checked')) {
+                $('#is_featured').prop('checked', true);
+                $('#featured_label').html('<i class="fa fa-star text-warning me-1"></i> {% trans "مميزة" %}');
+            } else {
+                $('#is_featured').prop('checked', false);
+                $('#featured_label').html('<i class="fa fa-star text-secondary me-1"></i> {% trans "غير مميزة" %}');
+            }
+        });
+
+        $('#verified_switch').change(function() {
+            if ($(this).is(':checked')) {
+                $('#is_verified').prop('checked', true);
+                $('#verified_label').html('<i class="fa fa-check-circle text-success me-1"></i> {% trans "موثقة" %}');
+            } else {
+                $('#is_verified').prop('checked', false);
+                $('#verified_label').html('<i class="fa fa-check-circle text-secondary me-1"></i> {% trans "غير موثقة" %}');
+            }
+        });
+
+        // معاينة وتحديث الصور
+        $('#logo-preview').click(function() {
+            $('#logo').click();
+        });
+
+        $('#banner-image-preview').click(function() {
+            $('#banner_image').click();
+        });
+
+        $('#logo').change(function() {
+            if (this.files && this.files[0]) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#logo-preview').html(`
+                        <img src="${e.target.result}" alt="Preview">
+                        <div class="image-preview-actions">
+                            <button type="button" class="btn-remove-image" data-target="logo">
+                                <i class="fa fa-trash text-danger"></i>
+                            </button>
+                        </div>
+                    `);
+                }
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        $('#banner_image').change(function() {
+            if (this.files && this.files[0]) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#banner-image-preview').html(`
+                        <img src="${e.target.result}" alt="Preview">
+                        <div class="image-preview-actions">
+                            <button type="button" class="btn-remove-image" data-target="banner_image">
+                                <i class="fa fa-trash text-danger"></i>
+                            </button>
+                        </div>
+                    `);
+                }
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        // حذف الصور
+        $(document).on('click', '.btn-remove-image', function() {
+            let target = $(this).data('target');
+            if (target === 'logo') {
+                $('#logo').val('');
+                $('#logo-preview').html(`
+                    <div class="image-preview-placeholder">
+                        <i class="fa fa-image"></i>
+                        <div>{% trans 'انقر لإضافة شعار' %}</div>
+                    </div>
+                `);
+            } else if (target === 'banner_image') {
+                $('#banner_image').val('');
+                $('#banner-image-preview').html(`
+                    <div class="image-preview-placeholder">
+                        <i class="fa fa-image"></i>
+                        <div>{% trans 'انقر لإضافة صورة بانر' %}</div>
+                    </div>
+                `);
+            }
+        });
+
+        // إنشاء slug تلقائي من الاسم
+        $('#name').on('input', function() {
+            if (!$('#slug').val()) {
+                let name = $(this).val();
+                let slug = name.toLowerCase()
+                    .replace(/[\s_]+/g, '-')           // استبدال المسافات والشرطات السفلية بشرطة
+                    .replace(/[^\w\u0621-\u064A\-]/g, '') // السماح بالأحرف العربية والإنجليزية والأرقام والشرطات
+                    .replace(/\-\-+/g, '-')            // استبدال الشرطات المتعددة بشرطة واحدة
+                    .replace(/^-+/, '')                // حذف الشرطات من بداية النص
+                    .replace(/-+$/, '');               // حذف الشرطات من نهاية النص
+
+                $('#slug').val(slug);
+            }
+        });
+
+        // جمع بيانات وسائل التواصل الاجتماعي قبل الإرسال
+        $('#brand-form').submit(function() {
+            let socialLinks = {};
+            socialLinks.facebook = $('#social_facebook').val() || '';
+            socialLinks.twitter = $('#social_twitter').val() || '';
+            socialLinks.instagram = $('#social_instagram').val() || '';
+            socialLinks.linkedin = $('#social_linkedin').val() || '';
+            socialLinks.youtube = $('#social_youtube').val() || '';
+
+            // إضافة حقل خفي يحتوي على بيانات وسائل التواصل الاجتماعي
+            $('<input>').attr({
+                type: 'hidden',
+                name: 'social_links',
+                value: JSON.stringify(socialLinks)
+            }).appendTo($(this));
+
+            return true;
+        });
+
+        // تأكيد مغادرة الصفحة إذا كانت هناك تغييرات غير محفوظة
+        let formChanged = false;
+
+        $('#brand-form input, #brand-form textarea, #brand-form select').change(function() {
+            formChanged = true;
+        });
+
+        $(window).on('beforeunload', function() {
+            if (formChanged) {
+                return "{% trans 'لديك تغييرات غير محفوظة. هل أنت متأكد من مغادرة الصفحة؟' %}";
+            }
+        });
+
+        $('#brand-form').submit(function() {
+            formChanged = false;
+        });
+    });
+</script>
+{% endblock %}

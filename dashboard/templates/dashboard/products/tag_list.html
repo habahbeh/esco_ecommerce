@@ -1,0 +1,696 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{% trans 'الوسوم' %}{% endblock %}
+{% block page_title %}{% trans 'إدارة الوسوم' %}{% endblock %}
+{% block current_page %}{% trans 'قائمة الوسوم' %}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_products' %}">{% trans 'المنتجات' %}</a></li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tag-card {
+        transition: all 0.3s ease;
+    }
+    .tag-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .tag-color {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 0.5rem;
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+    [dir="rtl"] .tag-color {
+        margin-right: 0;
+        margin-left: 0.5rem;
+    }
+    .tag-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        color: var(--bs-primary);
+    }
+    .tag-badge {
+        font-size: 0.75rem;
+        padding: 0.25em 0.5em;
+        margin-right: 0.25rem;
+    }
+    [dir="rtl"] .tag-badge {
+        margin-right: 0;
+        margin-left: 0.25rem;
+    }
+    .tag-count {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+    }
+    .tag-actions {
+        margin-top: 1rem;
+        display: flex;
+        gap: 0.5rem;
+    }
+    .stats-card {
+        border-right: 3px solid transparent;
+        transition: all 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    .stats-card.primary {
+        border-right-color: var(--bs-primary);
+    }
+    .stats-card.success {
+        border-right-color: var(--bs-success);
+    }
+    .stats-card.warning {
+        border-right-color: var(--bs-warning);
+    }
+    [dir="rtl"] .stats-card {
+        border-right: none;
+        border-left: 3px solid transparent;
+    }
+    [dir="rtl"] .stats-card.primary {
+        border-left-color: var(--bs-primary);
+    }
+    [dir="rtl"] .stats-card.success {
+        border-left-color: var(--bs-success);
+    }
+    [dir="rtl"] .stats-card.warning {
+        border-left-color: var(--bs-warning);
+    }
+    .search-container .input-group {
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        border-radius: 50px;
+        overflow: hidden;
+    }
+    .search-container .form-control {
+        border: none;
+        padding-left: 20px;
+    }
+    .search-container .btn {
+        border: none;
+        background-color: transparent;
+        color: #6c757d;
+    }
+    .tag-table-color {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: inline-block;
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+    .view-switcher {
+        display: flex;
+        gap: 0.5rem;
+    }
+    .view-switcher-btn {
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.25rem;
+        cursor: pointer;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        color: #6c757d;
+        transition: all 0.3s ease;
+    }
+    .view-switcher-btn:hover, .view-switcher-btn.active {
+        background-color: var(--bs-primary);
+        border-color: var(--bs-primary);
+        color: white;
+    }
+    .reset-filter-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.25rem;
+        cursor: pointer;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        color: #6c757d;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+    .reset-filter-btn:hover {
+        background-color: #e9ecef;
+        text-decoration: none;
+    }
+    .tag-pill {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        color: #fff;
+        margin-right: 0.5rem;
+    }
+    [dir="rtl"] .tag-pill {
+        margin-right: 0;
+        margin-left: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- إحصائيات الوسوم -->
+<div class="row mb-4">
+    <div class="col-xl-4 col-md-4 mb-3">
+        <div class="card shadow-sm stats-card primary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-0">{% trans 'إجمالي الوسوم' %}</h6>
+                        <h3 class="mb-0">{{ stats.total|intcomma }}</h3>
+                    </div>
+                    <div class="bg-light rounded-circle p-3">
+                        <i class="fa fa-tags text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-md-4 mb-3">
+        <div class="card shadow-sm stats-card success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-0">{% trans 'وسوم نشطة' %}</h6>
+                        <h3 class="mb-0">{{ stats.active|intcomma }}</h3>
+                    </div>
+                    <div class="bg-light rounded-circle p-3">
+                        <i class="fa fa-check-circle text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-md-4 mb-3">
+        <div class="card shadow-sm stats-card warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-0">{% trans 'وسوم مميزة' %}</h6>
+                        <h3 class="mb-0">{{ stats.featured|intcomma }}</h3>
+                    </div>
+                    <div class="bg-light rounded-circle p-3">
+                        <i class="fa fa-star text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- أدوات البحث والإجراءات -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                    <!-- البحث -->
+                    <div class="search-container mb-2 mb-md-0">
+                        <form method="GET" id="search-form">
+                            <div class="input-group">
+                                <input type="text" name="q" class="form-control" placeholder="{% trans 'بحث عن وسم...' %}" value="{{ query }}">
+                                <button class="btn" type="submit">
+                                    <i class="fa fa-search"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="d-flex gap-2 align-items-center">
+                        <!-- زر إعادة الضبط -->
+                        {% if query %}
+                        <a href="{% url 'dashboard:dashboard_tags' %}" class="reset-filter-btn">
+                            <i class="fa fa-times"></i>
+                            <span>{% trans 'مسح البحث' %}</span>
+                        </a>
+                        {% endif %}
+
+                        <!-- مبدل العرض -->
+                        <div class="view-switcher">
+                            <button id="grid-view-btn" class="view-switcher-btn active">
+                                <i class="fa fa-th-large me-1"></i> {% trans 'عرض شبكي' %}
+                            </button>
+                            <button id="table-view-btn" class="view-switcher-btn">
+                                <i class="fa fa-list me-1"></i> {% trans 'عرض جدولي' %}
+                            </button>
+                            <button id="pills-view-btn" class="view-switcher-btn">
+                                <i class="fa fa-pills me-1"></i> {% trans 'عرض الوسوم' %}
+                            </button>
+                        </div>
+
+                        <!-- زر إضافة وسم -->
+                        <a href="{% url 'dashboard:dashboard_tag_create' %}" class="btn btn-primary">
+                            <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة وسم' %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- العرض الشبكي للوسوم -->
+<div id="grid-view" class="row mb-4">
+    {% if tags %}
+        {% for tag in tags %}
+            <div class="col-xl-3 col-md-4 col-sm-6 mb-4">
+                <div class="card tag-card h-100">
+                    <div class="card-body text-center">
+                        {% if tag.icon %}
+                        <div class="tag-icon">
+                            <i class="{{ tag.icon }}"></i>
+                        </div>
+                        {% else %}
+                        <div class="tag-icon">
+                            <i class="fa fa-tag"></i>
+                        </div>
+                        {% endif %}
+
+                        <h5 class="card-title">
+                            {{ tag.name }}
+                            {% if tag.color %}
+                            <span class="tag-color" style="background-color: {{ tag.color }};"></span>
+                            {% endif %}
+                        </h5>
+
+                        <div class="mb-2">
+                            {% if tag.is_active %}
+                            <span class="badge bg-success tag-badge">{% trans 'نشط' %}</span>
+                            {% else %}
+                            <span class="badge bg-danger tag-badge">{% trans 'غير نشط' %}</span>
+                            {% endif %}
+
+                            {% if tag.is_featured %}
+                            <span class="badge bg-warning text-dark tag-badge">{% trans 'مميز' %}</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="tag-count">
+                            {{ tag.products_count }} {% trans 'منتج' %} | {{ tag.usage_count }} {% trans 'استخدام' %}
+                        </div>
+
+                        {% if tag.description %}
+                        <p class="card-text text-muted small">
+                            {{ tag.description|truncatechars:80 }}
+                        </p>
+                        {% endif %}
+
+                        <div class="tag-actions justify-content-center">
+                            <a href="{% url 'dashboard:dashboard_tag_edit' tag_id=tag.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fa fa-edit me-1"></i> {% trans 'تعديل' %}
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-danger delete-tag-btn" data-tag-id="{{ tag.id }}" data-tag-name="{{ tag.name }}" data-bs-toggle="modal" data-bs-target="#deleteTagModal">
+                                <i class="fa fa-trash me-1"></i> {% trans 'حذف' %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="fa fa-tags fa-3x text-muted mb-3"></i>
+                    <p class="mb-3">{% trans 'لم يتم العثور على وسوم' %}</p>
+                    {% if query %}
+                    <p class="text-muted">{% trans 'حاول تغيير معايير البحث' %}</p>
+                    <a href="{% url 'dashboard:dashboard_tags' %}" class="btn btn-outline-primary mt-2">
+                        <i class="fa fa-times me-1"></i> {% trans 'مسح البحث' %}
+                    </a>
+                    {% else %}
+                    <a href="{% url 'dashboard:dashboard_tag_create' %}" class="btn btn-primary">
+                        <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة وسم جديد' %}
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- العرض الجدولي للوسوم -->
+<div id="table-view" class="row mb-4" style="display: none;">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                {% if tags %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>{% trans 'الوسم' %}</th>
+                                <th>{% trans 'اللون' %}</th>
+                                <th>{% trans 'الوصف' %}</th>
+                                <th>{% trans 'المنتجات' %}</th>
+                                <th>{% trans 'الاستخدام' %}</th>
+                                <th>{% trans 'الحالة' %}</th>
+                                <th>{% trans 'الإجراءات' %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tag in tags %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if tag.icon %}
+                                        <i class="{{ tag.icon }} me-2"></i>
+                                        {% else %}
+                                        <i class="fa fa-tag me-2"></i>
+                                        {% endif %}
+                                        {{ tag.name }}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if tag.color %}
+                                    <span class="tag-table-color" style="background-color: {{ tag.color }};"></span>
+                                    <small class="text-muted">{{ tag.color }}</small>
+                                    {% else %}
+                                    <span class="text-muted">--</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if tag.description %}
+                                    {{ tag.description|truncatechars:30 }}
+                                    {% else %}
+                                    <span class="text-muted">--</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-info text-light">{{ tag.products_count }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ tag.usage_count }}</span>
+                                </td>
+                                <td>
+                                    {% if tag.is_active %}
+                                    <span class="badge bg-success">{% trans 'نشط' %}</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">{% trans 'غير نشط' %}</span>
+                                    {% endif %}
+
+                                    {% if tag.is_featured %}
+                                    <span class="badge bg-warning text-dark">{% trans 'مميز' %}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'dashboard:dashboard_tag_edit' tag_id=tag.id %}" class="btn btn-outline-secondary" title="{% trans 'تعديل' %}">
+                                            <i class="fa fa-edit"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-outline-danger delete-tag-btn" title="{% trans 'حذف' %}" data-tag-id="{{ tag.id }}" data-tag-name="{{ tag.name }}" data-bs-toggle="modal" data-bs-target="#deleteTagModal">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- ترقيم الصفحات -->
+                {% if tags.has_other_pages %}
+                <div class="d-flex justify-content-center mt-4">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination">
+                            {% if tags.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}" aria-label="First">
+                                    <span aria-hidden="true">&laquo;&laquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ tags.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            {% endif %}
+
+                            {% for i in paginator.page_range %}
+                                {% if tags.number == i %}
+                                <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                                {% elif i > tags.number|add:'-3' and i < tags.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ i }}{% if query %}&q={{ query }}{% endif %}">{{ i }}</a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if tags.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ tags.next_page_number }}{% if query %}&q={{ query }}{% endif %}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}" aria-label="Last">
+                                    <span aria-hidden="true">&raquo;&raquo;</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fa fa-tags fa-3x text-muted mb-3"></i>
+                    <p class="mb-3">{% trans 'لم يتم العثور على وسوم' %}</p>
+                    {% if query %}
+                    <p class="text-muted">{% trans 'حاول تغيير معايير البحث' %}</p>
+                    <a href="{% url 'dashboard:dashboard_tags' %}" class="btn btn-outline-primary mt-2">
+                        <i class="fa fa-times me-1"></i> {% trans 'مسح البحث' %}
+                    </a>
+                    {% else %}
+                    <a href="{% url 'dashboard:dashboard_tag_create' %}" class="btn btn-primary">
+                        <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة وسم جديد' %}
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- عرض الوسوم كوسوم -->
+<div id="pills-view" class="row mb-4" style="display: none;">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                {% if tags %}
+                <div class="tag-pills-container mb-3">
+                    {% for tag in tags %}
+                        <div class="tag-pill" style="background-color: {{ tag.color|default:'#6c757d' }};">
+                            {% if tag.icon %}<i class="{{ tag.icon }} me-1"></i>{% endif %}
+                            {{ tag.name }}
+                            <div class="float-end ms-2">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'dashboard:dashboard_tag_edit' tag_id=tag.id %}" class="btn btn-sm btn-light" title="{% trans 'تعديل' %}">
+                                        <i class="fa fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-light delete-tag-btn" title="{% trans 'حذف' %}" data-tag-id="{{ tag.id }}" data-tag-name="{{ tag.name }}" data-bs-toggle="modal" data-bs-target="#deleteTagModal">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- ترقيم الصفحات -->
+                {% if tags.has_other_pages %}
+                <div class="d-flex justify-content-center mt-4">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination">
+                            {% if tags.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}" aria-label="First">
+                                    <span aria-hidden="true">&laquo;&laquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ tags.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            {% endif %}
+
+                            {% for i in paginator.page_range %}
+                                {% if tags.number == i %}
+                                <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                                {% elif i > tags.number|add:'-3' and i < tags.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ i }}{% if query %}&q={{ query }}{% endif %}">{{ i }}</a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if tags.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ tags.next_page_number }}{% if query %}&q={{ query }}{% endif %}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}" aria-label="Last">
+                                    <span aria-hidden="true">&raquo;&raquo;</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fa fa-tags fa-3x text-muted mb-3"></i>
+                    <p class="mb-3">{% trans 'لم يتم العثور على وسوم' %}</p>
+                    {% if query %}
+                    <p class="text-muted">{% trans 'حاول تغيير معايير البحث' %}</p>
+                    <a href="{% url 'dashboard:dashboard_tags' %}" class="btn btn-outline-primary mt-2">
+                        <i class="fa fa-times me-1"></i> {% trans 'مسح البحث' %}
+                    </a>
+                    {% else %}
+                    <a href="{% url 'dashboard:dashboard_tag_create' %}" class="btn btn-primary">
+                        <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة وسم جديد' %}
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- نافذة الحذف -->
+<div class="modal fade" id="deleteTagModal" tabindex="-1" aria-labelledby="deleteTagModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteTagModalLabel">{% trans 'تأكيد الحذف' %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>{% trans 'هل أنت متأكد من حذف الوسم:' %} <span id="tag-name-to-delete"></span>؟</p>
+                <div class="alert alert-warning">
+                    <i class="fa fa-exclamation-triangle me-2"></i>
+                    {% trans 'لا يمكن حذف الوسم إذا كان مرتبط بمنتجات.' %}
+                </div>
+                <p class="text-danger">{% trans 'هذا الإجراء لا يمكن التراجع عنه.' %}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans 'إلغاء' %}</button>
+                <form id="delete-tag-form" method="post" action="">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">{% trans 'حذف' %}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // تبديل طريقة العرض
+        $('#grid-view-btn').click(function() {
+            $(this).addClass('active');
+            $('#table-view-btn').removeClass('active');
+            $('#pills-view-btn').removeClass('active');
+            $('#grid-view').show();
+            $('#table-view').hide();
+            $('#pills-view').hide();
+        });
+
+        $('#table-view-btn').click(function() {
+            $(this).addClass('active');
+            $('#grid-view-btn').removeClass('active');
+            $('#pills-view-btn').removeClass('active');
+            $('#grid-view').hide();
+            $('#table-view').show();
+            $('#pills-view').hide();
+        });
+
+        $('#pills-view-btn').click(function() {
+            $(this).addClass('active');
+            $('#grid-view-btn').removeClass('active');
+            $('#table-view-btn').removeClass('active');
+            $('#grid-view').hide();
+            $('#table-view').hide();
+            $('#pills-view').show();
+        });
+
+        // تأكيد حذف الوسم
+        $('.delete-tag-btn').click(function() {
+            let tagId = $(this).data('tag-id');
+            let tagName = $(this).data('tag-name');
+
+            $('#tag-name-to-delete').text(tagName);
+            $('#delete-tag-form').attr('action', '{% url "dashboard:dashboard_tag_delete" tag_id=0 %}'.replace('0', tagId));
+        });
+
+        // عرض رسالة تأكيد عند محاولة حذف وسم مرتبط بمنتجات
+        $('#delete-tag-form').submit(function(e) {
+            let tagId = $(this).attr('action').split('/').filter(Boolean).pop();
+            let hasProducts = false;
+
+            // التحقق مما إذا كان الوسم يحتوي على منتجات
+            // هذا مجرد تحقق أولي في واجهة المستخدم، التحقق النهائي يتم في الخادم
+            $('.tag-card, tr, .tag-pill').each(function() {
+                let currentTagId = $(this).find('.delete-tag-btn').data('tag-id');
+                if (currentTagId == tagId) {
+                    let productsCount = $(this).find('.tag-count, .badge.bg-info').text().trim();
+                    if (productsCount && parseInt(productsCount) > 0) {
+                        hasProducts = true;
+                        return false;
+                    }
+                }
+            });
+
+            if (hasProducts) {
+                e.preventDefault();
+                alert("{% trans 'لا يمكن حذف الوسم لأنه مرتبط بمنتجات.' %}");
+                $('#deleteTagModal').modal('hide');
+            }
+        });
+    });
+</script>
+{% endblock %}
