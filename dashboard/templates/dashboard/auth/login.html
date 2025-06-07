@@ -1,0 +1,238 @@
+{% extends "dashboard/auth/base_auth.html" %}
+{% load static %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% trans "تسجيل الدخول" %} | {% trans "لوحة التحكم" %}{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <div class="logo-container">
+                <img src="{% static 'images/logo.png' %}" alt="{% trans 'الشعار' %}" class="login-logo">
+            </div>
+            <h2>{% trans "لوحة التحكم" %}</h2>
+            <p>{% trans "أهلاً بك مجدداً، قم بتسجيل الدخول للوصول إلى لوحة التحكم" %}</p>
+        </div>
+
+        <div class="login-body">
+            {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="post" action="{% url 'dashboard:dashboard_login' %}">
+                {% csrf_token %}
+                {% if request.GET.next %}
+                    <input type="hidden" name="next" value="{{ request.GET.next }}">
+                {% endif %}
+                <div class="mb-3">
+                    <label for="id_username" class="form-label">{% trans "اسم المستخدم أو البريد الإلكتروني" %}</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                        <input type="text" name="username" class="form-control" id="id_username" required placeholder="{% trans 'أدخل اسم المستخدم أو البريد الإلكتروني' %}">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="id_password" class="form-label">{% trans "كلمة المرور" %}</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                        <input type="password" name="password" class="form-control" id="id_password" required placeholder="{% trans 'أدخل كلمة المرور' %}">
+                    </div>
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input type="checkbox" name="remember_me" class="form-check-input" id="id_remember_me" checked>
+                    <label class="form-check-label" for="id_remember_me">{% trans "تذكرني" %}</label>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-sign-in-alt me-2"></i> {% trans "تسجيل الدخول" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="login-footer">
+            <p>{% trans "هل نسيت كلمة المرور؟" %} <a href="{% url 'accounts:password_reset' %}">{% trans "استعادة كلمة المرور" %}</a></p>
+            <p>{% trans "العودة إلى" %} <a href="{% url 'core:home' %}">{% trans "الموقع الرئيسي" %}</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #3c8dbc;
+        --secondary-color: #f4f4f4;
+        --header-gradient-start: #3c8dbc;
+        --header-gradient-end: #2b6688;
+        --card-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        --text-color: #333;
+        --text-light: #fff;
+    }
+
+    body {
+        background-color: var(--secondary-color);
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow-y: auto;
+        direction: rtl;
+        font-family: 'Tajawal', sans-serif;
+    }
+
+    .login-container {
+        width: 100%;
+        max-width: 450px;
+        padding: 15px;
+    }
+
+    .login-card {
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: var(--card-shadow);
+        overflow: hidden;
+    }
+
+    .login-header {
+        background: linear-gradient(135deg, var(--header-gradient-start) 0%, var(--header-gradient-end) 100%);
+        color: var(--text-light);
+        padding: 2.5rem 2rem;
+        text-align: center;
+    }
+
+    /* تعديل خلفية اللوجو لتكون بيضاء */
+    .logo-container {
+        background-color: #ffffff;
+        border-radius: 50%;
+        width: 130px;
+        height: 130px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        padding: 5px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .login-logo {
+        max-width: 100px;
+        max-height: 100px;
+        object-fit: contain;
+    }
+
+    .login-header h2 {
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        font-size: 1.75rem;
+    }
+
+    .login-header p {
+        opacity: 0.9;
+        margin-bottom: 0;
+        font-size: 1rem;
+    }
+
+    .login-body {
+        padding: 2rem;
+    }
+
+    .login-footer {
+        padding: 1.5rem 2rem;
+        background-color: #f8f9fa;
+        text-align: center;
+        border-top: 1px solid #eee;
+    }
+
+    .login-footer p {
+        margin-bottom: 0.5rem;
+    }
+
+    .login-footer p:last-child {
+        margin-bottom: 0;
+    }
+
+    /* تخصيص نموذج تسجيل الدخول */
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--text-color);
+    }
+
+    .input-group-text {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+    }
+
+    .form-control {
+        border-radius: 0 4px 4px 0;
+        padding: 0.75rem 1rem;
+        border: 1px solid #ced4da;
+    }
+
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.25rem rgba(60, 141, 188, 0.25);
+    }
+
+    .form-check-input:checked {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        padding: 0.75rem 1rem;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .btn-primary:hover, .btn-primary:focus {
+        background-color: #2b6688;
+        border-color: #2b6688;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (max-width: 576px) {
+        .login-container {
+            padding: 0;
+        }
+
+        .login-card {
+            border-radius: 0;
+            box-shadow: none;
+            height: 100vh;
+        }
+
+        body {
+            background-color: #fff;
+        }
+
+        /* تعديل حجم اللوجو في الشاشات الصغيرة */
+        .logo-container {
+            width: 110px;
+            height: 110px;
+        }
+
+        .login-logo {
+            max-width: 85px;
+            max-height: 85px;
+        }
+    }
+</style>
+{% endblock %}

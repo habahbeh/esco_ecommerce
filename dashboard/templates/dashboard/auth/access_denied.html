@@ -1,0 +1,181 @@
+{% extends "dashboard/auth/base_auth.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "رفض الوصول" %} | {% trans "لوحة التحكم" %}{% endblock %}
+
+{% block content %}
+<div class="access-denied-container">
+    <div class="access-denied-card">
+        <div class="access-denied-header">
+            <img src="{% static 'images/logo.png' %}" alt="{% trans 'الشعار' %}" class="access-denied-logo">
+            <i class="fas fa-exclamation-triangle access-denied-icon"></i>
+            <h2>{% trans "رفض الوصول" %}</h2>
+            <p>{% trans "ليس لديك صلاحية الوصول إلى لوحة التحكم" %}</p>
+        </div>
+
+        <div class="access-denied-body">
+            {% if messages %}
+                <div class="messages mb-4">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <div class="access-denied-message text-center">
+                <i class="fas fa-lock access-denied-large-icon mb-4"></i>
+                <p>{% trans "نعتذر، لكن ليس لديك الصلاحيات اللازمة للوصول إلى لوحة التحكم." %}</p>
+                <p>{% trans "إذا كنت تعتقد أن هذا خطأ، يرجى التواصل مع مسؤول النظام." %}</p>
+            </div>
+        </div>
+        
+        <div class="access-denied-footer">
+            <div class="d-grid gap-2">
+                <a href="{% url 'dashboard:dashboard_login' %}" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt me-2"></i> {% trans "تسجيل الدخول بحساب آخر" %}
+                </a>
+                <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-home me-2"></i> {% trans "العودة إلى الموقع الرئيسي" %}
+                </a>
+                {% if user.is_authenticated %}
+                <a href="{% url 'dashboard:logout' %}" class="btn btn-outline-danger">
+                    <i class="fas fa-sign-out-alt me-2"></i> {% trans "تسجيل الخروج" %}
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #3c8dbc;
+        --danger-gradient-start: #e74c3c;
+        --danger-gradient-end: #c0392b;
+    }
+
+    body {
+        background-color: #f8f9fa;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow-y: auto;
+        direction: rtl;
+    }
+    
+    .access-denied-container {
+        width: 100%;
+        max-width: 500px;
+        padding: 15px;
+    }
+    
+    .access-denied-card {
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+    }
+    
+    .access-denied-header {
+        background: linear-gradient(135deg, var(--danger-gradient-start) 0%, var(--danger-gradient-end) 100%);
+        color: white;
+        padding: 2.5rem 2rem;
+        text-align: center;
+    }
+    
+    .access-denied-logo {
+        max-width: 90px;
+        max-height: 90px;
+        margin-bottom: 1rem;
+        object-fit: contain;
+        filter: brightness(0) invert(1);
+        opacity: 0.8;
+    }
+    
+    .access-denied-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .access-denied-header h2 {
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+    
+    .access-denied-header p {
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+    
+    .access-denied-body {
+        padding: 2.5rem 2rem;
+    }
+    
+    .access-denied-large-icon {
+        font-size: 4rem;
+        color: #dc3545;
+        display: block;
+    }
+    
+    .access-denied-message {
+        font-size: 1.1rem;
+        line-height: 1.7;
+    }
+    
+    .access-denied-message p {
+        margin-bottom: 0.75rem;
+    }
+    
+    .access-denied-footer {
+        padding: 1rem 2rem 2rem;
+    }
+    
+    .btn {
+        padding: 0.75rem 1rem;
+        font-weight: 500;
+    }
+    
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    
+    .btn-primary:hover, .btn-primary:focus {
+        background-color: #2b6688;
+        border-color: #2b6688;
+    }
+    
+    .btn-outline-secondary:hover, .btn-outline-secondary:focus {
+        background-color: #6c757d;
+        color: #fff;
+    }
+    
+    .btn-outline-danger:hover, .btn-outline-danger:focus {
+        background-color: #dc3545;
+        color: #fff;
+    }
+    
+    @media (max-width: 576px) {
+        .access-denied-container {
+            padding: 0;
+        }
+        
+        .access-denied-card {
+            border-radius: 0;
+            box-shadow: none;
+            height: 100vh;
+        }
+        
+        body {
+            background-color: #fff;
+        }
+    }
+</style>
+{% endblock %}

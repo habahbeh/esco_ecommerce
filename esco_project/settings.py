@@ -280,3 +280,10 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
     }
 }
+
+
+
+# مسارات تسجيل الدخول
+LOGIN_URL = 'dashboard:dashboard_login'
+LOGIN_REDIRECT_URL = 'dashboard:dashboard_home'
+LOGOUT_REDIRECT_URL = 'dashboard:dashboard_login'

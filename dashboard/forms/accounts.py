@@ -26,37 +26,36 @@ class DashboardLoginForm(AuthenticationForm):
     """نموذج تسجيل الدخول المخصص للوحة التحكم"""
     username = forms.CharField(
         label=_('اسم المستخدم أو البريد الإلكتروني'),
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('اسم المستخدم أو البريد الإلكتروني')})
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': _('أدخل اسم المستخدم أو البريد الإلكتروني'),
+            'autocomplete': 'username'
+        })
     )
     password = forms.CharField(
         label=_('كلمة المرور'),
-        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': _('كلمة المرور')})
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': _('أدخل كلمة المرور'),
+            'autocomplete': 'current-password'
+        })
     )
     remember_me = forms.BooleanField(
         label=_('تذكرني'),
         required=False,
         initial=True,
-        widget=forms.CheckboxInput()
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
     )
+
+    error_messages = {
+        'invalid_login': _("يرجى التأكد من اسم المستخدم وكلمة المرور. لاحظ أن كلاهما حساس لحالة الأحرف."),
+        'inactive': _("هذا الحساب غير نشط."),
+    }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_method = 'post'
-        self.helper.form_class = 'login-form'
-        self.helper.layout = Layout(
-            Fieldset(
-                _('تسجيل الدخول إلى لوحة التحكم'),
-                'username',
-                'password',
-                'remember_me'
-            ),
-            FormActions(
-                Submit('submit', _('تسجيل الدخول'), css_class='btn btn-primary btn-block'),
-                HTML('<a href="{% url "accounts:password_reset" %}" class="btn btn-link btn-block">%s</a>' % _(
-                    'نسيت كلمة المرور؟'))
-            )
-        )
+        # عدم استخدام FormHelper لتجنب مشكلات الترجمة
+        # مع النموذج المخصص
 
     def confirm_login_allowed(self, user):
         """التحقق من صلاحية المستخدم للوصول إلى لوحة التحكم"""
@@ -66,7 +65,6 @@ class DashboardLoginForm(AuthenticationForm):
                 _("ليس لديك صلاحية الوصول إلى لوحة التحكم."),
                 code='no_dashboard_access',
             )
-
 
 class UserForm(forms.ModelForm):
     """نموذج إنشاء وتعديل المستخدمين"""
