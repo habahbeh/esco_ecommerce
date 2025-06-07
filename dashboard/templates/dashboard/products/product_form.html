@@ -1089,62 +1089,108 @@
 
         // التحقق من صحة النموذج قبل الإرسال
         $('#product-form').submit(function(event) {
-            let isValid = true;
+    let isValid = true;
 
-            // التحقق من الحقول المطلوبة
-            if (!$('#name').val()) {
-                $('#name').addClass('is-invalid');
-                isValid = false;
-            }
+    // التحقق من الحقول المطلوبة
+    if (!$('#name').val()) {
+        $('#name').addClass('is-invalid');
+        isValid = false;
+    }
 
-            if (!$('#category').val()) {
-                $('#category').addClass('is-invalid');
-                isValid = false;
-            }
-            /*
-            if (!$('#base_price').val()) {
-                $('#base_price').addClass('is-invalid');
-                isValid = false;
-            }
-             */
-             // تحويل قيم الأسعار قبل الإرسال
-            let basePrice = $('#base_price').val().replace(',', '.');
-            if (isNaN(parseFloat(basePrice))) {
-                alert('الرجاء إدخال رقم صحيح للسعر الأساسي');
-                $('#base_price').focus();
-                return false;
-            }
-            $('#base_price').val(basePrice);
+    if (!$('#category').val()) {
+        $('#category').addClass('is-invalid');
+        isValid = false;
+    }
 
-            if (!isValid) {
-                event.preventDefault();
-                alert("{% trans 'الرجاء ملء جميع الحقول المطلوبة' %}");
-                return false;
-            }
+    // معالجة حقل السعر الأساسي
+    let basePrice = $('#base_price').val();
+    if (basePrice) {
+        // استبدال الفاصلة بالنقطة (مهم للغات التي تستخدم الفاصلة للفصل العشري)
+        basePrice = basePrice.replace(',', '.');
 
-            // التأكد من تحويل المدخلات بتنسيق JSON
-            try {
-                // التحقق من specifications
-                let specs = $('#specifications').val();
-                if (specs) {
-                    // حاول تحليل المدخلات كـ JSON
-                    JSON.parse(specs);
-                }
+        // محاولة تحويل القيمة إلى رقم
+        let basePriceNumber = parseFloat(basePrice);
+        if (isNaN(basePriceNumber)) {
+            alert('الرجاء إدخال رقم صالح للسعر الأساسي');
+            $('#base_price').focus();
+            return false;
+        }
 
-                // التحقق من features
-                let features = $('#features').val();
-                if (features && features.trim().startsWith('{')) {
-                    // إذا كان يبدأ بـ { يعتبر JSON
-                    JSON.parse(features);
-                }
-            } catch (e) {
-                event.preventDefault();
-                alert("{% trans 'هناك خطأ في تنسيق JSON. الرجاء التحقق من المواصفات والميزات.' %}");
-                return false;
-            }
+        // تنسيق الرقم ليكون بخانتين عشريتين بالضبط
+        $('#base_price').val(basePriceNumber.toFixed(2));
+    } else {
+        alert('السعر الأساسي مطلوب');
+        $('#base_price').focus();
+        return false;
+    }
 
-            return true;
-        });
+    // معالجة حقل نسبة الضريبة
+    let taxRate = $('#tax_rate').val();
+    if (!taxRate || taxRate.trim() === '') {
+        // استخدام القيمة الافتراضية إذا كانت فارغة
+        $('#tax_rate').val('16.00');
+    } else {
+        // استبدال الفاصلة بالنقطة
+        taxRate = taxRate.replace(',', '.');
+
+        // محاولة تحويل القيمة إلى رقم
+        let taxRateNumber = parseFloat(taxRate);
+        if (isNaN(taxRateNumber)) {
+            alert('الرجاء إدخال رقم صالح لنسبة الضريبة');
+            $('#tax_rate').focus();
+            return false;
+        }
+
+        // تنسيق الرقم ليكون بخانتين عشريتين
+        $('#tax_rate').val(taxRateNumber.toFixed(2));
+    }
+
+    // معالجة الأسعار الأخرى
+    let comparePrice = $('#compare_price').val();
+    if (comparePrice && comparePrice.trim() !== '') {
+        comparePrice = comparePrice.replace(',', '.');
+        let comparePriceNumber = parseFloat(comparePrice);
+        if (!isNaN(comparePriceNumber)) {
+            $('#compare_price').val(comparePriceNumber.toFixed(2));
+        }
+    }
+
+    let cost = $('#cost').val();
+    if (cost && cost.trim() !== '') {
+        cost = cost.replace(',', '.');
+        let costNumber = parseFloat(cost);
+        if (!isNaN(costNumber)) {
+            $('#cost').val(costNumber.toFixed(2));
+        }
+    }
+
+    if (!isValid) {
+        event.preventDefault();
+        alert("الرجاء ملء جميع الحقول المطلوبة");
+        return false;
+    }
+
+    // التحقق من تنسيق JSON
+    try {
+        // التحقق من specifications
+        let specs = $('#specifications').val();
+        if (specs) {
+            JSON.parse(specs);
+        }
+
+        // التحقق من features
+        let features = $('#features').val();
+        if (features && features.trim().startsWith('{')) {
+            JSON.parse(features);
+        }
+    } catch (e) {
+        event.preventDefault();
+        alert("هناك خطأ في تنسيق JSON. الرجاء التحقق من المواصفات والميزات.");
+        return false;
+    }
+
+    return true;
+});
 
         // البحث عن المنتجات ذات الصلة
         $('#related_products').select2({
