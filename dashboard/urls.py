@@ -9,7 +9,7 @@ app_name = 'dashboard'
 urlpatterns = [
     # ========================= المصادقة وتسجيل الدخول =========================
     path('login/', views.dashboard_login, name='dashboard_login'),
-    path('logout/', LogoutView.as_view(next_page='dashboard:dashboard_login'), name='logout'),
+    path('logout/', views.dashboard_logout, name='logout'),
     path('access-denied/', views.dashboard_access_denied, name='dashboard_access_denied'),
 
     # ========================= الصفحة الرئيسية =========================
