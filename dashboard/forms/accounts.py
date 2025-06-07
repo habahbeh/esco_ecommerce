@@ -347,7 +347,7 @@ class UserAddressForm(forms.ModelForm):
             'label', 'type', 'first_name', 'last_name',
             'address_line_1', 'address_line_2', 'city', 'state',
             'postal_code', 'country', 'phone_number',
-            'is_default', 'is_billing_default', 'is_shipping_default'
+            'is_default', 'is_shipping_default', 'is_billing_default'
         ]
         widgets = {
             'label': forms.TextInput(attrs={'class': 'form-control'}),
@@ -361,6 +361,9 @@ class UserAddressForm(forms.ModelForm):
             'postal_code': forms.TextInput(attrs={'class': 'form-control'}),
             'country': forms.TextInput(attrs={'class': 'form-control'}),
             'phone_number': forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
+            'is_default': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_shipping_default': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_billing_default': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -369,49 +372,6 @@ class UserAddressForm(forms.ModelForm):
 
         if self.instance and self.instance.pk and not self.user:
             self.user = self.instance.user
-
-        self.helper = FormHelper()
-        self.helper.form_tag = True
-        self.helper.form_class = 'form-horizontal'
-
-        self.helper.layout = Layout(
-            Fieldset(
-                _('معلومات العنوان'),
-                Row(
-                    Column('label', css_class='col-md-6'),
-                    Column('type', css_class='col-md-6'),
-                ),
-                Row(
-                    Column('first_name', css_class='col-md-6'),
-                    Column('last_name', css_class='col-md-6'),
-                ),
-                'address_line_1',
-                'address_line_2',
-                Row(
-                    Column('city', css_class='col-md-6'),
-                    Column('state', css_class='col-md-6'),
-                ),
-                Row(
-                    Column('postal_code', css_class='col-md-6'),
-                    Column('country', css_class='col-md-6'),
-                ),
-                'phone_number',
-            ),
-            Fieldset(
-                _('الإعدادات'),
-                Row(
-                    Column('is_default', css_class='col-md-4'),
-                    Column('is_billing_default', css_class='col-md-4'),
-                    Column('is_shipping_default', css_class='col-md-4'),
-                ),
-            ),
-            FormActions(
-                Submit('submit', _('حفظ'), css_class='btn btn-primary'),
-                HTML(
-                    '<a href="{% url "dashboard:user_address_list" user_id=user.pk %}" class="btn btn-secondary">%s</a>' % _(
-                        'إلغاء'))
-            )
-        )
 
     def save(self, commit=True):
         address = super().save(commit=False)
