@@ -1,0 +1,370 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+{% load static %}
+{% load dashboard_tags %}
+
+{% block title %}{% trans 'إدارة المستخدمين' %}{% endblock %}
+{% block page_title %}{% trans 'إدارة المستخدمين' %}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_users' %}">{% trans 'المستخدمين' %}</a></li>
+{% endblock %}
+
+{% block current_page %}{% trans 'قائمة المستخدمين' %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .avatar-placeholder {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        color: white;
+        font-weight: 600;
+    }
+
+    .filter-card {
+        margin-bottom: 1.5rem;
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .search-box {
+        position: relative;
+    }
+
+    .search-box .form-control {
+        padding-right: 40px;
+    }
+
+    .search-box .search-icon {
+        position: absolute;
+        top: 50%;
+        right: 10px;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+
+    [dir="rtl"] .search-box .form-control {
+        padding-right: 12px;
+        padding-left: 40px;
+    }
+
+    [dir="rtl"] .search-box .search-icon {
+        right: auto;
+        left: 10px;
+    }
+
+    .user-list-table .user-info {
+        display: flex;
+        align-items: center;
+    }
+
+    .user-list-table .user-details {
+        margin-right: 10px;
+    }
+
+    [dir="rtl"] .user-list-table .user-details {
+        margin-right: 0;
+        margin-left: 10px;
+    }
+
+    .user-list-table .status-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 5px;
+    }
+
+    [dir="rtl"] .user-list-table .status-dot {
+        margin-right: 0;
+        margin-left: 5px;
+    }
+
+    .user-list-table .active-dot {
+        background-color: #28a745;
+    }
+
+    .user-list-table .inactive-dot {
+        background-color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- بطاقة الإحصائيات السريعة -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-primary text-white border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50 mb-2">{% trans 'إجمالي المستخدمين' %}</h6>
+                        <h3 class="mb-0">{{ total_users }}</h3>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-users fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-success text-white border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50 mb-2">{% trans 'المستخدمين النشطين' %}</h6>
+                        <h3 class="mb-0">{{ active_users }}</h3>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-user-check fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-info text-white border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50 mb-2">{% trans 'المستخدمين الجدد اليوم' %}</h6>
+                        <h3 class="mb-0">{{ new_users_today|default:"0" }}</h3>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-user-plus fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- بطاقة البحث والفلترة -->
+<div class="card filter-card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{% url 'dashboard:dashboard_users' %}" id="filter-form">
+            <div class="row">
+                <div class="col-md-5">
+                    <div class="search-box mb-3 mb-md-0">
+                        <input type="text" name="q" class="form-control" placeholder="{% trans 'بحث باسم المستخدم أو البريد الإلكتروني...' %}" value="{{ query }}">
+                        <span class="search-icon"><i class="fas fa-search"></i></span>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="role" class="form-select mb-3 mb-md-0">
+                        <option value="">{% trans 'جميع الأدوار' %}</option>
+                        {% for role in roles %}
+                        <option value="{{ role.id }}" {% if role_filter == role.id|stringformat:"s" %}selected{% endif %}>{{ role.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="status" class="form-select mb-3 mb-md-0">
+                        <option value="">{% trans 'جميع الحالات' %}</option>
+                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>{% trans 'نشط' %}</option>
+                        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>{% trans 'غير نشط' %}</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter me-1"></i> {% trans 'تصفية' %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- بطاقة قائمة المستخدمين -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+        <h5 class="mb-0">{% trans 'قائمة المستخدمين' %}</h5>
+        {% if perms.accounts.add_user %}
+        <a href="{% url 'dashboard:dashboard_user_create' %}" class="btn btn-sm btn-primary">
+            <i class="fas fa-plus me-1"></i> {% trans 'إضافة مستخدم جديد' %}
+        </a>
+        {% endif %}
+    </div>
+    <div class="card-body p-0">
+        <!-- جدول المستخدمين -->
+        <div class="table-responsive" id="users-table-container">
+            {% include 'dashboard/accounts/users_table.html' %}
+        </div>
+    </div>
+    <!-- ترقيم الصفحات -->
+    <div class="card-footer bg-white">
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mb-0">
+                {% if users.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% query_transform page=1 %}" aria-label="First">
+                        <span aria-hidden="true">&laquo;&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?{% query_transform page=users.previous_page_number %}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="First">
+                        <span aria-hidden="true">&laquo;&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for num in users.paginator.page_range %}
+                    {% if users.number == num %}
+                    <li class="page-item active"><a class="page-link" href="?{% query_transform page=num %}">{{ num }}</a></li>
+                    {% elif num > users.number|add:'-3' and num < users.number|add:'3' %}
+                    <li class="page-item"><a class="page-link" href="?{% query_transform page=num %}">{{ num }}</a></li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if users.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% query_transform page=users.next_page_number %}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?{% query_transform page=users.paginator.num_pages %}" aria-label="Last">
+                        <span aria-hidden="true">&raquo;&raquo;</span>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Last">
+                        <span aria-hidden="true">&raquo;&raquo;</span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- نافذة تأكيد الحذف -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteUserModalLabel">{% trans 'تأكيد الحذف' %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>{% trans 'هل أنت متأكد من رغبتك في حذف هذا المستخدم؟' %}</p>
+                <p class="text-danger">{% trans 'هذا الإجراء لا يمكن التراجع عنه.' %}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans 'إلغاء' %}</button>
+                <form id="deleteUserForm" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">{% trans 'حذف' %}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // معالجة تغيير عناصر الفلترة
+        $('select[name="role"], select[name="status"]').change(function() {
+            $('#filter-form').submit();
+        });
+
+        // معالجة نقر زر الحذف
+        $('.user-list-table').on('click', '.btn-delete-user', function(e) {
+            e.preventDefault();
+            var userId = $(this).data('user-id');
+            var deleteUrl = "{% url 'dashboard:dashboard_user_delete' user_id='USER_ID' %}".replace('USER_ID', userId);
+            $('#deleteUserForm').attr('action', deleteUrl);
+            $('#deleteUserModal').modal('show');
+        });
+
+        // تحميل البيانات بـ AJAX عند التنقل بين الصفحات
+        $('.pagination .page-link').on('click', function(e) {
+            e.preventDefault();
+            var url = $(this).attr('href');
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(data) {
+                    $('#users-table-container').html(data.html);
+
+                    // تحديث عنوان URL بدون إعادة تحميل الصفحة
+                    history.pushState(null, '', url);
+
+                    // تحديث ترقيم الصفحات
+                    updatePagination(data);
+                }
+            });
+        });
+
+        // تحديث ترقيم الصفحات
+        function updatePagination(data) {
+            var pagination = $('.pagination');
+
+            // تحديث زر الصفحة السابقة
+            if (data.has_prev) {
+                pagination.find('li:eq(0), li:eq(1)').removeClass('disabled');
+                pagination.find('li:eq(1) a').attr('href', window.location.pathname + '?page=' + (data.page - 1));
+            } else {
+                pagination.find('li:eq(0), li:eq(1)').addClass('disabled');
+            }
+
+            // تحديث زر الصفحة التالية
+            if (data.has_next) {
+                pagination.find('li:eq(-1), li:eq(-2)').removeClass('disabled');
+                pagination.find('li:eq(-2) a').attr('href', window.location.pathname + '?page=' + (data.page + 1));
+            } else {
+                pagination.find('li:eq(-1), li:eq(-2)').addClass('disabled');
+            }
+
+            // تحديث أزرار الصفحات
+            var pageItems = '';
+            for (var i = 1; i <= data.pages; i++) {
+                if (i === data.page || (i > data.page - 3 && i < data.page + 3)) {
+                    var activeClass = (i === data.page) ? 'active' : '';
+                    pageItems += '<li class="page-item ' + activeClass + '"><a class="page-link" href="?page=' + i + '">' + i + '</a></li>';
+                }
+            }
+
+            pagination.find('li:not(:first-child):not(:last-child):not(:nth-child(2)):not(:nth-last-child(2))').remove();
+            pagination.find('li:eq(1)').after(pageItems);
+        }
+    });
+</script>
+{% endblock %}
