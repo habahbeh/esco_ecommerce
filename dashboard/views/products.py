@@ -203,34 +203,57 @@ class ProductFormView(DashboardAccessMixin, View):
         description = request.POST.get('description', '')
         short_description = request.POST.get('short_description', '')
 
-        # الأسعار والتخزين
-        base_price = request.POST.get('base_price')
-        compare_price = request.POST.get('compare_price') or None
-        cost = request.POST.get('cost') or None
-        tax_rate = request.POST.get('tax_rate', 16)
-        stock_quantity = request.POST.get('stock_quantity', 0)
-        track_inventory = request.POST.get('track_inventory') == 'on'
+        # معالجة الأسعار والقيم العددية
+        try:
+            # تحويل القيم إلى أرقام عشرية وإدارة الأخطاء
+            base_price_str = request.POST.get('base_price', '0').replace(',', '.')
+            base_price = round(float(base_price_str), 2)
+
+            compare_price_str = request.POST.get('compare_price', '') or None
+            compare_price = round(float(compare_price_str.replace(',', '.')), 2) if compare_price_str else None
+
+            cost_str = request.POST.get('cost', '') or None
+            cost = round(float(cost_str.replace(',', '.')), 2) if cost_str else None
+
+            tax_rate_str = request.POST.get('tax_rate', '16').replace(',', '.')
+            tax_rate = round(float(tax_rate_str), 2) if tax_rate_str else 16.00
+
+            stock_quantity_str = request.POST.get('stock_quantity', '0')
+            stock_quantity = int(stock_quantity_str) if stock_quantity_str.strip() else 0
+
+        except ValueError as e:
+            messages.error(request, f'خطأ في تنسيق الأرقام: {str(e)}')
+            return redirect(request.path)
 
         # الخصائص والحالة
+        track_inventory = request.POST.get('track_inventory') == 'on'
         status = request.POST.get('status', 'draft')
         stock_status = request.POST.get('stock_status', 'in_stock')
         condition = request.POST.get('condition', 'new')
         is_active = request.POST.get('is_active') == 'on'
         is_featured = request.POST.get('is_featured') == 'on'
 
-        # الخصائص البوليانية
+        # الخصائص البوليانية الأخرى
         is_new = request.POST.get('is_new') == 'on'
         is_digital = request.POST.get('is_digital') == 'on'
         requires_shipping = request.POST.get('requires_shipping') == 'on'
+        is_best_seller = request.POST.get('is_best_seller') == 'on'
 
-        # الأبعاد والوزن
-        weight = request.POST.get('weight') or None
-        length = request.POST.get('length') or None
-        width = request.POST.get('width') or None
-        height = request.POST.get('height') or None
+        # الأبعاد والوزن - معالجة القيم الفارغة
+        weight_str = request.POST.get('weight', '') or None
+        weight = float(weight_str.replace(',', '.')) if weight_str else None
+
+        length_str = request.POST.get('length', '') or None
+        length = float(length_str.replace(',', '.')) if length_str else None
+
+        width_str = request.POST.get('width', '') or None
+        width = float(width_str.replace(',', '.')) if width_str else None
+
+        height_str = request.POST.get('height', '') or None
+        height = float(height_str.replace(',', '.')) if height_str else None
 
         # التحقق من البيانات المطلوبة
-        if not name or not category_id or not base_price:
+        if not name or not category_id or base_price is None:
             messages.error(request, 'الرجاء ملء جميع الحقول المطلوبة: الاسم، الفئة، السعر الأساسي')
             return redirect(request.path)
 
@@ -261,6 +284,7 @@ class ProductFormView(DashboardAccessMixin, View):
                 product.is_active = is_active
                 product.is_featured = is_featured
                 product.is_new = is_new
+                product.is_best_seller = is_best_seller
                 product.is_digital = is_digital
                 product.requires_shipping = requires_shipping
                 product.weight = weight
@@ -305,6 +329,7 @@ class ProductFormView(DashboardAccessMixin, View):
                     is_active=is_active,
                     is_featured=is_featured,
                     is_new=is_new,
+                    is_best_seller=is_best_seller,
                     is_digital=is_digital,
                     requires_shipping=requires_shipping,
                     weight=weight,
@@ -372,10 +397,25 @@ class ProductFormView(DashboardAccessMixin, View):
             # معالجة المواصفات (specifications) كبيانات JSON
             specs_data = request.POST.get('specifications_json', '{}')
             try:
-                product.specifications = json.loads(specs_data)
-                product.save(update_fields=['specifications'])
+                if specs_data.strip():
+                    product.specifications = json.loads(specs_data)
+                    product.save(update_fields=['specifications'])
             except json.JSONDecodeError:
                 messages.warning(request, 'حدث خطأ في معالجة بيانات المواصفات')
+
+            # معالجة الميزات (features)
+            features_data = request.POST.get('features', '[]')
+            try:
+                if features_data.strip():
+                    if features_data.startswith('{') or features_data.startswith('['):
+                        # JSON format
+                        product.features = json.loads(features_data)
+                    else:
+                        # Line-by-line format
+                        product.features = [line.strip() for line in features_data.split('\n') if line.strip()]
+                    product.save(update_fields=['features'])
+            except json.JSONDecodeError:
+                messages.warning(request, 'حدث خطأ في معالجة بيانات الميزات')
 
             # تحديث المنتجات ذات الصلة
             related_product_ids = request.POST.getlist('related_products')
@@ -384,7 +424,7 @@ class ProductFormView(DashboardAccessMixin, View):
             else:
                 product.related_products.clear()
 
-            return redirect('dashboard_product_detail', product_id=product.id)
+            return redirect('dashboard:dashboard_product_detail', product_id=product.id)
 
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء حفظ المنتج: {str(e)}')
