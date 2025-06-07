@@ -1,0 +1,366 @@
+/*
+ * dashboard-rtl.css - أنماط لدعم اللغات من اليمين إلى اليسار (العربية)
+ * المسار: dashboard/static/dashboard/css/dashboard-rtl.css
+ */
+
+/* ===== اتجاه النص والعناصر ===== */
+body {
+  direction: rtl;
+  text-align: right;
+}
+
+/* ===== هيكل الصفحة ===== */
+.sidebar-wrapper {
+  right: 0;
+}
+
+.main-content-wrapper {
+  margin-right: var(--sidebar-width);
+  margin-left: 0;
+}
+
+.sidebar-collapsed .main-content-wrapper {
+  margin-right: var(--sidebar-collapsed-width);
+  margin-left: 0;
+}
+
+/* ===== الشريط الجانبي ===== */
+.menu-item > a {
+  border-left: none;
+  border-right: 3px solid transparent;
+}
+
+.menu-item > a:hover {
+  border-right-color: rgba(255, 255, 255, 0.2);
+}
+
+.menu-item.active > a {
+  border-right-color: white;
+}
+
+.menu-item > a i {
+  margin-right: 0;
+  margin-left: 12px;
+}
+
+.user-avatar {
+  margin-right: 0;
+  margin-left: 12px;
+}
+
+.user-avatar::after {
+  right: auto;
+  left: 2px;
+}
+
+/* قوائم الشريط الجانبي الفرعية */
+.submenu li::before {
+  left: auto;
+  right: 32px;
+}
+
+.submenu li a {
+  padding: 0.7rem 4rem 0.7rem 1rem;
+}
+
+.submenu li a::before {
+  left: auto;
+  right: 32px;
+}
+
+.submenu li a:hover {
+  padding-left: 1rem;
+  padding-right: 4.25rem;
+}
+
+/* التغييرات للعرض المطوي */
+.sidebar-collapsed .submenu {
+  right: var(--sidebar-collapsed-width);
+  left: auto;
+  border-radius: 0.25rem 0 0 0.25rem;
+}
+
+.sidebar-collapsed .menu-item > a i {
+  margin-left: 0;
+}
+
+/* ===== شريط التنقل العلوي ===== */
+.ms-auto {
+  margin-right: auto !important;
+  margin-left: 0 !important;
+}
+
+.me-auto {
+  margin-left: auto !important;
+  margin-right: 0 !important;
+}
+
+.me-2, .me-3 {
+  margin-left: 0.5rem !important;
+  margin-right: 0 !important;
+}
+
+.ms-2, .ms-3 {
+  margin-right: 0.5rem !important;
+  margin-left: 0 !important;
+}
+
+/* ===== خبز الفتات ===== */
+.breadcrumb-item + .breadcrumb-item {
+  padding-right: 0.5rem;
+  padding-left: 0;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+  float: right;
+  padding-left: 0.5rem;
+  padding-right: 0;
+  transform: scaleX(-1);
+}
+
+/* ===== قائمة الإشعارات ===== */
+.notification-icon {
+  margin-right: 0;
+  margin-left: 1rem;
+}
+
+.dropdown-menu-end {
+  left: 0 !important;
+  right: auto !important;
+}
+
+.notification-badge {
+  right: auto;
+  left: 3px;
+}
+
+/* ===== البحث والمرشحات ===== */
+.search-box i {
+  right: 1rem;
+  left: auto;
+}
+
+.search-box input {
+  padding-right: 2.5rem;
+  padding-left: 0.75rem;
+}
+
+/* ===== الشارات والمؤشرات ===== */
+.percent-badge i {
+  margin-right: 0;
+  margin-left: 0.25rem;
+}
+
+.badge i {
+  margin-right: 0;
+  margin-left: 0.25rem;
+}
+
+.indicator {
+  margin-right: 0;
+  margin-left: 5px;
+}
+
+/* ===== الجداول ===== */
+.table {
+  text-align: right;
+}
+
+/* ===== النماذج ===== */
+.form-check {
+  padding-right: 1.5em;
+  padding-left: 0;
+}
+
+.form-check .form-check-input {
+  float: right;
+  margin-right: -1.5em;
+  margin-left: 0;
+}
+
+/* ===== الشرائح والمحددات ===== */
+.carousel-control-next {
+  right: auto;
+  left: 0;
+}
+
+.carousel-control-prev {
+  left: auto;
+  right: 0;
+}
+
+.carousel-indicators {
+  direction: ltr;
+}
+
+/* ===== الأزرار والإدخالات المجمعة ===== */
+.input-group > .form-control:not(:last-child),
+.input-group > .custom-select:not(:last-child) {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
+}
+
+.input-group > .form-control:not(:first-child),
+.input-group > .custom-select:not(:first-child) {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-top-left-radius: 0.375rem;
+  border-bottom-left-radius: 0.375rem;
+}
+
+.input-group > .input-group-prepend > .btn,
+.input-group > .input-group-prepend > .input-group-text {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
+}
+
+.input-group > .input-group-append > .btn,
+.input-group > .input-group-append > .input-group-text {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-top-left-radius: 0.375rem;
+  border-bottom-left-radius: 0.375rem;
+}
+
+/* ===== محاذاة النصوص ===== */
+.text-end {
+  text-align: left !important;
+}
+
+.text-start {
+  text-align: right !important;
+}
+
+/* ===== الحدود ===== */
+.border-end {
+  border-left: 1px solid #e2e8f0 !important;
+  border-right: 0 !important;
+}
+
+.border-start {
+  border-right: 1px solid #e2e8f0 !important;
+  border-left: 0 !important;
+}
+
+/* ===== الهوامش ===== */
+.float-end {
+  float: left !important;
+}
+
+.float-start {
+  float: right !important;
+}
+
+/* ===== المودال ===== */
+.modal-header .btn-close {
+  margin: -0.5rem auto -0.5rem -0.5rem;
+}
+
+/* ===== شريط التقدم ===== */
+.progress {
+  direction: ltr;
+}
+
+/* ===== الإغلاق ===== */
+.btn-close {
+  margin-right: auto;
+  margin-left: 0;
+}
+
+/* ===== عناصر bootstrap المنسدلة ===== */
+.dropdown-toggle::after {
+  margin-left: 0;
+  margin-right: 0.255em;
+}
+
+/* ===== نموذج الفئات ===== */
+.list-group-horizontal > .list-group-item:first-child {
+  border-top-right-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.list-group-horizontal > .list-group-item:last-child {
+  border-top-left-radius: 0.375rem;
+  border-bottom-left-radius: 0.375rem;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* ===== أعمدة bootstrap ===== */
+.offset-1 { margin-right: 8.333333%; margin-left: 0; }
+.offset-2 { margin-right: 16.666667%; margin-left: 0; }
+.offset-3 { margin-right: 25%; margin-left: 0; }
+.offset-4 { margin-right: 33.333333%; margin-left: 0; }
+.offset-5 { margin-right: 41.666667%; margin-left: 0; }
+.offset-6 { margin-right: 50%; margin-left: 0; }
+.offset-7 { margin-right: 58.333333%; margin-left: 0; }
+.offset-8 { margin-right: 66.666667%; margin-left: 0; }
+.offset-9 { margin-right: 75%; margin-left: 0; }
+.offset-10 { margin-right: 83.333333%; margin-left: 0; }
+.offset-11 { margin-right: 91.666667%; margin-left: 0; }
+
+/* ===== استجابة لشاشات الأجهزة المحمولة ===== */
+@media (max-width: 992px) {
+  .sidebar-wrapper {
+    right: calc(-1 * var(--sidebar-width));
+    left: auto;
+  }
+
+  .sidebar-open .sidebar-wrapper {
+    right: 0;
+    left: auto;
+  }
+
+  .main-content-wrapper {
+    margin-right: 0;
+  }
+
+  .sidebar-collapsed .sidebar-wrapper {
+    right: calc(-1 * var(--sidebar-collapsed-width));
+    left: auto;
+  }
+
+  /* إعادة الأنماط لقائمة الشريط الجانبي على الشاشات الصغيرة */
+  .sidebar-collapsed .menu-item > a i {
+    margin-right: 0;
+    margin-left: 12px;
+  }
+
+  .sidebar-collapsed .submenu li a {
+    padding: 0.7rem 4rem 0.7rem 1rem;
+  }
+
+  .sidebar-collapsed .submenu li a:hover {
+    padding-left: 1rem;
+    padding-right: 4.25rem;
+  }
+
+  .sidebar-collapsed .user-avatar {
+    margin-right: 0;
+    margin-left: 12px;
+  }
+}
+
+/* ===== خطوط لدعم العربية ===== */
+body {
+  font-family: var(--font-family-arabic), 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  letter-spacing: 0;
+  word-spacing: 1px;
+}
+
+/* تعديلات خاصة بخط Cairo للغة العربية */
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6,
+.menu-item > a,
+.btn,
+.form-label,
+.card-title,
+.page-title h1 {
+  letter-spacing: 0;
+}
