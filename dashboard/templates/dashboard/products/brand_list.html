@@ -1,0 +1,616 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{% trans 'العلامات التجارية' %}{% endblock %}
+{% block page_title %}{% trans 'إدارة العلامات التجارية' %}{% endblock %}
+{% block current_page %}{% trans 'قائمة العلامات التجارية' %}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_products' %}">{% trans 'المنتجات' %}</a></li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .brand-card {
+        transition: all 0.3s ease;
+    }
+    .brand-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .brand-logo {
+        height: 80px;
+        width: 80px;
+        object-fit: contain;
+        margin-bottom: 1rem;
+    }
+    .brand-logo-placeholder {
+        height: 80px;
+        width: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+    }
+    .brand-logo-placeholder i {
+        color: #adb5bd;
+        font-size: 2rem;
+    }
+    .brand-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    .brand-badges {
+        margin-bottom: 0.75rem;
+    }
+    .brand-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        margin-right: 0.25rem;
+    }
+    [dir="rtl"] .brand-badge {
+        margin-right: 0;
+        margin-left: 0.25rem;
+    }
+    .brand-info {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    .brand-info i {
+        width: 15px;
+        margin-right: 0.35rem;
+    }
+    [dir="rtl"] .brand-info i {
+        margin-right: 0;
+        margin-left: 0.35rem;
+    }
+    .brand-actions {
+        margin-top: 1rem;
+        display: flex;
+        gap: 0.5rem;
+    }
+    .brand-products-count {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+    }
+    .verified-badge {
+        color: #28a745;
+        font-size: 0.85rem;
+        margin-left: 0.5rem;
+    }
+    [dir="rtl"] .verified-badge {
+        margin-left: 0;
+        margin-right: 0.5rem;
+    }
+    .stats-card {
+        border-right: 3px solid transparent;
+        transition: all 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    .stats-card.primary {
+        border-right-color: var(--bs-primary);
+    }
+    .stats-card.success {
+        border-right-color: var(--bs-success);
+    }
+    .stats-card.warning {
+        border-right-color: var(--bs-warning);
+    }
+    [dir="rtl"] .stats-card {
+        border-right: none;
+        border-left: 3px solid transparent;
+    }
+    [dir="rtl"] .stats-card.primary {
+        border-left-color: var(--bs-primary);
+    }
+    [dir="rtl"] .stats-card.success {
+        border-left-color: var(--bs-success);
+    }
+    [dir="rtl"] .stats-card.warning {
+        border-left-color: var(--bs-warning);
+    }
+    .search-container .input-group {
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        border-radius: 50px;
+        overflow: hidden;
+    }
+    .search-container .form-control {
+        border: none;
+        padding-left: 20px;
+    }
+    .search-container .btn {
+        border: none;
+        background-color: transparent;
+        color: #6c757d;
+    }
+    .brand-table-img {
+        width: 50px;
+        height: 50px;
+        object-fit: contain;
+        border-radius: 5px;
+    }
+    .brand-table-img-placeholder {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+    }
+    .view-switcher {
+        display: flex;
+        gap: 0.5rem;
+    }
+    .view-switcher-btn {
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.25rem;
+        cursor: pointer;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        color: #6c757d;
+        transition: all 0.3s ease;
+    }
+    .view-switcher-btn:hover, .view-switcher-btn.active {
+        background-color: var(--bs-primary);
+        border-color: var(--bs-primary);
+        color: white;
+    }
+    .reset-filter-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.25rem;
+        cursor: pointer;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        color: #6c757d;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+    .reset-filter-btn:hover {
+        background-color: #e9ecef;
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- إحصائيات العلامات التجارية -->
+<div class="row mb-4">
+    <div class="col-xl-4 col-md-4 mb-3">
+        <div class="card shadow-sm stats-card primary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-0">{% trans 'إجمالي العلامات التجارية' %}</h6>
+                        <h3 class="mb-0">{{ stats.total|intcomma }}</h3>
+                    </div>
+                    <div class="bg-light rounded-circle p-3">
+                        <i class="fa fa-building text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-md-4 mb-3">
+        <div class="card shadow-sm stats-card success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-0">{% trans 'علامات تجارية موثقة' %}</h6>
+                        <h3 class="mb-0">{{ stats.verified|intcomma }}</h3>
+                    </div>
+                    <div class="bg-light rounded-circle p-3">
+                        <i class="fa fa-check-circle text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-md-4 mb-3">
+        <div class="card shadow-sm stats-card warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-0">{% trans 'علامات تجارية مميزة' %}</h6>
+                        <h3 class="mb-0">{{ stats.featured|intcomma }}</h3>
+                    </div>
+                    <div class="bg-light rounded-circle p-3">
+                        <i class="fa fa-star text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- أدوات البحث والإجراءات -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                    <!-- البحث -->
+                    <div class="search-container mb-2 mb-md-0">
+                        <form method="GET" id="search-form">
+                            <div class="input-group">
+                                <input type="text" name="q" class="form-control" placeholder="{% trans 'بحث عن علامة تجارية...' %}" value="{{ query }}">
+                                <button class="btn" type="submit">
+                                    <i class="fa fa-search"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="d-flex gap-2 align-items-center">
+                        <!-- زر إعادة الضبط -->
+                        {% if query %}
+                        <a href="{% url 'dashboard:dashboard_brands' %}" class="reset-filter-btn">
+                            <i class="fa fa-times"></i>
+                            <span>{% trans 'مسح البحث' %}</span>
+                        </a>
+                        {% endif %}
+
+                        <!-- مبدل العرض -->
+                        <div class="view-switcher">
+                            <button id="grid-view-btn" class="view-switcher-btn active">
+                                <i class="fa fa-th-large me-1"></i> {% trans 'عرض شبكي' %}
+                            </button>
+                            <button id="table-view-btn" class="view-switcher-btn">
+                                <i class="fa fa-list me-1"></i> {% trans 'عرض جدولي' %}
+                            </button>
+                        </div>
+
+                        <!-- زر إضافة علامة تجارية -->
+                        <a href="{% url 'dashboard:dashboard_brand_create' %}" class="btn btn-primary">
+                            <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة علامة تجارية' %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- العرض الشبكي للعلامات التجارية -->
+<div id="grid-view" class="row mb-4">
+    {% if brands %}
+        {% for brand in brands %}
+            <div class="col-xl-3 col-md-4 col-sm-6 mb-4">
+                <div class="card brand-card h-100">
+                    <div class="card-body text-center">
+                        {% if brand.logo %}
+                        <img src="{{ brand.logo.url }}" alt="{{ brand.name }}" class="brand-logo">
+                        {% else %}
+                        <div class="brand-logo-placeholder mx-auto">
+                            <i class="fa fa-building"></i>
+                        </div>
+                        {% endif %}
+
+                        <h5 class="brand-title">
+                            {{ brand.name }}
+                            {% if brand.is_verified %}
+                            <span class="verified-badge"><i class="fa fa-check-circle"></i></span>
+                            {% endif %}
+                        </h5>
+
+                        <div class="brand-badges">
+                            {% if brand.is_active %}
+                            <span class="badge bg-success brand-badge">{% trans 'نشطة' %}</span>
+                            {% else %}
+                            <span class="badge bg-danger brand-badge">{% trans 'غير نشطة' %}</span>
+                            {% endif %}
+
+                            {% if brand.is_featured %}
+                            <span class="badge bg-warning text-dark brand-badge">{% trans 'مميزة' %}</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="brand-products-count">
+                            {{ brand.products_count }} {% trans 'منتج' %}
+                        </div>
+
+                        {% if brand.country %}
+                        <div class="brand-info">
+                            <i class="fa fa-map-marker-alt"></i> {{ brand.country }}
+                            {% if brand.city %}, {{ brand.city }}{% endif %}
+                        </div>
+                        {% endif %}
+
+                        {% if brand.website %}
+                        <div class="brand-info">
+                            <i class="fa fa-globe"></i> <a href="{{ brand.website }}" target="_blank" dir="ltr">{{ brand.website|truncatechars:25 }}</a>
+                        </div>
+                        {% endif %}
+
+                        <div class="brand-actions justify-content-center">
+                            <a href="{% url 'dashboard:dashboard_brand_edit' brand_id=brand.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fa fa-edit me-1"></i> {% trans 'تعديل' %}
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-danger delete-brand-btn" data-brand-id="{{ brand.id }}" data-brand-name="{{ brand.name }}" data-bs-toggle="modal" data-bs-target="#deleteBrandModal">
+                                <i class="fa fa-trash me-1"></i> {% trans 'حذف' %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="fa fa-building fa-3x text-muted mb-3"></i>
+                    <p class="mb-3">{% trans 'لم يتم العثور على علامات تجارية' %}</p>
+                    {% if query %}
+                    <p class="text-muted">{% trans 'حاول تغيير معايير البحث' %}</p>
+                    <a href="{% url 'dashboard:dashboard_brands' %}" class="btn btn-outline-primary mt-2">
+                        <i class="fa fa-times me-1"></i> {% trans 'مسح البحث' %}
+                    </a>
+                    {% else %}
+                    <a href="{% url 'dashboard:dashboard_brand_create' %}" class="btn btn-primary">
+                        <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة علامة تجارية جديدة' %}
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- العرض الجدولي للعلامات التجارية -->
+<div id="table-view" class="row mb-4" style="display: none;">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                {% if brands %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 60px;"></th>
+                                <th>{% trans 'العلامة التجارية' %}</th>
+                                <th>{% trans 'البلد' %}</th>
+                                <th>{% trans 'الموقع الإلكتروني' %}</th>
+                                <th>{% trans 'المنتجات' %}</th>
+                                <th>{% trans 'الحالة' %}</th>
+                                <th>{% trans 'الإجراءات' %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for brand in brands %}
+                            <tr>
+                                <td>
+                                    {% if brand.logo %}
+                                    <img src="{{ brand.logo.url }}" alt="{{ brand.name }}" class="brand-table-img">
+                                    {% else %}
+                                    <div class="brand-table-img-placeholder">
+                                        <i class="fa fa-building text-muted"></i>
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">
+                                        {{ brand.name }}
+                                        {% if brand.is_verified %}
+                                        <span class="verified-badge"><i class="fa fa-check-circle"></i></span>
+                                        {% endif %}
+                                    </div>
+                                    {% if brand.name_en %}
+                                    <div class="text-muted small">{{ brand.name_en }}</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if brand.country %}
+                                    {{ brand.country }}
+                                    {% if brand.city %}, {{ brand.city }}{% endif %}
+                                    {% else %}
+                                    <span class="text-muted">--</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if brand.website %}
+                                    <a href="{{ brand.website }}" target="_blank" dir="ltr" class="small">{{ brand.website|truncatechars:30 }}</a>
+                                    {% else %}
+                                    <span class="text-muted">--</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-info text-light">{{ brand.products_count }}</span>
+                                </td>
+                                <td>
+                                    {% if brand.is_active %}
+                                    <span class="badge bg-success">{% trans 'نشطة' %}</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">{% trans 'غير نشطة' %}</span>
+                                    {% endif %}
+
+                                    {% if brand.is_featured %}
+                                    <span class="badge bg-warning text-dark">{% trans 'مميزة' %}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'dashboard:dashboard_brand_edit' brand_id=brand.id %}" class="btn btn-outline-secondary" title="{% trans 'تعديل' %}">
+                                            <i class="fa fa-edit"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-outline-danger delete-brand-btn" title="{% trans 'حذف' %}" data-brand-id="{{ brand.id }}" data-brand-name="{{ brand.name }}" data-bs-toggle="modal" data-bs-target="#deleteBrandModal">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- ترقيم الصفحات -->
+                {% if brands.has_other_pages %}
+                <div class="d-flex justify-content-center mt-4">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination">
+                            {% if brands.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}" aria-label="First">
+                                    <span aria-hidden="true">&laquo;&laquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ brands.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            {% endif %}
+
+                            {% for i in paginator.page_range %}
+                                {% if brands.number == i %}
+                                <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                                {% elif i > brands.number|add:'-3' and i < brands.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ i }}{% if query %}&q={{ query }}{% endif %}">{{ i }}</a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if brands.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ brands.next_page_number }}{% if query %}&q={{ query }}{% endif %}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}" aria-label="Last">
+                                    <span aria-hidden="true">&raquo;&raquo;</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fa fa-building fa-3x text-muted mb-3"></i>
+                    <p class="mb-3">{% trans 'لم يتم العثور على علامات تجارية' %}</p>
+                    {% if query %}
+                    <p class="text-muted">{% trans 'حاول تغيير معايير البحث' %}</p>
+                    <a href="{% url 'dashboard:dashboard_brands' %}" class="btn btn-outline-primary mt-2">
+                        <i class="fa fa-times me-1"></i> {% trans 'مسح البحث' %}
+                    </a>
+                    {% else %}
+                    <a href="{% url 'dashboard:dashboard_brand_create' %}" class="btn btn-primary">
+                        <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة علامة تجارية جديدة' %}
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- نافذة الحذف -->
+<div class="modal fade" id="deleteBrandModal" tabindex="-1" aria-labelledby="deleteBrandModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteBrandModalLabel">{% trans 'تأكيد الحذف' %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>{% trans 'هل أنت متأكد من حذف العلامة التجارية:' %} <span id="brand-name-to-delete"></span>؟</p>
+                <div class="alert alert-warning">
+                    <i class="fa fa-exclamation-triangle me-2"></i>
+                    {% trans 'لا يمكن حذف العلامة التجارية إذا كانت مرتبطة بمنتجات.' %}
+                </div>
+                <p class="text-danger">{% trans 'هذا الإجراء لا يمكن التراجع عنه.' %}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans 'إلغاء' %}</button>
+                <form id="delete-brand-form" method="post" action="">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">{% trans 'حذف' %}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // تبديل طريقة العرض
+        $('#grid-view-btn').click(function() {
+            $(this).addClass('active');
+            $('#table-view-btn').removeClass('active');
+            $('#grid-view').show();
+            $('#table-view').hide();
+        });
+
+        $('#table-view-btn').click(function() {
+            $(this).addClass('active');
+            $('#grid-view-btn').removeClass('active');
+            $('#grid-view').hide();
+            $('#table-view').show();
+        });
+
+        // تأكيد حذف العلامة التجارية
+        $('.delete-brand-btn').click(function() {
+            let brandId = $(this).data('brand-id');
+            let brandName = $(this).data('brand-name');
+
+            $('#brand-name-to-delete').text(brandName);
+            $('#delete-brand-form').attr('action', '{% url "dashboard:dashboard_brand_delete" brand_id=0 %}'.replace('0', brandId));
+        });
+
+        // عرض رسالة تأكيد عند محاولة حذف علامة تجارية مرتبطة بمنتجات
+        $('#delete-brand-form').submit(function(e) {
+            let brandId = $(this).attr('action').split('/').filter(Boolean).pop();
+            let hasProducts = false;
+
+            // التحقق مما إذا كانت العلامة التجارية تحتوي على منتجات
+            // هذا مجرد تحقق أولي في واجهة المستخدم، التحقق النهائي يتم في الخادم
+            $('.brand-card, tr').each(function() {
+                let currentBrandId = $(this).find('.delete-brand-btn').data('brand-id');
+                if (currentBrandId == brandId) {
+                    let productsCount = $(this).find('.brand-products-count, .badge.bg-info').text().trim();
+                    if (productsCount && parseInt(productsCount) > 0) {
+                        hasProducts = true;
+                        return false;
+                    }
+                }
+            });
+
+            if (hasProducts) {
+                e.preventDefault();
+                alert("{% trans 'لا يمكن حذف العلامة التجارية لأنها مرتبطة بمنتجات.' %}");
+                $('#deleteBrandModal').modal('hide');
+            }
+        });
+    });
+</script>
+{% endblock %}

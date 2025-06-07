@@ -1,0 +1,574 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{% trans 'المنتجات' %}{% endblock %}
+{% block page_title %}{% trans 'إدارة المنتجات' %}{% endblock %}
+{% block current_page %}{% trans 'قائمة المنتجات' %}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_products' %}">{% trans 'المنتجات' %}</a></li>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+<style>
+    .product-actions {
+        display: flex;
+        gap: 5px;
+    }
+    .product-thumbnail {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 4px;
+    }
+    .product-thumbnail-placeholder {
+        width: 50px;
+        height: 50px;
+        background-color: #f5f5f5;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #aaa;
+    }
+    .stock-badge {
+        padding: 0.25em 0.5em;
+        font-size: 0.75em;
+        border-radius: 4px;
+    }
+    .filter-card {
+        transition: all 0.3s ease;
+    }
+    .filter-card .card-header {
+        cursor: pointer;
+    }
+    .status-indicator {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 5px;
+    }
+    [dir="rtl"] .status-indicator {
+        margin-right: 0;
+        margin-left: 5px;
+    }
+    .product-name {
+        font-weight: 600;
+        color: #333;
+    }
+    .product-sku {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    .product-price {
+        font-weight: 600;
+        color: #28a745;
+    }
+    .product-compare-price {
+        text-decoration: line-through;
+        color: #dc3545;
+        font-size: 0.85rem;
+    }
+    .bulk-actions {
+        display: none;
+    }
+    .select-all-container {
+        width: 55px;
+    }
+    .pagination-info {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    .stats-card {
+        border-right: 3px solid transparent;
+        transition: all 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    .stats-card.primary {
+        border-right-color: var(--bs-primary);
+    }
+    .stats-card.success {
+        border-right-color: var(--bs-success);
+    }
+    .stats-card.danger {
+        border-right-color: var(--bs-danger);
+    }
+    .stats-card.warning {
+        border-right-color: var(--bs-warning);
+    }
+    [dir="rtl"] .stats-card {
+        border-right: none;
+        border-left: 3px solid transparent;
+    }
+    [dir="rtl"] .stats-card.primary {
+        border-left-color: var(--bs-primary);
+    }
+    [dir="rtl"] .stats-card.success {
+        border-left-color: var(--bs-success);
+    }
+    [dir="rtl"] .stats-card.danger {
+        border-left-color: var(--bs-danger);
+    }
+    [dir="rtl"] .stats-card.warning {
+        border-left-color: var(--bs-warning);
+    }
+    .search-container .input-group {
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        border-radius: 50px;
+        overflow: hidden;
+    }
+    .search-container .form-control {
+        border: none;
+        padding-left: 20px;
+    }
+    .search-container .btn {
+        border: none;
+        background-color: transparent;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- أرقام إحصائية -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card shadow-sm stats-card primary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-0">{% trans 'إجمالي المنتجات' %}</h6>
+                        <h3 class="mb-0">{{ stats.total|intcomma }}</h3>
+                    </div>
+                    <div class="bg-light rounded-circle p-3">
+                        <i class="fa fa-boxes text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card shadow-sm stats-card success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-0">{% trans 'منتجات نشطة' %}</h6>
+                        <h3 class="mb-0">{{ stats.active|intcomma }}</h3>
+                    </div>
+                    <div class="bg-light rounded-circle p-3">
+                        <i class="fa fa-check-circle text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card shadow-sm stats-card danger h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-0">{% trans 'منتجات نفذت الكمية' %}</h6>
+                        <h3 class="mb-0">{{ stats.out_of_stock|intcomma }}</h3>
+                    </div>
+                    <div class="bg-light rounded-circle p-3">
+                        <i class="fa fa-exclamation-circle text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card shadow-sm stats-card warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-0">{% trans 'منتجات مميزة' %}</h6>
+                        <h3 class="mb-0">{{ stats.featured|intcomma }}</h3>
+                    </div>
+                    <div class="bg-light rounded-circle p-3">
+                        <i class="fa fa-star text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- أدوات البحث والإجراءات -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                    <!-- البحث -->
+                    <div class="search-container mb-2 mb-md-0">
+                        <form method="GET" id="search-form">
+                            <div class="input-group">
+                                <input type="text" name="q" class="form-control" placeholder="{% trans 'بحث عن منتج...' %}" value="{{ query }}">
+                                <button class="btn" type="submit">
+                                    <i class="fa fa-search"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- زر إضافة منتج -->
+                    {% if perms.products.add_product %}
+                    <div>
+                        <a href="{% url 'dashboard:dashboard_product_create' %}" class="btn btn-primary">
+                            <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة منتج' %}
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="row">
+                    <!-- التصفية حسب الفئة -->
+                    <div class="col-md-4 mb-3">
+                        <label for="category_filter" class="form-label">{% trans 'تصفية حسب الفئة' %}</label>
+                        <select id="category_filter" name="category" class="form-select select2">
+                            <option value="">{% trans 'جميع الفئات' %}</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}" {% if category_filter == category.id|stringformat:"s" %}selected{% endif %}>
+                                {{ category.name }}
+                                {% if category.children.exists %}
+                                <optgroup label="{{ category.name }}">
+                                    {% for child in category.children.all %}
+                                    <option value="{{ child.id }}" {% if category_filter == child.id|stringformat:"s" %}selected{% endif %}>
+                                        &nbsp;&nbsp;{{ child.name }}
+                                    </option>
+                                    {% endfor %}
+                                </optgroup>
+                                {% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- التصفية حسب العلامة التجارية -->
+                    <div class="col-md-4 mb-3">
+                        <label for="brand_filter" class="form-label">{% trans 'تصفية حسب العلامة التجارية' %}</label>
+                        <select id="brand_filter" name="brand" class="form-select select2">
+                            <option value="">{% trans 'جميع العلامات' %}</option>
+                            {% for brand in brands %}
+                            <option value="{{ brand.id }}" {% if brand_filter == brand.id|stringformat:"s" %}selected{% endif %}>
+                                {{ brand.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- التصفية حسب الحالة -->
+                    <div class="col-md-4 mb-3">
+                        <label for="status_filter" class="form-label">{% trans 'تصفية حسب الحالة' %}</label>
+                        <select id="status_filter" name="status" class="form-select">
+                            <option value="">{% trans 'جميع الحالات' %}</option>
+                            {% for status_code, status_name in status_choices %}
+                            <option value="{{ status_code }}" {% if status_filter == status_code %}selected{% endif %}>
+                                {{ status_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- جدول المنتجات -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form id="bulk-action-form" method="post" action="{% url 'dashboard:dashboard_product_bulk_actions' %}">
+                    {% csrf_token %}
+                    <!-- إجراءات جماعية -->
+                    <div class="bulk-actions alert alert-light d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <div class="d-inline-block me-2">
+                                <span class="selected-count">0</span> {% trans 'منتج محدد' %}
+                            </div>
+                            <div class="btn-group">
+                                <select name="action" class="form-select form-select-sm">
+                                    <option value="">{% trans 'اختر إجراء...' %}</option>
+                                    <option value="activate">{% trans 'تفعيل' %}</option>
+                                    <option value="deactivate">{% trans 'إلغاء تفعيل' %}</option>
+                                    <option value="publish">{% trans 'نشر' %}</option>
+                                    <option value="draft">{% trans 'مسودة' %}</option>
+                                    <option value="delete">{% trans 'حذف' %}</option>
+                                    <option value="update_stock">{% trans 'تحديث المخزون' %}</option>
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-secondary">{% trans 'تطبيق' %}</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary cancel-selection">
+                            {% trans 'إلغاء التحديد' %}
+                        </button>
+                    </div>
+
+                    <!-- جدول المنتجات (يتم تحميله من products_table.html) -->
+                    <div class="table-responsive" id="products-table-container">
+                        {% include 'dashboard/products/products_table.html' %}
+                    </div>
+                </form>
+
+                <!-- ترقيم الصفحات -->
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <div class="pagination-info">
+                        {% trans 'عرض' %} {{ products.start_index }} {% trans 'إلى' %} {{ products.end_index }} {% trans 'من' %} {{ paginator.count }} {% trans 'منتج' %}
+                    </div>
+
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination">
+                            {% if products.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if brand_filter %}&brand={{ brand_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" aria-label="First">
+                                    <span aria-hidden="true">&laquo;&laquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ products.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if brand_filter %}&brand={{ brand_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            {% endif %}
+
+                            {% for i in paginator.page_range %}
+                                {% if products.number == i %}
+                                <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                                {% elif i > products.number|add:'-3' and i < products.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ i }}{% if query %}&q={{ query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if brand_filter %}&brand={{ brand_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">{{ i }}</a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if products.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ products.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if brand_filter %}&brand={{ brand_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if brand_filter %}&brand={{ brand_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" aria-label="Last">
+                                    <span aria-hidden="true">&raquo;&raquo;</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- نافذة الحذف -->
+<div class="modal fade" id="deleteProductModal" tabindex="-1" aria-labelledby="deleteProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteProductModalLabel">{% trans 'تأكيد الحذف' %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>{% trans 'هل أنت متأكد من حذف المنتج:' %} <span id="product-name-to-delete"></span>؟</p>
+                <p class="text-danger">{% trans 'هذا الإجراء لا يمكن التراجع عنه.' %}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans 'إلغاء' %}</button>
+                <form id="delete-product-form" method="post" action="">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">{% trans 'حذف' %}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // تهيئة Select2
+        $('.select2').select2({
+            dir: $('html').attr('dir'),
+            placeholder: "{% trans 'اختر...' %}",
+            allowClear: true
+        });
+
+        // تغيير التصفية تلقائياً
+        $('#category_filter, #brand_filter, #status_filter').change(function() {
+            applyFilters();
+        });
+
+        // تطبيق التصفية
+        function applyFilters() {
+            let url = new URL(window.location.href);
+
+            // إضافة تصفية الفئة
+            let category = $('#category_filter').val();
+            if (category) {
+                url.searchParams.set('category', category);
+            } else {
+                url.searchParams.delete('category');
+            }
+
+            // إضافة تصفية العلامة التجارية
+            let brand = $('#brand_filter').val();
+            if (brand) {
+                url.searchParams.set('brand', brand);
+            } else {
+                url.searchParams.delete('brand');
+            }
+
+            // إضافة تصفية الحالة
+            let status = $('#status_filter').val();
+            if (status) {
+                url.searchParams.set('status', status);
+            } else {
+                url.searchParams.delete('status');
+            }
+
+            // إعادة تعيين رقم الصفحة
+            url.searchParams.delete('page');
+
+            // الانتقال للصفحة المحدثة
+            window.location.href = url.toString();
+        }
+
+        // تحديد المنتجات بالجملة
+        $('#select-all').change(function() {
+            let isChecked = $(this).prop('checked');
+            $('.product-checkbox').prop('checked', isChecked);
+            updateBulkActions();
+        });
+
+        // تحديث إجراءات الجملة عند تغيير التحديد
+        $('.product-checkbox').change(function() {
+            updateBulkActions();
+        });
+
+        // تحديث حالة إجراءات الجملة
+        function updateBulkActions() {
+            let selectedCount = $('.product-checkbox:checked').length;
+            $('.selected-count').text(selectedCount);
+
+            if (selectedCount > 0) {
+                $('.bulk-actions').show();
+            } else {
+                $('.bulk-actions').hide();
+            }
+
+            // تحديث حالة تحديد الكل
+            if (selectedCount === $('.product-checkbox').length && selectedCount > 0) {
+                $('#select-all').prop('checked', true);
+            } else {
+                $('#select-all').prop('checked', false);
+            }
+        }
+
+        // إلغاء التحديد
+        $('.cancel-selection').click(function() {
+            $('.product-checkbox, #select-all').prop('checked', false);
+            updateBulkActions();
+        });
+
+        // تأكيد حذف المنتج
+        $('.delete-product-btn').click(function(e) {
+            e.preventDefault();
+            let productId = $(this).data('product-id');
+            let productName = $(this).data('product-name');
+            let deleteUrl = $(this).attr('href');
+
+            $('#product-name-to-delete').text(productName);
+            $('#delete-product-form').attr('action', deleteUrl);
+            $('#deleteProductModal').modal('show');
+        });
+
+        // AJAX لتحميل المنتجات عند تغيير الصفحة
+        $(document).on('click', '.page-link', function(e) {
+            let isAjaxEnabled = true; // تعطيل/تفعيل التحميل الجزئي
+
+            if (!isAjaxEnabled) return true;
+
+            e.preventDefault();
+            let url = $(this).attr('href');
+
+            if (!url || url === '#') return;
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(response) {
+                    $('#products-table-container').html(response.html);
+
+                    // تحديث عنوان URL
+                    history.pushState(null, '', url);
+
+                    // تحديث معلومات الترقيم
+                    updatePaginationInfo(response);
+
+                    // إعادة ربط الأحداث
+                    bindEvents();
+                }
+            });
+        });
+
+        // تحديث معلومات الترقيم
+        function updatePaginationInfo(response) {
+            let start = (response.page - 1) * 20 + 1;
+            let end = Math.min(start + 19, response.total);
+            $('.pagination-info').text(
+                '{% trans "عرض" %} ' + start + ' {% trans "إلى" %} ' + end + ' {% trans "من" %} ' + response.total + ' {% trans "منتج" %}'
+            );
+        }
+
+        // ربط الأحداث بعد تحديث المحتوى
+        function bindEvents() {
+            // إعادة ربط أحداث التحديد
+            $('.product-checkbox').change(function() {
+                updateBulkActions();
+            });
+
+            // إعادة ربط أحداث الحذف
+            $('.delete-product-btn').click(function(e) {
+                e.preventDefault();
+                let productId = $(this).data('product-id');
+                let productName = $(this).data('product-name');
+                let deleteUrl = $(this).attr('href');
+
+                $('#product-name-to-delete').text(productName);
+                $('#delete-product-form').attr('action', deleteUrl);
+                $('#deleteProductModal').modal('show');
+            });
+        }
+
+        // عرض الإجراءات الجماعية مبدئياً (إذا كان هناك منتجات محددة)
+        updateBulkActions();
+    });
+</script>
+{% endblock %}

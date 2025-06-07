@@ -1,0 +1,160 @@
+{% load i18n %}
+
+<table class="table table-hover align-middle">
+    <thead class="table-light">
+        <tr>
+            <th class="select-all-container">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="select-all">
+                </div>
+            </th>
+            <th>{% trans 'المنتج' %}</th>
+            <th>{% trans 'SKU' %}</th>
+            <th>{% trans 'الفئة' %}</th>
+            <th>{% trans 'السعر' %}</th>
+            <th>{% trans 'المخزون' %}</th>
+            <th>{% trans 'الحالة' %}</th>
+            <th>{% trans 'التاريخ' %}</th>
+            <th>{% trans 'الإجراءات' %}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for product in products %}
+        <tr>
+            <td>
+                <div class="form-check">
+                    <input class="form-check-input product-checkbox" type="checkbox" name="selected_products" value="{{ product.id }}">
+                </div>
+            </td>
+            <td>
+                <div class="d-flex align-items-center">
+                    {% if product.default_image %}
+                    <img src="{{ product.default_image.image.url }}" alt="{{ product.name }}" class="product-thumbnail me-2">
+                    {% else %}
+                    <div class="product-thumbnail-placeholder me-2">
+                        <i class="fa fa-image"></i>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <div class="product-name">{{ product.name }}</div>
+                        {% if product.brand %}
+                        <div class="product-brand small">{{ product.brand.name }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div class="product-sku">{{ product.sku }}</div>
+            </td>
+            <td>
+                <span class="badge bg-light text-dark">{{ product.category.name }}</span>
+            </td>
+            <td>
+                <div class="product-price">{{ product.current_price|floatformat:2 }} د.ا</div>
+                {% if product.compare_price and product.compare_price > product.current_price %}
+                <div class="product-compare-price">{{ product.compare_price|floatformat:2 }} د.ا</div>
+                {% endif %}
+            </td>
+            <td>
+                {% if product.stock_status == 'in_stock' %}
+                    {% if product.low_stock %}
+                    <span class="stock-badge bg-warning-subtle text-warning">
+                        <i class="fa fa-exclamation-triangle"></i> {% trans 'منخفض' %} ({{ product.available_quantity }})
+                    </span>
+                    {% else %}
+                    <span class="stock-badge bg-success-subtle text-success">
+                        <i class="fa fa-check-circle"></i> {{ product.available_quantity }}
+                    </span>
+                    {% endif %}
+                {% elif product.stock_status == 'out_of_stock' %}
+                    <span class="stock-badge bg-danger-subtle text-danger">
+                        <i class="fa fa-times-circle"></i> {% trans 'نفذت الكمية' %}
+                    </span>
+                {% elif product.stock_status == 'pre_order' %}
+                    <span class="stock-badge bg-info-subtle text-info">
+                        <i class="fa fa-clock"></i> {% trans 'طلب مسبق' %}
+                    </span>
+                {% else %}
+                    <span class="stock-badge bg-secondary-subtle text-secondary">
+                        <i class="fa fa-ban"></i> {% trans 'متوقف' %}
+                    </span>
+                {% endif %}
+            </td>
+            <td>
+                {% if product.status == 'published' %}
+                    <span class="badge bg-success">
+                        <i class="fa fa-check-circle"></i> {% trans 'منشور' %}
+                    </span>
+                {% elif product.status == 'draft' %}
+                    <span class="badge bg-secondary">
+                        <i class="fa fa-edit"></i> {% trans 'مسودة' %}
+                    </span>
+                {% elif product.status == 'pending_review' %}
+                    <span class="badge bg-warning">
+                        <i class="fa fa-clock"></i> {% trans 'قيد المراجعة' %}
+                    </span>
+                {% else %}
+                    <span class="badge bg-danger">
+                        <i class="fa fa-archive"></i> {% trans 'مؤرشف' %}
+                    </span>
+                {% endif %}
+                {% if product.is_featured %}
+                    <span class="badge bg-warning text-dark">
+                        <i class="fa fa-star"></i>
+                    </span>
+                {% endif %}
+                {% if not product.is_active %}
+                    <span class="badge bg-danger">
+                        <i class="fa fa-ban"></i>
+                    </span>
+                {% endif %}
+            </td>
+            <td>
+                <div class="small text-muted">{{ product.created_at|date:"Y/m/d" }}</div>
+                {% if product.published_at %}
+                <div class="small text-muted">{{ product.published_at|date:"Y/m/d" }}</div>
+                {% endif %}
+            </td>
+            <td>
+                <div class="product-actions">
+                    <a href="{% url 'dashboard:dashboard_product_detail' product_id=product.id %}" class="btn btn-sm btn-outline-primary" title="{% trans 'عرض التفاصيل' %}">
+                        <i class="fa fa-eye"></i>
+                    </a>
+                    {% if perms.products.change_product %}
+                    <a href="{% url 'dashboard:dashboard_product_edit' product_id=product.id %}" class="btn btn-sm btn-outline-secondary" title="{% trans 'تعديل' %}">
+                        <i class="fa fa-edit"></i>
+                    </a>
+                    {% endif %}
+                    {% if perms.products.delete_product %}
+                    <a href="{% url 'dashboard:dashboard_product_delete' product_id=product.id %}" class="btn btn-sm btn-outline-danger delete-product-btn" title="{% trans 'حذف' %}" data-product-id="{{ product.id }}" data-product-name="{{ product.name }}">
+                        <i class="fa fa-trash"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="9" class="text-center py-4">
+                <div class="py-5">
+                    <i class="fa fa-search fa-3x text-muted mb-3"></i>
+                    <p class="mb-0">{% trans 'لم يتم العثور على منتجات' %}</p>
+                    {% if query or category_filter or brand_filter or status_filter %}
+                    <p class="text-muted">{% trans 'حاول تغيير معايير البحث أو التصفية' %}</p>
+                    <a href="{% url 'dashboard:dashboard_products' %}" class="btn btn-outline-primary mt-2">
+                        <i class="fa fa-times me-1"></i> {% trans 'مسح التصفية' %}
+                    </a>
+                    {% else %}
+                    <p class="text-muted">{% trans 'لم يتم إضافة أي منتجات بعد' %}</p>
+                    {% if perms.products.add_product %}
+                    <a href="{% url 'dashboard:dashboard_product_create' %}" class="btn btn-primary mt-2">
+                        <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة منتج جديد' %}
+                    </a>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

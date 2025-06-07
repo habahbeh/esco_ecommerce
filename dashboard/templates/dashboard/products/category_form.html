@@ -1,0 +1,902 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+{% if category %}
+{% trans 'تعديل الفئة' %}: {{ category.name }}
+{% else %}
+{% trans 'إضافة فئة جديدة' %}
+{% endif %}
+{% endblock %}
+
+{% block page_title %}
+{% if category %}
+{% trans 'تعديل الفئة' %}
+{% else %}
+{% trans 'إضافة فئة جديدة' %}
+{% endif %}
+{% endblock %}
+
+{% block current_page %}
+{% if category %}
+{{ category.name }}
+{% else %}
+{% trans 'فئة جديدة' %}
+{% endif %}
+{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_products' %}">{% trans 'المنتجات' %}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_categories' %}">{% trans 'الفئات' %}</a></li>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.20/summernote-bs5.min.css">
+<style>
+    .form-section {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .form-section:last-child {
+        border-bottom: none;
+    }
+    .form-section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #333;
+    }
+    .image-preview {
+        width: 150px;
+        height: 150px;
+        border: 2px dashed #ddd;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        overflow: hidden;
+        position: relative;
+        cursor: pointer;
+    }
+    .image-preview img {
+        max-width: 100%;
+        max-height: 100%;
+    }
+    .image-preview-placeholder {
+        color: #aaa;
+        text-align: center;
+    }
+    .image-preview-placeholder i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+    .image-preview-actions {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        display: flex;
+        gap: 5px;
+        background-color: rgba(255, 255, 255, 0.8);
+        padding: 3px;
+        border-radius: 3px;
+    }
+    [dir="rtl"] .image-preview-actions {
+        right: auto;
+        left: 5px;
+    }
+    .image-preview-actions button {
+        border: none;
+        background: transparent;
+        padding: 0;
+        font-size: 0.8rem;
+        cursor: pointer;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6c757d;
+        border-radius: 3px;
+    }
+    .image-preview-actions button:hover {
+        background-color: rgba(0, 0, 0, 0.1);
+    }
+    .icon-picker {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        max-height: 200px;
+        overflow-y: auto;
+        padding: 10px;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        margin-top: 10px;
+    }
+    .icon-item {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+    .icon-item:hover, .icon-item.selected {
+        background-color: #f8f9fa;
+        color: var(--bs-primary);
+    }
+    .icon-search {
+        margin-bottom: 10px;
+    }
+    .icon-preview {
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        text-align: center;
+        line-height: 30px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        margin-right: 10px;
+    }
+    [dir="rtl"] .icon-preview {
+        margin-right: 0;
+        margin-left: 10px;
+    }
+    .color-preview {
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        border-radius: 5px;
+        margin-right: 10px;
+        vertical-align: middle;
+        border: 1px solid #dee2e6;
+    }
+    [dir="rtl"] .color-preview {
+        margin-right: 0;
+        margin-left: 10px;
+    }
+    .select2-container .select2-selection--single {
+        height: 38px;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px;
+    }
+    .content-blocks-editor {
+        min-height: 200px;
+        font-family: monospace;
+        font-size: 0.875rem;
+    }
+    .seo-preview {
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        padding: 1rem;
+        margin-top: 1rem;
+        background-color: #f8f9fa;
+    }
+    .seo-preview-title {
+        color: #1a0dab;
+        font-size: 1.25rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .seo-preview-url {
+        color: #006621;
+        font-size: 0.875rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .seo-preview-description {
+        color: #545454;
+        font-size: 0.875rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+    .sticky-submit {
+        position: sticky;
+        bottom: 1rem;
+        z-index: 1000;
+        background-color: #fff;
+        box-shadow: 0 -5px 10px rgba(0, 0, 0, 0.1);
+        border-radius: 0.25rem;
+        padding: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<form method="post" enctype="multipart/form-data" id="category-form">
+    {% csrf_token %}
+
+    <div class="row">
+        <div class="col-lg-9">
+            <!-- البطاقة الرئيسية -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <ul class="nav nav-tabs card-header-tabs" id="categoryTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link active" id="basic-tab" data-bs-toggle="tab" href="#basic" role="tab" aria-controls="basic" aria-selected="true">
+                                <i class="fa fa-info-circle me-1"></i> {% trans 'المعلومات الأساسية' %}
+                            </a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="display-tab" data-bs-toggle="tab" href="#display" role="tab" aria-controls="display" aria-selected="false">
+                                <i class="fa fa-eye me-1"></i> {% trans 'العرض والمظهر' %}
+                            </a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="content-tab" data-bs-toggle="tab" href="#content" role="tab" aria-controls="content" aria-selected="false">
+                                <i class="fa fa-file-alt me-1"></i> {% trans 'المحتوى' %}
+                            </a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="seo-tab" data-bs-toggle="tab" href="#seo" role="tab" aria-controls="seo" aria-selected="false">
+                                <i class="fa fa-search me-1"></i> {% trans 'SEO' %}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body p-0">
+                    <div class="tab-content" id="categoryTabsContent">
+                        <!-- المعلومات الأساسية -->
+                        <div class="tab-pane fade show active" id="basic" role="tabpanel" aria-labelledby="basic-tab">
+                            <div class="p-4">
+                                <div class="form-section">
+                                    <h5 class="form-section-title">{% trans 'معلومات الفئة الأساسية' %}</h5>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="name" class="form-label">{% trans 'اسم الفئة' %} <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="name" name="name" value="{{ category.name|default:'' }}" required>
+                                            <div class="form-text">{% trans 'اسم الفئة الرئيسي (باللغة العربية)' %}</div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="name_en" class="form-label">{% trans 'اسم الفئة (الإنجليزية)' %}</label>
+                                            <input type="text" class="form-control" id="name_en" name="name_en" value="{{ category.name_en|default:'' }}" dir="ltr">
+                                            <div class="form-text">{% trans 'اسم الفئة باللغة الإنجليزية (اختياري)' %}</div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="slug" class="form-label">{% trans 'معرف URL' %}</label>
+                                            <input type="text" class="form-control" id="slug" name="slug" value="{{ category.slug|default:'' }}" dir="ltr">
+                                            <div class="form-text">{% trans 'سيتم إنشاؤه تلقائياً من الاسم إذا تركته فارغاً' %}</div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="parent" class="form-label">{% trans 'الفئة الأب' %}</label>
+                                            <select class="form-select select2" id="parent" name="parent">
+                                                <option value="">{% trans 'بدون فئة أب (فئة رئيسية)' %}</option>
+                                                {% for parent_category in parent_categories %}
+                                                    {% if parent_category.level == 0 %}
+                                                        <option value="{{ parent_category.id }}" {% if category.parent_id == parent_category.id %}selected{% endif %}>
+                                                            {{ parent_category.name }}
+                                                        </option>
+                                                        {% for child in parent_category.children.all %}
+                                                            {% if not child.pk == category.pk %}
+                                                                <option value="{{ child.id }}" {% if category.parent_id == child.id %}selected{% endif %}>
+                                                                    &nbsp;&nbsp;— {{ child.name }}
+                                                                </option>
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </select>
+                                            <div class="form-text">{% trans 'اختر الفئة الأب لإنشاء تسلسل هرمي للفئات' %}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <h5 class="form-section-title">{% trans 'وصف الفئة' %}</h5>
+                                    <div class="mb-3">
+                                        <label for="description" class="form-label">{% trans 'الوصف' %}</label>
+                                        <textarea class="form-control" id="description" name="description" rows="4">{{ category.description|default:'' }}</textarea>
+                                        <div class="form-text">{% trans 'وصف مختصر للفئة (باللغة العربية)' %}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="description_en" class="form-label">{% trans 'الوصف (الإنجليزية)' %}</label>
+                                        <textarea class="form-control" id="description_en" name="description_en" rows="4" dir="ltr">{{ category.description_en|default:'' }}</textarea>
+                                        <div class="form-text">{% trans 'وصف الفئة باللغة الإنجليزية (اختياري)' %}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- العرض والمظهر -->
+                        <div class="tab-pane fade" id="display" role="tabpanel" aria-labelledby="display-tab">
+                            <div class="p-4">
+                                <div class="form-section">
+                                    <h5 class="form-section-title">{% trans 'صور الفئة' %}</h5>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">{% trans 'صورة الفئة الرئيسية' %}</label>
+                                            <div class="image-preview" id="image-preview">
+                                                {% if category.image %}
+                                                <img src="{{ category.image.url }}" alt="{{ category.name }}">
+                                                <div class="image-preview-actions">
+                                                    <button type="button" class="btn-remove-image" data-target="image">
+                                                        <i class="fa fa-trash text-danger"></i>
+                                                    </button>
+                                                </div>
+                                                {% else %}
+                                                <div class="image-preview-placeholder">
+                                                    <i class="fa fa-image"></i>
+                                                    <div>{% trans 'انقر لإضافة صورة' %}</div>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            <input type="file" id="image" name="image" class="d-none" accept="image/*">
+                                            <div class="form-text">{% trans 'الصورة الرئيسية للفئة (الأبعاد المثالية: 300×300 بكسل)' %}</div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">{% trans 'صورة البانر' %}</label>
+                                            <div class="image-preview" id="banner-image-preview">
+                                                {% if category.banner_image %}
+                                                <img src="{{ category.banner_image.url }}" alt="{{ category.name }}">
+                                                <div class="image-preview-actions">
+                                                    <button type="button" class="btn-remove-image" data-target="banner_image">
+                                                        <i class="fa fa-trash text-danger"></i>
+                                                    </button>
+                                                </div>
+                                                {% else %}
+                                                <div class="image-preview-placeholder">
+                                                    <i class="fa fa-image"></i>
+                                                    <div>{% trans 'انقر لإضافة صورة بانر' %}</div>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            <input type="file" id="banner_image" name="banner_image" class="d-none" accept="image/*">
+                                            <div class="form-text">{% trans 'صورة بانر الفئة (الأبعاد المثالية: 1200×300 بكسل)' %}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <h5 class="form-section-title">{% trans 'أيقونة ولون الفئة' %}</h5>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="icon" class="form-label">{% trans 'أيقونة الفئة' %}</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">
+                                                    <span class="icon-preview" id="icon-preview">
+                                                        {% if category.icon %}
+                                                        <i class="{{ category.icon }}"></i>
+                                                        {% else %}
+                                                        <i class="fa fa-folder"></i>
+                                                        {% endif %}
+                                                    </span>
+                                                </span>
+                                                <input type="text" class="form-control" id="icon" name="icon" value="{{ category.icon|default:'' }}" dir="ltr">
+                                                <button class="btn btn-outline-secondary" type="button" id="icon-picker-btn">
+                                                    {% trans 'اختر أيقونة' %}
+                                                </button>
+                                            </div>
+                                            <div class="form-text">{% trans 'أيقونة Font Awesome (مثال: fas fa-home)' %}</div>
+
+                                            <!-- منتقي الأيقونات -->
+                                            <div class="card mt-2 d-none" id="icon-picker-container">
+                                                <div class="card-body">
+                                                    <div class="icon-search">
+                                                        <input type="text" class="form-control" id="icon-search" placeholder="{% trans 'بحث عن أيقونة...' %}">
+                                                    </div>
+                                                    <div class="icon-picker" id="icon-picker">
+                                                        <!-- سيتم ملء هذا بواسطة جافاسكريبت -->
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="color" class="form-label">{% trans 'لون الفئة' %}</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">
+                                                    <span class="color-preview" id="color-preview" style="background-color: {{ category.color|default:'#ffffff' }}"></span>
+                                                </span>
+                                                <input type="text" class="form-control" id="color" name="color" value="{{ category.color|default:'' }}" placeholder="#RRGGBB" dir="ltr">
+                                                <input type="color" class="form-control form-control-color" id="color-picker" value="{{ category.color|default:'#ffffff' }}">
+                                            </div>
+                                            <div class="form-text">{% trans 'لون الفئة بصيغة سداسية عشرية (مثال: #3498db)' %}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <h5 class="form-section-title">{% trans 'إعدادات العرض' %}</h5>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if category.is_active %}checked{% endif %}>
+                                                <label class="form-check-label" for="is_active">{% trans 'الفئة نشطة' %}</label>
+                                            </div>
+                                            <div class="form-text">{% trans 'تفعيل/تعطيل ظهور الفئة في الموقع' %}</div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="is_featured" name="is_featured" {% if category.is_featured %}checked{% endif %}>
+                                                <label class="form-check-label" for="is_featured">{% trans 'فئة مميزة' %}</label>
+                                            </div>
+                                            <div class="form-text">{% trans 'عرض الفئة كفئة مميزة في الصفحة الرئيسية' %}</div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="show_in_menu" name="show_in_menu" {% if category.show_in_menu %}checked{% endif %}>
+                                                <label class="form-check-label" for="show_in_menu">{% trans 'عرض في القائمة' %}</label>
+                                            </div>
+                                            <div class="form-text">{% trans 'عرض الفئة في قائمة التنقل الرئيسية' %}</div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="show_prices" name="show_prices" {% if category.show_prices %}checked{% endif %}>
+                                                <label class="form-check-label" for="show_prices">{% trans 'عرض الأسعار' %}</label>
+                                            </div>
+                                            <div class="form-text">{% trans 'عرض أسعار المنتجات في هذه الفئة' %}</div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="sort_order" class="form-label">{% trans 'ترتيب العرض' %}</label>
+                                        <input type="number" class="form-control" id="sort_order" name="sort_order" value="{{ category.sort_order|default:'0' }}" min="0">
+                                        <div class="form-text">{% trans 'ترتيب عرض الفئة (الأرقام الأصغر تظهر أولاً)' %}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- المحتوى -->
+                        <div class="tab-pane fade" id="content" role="tabpanel" aria-labelledby="content-tab">
+                            <div class="p-4">
+                                <div class="form-section">
+                                    <h5 class="form-section-title">{% trans 'كتل المحتوى' %}</h5>
+                                    <div class="mb-3">
+                                        <label for="content_blocks" class="form-label">{% trans 'كتل المحتوى' %}</label>
+                                        <textarea class="form-control content-blocks-editor" id="content_blocks" name="content_blocks" rows="10">{{ content_blocks_json|default:'' }}</textarea>
+                                        <div class="form-text">{% trans 'أدخل كتل المحتوى بتنسيق JSON (اختياري)' %}</div>
+                                    </div>
+                                    <div class="alert alert-info">
+                                        <i class="fa fa-info-circle me-2"></i>
+                                        {% trans 'استخدم تنسيق JSON لإدخال كتل المحتوى المخصصة للفئة، على سبيل المثال:' %}
+                                        <pre class="mt-2 bg-light p-2 rounded">
+{
+    "banner": {
+        "title": "عنوان البانر",
+        "description": "وصف البانر",
+        "image": "url/to/image.jpg",
+        "button_text": "تسوق الآن",
+        "button_url": "/products"
+    },
+    "featured_products": {
+        "title": "منتجات مميزة",
+        "count": 4
+    }
+}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SEO -->
+                        <div class="tab-pane fade" id="seo" role="tabpanel" aria-labelledby="seo-tab">
+                            <div class="p-4">
+                                <div class="form-section">
+                                    <h5 class="form-section-title">{% trans 'تحسين محركات البحث (SEO)' %}</h5>
+                                    <div class="mb-3">
+                                        <label for="meta_title" class="form-label">{% trans 'عنوان SEO' %}</label>
+                                        <input type="text" class="form-control" id="meta_title" name="meta_title" value="{{ category.meta_title|default:'' }}">
+                                        <div class="form-text">{% trans 'عنوان الصفحة الذي سيظهر في نتائج البحث (60-70 حرف)' %}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="meta_description" class="form-label">{% trans 'وصف SEO' %}</label>
+                                        <textarea class="form-control" id="meta_description" name="meta_description" rows="3">{{ category.meta_description|default:'' }}</textarea>
+                                        <div class="form-text">{% trans 'وصف مختصر للصفحة الذي سيظهر في نتائج البحث (150-160 حرف)' %}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="meta_keywords" class="form-label">{% trans 'الكلمات المفتاحية' %}</label>
+                                        <input type="text" class="form-control" id="meta_keywords" name="meta_keywords" value="{{ category.meta_keywords|default:'' }}">
+                                        <div class="form-text">{% trans 'الكلمات المفتاحية مفصولة بفواصل' %}</div>
+                                    </div>
+
+                                    <div class="seo-preview">
+                                        <h6>{% trans 'معاينة ظهور الصفحة في محركات البحث:' %}</h6>
+                                        <div class="seo-preview-title" id="seo-preview-title">
+                                            {{ category.meta_title|default:category.name|default:'عنوان الفئة' }}
+                                        </div>
+                                        <div class="seo-preview-url">
+                                            www.example.com/categories/{{ category.slug|default:'category-name' }}
+                                        </div>
+                                        <div class="seo-preview-description" id="seo-preview-description">
+                                            {{ category.meta_description|default:category.description|default:'وصف الفئة سيظهر هنا. قم بإضافة وصف مختصر وجذاب للفئة.' }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- زر الحفظ الثابت -->
+            <div class="sticky-submit">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa fa-save me-1"></i>
+                            {% if category %}
+                                {% trans 'حفظ التغييرات' %}
+                            {% else %}
+                                {% trans 'إنشاء الفئة' %}
+                            {% endif %}
+                        </button>
+                    </div>
+                    <a href="{% url 'dashboard:dashboard_categories' %}" class="btn btn-outline-secondary">
+                        <i class="fa fa-times me-1"></i> {% trans 'إلغاء' %}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3">
+            <!-- حالة الفئة -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">{% trans 'حالة الفئة' %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="status_switch" {% if category.is_active %}checked{% endif %}>
+                            <label class="form-check-label" for="status_switch">
+                                <span id="status_label">
+                                    {% if category.is_active %}
+                                        <i class="fa fa-eye text-success me-1"></i> {% trans 'نشط' %}
+                                    {% else %}
+                                        <i class="fa fa-eye-slash text-secondary me-1"></i> {% trans 'غير نشط' %}
+                                    {% endif %}
+                                </span>
+                            </label>
+                        </div>
+
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="featured_switch" {% if category.is_featured %}checked{% endif %}>
+                            <label class="form-check-label" for="featured_switch">
+                                <span id="featured_label">
+                                    {% if category.is_featured %}
+                                        <i class="fa fa-star text-warning me-1"></i> {% trans 'مميز' %}
+                                    {% else %}
+                                        <i class="fa fa-star text-secondary me-1"></i> {% trans 'غير مميز' %}
+                                    {% endif %}
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="mb-3">
+                        {% if category %}
+                        <div class="text-muted mb-2">
+                            <small>
+                                <i class="fa fa-calendar me-1"></i> {% trans 'تاريخ الإنشاء:' %} {{ category.created_at|date:"Y/m/d H:i" }}
+                            </small>
+                        </div>
+                        <div class="text-muted mb-2">
+                            <small>
+                                <i class="fa fa-edit me-1"></i> {% trans 'آخر تحديث:' %} {{ category.updated_at|date:"Y/m/d H:i" }}
+                            </small>
+                        </div>
+                        {% if category.products_count > 0 %}
+                        <div class="text-muted">
+                            <small>
+                                <i class="fa fa-box me-1"></i> {% trans 'عدد المنتجات:' %} {{ category.products_count }}
+                            </small>
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <div class="text-muted">
+                            <small>
+                                <i class="fa fa-info-circle me-1"></i> {% trans 'سيتم إنشاء الفئة بعد الحفظ' %}
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- معلومات الفئة -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">{% trans 'معلومات الفئة' %}</h5>
+                </div>
+                <div class="card-body">
+                    {% if category %}
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">{% trans 'المستوى:' %}</dt>
+                        <dd class="col-sm-7">{{ category.level }}</dd>
+
+                        <dt class="col-sm-5">{% trans 'الفئة الأب:' %}</dt>
+                        <dd class="col-sm-7">
+                            {% if category.parent %}
+                            <a href="{% url 'dashboard:dashboard_category_edit' category_id=category.parent.id %}">
+                                {{ category.parent.name }}
+                            </a>
+                            {% else %}
+                            {% trans 'لا يوجد (فئة رئيسية)' %}
+                            {% endif %}
+                        </dd>
+
+                        {% if category.children.exists %}
+                        <dt class="col-sm-5">{% trans 'الفئات الفرعية:' %}</dt>
+                        <dd class="col-sm-7">
+                            {{ category.children.count }}
+                            <a href="{% url 'dashboard:dashboard_categories' %}" class="ms-2 small">{% trans 'عرض الكل' %}</a>
+                        </dd>
+                        {% endif %}
+
+                        <dt class="col-sm-5">{% trans 'الرابط:' %}</dt>
+                        <dd class="col-sm-7">
+                            <a href="#" class="small" dir="ltr">/categories/{{ category.slug }}</a>
+                        </dd>
+                    </dl>
+                    {% else %}
+                    <div class="text-center text-muted">
+                        <i class="fa fa-folder fa-2x mb-2"></i>
+                        <p class="mb-0">{% trans 'ستظهر معلومات الفئة هنا بعد الإنشاء' %}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // تهيئة حقول Select2
+        $('.select2').select2({
+            dir: $('html').attr('dir'),
+            placeholder: "{% trans 'اختر...' %}",
+            allowClear: true,
+            width: '100%'
+        });
+
+        // تحديث معاينة SEO
+        $('#meta_title').on('input', function() {
+            let title = $(this).val() || $('#name').val() || "{% trans 'عنوان الفئة' %}";
+            $('#seo-preview-title').text(title);
+        });
+
+        $('#meta_description').on('input', function() {
+            let description = $(this).val() || $('#description').val() || "{% trans 'وصف الفئة سيظهر هنا. قم بإضافة وصف مختصر وجذاب للفئة.' %}";
+            $('#seo-preview-description').text(description);
+        });
+
+        // مؤثرات المفاتيح
+        $('#status_switch').change(function() {
+            if ($(this).is(':checked')) {
+                $('#is_active').prop('checked', true);
+                $('#status_label').html('<i class="fa fa-eye text-success me-1"></i> {% trans "نشط" %}');
+            } else {
+                $('#is_active').prop('checked', false);
+                $('#status_label').html('<i class="fa fa-eye-slash text-secondary me-1"></i> {% trans "غير نشط" %}');
+            }
+        });
+
+        $('#featured_switch').change(function() {
+            if ($(this).is(':checked')) {
+                $('#is_featured').prop('checked', true);
+                $('#featured_label').html('<i class="fa fa-star text-warning me-1"></i> {% trans "مميز" %}');
+            } else {
+                $('#is_featured').prop('checked', false);
+                $('#featured_label').html('<i class="fa fa-star text-secondary me-1"></i> {% trans "غير مميز" %}');
+            }
+        });
+
+        // معاينة وتحديث الصور
+        $('#image-preview').click(function() {
+            $('#image').click();
+        });
+
+        $('#banner-image-preview').click(function() {
+            $('#banner_image').click();
+        });
+
+        $('#image').change(function() {
+            if (this.files && this.files[0]) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#image-preview').html(`
+                        <img src="${e.target.result}" alt="Preview">
+                        <div class="image-preview-actions">
+                            <button type="button" class="btn-remove-image" data-target="image">
+                                <i class="fa fa-trash text-danger"></i>
+                            </button>
+                        </div>
+                    `);
+                }
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        $('#banner_image').change(function() {
+            if (this.files && this.files[0]) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#banner-image-preview').html(`
+                        <img src="${e.target.result}" alt="Preview">
+                        <div class="image-preview-actions">
+                            <button type="button" class="btn-remove-image" data-target="banner_image">
+                                <i class="fa fa-trash text-danger"></i>
+                            </button>
+                        </div>
+                    `);
+                }
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        // حذف الصور
+        $(document).on('click', '.btn-remove-image', function() {
+            let target = $(this).data('target');
+            if (target === 'image') {
+                $('#image').val('');
+                $('#image-preview').html(`
+                    <div class="image-preview-placeholder">
+                        <i class="fa fa-image"></i>
+                        <div>{% trans 'انقر لإضافة صورة' %}</div>
+                    </div>
+                `);
+            } else if (target === 'banner_image') {
+                $('#banner_image').val('');
+                $('#banner-image-preview').html(`
+                    <div class="image-preview-placeholder">
+                        <i class="fa fa-image"></i>
+                        <div>{% trans 'انقر لإضافة صورة بانر' %}</div>
+                    </div>
+                `);
+            }
+        });
+
+        // منتقي اللون
+        $('#color-picker').change(function() {
+            let color = $(this).val();
+            $('#color').val(color);
+            $('#color-preview').css('background-color', color);
+        });
+
+        $('#color').on('input', function() {
+            let color = $(this).val();
+            if (/^#[0-9A-F]{6}$/i.test(color)) {
+                $('#color-preview').css('background-color', color);
+                $('#color-picker').val(color);
+            }
+        });
+
+        // إنشاء منتقي الأيقونات
+        const icons = [
+            'fas fa-home', 'fas fa-user', 'fas fa-users', 'fas fa-cog', 'fas fa-gear',
+            'fas fa-wrench', 'fas fa-search', 'fas fa-bell', 'fas fa-envelope',
+            'fas fa-file', 'fas fa-folder', 'fas fa-folder-open', 'fas fa-save',
+            'fas fa-image', 'fas fa-camera', 'fas fa-video', 'fas fa-music',
+            'fas fa-film', 'fas fa-heart', 'fas fa-star', 'fas fa-check',
+            'fas fa-times', 'fas fa-plus', 'fas fa-minus', 'fas fa-shopping-cart',
+            'fas fa-shopping-bag', 'fas fa-credit-card', 'fas fa-dollar-sign',
+            'fas fa-euro-sign', 'fas fa-pound-sign', 'fas fa-yen-sign',
+            'fas fa-phone', 'fas fa-mobile', 'fas fa-tablet', 'fas fa-laptop',
+            'fas fa-desktop', 'fas fa-tv', 'fas fa-headphones', 'fas fa-microphone',
+            'fas fa-calendar', 'fas fa-clock', 'fas fa-map-marker', 'fas fa-location-arrow',
+            'fas fa-map', 'fas fa-globe', 'fas fa-flag', 'fas fa-thumbs-up',
+            'fas fa-thumbs-down', 'fas fa-comment', 'fas fa-comments', 'fas fa-share',
+            'fas fa-tag', 'fas fa-tags', 'fas fa-bookmark', 'fas fa-print',
+            'fas fa-camera-retro', 'fas fa-car', 'fas fa-truck', 'fas fa-bicycle',
+            'fas fa-motorcycle', 'fas fa-plane', 'fas fa-train', 'fas fa-ship',
+            'fas fa-bus', 'fas fa-taxi', 'fas fa-wheelchair', 'fas fa-wheelchair-alt',
+            'fas fa-universal-access', 'fas fa-accessible-icon', 'fas fa-low-vision',
+            'fas fa-blind', 'fas fa-deaf', 'fas fa-american-sign-language-interpreting',
+            'fas fa-sign-language', 'fas fa-assistive-listening-systems', 'fas fa-braille',
+            'fas fa-audio-description', 'fas fa-volume-control-phone', 'fas fa-phone-volume',
+            'fas fa-tty', 'fas fa-closed-captioning', 'fas fa-cc', 'fas fa-sign',
+            'fas fa-language', 'fas fa-box', 'fas fa-boxes', 'fas fa-box-open',
+            'fas fa-box-alt', 'fas fa-shipping-fast', 'fas fa-dolly', 'fas fa-dolly-flatbed',
+            'fas fa-pallet', 'fas fa-hand-holding-box', 'fas fa-hand-receiving',
+            'fas fa-hand-holding-usd', 'fas fa-hand-holding-water', 'fas fa-hand-holding-heart',
+            'fas fa-hand-holding-seedling', 'fas fa-hand-holding-medical', 'fas fa-hand-holding-medical'
+        ];
+
+        // إنشاء أيقونات في منتقي الأيقونات
+        let iconPickerHtml = '';
+        icons.forEach(icon => {
+            iconPickerHtml += `<div class="icon-item" data-icon="${icon}"><i class="${icon}"></i></div>`;
+        });
+        $('#icon-picker').html(iconPickerHtml);
+
+        // عرض/إخفاء منتقي الأيقونات
+        $('#icon-picker-btn').click(function() {
+            $('#icon-picker-container').toggleClass('d-none');
+        });
+
+        // اختيار أيقونة
+        $(document).on('click', '.icon-item', function() {
+            let icon = $(this).data('icon');
+            $('#icon').val(icon);
+            $('#icon-preview').html(`<i class="${icon}"></i>`);
+            $('#icon-picker-container').addClass('d-none');
+        });
+
+        // البحث في الأيقونات
+        $('#icon-search').on('input', function() {
+            let search = $(this).val().toLowerCase();
+            $('.icon-item').each(function() {
+                let icon = $(this).data('icon').toLowerCase();
+                if (icon.includes(search)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        });
+
+        // تحقق من صحة الـ JSON عند تقديم النموذج
+        $('#category-form').submit(function(e) {
+            let contentBlocks = $('#content_blocks').val();
+            if (contentBlocks.trim() !== '') {
+                try {
+                    JSON.parse(contentBlocks);
+                } catch (error) {
+                    e.preventDefault();
+                    alert("{% trans 'تنسيق JSON غير صالح في كتل المحتوى. الرجاء التحقق من التنسيق.' %}");
+                    $('#content-tab').tab('show');
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
+        // إنشاء slug تلقائي من الاسم
+        $('#name').on('input', function() {
+            if (!$('#slug').val()) {
+                let name = $(this).val();
+                let slug = name.toLowerCase()
+                    .replace(/[\s_]+/g, '-')           // استبدال المسافات والشرطات السفلية بشرطة
+                    .replace(/[^\w\u0621-\u064A\-]/g, '') // السماح بالأحرف العربية والإنجليزية والأرقام والشرطات
+                    .replace(/\-\-+/g, '-')            // استبدال الشرطات المتعددة بشرطة واحدة
+                    .replace(/^-+/, '')                // حذف الشرطات من بداية النص
+                    .replace(/-+$/, '');               // حذف الشرطات من نهاية النص
+
+                $('#slug').val(slug);
+            }
+        });
+
+        // تأكيد مغادرة الصفحة إذا كانت هناك تغييرات غير محفوظة
+        let formChanged = false;
+
+        $('#category-form input, #category-form textarea, #category-form select').change(function() {
+            formChanged = true;
+        });
+
+        $(window).on('beforeunload', function() {
+            if (formChanged) {
+                return "{% trans 'لديك تغييرات غير محفوظة. هل أنت متأكد من مغادرة الصفحة؟' %}";
+            }
+        });
+
+        $('#category-form').submit(function() {
+            formChanged = false;
+        });
+    });
+</script>
+{% endblock %}

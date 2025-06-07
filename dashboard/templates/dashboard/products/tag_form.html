@@ -1,0 +1,480 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+{% if tag %}
+{% trans 'تعديل الوسم' %}: {{ tag.name }}
+{% else %}
+{% trans 'إضافة وسم جديد' %}
+{% endif %}
+{% endblock %}
+
+{% block page_title %}
+{% if tag %}
+{% trans 'تعديل الوسم' %}
+{% else %}
+{% trans 'إضافة وسم جديد' %}
+{% endif %}
+{% endblock %}
+
+{% block current_page %}
+{% if tag %}
+{{ tag.name }}
+{% else %}
+{% trans 'وسم جديد' %}
+{% endif %}
+{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_products' %}">{% trans 'المنتجات' %}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_tags' %}">{% trans 'الوسوم' %}</a></li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .form-section:last-child {
+        border-bottom: none;
+    }
+    .form-section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #333;
+    }
+    .icon-picker {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        max-height: 200px;
+        overflow-y: auto;
+        padding: 10px;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        margin-top: 10px;
+    }
+    .icon-item {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+    .icon-item:hover, .icon-item.selected {
+        background-color: #f8f9fa;
+        color: var(--bs-primary);
+    }
+    .icon-search {
+        margin-bottom: 10px;
+    }
+    .icon-preview {
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        text-align: center;
+        line-height: 30px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        margin-right: 10px;
+    }
+    [dir="rtl"] .icon-preview {
+        margin-right: 0;
+        margin-left: 10px;
+    }
+    .color-preview {
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        border-radius: 5px;
+        margin-right: 10px;
+        vertical-align: middle;
+        border: 1px solid #dee2e6;
+    }
+    [dir="rtl"] .color-preview {
+        margin-right: 0;
+        margin-left: 10px;
+    }
+    .tag-preview {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 50px;
+        margin-top: 10px;
+        color: #fff;
+        font-weight: 500;
+    }
+    .sticky-submit {
+        position: sticky;
+        bottom: 1rem;
+        z-index: 1000;
+        background-color: #fff;
+        box-shadow: 0 -5px 10px rgba(0, 0, 0, 0.1);
+        border-radius: 0.25rem;
+        padding: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<form method="post" enctype="multipart/form-data" id="tag-form">
+    {% csrf_token %}
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- البطاقة الرئيسية -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="form-section">
+                        <h5 class="form-section-title">{% trans 'معلومات الوسم الأساسية' %}</h5>
+                        <div class="mb-3">
+                            <label for="name" class="form-label">{% trans 'اسم الوسم' %} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ tag.name|default:'' }}" required>
+                            <div class="form-text">{% trans 'اسم الوسم الذي سيظهر في الموقع' %}</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="slug" class="form-label">{% trans 'معرف URL' %}</label>
+                            <input type="text" class="form-control" id="slug" name="slug" value="{{ tag.slug|default:'' }}" dir="ltr">
+                            <div class="form-text">{% trans 'سيتم إنشاؤه تلقائياً من الاسم إذا تركته فارغاً' %}</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">{% trans 'الوصف' %}</label>
+                            <textarea class="form-control" id="description" name="description" rows="3">{{ tag.description|default:'' }}</textarea>
+                            <div class="form-text">{% trans 'وصف مختصر للوسم (اختياري)' %}</div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h5 class="form-section-title">{% trans 'مظهر الوسم' %}</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="icon" class="form-label">{% trans 'أيقونة الوسم' %}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <span class="icon-preview" id="icon-preview">
+                                            {% if tag.icon %}
+                                            <i class="{{ tag.icon }}"></i>
+                                            {% else %}
+                                            <i class="fa fa-tag"></i>
+                                            {% endif %}
+                                        </span>
+                                    </span>
+                                    <input type="text" class="form-control" id="icon" name="icon" value="{{ tag.icon|default:'' }}" dir="ltr">
+                                    <button class="btn btn-outline-secondary" type="button" id="icon-picker-btn">
+                                        {% trans 'اختر أيقونة' %}
+                                    </button>
+                                </div>
+                                <div class="form-text">{% trans 'أيقونة Font Awesome (مثال: fas fa-tag)' %}</div>
+
+                                <!-- منتقي الأيقونات -->
+                                <div class="card mt-2 d-none" id="icon-picker-container">
+                                    <div class="card-body">
+                                        <div class="icon-search">
+                                            <input type="text" class="form-control" id="icon-search" placeholder="{% trans 'بحث عن أيقونة...' %}">
+                                        </div>
+                                        <div class="icon-picker" id="icon-picker">
+                                            <!-- سيتم ملء هذا بواسطة جافاسكريبت -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="color" class="form-label">{% trans 'لون الوسم' %}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <span class="color-preview" id="color-preview" style="background-color: {{ tag.color|default:'#6c757d' }}"></span>
+                                    </span>
+                                    <input type="text" class="form-control" id="color" name="color" value="{{ tag.color|default:'' }}" placeholder="#RRGGBB" dir="ltr">
+                                    <input type="color" class="form-control form-control-color" id="color-picker" value="{{ tag.color|default:'#6c757d' }}">
+                                </div>
+                                <div class="form-text">{% trans 'لون الوسم بصيغة سداسية عشرية (مثال: #3498db)' %}</div>
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <label class="form-label">{% trans 'معاينة الوسم:' %}</label>
+                            <div class="tag-preview" id="tag-preview" style="background-color: {{ tag.color|default:'#6c757d' }}">
+                                {% if tag.icon %}<i class="{{ tag.icon }} me-1"></i>{% else %}<i class="fa fa-tag me-1"></i>{% endif %}
+                                <span id="tag-preview-name">{{ tag.name|default:'وسم جديد' }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h5 class="form-section-title">{% trans 'إعدادات الوسم' %}</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if tag.is_active %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_active">{% trans 'الوسم نشط' %}</label>
+                                </div>
+                                <div class="form-text">{% trans 'تفعيل/تعطيل ظهور الوسم في الموقع' %}</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="is_featured" name="is_featured" {% if tag.is_featured %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_featured">{% trans 'وسم مميز' %}</label>
+                                </div>
+                                <div class="form-text">{% trans 'عرض الوسم كوسم مميز في الموقع' %}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- زر الحفظ الثابت -->
+            <div class="sticky-submit">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa fa-save me-1"></i>
+                            {% if tag %}
+                                {% trans 'حفظ التغييرات' %}
+                            {% else %}
+                                {% trans 'إنشاء الوسم' %}
+                            {% endif %}
+                        </button>
+                    </div>
+                    <a href="{% url 'dashboard:dashboard_tags' %}" class="btn btn-outline-secondary">
+                        <i class="fa fa-times me-1"></i> {% trans 'إلغاء' %}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- حالة الوسم -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">{% trans 'حالة الوسم' %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="status_switch" {% if tag.is_active %}checked{% endif %}>
+                            <label class="form-check-label" for="status_switch">
+                                <span id="status_label">
+                                    {% if tag.is_active %}
+                                        <i class="fa fa-eye text-success me-1"></i> {% trans 'نشط' %}
+                                    {% else %}
+                                        <i class="fa fa-eye-slash text-secondary me-1"></i> {% trans 'غير نشط' %}
+                                    {% endif %}
+                                </span>
+                            </label>
+                        </div>
+
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="featured_switch" {% if tag.is_featured %}checked{% endif %}>
+                            <label class="form-check-label" for="featured_switch">
+                                <span id="featured_label">
+                                    {% if tag.is_featured %}
+                                        <i class="fa fa-star text-warning me-1"></i> {% trans 'مميز' %}
+                                    {% else %}
+                                        <i class="fa fa-star text-secondary me-1"></i> {% trans 'غير مميز' %}
+                                    {% endif %}
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="mb-3">
+                        {% if tag %}
+                        <div class="text-muted mb-2">
+                            <small>
+                                <i class="fa fa-calendar me-1"></i> {% trans 'تاريخ الإنشاء:' %} {{ tag.created_at|date:"Y/m/d H:i" }}
+                            </small>
+                        </div>
+                        <div class="text-muted mb-2">
+                            <small>
+                                <i class="fa fa-edit me-1"></i> {% trans 'آخر تحديث:' %} {{ tag.updated_at|date:"Y/m/d H:i" }}
+                            </small>
+                        </div>
+                        {% if tag.products_count > 0 %}
+                        <div class="text-muted mb-2">
+                            <small>
+                                <i class="fa fa-box me-1"></i> {% trans 'عدد المنتجات:' %} {{ tag.products_count }}
+                            </small>
+                        </div>
+                        {% endif %}
+                        <div class="text-muted">
+                            <small>
+                                <i class="fa fa-chart-line me-1"></i> {% trans 'مرات الاستخدام:' %} {{ tag.usage_count }}
+                            </small>
+                        </div>
+                        {% else %}
+                        <div class="text-muted">
+                            <small>
+                                <i class="fa fa-info-circle me-1"></i> {% trans 'سيتم إنشاء الوسم بعد الحفظ' %}
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- نصائح -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">{% trans 'نصائح استخدام الوسوم' %}</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li class="mb-2">{% trans 'استخدم أسماء وسوم قصيرة ومعبرة لتسهيل العثور عليها.' %}</li>
+                        <li class="mb-2">{% trans 'اختر ألوان متناسقة مع تصميم الموقع.' %}</li>
+                        <li class="mb-2">{% trans 'أضف وصفاً مختصراً للوسم لتحسين محركات البحث (SEO).' %}</li>
+                        <li class="mb-2">{% trans 'استخدم الوسوم المميزة للمنتجات الأكثر أهمية أو الأقسام الرئيسية.' %}</li>
+                        <li>{% trans 'حاول تجنب إنشاء وسوم متشابهة أو مكررة.' %}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // تحديث معاينة الوسم
+        function updateTagPreview() {
+            let name = $('#name').val() || '{% trans "وسم جديد" %}';
+            let color = $('#color').val() || '#6c757d';
+            let icon = $('#icon').val() || 'fa fa-tag';
+
+            $('#tag-preview-name').text(name);
+            $('#tag-preview').css('background-color', color);
+
+            $('#tag-preview i').attr('class', icon + ' me-1');
+        }
+
+        $('#name').on('input', updateTagPreview);
+
+        // مؤثرات المفاتيح
+        $('#status_switch').change(function() {
+            if ($(this).is(':checked')) {
+                $('#is_active').prop('checked', true);
+                $('#status_label').html('<i class="fa fa-eye text-success me-1"></i> {% trans "نشط" %}');
+            } else {
+                $('#is_active').prop('checked', false);
+                $('#status_label').html('<i class="fa fa-eye-slash text-secondary me-1"></i> {% trans "غير نشط" %}');
+            }
+        });
+
+        $('#featured_switch').change(function() {
+            if ($(this).is(':checked')) {
+                $('#is_featured').prop('checked', true);
+                $('#featured_label').html('<i class="fa fa-star text-warning me-1"></i> {% trans "مميز" %}');
+            } else {
+                $('#is_featured').prop('checked', false);
+                $('#featured_label').html('<i class="fa fa-star text-secondary me-1"></i> {% trans "غير مميز" %}');
+            }
+        });
+
+        // إدارة اللون
+        $('#color-picker').change(function() {
+            let color = $(this).val();
+            $('#color').val(color);
+            $('#color-preview').css('background-color', color);
+            updateTagPreview();
+        });
+
+        $('#color').on('input', function() {
+            let color = $(this).val();
+            if (/^#[0-9A-F]{6}$/i.test(color)) {
+                $('#color-preview').css('background-color', color);
+                $('#color-picker').val(color);
+                updateTagPreview();
+            }
+        });
+
+        // إنشاء منتقي الأيقونات
+        const icons = [
+            'fas fa-tag', 'fas fa-tags', 'fas fa-bookmark', 'fas fa-star', 'fas fa-heart',
+            'fas fa-check', 'fas fa-check-circle', 'fas fa-circle', 'fas fa-square',
+            'fas fa-certificate', 'fas fa-award', 'fas fa-medal', 'fas fa-trophy',
+            'fas fa-flag', 'fas fa-bullhorn', 'fas fa-fire', 'fas fa-bolt',
+            'fas fa-gem', 'fas fa-crown', 'fas fa-gift', 'fas fa-percentage',
+            'fas fa-thumbs-up', 'fas fa-thumbs-down', 'fas fa-smile', 'fas fa-frown',
+            'fas fa-meh', 'fas fa-laugh', 'fas fa-angry', 'fas fa-dizzy',
+            'fas fa-shopping-cart', 'fas fa-shopping-bag', 'fas fa-store', 'fas fa-box',
+            'fas fa-boxes', 'fas fa-archive', 'fas fa-truck', 'fas fa-shipping-fast',
+            'fas fa-hand-holding-usd', 'fas fa-money-bill', 'fas fa-credit-card', 'fas fa-dollar-sign',
+            'fas fa-percent', 'fas fa-funnel-dollar', 'fas fa-piggy-bank', 'fas fa-coins'
+        ];
+
+        // إنشاء أيقونات في منتقي الأيقونات
+        let iconPickerHtml = '';
+        icons.forEach(icon => {
+            iconPickerHtml += `<div class="icon-item" data-icon="${icon}"><i class="${icon}"></i></div>`;
+        });
+        $('#icon-picker').html(iconPickerHtml);
+
+        // عرض/إخفاء منتقي الأيقونات
+        $('#icon-picker-btn').click(function() {
+            $('#icon-picker-container').toggleClass('d-none');
+        });
+
+        // اختيار أيقونة
+        $(document).on('click', '.icon-item', function() {
+            let icon = $(this).data('icon');
+            $('#icon').val(icon);
+            $('#icon-preview').html(`<i class="${icon}"></i>`);
+            $('#icon-picker-container').addClass('d-none');
+            updateTagPreview();
+        });
+
+        // البحث في الأيقونات
+        $('#icon-search').on('input', function() {
+            let search = $(this).val().toLowerCase();
+            $('.icon-item').each(function() {
+                let icon = $(this).data('icon').toLowerCase();
+                if (icon.includes(search)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        });
+
+        // إنشاء slug تلقائي من الاسم
+        $('#name').on('input', function() {
+            if (!$('#slug').val()) {
+                let name = $(this).val();
+                let slug = name.toLowerCase()
+                    .replace(/[\s_]+/g, '-')           // استبدال المسافات والشرطات السفلية بشرطة
+                    .replace(/[^\w\u0621-\u064A\-]/g, '') // السماح بالأحرف العربية والإنجليزية والأرقام والشرطات
+                    .replace(/\-\-+/g, '-')            // استبدال الشرطات المتعددة بشرطة واحدة
+                    .replace(/^-+/, '')                // حذف الشرطات من بداية النص
+                    .replace(/-+$/, '');               // حذف الشرطات من نهاية النص
+
+                $('#slug').val(slug);
+            }
+        });
+
+        // تأكيد مغادرة الصفحة إذا كانت هناك تغييرات غير محفوظة
+        let formChanged = false;
+
+        $('#tag-form input, #tag-form textarea, #tag-form select').change(function() {
+            formChanged = true;
+        });
+
+        $(window).on('beforeunload', function() {
+            if (formChanged) {
+                return "{% trans 'لديك تغييرات غير محفوظة. هل أنت متأكد من مغادرة الصفحة؟' %}";
+            }
+        });
+
+        $('#tag-form').submit(function() {
+            formChanged = false;
+        });
+    });
+</script>
+{% endblock %}

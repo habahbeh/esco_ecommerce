@@ -1,0 +1,1256 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ product.name }} - {% trans 'تفاصيل المنتج' %}{% endblock %}
+{% block page_title %}{% trans 'تفاصيل المنتج' %}{% endblock %}
+{% block current_page %}{{ product.name }}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_products' %}">{% trans 'المنتجات' %}</a></li>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@7/swiper-bundle.min.css">
+<style>
+    .product-header {
+        position: relative;
+        padding: 2rem 0;
+    }
+    .product-header .product-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #333;
+    }
+    .product-header .product-sku {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    .product-header .product-badges {
+        margin-top: 0.5rem;
+    }
+    .product-image-gallery {
+        position: relative;
+        overflow: hidden;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+    }
+    .product-image-main {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8f9fa;
+        height: 350px;
+        overflow: hidden;
+    }
+    .product-image-main img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+    .product-thumbnails {
+        display: flex;
+        overflow-x: auto;
+        padding: 1rem 0;
+        gap: 0.5rem;
+    }
+    .product-thumb {
+        cursor: pointer;
+        width: 60px;
+        height: 60px;
+        border-radius: 0.25rem;
+        border: 2px solid transparent;
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+    .product-thumb.active {
+        border-color: var(--bs-primary);
+    }
+    .product-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .product-info-section {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-radius: 0.5rem;
+        background-color: #fff;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .product-info-section h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #333;
+    }
+    .product-price-section {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-radius: 0.5rem;
+        background-color: #fff;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .product-price {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #28a745;
+    }
+    .product-compare-price {
+        text-decoration: line-through;
+        color: #dc3545;
+        font-size: 1.25rem;
+    }
+    .product-price-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .product-discount-badge {
+        background-color: #dc3545;
+        color: #fff;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+    .product-metadata {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+    }
+    .product-metadata-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    .product-tabs {
+        margin-top: 2rem;
+    }
+    .product-tabs .nav-link {
+        color: #495057;
+        font-weight: 500;
+    }
+    .product-tabs .nav-link.active {
+        color: var(--bs-primary);
+        background-color: transparent;
+        border-color: #dee2e6 #dee2e6 #fff;
+    }
+    .product-content {
+        padding: 1.5rem;
+    }
+    .product-specifications {
+        width: 100%;
+    }
+    .product-specifications td,
+    .product-specifications th {
+        padding: 0.75rem;
+    }
+    .product-specifications th {
+        width: 30%;
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+    .product-specs-table tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+    .product-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    .product-variant {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        border-radius: 0.25rem;
+        border: 1px solid #dee2e6;
+        margin-bottom: 0.5rem;
+        transition: all 0.2s ease;
+    }
+    .product-variant:hover {
+        background-color: #f8f9fa;
+    }
+    .product-variant-name {
+        font-weight: 600;
+    }
+    .product-variant-price {
+        color: #28a745;
+        font-weight: 600;
+    }
+    .product-variant-badge {
+        font-size: 0.75rem;
+        padding: 0.25em 0.5em;
+    }
+    .product-reviews-summary {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    .product-rating {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #ffc107;
+    }
+    .product-rating-stars {
+        color: #ffc107;
+        font-size: 1.25rem;
+    }
+    .product-review-count {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    .product-review {
+        padding: 1rem;
+        border-radius: 0.25rem;
+        border: 1px solid #dee2e6;
+        margin-bottom: 1rem;
+    }
+    .product-review-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+    .product-review-title {
+        font-weight: 600;
+    }
+    .product-review-date {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    .progress-bar-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.25rem;
+    }
+    .progress-bar-label {
+        width: 2rem;
+        text-align: right;
+    }
+    .progress-bar-outer {
+        flex-grow: 1;
+        height: 0.5rem;
+        background-color: #e9ecef;
+        border-radius: 0.25rem;
+    }
+    .progress-bar-inner {
+        height: 100%;
+        background-color: #ffc107;
+        border-radius: 0.25rem;
+    }
+    .progress-bar-count {
+        width: 2rem;
+    }
+    .feature-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .feature-icon {
+        color: var(--bs-primary);
+    }
+    .related-products {
+        margin-top: 2rem;
+    }
+    .related-product-card {
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+    .related-product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    .related-product-image {
+        height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+    .related-product-image img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+    .swiper-container {
+        padding: 1rem 0;
+    }
+    .swiper-button-next, .swiper-button-prev {
+        color: var(--bs-primary);
+    }
+    .swiper-pagination-bullet-active {
+        background-color: var(--bs-primary);
+    }
+    .sales-stats {
+        padding: 1rem;
+        border-radius: 0.25rem;
+        background-color: #f8f9fa;
+        margin-bottom: 1rem;
+    }
+    .sales-stat-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .sales-stat-item:last-child {
+        border-bottom: none;
+    }
+    .sales-stat-label {
+        font-weight: 600;
+    }
+    .sales-stat-value {
+        font-weight: 600;
+        color: #28a745;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- رأس المنتج -->
+<div class="product-header">
+    <div class="d-flex justify-content-between align-items-start flex-wrap">
+        <div>
+            <h1 class="product-title">{{ product.name }}</h1>
+            <div class="product-sku">{{ product.sku }}</div>
+            <div class="product-badges">
+                {% if product.is_new %}
+                <span class="badge bg-info">{% trans 'جديد' %}</span>
+                {% endif %}
+                {% if product.is_featured %}
+                <span class="badge bg-warning text-dark">{% trans 'مميز' %}</span>
+                {% endif %}
+                {% if product.is_best_seller %}
+                <span class="badge bg-success">{% trans 'الأكثر مبيعاً' %}</span>
+                {% endif %}
+                {% if product.status == 'published' %}
+                <span class="badge bg-success">{% trans 'منشور' %}</span>
+                {% elif product.status == 'draft' %}
+                <span class="badge bg-secondary">{% trans 'مسودة' %}</span>
+                {% elif product.status == 'pending_review' %}
+                <span class="badge bg-warning">{% trans 'قيد المراجعة' %}</span>
+                {% else %}
+                <span class="badge bg-danger">{% trans 'مؤرشف' %}</span>
+                {% endif %}
+                {% if not product.is_active %}
+                <span class="badge bg-danger">{% trans 'غير نشط' %}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="product-actions">
+            {% if perms.products.change_product %}
+            <a href="{% url 'dashboard:dashboard_product_edit' product_id=product.id %}" class="btn btn-primary">
+                <i class="fa fa-edit me-1"></i> {% trans 'تعديل المنتج' %}
+            </a>
+            {% endif %}
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="productActionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fa fa-ellipsis-v"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="productActionsDropdown">
+                    <li>
+                        <a class="dropdown-item" href="#">
+                            <i class="fa fa-eye me-2"></i> {% trans 'معاينة في الموقع' %}
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="#">
+                            <i class="fa fa-copy me-2"></i> {% trans 'نسخ المنتج' %}
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="#">
+                            <i class="fa fa-tags me-2"></i> {% trans 'إضافة متغير' %}
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="#">
+                            <i class="fa fa-chart-line me-2"></i> {% trans 'تقرير المبيعات' %}
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    {% if perms.products.delete_product %}
+                    <li>
+                        <a class="dropdown-item text-danger delete-product-btn" href="{% url 'dashboard:dashboard_product_delete' product_id=product.id %}" data-product-id="{{ product.id }}" data-product-name="{{ product.name }}">
+                            <i class="fa fa-trash me-2"></i> {% trans 'حذف المنتج' %}
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- معلومات المنتج الرئيسية -->
+    <div class="col-lg-9">
+        <div class="row">
+            <!-- صور المنتج -->
+            <div class="col-md-5 mb-4">
+                <div class="product-image-gallery">
+                    <div class="product-image-main">
+                        {% if product.default_image %}
+                        <img src="{{ product.default_image.image.url }}" alt="{{ product.name }}" id="main-product-image">
+                        {% else %}
+                        <div class="d-flex align-items-center justify-content-center h-100 w-100 bg-light">
+                            <i class="fa fa-image fa-3x text-muted"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="product-thumbnails">
+                        {% for image in images %}
+                        <div class="product-thumb {% if image.is_primary %}active{% endif %}" data-image="{{ image.image.url }}">
+                            <img src="{{ image.image.url }}" alt="{{ image.alt_text|default:product.name }}">
+                        </div>
+                        {% empty %}
+                        <div class="text-center w-100 py-3 text-muted">
+                            <i class="fa fa-images me-1"></i> {% trans 'لا توجد صور للمنتج' %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- معلومات المنتج -->
+            <div class="col-md-7 mb-4">
+                <div class="product-price-section">
+                    <div class="product-price-info">
+                        <div class="product-price">{{ product.current_price|floatformat:2 }} د.ا</div>
+                        {% if product.compare_price and product.compare_price > product.current_price %}
+                        <div class="product-compare-price">{{ product.compare_price|floatformat:2 }} د.ا</div>
+                        <div class="product-discount-badge">{{ product.savings_percentage }}% {% trans 'خصم' %}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="product-metadata">
+                        <div class="product-metadata-item">
+                            <i class="fa fa-tag"></i>
+                            <span>{% trans 'التكلفة:' %} {% if product.cost %}{{ product.cost|floatformat:2 }} د.ا{% else %}{% trans 'غير محدد' %}{% endif %}</span>
+                        </div>
+                        <div class="product-metadata-item">
+                            <i class="fa fa-chart-line"></i>
+                            <span>{% trans 'الهامش:' %}
+                                {% if product.cost %}
+                                    {{ product.current_price|subtract:product.cost|floatformat:2 }} د.ا
+                                    ({{ product.current_price|subtract:product.cost|divide:product.current_price|multiply:100|floatformat:0 }}%)
+                                {% else %}
+                                    {% trans 'غير محدد' %}
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-info-section">
+                    <h3>{% trans 'معلومات المنتج' %}</h3>
+                    <table class="table table-sm product-specifications">
+                        <tbody>
+                            <tr>
+                                <th>{% trans 'الفئة' %}</th>
+                                <td>
+                                    <a href="{% url 'dashboard:dashboard_categories' %}?category={{ product.category.id }}">
+                                        {{ product.category.name }}
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>{% trans 'العلامة التجارية' %}</th>
+                                <td>
+                                    {% if product.brand %}
+                                    <a href="{% url 'dashboard:dashboard_brands' %}?brand={{ product.brand.id }}">
+                                        {{ product.brand.name }}
+                                    </a>
+                                    {% else %}
+                                    <span class="text-muted">{% trans 'غير محدد' %}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>{% trans 'الوسوم' %}</th>
+                                <td>
+                                    {% for tag in product.tags.all %}
+                                    <a href="{% url 'dashboard:dashboard_tags' %}?tag={{ tag.id }}" class="badge bg-light text-dark me-1">
+                                        {{ tag.name }}
+                                    </a>
+                                    {% empty %}
+                                    <span class="text-muted">{% trans 'لا توجد وسوم' %}</span>
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>{% trans 'حالة المخزون' %}</th>
+                                <td>
+                                    {% if product.stock_status == 'in_stock' %}
+                                        {% if product.low_stock %}
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="fa fa-exclamation-triangle me-1"></i> {% trans 'منخفض' %} ({{ product.available_quantity }})
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-success">
+                                            <i class="fa fa-check-circle me-1"></i> {% trans 'متوفر' %} ({{ product.available_quantity }})
+                                        </span>
+                                        {% endif %}
+                                    {% elif product.stock_status == 'out_of_stock' %}
+                                        <span class="badge bg-danger">
+                                            <i class="fa fa-times-circle me-1"></i> {% trans 'نفذت الكمية' %}
+                                        </span>
+                                    {% elif product.stock_status == 'pre_order' %}
+                                        <span class="badge bg-info">
+                                            <i class="fa fa-clock me-1"></i> {% trans 'طلب مسبق' %}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">
+                                            <i class="fa fa-ban me-1"></i> {% trans 'متوقف' %}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>{% trans 'تاريخ الإنشاء' %}</th>
+                                <td>{{ product.created_at|date:"Y/m/d H:i" }}</td>
+                            </tr>
+                            <tr>
+                                <th>{% trans 'تاريخ النشر' %}</th>
+                                <td>
+                                    {% if product.published_at %}
+                                    {{ product.published_at|date:"Y/m/d H:i" }}
+                                    {% else %}
+                                    <span class="text-muted">{% trans 'غير منشور بعد' %}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>{% trans 'آخر تحديث' %}</th>
+                                <td>{{ product.updated_at|date:"Y/m/d H:i" }}</td>
+                            </tr>
+                            <tr>
+                                <th>{% trans 'الباركود' %}</th>
+                                <td>
+                                    {% if product.barcode %}
+                                    {{ product.barcode }}
+                                    {% else %}
+                                    <span class="text-muted">{% trans 'غير محدد' %}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>{% trans 'الشحن' %}</th>
+                                <td>
+                                    {% if product.requires_shipping %}
+                                    <span class="badge bg-primary">{% trans 'يتطلب شحن' %}</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{% trans 'بدون شحن' %}</span>
+                                    {% endif %}
+
+                                    {% if product.is_digital %}
+                                    <span class="badge bg-info">{% trans 'منتج رقمي' %}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- تبويبات المنتج -->
+        <div class="product-tabs">
+            <ul class="nav nav-tabs" id="productTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="description-tab" data-bs-toggle="tab" data-bs-target="#description" type="button" role="tab" aria-controls="description" aria-selected="true">
+                        {% trans 'الوصف' %}
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="specifications-tab" data-bs-toggle="tab" data-bs-target="#specifications" type="button" role="tab" aria-controls="specifications" aria-selected="false">
+                        {% trans 'المواصفات' %}
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="variants-tab" data-bs-toggle="tab" data-bs-target="#variants" type="button" role="tab" aria-controls="variants" aria-selected="false">
+                        {% trans 'المتغيرات' %} <span class="badge bg-secondary">{{ variants.count }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button" role="tab" aria-controls="reviews" aria-selected="false">
+                        {% trans 'التقييمات' %} <span class="badge bg-secondary">{{ reviews.count }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="attributes-tab" data-bs-toggle="tab" data-bs-target="#attributes" type="button" role="tab" aria-controls="attributes" aria-selected="false">
+                        {% trans 'الخصائص' %}
+                    </button>
+                </li>
+            </ul>
+            <div class="tab-content" id="productTabsContent">
+                <!-- وصف المنتج -->
+                <div class="tab-pane fade show active" id="description" role="tabpanel" aria-labelledby="description-tab">
+                    <div class="card">
+                        <div class="card-body product-content">
+                            {% if product.short_description %}
+                            <div class="alert alert-light">
+                                <strong>{% trans 'الوصف المختصر:' %}</strong>
+                                <p class="mb-0">{{ product.short_description }}</p>
+                            </div>
+                            {% endif %}
+
+                            {% if product.description %}
+                            <div class="product-description">
+                                {{ product.description|linebreaks }}
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4 text-muted">
+                                <i class="fa fa-file-alt fa-2x mb-2"></i>
+                                <p>{% trans 'لا يوجد وصف للمنتج' %}</p>
+                            </div>
+                            {% endif %}
+
+                            {% if product.features %}
+                            <div class="product-features mt-4">
+                                <h4>{% trans 'ميزات المنتج' %}</h4>
+                                <div class="row">
+                                    {% for feature in product.features %}
+                                    <div class="col-md-6">
+                                        <div class="feature-item">
+                                            <i class="fa fa-check-circle feature-icon"></i>
+                                            <div>{{ feature }}</div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- مواصفات المنتج -->
+                <div class="tab-pane fade" id="specifications" role="tabpanel" aria-labelledby="specifications-tab">
+                    <div class="card">
+                        <div class="card-body product-content">
+                            {% if product.specifications %}
+                            <div class="table-responsive">
+                                <table class="table table-striped product-specs-table">
+                                    <tbody>
+                                        {% for key, value in product.specifications.items %}
+                                        <tr>
+                                            <th>{{ key }}</th>
+                                            <td>
+                                                {% if value is string %}
+                                                {{ value }}
+                                                {% else %}
+                                                {{ value|safe }}
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4 text-muted">
+                                <i class="fa fa-clipboard-list fa-2x mb-2"></i>
+                                <p>{% trans 'لا توجد مواصفات فنية للمنتج' %}</p>
+                            </div>
+                            {% endif %}
+
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <h5>{% trans 'الأبعاد والوزن' %}</h5>
+                                    <table class="table table-sm">
+                                        <tbody>
+                                            <tr>
+                                                <th>{% trans 'الوزن' %}</th>
+                                                <td>{% if product.weight %}{{ product.weight }} {% trans 'كجم' %}{% else %}{% trans 'غير محدد' %}{% endif %}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>{% trans 'الطول' %}</th>
+                                                <td>{% if product.length %}{{ product.length }} {% trans 'سم' %}{% else %}{% trans 'غير محدد' %}{% endif %}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>{% trans 'العرض' %}</th>
+                                                <td>{% if product.width %}{{ product.width }} {% trans 'سم' %}{% else %}{% trans 'غير محدد' %}{% endif %}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>{% trans 'الارتفاع' %}</th>
+                                                <td>{% if product.height %}{{ product.height }} {% trans 'سم' %}{% else %}{% trans 'غير محدد' %}{% endif %}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5>{% trans 'معلومات إضافية' %}</h5>
+                                    <table class="table table-sm">
+                                        <tbody>
+                                            <tr>
+                                                <th>{% trans 'حالة المنتج' %}</th>
+                                                <td>{{ product.get_condition_display }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>{% trans 'فترة الضمان' %}</th>
+                                                <td>{% if product.warranty_period %}{{ product.warranty_period }}{% else %}{% trans 'غير محدد' %}{% endif %}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>{% trans 'نسبة الضريبة' %}</th>
+                                                <td>{{ product.tax_rate }}%</td>
+                                            </tr>
+                                            <tr>
+                                                <th>{% trans 'فئة الضريبة' %}</th>
+                                                <td>{% if product.tax_class %}{{ product.tax_class }}{% else %}{% trans 'عامة' %}{% endif %}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- متغيرات المنتج -->
+                <div class="tab-pane fade" id="variants" role="tabpanel" aria-labelledby="variants-tab">
+                    <div class="card">
+                        <div class="card-body product-content">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="mb-0">{% trans 'متغيرات المنتج' %}</h4>
+                                <a href="#" class="btn btn-sm btn-primary">
+                                    <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة متغير' %}
+                                </a>
+                            </div>
+
+                            {% if variants %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>{% trans 'المتغير' %}</th>
+                                            <th>{% trans 'SKU' %}</th>
+                                            <th>{% trans 'السعر' %}</th>
+                                            <th>{% trans 'المخزون' %}</th>
+                                            <th>{% trans 'الحالة' %}</th>
+                                            <th>{% trans 'الإجراءات' %}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for variant in variants %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    {% with variant.images.first as variant_image %}
+                                                    {% if variant_image %}
+                                                    <img src="{{ variant_image.image.url }}" alt="{{ variant.name }}" class="me-2" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                                    {% else %}
+                                                    <div class="me-2" style="width: 40px; height: 40px; background-color: #f8f9fa; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                                        <i class="fa fa-image text-muted"></i>
+                                                    </div>
+                                                    {% endif %}
+                                                    {% endwith %}
+                                                    <div>
+                                                        <div class="fw-semibold">{{ variant.name }}</div>
+                                                        {% if variant.attributes %}
+                                                        <div class="small text-muted">
+                                                            {% for key, value in variant.attributes.items %}
+                                                            {{ key }}: {{ value }}{% if not forloop.last %}, {% endif %}
+                                                            {% endfor %}
+                                                        </div>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>{{ variant.sku }}</td>
+                                            <td>{{ variant.current_price|floatformat:2 }} د.ا</td>
+                                            <td>{{ variant.available_quantity }}</td>
+                                            <td>
+                                                {% if variant.is_active %}
+                                                <span class="badge bg-success">{% trans 'نشط' %}</span>
+                                                {% else %}
+                                                <span class="badge bg-danger">{% trans 'غير نشط' %}</span>
+                                                {% endif %}
+
+                                                {% if variant.is_default %}
+                                                <span class="badge bg-primary">{% trans 'افتراضي' %}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="#" class="btn btn-outline-secondary">
+                                                        <i class="fa fa-edit"></i>
+                                                    </a>
+                                                    <a href="#" class="btn btn-outline-danger">
+                                                        <i class="fa fa-trash"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4 text-muted">
+                                <i class="fa fa-tags fa-2x mb-2"></i>
+                                <p>{% trans 'لا توجد متغيرات لهذا المنتج' %}</p>
+                                <a href="#" class="btn btn-primary mt-2">
+                                    <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة متغير الآن' %}
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- تقييمات المنتج -->
+                <div class="tab-pane fade" id="reviews" role="tabpanel" aria-labelledby="reviews-tab">
+                    <div class="card">
+                        <div class="card-body product-content">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="product-reviews-summary">
+                                        <div class="product-rating">{{ product.rating|floatformat:1 }}</div>
+                                        <div>
+                                            <div class="product-rating-stars">
+                                                {% for i in "12345"|make_list %}
+                                                {% if forloop.counter <= product.rating|floatformat:0|add:0 %}
+                                                <i class="fa fa-star"></i>
+                                                {% elif forloop.counter <= product.rating|floatformat:1|add:0.5 %}
+                                                <i class="fa fa-star-half-alt"></i>
+                                                {% else %}
+                                                <i class="far fa-star"></i>
+                                                {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                            <div class="product-review-count">{{ product.review_count }} {% trans 'تقييم' %}</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="product-rating-distribution">
+                                        <div class="progress-bar-container">
+                                            <div class="progress-bar-label">5 <i class="fa fa-star"></i></div>
+                                            <div class="progress-bar-outer">
+                                                <div class="progress-bar-inner" style="width: {{ product.rating_distribution.5.percentage }}%"></div>
+                                            </div>
+                                            <div class="progress-bar-count">{{ product.rating_distribution.5.count }}</div>
+                                        </div>
+                                        <div class="progress-bar-container">
+                                            <div class="progress-bar-label">4 <i class="fa fa-star"></i></div>
+                                            <div class="progress-bar-outer">
+                                                <div class="progress-bar-inner" style="width: {{ product.rating_distribution.4.percentage }}%"></div>
+                                            </div>
+                                            <div class="progress-bar-count">{{ product.rating_distribution.4.count }}</div>
+                                        </div>
+                                        <div class="progress-bar-container">
+                                            <div class="progress-bar-label">3 <i class="fa fa-star"></i></div>
+                                            <div class="progress-bar-outer">
+                                                <div class="progress-bar-inner" style="width: {{ product.rating_distribution.3.percentage }}%"></div>
+                                            </div>
+                                            <div class="progress-bar-count">{{ product.rating_distribution.3.count }}</div>
+                                        </div>
+                                        <div class="progress-bar-container">
+                                            <div class="progress-bar-label">2 <i class="fa fa-star"></i></div>
+                                            <div class="progress-bar-outer">
+                                                <div class="progress-bar-inner" style="width: {{ product.rating_distribution.2.percentage }}%"></div>
+                                            </div>
+                                            <div class="progress-bar-count">{{ product.rating_distribution.2.count }}</div>
+                                        </div>
+                                        <div class="progress-bar-container">
+                                            <div class="progress-bar-label">1 <i class="fa fa-star"></i></div>
+                                            <div class="progress-bar-outer">
+                                                <div class="progress-bar-inner" style="width: {{ product.rating_distribution.1.percentage }}%"></div>
+                                            </div>
+                                            <div class="progress-bar-count">{{ product.rating_distribution.1.count }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-8">
+                                    <h5>{% trans 'أحدث التقييمات' %}</h5>
+                                    {% for review in reviews %}
+                                    <div class="product-review">
+                                        <div class="product-review-header">
+                                            <div class="product-review-title">{{ review.title|default:review.user.get_full_name }}</div>
+                                            <div class="product-review-date">{{ review.created_at|date:"Y/m/d" }}</div>
+                                        </div>
+                                        <div class="product-rating-stars mb-2">
+                                            {% for i in "12345"|make_list %}
+                                            {% if forloop.counter <= review.rating %}
+                                            <i class="fa fa-star"></i>
+                                            {% else %}
+                                            <i class="far fa-star"></i>
+                                            {% endif %}
+                                            {% endfor %}
+
+                                            {% if review.is_verified %}
+                                            <span class="badge bg-success ms-2">{% trans 'شراء موثق' %}</span>
+                                            {% endif %}
+                                        </div>
+                                        <div>{{ review.content }}</div>
+
+                                        {% if review.images.exists %}
+                                        <div class="d-flex mt-2 gap-2">
+                                            {% for image in review.images.all %}
+                                            <a href="{{ image.image.url }}" target="_blank">
+                                                <img src="{{ image.image.url }}" alt="{{ review.title }}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">
+                                            </a>
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+
+                                        <div class="d-flex justify-content-between align-items-center mt-2">
+                                            <div class="small text-muted">
+                                                {% if review.helpful_votes > 0 %}
+                                                {{ review.helpful_votes }} {% trans 'شخص وجد هذا التقييم مفيداً' %}
+                                                {% endif %}
+                                            </div>
+                                            <div>
+                                                {% if review.is_approved %}
+                                                <span class="badge bg-success">{% trans 'معتمد' %}</span>
+                                                {% else %}
+                                                <span class="badge bg-warning text-dark">{% trans 'قيد المراجعة' %}</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% empty %}
+                                    <div class="text-center py-4 text-muted">
+                                        <i class="fa fa-star fa-2x mb-2"></i>
+                                        <p>{% trans 'لا توجد تقييمات لهذا المنتج' %}</p>
+                                    </div>
+                                    {% endfor %}
+
+                                    {% if reviews %}
+                                    <div class="text-center mt-3">
+                                        <a href="{% url 'dashboard:dashboard_reviews' %}?product={{ product.id }}" class="btn btn-outline-primary">
+                                            {% trans 'عرض جميع التقييمات' %}
+                                        </a>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- خصائص المنتج -->
+                <div class="tab-pane fade" id="attributes" role="tabpanel" aria-labelledby="attributes-tab">
+                    <div class="card">
+                        <div class="card-body product-content">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="mb-0">{% trans 'خصائص المنتج' %}</h4>
+                                <a href="#" class="btn btn-sm btn-primary">
+                                    <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة خاصية' %}
+                                </a>
+                            </div>
+
+                            {% if attributes %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>{% trans 'الخاصية' %}</th>
+                                            <th>{% trans 'القيمة' %}</th>
+                                            <th>{% trans 'النوع' %}</th>
+                                            <th>{% trans 'الإجراءات' %}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for attribute in attributes %}
+                                        <tr>
+                                            <td>{{ attribute.attribute.name }}</td>
+                                            <td>{{ attribute.value }}</td>
+                                            <td>{{ attribute.attribute.get_attribute_type_display }}</td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="#" class="btn btn-outline-secondary">
+                                                        <i class="fa fa-edit"></i>
+                                                    </a>
+                                                    <a href="#" class="btn btn-outline-danger">
+                                                        <i class="fa fa-trash"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4 text-muted">
+                                <i class="fa fa-list-alt fa-2x mb-2"></i>
+                                <p>{% trans 'لا توجد خصائص لهذا المنتج' %}</p>
+                                <a href="#" class="btn btn-primary mt-2">
+                                    <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة خاصية الآن' %}
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- المنتجات ذات الصلة -->
+        <div class="related-products">
+            <h3 class="mb-3">{% trans 'المنتجات ذات الصلة' %}</h3>
+
+            {% if related_products %}
+            <div class="swiper-container">
+                <div class="swiper-wrapper">
+                    {% for related_product in related_products %}
+                    <div class="swiper-slide">
+                        <div class="card related-product-card h-100">
+                            <div class="related-product-image p-3">
+                                {% if related_product.default_image %}
+                                <img src="{{ related_product.default_image.image.url }}" alt="{{ related_product.name }}">
+                                {% else %}
+                                <div class="d-flex align-items-center justify-content-center h-100 w-100 bg-light">
+                                    <i class="fa fa-image fa-2x text-muted"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">{{ related_product.name }}</h5>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="product-price">{{ related_product.current_price|floatformat:2 }} د.ا</div>
+                                    <a href="{% url 'dashboard:dashboard_product_detail' product_id=related_product.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fa fa-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="swiper-pagination"></div>
+                <div class="swiper-button-next"></div>
+                <div class="swiper-button-prev"></div>
+            </div>
+            {% else %}
+            <div class="alert alert-light text-center">
+                <i class="fa fa-link fa-2x mb-2"></i>
+                <p>{% trans 'لا توجد منتجات ذات صلة' %}</p>
+                <a href="#" class="btn btn-primary">
+                    <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة منتجات ذات صلة' %}
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- جانب المنتج -->
+    <div class="col-lg-3">
+        <!-- إحصائيات المبيعات -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">{% trans 'إحصائيات المبيعات' %}</h5>
+            </div>
+            <div class="card-body">
+                <div class="sales-stats">
+                    <div class="sales-stat-item">
+                        <div class="sales-stat-label">{% trans 'إجمالي المبيعات' %}</div>
+                        <div class="sales-stat-value">{{ sales_data.total_sales }}</div>
+                    </div>
+                    <div class="sales-stat-item">
+                        <div class="sales-stat-label">{% trans 'المشاهدات' %}</div>
+                        <div class="sales-stat-value">{{ sales_data.views|intcomma }}</div>
+                    </div>
+                    <div class="sales-stat-item">
+                        <div class="sales-stat-label">{% trans 'متوسط التقييم' %}</div>
+                        <div class="sales-stat-value">
+                            {{ sales_data.avg_rating|floatformat:1 }}
+                            <i class="fa fa-star text-warning"></i>
+                        </div>
+                    </div>
+                    <div class="sales-stat-item">
+                        <div class="sales-stat-label">{% trans 'عدد التقييمات' %}</div>
+                        <div class="sales-stat-value">{{ sales_data.review_count }}</div>
+                    </div>
+                    <div class="sales-stat-item">
+                        <div class="sales-stat-label">{% trans 'قوائم الأمنيات' %}</div>
+                        <div class="sales-stat-value">{{ sales_data.wishlist_count }}</div>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <a href="#" class="btn btn-outline-primary w-100">
+                        <i class="fa fa-chart-line me-1"></i> {% trans 'تقرير مفصل' %}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- معلومات المخزون -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">{% trans 'معلومات المخزون' %}</h5>
+            </div>
+            <div class="card-body">
+                <div class="sales-stats">
+                    <div class="sales-stat-item">
+                        <div class="sales-stat-label">{% trans 'الكمية المتاحة' %}</div>
+                        <div class="sales-stat-value">{{ stock_info.available }}</div>
+                    </div>
+                    <div class="sales-stat-item">
+                        <div class="sales-stat-label">{% trans 'الكمية المحجوزة' %}</div>
+                        <div class="sales-stat-value">{{ stock_info.reserved }}</div>
+                    </div>
+                    <div class="sales-stat-item">
+                        <div class="sales-stat-label">{% trans 'إجمالي المخزون' %}</div>
+                        <div class="sales-stat-value">{{ stock_info.total }}</div>
+                    </div>
+                    <div class="sales-stat-item">
+                        <div class="sales-stat-label">{% trans 'حالة المخزون' %}</div>
+                        <div class="sales-stat-value">
+                            {% if stock_info.status == 'in_stock' %}
+                                {% if stock_info.low_stock %}
+                                <span class="text-warning">
+                                    <i class="fa fa-exclamation-triangle"></i> {% trans 'منخفض' %}
+                                </span>
+                                {% else %}
+                                <span class="text-success">
+                                    <i class="fa fa-check-circle"></i> {% trans 'متوفر' %}
+                                </span>
+                                {% endif %}
+                            {% elif stock_info.status == 'out_of_stock' %}
+                                <span class="text-danger">
+                                    <i class="fa fa-times-circle"></i> {% trans 'نفذت الكمية' %}
+                                </span>
+                            {% else %}
+                                {{ stock_info.get_status_display }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <a href="#" class="btn btn-outline-primary w-100">
+                        <i class="fa fa-edit me-1"></i> {% trans 'تحديث المخزون' %}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- الإجراءات السريعة -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">{% trans 'إجراءات سريعة' %}</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if product.status == 'published' %}
+                    <a href="#" class="btn btn-outline-secondary">
+                        <i class="fa fa-eye-slash me-1"></i> {% trans 'تحويل لمسودة' %}
+                    </a>
+                    {% else %}
+                    <a href="#" class="btn btn-outline-success">
+                        <i class="fa fa-eye me-1"></i> {% trans 'نشر المنتج' %}
+                    </a>
+                    {% endif %}
+
+                    {% if product.is_active %}
+                    <a href="#" class="btn btn-outline-danger">
+                        <i class="fa fa-ban me-1"></i> {% trans 'إلغاء تفعيل المنتج' %}
+                    </a>
+                    {% else %}
+                    <a href="#" class="btn btn-outline-success">
+                        <i class="fa fa-check-circle me-1"></i> {% trans 'تفعيل المنتج' %}
+                    </a>
+                    {% endif %}
+
+                    {% if product.is_featured %}
+                    <a href="#" class="btn btn-outline-warning">
+                        <i class="fa fa-star me-1"></i> {% trans 'إلغاء تمييز المنتج' %}
+                    </a>
+                    {% else %}
+                    <a href="#" class="btn btn-outline-warning">
+                        <i class="fa fa-star me-1"></i> {% trans 'تمييز المنتج' %}
+                    </a>
+                    {% endif %}
+
+                    <a href="#" class="btn btn-outline-primary">
+                        <i class="fa fa-copy me-1"></i> {% trans 'نسخ المنتج' %}
+                    </a>
+
+                    <a href="#" class="btn btn-outline-secondary">
+                        <i class="fa fa-barcode me-1"></i> {% trans 'طباعة الباركود' %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- نافذة الحذف -->
+<div class="modal fade" id="deleteProductModal" tabindex="-1" aria-labelledby="deleteProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteProductModalLabel">{% trans 'تأكيد الحذف' %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>{% trans 'هل أنت متأكد من حذف المنتج:' %} <span id="product-name-to-delete">{{ product.name }}</span>؟</p>
+                <p class="text-danger">{% trans 'هذا الإجراء لا يمكن التراجع عنه.' %}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans 'إلغاء' %}</button>
+                <form id="delete-product-form" method="post" action="{% url 'dashboard:dashboard_product_delete' product_id=product.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">{% trans 'حذف' %}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/swiper@7/swiper-bundle.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // معرض الصور
+        $('.product-thumb').click(function() {
+            let imageUrl = $(this).data('image');
+            $('#main-product-image').attr('src', imageUrl);
+            $('.product-thumb').removeClass('active');
+            $(this).addClass('active');
+        });
+
+        // تأكيد حذف المنتج
+        $('.delete-product-btn').click(function(e) {
+            e.preventDefault();
+            $('#deleteProductModal').modal('show');
+        });
+
+        // تهيئة Swiper للمنتجات ذات الصلة
+        const swiper = new Swiper('.swiper-container', {
+            slidesPerView: 1,
+            spaceBetween: 20,
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+            },
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+            breakpoints: {
+                640: {
+                    slidesPerView: 2,
+                },
+                992: {
+                    slidesPerView: 3,
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

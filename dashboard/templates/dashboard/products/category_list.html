@@ -1,0 +1,653 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{% trans 'الفئات' %}{% endblock %}
+{% block page_title %}{% trans 'إدارة الفئات' %}{% endblock %}
+{% block current_page %}{% trans 'قائمة الفئات' %}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_products' %}">{% trans 'المنتجات' %}</a></li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .category-card {
+        transition: all 0.3s ease;
+    }
+    .category-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .category-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        color: var(--bs-primary);
+    }
+    .category-image {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+    .category-image-placeholder {
+        width: 80px;
+        height: 80px;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+    .category-tree {
+        list-style: none;
+        padding-right: 0;
+    }
+    [dir="ltr"] .category-tree {
+        padding-right: initial;
+        padding-left: 0;
+    }
+    .category-tree-item {
+        border: 1px solid #eee;
+        border-radius: 0.25rem;
+        margin-bottom: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    .category-tree-item:hover {
+        box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+        border-color: #ddd;
+    }
+    .category-tree-item-header {
+        padding: 0.75rem 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+    }
+    .category-tree-item-header.active {
+        background-color: #f8f9fa;
+    }
+    .category-tree-item-header .category-name {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .category-tree-children {
+        padding-right: 2rem;
+        list-style: none;
+        display: none;
+    }
+    [dir="ltr"] .category-tree-children {
+        padding-right: 0;
+        padding-left: 2rem;
+    }
+    .category-badge {
+        font-size: 0.75rem;
+        padding: 0.25em 0.5em;
+        margin-right: 0.5rem;
+    }
+    [dir="ltr"] .category-badge {
+        margin-right: 0;
+        margin-left: 0.5rem;
+    }
+    .category-actions {
+        display: flex;
+        gap: 0.25rem;
+    }
+    .category-expand-icon {
+        transition: transform 0.3s ease;
+    }
+    .category-expand-icon.open {
+        transform: rotate(90deg);
+    }
+    .stats-card {
+        border-right: 3px solid transparent;
+        transition: all 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    .stats-card.primary {
+        border-right-color: var(--bs-primary);
+    }
+    .stats-card.success {
+        border-right-color: var(--bs-success);
+    }
+    .stats-card.warning {
+        border-right-color: var(--bs-warning);
+    }
+    .stats-card.info {
+        border-right-color: var(--bs-info);
+    }
+    [dir="rtl"] .stats-card {
+        border-right: none;
+        border-left: 3px solid transparent;
+    }
+    [dir="rtl"] .stats-card.primary {
+        border-left-color: var(--bs-primary);
+    }
+    [dir="rtl"] .stats-card.success {
+        border-left-color: var(--bs-success);
+    }
+    [dir="rtl"] .stats-card.warning {
+        border-left-color: var(--bs-warning);
+    }
+    [dir="rtl"] .stats-card.info {
+        border-left-color: var(--bs-info);
+    }
+    .category-thumbnail {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 4px;
+    }
+    .category-thumbnail-placeholder {
+        width: 40px;
+        height: 40px;
+        background-color: #f5f5f5;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #aaa;
+    }
+    .view-switcher {
+        display: flex;
+        gap: 0.5rem;
+    }
+    .view-switcher-btn {
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.25rem;
+        cursor: pointer;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        color: #6c757d;
+        transition: all 0.3s ease;
+    }
+    .view-switcher-btn:hover, .view-switcher-btn.active {
+        background-color: var(--bs-primary);
+        border-color: var(--bs-primary);
+        color: white;
+    }
+    .search-container .input-group {
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        border-radius: 50px;
+        overflow: hidden;
+    }
+    .search-container .form-control {
+        border: none;
+        padding-left: 20px;
+    }
+    .search-container .btn {
+        border: none;
+        background-color: transparent;
+        color: #6c757d;
+    }
+    .reset-filter-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.25rem;
+        cursor: pointer;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        color: #6c757d;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+    .reset-filter-btn:hover {
+        background-color: #e9ecef;
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- إحصائيات الفئات -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card shadow-sm stats-card primary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-0">{% trans 'إجمالي الفئات' %}</h6>
+                        <h3 class="mb-0">{{ stats.total|intcomma }}</h3>
+                    </div>
+                    <div class="bg-light rounded-circle p-3">
+                        <i class="fa fa-folder text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card shadow-sm stats-card success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-0">{% trans 'فئات نشطة' %}</h6>
+                        <h3 class="mb-0">{{ stats.active|intcomma }}</h3>
+                    </div>
+                    <div class="bg-light rounded-circle p-3">
+                        <i class="fa fa-check-circle text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card shadow-sm stats-card info h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-0">{% trans 'فئات رئيسية' %}</h6>
+                        <h3 class="mb-0">{{ stats.root_categories|intcomma }}</h3>
+                    </div>
+                    <div class="bg-light rounded-circle p-3">
+                        <i class="fa fa-sitemap text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card shadow-sm stats-card warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-0">{% trans 'فئات مميزة' %}</h6>
+                        <h3 class="mb-0">{{ stats.featured|intcomma }}</h3>
+                    </div>
+                    <div class="bg-light rounded-circle p-3">
+                        <i class="fa fa-star text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- أدوات البحث والإجراءات -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                    <!-- البحث -->
+                    <div class="search-container mb-2 mb-md-0">
+                        <form method="GET" id="search-form">
+                            <div class="input-group">
+                                <input type="text" name="q" class="form-control" placeholder="{% trans 'بحث عن فئة...' %}" value="{{ query }}">
+                                <button class="btn" type="submit">
+                                    <i class="fa fa-search"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="d-flex gap-2 align-items-center">
+                        <!-- زر إعادة الضبط -->
+                        {% if query %}
+                        <a href="{% url 'dashboard:dashboard_categories' %}" class="reset-filter-btn">
+                            <i class="fa fa-times"></i>
+                            <span>{% trans 'مسح البحث' %}</span>
+                        </a>
+                        {% endif %}
+
+                        <!-- مبدل العرض -->
+                        <div class="view-switcher">
+                            <button id="tree-view-btn" class="view-switcher-btn active">
+                                <i class="fa fa-sitemap me-1"></i> {% trans 'عرض شجري' %}
+                            </button>
+                            <button id="grid-view-btn" class="view-switcher-btn">
+                                <i class="fa fa-th-large me-1"></i> {% trans 'عرض شبكي' %}
+                            </button>
+                        </div>
+
+                        <!-- زر إضافة فئة -->
+                        <a href="{% url 'dashboard:dashboard_category_create' %}" class="btn btn-primary">
+                            <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة فئة' %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- العرض الشجري للفئات -->
+<div id="tree-view" class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title mb-3">{% trans 'هيكل الفئات' %}</h5>
+
+                {% if categories %}
+                <ul class="category-tree">
+                    {% for category in categories %}
+                        {% if category.level == 0 %}
+                        <li class="category-tree-item">
+                            <div class="category-tree-item-header" data-category-id="{{ category.id }}">
+                                <div class="category-name">
+                                    <i class="fa fa-chevron-right category-expand-icon"></i>
+                                    {% if category.image %}
+                                    <img src="{{ category.image.url }}" alt="{{ category.name }}" class="category-thumbnail me-2">
+                                    {% else %}
+                                    <div class="category-thumbnail-placeholder me-2">
+                                        <i class="fa fa-folder"></i>
+                                    </div>
+                                    {% endif %}
+                                    <span class="fw-bold">{{ category.name }}</span>
+
+                                    {% if category.is_active %}
+                                    <span class="badge bg-success category-badge">{% trans 'نشط' %}</span>
+                                    {% else %}
+                                    <span class="badge bg-danger category-badge">{% trans 'غير نشط' %}</span>
+                                    {% endif %}
+
+                                    {% if category.is_featured %}
+                                    <span class="badge bg-warning text-dark category-badge">{% trans 'مميز' %}</span>
+                                    {% endif %}
+
+                                    <span class="badge bg-info text-light category-badge">
+                                        {{ category.products_count }} {% trans 'منتج' %}
+                                    </span>
+                                </div>
+                                <div class="category-actions">
+                                    <a href="{% url 'dashboard:dashboard_category_edit' category_id=category.id %}" class="btn btn-sm btn-outline-secondary" title="{% trans 'تعديل' %}">
+                                        <i class="fa fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger delete-category-btn" title="{% trans 'حذف' %}" data-category-id="{{ category.id }}" data-category-name="{{ category.name }}" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {% if category.children.exists %}
+                            <ul class="category-tree-children" id="children-{{ category.id }}">
+                                {% for child in category.children.all %}
+                                <li class="category-tree-item">
+                                    <div class="category-tree-item-header" data-category-id="{{ child.id }}">
+                                        <div class="category-name">
+                                            <i class="fa fa-chevron-right category-expand-icon"></i>
+                                            {% if child.image %}
+                                            <img src="{{ child.image.url }}" alt="{{ child.name }}" class="category-thumbnail me-2">
+                                            {% else %}
+                                            <div class="category-thumbnail-placeholder me-2">
+                                                <i class="fa fa-folder"></i>
+                                            </div>
+                                            {% endif %}
+                                            <span>{{ child.name }}</span>
+
+                                            {% if child.is_active %}
+                                            <span class="badge bg-success category-badge">{% trans 'نشط' %}</span>
+                                            {% else %}
+                                            <span class="badge bg-danger category-badge">{% trans 'غير نشط' %}</span>
+                                            {% endif %}
+
+                                            {% if child.is_featured %}
+                                            <span class="badge bg-warning text-dark category-badge">{% trans 'مميز' %}</span>
+                                            {% endif %}
+
+                                            <span class="badge bg-info text-light category-badge">
+                                                {{ child.products_count }} {% trans 'منتج' %}
+                                            </span>
+                                        </div>
+                                        <div class="category-actions">
+                                            <a href="{% url 'dashboard:dashboard_category_edit' category_id=child.id %}" class="btn btn-sm btn-outline-secondary" title="{% trans 'تعديل' %}">
+                                                <i class="fa fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger delete-category-btn" title="{% trans 'حذف' %}" data-category-id="{{ child.id }}" data-category-name="{{ child.name }}" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {% if child.children.exists %}
+                                    <ul class="category-tree-children" id="children-{{ child.id }}">
+                                        {% for grandchild in child.children.all %}
+                                        <li class="category-tree-item">
+                                            <div class="category-tree-item-header">
+                                                <div class="category-name">
+                                                    {% if grandchild.image %}
+                                                    <img src="{{ grandchild.image.url }}" alt="{{ grandchild.name }}" class="category-thumbnail me-2">
+                                                    {% else %}
+                                                    <div class="category-thumbnail-placeholder me-2">
+                                                        <i class="fa fa-folder"></i>
+                                                    </div>
+                                                    {% endif %}
+                                                    <span>{{ grandchild.name }}</span>
+
+                                                    {% if grandchild.is_active %}
+                                                    <span class="badge bg-success category-badge">{% trans 'نشط' %}</span>
+                                                    {% else %}
+                                                    <span class="badge bg-danger category-badge">{% trans 'غير نشط' %}</span>
+                                                    {% endif %}
+
+                                                    {% if grandchild.is_featured %}
+                                                    <span class="badge bg-warning text-dark category-badge">{% trans 'مميز' %}</span>
+                                                    {% endif %}
+
+                                                    <span class="badge bg-info text-light category-badge">
+                                                        {{ grandchild.products_count }} {% trans 'منتج' %}
+                                                    </span>
+                                                </div>
+                                                <div class="category-actions">
+                                                    <a href="{% url 'dashboard:dashboard_category_edit' category_id=grandchild.id %}" class="btn btn-sm btn-outline-secondary" title="{% trans 'تعديل' %}">
+                                                        <i class="fa fa-edit"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-category-btn" title="{% trans 'حذف' %}" data-category-id="{{ grandchild.id }}" data-category-name="{{ grandchild.name }}" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal">
+                                                        <i class="fa fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                    {% endif %}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fa fa-folder-open fa-3x text-muted mb-3"></i>
+                    <p class="mb-3">{% trans 'لم يتم العثور على فئات' %}</p>
+                    {% if query %}
+                    <p class="text-muted">{% trans 'حاول تغيير معايير البحث' %}</p>
+                    <a href="{% url 'dashboard:dashboard_categories' %}" class="btn btn-outline-primary mt-2">
+                        <i class="fa fa-times me-1"></i> {% trans 'مسح البحث' %}
+                    </a>
+                    {% else %}
+                    <a href="{% url 'dashboard:dashboard_category_create' %}" class="btn btn-primary">
+                        <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة فئة جديدة' %}
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- العرض الشبكي للفئات -->
+<div id="grid-view" class="row mb-4" style="display: none;">
+    {% if categories %}
+        {% for category in categories %}
+            <div class="col-xl-3 col-md-4 col-sm-6 mb-4">
+                <div class="card category-card h-100">
+                    <div class="card-body text-center">
+                        {% if category.image %}
+                        <img src="{{ category.image.url }}" alt="{{ category.name }}" class="category-image">
+                        {% elif category.icon %}
+                        <div class="category-icon">
+                            <i class="{{ category.icon }}"></i>
+                        </div>
+                        {% else %}
+                        <div class="category-image-placeholder">
+                            <i class="fa fa-folder fa-2x text-muted"></i>
+                        </div>
+                        {% endif %}
+
+                        <h5 class="card-title">{{ category.name }}</h5>
+
+                        <div class="mb-3">
+                            {% if category.is_active %}
+                            <span class="badge bg-success">{% trans 'نشط' %}</span>
+                            {% else %}
+                            <span class="badge bg-danger">{% trans 'غير نشط' %}</span>
+                            {% endif %}
+
+                            {% if category.is_featured %}
+                            <span class="badge bg-warning text-dark">{% trans 'مميز' %}</span>
+                            {% endif %}
+
+                            <span class="badge bg-info">
+                                {{ category.products_count }} {% trans 'منتج' %}
+                            </span>
+                        </div>
+
+                        {% if category.description %}
+                        <p class="card-text text-muted small">
+                            {{ category.description|truncatechars:80 }}
+                        </p>
+                        {% endif %}
+
+                        <div class="d-flex justify-content-center mt-3 gap-2">
+                            <a href="{% url 'dashboard:dashboard_category_edit' category_id=category.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fa fa-edit me-1"></i> {% trans 'تعديل' %}
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-danger delete-category-btn" data-category-id="{{ category.id }}" data-category-name="{{ category.name }}" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal">
+                                <i class="fa fa-trash me-1"></i> {% trans 'حذف' %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="fa fa-folder-open fa-3x text-muted mb-3"></i>
+                    <p class="mb-3">{% trans 'لم يتم العثور على فئات' %}</p>
+                    {% if query %}
+                    <p class="text-muted">{% trans 'حاول تغيير معايير البحث' %}</p>
+                    <a href="{% url 'dashboard:dashboard_categories' %}" class="btn btn-outline-primary mt-2">
+                        <i class="fa fa-times me-1"></i> {% trans 'مسح البحث' %}
+                    </a>
+                    {% else %}
+                    <a href="{% url 'dashboard:dashboard_category_create' %}" class="btn btn-primary">
+                        <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة فئة جديدة' %}
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- نافذة الحذف -->
+<div class="modal fade" id="deleteCategoryModal" tabindex="-1" aria-labelledby="deleteCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteCategoryModalLabel">{% trans 'تأكيد الحذف' %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>{% trans 'هل أنت متأكد من حذف الفئة:' %} <span id="category-name-to-delete"></span>؟</p>
+                <div class="alert alert-warning">
+                    <i class="fa fa-exclamation-triangle me-2"></i>
+                    {% trans 'سيتم حذف جميع الفئات الفرعية أيضاً إذا كانت موجودة.' %}
+                </div>
+                <p class="text-danger">{% trans 'هذا الإجراء لا يمكن التراجع عنه.' %}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans 'إلغاء' %}</button>
+                <form id="delete-category-form" method="post" action="">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">{% trans 'حذف' %}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // تبديل طريقة العرض
+        $('#tree-view-btn').click(function() {
+            $(this).addClass('active');
+            $('#grid-view-btn').removeClass('active');
+            $('#tree-view').show();
+            $('#grid-view').hide();
+        });
+
+        $('#grid-view-btn').click(function() {
+            $(this).addClass('active');
+            $('#tree-view-btn').removeClass('active');
+            $('#tree-view').hide();
+            $('#grid-view').show();
+        });
+
+        // توسيع/طي الفئات
+        $('.category-tree-item-header').click(function() {
+            let categoryId = $(this).data('category-id');
+            let childrenContainer = $('#children-' + categoryId);
+
+            if (childrenContainer.length > 0) {
+                childrenContainer.toggle();
+                $(this).find('.category-expand-icon').toggleClass('open');
+                $(this).toggleClass('active');
+            }
+        });
+
+        // منع انتشار النقر من الأزرار للعنصر الأب
+        $('.category-actions button, .category-actions a').click(function(e) {
+            e.stopPropagation();
+        });
+
+        // تأكيد حذف الفئة
+        $('.delete-category-btn').click(function() {
+            let categoryId = $(this).data('category-id');
+            let categoryName = $(this).data('category-name');
+
+            $('#category-name-to-delete').text(categoryName);
+            $('#delete-category-form').attr('action', '{% url "dashboard:dashboard_category_delete" category_id=0 %}'.replace('0', categoryId));
+        });
+
+        // عرض رسالة تأكيد عند محاولة حذف فئة تحتوي على منتجات
+        $('#delete-category-form').submit(function(e) {
+            let categoryId = $(this).attr('action').split('/').filter(Boolean).pop();
+            let hasProducts = false;
+
+            // التحقق مما إذا كانت الفئة تحتوي على منتجات
+            $('.category-tree-item-header[data-category-id="' + categoryId + '"]').find('.badge.bg-info').each(function() {
+                let count = parseInt($(this).text());
+                if (count > 0) {
+                    hasProducts = true;
+                    return false;
+                }
+            });
+
+            if (hasProducts) {
+                if (!confirm("{% trans 'هذه الفئة تحتوي على منتجات. هل أنت متأكد من حذفها؟' %}")) {
+                    e.preventDefault();
+                    $('#deleteCategoryModal').modal('hide');
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
