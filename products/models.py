@@ -1016,8 +1016,20 @@ class Product(TimeStampedModel, SEOModel):
         if self.discount_percentage > 0 and self.discount_amount > 0:
             raise ValidationError(_("لا يمكن تطبيق نسبة خصم ومبلغ خصم معاً"))
 
-        if self.discount_amount >= self.base_price:
-            raise ValidationError(_("مبلغ الخصم لا يمكن أن يكون أكبر من أو يساوي السعر الأساسي"))
+        # تعديل: تحويل القيم إلى Decimal للمقارنة
+        from decimal import Decimal
+        discount_amount = self.discount_amount
+        base_price = self.base_price
+
+        if discount_amount and base_price:
+            # تحويل القيم إلى Decimal إذا كانت سلاسل نصية
+            if isinstance(discount_amount, str):
+                discount_amount = Decimal(discount_amount.replace(',', '.'))
+            if isinstance(base_price, str):
+                base_price = Decimal(base_price.replace(',', '.'))
+
+            if discount_amount >= base_price:
+                raise ValidationError(_("مبلغ الخصم لا يمكن أن يكون أكبر من أو يساوي السعر الأساسي"))
 
         # Validate discount period
         if self.discount_start and self.discount_end:

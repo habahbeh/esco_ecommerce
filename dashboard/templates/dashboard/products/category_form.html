@@ -302,8 +302,9 @@
                                     <h5 class="form-section-title">{% trans 'وصف الفئة' %}</h5>
                                     <div class="mb-3">
                                         <label for="description" class="form-label">{% trans 'الوصف' %}</label>
-                                        <textarea class="form-control" id="description" name="description" rows="4">{{ category.description|default:'' }}</textarea>
-                                        <div class="form-text">{% trans 'وصف مختصر للفئة (باللغة العربية)' %}</div>
+                                        <textarea class="form-control" id="description" name="description"
+                                                  rows="4">{{ category.description|default:'' }}</textarea>
+                                        <div class="form-text">{% trans 'وصف مختصر للفئة (باللغة العربية). يجب أن يحتوي على 10 أحرف على الأقل.' %}</div>
                                     </div>
                                     <div class="mb-3">
                                         <label for="description_en" class="form-label">{% trans 'الوصف (الإنجليزية)' %}</label>
@@ -510,13 +511,13 @@
                                     <div class="seo-preview">
                                         <h6>{% trans 'معاينة ظهور الصفحة في محركات البحث:' %}</h6>
                                         <div class="seo-preview-title" id="seo-preview-title">
-                                            {{ category.meta_title|default:category.name|default:'عنوان الفئة' }}
+                                            {% if category %}{{ category.meta_title|default:category.name }}{% else %}عنوان الفئة{% endif %}
                                         </div>
                                         <div class="seo-preview-url">
                                             www.example.com/categories/{{ category.slug|default:'category-name' }}
                                         </div>
                                         <div class="seo-preview-description" id="seo-preview-description">
-                                            {{ category.meta_description|default:category.description|default:'وصف الفئة سيظهر هنا. قم بإضافة وصف مختصر وجذاب للفئة.' }}
+                                            {% if category %}{{ category.meta_description|default:category.description }}{% else %}وصف الفئة سيظهر هنا. قم بإضافة وصف مختصر وجذاب للفئة.{% endif %}
                                         </div>
                                     </div>
                                 </div>

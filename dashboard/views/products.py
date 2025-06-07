@@ -15,6 +15,7 @@ from django.utils.text import slugify
 import uuid
 import json
 from django.views.decorators.http import require_POST
+from decimal import Decimal
 
 from products.models import (
     Product, Category, Brand, Tag, ProductImage,
@@ -593,7 +594,7 @@ class CategoryFormView(DashboardAccessMixin, View):
             if image or banner_image:
                 category.save()
 
-            return redirect('dashboard_categories')
+            return redirect('dashboard:dashboard_categories')
 
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء حفظ الفئة: {str(e)}')
@@ -610,12 +611,12 @@ class CategoryDeleteView(DashboardAccessMixin, View):
         products_count = category.products.count()
         if products_count > 0:
             messages.error(request, f'لا يمكن حذف الفئة لأنها تحتوي على {products_count} منتج')
-            return redirect('dashboard_categories')
+            return redirect('dashboard:dashboard_categories')
 
         # التحقق من وجود فئات فرعية
         if category.children.exists():
             messages.error(request, 'لا يمكن حذف الفئة لأنها تحتوي على فئات فرعية')
-            return redirect('dashboard_categories')
+            return redirect('dashboard:dashboard_categories')
 
         try:
             category_name = category.name
@@ -624,7 +625,7 @@ class CategoryDeleteView(DashboardAccessMixin, View):
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء حذف الفئة: {str(e)}')
 
-        return redirect('dashboard_categories')
+        return redirect('dashboard:dashboard_categories')
 
 
 # ========================= إدارة العلامات التجارية =========================
