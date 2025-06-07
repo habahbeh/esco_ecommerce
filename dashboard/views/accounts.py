@@ -14,7 +14,9 @@ from django.template.loader import render_to_string
 
 from accounts.models import User, Role, UserProfile, UserAddress, UserActivity
 from .dashboard import DashboardAccessMixin
-
+from django import forms
+from django.utils.translation import gettext_lazy as _
+from dashboard.forms.accounts import UserForm, RoleForm, UserProfileForm, UserAddressForm
 
 # قائمة المستخدمين
 class UserListView(DashboardAccessMixin, View):
@@ -39,7 +41,13 @@ class UserListView(DashboardAccessMixin, View):
 
         # تطبيق التصفية حسب الدور
         if role_filter:
-            users = users.filter(role__id=role_filter)
+            # التعامل مع قيم خاصة
+            if role_filter == 'superuser':
+                users = users.filter(is_superuser=True)
+            elif role_filter == 'staff':
+                users = users.filter(is_staff=True, is_superuser=False)
+            elif role_filter.isdigit():  # التحقق من أن القيمة رقمية
+                users = users.filter(role__id=role_filter)
 
         # تصفية حسب الحالة
         if status_filter == 'active':
@@ -252,7 +260,7 @@ class UserFormView(DashboardAccessMixin, View):
             user.avatar = avatar
             user.save()
 
-        return redirect('dashboard_user_detail', user_id=user.id)
+        return redirect('dashboard:dashboard_user_detail', user_id=user.id)
 
 
 # حذف المستخدم
@@ -380,14 +388,14 @@ class RoleDeleteView(DashboardAccessMixin, View):
         # التحقق من صلاحية الوصول (فقط للمشرف)
         if not request.user.is_superuser:
             messages.error(request, 'ليس لديك صلاحية الوصول لهذه الصفحة')
-            return redirect('dashboard_roles')
+            return redirect('dashboard:dashboard_roles')  # تأكد من استخدام بادئة dashboard:
 
         role = get_object_or_404(Role, id=role_id)
 
         # التحقق من عدم وجود مستخدمين يستخدمون هذا الدور
         if role.users.exists():
             messages.error(request, 'لا يمكن حذف الدور لأنه مستخدم من قبل بعض المستخدمين')
-            return redirect('dashboard_roles')
+            return redirect('dashboard:dashboard_roles')  # تأكد من استخدام بادئة dashboard:
 
         # حذف الدور
         try:
@@ -396,4 +404,316 @@ class RoleDeleteView(DashboardAccessMixin, View):
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء حذف الدور: {str(e)}')
 
-        return redirect('dashboard_roles')
+        return redirect('dashboard:dashboard_roles')  # تأكد من استخدام بادئة dashboard:
+
+
+class UserAddressSaveView(DashboardAccessMixin, View):
+    """عرض حفظ عنوان المستخدم"""
+
+    def post(self, request):
+        # استخراج بيانات العنوان من الطلب
+        address_id = request.POST.get('id')
+        user_id = request.POST.get('user_id')
+
+        # التحقق من وجود المستخدم
+        user = get_object_or_404(User, id=user_id)
+
+        # التحقق من صلاحية الوصول
+        if not request.user.is_superuser and not request.user.has_perm('accounts.change_useraddress'):
+            return JsonResponse({
+                'success': False,
+                'message': 'ليس لديك صلاحية تعديل عناوين المستخدمين'
+            })
+
+        # إنشاء أو تحديث العنوان
+        if address_id:
+            # تحديث عنوان موجود
+            address = get_object_or_404(UserAddress, id=address_id, user=user)
+        else:
+            # إنشاء عنوان جديد
+            address = UserAddress(user=user)
+
+        # تحديث حقول العنوان
+        address.label = request.POST.get('label')
+        address.type = request.POST.get('type')
+        address.first_name = request.POST.get('first_name')
+        address.last_name = request.POST.get('last_name')
+        address.address_line_1 = request.POST.get('address_line_1')
+        address.address_line_2 = request.POST.get('address_line_2')
+        address.city = request.POST.get('city')
+        address.state = request.POST.get('state')
+        address.postal_code = request.POST.get('postal_code')
+        address.country = request.POST.get('country')
+        address.phone_number = request.POST.get('phone_number')
+        address.is_default = request.POST.get('is_default') == 'true'
+        address.is_shipping_default = request.POST.get('is_shipping_default') == 'true'
+        address.is_billing_default = request.POST.get('is_billing_default') == 'true'
+
+        try:
+            address.save()
+            return JsonResponse({
+                'success': True,
+                'message': 'تم حفظ العنوان بنجاح'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'حدث خطأ أثناء حفظ العنوان: {str(e)}'
+            })
+
+
+class UserAddressGetView(DashboardAccessMixin, View):
+    """عرض الحصول على بيانات عنوان المستخدم"""
+
+    def get(self, request):
+        address_id = request.GET.get('address_id')
+
+        # التحقق من وجود العنوان
+        try:
+            address = UserAddress.objects.get(id=address_id)
+        except UserAddress.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': 'العنوان غير موجود'
+            })
+
+        # التحقق من صلاحية الوصول
+        if not request.user.is_superuser and not request.user.has_perm('accounts.view_useraddress'):
+            return JsonResponse({
+                'success': False,
+                'message': 'ليس لديك صلاحية عرض عناوين المستخدمين'
+            })
+
+        # إرجاع بيانات العنوان
+        return JsonResponse({
+            'success': True,
+            'address': {
+                'id': str(address.id),
+                'label': address.label,
+                'type': address.type,
+                'first_name': address.first_name,
+                'last_name': address.last_name,
+                'address_line_1': address.address_line_1,
+                'address_line_2': address.address_line_2,
+                'city': address.city,
+                'state': address.state,
+                'postal_code': address.postal_code,
+                'country': address.country,
+                'phone_number': address.phone_number,
+                'is_default': address.is_default,
+                'is_shipping_default': address.is_shipping_default,
+                'is_billing_default': address.is_billing_default
+            }
+        })
+
+
+class UserAddressDeleteView(DashboardAccessMixin, View):
+    """عرض حذف عنوان المستخدم"""
+
+    def post(self, request):
+        address_id = request.POST.get('address_id')
+
+        # التحقق من وجود العنوان
+        try:
+            address = UserAddress.objects.get(id=address_id)
+        except UserAddress.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': 'العنوان غير موجود'
+            })
+
+        # التحقق من صلاحية الوصول
+        if not request.user.is_superuser and not request.user.has_perm('accounts.delete_useraddress'):
+            return JsonResponse({
+                'success': False,
+                'message': 'ليس لديك صلاحية حذف عناوين المستخدمين'
+            })
+
+        # حذف العنوان
+        try:
+            address.delete()
+            return JsonResponse({
+                'success': True,
+                'message': 'تم حذف العنوان بنجاح'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'حدث خطأ أثناء حذف العنوان: {str(e)}'
+            })
+
+
+class UserAddressListPartialView(DashboardAccessMixin, View):
+    """عرض قائمة عناوين المستخدم الجزئية"""
+
+    def get(self, request):
+        user_id = request.GET.get('user_id')
+
+        # التحقق من وجود المستخدم
+        user = get_object_or_404(User, id=user_id)
+
+        # التحقق من صلاحية الوصول
+        if not request.user.is_superuser and not request.user.has_perm('accounts.view_useraddress'):
+            return HttpResponse('<div class="alert alert-danger">ليس لديك صلاحية عرض عناوين المستخدمين</div>')
+
+        # جلب عناوين المستخدم
+        addresses = user.addresses.all()
+
+        # تقديم القالب الجزئي
+        return render(request, 'dashboard/accounts/user_address_list_partial.html', {
+            'addresses': addresses,
+            'user': user
+        })
+
+
+class UserResetPasswordView(DashboardAccessMixin, View):
+    """عرض إعادة تعيين كلمة المرور للمستخدم"""
+
+    def post(self, request, user_id):
+        user = get_object_or_404(User, id=user_id)
+
+        # التحقق من صلاحية الوصول (فقط للمشرف)
+        if not request.user.is_superuser and not request.user.has_perm('accounts.change_user'):
+            messages.error(request, 'ليس لديك صلاحية إعادة تعيين كلمة المرور')
+            return redirect('dashboard:dashboard_user_detail', user_id=user_id)
+
+        # جمع البيانات من النموذج
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+        send_email = request.POST.get('send_email') == 'on'
+
+        # التحقق من البيانات
+        if not new_password:
+            messages.error(request, 'كلمة المرور مطلوبة')
+            return redirect('dashboard:dashboard_user_detail', user_id=user_id)
+
+        if new_password != confirm_password:
+            messages.error(request, 'كلمة المرور وتأكيدها غير متطابقين')
+            return redirect('dashboard:dashboard_user_detail', user_id=user_id)
+
+        # إعادة تعيين كلمة المرور
+        try:
+            user.set_password(new_password)
+            user.save()
+            messages.success(request, 'تم إعادة تعيين كلمة المرور بنجاح')
+
+            # إرسال بريد إلكتروني للمستخدم إذا تم طلب ذلك
+            if send_email:
+                try:
+                    # هنا يمكنك إضافة كود إرسال البريد الإلكتروني
+                    # (يعتمد على كيفية إعداد البريد في تطبيقك)
+                    # مثال: send_password_reset_email(user, new_password)
+                    messages.info(request, 'تم إرسال بريد إلكتروني إلى المستخدم بكلمة المرور الجديدة')
+                except Exception as e:
+                    messages.warning(request, f'تم إعادة تعيين كلمة المرور ولكن فشل إرسال البريد الإلكتروني: {str(e)}')
+
+        except Exception as e:
+            messages.error(request, f'حدث خطأ أثناء إعادة تعيين كلمة المرور: {str(e)}')
+
+        return redirect('dashboard:dashboard_user_detail', user_id=user_id)
+
+@method_decorator(login_required, name='dispatch')
+class UserDeleteView(DashboardAccessMixin, View):
+    """حذف المستخدم"""
+
+    def post(self, request, user_id):
+        # التحقق من صلاحية الوصول (فقط للمشرف)
+        if not request.user.is_superuser:
+            messages.error(request, 'ليس لديك صلاحية الوصول لهذه الصفحة')
+            return redirect('dashboard:dashboard_users')  # تصحيح هنا - إضافة بادئة dashboard:
+
+        user = get_object_or_404(User, id=user_id)
+
+        # لا يمكن حذف المستخدم الحالي
+        if user == request.user:
+            messages.error(request, 'لا يمكن حذف حسابك الحالي')
+            return redirect('dashboard:dashboard_users')  # تصحيح هنا - إضافة بادئة dashboard:
+
+        # حذف المستخدم
+        try:
+            user.delete()
+            messages.success(request, 'تم حذف المستخدم بنجاح')
+        except Exception as e:
+            messages.error(request, f'حدث خطأ أثناء حذف المستخدم: {str(e)}')
+
+        return redirect('dashboard:dashboard_users')  # تصحيح هنا - إضافة بادئة dashboard:
+
+
+class UserAddressFormView(DashboardAccessMixin, View):
+    """عرض إنشاء وتعديل عنوان المستخدم"""
+
+    def get(self, request, user_id, address_id=None):
+        user = get_object_or_404(User, id=user_id)
+
+        # التحقق من صلاحية الوصول
+        if not request.user.is_superuser and not request.user.has_perm('accounts.change_useraddress'):
+            messages.error(request, 'ليس لديك صلاحية إدارة عناوين المستخدمين')
+            return redirect('dashboard:dashboard_user_detail', user_id=user_id)
+
+        # جلب العنوان إذا كان في وضع التعديل
+        address = None
+        if address_id:
+            address = get_object_or_404(UserAddress, id=address_id, user=user)
+
+        # إنشاء نموذج فارغ أو معبأ بالبيانات الحالية
+        form = UserAddressForm(instance=address, user=user)
+
+        return render(request, 'dashboard/accounts/user_address_form.html', {
+            'form': form,
+            'user': user,
+            'address': address,
+            'form_title': 'تعديل العنوان' if address else 'إضافة عنوان جديد'
+        })
+
+    def post(self, request, user_id, address_id=None):
+        user = get_object_or_404(User, id=user_id)
+
+        # التحقق من صلاحية الوصول
+        if not request.user.is_superuser and not request.user.has_perm('accounts.change_useraddress'):
+            messages.error(request, 'ليس لديك صلاحية إدارة عناوين المستخدمين')
+            return redirect('dashboard:dashboard_user_detail', user_id=user_id)
+
+        # جلب العنوان إذا كان في وضع التعديل
+        address = None
+        if address_id:
+            address = get_object_or_404(UserAddress, id=address_id, user=user)
+
+        # معالجة النموذج
+        form = UserAddressForm(request.POST, instance=address, user=user)
+
+        if form.is_valid():
+            # حفظ النموذج مع ربطه بالمستخدم
+            address = form.save(commit=False)
+            address.user = user
+            address.save()
+
+            messages.success(request, 'تم حفظ العنوان بنجاح')
+            return redirect('dashboard:dashboard_user_address_list', user_id=user_id)
+
+        # إذا كان النموذج غير صالح
+        return render(request, 'dashboard/accounts/user_address_form.html', {
+            'form': form,
+            'user': user,
+            'address': address,
+            'form_title': 'تعديل العنوان' if address else 'إضافة عنوان جديد'
+        })
+
+
+class UserAddressListView(DashboardAccessMixin, View):
+    """عرض قائمة عناوين المستخدم"""
+
+    def get(self, request, user_id):
+        user = get_object_or_404(User, id=user_id)
+
+        # التحقق من صلاحية الوصول
+        if not request.user.is_superuser and not request.user.has_perm('accounts.view_useraddress'):
+            messages.error(request, 'ليس لديك صلاحية عرض عناوين المستخدمين')
+            return redirect('dashboard:dashboard_user_detail', user_id=user_id)
+
+        # جلب عناوين المستخدم
+        addresses = user.addresses.all()
+
+        return render(request, 'dashboard/accounts/user_address_list.html', {
+            'user': user,
+            'addresses': addresses
+        })

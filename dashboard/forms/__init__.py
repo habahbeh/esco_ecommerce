@@ -27,7 +27,7 @@ from .core import (
 
 # يمكن استيراد كل النماذج من خلال استيراد حزمة forms
 __all__ = [
-    'DashboardLoginForm', 'UserForm', 'RoleForm', 'UserProfileForm', 'UserAddressForm',
+    'DashboardLoginForm', 'UserForm', 'RoleForm', 'UserProfileForm', 'UserAddressForm','UserAddressForm',
     'ProductForm', 'CategoryForm', 'ProductVariantForm', 'ProductImageForm', 'ProductDiscountForm',
     'OrderForm', 'OrderItemForm', 'OrderStatusUpdateForm',
     'PaymentMethodForm', 'ShippingMethodForm',

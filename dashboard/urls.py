@@ -2,6 +2,7 @@ from django.urls import path
 from django.contrib.auth.views import LoginView, LogoutView
 
 from . import views
+from dashboard.views.accounts import UserAddressSaveView, UserAddressGetView, UserAddressDeleteView, UserAddressListPartialView
 
 app_name = 'dashboard'
 
@@ -17,10 +18,29 @@ urlpatterns = [
     # ========================= إدارة المستخدمين =========================
     # قائمة المستخدمين
     path('accounts/users/', views.UserListView.as_view(), name='dashboard_users'),
-    path('accounts/users/<str:user_id>/', views.UserDetailView.as_view(), name='dashboard_user_detail'),
+    # path('accounts/users/<str:user_id>/', views.UserDetailView.as_view(), name='dashboard_user_detail'),
+    # path('accounts/users/create/', views.UserFormView.as_view(), name='dashboard_user_create'),
+    # path('accounts/users/<str:user_id>/edit/', views.UserFormView.as_view(), name='dashboard_user_edit'),
+    path('accounts/users/detail/<uuid:user_id>/', views.UserDetailView.as_view(), name='dashboard_user_detail'),
     path('accounts/users/create/', views.UserFormView.as_view(), name='dashboard_user_create'),
-    path('accounts/users/<str:user_id>/edit/', views.UserFormView.as_view(), name='dashboard_user_edit'),
+    path('accounts/users/edit/<uuid:user_id>/', views.UserFormView.as_view(), name='dashboard_user_edit'),
     path('accounts/users/<str:user_id>/delete/', views.UserDeleteView.as_view(), name='dashboard_user_delete'),
+
+    path('accounts/users/<uuid:user_id>/addresses/', views.UserAddressListView.as_view(), name='dashboard_user_address_list'),
+    path('accounts/users/<uuid:user_id>/addresses/create/', views.UserAddressFormView.as_view(), name='dashboard_user_address_create'),
+    path('accounts/users/<uuid:user_id>/addresses/<int:address_id>/edit/', views.UserAddressFormView.as_view(),
+         name='dashboard_user_address_edit'),
+
+    path('accounts/users/address/save/', UserAddressSaveView.as_view(), name='dashboard_user_address_save'),
+    path('accounts/users/address/get/', UserAddressGetView.as_view(), name='dashboard_user_address_get'),
+    # path('accounts/users/address/delete/', UserAddressDeleteView.as_view(), name='dashboard_user_address_delete'),
+    path('accounts/api/address/delete/', UserAddressDeleteView.as_view(), name='dashboard_user_address_delete'),
+    path('accounts/users/<uuid:user_id>/addresses/<int:address_id>/delete/', views.UserAddressDeleteView.as_view(), name='dashboard_user_address_delete'),
+
+    path('accounts/users/address/list-partial/', UserAddressListPartialView.as_view(),
+         name='dashboard_user_address_list_partial'),
+
+    path('accounts/users/<uuid:user_id>/reset-password/', views.UserResetPasswordView.as_view(), name='dashboard_user_reset_password'),
 
     # إدارة الأدوار
     path('accounts/roles/', views.RoleListView.as_view(), name='dashboard_roles'),

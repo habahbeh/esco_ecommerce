@@ -1,0 +1,64 @@
+<!-- في ملف templates/dashboard/accounts/user_address_list_partial.html -->
+{% load i18n %}
+
+{% if addresses %}
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>{% trans 'العنوان' %}</th>
+                <th>{% trans 'النوع' %}</th>
+                <th>{% trans 'المدينة' %}</th>
+                <th>{% trans 'الدولة' %}</th>
+                <th>{% trans 'الإعدادات' %}</th>
+                <th>{% trans 'الإجراءات' %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for address in addresses %}
+            <tr>
+                <td>
+                    <div class="fw-bold">{{ address.label }}</div>
+                    <small>{{ address.address_line_1 }}</small>
+                </td>
+                <td>
+                    {% if address.type == 'home' %}
+                    <span class="badge bg-primary">{% trans 'المنزل' %}</span>
+                    {% elif address.type == 'work' %}
+                    <span class="badge bg-info">{% trans 'العمل' %}</span>
+                    {% else %}
+                    <span class="badge bg-secondary">{% trans 'آخر' %}</span>
+                    {% endif %}
+                </td>
+                <td>{{ address.city }}</td>
+                <td>{{ address.country }}</td>
+                <td>
+                    {% if address.is_default %}
+                    <span class="badge bg-success">{% trans 'العنوان الافتراضي' %}</span>
+                    {% endif %}
+                    {% if address.is_shipping_default %}
+                    <span class="badge bg-info">{% trans 'عنوان الشحن الافتراضي' %}</span>
+                    {% endif %}
+                    {% if address.is_billing_default %}
+                    <span class="badge bg-warning text-dark">{% trans 'عنوان الفوترة الافتراضي' %}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-outline-primary me-1 btn-edit-address" data-address-id="{{ address.id }}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger btn-delete-address" data-address-id="{{ address.id }}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
+    <p>{% trans 'لا توجد عناوين لهذا المستخدم حتى الآن' %}</p>
+</div>
+{% endif %}
