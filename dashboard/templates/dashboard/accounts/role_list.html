@@ -1,0 +1,288 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans 'إدارة الأدوار' %}{% endblock %}
+{% block page_title %}{% trans 'إدارة الأدوار' %}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_users' %}">{% trans 'المستخدمين' %}</a></li>
+{% endblock %}
+
+{% block current_page %}{% trans 'قائمة الأدوار' %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .role-card {
+        transition: all 0.3s ease;
+        border: none;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        height: 100%;
+    }
+
+    .role-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .role-card-header {
+        background-color: #f8f9fa;
+        padding: 1.25rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .role-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .role-users {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    .role-description {
+        color: #6c757d;
+        margin-bottom: 1.5rem;
+        min-height: 3rem;
+    }
+
+    .permissions-summary {
+        margin-bottom: 1.5rem;
+    }
+
+    .permission-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        margin: 0.25rem;
+        background-color: #e9ecef;
+        color: #495057;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+    }
+
+    .role-actions {
+        margin-top: auto;
+    }
+
+    .role-users-count {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background-color: #6c757d;
+        color: white;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+    }
+
+    [dir="rtl"] .role-users-count {
+        right: auto;
+        left: 1rem;
+    }
+
+    .role-empty {
+        text-align: center;
+        padding: 3rem;
+    }
+
+    .role-empty-icon {
+        font-size: 3rem;
+        color: #e9ecef;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0">{% trans 'إدارة الأدوار والصلاحيات' %}</h3>
+    {% if perms.accounts.add_role %}
+    <a href="{% url 'dashboard:dashboard_role_create' %}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i> {% trans 'إضافة دور جديد' %}
+    </a>
+    {% endif %}
+</div>
+
+<div class="row">
+    <!-- بطاقة دور مدير النظام -->
+    <div class="col-md-4 mb-4">
+        <div class="role-card">
+            <div class="role-card-header">
+                <div class="role-name">{% trans 'مدير النظام' %}</div>
+                <div class="role-users">
+                    {{ superuser_count }} {% trans 'مستخدم' %}
+                </div>
+                <div class="role-users-count">{{ superuser_count }}</div>
+            </div>
+            <div class="card-body d-flex flex-column">
+                <div class="role-description">
+                    {% trans 'مدير النظام لديه جميع الصلاحيات وإمكانية الوصول الكاملة لجميع أجزاء النظام.' %}
+                </div>
+                <div class="permissions-summary">
+                    <div class="mb-2">{% trans 'الصلاحيات:' %}</div>
+                    <div class="permission-badge">{% trans 'جميع الصلاحيات' %}</div>
+                </div>
+                <div class="role-actions">
+                    <a href="{% url 'dashboard:dashboard_users' %}?role=superuser" class="btn btn-sm btn-outline-primary w-100">
+                        <i class="fas fa-users me-1"></i> {% trans 'عرض المستخدمين' %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- بطاقة دور المشرف -->
+    <div class="col-md-4 mb-4">
+        <div class="role-card">
+            <div class="role-card-header">
+                <div class="role-name">{% trans 'مشرف' %}</div>
+                <div class="role-users">
+                    {{ staff_count }} {% trans 'مستخدم' %}
+                </div>
+                <div class="role-users-count">{{ staff_count }}</div>
+            </div>
+            <div class="card-body d-flex flex-column">
+                <div class="role-description">
+                    {% trans 'المشرف لديه إمكانية الوصول للوحة التحكم مع صلاحيات محددة وفق الأدوار المخصصة.' %}
+                </div>
+                <div class="permissions-summary">
+                    <div class="mb-2">{% trans 'الصلاحيات:' %}</div>
+                    <div class="permission-badge">{% trans 'الوصول للوحة التحكم' %}</div>
+                </div>
+                <div class="role-actions">
+                    <a href="{% url 'dashboard:dashboard_users' %}?role=staff" class="btn btn-sm btn-outline-primary w-100">
+                        <i class="fas fa-users me-1"></i> {% trans 'عرض المستخدمين' %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- الأدوار المخصصة -->
+    {% for role in roles %}
+    <div class="col-md-4 mb-4">
+        <div class="role-card">
+            <div class="role-card-header">
+                <div class="role-name">{{ role.name }}</div>
+                <div class="role-users">
+                    {{ role.users.count }} {% trans 'مستخدم' %}
+                </div>
+                <div class="role-users-count">{{ role.users.count }}</div>
+            </div>
+            <div class="card-body d-flex flex-column">
+                <div class="role-description">
+                    {{ role.description|default:_('لا يوجد وصف') }}
+                </div>
+                <div class="permissions-summary">
+                    <div class="mb-2">{% trans 'الصلاحيات:' %}</div>
+                    {% if role.permissions.count > 0 %}
+                        {% for permission in role.permissions.all|slice:":5" %}
+                        <div class="permission-badge">{{ permission.name }}</div>
+                        {% endfor %}
+
+                        {% if role.permissions.count > 5 %}
+                        <div class="permission-badge">
+                            +{{ role.permissions.count|add:"-5" }} {% trans 'أخرى' %}
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-muted">{% trans 'لا توجد صلاحيات محددة' %}</div>
+                    {% endif %}
+                </div>
+                <div class="role-actions">
+                    <div class="btn-group w-100">
+                        <a href="{% url 'dashboard:dashboard_users' %}?role={{ role.id }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-users me-1"></i> {% trans 'المستخدمين' %}
+                        </a>
+                        {% if perms.accounts.change_role %}
+                        <a href="{% url 'dashboard:dashboard_role_edit' role_id=role.id %}" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-edit me-1"></i> {% trans 'تعديل' %}
+                        </a>
+                        {% endif %}
+                        {% if perms.accounts.delete_role %}
+                        <button type="button" class="btn btn-sm btn-outline-danger btn-delete-role" data-role-id="{{ role.id }}">
+                            <i class="fas fa-trash me-1"></i> {% trans 'حذف' %}
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body role-empty">
+                <div class="role-empty-icon">
+                    <i class="fas fa-user-tag"></i>
+                </div>
+                <h5>{% trans 'لا توجد أدوار مخصصة حتى الآن' %}</h5>
+                <p class="text-muted">{% trans 'قم بإنشاء أدوار مخصصة لتحديد صلاحيات المستخدمين في النظام.' %}</p>
+                {% if perms.accounts.add_role %}
+                <a href="{% url 'dashboard:dashboard_role_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> {% trans 'إضافة دور جديد' %}
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- نافذة تأكيد الحذف -->
+<div class="modal fade" id="deleteRoleModal" tabindex="-1" aria-labelledby="deleteRoleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteRoleModalLabel">{% trans 'تأكيد الحذف' %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>{% trans 'هل أنت متأكد من رغبتك في حذف هذا الدور؟' %}</p>
+                <p id="roleUsersWarning" class="text-danger d-none">
+                    {% trans 'تحذير: هذا الدور مرتبط بمستخدمين. حذفه سيؤدي إلى إزالة الدور من هؤلاء المستخدمين.' %}
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans 'إلغاء' %}</button>
+                <form id="deleteRoleForm" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">{% trans 'حذف' %}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // معالجة نقر زر الحذف
+        $('.btn-delete-role').on('click', function() {
+            var roleId = $(this).data('role-id');
+            var usersCount = $(this).closest('.role-card').find('.role-users-count').text();
+            var deleteUrl = "{% url 'dashboard:dashboard_role_delete' role_id='ROLE_ID' %}".replace('ROLE_ID', roleId);
+
+            $('#deleteRoleForm').attr('action', deleteUrl);
+
+            // إظهار تحذير إذا كان الدور مرتبط بمستخدمين
+            if (parseInt(usersCount) > 0) {
+                $('#roleUsersWarning').removeClass('d-none');
+            } else {
+                $('#roleUsersWarning').addClass('d-none');
+            }
+
+            $('#deleteRoleModal').modal('show');
+        });
+    });
+</script>
+{% endblock %}

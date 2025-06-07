@@ -1,0 +1,856 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+{% load static %}
+{% load dashboard_tags %}
+
+{% block title %}{% trans 'تفاصيل المستخدم' %}{% endblock %}
+{% block page_title %}{% trans 'تفاصيل المستخدم' %}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_users' %}">{% trans 'المستخدمين' %}</a></li>
+{% endblock %}
+
+{% block current_page %}{{ user_obj.get_full_name|default:user_obj.username }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .user-header {
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .user-avatar-large {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .avatar-placeholder-large {
+        width: 120px;
+        height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        color: white;
+        font-weight: 600;
+        font-size: 2.5rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .user-info-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .user-name {
+        font-size: 1.75rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .user-username {
+        font-size: 1rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+
+    .user-status {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 2rem;
+        font-weight: 500;
+        font-size: 0.875rem;
+    }
+
+    .user-active {
+        background-color: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+    }
+
+    .user-inactive {
+        background-color: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+    }
+
+    .info-card {
+        height: 100%;
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .info-card .card-header {
+        background-color: transparent;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+        font-weight: 600;
+    }
+
+    .info-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .info-list li {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .info-list li:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        color: #6c757d;
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+    }
+
+    .info-value {
+        font-weight: 500;
+    }
+
+    .activity-item {
+        position: relative;
+        padding-left: 2rem;
+        padding-bottom: 1.5rem;
+    }
+
+    [dir="rtl"] .activity-item {
+        padding-left: 0;
+        padding-right: 2rem;
+    }
+
+    .activity-item:before {
+        content: '';
+        position: absolute;
+        left: 0.5rem;
+        top: 0.5rem;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #6c757d;
+        z-index: 1;
+    }
+
+    [dir="rtl"] .activity-item:before {
+        left: auto;
+        right: 0.5rem;
+    }
+
+    .activity-item:after {
+        content: '';
+        position: absolute;
+        left: 0.95rem;
+        top: 1rem;
+        bottom: 0;
+        width: 2px;
+        background-color: #e9ecef;
+    }
+
+    [dir="rtl"] .activity-item:after {
+        left: auto;
+        right: 0.95rem;
+    }
+
+    .activity-item:last-child:after {
+        display: none;
+    }
+
+    .activity-time {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+
+    .activity-type {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .activity-details {
+        font-size: 0.875rem;
+    }
+
+    .order-item {
+        border-left: 3px solid #6c757d;
+        padding-left: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.2s ease;
+    }
+
+    [dir="rtl"] .order-item {
+        border-left: none;
+        border-right: 3px solid #6c757d;
+        padding-left: 0;
+        padding-right: 1rem;
+    }
+
+    .order-item:hover {
+        border-left-color: #007bff;
+        background-color: rgba(0, 123, 255, 0.05);
+    }
+
+    [dir="rtl"] .order-item:hover {
+        border-right-color: #007bff;
+    }
+
+    .order-item .order-id {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .order-item .order-date {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+    }
+
+    .order-item .order-total {
+        font-weight: 600;
+        color: #28a745;
+    }
+
+    .address-card {
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+
+    .address-type {
+        position: absolute;
+        top: -0.75rem;
+        right: 1rem;
+        background-color: #fff;
+        padding: 0 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #6c757d;
+    }
+
+    [dir="rtl"] .address-type {
+        right: auto;
+        left: 1rem;
+    }
+
+    .address-default {
+        position: absolute;
+        top: 0.5rem;
+        left: 0.5rem;
+        font-size: 0.75rem;
+        color: #28a745;
+    }
+
+    [dir="rtl"] .address-default {
+        left: auto;
+        right: 0.5rem;
+    }
+
+    .tab-pane {
+        padding: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- رأس صفحة المستخدم -->
+<div class="user-header">
+    <div class="row">
+        <div class="col-md-auto text-center">
+            {% if user_obj.avatar %}
+            <img src="{{ user_obj.avatar.url }}" alt="{{ user_obj.get_full_name }}" class="user-avatar-large">
+            {% else %}
+            <div class="avatar-placeholder-large bg-primary">
+                {{ user_obj.get_initials }}
+            </div>
+            {% endif %}
+        </div>
+        <div class="col user-info-container">
+            <h1 class="user-name">{{ user_obj.get_full_name|default:user_obj.username }}</h1>
+            <div class="user-username text-muted">@{{ user_obj.username }}</div>
+            <div class="d-flex align-items-center">
+                {% if user_obj.is_active %}
+                <span class="user-status user-active me-3">
+                    <i class="fas fa-check-circle me-1"></i> {% trans 'نشط' %}
+                </span>
+                {% else %}
+                <span class="user-status user-inactive me-3">
+                    <i class="fas fa-times-circle me-1"></i> {% trans 'غير نشط' %}
+                </span>
+                {% endif %}
+
+                {% if user_obj.role %}
+                <span class="badge bg-info me-2">{{ user_obj.role.name }}</span>
+                {% elif user_obj.is_superuser %}
+                <span class="badge bg-danger me-2">{% trans 'مدير النظام' %}</span>
+                {% elif user_obj.is_staff %}
+                <span class="badge bg-primary me-2">{% trans 'مشرف' %}</span>
+                {% else %}
+                <span class="badge bg-secondary me-2">{% trans 'مستخدم' %}</span>
+                {% endif %}
+
+                {% if user_obj.is_verified %}
+                <span class="badge bg-success me-2">
+                    <i class="fas fa-check-circle me-1"></i> {% trans 'موثق' %}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-auto text-end">
+            <div class="btn-group">
+                {% if perms.accounts.change_user %}
+                <a href="{% url 'dashboard:dashboard_user_edit' user_id=user_obj.id %}" class="btn btn-primary">
+                    <i class="fas fa-edit me-1"></i> {% trans 'تعديل' %}
+                </a>
+                {% endif %}
+                <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="visually-hidden">Toggle Dropdown</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    {% if perms.accounts.delete_user and not user_obj.is_superuser and user_obj != request.user %}
+                    <li>
+                        <a href="#" class="dropdown-item text-danger btn-delete-user" data-user-id="{{ user_obj.id }}" data-bs-toggle="modal" data-bs-target="#deleteUserModal">
+                            <i class="fas fa-trash me-1"></i> {% trans 'حذف' %}
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li>
+                        <a href="mailto:{{ user_obj.email }}" class="dropdown-item">
+                            <i class="fas fa-envelope me-1"></i> {% trans 'مراسلة' %}
+                        </a>
+                    </li>
+                    {% if perms.accounts.reset_user_password %}
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#resetPasswordModal">
+                            <i class="fas fa-key me-1"></i> {% trans 'إعادة تعيين كلمة المرور' %}
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- تبويبات المعلومات -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white">
+        <ul class="nav nav-tabs card-header-tabs" id="userTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab" aria-controls="info" aria-selected="true">
+                    <i class="fas fa-info-circle me-1"></i> {% trans 'المعلومات الأساسية' %}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="false">
+                    <i class="fas fa-user me-1"></i> {% trans 'الملف الشخصي' %}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="addresses-tab" data-bs-toggle="tab" data-bs-target="#addresses" type="button" role="tab" aria-controls="addresses" aria-selected="false">
+                    <i class="fas fa-map-marker-alt me-1"></i> {% trans 'العناوين' %}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab" aria-controls="orders" aria-selected="false">
+                    <i class="fas fa-shopping-cart me-1"></i> {% trans 'الطلبات' %}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="activity-tab" data-bs-toggle="tab" data-bs-target="#activity" type="button" role="tab" aria-controls="activity" aria-selected="false">
+                    <i class="fas fa-history me-1"></i> {% trans 'النشاط' %}
+                </button>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body p-0">
+        <div class="tab-content" id="userTabsContent">
+            <!-- المعلومات الأساسية -->
+            <div class="tab-pane fade show active" id="info" role="tabpanel" aria-labelledby="info-tab">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card info-card mb-4">
+                            <div class="card-header">
+                                <i class="fas fa-user-circle me-2"></i> {% trans 'معلومات الحساب' %}
+                            </div>
+                            <div class="card-body">
+                                <ul class="info-list">
+                                    <li>
+                                        <div class="info-label">{% trans 'اسم المستخدم' %}</div>
+                                        <div class="info-value">{{ user_obj.username }}</div>
+                                    </li>
+                                    <li>
+                                        <div class="info-label">{% trans 'البريد الإلكتروني' %}</div>
+                                        <div class="info-value">{{ user_obj.email }}</div>
+                                    </li>
+                                    <li>
+                                        <div class="info-label">{% trans 'تاريخ التسجيل' %}</div>
+                                        <div class="info-value">{{ user_obj.date_joined|date:"Y/m/d - g:i a" }}</div>
+                                    </li>
+                                    <li>
+                                        <div class="info-label">{% trans 'آخر تسجيل دخول' %}</div>
+                                        <div class="info-value">{{ user_obj.last_login|date:"Y/m/d - g:i a"|default:"لم يسجل الدخول بعد" }}</div>
+                                    </li>
+                                    <li>
+                                        <div class="info-label">{% trans 'الدور' %}</div>
+                                        <div class="info-value">
+                                            {% if user_obj.role %}
+                                            {{ user_obj.role.name }}
+                                            {% elif user_obj.is_superuser %}
+                                            {% trans 'مدير النظام' %}
+                                            {% elif user_obj.is_staff %}
+                                            {% trans 'مشرف' %}
+                                            {% else %}
+                                            {% trans 'مستخدم' %}
+                                            {% endif %}
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card info-card mb-4">
+                            <div class="card-header">
+                                <i class="fas fa-id-card me-2"></i> {% trans 'المعلومات الشخصية' %}
+                            </div>
+                            <div class="card-body">
+                                <ul class="info-list">
+                                    <li>
+                                        <div class="info-label">{% trans 'الاسم الكامل' %}</div>
+                                        <div class="info-value">{{ user_obj.get_full_name|default:"-" }}</div>
+                                    </li>
+                                    <li>
+                                        <div class="info-label">{% trans 'رقم الهاتف' %}</div>
+                                        <div class="info-value">{{ user_obj.phone_number|phone_format|default:"-" }}</div>
+                                    </li>
+                                    <li>
+                                        <div class="info-label">{% trans 'تاريخ الميلاد' %}</div>
+                                        <div class="info-value">{{ user_obj.birth_date|date:"Y/m/d"|default:"-" }}</div>
+                                    </li>
+                                    <li>
+                                        <div class="info-label">{% trans 'الجنس' %}</div>
+                                        <div class="info-value">
+                                            {% if user_obj.gender == 'M' %}
+                                            {% trans 'ذكر' %}
+                                            {% elif user_obj.gender == 'F' %}
+                                            {% trans 'أنثى' %}
+                                            {% elif user_obj.gender == 'O' %}
+                                            {% trans 'آخر' %}
+                                            {% else %}
+                                            -
+                                            {% endif %}
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="info-label">{% trans 'اللغة المفضلة' %}</div>
+                                        <div class="info-value">
+                                            {% if user_obj.language == 'ar' %}
+                                            <i class="flag-icon flag-icon-jo me-1"></i> {% trans 'العربية' %}
+                                            {% elif user_obj.language == 'en' %}
+                                            <i class="flag-icon flag-icon-us me-1"></i> {% trans 'الإنجليزية' %}
+                                            {% else %}
+                                            -
+                                            {% endif %}
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card info-card mb-4">
+                            <div class="card-header">
+                                <i class="fas fa-map-marked-alt me-2"></i> {% trans 'معلومات العنوان' %}
+                            </div>
+                            <div class="card-body">
+                                <ul class="info-list">
+                                    <li>
+                                        <div class="info-label">{% trans 'العنوان' %}</div>
+                                        <div class="info-value">{{ user_obj.address|default:"-" }}</div>
+                                    </li>
+                                    <li>
+                                        <div class="info-label">{% trans 'المدينة' %}</div>
+                                        <div class="info-value">{{ user_obj.city|default:"-" }}</div>
+                                    </li>
+                                    <li>
+                                        <div class="info-label">{% trans 'الدولة' %}</div>
+                                        <div class="info-value">{{ user_obj.country|default:"-" }}</div>
+                                    </li>
+                                    <li>
+                                        <div class="info-label">{% trans 'الرمز البريدي' %}</div>
+                                        <div class="info-value">{{ user_obj.postal_code|default:"-" }}</div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card info-card mb-4">
+                            <div class="card-header">
+                                <i class="fas fa-chart-line me-2"></i> {% trans 'إحصائيات المستخدم' %}
+                            </div>
+                            <div class="card-body">
+                                <ul class="info-list">
+                                    <li>
+                                        <div class="info-label">{% trans 'إجمالي الطلبات' %}</div>
+                                        <div class="info-value">{{ total_orders|default:"0" }}</div>
+                                    </li>
+                                    <li>
+                                        <div class="info-label">{% trans 'إجمالي المبلغ المنفق' %}</div>
+                                        <div class="info-value">{{ total_spent|floatformat:2 }} د.ا</div>
+                                    </li>
+                                    <li>
+                                        <div class="info-label">{% trans 'آخر نشاط' %}</div>
+                                        <div class="info-value">{{ user_obj.last_activity|date:"Y/m/d - g:i a"|default:"-" }}</div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- الملف الشخصي -->
+            <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+                {% if profile %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card info-card mb-4">
+                            <div class="card-header">
+                                <i class="fas fa-user-tag me-2"></i> {% trans 'معلومات الملف الشخصي' %}
+                            </div>
+                            <div class="card-body">
+                                <ul class="info-list">
+                                    <li>
+                                        <div class="info-label">{% trans 'نبذة شخصية' %}</div>
+                                        <div class="info-value">{{ profile.bio|default:"-" }}</div>
+                                    </li>
+                                    <li>
+                                        <div class="info-label">{% trans 'المهنة' %}</div>
+                                        <div class="info-value">{{ profile.profession|default:"-" }}</div>
+                                    </li>
+                                    <li>
+                                        <div class="info-label">{% trans 'الشركة' %}</div>
+                                        <div class="info-value">{{ profile.company|default:"-" }}</div>
+                                    </li>
+                                    <li>
+                                        <div class="info-label">{% trans 'الاهتمامات' %}</div>
+                                        <div class="info-value">{{ profile.interests|default:"-" }}</div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card info-card mb-4">
+                            <div class="card-header">
+                                <i class="fas fa-share-alt me-2"></i> {% trans 'روابط التواصل الاجتماعي' %}
+                            </div>
+                            <div class="card-body">
+                                <ul class="info-list">
+                                    <li>
+                                        <div class="info-label">{% trans 'الموقع الشخصي' %}</div>
+                                        <div class="info-value">
+                                            {% if profile.website %}
+                                            <a href="{{ profile.website }}" target="_blank">{{ profile.website }}</a>
+                                            {% else %}
+                                            -
+                                            {% endif %}
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="info-label">{% trans 'تويتر' %}</div>
+                                        <div class="info-value">{{ profile.twitter|default:"-" }}</div>
+                                    </li>
+                                    <li>
+                                        <div class="info-label">{% trans 'فيسبوك' %}</div>
+                                        <div class="info-value">{{ profile.facebook|default:"-" }}</div>
+                                    </li>
+                                    <li>
+                                        <div class="info-label">{% trans 'انستغرام' %}</div>
+                                        <div class="info-value">{{ profile.instagram|default:"-" }}</div>
+                                    </li>
+                                    <li>
+                                        <div class="info-label">{% trans 'لينكد إن' %}</div>
+                                        <div class="info-value">{{ profile.linkedin|default:"-" }}</div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-user-circle fa-3x text-muted mb-3"></i>
+                    <p>{% trans 'لم يتم إنشاء ملف شخصي لهذا المستخدم بعد' %}</p>
+                    {% if perms.accounts.change_userprofile %}
+                    <a href="{% url 'dashboard:dashboard_user_edit' user_id=user_obj.id %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i> {% trans 'إنشاء ملف شخصي' %}
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- العناوين -->
+            <div class="tab-pane fade" id="addresses" role="tabpanel" aria-labelledby="addresses-tab">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="mb-0">{% trans 'عناوين المستخدم' %}</h5>
+                    {% if perms.accounts.add_useraddress %}
+                        <a href="{% url 'dashboard:dashboard_user_address_create' user_id=user_obj.id %}"
+                           class="btn btn-sm btn-primary">
+                            <i class="fas fa-plus me-1"></i> {% trans 'إضافة عنوان جديد' %}
+                        </a>
+                    {% endif %}
+                </div>
+
+                {% if addresses %}
+                <div class="row">
+                    {% for address in addresses %}
+                    <div class="col-md-6 mb-4">
+                        <div class="address-card">
+                            <div class="address-type">
+                                {% if address.type == 'home' %}
+                                <i class="fas fa-home me-1"></i> {% trans 'المنزل' %}
+                                {% elif address.type == 'work' %}
+                                <i class="fas fa-briefcase me-1"></i> {% trans 'العمل' %}
+                                {% else %}
+                                <i class="fas fa-map-marker-alt me-1"></i> {% trans 'آخر' %}
+                                {% endif %}
+                            </div>
+
+                            {% if address.is_default %}
+                            <div class="address-default">
+                                <i class="fas fa-check-circle me-1"></i> {% trans 'العنوان الافتراضي' %}
+                            </div>
+                            {% endif %}
+
+                            <h6 class="mb-3">{{ address.label }}</h6>
+
+                            <div class="mb-2">{{ address.full_name }}</div>
+                            <div class="mb-2">{{ address.address_line_1 }}</div>
+                            {% if address.address_line_2 %}
+                            <div class="mb-2">{{ address.address_line_2 }}</div>
+                            {% endif %}
+                            <div class="mb-2">{{ address.city }}{% if address.state %}, {{ address.state }}{% endif %} {{ address.postal_code }}</div>
+                            <div class="mb-2">{{ address.country }}</div>
+                            {% if address.phone_number %}
+                            <div class="mb-2">{{ address.phone_number|phone_format }}</div>
+                            {% endif %}
+
+                            <div class="d-flex justify-content-end mt-3">
+                                {% if perms.accounts.change_useraddress %}
+                                <a href="{% url 'dashboard:dashboard_user_edit' user_id=user_obj.id %}?address_id={{ address.id }}" class="btn btn-sm btn-outline-primary me-2">
+                                    <i class="fas fa-edit"></i> {% trans 'تعديل' %}
+                                </a>
+                                {% endif %}
+                                {% if perms.accounts.delete_useraddress %}
+                                <button class="btn btn-sm btn-outline-danger btn-delete-address" data-address-id="{{ address.id }}">
+                                    <i class="fas fa-trash"></i> {% trans 'حذف' %}
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
+                    <p>{% trans 'لا توجد عناوين لهذا المستخدم حتى الآن' %}</p>
+                    {% if perms.accounts.add_useraddress %}
+                        <a href="{% url 'dashboard:dashboard_user_address_create' user_id=user_obj.id %}"
+                           class="btn btn-sm btn-primary">
+                            <i class="fas fa-plus me-1"></i> {% trans 'إضافة عنوان جديد' %}
+                        </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- الطلبات -->
+            <div class="tab-pane fade" id="orders" role="tabpanel" aria-labelledby="orders-tab">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="mb-0">{% trans 'طلبات المستخدم' %}</h5>
+                    <a href="{% url 'dashboard:dashboard_orders' %}?user_id={{ user_obj.id }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-search me-1"></i> {% trans 'عرض جميع الطلبات' %}
+                    </a>
+                </div>
+
+                {% if orders %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>{% trans 'رقم الطلب' %}</th>
+                                <th>{% trans 'التاريخ' %}</th>
+                                <th>{% trans 'الحالة' %}</th>
+                                <th>{% trans 'طريقة الدفع' %}</th>
+                                <th>{% trans 'المجموع' %}</th>
+                                <th>{% trans 'الإجراءات' %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr>
+                                <td><strong>#{{ order.order_number }}</strong></td>
+                                <td>{{ order.created_at|date:"Y/m/d" }}</td>
+                                <td>{{ order.status|status_badge }}</td>
+                                <td>{{ order.payment_method }}</td>
+                                <td><strong>{{ order.grand_total|floatformat:2 }} د.ا</strong></td>
+                                <td>
+                                    <a href="{% url 'dashboard:dashboard_order_detail' order_id=order.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i> {% trans 'عرض' %}
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                    <p>{% trans 'لا توجد طلبات لهذا المستخدم حتى الآن' %}</p>
+                    {% if perms.orders.add_order %}
+                    <a href="{% url 'dashboard:dashboard_order_create' %}?user_id={{ user_obj.id }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i> {% trans 'إنشاء طلب جديد' %}
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- النشاط -->
+            <div class="tab-pane fade" id="activity" role="tabpanel" aria-labelledby="activity-tab">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="mb-0">{% trans 'سجل نشاط المستخدم' %}</h5>
+                </div>
+
+                {% if activities %}
+                <div class="activity-list">
+                    {% for activity in activities %}
+                    <div class="activity-item">
+                        <div class="activity-time">{{ activity.timestamp|date:"Y/m/d - g:i a" }}</div>
+                        <div class="activity-type">{{ activity.activity_type }}</div>
+                        <div class="activity-details">{{ activity.description }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                    <p>{% trans 'لا يوجد سجل نشاط لهذا المستخدم حتى الآن' %}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- نافذة تأكيد الحذف -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteUserModalLabel">{% trans 'تأكيد الحذف' %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>{% trans 'هل أنت متأكد من رغبتك في حذف هذا المستخدم؟' %}</p>
+                <p class="text-danger">{% trans 'هذا الإجراء لا يمكن التراجع عنه.' %}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans 'إلغاء' %}</button>
+                <form action="{% url 'dashboard:dashboard_user_delete' user_id=user_obj.id %}" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">{% trans 'حذف' %}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- نافذة إعادة تعيين كلمة المرور -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resetPasswordModalLabel">{% trans 'إعادة تعيين كلمة المرور' %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'dashboard:dashboard_user_reset_password' user_id=user_obj.id %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label">{% trans 'كلمة المرور الجديدة' %}</label>
+                        <input type="password" class="form-control" id="new_password" name="new_password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">{% trans 'تأكيد كلمة المرور' %}</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="send_email" name="send_email" checked>
+                        <label class="form-check-label" for="send_email">
+                            {% trans 'إرسال بريد إلكتروني للمستخدم' %}
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans 'إلغاء' %}</button>
+                    <button type="submit" class="btn btn-primary">{% trans 'إعادة تعيين' %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // التحقق من تطابق كلمة المرور
+        $('#resetPasswordModal form').on('submit', function(e) {
+            var password = $('#new_password').val();
+            var confirmPassword = $('#confirm_password').val();
+
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                alert("{% trans 'كلمة المرور وتأكيدها غير متطابقين' %}");
+            }
+        });
+
+        // حذف العنوان
+        $('.btn-delete-address').on('click', function() {
+            if (confirm("{% trans 'هل أنت متأكد من رغبتك في حذف هذا العنوان؟' %}")) {
+                var addressId = $(this).data('address-id');
+                $.ajax({
+                    url: '{% url "dashboard:dashboard_user_address_delete" %}',
+                    type: 'POST',
+                    data: {
+                        'address_id': addressId,
+                        'csrfmiddlewaretoken': '{{ csrf_token }}'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            location.reload();
+                        } else {
+                            alert(response.message);
+                        }
+                    }
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

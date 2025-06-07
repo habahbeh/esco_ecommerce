@@ -1,0 +1,105 @@
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+<div class="mb-3">
+    <label for="{{ form.bio.id_for_label }}" class="form-label">{% trans 'نبذة شخصية' %}</label>
+    {{ form.bio|add_class:"form-control" }}
+    <div class="form-text">{{ form.bio.help_text }}</div>
+    {% if form.bio.errors %}
+    <div class="invalid-feedback d-block">{{ form.bio.errors }}</div>
+    {% endif %}
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label for="{{ form.profession.id_for_label }}" class="form-label">{% trans 'المهنة' %}</label>
+        {{ form.profession|add_class:"form-control" }}
+        {% if form.profession.errors %}
+        <div class="invalid-feedback d-block">{{ form.profession.errors }}</div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label for="{{ form.company.id_for_label }}" class="form-label">{% trans 'الشركة' %}</label>
+        {{ form.company|add_class:"form-control" }}
+        {% if form.company.errors %}
+        <div class="invalid-feedback d-block">{{ form.company.errors }}</div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="mb-3">
+    <label for="{{ form.interests.id_for_label }}" class="form-label">{% trans 'الاهتمامات' %}</label>
+    {{ form.interests|add_class:"form-control" }}
+    <div class="form-text">{{ form.interests.help_text }}</div>
+    {% if form.interests.errors %}
+    <div class="invalid-feedback d-block">{{ form.interests.errors }}</div>
+    {% endif %}
+</div>
+
+<h5 class="mb-3 mt-4">{% trans 'روابط التواصل الاجتماعي' %}</h5>
+
+<div class="mb-3">
+    <label for="{{ form.website.id_for_label }}" class="form-label">{% trans 'الموقع الشخصي' %}</label>
+    {{ form.website|add_class:"form-control"|add_attr:"dir:ltr" }}
+    {% if form.website.errors %}
+    <div class="invalid-feedback d-block">{{ form.website.errors }}</div>
+    {% endif %}
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label for="{{ form.twitter.id_for_label }}" class="form-label">{% trans 'تويتر' %}</label>
+        <div class="input-group">
+            <span class="input-group-text">@</span>
+            {{ form.twitter|add_class:"form-control"|add_attr:"dir:ltr" }}
+        </div>
+        {% if form.twitter.errors %}
+        <div class="invalid-feedback d-block">{{ form.twitter.errors }}</div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label for="{{ form.facebook.id_for_label }}" class="form-label">{% trans 'فيسبوك' %}</label>
+        {{ form.facebook|add_class:"form-control"|add_attr:"dir:ltr" }}
+        {% if form.facebook.errors %}
+        <div class="invalid-feedback d-block">{{ form.facebook.errors }}</div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label for="{{ form.instagram.id_for_label }}" class="form-label">{% trans 'انستغرام' %}</label>
+        <div class="input-group">
+            <span class="input-group-text">@</span>
+            {{ form.instagram|add_class:"form-control"|add_attr:"dir:ltr" }}
+        </div>
+        {% if form.instagram.errors %}
+        <div class="invalid-feedback d-block">{{ form.instagram.errors }}</div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label for="{{ form.linkedin.id_for_label }}" class="form-label">{% trans 'لينكد إن' %}</label>
+        {{ form.linkedin|add_class:"form-control"|add_attr:"dir:ltr" }}
+        {% if form.linkedin.errors %}
+        <div class="invalid-feedback d-block">{{ form.linkedin.errors }}</div>
+        {% endif %}
+    </div>
+</div>
+
+<h5 class="mb-3 mt-4">{% trans 'تفضيلات الإشعارات' %}</h5>
+
+<div class="row">
+    {% for field_name, field in notification_fields.items %}
+    <div class="col-md-6 mb-3">
+        <div class="form-check">
+            {{ form|dict_item:field|add_class:"form-check-input" }}
+            <label class="form-check-label" for="{{ form|dict_item:field.id_for_label }}">
+                {{ form|dict_item:field.label }}
+            </label>
+        </div>
+    </div>
+    {% endfor %}
+</div>

@@ -1,0 +1,113 @@
+{% load i18n %}
+
+<div class="search-box">
+    <input type="text" class="form-control search-input" id="permissionSearch" placeholder="{% trans 'البحث في الصلاحيات...' %}">
+    <span class="search-icon"><i class="fas fa-search"></i></span>
+</div>
+
+<div class="permissions-container">
+    {% regroup permissions by content_type.app_label as app_list %}
+
+    {% for app in app_list %}
+    <div class="app-permissions" data-app="{{ app.grouper }}">
+        <div class="app-header">
+            <div class="app-title">
+                <span>{{ app.grouper|title }}</span>
+                <span class="permission-count">
+                    <span class="app-selected-count">0</span> / {{ app.list|length }}
+                </span>
+            </div>
+        </div>
+
+        <div class="app-permissions-list">
+            {% regroup app.list by content_type.model as model_list %}
+
+            {% for model in model_list %}
+            <div class="model-permissions" data-model="{{ model.grouper }}">
+                <div class="model-title">
+                    {{ model.grouper|title }}
+                </div>
+
+                <div class="permission-group">
+                    {% for permission in model.list %}
+                    <div class="permission-row">
+                        <div class="form-check">
+                            <input class="form-check-input permission-checkbox" type="checkbox"
+                                   id="permission_{{ permission.id }}"
+                                   name="permissions"
+                                   value="{{ permission.id }}"
+                                   data-app="{{ app.grouper }}"
+                                   {% if role and permission in role.permissions.all %}checked{% endif %}>
+                            <label class="permission-name" for="permission_{{ permission.id }}">
+                                {{ permission.name }}
+                            </label>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    $(document).ready(function() {
+        // تحديث عدد الصلاحيات المحددة
+        function updateSelectedCount() {
+            var totalChecked = $('.permission-checkbox:checked').length;
+            var totalPermissions = $('.permission-checkbox').length;
+            var percentage = (totalPermissions > 0) ? Math.round((totalChecked / totalPermissions) * 100) : 0;
+
+            $('#selectedPermissionsCount').text(totalChecked);
+            $('#permissionsProgressBar').css('width', percentage + '%').text(percentage + '%').attr('aria-valuenow', percentage);
+
+            // تحديث عدد الصلاحيات المحددة لكل تطبيق
+            $('.app-permissions').each(function() {
+                var app = $(this).data('app');
+                var appChecked = $('.permission-checkbox[data-app="' + app + '"]:checked').length;
+                var appTotal = $('.permission-checkbox[data-app="' + app + '"]').length;
+                $(this).find('.app-selected-count').text(appChecked);
+            });
+        }
+
+        // تحديث عند تحميل الصفحة
+        updateSelectedCount();
+
+        // تحديث عند تغيير حالة الاختيار
+        $('.permission-checkbox').on('change', function() {
+            updateSelectedCount();
+        });
+
+        // البحث في الصلاحيات
+        $('#permissionSearch').on('keyup', function() {
+            var value = $(this).val().toLowerCase();
+
+            if (value.length > 0) {
+                // إخفاء جميع الأقسام والتطبيقات
+                $('.app-permissions, .model-permissions').hide();
+
+                // البحث في كل صف من صفوف الصلاحيات
+                $('.permission-row').each(function() {
+                    var permissionText = $(this).find('.permission-name').text().toLowerCase();
+
+                    if (permissionText.indexOf(value) > -1) {
+                        // إظهار صف الصلاحية المطابق
+                        $(this).show();
+
+                        // إظهار القسم والتطبيق الأب
+                        $(this).closest('.model-permissions').show();
+                        $(this).closest('.app-permissions').show();
+                    } else {
+                        // إخفاء صف الصلاحية غير المطابق
+                        $(this).hide();
+                    }
+                });
+            } else {
+                // إظهار جميع الأقسام والتطبيقات والصفوف
+                $('.app-permissions, .model-permissions, .permission-row').show();
+            }
+        });
+    });
+</script>

@@ -1,0 +1,230 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+{% load static %}
+{% load dashboard_tags %}
+
+{% block title %}{% trans 'عناوين المستخدم' %}{% endblock %}
+{% block page_title %}{% trans 'عناوين المستخدم' %}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_users' %}">{% trans 'المستخدمين' %}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_user_detail' user_id=user.id %}">{{ user.get_full_name|default:user.username }}</a></li>
+{% endblock %}
+
+{% block current_page %}{% trans 'العناوين' %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .address-card {
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        transition: all 0.3s ease;
+        height: 100%;
+        position: relative;
+    }
+
+    .address-card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        transform: translateY(-5px);
+    }
+
+    .address-type {
+        position: absolute;
+        top: -0.75rem;
+        right: 1rem;
+        background-color: #fff;
+        padding: 0 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #6c757d;
+    }
+
+    [dir="rtl"] .address-type {
+        right: auto;
+        left: 1rem;
+    }
+
+    .address-badge {
+        position: absolute;
+        top: 0.5rem;
+        left: 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    [dir="rtl"] .address-badge {
+        left: auto;
+        right: 0.5rem;
+    }
+
+    .address-actions {
+        position: absolute;
+        bottom: 1rem;
+        right: 1rem;
+    }
+
+    [dir="rtl"] .address-actions {
+        right: auto;
+        left: 1rem;
+    }
+
+    .address-content {
+        padding: 1.5rem;
+    }
+
+    .address-label {
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+    }
+
+    .address-details {
+        margin-bottom: 2rem;
+    }
+
+    .address-detail-item {
+        margin-bottom: 0.5rem;
+    }
+
+    .address-empty {
+        text-align: center;
+        padding: 3rem;
+    }
+
+    .address-empty-icon {
+        font-size: 3rem;
+        color: #e9ecef;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0">{% trans 'عناوين المستخدم' %}</h3>
+    {% if perms.accounts.add_useraddress %}
+    <a href="{% url 'dashboard:dashboard_user_address_create' user_id=user.id %}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i> {% trans 'إضافة عنوان جديد' %}
+    </a>
+    {% endif %}
+</div>
+
+<div class="row">
+    {% if addresses %}
+        {% for address in addresses %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="address-card">
+                <div class="address-content">
+                    <div class="address-type">
+                        {% if address.type == 'home' %}
+                        <i class="fas fa-home me-1"></i> {% trans 'المنزل' %}
+                        {% elif address.type == 'work' %}
+                        <i class="fas fa-briefcase me-1"></i> {% trans 'العمل' %}
+                        {% else %}
+                        <i class="fas fa-map-marker-alt me-1"></i> {% trans 'آخر' %}
+                        {% endif %}
+                    </div>
+
+                    <div class="address-badge">
+                        {% if address.is_default %}
+                        <span class="badge bg-success">{% trans 'العنوان الافتراضي' %}</span>
+                        {% endif %}
+                        {% if address.is_shipping_default %}
+                        <span class="badge bg-info d-block mt-1">{% trans 'عنوان الشحن الافتراضي' %}</span>
+                        {% endif %}
+                        {% if address.is_billing_default %}
+                        <span class="badge bg-warning text-dark d-block mt-1">{% trans 'عنوان الفوترة الافتراضي' %}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="address-label">{{ address.label }}</div>
+
+                    <div class="address-details">
+                        <div class="address-detail-item">{{ address.full_name }}</div>
+                        <div class="address-detail-item">{{ address.address_line_1 }}</div>
+                        {% if address.address_line_2 %}
+                        <div class="address-detail-item">{{ address.address_line_2 }}</div>
+                        {% endif %}
+                        <div class="address-detail-item">
+                            {{ address.city }}{% if address.state %}, {{ address.state }}{% endif %} {{ address.postal_code }}
+                        </div>
+                        <div class="address-detail-item">{{ address.country }}</div>
+                        {% if address.phone_number %}
+                        <div class="address-detail-item">{{ address.phone_number|phone_format }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="address-actions">
+                        {% if perms.accounts.change_useraddress %}
+                            <a href="{% url 'dashboard:dashboard_user_address_edit' user_id=user.id address_id=address.id %}"
+                               class="btn btn-sm btn-outline-primary me-1">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        {% endif %}
+                        {% if perms.accounts.delete_useraddress %}
+                            <button type="button" class="btn btn-sm btn-outline-danger btn-delete-address"
+                                    data-address-id="{{ address.id }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body address-empty">
+                <div class="address-empty-icon">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <h5>{% trans 'لا توجد عناوين لهذا المستخدم حتى الآن' %}</h5>
+                <p class="text-muted">{% trans 'قم بإضافة عنوان جديد باستخدام الزر أعلاه.' %}</p>
+                {% if perms.accounts.add_useraddress %}
+                <a href="{% url 'dashboard:dashboard_user_address_create' user_id=user.id %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> {% trans 'إضافة عنوان جديد' %}
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- نافذة تأكيد الحذف -->
+<div class="modal fade" id="deleteAddressModal" tabindex="-1" aria-labelledby="deleteAddressModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteAddressModalLabel">{% trans 'تأكيد الحذف' %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>{% trans 'هل أنت متأكد من رغبتك في حذف هذا العنوان؟' %}</p>
+                <p class="text-danger">{% trans 'هذا الإجراء لا يمكن التراجع عنه.' %}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans 'إلغاء' %}</button>
+                <form id="deleteAddressForm" action="{% url 'dashboard:dashboard_user_address_delete' %}" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="address_id" id="address_id_to_delete" value="">
+                    <button type="submit" class="btn btn-danger">{% trans 'حذف' %}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // معالجة نقر زر حذف العنوان
+        $('.btn-delete-address').on('click', function() {
+            var addressId = $(this).data('address-id');
+            $('#address_id_to_delete').val(addressId);
+            $('#deleteAddressModal').modal('show');
+        });
+    });
+</script>
+{% endblock %}

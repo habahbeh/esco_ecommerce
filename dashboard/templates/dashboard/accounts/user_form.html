@@ -1,0 +1,820 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ form_title }}{% endblock %}
+{% block page_title %}{{ form_title }}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_users' %}">{% trans 'المستخدمين' %}</a></li>
+{% endblock %}
+
+{% block current_page %}{{ form_title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/css/bootstrap-datepicker3.min.css">
+<style>
+    .form-card {
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+    }
+
+    .form-section-title {
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e9ecef;
+        font-weight: 600;
+    }
+
+    .required-field label::after {
+        content: " *";
+        color: red;
+    }
+
+    .preview-avatar {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-bottom: 1rem;
+    }
+
+    .avatar-placeholder {
+        width: 150px;
+        height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background-color: #e9ecef;
+        color: #6c757d;
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .nav-tabs .nav-link {
+        color: #6c757d;
+    }
+
+    .nav-tabs .nav-link.active {
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .tab-pane {
+        padding: 1.5rem;
+    }
+
+    .permissions-container {
+        max-height: 400px;
+        overflow-y: auto;
+        padding-right: 1rem;
+    }
+
+    [dir="rtl"] .permissions-container {
+        padding-right: 0;
+        padding-left: 1rem;
+    }
+
+    .permissions-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .permissions-group-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #495057;
+    }
+
+    .permissions-list {
+        padding-left: 1.5rem;
+    }
+
+    [dir="rtl"] .permissions-list {
+        padding-left: 0;
+        padding-right: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card form-card mb-4">
+    <div class="card-header bg-white py-3">
+        <ul class="nav nav-tabs card-header-tabs" id="userFormTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab" aria-controls="basic" aria-selected="true">
+                    <i class="fas fa-user me-1"></i> {% trans 'المعلومات الأساسية' %}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="false">
+                    <i class="fas fa-id-card me-1"></i> {% trans 'الملف الشخصي' %}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="permissions-tab" data-bs-toggle="tab" data-bs-target="#permissions" type="button" role="tab" aria-controls="permissions" aria-selected="false">
+                    <i class="fas fa-lock me-1"></i> {% trans 'الصلاحيات' %}
+                </button>
+            </li>
+            {% if user_obj %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="address-tab" data-bs-toggle="tab" data-bs-target="#address" type="button" role="tab" aria-controls="address" aria-selected="false">
+                    <i class="fas fa-map-marker-alt me-1"></i> {% trans 'العناوين' %}
+                </button>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data" id="userForm">
+            {% csrf_token %}
+
+            <div class="tab-content" id="userFormTabsContent">
+                <!-- المعلومات الأساسية -->
+                <div class="tab-pane fade show active" id="basic" role="tabpanel" aria-labelledby="basic-tab">
+                    <div class="row">
+                        <div class="col-md-3 text-center">
+                            <div class="mb-4">
+                                {% if user_obj and user_obj.avatar %}
+                                <img src="{{ user_obj.avatar.url }}" alt="{{ user_obj.get_full_name }}" class="preview-avatar" id="avatar-preview">
+                                {% else %}
+                                <div class="avatar-placeholder" id="avatar-placeholder">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <img src="" alt="" class="preview-avatar d-none" id="avatar-preview">
+                                {% endif %}
+
+                                <div class="mb-3">
+                                    <label for="avatar" class="form-label">{% trans 'الصورة الشخصية' %}</label>
+                                    <input class="form-control" type="file" id="avatar" name="avatar" accept="image/*">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-section">
+                                <h5 class="form-section-title">{% trans 'معلومات الحساب' %}</h5>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3 required-field">
+                                        <label for="username" class="form-label">{% trans 'اسم المستخدم' %}</label>
+                                        <input type="text" class="form-control" id="username" name="username" value="{{ user_obj.username|default:'' }}" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3 required-field">
+                                        <label for="email" class="form-label">{% trans 'البريد الإلكتروني' %}</label>
+                                        <input type="email" class="form-control" id="email" name="email" value="{{ user_obj.email|default:'' }}" required>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="password" class="form-label">{% trans 'كلمة المرور' %}{% if not user_obj %} *{% endif %}</label>
+                                        <input type="password" class="form-control" id="password" name="password" {% if not user_obj %}required{% endif %}>
+                                        {% if user_obj %}
+                                        <div class="form-text">{% trans 'اترك هذا الحقل فارغاً إذا كنت لا تريد تغيير كلمة المرور' %}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="confirm_password" class="form-label">{% trans 'تأكيد كلمة المرور' %}{% if not user_obj %} *{% endif %}</label>
+                                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" {% if not user_obj %}required{% endif %}>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <h5 class="form-section-title">{% trans 'المعلومات الشخصية' %}</h5>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="first_name" class="form-label">{% trans 'الاسم الأول' %}</label>
+                                        <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user_obj.first_name|default:'' }}">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="last_name" class="form-label">{% trans 'اسم العائلة' %}</label>
+                                        <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user_obj.last_name|default:'' }}">
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="phone_number" class="form-label">{% trans 'رقم الهاتف' %}</label>
+                                        <input type="text" class="form-control" id="phone_number" name="phone_number" value="{{ user_obj.phone_number|default:'' }}" dir="ltr">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="birth_date" class="form-label">{% trans 'تاريخ الميلاد' %}</label>
+                                        <input type="date" class="form-control datepicker" id="birth_date" name="birth_date" value="{{ user_obj.birth_date|date:'Y-m-d'|default:'' }}">
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="gender" class="form-label">{% trans 'الجنس' %}</label>
+                                        <select class="form-select" id="gender" name="gender">
+                                            <option value="">{% trans 'اختر الجنس' %}</option>
+                                            <option value="M" {% if user_obj.gender == 'M' %}selected{% endif %}>{% trans 'ذكر' %}</option>
+                                            <option value="F" {% if user_obj.gender == 'F' %}selected{% endif %}>{% trans 'أنثى' %}</option>
+                                            <option value="O" {% if user_obj.gender == 'O' %}selected{% endif %}>{% trans 'آخر' %}</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="language" class="form-label">{% trans 'اللغة المفضلة' %}</label>
+                                        <select class="form-select" id="language" name="language">
+                                            <option value="ar" {% if user_obj.language == 'ar' or not user_obj %}selected{% endif %}>{% trans 'العربية' %}</option>
+                                            <option value="en" {% if user_obj.language == 'en' %}selected{% endif %}>{% trans 'الإنجليزية' %}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <h5 class="form-section-title">{% trans 'معلومات العنوان' %}</h5>
+                                <div class="mb-3">
+                                    <label for="address" class="form-label">{% trans 'العنوان' %}</label>
+                                    <textarea class="form-control" id="address" name="address" rows="2">{{ user_obj.address|default:'' }}</textarea>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="city" class="form-label">{% trans 'المدينة' %}</label>
+                                        <input type="text" class="form-control" id="city" name="city" value="{{ user_obj.city|default:'' }}">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="country" class="form-label">{% trans 'الدولة' %}</label>
+                                        <input type="text" class="form-control" id="country" name="country" value="{{ user_obj.country|default:'' }}">
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="postal_code" class="form-label">{% trans 'الرمز البريدي' %}</label>
+                                    <input type="text" class="form-control" id="postal_code" name="postal_code" value="{{ user_obj.postal_code|default:'' }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- الملف الشخصي -->
+                <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+                    <div class="form-section">
+                        <h5 class="form-section-title">{% trans 'معلومات الملف الشخصي' %}</h5>
+                        <div class="mb-3">
+                            <label for="bio" class="form-label">{% trans 'نبذة شخصية' %}</label>
+                            <textarea class="form-control" id="bio" name="bio" rows="3">{{ profile.bio|default:'' }}</textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="profession" class="form-label">{% trans 'المهنة' %}</label>
+                                <input type="text" class="form-control" id="profession" name="profession" value="{{ profile.profession|default:'' }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="company" class="form-label">{% trans 'الشركة' %}</label>
+                                <input type="text" class="form-control" id="company" name="company" value="{{ profile.company|default:'' }}">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="interests" class="form-label">{% trans 'الاهتمامات' %}</label>
+                            <textarea class="form-control" id="interests" name="interests" rows="2">{{ profile.interests|default:'' }}</textarea>
+                            <div class="form-text">{% trans 'أدخل الاهتمامات مفصولة بفواصل' %}</div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h5 class="form-section-title">{% trans 'روابط التواصل الاجتماعي' %}</h5>
+                        <div class="mb-3">
+                            <label for="website" class="form-label">{% trans 'الموقع الشخصي' %}</label>
+                            <input type="url" class="form-control" id="website" name="website" value="{{ profile.website|default:'' }}" dir="ltr">
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="twitter" class="form-label">{% trans 'تويتر' %}</label>
+                                <input type="text" class="form-control" id="twitter" name="twitter" value="{{ profile.twitter|default:'' }}" dir="ltr">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="facebook" class="form-label">{% trans 'فيسبوك' %}</label>
+                                <input type="text" class="form-control" id="facebook" name="facebook" value="{{ profile.facebook|default:'' }}" dir="ltr">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="instagram" class="form-label">{% trans 'انستغرام' %}</label>
+                                <input type="text" class="form-control" id="instagram" name="instagram" value="{{ profile.instagram|default:'' }}" dir="ltr">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="linkedin" class="form-label">{% trans 'لينكد إن' %}</label>
+                                <input type="text" class="form-control" id="linkedin" name="linkedin" value="{{ profile.linkedin|default:'' }}" dir="ltr">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h5 class="form-section-title">{% trans 'تفضيلات الإشعارات' %}</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="notification_order_updates" name="notification_order_updates" {% if profile.notification_preferences.order_updates|default:True %}checked{% endif %}>
+                                    <label class="form-check-label" for="notification_order_updates">
+                                        {% trans 'تحديثات الطلبات' %}
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="notification_product_updates" name="notification_product_updates" {% if profile.notification_preferences.product_updates|default:True %}checked{% endif %}>
+                                    <label class="form-check-label" for="notification_product_updates">
+                                        {% trans 'تحديثات المنتجات' %}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="notification_promotions" name="notification_promotions" {% if profile.notification_preferences.promotions|default:True %}checked{% endif %}>
+                                    <label class="form-check-label" for="notification_promotions">
+                                        {% trans 'العروض والخصومات' %}
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="notification_newsletters" name="notification_newsletters" {% if profile.notification_preferences.newsletters|default:True %}checked{% endif %}>
+                                    <label class="form-check-label" for="notification_newsletters">
+                                        {% trans 'النشرات الإخبارية' %}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="notification_system_messages" name="notification_system_messages" {% if profile.notification_preferences.system_messages|default:True %}checked{% endif %}>
+                                    <label class="form-check-label" for="notification_system_messages">
+                                        {% trans 'رسائل النظام' %}
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="accept_marketing" name="accept_marketing" {% if user_obj.accept_marketing %}checked{% endif %}>
+                                    <label class="form-check-label" for="accept_marketing">
+                                        {% trans 'أوافق على تلقي رسائل تسويقية' %}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- الصلاحيات -->
+                <div class="tab-pane fade" id="permissions" role="tabpanel" aria-labelledby="permissions-tab">
+                    <div class="form-section">
+                        <h5 class="form-section-title">{% trans 'حالة الحساب والدور' %}</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if user_obj.is_active|default:True %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_active">
+                                        {% trans 'حساب نشط' %}
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="is_verified" name="is_verified" {% if user_obj.is_verified %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_verified">
+                                        {% trans 'حساب موثق' %}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="role" class="form-label">{% trans 'الدور' %}</label>
+                                <select class="form-select" id="role" name="role">
+                                    <option value="">{% trans 'بدون دور' %}</option>
+                                    {% for role in roles %}
+                                    <option value="{{ role.id }}" {% if user_obj.role.id == role.id %}selected{% endif %}>{{ role.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h5 class="form-section-title">{% trans 'صلاحيات النظام' %}</h5>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="is_staff" name="is_staff" {% if user_obj.is_staff %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_staff">
+                                        {% trans 'الوصول للوحة التحكم' %}
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="is_superuser" name="is_superuser" {% if user_obj.is_superuser %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_superuser">
+                                        {% trans 'مشرف كامل الصلاحيات' %}
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="is_product_reviewer" name="is_product_reviewer" {% if user_obj.is_product_reviewer %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_product_reviewer">
+                                        {% trans 'مراجع منتجات' %}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- العناوين -->
+                {% if user_obj %}
+                <div class="tab-pane fade" id="address" role="tabpanel" aria-labelledby="address-tab">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="mb-0">{% trans 'عناوين المستخدم' %}</h5>
+                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+                            <i class="fas fa-plus me-1"></i> {% trans 'إضافة عنوان جديد' %}
+                        </button>
+                    </div>
+
+                    <div id="addressList">
+                        {% if addresses %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>{% trans 'العنوان' %}</th>
+                                        <th>{% trans 'النوع' %}</th>
+                                        <th>{% trans 'المدينة' %}</th>
+                                        <th>{% trans 'الدولة' %}</th>
+                                        <th>{% trans 'الإعدادات' %}</th>
+                                        <th>{% trans 'الإجراءات' %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for address in addresses %}
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold">{{ address.label }}</div>
+                                            <small>{{ address.address_line_1 }}</small>
+                                        </td>
+                                        <td>
+                                            {% if address.type == 'home' %}
+                                            <span class="badge bg-primary">{% trans 'المنزل' %}</span>
+                                            {% elif address.type == 'work' %}
+                                            <span class="badge bg-info">{% trans 'العمل' %}</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary">{% trans 'آخر' %}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ address.city }}</td>
+                                        <td>{{ address.country }}</td>
+                                        <td>
+                                            {% if address.is_default %}
+                                            <span class="badge bg-success">{% trans 'العنوان الافتراضي' %}</span>
+                                            {% endif %}
+                                            {% if address.is_shipping_default %}
+                                            <span class="badge bg-info">{% trans 'عنوان الشحن الافتراضي' %}</span>
+                                            {% endif %}
+                                            {% if address.is_billing_default %}
+                                            <span class="badge bg-warning text-dark">{% trans 'عنوان الفوترة الافتراضي' %}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-outline-primary me-1 btn-edit-address" data-address-id="{{ address.id }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger btn-delete-address" data-address-id="{{ address.id }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
+                            <p>{% trans 'لا توجد عناوين لهذا المستخدم حتى الآن' %}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-end mt-4">
+                <a href="{% url 'dashboard:dashboard_users' %}" class="btn btn-secondary me-2">{% trans 'إلغاء' %}</a>
+                <button type="submit" class="btn btn-primary">{% trans 'حفظ' %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- نافذة إضافة عنوان -->
+<div class="modal fade" id="addAddressModal" tabindex="-1" aria-labelledby="addAddressModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAddressModalLabel">{% trans 'إضافة عنوان جديد' %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addressForm">
+                    <input type="hidden" id="address_id" name="address_id" value="">
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="address_label" class="form-label">{% trans 'تسمية العنوان' %} *</label>
+                            <input type="text" class="form-control" id="address_label" name="address_label" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="address_type" class="form-label">{% trans 'نوع العنوان' %}</label>
+                            <select class="form-select" id="address_type" name="address_type">
+                                <option value="home">{% trans 'المنزل' %}</option>
+                                <option value="work">{% trans 'العمل' %}</option>
+                                <option value="other">{% trans 'آخر' %}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="address_first_name" class="form-label">{% trans 'الاسم الأول' %} *</label>
+                            <input type="text" class="form-control" id="address_first_name" name="address_first_name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="address_last_name" class="form-label">{% trans 'اسم العائلة' %} *</label>
+                            <input type="text" class="form-control" id="address_last_name" name="address_last_name" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="address_line_1" class="form-label">{% trans 'سطر العنوان الأول' %} *</label>
+                        <input type="text" class="form-control" id="address_line_1" name="address_line_1" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="address_line_2" class="form-label">{% trans 'سطر العنوان الثاني' %}</label>
+                        <input type="text" class="form-control" id="address_line_2" name="address_line_2">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="address_city" class="form-label">{% trans 'المدينة' %} *</label>
+                            <input type="text" class="form-control" id="address_city" name="address_city" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="address_state" class="form-label">{% trans 'الولاية/المنطقة' %}</label>
+                            <input type="text" class="form-control" id="address_state" name="address_state">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="address_postal_code" class="form-label">{% trans 'الرمز البريدي' %} *</label>
+                            <input type="text" class="form-control" id="address_postal_code" name="address_postal_code" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="address_country" class="form-label">{% trans 'الدولة' %} *</label>
+                            <input type="text" class="form-control" id="address_country" name="address_country" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="address_phone" class="form-label">{% trans 'رقم الهاتف' %}</label>
+                        <input type="text" class="form-control" id="address_phone" name="address_phone" dir="ltr">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="address_is_default" name="address_is_default">
+                                <label class="form-check-label" for="address_is_default">
+                                    {% trans 'العنوان الافتراضي' %}
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="address_is_shipping_default" name="address_is_shipping_default">
+                                <label class="form-check-label" for="address_is_shipping_default">
+                                    {% trans 'عنوان الشحن الافتراضي' %}
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="address_is_billing_default" name="address_is_billing_default">
+                                <label class="form-check-label" for="address_is_billing_default">
+                                    {% trans 'عنوان الفوترة الافتراضي' %}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans 'إلغاء' %}</button>
+                <button type="button" class="btn btn-primary" id="saveAddress">{% trans 'حفظ العنوان' %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/js/bootstrap-datepicker.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // معاينة الصورة الشخصية
+        $('#avatar').change(function() {
+            if (this.files && this.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#avatar-preview').attr('src', e.target.result).removeClass('d-none');
+                    $('#avatar-placeholder').addClass('d-none');
+                }
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        // التحقق من تطابق كلمة المرور
+        $('#userForm').on('submit', function(e) {
+            var password = $('#password').val();
+            var confirmPassword = $('#confirm_password').val();
+
+            if (password && password !== confirmPassword) {
+                e.preventDefault();
+                alert("{% trans 'كلمة المرور وتأكيدها غير متطابقين' %}");
+            }
+        });
+
+        // معالجة نقر زر حفظ العنوان
+        $('#saveAddress').on('click', function() {
+            var form = $('#addressForm');
+
+            // التحقق من صحة النموذج
+            if (!form[0].checkValidity()) {
+                form.find(':input:visible').filter(function() {
+                    return !this.checkValidity();
+                }).first().focus();
+                return;
+            }
+
+            // جمع بيانات العنوان
+            var addressData = {
+                id: $('#address_id').val(),
+                label: $('#address_label').val(),
+                type: $('#address_type').val(),
+                first_name: $('#address_first_name').val(),
+                last_name: $('#address_last_name').val(),
+                address_line_1: $('#address_line_1').val(),
+                address_line_2: $('#address_line_2').val(),
+                city: $('#address_city').val(),
+                state: $('#address_state').val(),
+                postal_code: $('#address_postal_code').val(),
+                country: $('#address_country').val(),
+                phone_number: $('#address_phone').val(),
+                is_default: $('#address_is_default').is(':checked'),
+                is_shipping_default: $('#address_is_shipping_default').is(':checked'),
+                is_billing_default: $('#address_is_billing_default').is(':checked'),
+                user_id: '{{ user_obj.id }}',
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            };
+
+            // إرسال طلب AJAX
+            $.ajax({
+                url: '{% url "dashboard:dashboard_user_address_save" %}',
+                type: 'POST',
+                data: addressData,
+                success: function(response) {
+                    if (response.success) {
+                        // إعادة تحميل قائمة العناوين
+                        reloadAddressList();
+
+                        // إغلاق النافذة المنبثقة
+                        $('#addAddressModal').modal('hide');
+
+                        // إعادة تعيين النموذج
+                        $('#addressForm')[0].reset();
+                        $('#address_id').val('');
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function() {
+                    alert("{% trans 'حدث خطأ أثناء حفظ العنوان. يرجى المحاولة مرة أخرى.' %}");
+                }
+            });
+        });
+
+        // معالجة نقر زر تعديل العنوان
+        $('#addressList').on('click', '.btn-edit-address', function() {
+            var addressId = $(this).data('address-id');
+
+            // جلب بيانات العنوان
+            $.ajax({
+                url: '{% url "dashboard:dashboard_user_address_get" %}',
+                type: 'GET',
+                data: {
+                    'address_id': addressId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // ملء النموذج ببيانات العنوان
+                        var address = response.address;
+                        $('#address_id').val(address.id);
+                        $('#address_label').val(address.label);
+                        $('#address_type').val(address.type);
+                        $('#address_first_name').val(address.first_name);
+                        $('#address_last_name').val(address.last_name);
+                        $('#address_line_1').val(address.address_line_1);
+                        $('#address_line_2').val(address.address_line_2);
+                        $('#address_city').val(address.city);
+                        $('#address_state').val(address.state);
+                        $('#address_postal_code').val(address.postal_code);
+                        $('#address_country').val(address.country);
+                        $('#address_phone').val(address.phone_number);
+                        $('#address_is_default').prop('checked', address.is_default);
+                        $('#address_is_shipping_default').prop('checked', address.is_shipping_default);
+                        $('#address_is_billing_default').prop('checked', address.is_billing_default);
+
+                        // فتح النافذة المنبثقة
+                        $('#addAddressModalLabel').text("{% trans 'تعديل العنوان' %}");
+                        $('#addAddressModal').modal('show');
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function() {
+                    alert("{% trans 'حدث خطأ أثناء جلب بيانات العنوان. يرجى المحاولة مرة أخرى.' %}");
+                }
+            });
+        });
+
+        // معالجة نقر زر حذف العنوان
+        $('#addressList').on('click', '.btn-delete-address', function() {
+            if (confirm("{% trans 'هل أنت متأكد من رغبتك في حذف هذا العنوان؟' %}")) {
+                var addressId = $(this).data('address-id');
+
+                $.ajax({
+                    url: '{% url "dashboard:dashboard_user_address_delete" %}',
+                    type: 'POST',
+                    data: {
+                        'address_id': addressId,
+                        'csrfmiddlewaretoken': '{{ csrf_token }}'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // إعادة تحميل قائمة العناوين
+                            reloadAddressList();
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function() {
+                        alert("{% trans 'حدث خطأ أثناء حذف العنوان. يرجى المحاولة مرة أخرى.' %}");
+                    }
+                });
+            }
+        });
+
+        // معالجة فتح نافذة إضافة عنوان جديد
+        $('#addAddressModal').on('show.bs.modal', function() {
+            if ($('#address_id').val() === '') {
+                $('#addAddressModalLabel').text("{% trans 'إضافة عنوان جديد' %}");
+                $('#addressForm')[0].reset();
+            }
+        });
+
+        // إعادة تحميل قائمة العناوين
+        function reloadAddressList() {
+            $.ajax({
+                url: '{% url "dashboard:dashboard_user_address_list_partial" %}',
+                type: 'GET',
+                data: {
+                    'user_id': '{{ user_obj.id }}'
+                },
+                success: function(response) {
+                    $('#addressList').html(response);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

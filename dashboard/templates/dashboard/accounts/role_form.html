@@ -1,0 +1,316 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{{ form_title }}{% endblock %}
+{% block page_title %}{{ form_title }}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_users' %}">{% trans 'المستخدمين' %}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_roles' %}">{% trans 'الأدوار' %}</a></li>
+{% endblock %}
+
+{% block current_page %}{{ form_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-card {
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .permissions-container {
+        max-height: 600px;
+        overflow-y: auto;
+        padding-right: 1rem;
+    }
+
+    [dir="rtl"] .permissions-container {
+        padding-right: 0;
+        padding-left: 1rem;
+    }
+
+    .app-permissions {
+        margin-bottom: 2rem;
+        border: 1px solid #e9ecef;
+        border-radius: 0.5rem;
+    }
+
+    .app-header {
+        padding: 1rem;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+
+    .app-title {
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .app-permissions-list {
+        padding: 1rem;
+    }
+
+    .model-permissions {
+        margin-bottom: 1.5rem;
+    }
+
+    .model-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #f8f9fa;
+    }
+
+    .permission-group {
+        margin-bottom: 1rem;
+    }
+
+    .permission-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .permission-name {
+        flex-grow: 1;
+        padding-left: 0.5rem;
+    }
+
+    [dir="rtl"] .permission-name {
+        padding-left: 0;
+        padding-right: 0.5rem;
+    }
+
+    .search-box {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+
+    .search-box .search-input {
+        padding-left: 2.5rem;
+    }
+
+    [dir="rtl"] .search-box .search-input {
+        padding-left: 0.75rem;
+        padding-right: 2.5rem;
+    }
+
+    .search-box .search-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+
+    [dir="rtl"] .search-box .search-icon {
+        left: auto;
+        right: 0.75rem;
+    }
+
+    .select-actions {
+        margin-bottom: 1.5rem;
+    }
+
+    .permission-count {
+        background-color: #f8f9fa;
+        color: #6c757d;
+        border-radius: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card form-card mb-4">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0">{{ form_title }}</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" id="roleForm">
+            {% csrf_token %}
+
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">{% trans 'اسم الدور' %} *</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ role.name|default:'' }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">{% trans 'وصف الدور' %}</label>
+                        <textarea class="form-control" id="description" name="description" rows="4">{{ role.description|default:'' }}</textarea>
+                        <div class="form-text">{% trans 'وصف مختصر لغرض الدور وصلاحياته' %}</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">{% trans 'إحصائيات الصلاحيات' %}</label>
+                        <div class="card">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>{% trans 'الصلاحيات المحددة:' %}</span>
+                                    <span class="fw-bold" id="selectedPermissionsCount">0</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>{% trans 'إجمالي الصلاحيات:' %}</span>
+                                    <span class="fw-bold">{{ permissions|length }}</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" style="width: 0%;" id="permissionsProgressBar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="select-actions">
+                        <button type="button" class="btn btn-sm btn-outline-primary me-2" id="selectAll">
+                            {% trans 'تحديد الكل' %}
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAll">
+                            {% trans 'إلغاء تحديد الكل' %}
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-md-8">
+                    <div class="search-box">
+                        <input type="text" class="form-control search-input" id="permissionSearch" placeholder="{% trans 'البحث في الصلاحيات...' %}">
+                        <span class="search-icon"><i class="fas fa-search"></i></span>
+                    </div>
+
+                    <div class="permissions-container">
+                        {% regroup permissions by content_type.app_label as app_list %}
+
+                        {% for app in app_list %}
+                        <div class="app-permissions" data-app="{{ app.grouper }}">
+                            <div class="app-header">
+                                <div class="app-title">
+                                    <span>{{ app.grouper|title }}</span>
+                                    <span class="permission-count">
+                                        <span class="app-selected-count">0</span> / {{ app.list|length }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="app-permissions-list">
+                                {% regroup app.list by content_type.model as model_list %}
+
+                                {% for model in model_list %}
+                                <div class="model-permissions" data-model="{{ model.grouper }}">
+                                    <div class="model-title">
+                                        {{ model.grouper|title }}
+                                    </div>
+
+                                    <div class="permission-group">
+                                        {% for permission in model.list %}
+                                        <div class="permission-row">
+                                            <div class="form-check">
+                                                <input class="form-check-input permission-checkbox" type="checkbox"
+                                                       id="permission_{{ permission.id }}"
+                                                       name="permissions"
+                                                       value="{{ permission.id }}"
+                                                       data-app="{{ app.grouper }}"
+                                                       {% if role and permission in role.permissions.all %}checked{% endif %}>
+                                            </div>
+                                            <label class="permission-name" for="permission_{{ permission.id }}">
+                                                {{ permission.name }}
+                                            </label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end mt-4">
+                <a href="{% url 'dashboard:dashboard_roles' %}" class="btn btn-secondary me-2">{% trans 'إلغاء' %}</a>
+                <button type="submit" class="btn btn-primary">{% trans 'حفظ' %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // تحديث عدد الصلاحيات المحددة
+        function updateSelectedCount() {
+            var totalChecked = $('.permission-checkbox:checked').length;
+            var totalPermissions = $('.permission-checkbox').length;
+            var percentage = (totalPermissions > 0) ? Math.round((totalChecked / totalPermissions) * 100) : 0;
+
+            $('#selectedPermissionsCount').text(totalChecked);
+            $('#permissionsProgressBar').css('width', percentage + '%').text(percentage + '%').attr('aria-valuenow', percentage);
+
+            // تحديث عدد الصلاحيات المحددة لكل تطبيق
+            $('.app-permissions').each(function() {
+                var app = $(this).data('app');
+                var appChecked = $('.permission-checkbox[data-app="' + app + '"]:checked').length;
+                var appTotal = $('.permission-checkbox[data-app="' + app + '"]').length;
+                $(this).find('.app-selected-count').text(appChecked);
+            });
+        }
+
+        // تحديث عند تحميل الصفحة
+        updateSelectedCount();
+
+        // تحديث عند تغيير حالة الاختيار
+        $('.permission-checkbox').on('change', function() {
+            updateSelectedCount();
+        });
+
+        // تحديد الكل
+        $('#selectAll').on('click', function() {
+            $('.permission-checkbox').prop('checked', true);
+            updateSelectedCount();
+        });
+
+        // إلغاء تحديد الكل
+        $('#deselectAll').on('click', function() {
+            $('.permission-checkbox').prop('checked', false);
+            updateSelectedCount();
+        });
+
+        // البحث في الصلاحيات
+        $('#permissionSearch').on('keyup', function() {
+            var value = $(this).val().toLowerCase();
+
+            if (value.length > 0) {
+                // إخفاء جميع الأقسام والتطبيقات
+                $('.app-permissions, .model-permissions').hide();
+
+                // البحث في كل صف من صفوف الصلاحيات
+                $('.permission-row').each(function() {
+                    var permissionText = $(this).find('.permission-name').text().toLowerCase();
+
+                    if (permissionText.indexOf(value) > -1) {
+                        // إظهار صف الصلاحية المطابق
+                        $(this).show();
+
+                        // إظهار القسم والتطبيق الأب
+                        $(this).closest('.model-permissions').show();
+                        $(this).closest('.app-permissions').show();
+                    } else {
+                        // إخفاء صف الصلاحية غير المطابق
+                        $(this).hide();
+                    }
+                });
+            } else {
+                // إظهار جميع الأقسام والتطبيقات والصفوف
+                $('.app-permissions, .model-permissions, .permission-row').show();
+            }
+        });
+    });
+</script>
+{% endblock %}
