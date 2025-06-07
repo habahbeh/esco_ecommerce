@@ -1,0 +1,171 @@
+/* تنسيق محسن لشجرة الفئات */
+
+.category-tree {
+    margin: 0;
+    padding: 0;
+}
+
+.category-tree-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.category-item {
+    margin: 0;
+    padding: 0;
+    transition: background-color 0.2s;
+}
+
+.category-item.hover {
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+.category-item-content {
+    display: flex;
+    align-items: center;
+    padding: 8px 15px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.category-link {
+    flex-grow: 1;
+    color: #212529;
+    text-decoration: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2px 0;
+}
+
+.category-link:hover {
+    color: #0d6efd;
+}
+
+.category-link.active {
+    color: #0d6efd;
+    font-weight: bold;
+}
+
+.toggle-icon, .no-toggle-icon {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+    text-align: center;
+    cursor: pointer;
+    color: #6c757d;
+}
+
+.toggle-icon:hover {
+    color: #0d6efd;
+}
+
+.toggle-icon .expand-icon,
+.toggle-icon.expanded .collapse-icon {
+    display: inline-block;
+}
+
+.toggle-icon.expanded .expand-icon,
+.toggle-icon .collapse-icon {
+    display: none;
+}
+
+.no-toggle-icon {
+    font-size: 8px;
+    color: #adb5bd;
+    padding-top: 6px;
+}
+
+.subcategory-list {
+    margin-left: 20px;
+    border-left: 1px dashed rgba(0, 0, 0, 0.1);
+    list-style: none;
+    padding: 0;
+}
+
+.badge {
+    margin-left: 5px;
+    font-weight: normal;
+}
+
+.no-categories {
+    padding: 0;
+}
+
+.no-categories-message {
+    color: #6c757d;
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+}
+
+/* Animaciones */
+.subcategory-list {
+    transition: all 0.3s ease-in-out;
+}
+
+/* Estilos para la vista de categorías */
+.category-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 150px;
+    background-color: #f8f9fa;
+    color: #adb5bd;
+}
+
+.product-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 180px;
+    background-color: #f8f9fa;
+    color: #adb5bd;
+}
+
+/* Estado de carga */
+.category-tree-loading {
+    text-align: center;
+    padding: 20px;
+    color: #6c757d;
+}
+
+.category-tree-loading .spinner-border {
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-right: 10px;
+}
+
+/* Estilos para categorías destacadas */
+.featured-category .card-header {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+/* Estado vacío */
+.empty-category-message {
+    padding: 30px;
+    text-align: center;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    color: #6c757d;
+}
+
+.empty-category-message i {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    color: #adb5bd;
+}
+
+/* Mensaje de depuración */
+.debug-info {
+    margin: 15px 0;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 12px;
+    color: #495057;
+}

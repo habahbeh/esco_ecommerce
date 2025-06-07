@@ -29,7 +29,7 @@ from decimal import Decimal
 User = get_user_model()
 
 
-class DashboardStatsAPIView(LoginRequiredMixin, DashboardAccessMixin, View):
+class DashboardStatsAPIView( DashboardAccessMixin, View):
     """
     واجهة برمجية لإحصائيات لوحة التحكم
     توفر البيانات الإحصائية الأساسية لعرضها في الصفحة الرئيسية للوحة التحكم
@@ -161,7 +161,7 @@ class DashboardStatsAPIView(LoginRequiredMixin, DashboardAccessMixin, View):
         return JsonResponse(data)
 
 
-class ChartDataAPIView(LoginRequiredMixin, DashboardAccessMixin, View):
+class ChartDataAPIView( DashboardAccessMixin, View):
     """
     واجهة برمجية لبيانات الرسوم البيانية
     توفر البيانات اللازمة لإنشاء الرسوم البيانية المختلفة في لوحة التحكم
@@ -532,7 +532,7 @@ class ChartDataAPIView(LoginRequiredMixin, DashboardAccessMixin, View):
         })
 
 
-class UserAutocompleteAPIView(LoginRequiredMixin, DashboardAccessMixin, View):
+class UserAutocompleteAPIView( DashboardAccessMixin, View):
     """
     واجهة برمجية للبحث عن المستخدمين
     تستخدم للبحث السريع عن المستخدمين أثناء الكتابة
@@ -569,7 +569,7 @@ class UserAutocompleteAPIView(LoginRequiredMixin, DashboardAccessMixin, View):
         return JsonResponse({'results': results})
 
 
-class ProductAutocompleteAPIView(LoginRequiredMixin, DashboardAccessMixin, View):
+class ProductAutocompleteAPIView( DashboardAccessMixin, View):
     """
     واجهة برمجية للبحث عن المنتجات
     تستخدم للبحث السريع عن المنتجات أثناء الكتابة
@@ -629,7 +629,7 @@ class ProductAutocompleteAPIView(LoginRequiredMixin, DashboardAccessMixin, View)
         return JsonResponse({'results': results})
 
 
-class OrderAutocompleteAPIView(LoginRequiredMixin, DashboardAccessMixin, View):
+class OrderAutocompleteAPIView( DashboardAccessMixin, View):
     """
     واجهة برمجية للبحث عن الطلبات
     تستخدم للبحث السريع عن الطلبات أثناء الكتابة
@@ -670,7 +670,7 @@ class OrderAutocompleteAPIView(LoginRequiredMixin, DashboardAccessMixin, View):
         return JsonResponse({'results': results})
 
 
-class NotificationAPIView(LoginRequiredMixin, DashboardAccessMixin, View):
+class NotificationAPIView( DashboardAccessMixin, View):
     """
     واجهة برمجية لإدارة الإشعارات
     تتيح الحصول على الإشعارات وتحديثها وتعليمها كمقروءة
@@ -761,7 +761,7 @@ class NotificationAPIView(LoginRequiredMixin, DashboardAccessMixin, View):
             }, status=400)
 
 
-class OrderStatusUpdateAPIView(LoginRequiredMixin, DashboardAccessMixin, View):
+class OrderStatusUpdateAPIView( DashboardAccessMixin, View):
     """
     واجهة برمجية لتحديث حالة الطلب
     تتيح تحديث حالة الطلب وحالة الدفع بسرعة
@@ -831,7 +831,7 @@ class OrderStatusUpdateAPIView(LoginRequiredMixin, DashboardAccessMixin, View):
             }, status=404)
 
 
-class ProductStockUpdateAPIView(LoginRequiredMixin, DashboardAccessMixin, View):
+class ProductStockUpdateAPIView( DashboardAccessMixin, View):
     """
     واجهة برمجية لتحديث مخزون المنتج
     تتيح تحديث كمية المخزون للمنتج أو المتغير بسرعة
@@ -920,7 +920,7 @@ class ProductStockUpdateAPIView(LoginRequiredMixin, DashboardAccessMixin, View):
             }, status=404)
 
 
-class DashboardWidgetDataAPIView(LoginRequiredMixin, DashboardAccessMixin, View):
+class DashboardWidgetDataAPIView( DashboardAccessMixin, View):
     """
     واجهة برمجية لبيانات ودجات لوحة التحكم
     توفر البيانات اللازمة لعرض ودجات لوحة التحكم المختلفة

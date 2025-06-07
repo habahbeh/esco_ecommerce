@@ -10,6 +10,8 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q, Avg, Count, Sum, F, Max, Min
 from django.core.cache import cache
 from django.utils.html import strip_tags
+from mptt.models import MPTTModel, TreeForeignKey
+
 from decimal import Decimal
 import os
 import uuid
@@ -88,7 +90,7 @@ class SEOModel(models.Model):
         abstract = True
 
 
-class Category(TimeStampedModel, SEOModel):
+class Category(MPTTModel, TimeStampedModel, SEOModel):
     """
     نموذج فئات المنتجات مع دعم التصنيفات الهرمية المحسن
     Enhanced Product categories model with hierarchical support
@@ -128,14 +130,18 @@ class Category(TimeStampedModel, SEOModel):
     )
 
     # Hierarchical Structure
-    parent = models.ForeignKey(
-        'self',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name='children',
-        verbose_name=_("الفئة الأب")
-    )
+    # parent = models.ForeignKey(
+    #     'self',
+    #     on_delete=models.CASCADE,
+    #     null=True,
+    #     blank=True,
+    #     related_name='children',
+    #     verbose_name=_("الفئة الأب")
+    # )
+
+    parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True,
+                            related_name='children', verbose_name=_("الفئة الأب"))
+
     level = models.PositiveIntegerField(
         _("المستوى"),
         default=0,

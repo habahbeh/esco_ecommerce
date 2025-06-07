@@ -2,7 +2,10 @@
 body {
     direction: rtl;
     text-align: right;
+    font-family: 'Tajawal', sans-serif !important;
+    color: #333;
 }
+
 
 /* تصحيح اتجاه القوائم المنسدلة */
 .dropdown-menu {
@@ -231,4 +234,17 @@ body {
 .card-header .card-actions {
     left: 1rem;
     right: auto;
+}
+
+/* تعديلات خاصة بحقل البحث للموبايل */
+@media (max-width: 991.98px) {
+    .mobile-search-wrapper .input-group > .form-control {
+        border-radius: 0 0.25rem 0.25rem 0 !important;
+        border-left: 0;
+        border-right: 1px solid #ced4da;
+    }
+
+    .mobile-search-wrapper .input-group > .btn {
+        border-radius: 0.25rem 0 0 0.25rem !important;
+    }
 }

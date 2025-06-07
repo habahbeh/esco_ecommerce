@@ -363,9 +363,8 @@ class CouponForm(forms.ModelForm):
         model = Coupon
         fields = [
             'code', 'description', 'discount_type', 'discount_value',
-            'max_discount_amount', 'min_purchase_amount', 'valid_from',
-            'valid_to', 'is_active', 'usage_limit', 'used_count',
-            'is_one_time_use', 'categories', 'products', 'excluded_products'
+            'max_discount_amount', 'min_order_value', 'start_date',
+            'end_date', 'is_active', 'max_uses', 'max_uses_per_user'
         ]
         widgets = {
             'code': forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
@@ -373,14 +372,11 @@ class CouponForm(forms.ModelForm):
             'discount_type': forms.Select(attrs={'class': 'form-select'}),
             'discount_value': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'max_discount_amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'min_purchase_amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'valid_from': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
-            'valid_to': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
-            'usage_limit': forms.NumberInput(attrs={'class': 'form-control'}),
-            'used_count': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
-            'categories': forms.SelectMultiple(attrs={'class': 'form-select select2', 'multiple': 'multiple'}),
-            'products': forms.SelectMultiple(attrs={'class': 'form-select select2', 'multiple': 'multiple'}),
-            'excluded_products': forms.SelectMultiple(attrs={'class': 'form-select select2', 'multiple': 'multiple'}),
+            'min_order_value': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'start_date': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'end_date': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'max_uses': forms.NumberInput(attrs={'class': 'form-control'}),
+            'max_uses_per_user': forms.NumberInput(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -401,26 +397,19 @@ class CouponForm(forms.ModelForm):
                         Column('discount_value', css_class='col-md-4'),
                         Column('max_discount_amount', css_class='col-md-4'),
                     ),
-                    'min_purchase_amount',
+                    'min_order_value',
                     ),
 
                 Tab(_('الصلاحية والاستخدام'),
                     Row(
-                        Column('valid_from', css_class='col-md-6'),
-                        Column('valid_to', css_class='col-md-6'),
+                        Column('start_date', css_class='col-md-6'),
+                        Column('end_date', css_class='col-md-6'),
                     ),
                     Row(
-                        Column('usage_limit', css_class='col-md-4'),
-                        Column('used_count', css_class='col-md-4'),
-                        Column('is_one_time_use', css_class='col-md-4'),
+                        Column('max_uses', css_class='col-md-6'),
+                        Column('max_uses_per_user', css_class='col-md-6'),
                     ),
                     'is_active',
-                    ),
-
-                Tab(_('القيود'),
-                    'categories',
-                    'products',
-                    'excluded_products',
                     ),
             ),
 
@@ -434,11 +423,11 @@ class CouponForm(forms.ModelForm):
         cleaned_data = super().clean()
 
         # التحقق من تواريخ الصلاحية
-        valid_from = cleaned_data.get('valid_from')
-        valid_to = cleaned_data.get('valid_to')
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
 
-        if valid_from and valid_to and valid_from >= valid_to:
-            self.add_error('valid_to', _('يجب أن يكون تاريخ انتهاء الصلاحية بعد تاريخ بداية الصلاحية'))
+        if start_date and end_date and start_date >= end_date:
+            self.add_error('end_date', _('يجب أن يكون تاريخ انتهاء الصلاحية بعد تاريخ بداية الصلاحية'))
 
         # التحقق من نوع الخصم وقيمته
         discount_type = cleaned_data.get('discount_type')
