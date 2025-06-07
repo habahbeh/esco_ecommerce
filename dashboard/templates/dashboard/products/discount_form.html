@@ -1,0 +1,563 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+{% load dashboard_tags %}
+
+{% block title %}
+    {% if discount %}
+        {% trans "تعديل الخصم" %} | {% trans "لوحة التحكم" %}
+    {% else %}
+        {% trans "إضافة خصم جديد" %} | {% trans "لوحة التحكم" %}
+    {% endif %}
+{% endblock %}
+
+{% block page_title %}
+    {% if discount %}
+        {% trans "تعديل الخصم" %}: {{ discount.name }}
+    {% else %}
+        {% trans "إضافة خصم جديد" %}
+    {% endif %}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_products' %}">{% trans "المنتجات" %}</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_discounts' %}">{% trans "الخصومات" %}</a></li>
+    <li class="breadcrumb-item active">
+        {% if discount %}
+            {% trans "تعديل الخصم" %}
+        {% else %}
+            {% trans "إضافة خصم جديد" %}
+        {% endif %}
+    </li>
+{% endblock %}
+
+{% block current_page %}
+    {% if discount %}
+        {% trans "تعديل الخصم" %}
+    {% else %}
+        {% trans "إضافة خصم جديد" %}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-tag fa-fw me-2"></i>
+            {% if discount %}
+                {% trans "تعديل الخصم" %}: {{ discount.name }}
+            {% else %}
+                {% trans "إضافة خصم جديد" %}
+            {% endif %}
+        </h6>
+        <div class="actions">
+            <a href="{% url 'dashboard:dashboard_discounts' %}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-right me-1"></i> {% trans "العودة إلى قائمة الخصومات" %}
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <form method="post" id="discount-form" class="form">
+            {% csrf_token %}
+
+            <!-- بداية التابز -->
+            <ul class="nav nav-tabs mb-4" id="discountTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab" aria-controls="basic" aria-selected="true">
+                        <i class="fas fa-info-circle me-1"></i> {% trans "المعلومات الأساسية" %}
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="scope-tab" data-bs-toggle="tab" data-bs-target="#scope" type="button" role="tab" aria-controls="scope" aria-selected="false">
+                        <i class="fas fa-bullseye me-1"></i> {% trans "نطاق التطبيق" %}
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="bxgy-tab" data-bs-toggle="tab" data-bs-target="#bxgy" type="button" role="tab" aria-controls="bxgy" aria-selected="false">
+                        <i class="fas fa-gift me-1"></i> {% trans "اشتري X واحصل على Y" %}
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button" role="tab" aria-controls="advanced" aria-selected="false">
+                        <i class="fas fa-cogs me-1"></i> {% trans "الإعدادات المتقدمة" %}
+                    </button>
+                </li>
+            </ul>
+
+            <!-- محتوى التابز -->
+            <div class="tab-content" id="discountTabsContent">
+                <!-- تاب المعلومات الأساسية -->
+                <div class="tab-pane fade show active" id="basic" role="tabpanel" aria-labelledby="basic-tab">
+                    <div class="row g-3">
+                        <!-- اسم الخصم -->
+                        <div class="col-md-12 mb-3">
+                            <label for="name" class="form-label required">{% trans "اسم الخصم" %}</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ discount.name|default:'' }}" required>
+                            <div class="form-text">{% trans "اسم وصفي للخصم (مثال: خصم الجمعة البيضاء 30%)" %}</div>
+                        </div>
+
+                        <!-- وصف الخصم -->
+                        <div class="col-md-12 mb-3">
+                            <label for="description" class="form-label">{% trans "وصف الخصم" %}</label>
+                            <textarea class="form-control" id="description" name="description" rows="3">{{ discount.description|default:'' }}</textarea>
+                            <div class="form-text">{% trans "وصف تفصيلي للخصم وشروط استخدامه" %}</div>
+                        </div>
+
+                        <!-- كود الخصم وإعداد الكود -->
+                        <div class="col-md-6 mb-3">
+                            <label for="code" class="form-label">{% trans "كود الخصم" %}</label>
+                            <input type="text" class="form-control" id="code" name="code" value="{{ discount.code|default:'' }}" maxlength="50">
+                            <div class="form-text">{% trans "كود فريد للخصم يمكن استخدامه من قبل العملاء (اختياري)" %}</div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check mt-4">
+                                <input class="form-check-input" type="checkbox" id="requires_coupon_code" name="requires_coupon_code" {% if discount.requires_coupon_code %}checked{% endif %}>
+                                <label class="form-check-label" for="requires_coupon_code">
+                                    {% trans "يتطلب كود خصم" %}
+                                </label>
+                                <div class="form-text">{% trans "عند تفعيل هذا الخيار، يجب على العملاء إدخال كود الخصم لتطبيقه" %}</div>
+                            </div>
+                        </div>
+
+                        <!-- نوع وقيمة الخصم -->
+                        <div class="col-md-4 mb-3">
+                            <label for="discount_type" class="form-label required">{% trans "نوع الخصم" %}</label>
+                            <select class="form-select" id="discount_type" name="discount_type" required>
+                                {% for type_value, type_label in discount_types %}
+                                <option value="{{ type_value }}" {% if discount.discount_type == type_value %}selected{% endif %}>{{ type_label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label for="value" class="form-label required">{% trans "قيمة الخصم" %}</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="value" name="value" value="{{ discount.value|default:'0' }}" step="0.01" min="0.01" required>
+                                <span class="input-group-text discount-unit">%</span>
+                            </div>
+                            <div class="form-text discount-value-help">{% trans "قيمة الخصم حسب النوع المحدد" %}</div>
+                        </div>
+
+                        <div class="col-md-4 mb-3 max-discount-field">
+                            <label for="max_discount_amount" class="form-label">{% trans "الحد الأقصى للخصم" %}</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="max_discount_amount" name="max_discount_amount" value="{{ discount.max_discount_amount|default:'' }}" step="0.01" min="0">
+                                <span class="input-group-text">ر.س</span>
+                            </div>
+                            <div class="form-text">{% trans "الحد الأقصى لمبلغ الخصم (للنسب المئوية)" %}</div>
+                        </div>
+
+                        <!-- فترة الخصم -->
+                        <div class="col-md-6 mb-3">
+                            <label for="start_date" class="form-label required">{% trans "تاريخ البداية" %}</label>
+                            <input type="datetime-local" class="form-control" id="start_date" name="start_date" value="{{ discount.start_date|date:'Y-m-d\TH:i' }}" required>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="end_date" class="form-label">{% trans "تاريخ النهاية" %}</label>
+                            <input type="datetime-local" class="form-control" id="end_date" name="end_date" value="{{ discount.end_date|date:'Y-m-d\TH:i' }}">
+                            <div class="form-text">{% trans "اتركه فارغاً إذا كان الخصم غير محدد المدة" %}</div>
+                        </div>
+
+                        <!-- حالة الخصم -->
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if discount.is_active or discount is None %}checked{% endif %}>
+                                <label class="form-check-label" for="is_active">
+                                    {% trans "نشط" %}
+                                </label>
+                                <div class="form-text">{% trans "تفعيل أو إلغاء تفعيل الخصم" %}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- تاب نطاق التطبيق -->
+                <div class="tab-pane fade" id="scope" role="tabpanel" aria-labelledby="scope-tab">
+                    <div class="row g-3">
+                        <!-- نوع التطبيق -->
+                        <div class="col-md-12 mb-3">
+                            <label for="application_type" class="form-label required">{% trans "نطاق تطبيق الخصم" %}</label>
+                            <select class="form-select" id="application_type" name="application_type" required>
+                                {% for type_value, type_label in application_types %}
+                                <option value="{{ type_value }}" {% if discount.application_type == type_value %}selected{% endif %}>{{ type_label }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">{% trans "حدد على ماذا سيتم تطبيق الخصم" %}</div>
+                        </div>
+
+                        <!-- الفئة المحددة -->
+                        <div class="col-md-12 mb-3 category-field" {% if discount.application_type != 'category' %}style="display: none;"{% endif %}>
+                            <label for="category" class="form-label">{% trans "الفئة" %}</label>
+                            <select class="form-select" id="category" name="category">
+                                <option value="">{% trans "-- اختر الفئة --" %}</option>
+                                {% for category_item in categories %}
+                                <option value="{{ category_item.id }}" {% if discount.category_id == category_item.id %}selected{% endif %}>
+                                    {{ category_item.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">{% trans "الفئة التي سيتم تطبيق الخصم عليها وعلى منتجاتها" %}</div>
+                        </div>
+
+                        <!-- المنتجات المحددة -->
+                        <div class="col-md-12 mb-3 products-field" {% if discount.application_type != 'specific_products' %}style="display: none;"{% endif %}>
+                            <label for="products" class="form-label">{% trans "المنتجات" %}</label>
+                            <select class="form-select select2" id="products" name="products" multiple="multiple">
+                                {% for product in products %}
+                                <option value="{{ product.id }}" {% if product in selected_products %}selected{% endif %}>{{ product.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">{% trans "اختر المنتجات التي سيتم تطبيق الخصم عليها" %}</div>
+                        </div>
+
+                        <!-- الحد الأدنى للشراء -->
+                        <div class="col-md-6 mb-3 min-purchase-field">
+                            <label for="min_purchase_amount" class="form-label">{% trans "الحد الأدنى للشراء" %}</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="min_purchase_amount" name="min_purchase_amount" value="{{ discount.min_purchase_amount|default:'' }}" step="0.01" min="0">
+                                <span class="input-group-text">ر.س</span>
+                            </div>
+                            <div class="form-text">{% trans "الحد الأدنى لمبلغ الشراء لتطبيق الخصم" %}</div>
+                        </div>
+
+                        <!-- الحد الأدنى للكمية -->
+                        <div class="col-md-6 mb-3 min-quantity-field">
+                            <label for="min_quantity" class="form-label">{% trans "الحد الأدنى للكمية" %}</label>
+                            <input type="number" class="form-control" id="min_quantity" name="min_quantity" value="{{ discount.min_quantity|default:'' }}" min="1">
+                            <div class="form-text">{% trans "الحد الأدنى لكمية المنتجات في السلة لتطبيق الخصم" %}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- تاب اشتري X واحصل على Y -->
+                <div class="tab-pane fade" id="bxgy" role="tabpanel" aria-labelledby="bxgy-tab">
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        {% trans "هذه الإعدادات تنطبق فقط على خصومات نوع 'اشتري X واحصل على Y'" %}
+                    </div>
+
+                    <div class="row g-3 buy-x-get-y-fields">
+                        <!-- كمية الشراء -->
+                        <div class="col-md-4 mb-3">
+                            <label for="buy_quantity" class="form-label">{% trans "كمية الشراء (X)" %}</label>
+                            <input type="number" class="form-control" id="buy_quantity" name="buy_quantity" value="{{ discount.buy_quantity|default:'1' }}" min="1">
+                            <div class="form-text">{% trans "عدد المنتجات التي يجب شراؤها" %}</div>
+                        </div>
+
+                        <!-- كمية الحصول -->
+                        <div class="col-md-4 mb-3">
+                            <label for="get_quantity" class="form-label">{% trans "كمية الحصول (Y)" %}</label>
+                            <input type="number" class="form-control" id="get_quantity" name="get_quantity" value="{{ discount.get_quantity|default:'1' }}" min="1">
+                            <div class="form-text">{% trans "عدد المنتجات التي سيحصل عليها العميل مجاناً أو بخصم" %}</div>
+                        </div>
+
+                        <!-- نسبة خصم المنتجات المجانية -->
+                        <div class="col-md-4 mb-3">
+                            <label for="get_discount_percentage" class="form-label">{% trans "نسبة الخصم" %}</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="get_discount_percentage" name="get_discount_percentage" value="{{ discount.get_discount_percentage|default:'100' }}" min="0" max="100" step="1">
+                                <span class="input-group-text">%</span>
+                            </div>
+                            <div class="form-text">{% trans "نسبة الخصم على المنتجات المجانية (100% = مجاني بالكامل)" %}</div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="card bg-light border">
+                                <div class="card-body">
+                                    <h6 class="card-title">{% trans "مثال على كيفية عمل هذا الخصم" %}</h6>
+                                    <div class="example-text">
+                                        <p>{% trans "على سبيل المثال، إذا كانت قيمة X = 2 وY = 1 ونسبة الخصم 100%:" %}</p>
+                                        <ul>
+                                            <li>{% trans "إذا اشترى العميل منتجين، فسيحصل على منتج ثالث مجاناً" %}</li>
+                                            <li>{% trans "إذا اشترى العميل 4 منتجات، فسيحصل على منتجين مجاناً" %}</li>
+                                        </ul>
+                                        <p>{% trans "إذا كانت نسبة الخصم 50% بدلاً من 100%، فسيحصل العميل على خصم 50% على المنتجات المجانية" %}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- تاب الإعدادات المتقدمة -->
+                <div class="tab-pane fade" id="advanced" role="tabpanel" aria-labelledby="advanced-tab">
+                    <div class="row g-3">
+                        <!-- حدود الاستخدام -->
+                        <div class="col-md-6 mb-3">
+                            <label for="max_uses" class="form-label">{% trans "الحد الأقصى للاستخدام" %}</label>
+                            <input type="number" class="form-control" id="max_uses" name="max_uses" value="{{ discount.max_uses|default:'' }}" min="1">
+                            <div class="form-text">{% trans "الحد الأقصى لعدد مرات استخدام هذا الخصم بشكل إجمالي (اتركه فارغاً لعدم وجود حد)" %}</div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="max_uses_per_user" class="form-label">{% trans "الحد الأقصى للاستخدام لكل مستخدم" %}</label>
+                            <input type="number" class="form-control" id="max_uses_per_user" name="max_uses_per_user" value="{{ discount.max_uses_per_user|default:'' }}" min="1">
+                            <div class="form-text">{% trans "الحد الأقصى لعدد مرات استخدام هذا الخصم من قبل كل مستخدم (اتركه فارغاً لعدم وجود حد)" %}</div>
+                        </div>
+
+                        <!-- إعدادات متقدمة -->
+                        <div class="col-md-6 mb-3">
+                            <label for="priority" class="form-label">{% trans "الأولوية" %}</label>
+                            <input type="number" class="form-control" id="priority" name="priority" value="{{ discount.priority|default:'0' }}" min="0">
+                            <div class="form-text">{% trans "أولوية تطبيق الخصم (الأعلى أولاً) عند وجود عدة خصومات متاحة" %}</div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check form-switch mt-4">
+                                <input class="form-check-input" type="checkbox" id="is_stackable" name="is_stackable" {% if discount.is_stackable %}checked{% endif %}>
+                                <label class="form-check-label" for="is_stackable">
+                                    {% trans "قابل للتجميع مع خصومات أخرى" %}
+                                </label>
+                                <div class="form-text">{% trans "إذا كان هذا الخصم يمكن تطبيقه مع خصومات أخرى في نفس الوقت" %}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <!-- أزرار الحفظ والإلغاء -->
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'dashboard:dashboard_discounts' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-1"></i> {% trans "إلغاء" %}
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i>
+                    {% if discount %}
+                        {% trans "حفظ التغييرات" %}
+                    {% else %}
+                        {% trans "إنشاء الخصم" %}
+                    {% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .required:after {
+        content: " *";
+        color: red;
+    }
+
+    .tab-pane {
+        padding: 1.5rem;
+        border: 1px solid #dee2e6;
+        border-top: 0;
+        border-radius: 0 0 .25rem .25rem;
+    }
+
+    .nav-tabs .nav-link {
+        color: #495057;
+    }
+
+    .nav-tabs .nav-link.active {
+        font-weight: 600;
+    }
+
+    .card-title {
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    .example-text {
+        font-size: 0.9rem;
+    }
+
+    .form-check-input {
+        cursor: pointer;
+    }
+
+    .form-text {
+        font-size: 0.8rem;
+    }
+
+    /* للشاشات الصغيرة */
+    @media (max-width: 767.98px) {
+        .tab-pane {
+            padding: 1rem;
+        }
+
+        .nav-tabs {
+            display: flex;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .nav-tabs .nav-link {
+            white-space: nowrap;
+        }
+    }
+</style>
+
+<!-- Select2 for product selection -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // تفعيل Select2 للمنتجات
+        $('#products').select2({
+            theme: 'bootstrap-5',
+            placeholder: "{% trans 'اختر المنتجات...' %}",
+            allowClear: true,
+            width: '100%'
+        });
+
+        // تفعيل Select2 للفئة
+        $('#category').select2({
+            theme: 'bootstrap-5',
+            placeholder: "{% trans 'اختر الفئة...' %}",
+            allowClear: true,
+            width: '100%'
+        });
+
+        // تحديث عرض الحقول حسب نوع الخصم
+        function updateDiscountTypeFields() {
+            var discountType = $('#discount_type').val();
+
+            // إخفاء/إظهار حقول حسب نوع الخصم
+            if (discountType === 'percentage') {
+                $('.discount-unit').text('%');
+                $('.max-discount-field').show();
+                $('.discount-value-help').text("{% trans 'نسبة الخصم (من 0 إلى 100%)' %}");
+            } else if (discountType === 'fixed_amount') {
+                $('.discount-unit').text('ر.س');
+                $('.max-discount-field').hide();
+                $('.discount-value-help').text("{% trans 'قيمة الخصم بالريال السعودي' %}");
+            } else if (discountType === 'buy_x_get_y') {
+                $('.discount-unit').text('ر.س');
+                $('.max-discount-field').hide();
+                $('.discount-value-help').text("{% trans 'قيمة الخصم على المنتج (تحدد بنسبة الخصم في تاب اشتري X واحصل على Y)' %}");
+            } else if (discountType === 'free_shipping') {
+                $('.discount-unit').text('ر.س');
+                $('.max-discount-field').hide();
+                $('.discount-value-help').text("{% trans 'الحد الأدنى للطلب للحصول على الشحن المجاني (0 = لا يوجد حد أدنى)' %}");
+            }
+
+            // إظهار/إخفاء تاب اشتري X واحصل على Y
+            if (discountType === 'buy_x_get_y') {
+                $('#bxgy-tab').parent().show();
+            } else {
+                $('#bxgy-tab').parent().hide();
+                // تأكد من عدم عرض التاب إذا كان نشطًا
+                if ($('#bxgy-tab').hasClass('active')) {
+                    $('#basic-tab').tab('show');
+                }
+            }
+        }
+
+        // تحديث عرض الحقول حسب نوع التطبيق
+        function updateApplicationTypeFields() {
+            var applicationType = $('#application_type').val();
+
+            // إخفاء جميع الحقول ثم إظهار المناسبة
+            $('.category-field, .products-field').hide();
+
+            if (applicationType === 'category') {
+                $('.category-field').show();
+            } else if (applicationType === 'specific_products') {
+                $('.products-field').show();
+            }
+        }
+
+        // تحديث واجهة المستخدم عند تغيير نوع الخصم
+        $('#discount_type').change(function() {
+            updateDiscountTypeFields();
+        });
+
+        // تحديث واجهة المستخدم عند تغيير نوع التطبيق
+        $('#application_type').change(function() {
+            updateApplicationTypeFields();
+        });
+
+        // تفعيل تحديثات واجهة المستخدم عند التحميل
+        updateDiscountTypeFields();
+        updateApplicationTypeFields();
+
+        // التحقق من صحة الكود عند تغيير "يتطلب كود خصم"
+        $('#requires_coupon_code').change(function() {
+            if ($(this).is(':checked') && !$('#code').val()) {
+                alert("{% trans 'يجب إدخال كود الخصم عند تفعيل خيار يتطلب كود خصم' %}");
+                $('#code').focus();
+            }
+        });
+
+        // التحقق من النموذج قبل الإرسال
+        $('#discount-form').submit(function(e) {
+            var isValid = true;
+            var discountType = $('#discount_type').val();
+            var applicationType = $('#application_type').val();
+
+            // التحقق من صحة نسبة الخصم للنوع percentage
+            if (discountType === 'percentage') {
+                var value = parseFloat($('#value').val());
+                if (value > 100) {
+                    alert("{% trans 'نسبة الخصم لا يمكن أن تتجاوز 100%' %}");
+                    $('#value').focus();
+                    isValid = false;
+                }
+            }
+
+            // التحقق من صحة تاريخ البداية والنهاية
+            var startDate = new Date($('#start_date').val());
+            var endDate = new Date($('#end_date').val());
+
+            if ($('#end_date').val() && startDate >= endDate) {
+                alert("{% trans 'تاريخ النهاية يجب أن يكون بعد تاريخ البداية' %}");
+                $('#end_date').focus();
+                isValid = false;
+            }
+
+            // التحقق من نوع التطبيق
+            if (applicationType === 'category' && !$('#category').val()) {
+                alert("{% trans 'يجب تحديد الفئة عند اختيار نوع التطبيق فئة محددة' %}");
+                $('#category').focus();
+                isValid = false;
+            }
+
+            if (applicationType === 'specific_products' && $('#products').val().length === 0) {
+                alert("{% trans 'يجب تحديد منتج واحد على الأقل عند اختيار نوع التطبيق منتجات محددة' %}");
+                $('#products').focus();
+                isValid = false;
+            }
+
+            // التحقق من صحة خيارات اشتري X واحصل على Y
+            if (discountType === 'buy_x_get_y') {
+                if (parseInt($('#buy_quantity').val()) < 1) {
+                    alert("{% trans 'كمية الشراء يجب أن تكون 1 على الأقل' %}");
+                    $('#buy_quantity').focus();
+                    isValid = false;
+                }
+
+                if (parseInt($('#get_quantity').val()) < 1) {
+                    alert("{% trans 'كمية الحصول يجب أن تكون 1 على الأقل' %}");
+                    $('#get_quantity').focus();
+                    isValid = false;
+                }
+            }
+
+            // التحقق من وجود كود الخصم إذا كان مطلوباً
+            if ($('#requires_coupon_code').is(':checked') && !$('#code').val()) {
+                alert("{% trans 'يجب إدخال كود الخصم عند تفعيل خيار يتطلب كود خصم' %}");
+                $('#code').focus();
+                isValid = false;
+            }
+
+            return isValid;
+        });
+    });
+</script>
+{% endblock %}

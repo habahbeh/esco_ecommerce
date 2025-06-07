@@ -1,0 +1,411 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+{% load i18n %}
+{% load dashboard_tags %}
+
+{% block title %}{% trans "إدارة الخصومات" %} | {% trans "لوحة التحكم" %}{% endblock %}
+
+{% block page_title %}{% trans "إدارة الخصومات" %}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_products' %}">{% trans "المنتجات" %}</a></li>
+<li class="breadcrumb-item active">{% trans "الخصومات" %}</li>
+{% endblock %}
+
+{% block current_page %}{% trans "قائمة الخصومات" %}{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-tags fa-fw me-2"></i>{% trans "الخصومات" %}
+        </h6>
+        <div class="actions">
+            {% if perms.products.add_productdiscount %}
+            <a href="{% url 'dashboard:dashboard_discount_create' %}" class="btn btn-sm btn-primary">
+                <i class="fas fa-plus-circle me-1"></i> {% trans "إضافة خصم جديد" %}
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- الإحصائيات -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="stats-item border rounded p-3 bg-light-hover h-100">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0 counter">{{ stats.total }}</h5>
+                            <span class="text-muted">{% trans "إجمالي الخصومات" %}</span>
+                        </div>
+                        <div class="stats-icon bg-info-light text-info">
+                            <i class="fas fa-tag fa-fw"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stats-item border rounded p-3 bg-light-hover h-100">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0 counter">{{ stats.active }}</h5>
+                            <span class="text-muted">{% trans "الخصومات النشطة" %}</span>
+                        </div>
+                        <div class="stats-icon bg-success-light text-success">
+                            <i class="fas fa-check-circle fa-fw"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stats-item border rounded p-3 bg-light-hover h-100">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0 counter">{{ stats.expired }}</h5>
+                            <span class="text-muted">{% trans "الخصومات المنتهية" %}</span>
+                        </div>
+                        <div class="stats-icon bg-danger-light text-danger">
+                            <i class="fas fa-calendar-times fa-fw"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- أدوات البحث والتصفية -->
+        <div class="card mb-4 border">
+            <div class="card-header bg-light py-2">
+                <h6 class="m-0 font-weight-bold">{% trans "بحث وتصفية" %}</h6>
+            </div>
+            <div class="card-body">
+                <form method="get" id="filter-form" class="mb-0">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="q" class="small mb-1">{% trans "البحث" %}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                    <input type="text" class="form-control" id="q" name="q" value="{{ query }}" placeholder="{% trans 'بحث باسم الخصم أو الكود...' %}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="type" class="small mb-1">{% trans "نوع الخصم" %}</label>
+                                <select class="form-select" id="type" name="type">
+                                    <option value="">{% trans "الكل" %}</option>
+                                    {% for type_value, type_label in discount_types %}
+                                    <option value="{{ type_value }}" {% if type_filter == type_value %}selected{% endif %}>{{ type_label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="status" class="small mb-1">{% trans "الحالة" %}</label>
+                                <select class="form-select" id="status" name="status">
+                                    <option value="">{% trans "الكل" %}</option>
+                                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>{% trans "نشط" %}</option>
+                                    <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>{% trans "غير نشط" %}</option>
+                                    <option value="expired" {% if status_filter == 'expired' %}selected{% endif %}>{% trans "منتهي" %}</option>
+                                    <option value="upcoming" {% if status_filter == 'upcoming' %}selected{% endif %}>{% trans "قادم" %}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <div class="form-group w-100">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-filter me-1"></i> {% trans "تصفية" %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- جدول الخصومات -->
+        <div class="table-responsive" id="discounts-table-container">
+            <table class="table table-hover table-bordered" id="discounts-table">
+                <thead class="table-light">
+                    <tr>
+                        <th>{% trans "الخصم" %}</th>
+                        <th>{% trans "نوع الخصم" %}</th>
+                        <th>{% trans "القيمة" %}</th>
+                        <th>{% trans "تطبيق على" %}</th>
+                        <th>{% trans "تاريخ البداية" %}</th>
+                        <th>{% trans "تاريخ النهاية" %}</th>
+                        <th>{% trans "الحالة" %}</th>
+                        <th width="130">{% trans "الإجراءات" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for discount in discounts %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="ms-3">
+                                    <p class="fw-bold mb-1">{{ discount.name }}</p>
+                                    {% if discount.code %}
+                                    <p class="text-muted mb-0 small">
+                                        <span class="badge bg-light text-dark border"><code>{{ discount.code }}</code></span>
+                                    </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if discount.discount_type == 'percentage' %}
+                            <span class="badge bg-info">{% trans "نسبة مئوية" %}</span>
+                            {% elif discount.discount_type == 'fixed_amount' %}
+                            <span class="badge bg-warning">{% trans "مبلغ ثابت" %}</span>
+                            {% elif discount.discount_type == 'buy_x_get_y' %}
+                            <span class="badge bg-success">{% trans "اشتري X واحصل على Y" %}</span>
+                            {% elif discount.discount_type == 'free_shipping' %}
+                            <span class="badge bg-primary">{% trans "شحن مجاني" %}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if discount.discount_type == 'percentage' %}
+                            <span class="fw-bold">{{ discount.value|percentage }}</span>
+                            {% if discount.max_discount_amount %}
+                            <small class="d-block text-muted mt-1">{% trans "حتى" %} {{ discount.max_discount_amount|currency }}</small>
+                            {% endif %}
+                            {% elif discount.discount_type == 'fixed_amount' %}
+                            <span class="fw-bold">{{ discount.value|currency }}</span>
+                            {% elif discount.discount_type == 'buy_x_get_y' %}
+                            <span>{% trans "اشتري" %} {{ discount.buy_quantity }} {% trans "واحصل على" %} {{ discount.get_quantity }}</span>
+                            {% elif discount.discount_type == 'free_shipping' %}
+                            <span class="fw-bold">{% trans "شحن مجاني" %}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if discount.application_type == 'all_products' %}
+                            <span class="badge bg-secondary">{% trans "جميع المنتجات" %}</span>
+                            {% elif discount.application_type == 'category' %}
+                            <span class="badge bg-info">{% trans "فئة:" %} {{ discount.category.name }}</span>
+                            {% elif discount.application_type == 'specific_products' %}
+                            <span class="badge bg-warning">{% trans "منتجات محددة" %} ({{ discount.products.count }})</span>
+                            {% elif discount.application_type == 'minimum_purchase' %}
+                            <span class="badge bg-success">{% trans "الحد الأدنى للشراء" %}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ discount.start_date|date:"Y-m-d H:i" }}</td>
+                        <td>
+                            {% if discount.end_date %}
+                            {{ discount.end_date|date:"Y-m-d H:i" }}
+                            {% else %}
+                            <span class="text-muted">{% trans "غير محدد" %}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if discount.is_active %}
+                                {% if discount.end_date and discount.end_date < now %}
+                                <span class="badge bg-danger">{% trans "منتهي" %}</span>
+                                {% elif discount.start_date > now %}
+                                <span class="badge bg-info">{% trans "قادم" %}</span>
+                                {% else %}
+                                <span class="badge bg-success">{% trans "نشط" %}</span>
+                                {% endif %}
+                            {% else %}
+                            <span class="badge bg-secondary">{% trans "غير نشط" %}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                {% if perms.products.change_productdiscount %}
+                                <a href="{% url 'dashboard:dashboard_discount_edit' discount_id=discount.id %}" class="btn btn-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% endif %}
+                                {% if perms.products.delete_productdiscount %}
+                                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ discount.id }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+
+                            <!-- Modal حذف الخصم -->
+                            <div class="modal fade" id="deleteModal{{ discount.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ discount.id }}" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="deleteModalLabel{{ discount.id }}">{% trans "تأكيد الحذف" %}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>{% trans "هل أنت متأكد من حذف الخصم:" %} <strong>{{ discount.name }}</strong>؟</p>
+                                            <p class="text-danger">{% trans "هذا الإجراء لا يمكن التراجع عنه." %}</p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <form method="post" action="{% url 'dashboard:dashboard_discount_delete' discount_id=discount.id %}">
+                                                {% csrf_token %}
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "إلغاء" %}</button>
+                                                <button type="submit" class="btn btn-danger">
+                                                    <i class="fas fa-trash me-1"></i> {% trans "تأكيد الحذف" %}
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <div class="empty-state">
+                                <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                                <h6>{% trans "لا توجد خصومات" %}</h6>
+                                <p class="text-muted">{% trans "لم يتم العثور على خصومات متطابقة مع معايير البحث" %}</p>
+                                {% if perms.products.add_productdiscount %}
+                                <a href="{% url 'dashboard:dashboard_discount_create' %}" class="btn btn-sm btn-primary mt-2">
+                                    <i class="fas fa-plus-circle me-1"></i> {% trans "إضافة خصم جديد" %}
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if discounts.has_other_pages %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if discounts.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" aria-label="First">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ discounts.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" aria-label="Previous">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="First">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Previous">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for i in discounts.paginator.page_range %}
+                    {% if discounts.number == i %}
+                    <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                    {% elif i > discounts.number|add:'-3' and i < discounts.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ i }}{% if query %}&q={{ query }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">{{ i }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if discounts.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ discounts.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" aria-label="Next">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ discounts.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" aria-label="Last">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Next">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Last">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .empty-state {
+        padding: 2rem;
+        text-align: center;
+    }
+
+    .stats-item {
+        transition: all 0.3s ease;
+    }
+
+    .bg-light-hover:hover {
+        background-color: rgba(248, 249, 250, 0.7) !important;
+    }
+
+    .stats-icon {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-size: 1.5rem;
+    }
+
+    .bg-success-light {
+        background-color: rgba(25, 135, 84, 0.15);
+    }
+
+    .bg-info-light {
+        background-color: rgba(13, 202, 240, 0.15);
+    }
+
+    .bg-danger-light {
+        background-color: rgba(220, 53, 69, 0.15);
+    }
+
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 0, 0, 0.03);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // تحديث التصفية تلقائيًا عند تغيير أي حقل فلترة
+        $('#type, #status').change(function() {
+            $('#filter-form').submit();
+        });
+
+        // عرض التوست للرسائل
+        $('.toast').toast('show');
+
+        // تفعيل البوبوفر لعرض معلومات إضافية
+        var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+        var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+            return new bootstrap.Popover(popoverTriggerEl, {
+                trigger: 'hover',
+                html: true
+            });
+        });
+    });
+</script>
+{% endblock %}

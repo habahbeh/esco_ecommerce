@@ -1,0 +1,549 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+{% load i18n %}
+{% load dashboard_tags %}
+
+{% block title %}{% trans "إدارة تقييمات المنتجات" %} | {% trans "لوحة التحكم" %}{% endblock %}
+
+{% block page_title %}{% trans "إدارة تقييمات المنتجات" %}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_products' %}">{% trans "المنتجات" %}</a></li>
+<li class="breadcrumb-item active">{% trans "تقييمات المنتجات" %}</li>
+{% endblock %}
+
+{% block current_page %}{% trans "قائمة التقييمات" %}{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-star fa-fw me-2"></i>{% trans "تقييمات المنتجات" %}
+        </h6>
+        <div class="actions">
+            <a href="{% url 'dashboard:dashboard_products' %}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-box me-1"></i> {% trans "قائمة المنتجات" %}
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- الإحصائيات -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-item border rounded p-3 bg-light-hover h-100">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0 counter">{{ stats.total }}</h5>
+                            <span class="text-muted">{% trans "إجمالي التقييمات" %}</span>
+                        </div>
+                        <div class="stats-icon bg-info-light text-info">
+                            <i class="fas fa-star fa-fw"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-item border rounded p-3 bg-light-hover h-100">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0 counter">{{ stats.approved }}</h5>
+                            <span class="text-muted">{% trans "تقييمات معتمدة" %}</span>
+                        </div>
+                        <div class="stats-icon bg-success-light text-success">
+                            <i class="fas fa-check-circle fa-fw"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-item border rounded p-3 bg-light-hover h-100">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0 counter">{{ stats.pending }}</h5>
+                            <span class="text-muted">{% trans "تقييمات قيد المراجعة" %}</span>
+                        </div>
+                        <div class="stats-icon bg-warning-light text-warning">
+                            <i class="fas fa-hourglass-half fa-fw"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-item border rounded p-3 bg-light-hover h-100">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0 counter">{{ stats.reported }}</h5>
+                            <span class="text-muted">{% trans "تقييمات مبلغ عنها" %}</span>
+                        </div>
+                        <div class="stats-icon bg-danger-light text-danger">
+                            <i class="fas fa-flag fa-fw"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- أدوات البحث والتصفية -->
+        <div class="card mb-4 border">
+            <div class="card-header bg-light py-2">
+                <h6 class="m-0 font-weight-bold">{% trans "بحث وتصفية" %}</h6>
+            </div>
+            <div class="card-body">
+                <form method="get" id="filter-form" class="mb-0">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="q" class="small mb-1">{% trans "البحث" %}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                    <input type="text" class="form-control" id="q" name="q" value="{{ query }}" placeholder="{% trans 'بحث في المنتج، المستخدم، المحتوى...' %}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label for="rating" class="small mb-1">{% trans "التقييم" %}</label>
+                                <select class="form-select" id="rating" name="rating">
+                                    <option value="">{% trans "الكل" %}</option>
+                                    <option value="5" {% if rating_filter == '5' %}selected{% endif %}>5 {% trans "نجوم" %}</option>
+                                    <option value="4" {% if rating_filter == '4' %}selected{% endif %}>4 {% trans "نجوم" %}</option>
+                                    <option value="3" {% if rating_filter == '3' %}selected{% endif %}>3 {% trans "نجوم" %}</option>
+                                    <option value="2" {% if rating_filter == '2' %}selected{% endif %}>2 {% trans "نجوم" %}</option>
+                                    <option value="1" {% if rating_filter == '1' %}selected{% endif %}>1 {% trans "نجمة" %}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label for="status" class="small mb-1">{% trans "الحالة" %}</label>
+                                <select class="form-select" id="status" name="status">
+                                    <option value="">{% trans "الكل" %}</option>
+                                    <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>{% trans "معتمد" %}</option>
+                                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>{% trans "قيد المراجعة" %}</option>
+                                    <option value="featured" {% if status_filter == 'featured' %}selected{% endif %}>{% trans "مميز" %}</option>
+                                    <option value="reported" {% if status_filter == 'reported' %}selected{% endif %}>{% trans "مبلغ عنه" %}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <div class="form-group w-100">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-filter me-1"></i> {% trans "تصفية" %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- جدول التقييمات -->
+        <div class="table-responsive" id="reviews-table-container">
+            <table class="table table-hover border" id="reviews-table">
+                <thead class="table-light">
+                    <tr>
+                        <th>{% trans "المنتج" %}</th>
+                        <th>{% trans "المستخدم" %}</th>
+                        <th>{% trans "التقييم" %}</th>
+                        <th>{% trans "المحتوى" %}</th>
+                        <th>{% trans "التاريخ" %}</th>
+                        <th>{% trans "الحالة" %}</th>
+                        <th width="140">{% trans "الإجراءات" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for review in reviews %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'dashboard:dashboard_product_detail' product_id=review.product.id %}" class="text-decoration-none">
+                                <div class="d-flex align-items-center">
+                                    {% if review.product.default_image %}
+                                    <img src="{{ review.product.default_image.image_thumbnail.url|default:review.product.default_image.image.url }}" alt="{{ review.product.name }}" class="review-product-image rounded me-2" width="40" height="40">
+                                    {% else %}
+                                    <div class="no-image-placeholder rounded me-2 d-flex align-items-center justify-content-center" style="width:40px;height:40px;background:#eee;color:#999;"><i class="fas fa-image"></i></div>
+                                    {% endif %}
+                                    <div class="ms-1">
+                                        <p class="mb-0 text-primary">{{ review.product.name|truncatechars:30 }}</p>
+                                        <small class="text-muted">{{ review.product.sku }}</small>
+                                    </div>
+                                </div>
+                            </a>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if review.user.avatar %}
+                                <img src="{{ review.user.avatar.url }}" class="rounded-circle me-2" width="32" height="32" alt="{{ review.user.get_full_name }}">
+                                {% else %}
+                                <div class="avatar-placeholder rounded-circle me-2 d-flex align-items-center justify-content-center" style="width:32px;height:32px;background:#3c8dbc;color:#fff;">
+                                    {{ review.user.get_initials }}
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <p class="mb-0 fw-medium">{{ review.user.get_full_name|default:review.user.username }}</p>
+                                    <small class="text-muted">{{ review.user.email }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="rating-stars">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= review.rating %}
+                                    <i class="fas fa-star text-warning"></i>
+                                    {% else %}
+                                    <i class="far fa-star text-muted"></i>
+                                    {% endif %}
+                                {% endfor %}
+                                <span class="badge bg-secondary ms-1">{{ review.rating }}/5</span>
+                            </div>
+                            
+                            {% if review.images.exists %}
+                            <span class="badge bg-info">
+                                <i class="fas fa-image me-1"></i> {{ review.images.count }}
+                            </span>
+                            {% endif %}
+                            
+                            {% if review.recommend %}
+                            <span class="badge bg-success mt-1 d-inline-block">
+                                <i class="fas fa-thumbs-up me-1"></i> {% trans "يوصي بالمنتج" %}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if review.title %}
+                            <p class="mb-1 fw-medium">{{ review.title }}</p>
+                            {% endif %}
+                            <p class="mb-0 small text-muted">{{ review.content|truncatechars:100 }}</p>
+                            
+                            {% if review.helpful_votes > 0 %}
+                            <small class="text-success">
+                                <i class="fas fa-thumbs-up me-1"></i> {{ review.helpful_votes }} {% trans "شخص وجدوا هذا مفيداً" %}
+                            </small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="text-nowrap">{{ review.created_at|date:"Y-m-d" }}</span><br>
+                            <small class="text-muted">{{ review.created_at|time:"H:i" }}</small>
+                        </td>
+                        <td>
+                            {% if review.is_approved %}
+                                <span class="badge bg-success">{% trans "معتمد" %}</span>
+                            {% else %}
+                                <span class="badge bg-warning">{% trans "قيد المراجعة" %}</span>
+                            {% endif %}
+                            
+                            {% if review.is_featured %}
+                                <span class="badge bg-info mt-1 d-inline-block">{% trans "مميز" %}</span>
+                            {% endif %}
+                            
+                            {% if review.report_count > 0 %}
+                                <span class="badge bg-danger mt-1 d-inline-block">
+                                    <i class="fas fa-flag me-1"></i> {{ review.report_count }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'dashboard:dashboard_review_detail' review_id=review.id %}" class="btn btn-info" data-bs-toggle="tooltip" title="{% trans 'عرض التفاصيل' %}">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                
+                                {% if not review.is_approved %}
+                                <button type="button" class="btn btn-success approve-review" data-review-id="{{ review.id }}" data-bs-toggle="tooltip" title="{% trans 'اعتماد التقييم' %}">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                {% endif %}
+                                
+                                {% if not review.is_featured %}
+                                <button type="button" class="btn btn-primary feature-review" data-review-id="{{ review.id }}" data-bs-toggle="tooltip" title="{% trans 'تمييز التقييم' %}">
+                                    <i class="fas fa-star"></i>
+                                </button>
+                                {% endif %}
+                                
+                                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ review.id }}" title="{% trans 'حذف التقييم' %}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+
+                            <!-- Modal حذف التقييم -->
+                            <div class="modal fade" id="deleteModal{{ review.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ review.id }}" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="deleteModalLabel{{ review.id }}">{% trans "تأكيد الحذف" %}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>{% trans "هل أنت متأكد من حذف تقييم" %} <strong>{{ review.user.get_full_name|default:review.user.username }}</strong> {% trans "للمنتج" %} <strong>{{ review.product.name }}</strong>؟</p>
+                                            <p class="text-danger">{% trans "هذا الإجراء لا يمكن التراجع عنه." %}</p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <form method="post" action="{% url 'dashboard:dashboard_review_action' review_id=review.id %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="delete">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "إلغاء" %}</button>
+                                                <button type="submit" class="btn btn-danger">
+                                                    <i class="fas fa-trash me-1"></i> {% trans "تأكيد الحذف" %}
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <div class="empty-state">
+                                <i class="fas fa-star fa-3x text-muted mb-3"></i>
+                                <h6>{% trans "لا توجد تقييمات" %}</h6>
+                                <p class="text-muted">{% trans "لم يتم العثور على تقييمات متطابقة مع معايير البحث" %}</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if reviews.has_other_pages %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if reviews.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}{% if rating_filter %}&rating={{ rating_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" aria-label="First">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ reviews.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if rating_filter %}&rating={{ rating_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" aria-label="Previous">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="First">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Previous">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for i in reviews.paginator.page_range %}
+                    {% if reviews.number == i %}
+                    <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                    {% elif i > reviews.number|add:'-3' and i < reviews.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ i }}{% if query %}&q={{ query }}{% endif %}{% if rating_filter %}&rating={{ rating_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">{{ i }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if reviews.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ reviews.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if rating_filter %}&rating={{ rating_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" aria-label="Next">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ reviews.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}{% if rating_filter %}&rating={{ rating_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" aria-label="Last">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Next">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Last">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="reviewToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-success text-white">
+            <i class="fas fa-check-circle me-2"></i>
+            <strong class="me-auto" id="toast-title">{% trans "نجاح" %}</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toast-message">
+            {% trans "تم تنفيذ الإجراء بنجاح" %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .empty-state {
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .stats-item {
+        transition: all 0.3s ease;
+    }
+    
+    .bg-light-hover:hover {
+        background-color: rgba(248, 249, 250, 0.7) !important;
+    }
+    
+    .stats-icon {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-size: 1.5rem;
+    }
+    
+    .bg-success-light {
+        background-color: rgba(25, 135, 84, 0.15);
+    }
+    
+    .bg-info-light {
+        background-color: rgba(13, 202, 240, 0.15);
+    }
+    
+    .bg-warning-light {
+        background-color: rgba(255, 193, 7, 0.15);
+    }
+    
+    .bg-danger-light {
+        background-color: rgba(220, 53, 69, 0.15);
+    }
+    
+    .rating-stars {
+        white-space: nowrap;
+    }
+    
+    .review-product-image {
+        object-fit: contain;
+        background-color: #f8f9fa;
+    }
+    
+    .fw-medium {
+        font-weight: 500;
+    }
+    
+    /* اضافات لنص الفارغ */
+    td.text-muted {
+        color: #6c757d;
+    }
+    
+    /* توقف النص في جدول المحتوى */
+    .table td p {
+        margin-bottom: 0;
+        word-break: break-word;
+    }
+    
+    /* تعديل لحجم الصور */
+    .avatar-placeholder, .no-image-placeholder {
+        min-width: 32px;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // تحديث التصفية تلقائيًا عند تغيير أي حقل فلترة
+        $('#rating, #status').change(function() {
+            $('#filter-form').submit();
+        });
+        
+        // تفعيل التلميحات tooltip
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // وظيفة لعرض رسالة نجاح
+        function showSuccessToast(message) {
+            $('#toast-message').text(message);
+            var toast = new bootstrap.Toast(document.getElementById('reviewToast'));
+            toast.show();
+        }
+        
+        // معالجة نقر زر الموافقة على التقييم
+        $('.approve-review').click(function() {
+            var reviewId = $(this).data('review-id');
+            var button = $(this);
+            
+            $.ajax({
+                url: '{% url "dashboard:dashboard_review_action" review_id=0 %}'.replace('0', reviewId),
+                type: 'POST',
+                data: {
+                    'action': 'approve',
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // تحديث حالة الزر والشارة
+                        button.closest('tr').find('td:nth-child(6) .badge').first().removeClass('bg-warning').addClass('bg-success').text('{% trans "معتمد" %}');
+                        button.remove();
+                        showSuccessToast('{% trans "تم اعتماد التقييم بنجاح" %}');
+                    }
+                },
+                error: function() {
+                    alert('{% trans "حدث خطأ أثناء معالجة الطلب" %}');
+                }
+            });
+        });
+        
+        // معالجة نقر زر تمييز التقييم
+        $('.feature-review').click(function() {
+            var reviewId = $(this).data('review-id');
+            var button = $(this);
+            
+            $.ajax({
+                url: '{% url "dashboard:dashboard_review_action" review_id=0 %}'.replace('0', reviewId),
+                type: 'POST',
+                data: {
+                    'action': 'feature',
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // إضافة شارة مميز للتقييم
+                        var statusCell = button.closest('tr').find('td:nth-child(6)');
+                        if (!statusCell.find('.badge.bg-info').length) {
+                            statusCell.append('<span class="badge bg-info mt-1 d-inline-block">{% trans "مميز" %}</span>');
+                        }
+                        button.remove();
+                        showSuccessToast('{% trans "تم تمييز التقييم بنجاح" %}');
+                    }
+                },
+                error: function() {
+                    alert('{% trans "حدث خطأ أثناء معالجة الطلب" %}');
+                }
+            });
+        });
+        
+        // عرض رسالة النجاح بعد الإجراءات
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.tags == 'success' %}
+                    showSuccessToast("{{ message }}");
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    });
+</script>
+{% endblock %}

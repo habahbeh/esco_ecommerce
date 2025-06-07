@@ -569,7 +569,7 @@
                                     <div class="col-md-4 mb-3">
                                         <label for="base_price" class="form-label">{% trans 'السعر الأساسي' %} <span class="text-danger">*</span></label>
                                         <div class="input-group price-field">
-                                            <input type="number" class="form-control" id="base_price" name="base_price" step="0.01" min="0" value="{{ product.base_price|default:'' }}" required>
+                                            <input type="number" class="form-control" id="base_price" name="base_price" step="0.01" min="0" value="{{ product.base_price|stringformat:'f'|cut:',' }}" required>
                                             <span class="input-group-text">د.ا</span>
                                         </div>
                                         <div class="form-text">{% trans 'السعر الحالي للمنتج' %}</div>
@@ -793,13 +793,13 @@
                                 <div class="seo-preview">
                                     <h6>{% trans 'معاينة ظهور الصفحة في محركات البحث:' %}</h6>
                                     <div class="seo-preview-title" id="seo-preview-title">
-                                        {{ product.meta_title|default:product.name|default:'عنوان المنتج' }}
+                                        {% if product %}{{ product.meta_title|default:product.name }}{% else %}عنوان المنتج{% endif %}
                                     </div>
                                     <div class="seo-preview-url">
                                         www.example.com/products/{{ product.slug|default:'product-name' }}
                                     </div>
                                     <div class="seo-preview-description" id="seo-preview-description">
-                                        {{ product.meta_description|default:product.short_description|default:'وصف المنتج سيظهر هنا. قم بإضافة وصف مختصر وجذاب للمنتج.' }}
+                                        {% if product %}{{ product.meta_description|default:product.short_description }}{% else %}وصف المنتج سيظهر هنا. قم بإضافة وصف مختصر وجذاب للمنتج.{% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -1101,11 +1101,20 @@
                 $('#category').addClass('is-invalid');
                 isValid = false;
             }
-
+            /*
             if (!$('#base_price').val()) {
                 $('#base_price').addClass('is-invalid');
                 isValid = false;
             }
+             */
+             // تحويل قيم الأسعار قبل الإرسال
+            let basePrice = $('#base_price').val().replace(',', '.');
+            if (isNaN(parseFloat(basePrice))) {
+                alert('الرجاء إدخال رقم صحيح للسعر الأساسي');
+                $('#base_price').focus();
+                return false;
+            }
+            $('#base_price').val(basePrice);
 
             if (!isValid) {
                 event.preventDefault();

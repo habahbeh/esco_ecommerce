@@ -2,7 +2,8 @@ from django.urls import path
 from django.contrib.auth.views import LoginView, LogoutView
 
 from . import views
-from dashboard.views.accounts import UserAddressSaveView, UserAddressGetView, UserAddressDeleteView, UserAddressListPartialView
+from dashboard.views.accounts import UserAddressSaveView, UserAddressGetView, UserAddressDeleteView, \
+    UserAddressListPartialView
 
 app_name = 'dashboard'
 
@@ -26,8 +27,10 @@ urlpatterns = [
     path('accounts/users/edit/<uuid:user_id>/', views.UserFormView.as_view(), name='dashboard_user_edit'),
     path('accounts/users/<str:user_id>/delete/', views.UserDeleteView.as_view(), name='dashboard_user_delete'),
 
-    path('accounts/users/<uuid:user_id>/addresses/', views.UserAddressListView.as_view(), name='dashboard_user_address_list'),
-    path('accounts/users/<uuid:user_id>/addresses/create/', views.UserAddressFormView.as_view(), name='dashboard_user_address_create'),
+    path('accounts/users/<uuid:user_id>/addresses/', views.UserAddressListView.as_view(),
+         name='dashboard_user_address_list'),
+    path('accounts/users/<uuid:user_id>/addresses/create/', views.UserAddressFormView.as_view(),
+         name='dashboard_user_address_create'),
     path('accounts/users/<uuid:user_id>/addresses/<int:address_id>/edit/', views.UserAddressFormView.as_view(),
          name='dashboard_user_address_edit'),
 
@@ -35,12 +38,14 @@ urlpatterns = [
     path('accounts/users/address/get/', UserAddressGetView.as_view(), name='dashboard_user_address_get'),
     # path('accounts/users/address/delete/', UserAddressDeleteView.as_view(), name='dashboard_user_address_delete'),
     path('accounts/api/address/delete/', UserAddressDeleteView.as_view(), name='dashboard_user_address_delete'),
-    path('accounts/users/<uuid:user_id>/addresses/<int:address_id>/delete/', views.UserAddressDeleteView.as_view(), name='dashboard_user_address_delete'),
+    path('accounts/users/<uuid:user_id>/addresses/<int:address_id>/delete/', views.UserAddressDeleteView.as_view(),
+         name='dashboard_user_address_delete'),
 
     path('accounts/users/address/list-partial/', UserAddressListPartialView.as_view(),
          name='dashboard_user_address_list_partial'),
 
-    path('accounts/users/<uuid:user_id>/reset-password/', views.UserResetPasswordView.as_view(), name='dashboard_user_reset_password'),
+    path('accounts/users/<uuid:user_id>/reset-password/', views.UserResetPasswordView.as_view(),
+         name='dashboard_user_reset_password'),
 
     # إدارة الأدوار
     path('accounts/roles/', views.RoleListView.as_view(), name='dashboard_roles'),
@@ -51,10 +56,7 @@ urlpatterns = [
     # ========================= إدارة المنتجات =========================
     # قائمة المنتجات
     path('products/', views.ProductListView.as_view(), name='dashboard_products'),
-    path('products/<str:product_id>/', views.ProductDetailView.as_view(), name='dashboard_product_detail'),
     path('products/create/', views.ProductFormView.as_view(), name='dashboard_product_create'),
-    path('products/<str:product_id>/edit/', views.ProductFormView.as_view(), name='dashboard_product_edit'),
-    path('products/<str:product_id>/delete/', views.ProductDeleteView.as_view(), name='dashboard_product_delete'),
     path('products/bulk-actions/', views.ProductBulkActionsView.as_view(), name='dashboard_product_bulk_actions'),
 
     # إدارة الفئات
@@ -89,6 +91,11 @@ urlpatterns = [
     path('products/reviews/', views.ReviewListView.as_view(), name='dashboard_reviews'),
     path('products/reviews/<str:review_id>/', views.ReviewDetailView.as_view(), name='dashboard_review_detail'),
     path('products/reviews/<str:review_id>/action/', views.review_action, name='dashboard_review_action'),
+
+    # روابط المنتجات ذات المعرفات - يجب أن تكون بعد المسارات الثابتة
+    path('products/<str:product_id>/', views.ProductDetailView.as_view(), name='dashboard_product_detail'),
+    path('products/<str:product_id>/edit/', views.ProductFormView.as_view(), name='dashboard_product_edit'),
+    path('products/<str:product_id>/delete/', views.ProductDeleteView.as_view(), name='dashboard_product_delete'),
 
     # ========================= إدارة الطلبات =========================
     path('orders/', views.OrderListView.as_view(), name='dashboard_orders'),

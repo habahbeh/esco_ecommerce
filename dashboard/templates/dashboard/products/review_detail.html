@@ -1,0 +1,560 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+{% load i18n %}
+{% load dashboard_tags %}
+
+{% block title %}{% trans "تفاصيل التقييم" %} | {% trans "لوحة التحكم" %}{% endblock %}
+
+{% block page_title %}{% trans "تفاصيل التقييم" %}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_products' %}">{% trans "المنتجات" %}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_reviews' %}">{% trans "التقييمات" %}</a></li>
+<li class="breadcrumb-item active">{% trans "تفاصيل التقييم" %}</li>
+{% endblock %}
+
+{% block current_page %}{% trans "تفاصيل التقييم" %}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- تفاصيل التقييم -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-star fa-fw me-2"></i>{% trans "تفاصيل التقييم" %}
+                </h6>
+                <div class="actions">
+                    <a href="{% url 'dashboard:dashboard_reviews' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-arrow-right me-1"></i> {% trans "العودة إلى التقييمات" %}
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- معلومات المستخدم والتقييم -->
+                <div class="review-header mb-4 pb-4 border-bottom">
+                    <div class="d-flex flex-wrap align-items-center">
+                        <div class="d-flex align-items-center me-auto">
+                            {% if review.user.avatar %}
+                            <img src="{{ review.user.avatar.url }}" class="rounded-circle me-3" width="64" height="64" alt="{{ review.user.get_full_name }}">
+                            {% else %}
+                            <div class="avatar-placeholder rounded-circle me-3 d-flex align-items-center justify-content-center" style="width:64px;height:64px;background:#3c8dbc;color:#fff;font-size:1.5rem;">
+                                {{ review.user.get_initials }}
+                            </div>
+                            {% endif %}
+                            <div>
+                                <h5 class="mb-1">{{ review.user.get_full_name|default:review.user.username }}</h5>
+                                <p class="mb-1 text-muted">{{ review.user.email }}</p>
+                                <p class="mb-0 small">
+                                    <i class="fas fa-clock me-1"></i> {{ review.created_at|date:"d M Y, H:i" }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="review-rating mt-3 mt-md-0">
+                            <div class="rating-stars fs-4 mb-2">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= review.rating %}
+                                    <i class="fas fa-star text-warning"></i>
+                                    {% else %}
+                                    <i class="far fa-star text-muted"></i>
+                                    {% endif %}
+                                {% endfor %}
+                                <span class="badge bg-secondary ms-2 align-middle">{{ review.rating }}/5</span>
+                            </div>
+                            {% if review.recommend %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-thumbs-up me-1"></i> {% trans "يوصي بالمنتج" %}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- محتوى التقييم -->
+                <div class="review-content mb-4 pb-4 border-bottom">
+                    {% if review.title %}
+                    <h5 class="review-title mb-3">{{ review.title }}</h5>
+                    {% endif %}
+
+                    <div class="review-text mb-4">
+                        <p class="mb-0">{{ review.content|linebreaks }}</p>
+                    </div>
+
+                    {% if review.images.exists %}
+                    <div class="review-images">
+                        <h6 class="mb-3">{% trans "الصور المرفقة" %} ({{ review.images.count }})</h6>
+                        <div class="row g-2">
+                            {% for image in images %}
+                            <div class="col-md-4 col-6">
+                                <a href="{{ image.image.url }}" target="_blank" class="d-block review-image-link">
+                                    <img src="{{ image.image.url }}" alt="{{ image.caption|default:'' }}" class="img-fluid rounded shadow-sm review-image">
+                                    {% if image.caption %}
+                                    <div class="mt-1 small text-center text-muted">{{ image.caption }}</div>
+                                    {% endif %}
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- معلومات إضافية للتقييم -->
+                <div class="review-details">
+                    <h6 class="mb-3">{% trans "معلومات إضافية" %}</h6>
+                    <div class="row g-3">
+                        {% if review.purchase_date %}
+                        <div class="col-md-6">
+                            <div class="info-item p-3 border rounded bg-light">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-shopping-cart text-success"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <p class="mb-0 fw-medium">{% trans "تاريخ الشراء" %}</p>
+                                        <p class="mb-0">{{ review.purchase_date|date:"d M Y" }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="col-md-6">
+                            <div class="info-item p-3 border rounded bg-light">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-thumbs-up text-info"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <p class="mb-0 fw-medium">{% trans "تفاعل المستخدمين" %}</p>
+                                        <p class="mb-0">{{ review.helpful_votes }} {% trans "إعجاب" %} | {{ review.unhelpful_votes }} {% trans "عدم إعجاب" %}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if review.quality_rating or review.value_rating or review.delivery_rating %}
+                        <div class="col-md-6">
+                            <div class="info-item p-3 border rounded bg-light">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-tasks text-primary"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <p class="mb-0 fw-medium">{% trans "تقييمات تفصيلية" %}</p>
+                                        <ul class="list-unstyled mb-0">
+                                            {% if review.quality_rating %}
+                                            <li>{% trans "الجودة" %}: {{ review.quality_rating }}/5</li>
+                                            {% endif %}
+                                            {% if review.value_rating %}
+                                            <li>{% trans "القيمة" %}: {{ review.value_rating }}/5</li>
+                                            {% endif %}
+                                            {% if review.delivery_rating %}
+                                            <li>{% trans "التوصيل" %}: {{ review.delivery_rating }}/5</li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="col-md-6">
+                            <div class="info-item p-3 border rounded bg-light">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-info-circle text-warning"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <p class="mb-0 fw-medium">{% trans "حالة التقييم" %}</p>
+                                        <div>
+                                            {% if review.is_approved %}
+                                            <span class="badge bg-success">{% trans "معتمد" %}</span>
+                                            {% else %}
+                                            <span class="badge bg-warning">{% trans "قيد المراجعة" %}</span>
+                                            {% endif %}
+
+                                            {% if review.is_featured %}
+                                            <span class="badge bg-info">{% trans "مميز" %}</span>
+                                            {% endif %}
+
+                                            {% if review.is_spam %}
+                                            <span class="badge bg-danger">{% trans "محتوى مزعج" %}</span>
+                                            {% endif %}
+
+                                            {% if review.report_count > 0 %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-flag me-1"></i> {{ review.report_count }} {% trans "بلاغ" %}
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if review.ip_address %}
+                        <div class="col-md-6">
+                            <div class="info-item p-3 border rounded bg-light">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-network-wired text-secondary"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <p class="mb-0 fw-medium">{% trans "معلومات النظام" %}</p>
+                                        <p class="mb-0 small">IP: {{ review.ip_address }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if review.approved_at %}
+                        <div class="col-md-6">
+                            <div class="info-item p-3 border rounded bg-light">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-check-circle text-success"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <p class="mb-0 fw-medium">{% trans "تم الاعتماد بواسطة" %}</p>
+                                        <p class="mb-0">
+                                            {{ review.approved_by.get_full_name|default:review.approved_by.username }}
+                                            <small class="text-muted">{{ review.approved_at|date:"d M Y, H:i" }}</small>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-white py-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        {% if not review.is_approved %}
+                        <form method="post" action="{% url 'dashboard:dashboard_review_action' review_id=review.id %}" class="d-inline-block">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="approve">
+                            <button type="submit" class="btn btn-success me-2">
+                                <i class="fas fa-check-circle me-1"></i> {% trans "اعتماد التقييم" %}
+                            </button>
+                        </form>
+                        <form method="post" action="{% url 'dashboard:dashboard_review_action' review_id=review.id %}" class="d-inline-block">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="reject">
+                            <button type="submit" class="btn btn-warning me-2">
+                                <i class="fas fa-times-circle me-1"></i> {% trans "رفض التقييم" %}
+                            </button>
+                        </form>
+                        {% endif %}
+
+                        {% if review.is_featured %}
+                        <form method="post" action="{% url 'dashboard:dashboard_review_action' review_id=review.id %}" class="d-inline-block">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="unfeature">
+                            <button type="submit" class="btn btn-info me-2">
+                                <i class="fas fa-star-half-alt me-1"></i> {% trans "إلغاء التمييز" %}
+                            </button>
+                        </form>
+                        {% else %}
+                        <form method="post" action="{% url 'dashboard:dashboard_review_action' review_id=review.id %}" class="d-inline-block">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="feature">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-star me-1"></i> {% trans "تمييز التقييم" %}
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteReviewModal">
+                        <i class="fas fa-trash me-1"></i> {% trans "حذف التقييم" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- معلومات المنتج -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-box fa-fw me-2"></i>{% trans "المنتج" %}
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    {% if product.default_image %}
+                    <img src="{{ product.default_image.image.url }}" alt="{{ product.name }}" class="img-fluid mb-3 product-image rounded shadow-sm" style="max-height: 200px;">
+                    {% else %}
+                    <div class="no-image-placeholder rounded mb-3 d-flex align-items-center justify-content-center mx-auto" style="width:200px;height:200px;background:#eee;color:#999;font-size:2.5rem;">
+                        <i class="fas fa-image"></i>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <h5 class="mb-2">{{ product.name }}</h5>
+                <p class="text-muted mb-2">{{ product.sku }}</p>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>{% trans "السعر:" %}</span>
+                        <span class="fw-bold">{{ product.base_price|currency }}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>{% trans "الفئة:" %}</span>
+                        <span>{{ product.category.name }}</span>
+                    </div>
+
+                    {% if product.brand %}
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>{% trans "العلامة التجارية:" %}</span>
+                        <span>{{ product.brand.name }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <hr class="my-3">
+
+                <!-- إحصائيات التقييمات للمنتج -->
+                <h6 class="mb-3">{% trans "إحصائيات التقييمات" %}</h6>
+                <div class="d-flex justify-content-between mb-1">
+                    <span>{% trans "متوسط التقييم:" %}</span>
+                    <span class="fw-bold">
+                        {{ product.rating|floatformat:1 }}/5
+                        <i class="fas fa-star text-warning ms-1"></i>
+                    </span>
+                </div>
+
+                <div class="d-flex justify-content-between mb-1">
+                    <span>{% trans "عدد التقييمات:" %}</span>
+                    <span>{{ product.review_count }}</span>
+                </div>
+
+                <hr class="my-3">
+
+                <div class="text-center">
+                    <a href="{% url 'dashboard:dashboard_product_detail' product_id=product.id %}" class="btn btn-outline-primary">
+                        <i class="fas fa-external-link-alt me-1"></i> {% trans "عرض تفاصيل المنتج" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- تقييمات أخرى للمنتج -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-comments fa-fw me-2"></i>{% trans "تقييمات أخرى للمنتج" %}
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for other_review in product.reviews.all|slice:":5" %}
+                        {% if other_review.id != review.id %}
+                        <a href="{% url 'dashboard:dashboard_review_detail' review_id=other_review.id %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between align-items-start">
+                                <h6 class="mb-1">{{ other_review.user.get_full_name|default:other_review.user.username }}</h6>
+                                <div class="rating-stars small">
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= other_review.rating %}
+                                        <i class="fas fa-star text-warning"></i>
+                                        {% else %}
+                                        <i class="far fa-star text-muted"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <p class="mb-1 small text-truncate">{{ other_review.content|truncatechars:80 }}</p>
+                            <small class="text-muted">{{ other_review.created_at|date:"d M Y" }}</small>
+                        </a>
+                        {% endif %}
+                    {% empty %}
+                        <div class="list-group-item text-center py-4">
+                            <i class="fas fa-comment-slash text-muted mb-2 d-block fa-2x"></i>
+                            <p class="mb-0 text-muted">{% trans "لا توجد تقييمات أخرى لهذا المنتج" %}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-footer bg-white text-center py-3">
+                <a href="{% url 'dashboard:dashboard_reviews' %}?q={{ product.name }}" class="btn btn-sm btn-outline-secondary">
+                    {% trans "عرض كل تقييمات المنتج" %}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal حذف التقييم -->
+<div class="modal fade" id="deleteReviewModal" tabindex="-1" aria-labelledby="deleteReviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteReviewModalLabel">{% trans "تأكيد الحذف" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>{% trans "هل أنت متأكد من حذف تقييم" %} <strong>{{ review.user.get_full_name|default:review.user.username }}</strong> {% trans "للمنتج" %} <strong>{{ product.name }}</strong>؟</p>
+                <p class="text-danger">{% trans "هذا الإجراء لا يمكن التراجع عنه." %}</p>
+            </div>
+            <div class="modal-footer">
+                <form method="post" action="{% url 'dashboard:dashboard_review_action' review_id=review.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "إلغاء" %}</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i> {% trans "تأكيد الحذف" %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="reviewToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-success text-white">
+            <i class="fas fa-check-circle me-2"></i>
+            <strong class="me-auto" id="toast-title">{% trans "نجاح" %}</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toast-message">
+            {% trans "تم تنفيذ الإجراء بنجاح" %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .review-image {
+        object-fit: cover;
+        height: 150px;
+        width: 100%;
+    }
+
+    .review-image-link {
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .review-image-link:hover {
+        transform: scale(1.02);
+    }
+
+    .product-image {
+        object-fit: contain;
+        max-height: 200px;
+        width: auto;
+    }
+
+    .info-item {
+        transition: all 0.2s ease;
+    }
+
+    .info-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .rating-stars {
+        white-space: nowrap;
+    }
+
+    .avatar-placeholder, .no-image-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .fw-medium {
+        font-weight: 500;
+    }
+
+    /* تنسيق محتوى التقييم */
+    .review-content p {
+        line-height: 1.7;
+    }
+
+    /* تنسيق النص في التقييمات الأخرى */
+    .list-group-item-action .text-truncate {
+        max-width: 200px;
+    }
+
+    /* للشاشات الصغيرة */
+    @media (max-width: 767.98px) {
+        .review-header {
+            flex-direction: column;
+        }
+
+        .review-rating {
+            margin-top: 1rem;
+        }
+
+        .review-image {
+            height: 120px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // تكبير الصور عند النقر
+        $('.review-image-link').click(function(e) {
+            e.preventDefault();
+            var imageUrl = $(this).attr('href');
+
+            // إنشاء مودال مؤقت لعرض الصورة بحجم كامل
+            var modalHtml = `
+                <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">${$(this).find('img').attr('alt') || '{% trans "صورة التقييم" %}'}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-center">
+                                <img src="${imageUrl}" class="img-fluid" alt="${$(this).find('img').attr('alt') || '{% trans "صورة التقييم" %}'}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // إضافة المودال للصفحة وعرضه
+            $('body').append(modalHtml);
+            var imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+            imageModal.show();
+
+            // إزالة المودال بعد إغلاقه
+            $('#imageModal').on('hidden.bs.modal', function() {
+                $(this).remove();
+            });
+        });
+
+        // وظيفة لعرض رسالة نجاح
+        function showSuccessToast(message) {
+            $('#toast-message').text(message);
+            var toast = new bootstrap.Toast(document.getElementById('reviewToast'));
+            toast.show();
+        }
+
+        // عرض رسالة النجاح بعد الإجراءات
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.tags == 'success' %}
+                    showSuccessToast("{{ message }}");
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    });
+</script>
+{% endblock %}

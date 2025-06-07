@@ -389,3 +389,37 @@ def action_buttons(obj, edit_url=None, delete_url=None, view_url=None, can_edit=
         'can_edit': can_edit,
         'can_delete': can_delete,
     }
+
+
+@register.filter
+def subtract(value, arg):
+    """
+    طرح قيمة من قيمة أخرى
+    مثال: {{ product.current_price|subtract:product.cost }}
+    """
+    try:
+        return float(value) - float(arg)
+    except (ValueError, TypeError):
+        return value
+
+@register.filter
+def divide(value, arg):
+    """
+    قسمة قيمة على قيمة أخرى
+    مثال: {{ product.current_price|divide:2 }}
+    """
+    try:
+        return float(value) / float(arg)
+    except (ValueError, TypeError, ZeroDivisionError):
+        return 0  # إرجاع صفر في حالة الخطأ أو القسمة على صفر
+
+@register.filter
+def multiply(value, arg):
+    """
+    ضرب قيمة في قيمة أخرى
+    مثال: {{ product.price|multiply:quantity }}
+    """
+    try:
+        return float(value) * float(arg)
+    except (ValueError, TypeError):
+        return 0  # إرجاع صفر في حالة الخطأ
