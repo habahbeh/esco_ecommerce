@@ -14,6 +14,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 import uuid
 import json
+from django.views.decorators.http import require_POST
 
 from products.models import (
     Product, Category, Brand, Tag, ProductImage,

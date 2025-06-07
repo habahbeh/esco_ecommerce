@@ -27,7 +27,7 @@ from decimal import Decimal
 User = get_user_model()
 
 
-class ReportIndexView(LoginRequiredMixin, DashboardAccessMixin, TemplateView):
+class ReportIndexView( DashboardAccessMixin, TemplateView):
     """
     صفحة فهرس التقارير الرئيسية - تعرض روابط لمختلف أنواع التقارير المتاحة
     """
@@ -117,7 +117,7 @@ class ReportIndexView(LoginRequiredMixin, DashboardAccessMixin, TemplateView):
         return context
 
 
-class SalesReportView(LoginRequiredMixin, DashboardAccessMixin, TemplateView):
+class SalesReportView( DashboardAccessMixin, TemplateView):
     """
     تقارير المبيعات - تحليل المبيعات حسب الفترة الزمنية والمنتجات
     """
@@ -236,7 +236,7 @@ class SalesReportView(LoginRequiredMixin, DashboardAccessMixin, TemplateView):
         return context
 
 
-class ProductReportView(LoginRequiredMixin, DashboardAccessMixin, TemplateView):
+class ProductReportView( DashboardAccessMixin, TemplateView):
     """
     تقارير المنتجات - تحليل أداء المنتجات ومبيعاتها ومخزونها
     """
@@ -341,7 +341,7 @@ class ProductReportView(LoginRequiredMixin, DashboardAccessMixin, TemplateView):
         return context
 
 
-class CustomerReportView(LoginRequiredMixin, DashboardAccessMixin, TemplateView):
+class CustomerReportView( DashboardAccessMixin, TemplateView):
     """
     تقارير العملاء - تحليل بيانات العملاء وسلوكهم الشرائي
     """
@@ -422,7 +422,7 @@ class CustomerReportView(LoginRequiredMixin, DashboardAccessMixin, TemplateView)
         return context
 
 
-class InventoryReportView(LoginRequiredMixin, DashboardAccessMixin, TemplateView):
+class InventoryReportView( DashboardAccessMixin, TemplateView):
     """
     تقارير المخزون - متابعة حالة المخزون والمنتجات منخفضة المخزون
     """
@@ -523,7 +523,7 @@ class InventoryReportView(LoginRequiredMixin, DashboardAccessMixin, TemplateView
         return context
 
 
-class RevenueReportView(LoginRequiredMixin, DashboardAccessMixin, TemplateView):
+class RevenueReportView( DashboardAccessMixin, TemplateView):
     """
     تقارير الإيرادات - تحليل الإيرادات والأرباح والمصروفات
     """
@@ -681,7 +681,7 @@ class RevenueReportView(LoginRequiredMixin, DashboardAccessMixin, TemplateView):
         return context
 
 
-class TaxReportView(LoginRequiredMixin, DashboardAccessMixin, TemplateView):
+class TaxReportView( DashboardAccessMixin, TemplateView):
     """
     تقارير الضرائب - تقارير الضرائب والرسوم المحصلة
     """
@@ -808,7 +808,7 @@ class TaxReportView(LoginRequiredMixin, DashboardAccessMixin, TemplateView):
         return context
 
 
-class ExportReportView(LoginRequiredMixin, DashboardAccessMixin, TemplateView):
+class ExportReportView( DashboardAccessMixin, TemplateView):
     """
     تصدير التقارير - واجهة لتصدير مختلف التقارير بتنسيقات متعددة
     """
@@ -875,7 +875,7 @@ class ExportReportView(LoginRequiredMixin, DashboardAccessMixin, TemplateView):
         return context
 
 
-class ExportReportDataView(LoginRequiredMixin, DashboardAccessMixin, View):
+class ExportReportDataView( DashboardAccessMixin, View):
     """
     واجهة برمجية لتصدير البيانات بتنسيقات مختلفة
     """

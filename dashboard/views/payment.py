@@ -3,7 +3,7 @@
 عروض إدارة المدفوعات والمعاملات المالية
 """
 
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, FormView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, FormView, TemplateView, View
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.urls import reverse_lazy, reverse
 from django.shortcuts import redirect, get_object_or_404
@@ -23,7 +23,7 @@ import json
 from decimal import Decimal
 
 
-class TransactionListView(LoginRequiredMixin, DashboardAccessMixin, ListView):
+class TransactionListView(DashboardAccessMixin, ListView):
     """عرض قائمة المعاملات المالية"""
     model = Transaction
     template_name = 'dashboard/payment/transaction_list.html'
@@ -100,8 +100,7 @@ class TransactionListView(LoginRequiredMixin, DashboardAccessMixin, ListView):
 
         return context
 
-
-class TransactionDetailView(LoginRequiredMixin, DashboardAccessMixin, DetailView):
+class TransactionDetailView(DashboardAccessMixin, DetailView):
     """عرض تفاصيل المعاملة المالية"""
     model = Transaction
     template_name = 'dashboard/payment/transaction_detail.html'
@@ -136,8 +135,7 @@ class TransactionDetailView(LoginRequiredMixin, DashboardAccessMixin, DetailView
         return context
 
 
-class UpdateTransactionStatusView(LoginRequiredMixin, DashboardAccessMixin, UpdateView):
-    """تحديث حالة المعاملة المالية"""
+class UpdateTransactionStatusView(DashboardAccessMixin, UpdateView):
     model = Transaction
     template_name = 'dashboard/payment/transaction_status_update.html'
     fields = ['status', 'notes']
@@ -173,7 +171,7 @@ class UpdateTransactionStatusView(LoginRequiredMixin, DashboardAccessMixin, Upda
         return super().form_valid(form)
 
 
-class TransactionCreateView(LoginRequiredMixin, DashboardAccessMixin, CreateView):
+class TransactionCreateView(DashboardAccessMixin, CreateView):
     """إنشاء معاملة مالية جديدة"""
     model = Transaction
     template_name = 'dashboard/payment/transaction_form.html'
@@ -213,7 +211,7 @@ class TransactionCreateView(LoginRequiredMixin, DashboardAccessMixin, CreateView
         return super().form_valid(form)
 
 
-class PaymentListView(LoginRequiredMixin, DashboardAccessMixin, ListView):
+class PaymentListView(DashboardAccessMixin, ListView):
     """عرض قائمة المدفوعات"""
     model = Payment
     template_name = 'dashboard/payment/payment_list.html'
@@ -281,7 +279,7 @@ class PaymentListView(LoginRequiredMixin, DashboardAccessMixin, ListView):
         return context
 
 
-class PaymentDetailView(LoginRequiredMixin, DashboardAccessMixin, DetailView):
+class PaymentDetailView(DashboardAccessMixin, DetailView):
     """عرض تفاصيل عملية الدفع"""
     model = Payment
     template_name = 'dashboard/payment/payment_detail.html'
@@ -319,7 +317,7 @@ class PaymentDetailView(LoginRequiredMixin, DashboardAccessMixin, DetailView):
         return context
 
 
-class PaymentUpdateStatusView(LoginRequiredMixin, DashboardAccessMixin, UpdateView):
+class PaymentUpdateStatusView(DashboardAccessMixin, UpdateView):
     """تحديث حالة عملية الدفع"""
     model = Payment
     template_name = 'dashboard/payment/payment_status_update.html'
@@ -359,7 +357,7 @@ class PaymentUpdateStatusView(LoginRequiredMixin, DashboardAccessMixin, UpdateVi
         return super().form_valid(form)
 
 
-class PaymentCreateView(LoginRequiredMixin, DashboardAccessMixin, CreateView):
+class PaymentCreateView( DashboardAccessMixin, CreateView):
     """إنشاء عملية دفع جديدة"""
     model = Payment
     template_name = 'dashboard/payment/payment_form.html'
@@ -398,7 +396,7 @@ class PaymentCreateView(LoginRequiredMixin, DashboardAccessMixin, CreateView):
         return super().form_valid(form)
 
 
-class RefundListView(LoginRequiredMixin, DashboardAccessMixin, ListView):
+class RefundListView( DashboardAccessMixin, ListView):
     """عرض قائمة طلبات استرداد المبالغ"""
     model = Refund
     template_name = 'dashboard/payment/refund_list.html'
@@ -466,7 +464,7 @@ class RefundListView(LoginRequiredMixin, DashboardAccessMixin, ListView):
         return context
 
 
-class RefundDetailView(LoginRequiredMixin, DashboardAccessMixin, DetailView):
+class RefundDetailView( DashboardAccessMixin, DetailView):
     """عرض تفاصيل طلب استرداد المبلغ"""
     model = Refund
     template_name = 'dashboard/payment/refund_detail.html'
@@ -497,7 +495,7 @@ class RefundDetailView(LoginRequiredMixin, DashboardAccessMixin, DetailView):
         return context
 
 
-class RefundCreateView(LoginRequiredMixin, DashboardAccessMixin, CreateView):
+class RefundCreateView(DashboardAccessMixin, CreateView):
     """إنشاء طلب استرداد مبلغ جديد"""
     model = Refund
     template_name = 'dashboard/payment/refund_form.html'
@@ -553,7 +551,7 @@ class RefundCreateView(LoginRequiredMixin, DashboardAccessMixin, CreateView):
         return super().form_valid(form)
 
 
-class RefundUpdateStatusView(LoginRequiredMixin, DashboardAccessMixin, UpdateView):
+class RefundUpdateStatusView(DashboardAccessMixin, UpdateView):
     """تحديث حالة طلب استرداد المبلغ"""
     model = Refund
     template_name = 'dashboard/payment/refund_status_update.html'
@@ -605,7 +603,7 @@ class RefundUpdateStatusView(LoginRequiredMixin, DashboardAccessMixin, UpdateVie
         return super().form_valid(form)
 
 
-class PaymentDashboardView(LoginRequiredMixin, DashboardAccessMixin, TemplateView):
+class PaymentDashboardView(DashboardAccessMixin, TemplateView):
     """لوحة معلومات المدفوعات والإحصائيات"""
     template_name = 'dashboard/payment/dashboard.html'
     permission_required = 'payment.view_payment'
@@ -681,7 +679,7 @@ class PaymentDashboardView(LoginRequiredMixin, DashboardAccessMixin, TemplateVie
         return context
 
 
-class PaymentAPIView(LoginRequiredMixin, DashboardAccessMixin, View):
+class PaymentAPIView(DashboardAccessMixin, View):
     """واجهة برمجية للحصول على بيانات المدفوعات للرسوم البيانية"""
     permission_required = 'payment.view_payment'
 

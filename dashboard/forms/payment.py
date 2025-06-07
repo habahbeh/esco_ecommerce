@@ -121,7 +121,7 @@ class PaymentTransactionForm(forms.ModelForm):
         model = Transaction
         fields = [
             'transaction_type', 'amount', 'currency', 'status',
-            'reference_id', 'gateway', 'gateway_transaction_id',
+            'reference_number', 'payment_gateway', 'gateway_transaction_id',
             'description', 'metadata'
         ]
         widgets = {
@@ -129,8 +129,8 @@ class PaymentTransactionForm(forms.ModelForm):
             'amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'currency': forms.TextInput(attrs={'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-select'}),
-            'reference_id': forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
-            'gateway': forms.TextInput(attrs={'class': 'form-control'}),
+            'reference_number': forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
+            'payment_gateway': forms.TextInput(attrs={'class': 'form-control'}),
             'gateway_transaction_id': forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
@@ -143,7 +143,6 @@ class PaymentTransactionForm(forms.ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
-        self.payment = kwargs.pop('payment', None)
         self.order = kwargs.pop('order', None)
         super().__init__(*args, **kwargs)
 
@@ -177,10 +176,10 @@ class PaymentTransactionForm(forms.ModelForm):
             Fieldset(
                 _('معلومات البوابة'),
                 Row(
-                    Column('gateway', css_class='col-md-6'),
+                    Column('payment_gateway', css_class='col-md-6'),
                     Column('gateway_transaction_id', css_class='col-md-6'),
                 ),
-                'reference_id',
+                'reference_number',
                 'metadata_field',
             ),
             FormActions(
@@ -206,10 +205,7 @@ class PaymentTransactionForm(forms.ModelForm):
         # تعيين البيانات الإضافية
         transaction.metadata = self.cleaned_data.get('metadata_field', {})
 
-        # تعيين المعاملة بالدفع أو الطلب إذا تم تمريرهما
-        if self.payment and not transaction.payment_id:
-            transaction.payment = self.payment
-
+        # تعيين المعاملة بالطلب إذا تم تمريره
         if self.order and not transaction.order_id:
             transaction.order = self.order
 
@@ -222,12 +218,27 @@ class PaymentTransactionForm(forms.ModelForm):
 class PaymentForm(forms.ModelForm):
     """نموذج إنشاء وتعديل المدفوعات"""
 
+    # حقول إضافية لتسهيل إدخال تاريخ انتهاء البطاقة
+    card_expiry_month = forms.CharField(
+        label=_('شهر انتهاء البطاقة'),
+        required=False,
+        max_length=2,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr', 'min': '1', 'max': '12'})
+    )
+
+    card_expiry_year = forms.CharField(
+        label=_('سنة انتهاء البطاقة'),
+        required=False,
+        max_length=4,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr', 'min': '2023', 'max': '2050'})
+    )
+
     class Meta:
         model = Payment
         fields = [
             'amount', 'currency', 'status', 'payment_method',
             'payment_gateway', 'gateway_payment_id', 'billing_address',
-            'card_type', 'card_last4', 'card_expiry_month', 'card_expiry_year',
+            'card_type', 'last_4_digits', 'card_expiry',
             'notes'
         ]
         widgets = {
@@ -239,15 +250,24 @@ class PaymentForm(forms.ModelForm):
             'gateway_payment_id': forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
             'billing_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'card_type': forms.TextInput(attrs={'class': 'form-control'}),
-            'card_last4': forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
-            'card_expiry_month': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'max': '12'}),
-            'card_expiry_year': forms.NumberInput(attrs={'class': 'form-control', 'min': '2023', 'max': '2050'}),
+            'last_4_digits': forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr', 'maxlength': '4'}),
+            'card_expiry': forms.HiddenInput(),  # نخفي هذا الحقل ونستخدم الحقلين الإضافيين بدلاً منه
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
     def __init__(self, *args, **kwargs):
         self.order = kwargs.pop('order', None)
         super().__init__(*args, **kwargs)
+
+        # تعبئة حقول تاريخ انتهاء البطاقة من حقل card_expiry
+        if self.instance.pk and self.instance.card_expiry:
+            try:
+                parts = self.instance.card_expiry.split('/')
+                if len(parts) == 2:
+                    self.fields['card_expiry_month'].initial = parts[0]
+                    self.fields['card_expiry_year'].initial = parts[1]
+            except:
+                pass
 
         # إعداد Crispy Form
         self.helper = FormHelper()
@@ -273,7 +293,7 @@ class PaymentForm(forms.ModelForm):
                 _('معلومات البطاقة (اختياري)'),
                 Row(
                     Column('card_type', css_class='col-md-4'),
-                    Column('card_last4', css_class='col-md-4'),
+                    Column('last_4_digits', css_class='col-md-4'),
                     Column(
                         Row(
                             Column('card_expiry_month', css_class='col-md-6'),
@@ -282,6 +302,7 @@ class PaymentForm(forms.ModelForm):
                         css_class='col-md-4'
                     ),
                 ),
+                Field('card_expiry', type="hidden"),
             ),
             Fieldset(
                 _('ملاحظات'),
@@ -292,6 +313,40 @@ class PaymentForm(forms.ModelForm):
                 HTML('<a href="{% url "dashboard:payment_list" %}" class="btn btn-secondary">%s</a>' % _('إلغاء'))
             )
         )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        # تحويل شهر وسنة انتهاء البطاقة إلى تنسيق MM/YYYY
+        month = cleaned_data.get('card_expiry_month')
+        year = cleaned_data.get('card_expiry_year')
+
+        if month and year:
+            # التأكد من صحة الشهر
+            try:
+                month_num = int(month)
+                if month_num < 1 or month_num > 12:
+                    self.add_error('card_expiry_month', _('يجب أن يكون الشهر بين 1 و 12'))
+                else:
+                    # تنسيق الشهر بشكل صحيح (مثلاً: 01، 02، ... إلخ)
+                    month = f"{month_num:02d}"
+            except ValueError:
+                self.add_error('card_expiry_month', _('الشهر يجب أن يكون رقماً'))
+
+            # التأكد من صحة السنة
+            try:
+                year_num = int(year)
+                current_year = timezone.now().year
+                if year_num < current_year or year_num > current_year + 30:
+                    self.add_error('card_expiry_year', _('السنة غير صالحة'))
+            except ValueError:
+                self.add_error('card_expiry_year', _('السنة يجب أن تكون رقماً'))
+
+            # إذا لم تكن هناك أخطاء، قم بتعيين حقل card_expiry
+            if 'card_expiry_month' not in self.errors and 'card_expiry_year' not in self.errors:
+                cleaned_data['card_expiry'] = f"{month}/{year}"
+
+        return cleaned_data
 
     def save(self, commit=True):
         payment = super().save(commit=False)

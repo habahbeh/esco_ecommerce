@@ -26,7 +26,7 @@ from PIL import Image
 from io import BytesIO
 
 
-class SiteSettingsView(LoginRequiredMixin, SuperuserRequiredMixin, UpdateView):
+class SiteSettingsView( SuperuserRequiredMixin, UpdateView):
     """
     عرض إعدادات الموقع العامة - متاح فقط للمديرين
     يتيح تعديل إعدادات الموقع الأساسية مثل الاسم والوصف والشعار وألوان الواجهة
@@ -96,7 +96,7 @@ class SiteSettingsView(LoginRequiredMixin, SuperuserRequiredMixin, UpdateView):
         return response
 
 
-class EmailSettingsView(LoginRequiredMixin, SuperuserRequiredMixin, TemplateView):
+class EmailSettingsView( SuperuserRequiredMixin, TemplateView):
     """
     عرض إعدادات البريد الإلكتروني - متاح فقط للمديرين
     يتيح تكوين إعدادات خادم SMTP لإرسال رسائل البريد الإلكتروني
@@ -142,7 +142,7 @@ class EmailSettingsView(LoginRequiredMixin, SuperuserRequiredMixin, TemplateView
         return redirect('dashboard:email_settings')
 
 
-class PaymentGatewaySettingsView(LoginRequiredMixin, SuperuserRequiredMixin, TemplateView):
+class PaymentGatewaySettingsView( SuperuserRequiredMixin, TemplateView):
     """
     عرض إعدادات بوابات الدفع - متاح فقط للمديرين
     يتيح تكوين بوابات الدفع المختلفة مثل PayPal و Stripe وغيرها
@@ -248,7 +248,7 @@ class PaymentGatewaySettingsView(LoginRequiredMixin, SuperuserRequiredMixin, Tem
         return redirect('dashboard:payment_gateway_settings', gateway_id=gateway_id)
 
 
-class ShippingSettingsView(LoginRequiredMixin, SuperuserRequiredMixin, TemplateView):
+class ShippingSettingsView( SuperuserRequiredMixin, TemplateView):
     """
     عرض إعدادات الشحن - متاح فقط للمديرين
     يتيح تكوين خيارات الشحن وطرق التوصيل وتكاليفها
@@ -270,7 +270,7 @@ class ShippingSettingsView(LoginRequiredMixin, SuperuserRequiredMixin, TemplateV
         return context
 
 
-class TaxSettingsView(LoginRequiredMixin, SuperuserRequiredMixin, TemplateView):
+class TaxSettingsView( SuperuserRequiredMixin, TemplateView):
     """
     عرض إعدادات الضرائب - متاح فقط للمديرين
     يتيح تكوين إعدادات الضرائب والرسوم المطبقة على المنتجات
@@ -302,7 +302,7 @@ class TaxSettingsView(LoginRequiredMixin, SuperuserRequiredMixin, TemplateView):
         return redirect('dashboard:tax_settings')
 
 
-class DashboardSettingsView(LoginRequiredMixin, DashboardAccessMixin, UpdateView):
+class DashboardSettingsView( DashboardAccessMixin, UpdateView):
     """
     عرض إعدادات لوحة التحكم للمستخدم الحالي
     يتيح للمستخدم تخصيص لوحة التحكم وفقاً لتفضيلاته
@@ -342,7 +342,7 @@ class DashboardSettingsView(LoginRequiredMixin, DashboardAccessMixin, UpdateView
         return response
 
 
-class WidgetSettingsView(LoginRequiredMixin, DashboardAccessMixin, TemplateView):
+class WidgetSettingsView( DashboardAccessMixin, TemplateView):
     """
     عرض إعدادات الودجات في لوحة التحكم
     يتيح للمستخدم تخصيص ترتيب وظهور الودجات في لوحة التحكم
@@ -379,7 +379,7 @@ class WidgetSettingsView(LoginRequiredMixin, DashboardAccessMixin, TemplateView)
         return redirect('dashboard:widget_settings')
 
 
-class CurrencySettingsView(LoginRequiredMixin, SuperuserRequiredMixin, TemplateView):
+class CurrencySettingsView( SuperuserRequiredMixin, TemplateView):
     """
     عرض إعدادات العملات - متاح فقط للمديرين
     يتيح تكوين العملات المدعومة وأسعار الصرف
@@ -431,7 +431,7 @@ class CurrencySettingsView(LoginRequiredMixin, SuperuserRequiredMixin, TemplateV
         return redirect('dashboard:currency_settings')
 
 
-class LanguageSettingsView(LoginRequiredMixin, SuperuserRequiredMixin, TemplateView):
+class LanguageSettingsView( SuperuserRequiredMixin, TemplateView):
     """
     عرض إعدادات اللغات - متاح فقط للمديرين
     يتيح تكوين اللغات المدعومة وإعدادات الترجمة
@@ -465,7 +465,7 @@ class LanguageSettingsView(LoginRequiredMixin, SuperuserRequiredMixin, TemplateV
         return redirect('dashboard:language_settings')
 
 
-class MaintenanceModeView(LoginRequiredMixin, SuperuserRequiredMixin, TemplateView):
+class MaintenanceModeView( SuperuserRequiredMixin, TemplateView):
     """
     عرض وضع الصيانة - متاح فقط للمديرين
     يتيح تفعيل وضع الصيانة للموقع وتخصيص رسالة الصيانة
@@ -497,7 +497,7 @@ class MaintenanceModeView(LoginRequiredMixin, SuperuserRequiredMixin, TemplateVi
         return redirect('dashboard:maintenance_mode')
 
 
-class CacheManagementView(LoginRequiredMixin, SuperuserRequiredMixin, TemplateView):
+class CacheManagementView( SuperuserRequiredMixin, TemplateView):
     """
     عرض إدارة ذاكرة التخزين المؤقت - متاح فقط للمديرين
     يتيح مسح ذاكرة التخزين المؤقت وتكوين إعداداتها
@@ -557,7 +557,7 @@ class CacheManagementView(LoginRequiredMixin, SuperuserRequiredMixin, TemplateVi
         return redirect('dashboard:cache_management')
 
 
-class BackupSettingsView(LoginRequiredMixin, SuperuserRequiredMixin, TemplateView):
+class BackupSettingsView( SuperuserRequiredMixin, TemplateView):
     """
     عرض إعدادات النسخ الاحتياطي - متاح فقط للمديرين
     يتيح تكوين إعدادات النسخ الاحتياطي واستعادة البيانات
@@ -638,7 +638,7 @@ class BackupSettingsView(LoginRequiredMixin, SuperuserRequiredMixin, TemplateVie
         return redirect('dashboard:backup_settings')
 
 
-class APISettingsView(LoginRequiredMixin, SuperuserRequiredMixin, TemplateView):
+class APISettingsView( SuperuserRequiredMixin, TemplateView):
     """
     عرض إعدادات واجهة برمجة التطبيقات - متاح فقط للمديرين
     يتيح تكوين إعدادات API وإدارة مفاتيح الوصول
@@ -670,7 +670,7 @@ class APISettingsView(LoginRequiredMixin, SuperuserRequiredMixin, TemplateView):
         return redirect('dashboard:api_settings')
 
 
-class SocialMediaSettingsView(LoginRequiredMixin, SuperuserRequiredMixin, TemplateView):
+class SocialMediaSettingsView( SuperuserRequiredMixin, TemplateView):
     """
     عرض إعدادات وسائل التواصل الاجتماعي - متاح فقط للمديرين
     يتيح تكوين حسابات التواصل الاجتماعي وإعدادات المشاركة
@@ -716,7 +716,7 @@ class SocialMediaSettingsView(LoginRequiredMixin, SuperuserRequiredMixin, Templa
         return redirect('dashboard:social_media_settings')
 
 
-class SecuritySettingsView(LoginRequiredMixin, SuperuserRequiredMixin, TemplateView):
+class SecuritySettingsView( SuperuserRequiredMixin, TemplateView):
     """
     عرض إعدادات الأمان - متاح فقط للمديرين
     يتيح تكوين إعدادات الأمان مثل reCAPTCHA وسياسات كلمات المرور
