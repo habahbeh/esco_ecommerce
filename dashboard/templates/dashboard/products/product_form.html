@@ -967,9 +967,10 @@
 
         // التأكد من أن حقول الأسعار تحتوي على قيم صالحة دائمًا
     function ensureValidNumericFields() {
-        // تعيين قيمة افتراضية لحقل السعر الأساسي إذا كان فارغًا
-        if (!$('#base_price').val()) {
-            $('#base_price').val('0.00');
+        // تعيين قيمة افتراضية لحقل السعر الأساسي إذا كان فارغًا أو صفر
+        let basePrice = $('#base_price').val();
+        if (!basePrice || parseFloat(basePrice) <= 0) {
+            $('#base_price').val('0.01');  // تغيير من 0.00 إلى 0.01
         }
 
         // تعيين قيم افتراضية للحقول العددية الأخرى إذا كانت مطلوبة ولكنها فارغة
@@ -1122,108 +1123,112 @@
 
         // التحقق من صحة النموذج قبل الإرسال
         $('#product-form').submit(function(event) {
-    let isValid = true;
+            let isValid = true;
+alert('hi')
+            // التحقق من الحقول المطلوبة
+            if (!$('#name').val()) {
+                $('#name').addClass('is-invalid');
+                isValid = false;
+            }
 
-    // التحقق من الحقول المطلوبة
-    if (!$('#name').val()) {
-        $('#name').addClass('is-invalid');
-        isValid = false;
-    }
+            let categoryValue = $('#category').val();
+        console.log('القيمة المختارة للفئة:', categoryValue);
 
-    if (!$('#category').val()) {
-        $('#category').addClass('is-invalid');
-        isValid = false;
-    }
-
-    // معالجة حقل السعر الأساسي
-    let basePrice = $('#base_price').val();
-    if (basePrice) {
-        // استبدال الفاصلة بالنقطة (مهم للغات التي تستخدم الفاصلة للفصل العشري)
-        basePrice = basePrice.replace(',', '.');
-
-        // محاولة تحويل القيمة إلى رقم
-        let basePriceNumber = parseFloat(basePrice);
-        if (isNaN(basePriceNumber)) {
-            alert('الرجاء إدخال رقم صالح للسعر الأساسي');
-            $('#base_price').focus();
+        if (!categoryValue || categoryValue === '') {
+            event.preventDefault();
+            alert('يرجى اختيار فئة للمنتج');
+            $('#category').select2('open'); // فتح القائمة المنسدلة
             return false;
         }
+/*
+            if (!$('#category').val()) {
+                $('#category').addClass('is-invalid');
+                isValid = false;
+            }
+*/
+            // معالجة حقل السعر الأساسي
+            let basePrice = $('#base_price').val();
+            basePrice = basePrice.replace(',', '.');
 
-        // تنسيق الرقم ليكون بخانتين عشريتين بالضبط
-        $('#base_price').val(basePriceNumber.toFixed(2));
-    } else {
-        alert('السعر الأساسي مطلوب');
-        $('#base_price').focus();
-        return false;
-    }
+            let basePriceNumber = parseFloat(basePrice);
+            if (isNaN(basePriceNumber) || basePriceNumber <= 0) {
+                alert('السعر الأساسي يجب أن يكون أكبر من صفر');
+                $('#base_price').val('0.01');
+                $('#base_price').focus();
+                return false;
+            }
 
-    // معالجة حقل نسبة الضريبة
-    let taxRate = $('#tax_rate').val();
-    if (!taxRate || taxRate.trim() === '') {
-        // استخدام القيمة الافتراضية إذا كانت فارغة
-        $('#tax_rate').val('16.00');
-    } else {
-        // استبدال الفاصلة بالنقطة
-        taxRate = taxRate.replace(',', '.');
+            // تنسيق الرقم ليكون بخانتين عشريتين
+            $('#base_price').val(basePriceNumber.toFixed(2));
 
-        // محاولة تحويل القيمة إلى رقم
-        let taxRateNumber = parseFloat(taxRate);
-        if (isNaN(taxRateNumber)) {
-            alert('الرجاء إدخال رقم صالح لنسبة الضريبة');
-            $('#tax_rate').focus();
-            return false;
-        }
+            // معالجة حقل نسبة الضريبة
+            let taxRate = $('#tax_rate').val();
+            if (!taxRate || taxRate.trim() === '') {
+                // استخدام القيمة الافتراضية إذا كانت فارغة
+                $('#tax_rate').val('16.00');
+            } else {
+                // استبدال الفاصلة بالنقطة
+                taxRate = taxRate.replace(',', '.');
 
-        // تنسيق الرقم ليكون بخانتين عشريتين
-        $('#tax_rate').val(taxRateNumber.toFixed(2));
-    }
+                // محاولة تحويل القيمة إلى رقم
+                let taxRateNumber = parseFloat(taxRate);
+                if (isNaN(taxRateNumber)) {
+                    alert('الرجاء إدخال رقم صالح لنسبة الضريبة');
+                    $('#tax_rate').focus();
+                    return false;
+                }
 
-    // معالجة الأسعار الأخرى
-    let comparePrice = $('#compare_price').val();
-    if (comparePrice && comparePrice.trim() !== '') {
-        comparePrice = comparePrice.replace(',', '.');
-        let comparePriceNumber = parseFloat(comparePrice);
-        if (!isNaN(comparePriceNumber)) {
-            $('#compare_price').val(comparePriceNumber.toFixed(2));
-        }
-    }
+                // تنسيق الرقم ليكون بخانتين عشريتين
+                $('#tax_rate').val(taxRateNumber.toFixed(2));
+            }
 
-    let cost = $('#cost').val();
-    if (cost && cost.trim() !== '') {
-        cost = cost.replace(',', '.');
-        let costNumber = parseFloat(cost);
-        if (!isNaN(costNumber)) {
-            $('#cost').val(costNumber.toFixed(2));
-        }
-    }
+            // معالجة الأسعار الأخرى
+            let comparePrice = $('#compare_price').val();
+            if (comparePrice && comparePrice.trim() !== '') {
+                comparePrice = comparePrice.replace(',', '.');
+                let comparePriceNumber = parseFloat(comparePrice);
+                if (!isNaN(comparePriceNumber)) {
+                    $('#compare_price').val(comparePriceNumber.toFixed(2));
+                }
+            }
 
-    if (!isValid) {
-        event.preventDefault();
-        alert("الرجاء ملء جميع الحقول المطلوبة");
-        return false;
-    }
+            let cost = $('#cost').val();
+            if (cost && cost.trim() !== '') {
+                cost = cost.replace(',', '.');
+                let costNumber = parseFloat(cost);
+                if (!isNaN(costNumber)) {
+                    $('#cost').val(costNumber.toFixed(2));
+                }
+            }
 
-    // التحقق من تنسيق JSON
-    try {
-        // التحقق من specifications
-        let specs = $('#specifications').val();
-        if (specs) {
-            JSON.parse(specs);
-        }
+            if (!isValid) {
+                event.preventDefault();
+                alert("الرجاء ملء جميع الحقول المطلوبة");
+                return false;
+            }
 
-        // التحقق من features
-        let features = $('#features').val();
-        if (features && features.trim().startsWith('{')) {
-            JSON.parse(features);
-        }
-    } catch (e) {
-        event.preventDefault();
-        alert("هناك خطأ في تنسيق JSON. الرجاء التحقق من المواصفات والميزات.");
-        return false;
-    }
+            // التحقق من تنسيق JSON
+            try {
+                // التحقق من specifications
+                let specs = $('#specifications').val();
+                if (specs) {
+                    JSON.parse(specs);
+                }
 
-    return true;
-});
+                // التحقق من features
+                let features = $('#features').val();
+                if (features && features.trim().startsWith('{')) {
+                    JSON.parse(features);
+                }
+            } catch (e) {
+                event.preventDefault();
+                alert("هناك خطأ في تنسيق JSON. الرجاء التحقق من المواصفات والميزات.");
+                return false;
+            }
+
+            return true;
+        });
+
         ensureValidNumericFields();
         // البحث عن المنتجات ذات الصلة
         $('#related_products').select2({
