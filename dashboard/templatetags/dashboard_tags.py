@@ -423,3 +423,31 @@ def multiply(value, arg):
         return float(value) * float(arg)
     except (ValueError, TypeError):
         return 0  # إرجاع صفر في حالة الخطأ
+
+
+@register.filter
+def dict_get(dictionary, key):
+    """
+    دالة للوصول الآمن إلى قيم القاموس، مع إرجاع قيمة فارغة إذا كان القاموس فارغًا أو المفتاح غير موجود
+    مثال: {{ form_data|dict_get:'name' }}
+    """
+    if dictionary is None:
+        return ''
+    return dictionary.get(key, '')
+
+
+@register.filter
+def dict_get_default(dictionary, key_default):
+    """
+    دالة للوصول الآمن إلى قيم القاموس، مع إمكانية توفير قيمة افتراضية
+    مثال: {{ form_data|dict_get_default:'name:القيمة الافتراضية' }}
+    """
+    if dictionary is None:
+        return ''
+
+    if ':' in key_default:
+        key, default = key_default.split(':', 1)
+    else:
+        key, default = key_default, ''
+
+    return dictionary.get(key, default)

@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load static %}
 {% load crispy_forms_tags %}
+{% load dashboard_tags %}
 
 {% block title %}
 {% if product %}
@@ -39,6 +40,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.20/summernote-bs5.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.css">
 <style>
+    /* تنسيق الأقسام */
     .form-section {
         border-bottom: 1px solid #eee;
         padding-bottom: 1.5rem;
@@ -53,6 +55,37 @@
         margin-bottom: 1rem;
         color: #333;
     }
+
+    /* تمييز الحقول المطلوبة */
+    .required-field label:after {
+        content: " *";
+        color: #dc3545;
+        font-weight: bold;
+    }
+
+    /* تنسيق حقول التحرير */
+    .json-editor-container {
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background-color: #f8f9fa;
+    }
+
+    /* تمييز حقل به خطأ */
+    .is-invalid {
+        border-color: #dc3545 !important;
+    }
+
+    .invalid-feedback {
+        display: block;
+        width: 100%;
+        margin-top: 0.25rem;
+        font-size: 80%;
+        color: #dc3545;
+    }
+
+    /* معاينات الصور */
     .image-preview-container {
         display: flex;
         flex-wrap: wrap;
@@ -135,6 +168,8 @@
         border-color: var(--bs-primary);
         color: var(--bs-primary);
     }
+
+    /* تنسيقات أخرى */
     .tab-pane {
         padding: 1.5rem;
     }
@@ -208,13 +243,6 @@
         border-color: #86b7fe;
         box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
     }
-    .specifications-editor, .features-editor {
-        min-height: 200px;
-        border: 1px solid #ced4da;
-        border-radius: 0.25rem;
-        padding: 0.5rem;
-        font-family: monospace;
-    }
     .note-editor .note-editing-area .note-editable {
         min-height: 200px;
     }
@@ -230,54 +258,63 @@
     .form-control-color {
         width: 3rem;
     }
-    .variant-attributes-table {
-        border-collapse: collapse;
+
+    /* تنسيق الجدول */
+    .json-table {
         width: 100%;
+        margin-bottom: 1rem;
+        border-collapse: collapse;
     }
-    .variant-attributes-table td {
-        padding: 0.5rem;
-        vertical-align: middle;
-    }
-    .variant-attributes-table td:first-child {
-        font-weight: 600;
-        width: 30%;
-    }
-    .seo-preview {
+
+    .json-table th, .json-table td {
+        padding: 0.75rem;
         border: 1px solid #dee2e6;
-        border-radius: 0.25rem;
-        padding: 1rem;
-        margin-top: 1rem;
+    }
+
+    .json-table th {
         background-color: #f8f9fa;
+        font-weight: bold;
     }
-    .seo-preview-title {
-        color: #1a0dab;
-        font-size: 1.25rem;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    .seo-preview-url {
-        color: #006621;
+
+    /* توضيح طريقة الإدخال */
+    .help-text {
+        margin-top: 0.5rem;
         font-size: 0.875rem;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        color: #6c757d;
     }
-    .seo-preview-description {
-        color: #545454;
-        font-size: 0.875rem;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
+
+    /* تمييز الخطأ في النموذج */
+    .alert-validation {
+        padding: 10px 15px;
+        margin-bottom: 20px;
+        border: 1px solid transparent;
+        border-radius: 4px;
+    }
+
+    .alert-danger-validation {
+        color: #721c24;
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
     }
 </style>
 {% endblock %}
 
 {% block content %}
+<!-- نموذج المنتج -->
 <form method="post" enctype="multipart/form-data" id="product-form">
     {% csrf_token %}
+
+    <!-- عرض رسائل الخطأ أعلى النموذج -->
+    {% if messages %}
+    <div class="alert alert-danger-validation mb-4">
+        <h5 class="mb-2"><i class="fa fa-exclamation-triangle me-2"></i>{% trans 'يرجى تصحيح الأخطاء التالية:' %}</h5>
+        <ul class="list-unstyled mb-0">
+            {% for message in messages %}
+                <li><i class="fa fa-times me-1"></i> {{ message }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
 
     <div class="row">
         <div class="col-lg-9">
@@ -324,46 +361,56 @@
                             <div class="form-section">
                                 <h5 class="form-section-title">{% trans 'معلومات المنتج الأساسية' %}</h5>
                                 <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="name" class="form-label">{% trans 'اسم المنتج' %} <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" id="name" name="name" value="{{ product.name|default:'' }}" required>
+                                    <!-- اسم المنتج (مطلوب) -->
+                                    <div class="col-md-6 mb-3 required-field">
+                                        <label for="name" class="form-label">{% trans 'اسم المنتج' %}</label>
+                                        <input type="text"
+                                               class="form-control {% if 'name' in field_errors %}is-invalid{% endif %}"
+                                               id="name" name="name"
+                                               value="
+                                                       {% if form_data %}{% if 'name' in form_data %}{{ form_data.name }}{% endif %}{% elif product %}{{ product.name }}{% endif %}"
+                                               required>
                                         <div class="form-text">{% trans 'اسم المنتج الرئيسي (باللغة العربية)' %}</div>
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label for="name_en" class="form-label">{% trans 'اسم المنتج (الإنجليزية)' %}</label>
-                                        <input type="text" class="form-control" id="name_en" name="name_en" value="{{ product.name_en|default:'' }}" dir="ltr">
+                                        <input type="text" class="form-control" id="name_en" name="name_en"
+                                               value="{{ form_data.name_en|default:product.name_en|default:'' }}" dir="ltr">
                                         <div class="form-text">{% trans 'اسم المنتج باللغة الإنجليزية (اختياري)' %}</div>
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
                                         <label for="sku" class="form-label">{% trans 'رقم المنتج (SKU)' %}</label>
-                                        <input type="text" class="form-control" id="sku" name="sku" value="{{ product.sku|default:'' }}" dir="ltr">
-                                        <div class="form-text">{% trans 'رقم تعريف المنتج الفريد' %}</div>
+                                        <input type="text" class="form-control" id="sku" name="sku"
+                                               value="{{ form_data.sku|default:product.sku|default:'' }}" dir="ltr">
+                                        <div class="form-text">{% trans 'رقم تعريف المنتج الفريد (سيتم إنشاؤه تلقائيًا إذا تُرك فارغًا)' %}</div>
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label for="barcode" class="form-label">{% trans 'الباركود' %}</label>
-                                        <input type="text" class="form-control" id="barcode" name="barcode" value="{{ product.barcode|default:'' }}" dir="ltr">
+                                        <input type="text" class="form-control" id="barcode" name="barcode"
+                                               value="{{ form_data.barcode|default:product.barcode|default:'' }}" dir="ltr">
                                         <div class="form-text">{% trans 'رمز الباركود مثل UPC أو EAN (اختياري)' %}</div>
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="category" class="form-label">{% trans 'الفئة' %} <span class="text-danger">*</span></label>
-                                        <select class="form-select select2" id="category" name="category" required>
+                                    <!-- الفئة (مطلوبة) -->
+                                    <div class="col-md-6 mb-3 required-field">
+                                        <label for="category" class="form-label">{% trans 'الفئة' %}</label>
+                                        <select class="form-select {% if 'category' in field_errors %}is-invalid{% endif %}" id="category" name="category" required>
                                             <option value="">{% trans 'اختر الفئة...' %}</option>
                                             {% for category in categories %}
-                                                <option value="{{ category.id }}" {% if product.category_id == category.id %}selected{% endif %}>
+                                                <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" or product.category_id == category.id %}selected{% endif %}>
                                                     {{ category.name }}
                                                 </option>
                                                 {% if category.children.exists %}
                                                     {% for child in category.children.all %}
-                                                        <option value="{{ child.id }}" {% if product.category_id == child.id %}selected{% endif %}>
+                                                        <option value="{{ child.id }}" {% if selected_category == child.id|stringformat:"s" or product.category_id == child.id %}selected{% endif %}>
                                                             &nbsp;&nbsp;— {{ child.name }}
                                                         </option>
                                                         {% if child.children.exists %}
                                                             {% for grandchild in child.children.all %}
-                                                                <option value="{{ grandchild.id }}" {% if product.category_id == grandchild.id %}selected{% endif %}>
+                                                                <option value="{{ grandchild.id }}" {% if selected_category == grandchild.id|stringformat:"s" or product.category_id == grandchild.id %}selected{% endif %}>
                                                                     &nbsp;&nbsp;&nbsp;&nbsp;— {{ grandchild.name }}
                                                                 </option>
                                                             {% endfor %}
@@ -372,13 +419,14 @@
                                                 {% endif %}
                                             {% endfor %}
                                         </select>
+                                        <div class="form-text">{% trans 'اختر الفئة المناسبة للمنتج' %}</div>
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label for="brand" class="form-label">{% trans 'العلامة التجارية' %}</label>
                                         <select class="form-select select2" id="brand" name="brand">
                                             <option value="">{% trans 'بدون علامة تجارية' %}</option>
                                             {% for brand in brands %}
-                                                <option value="{{ brand.id }}" {% if product.brand_id == brand.id %}selected{% endif %}>
+                                                <option value="{{ brand.id }}" {% if selected_brand == brand.id|stringformat:"s" or product.brand_id == brand.id %}selected{% endif %}>
                                                     {{ brand.name }}
                                                 </option>
                                             {% endfor %}
@@ -393,7 +441,7 @@
                                     <label for="tags" class="form-label">{% trans 'الوسوم' %}</label>
                                     <select class="form-select select2" id="tags" name="tags" multiple>
                                         {% for tag in tags %}
-                                            <option value="{{ tag.id }}" {% if product and tag in product.tags.all %}selected{% endif %}>
+                                            <option value="{{ tag.id }}" {% if tag.id|stringformat:"s" in selected_tags or product and tag in product.tags.all %}selected{% endif %}>
                                                 {{ tag.name }}
                                             </option>
                                         {% endfor %}
@@ -402,7 +450,7 @@
                                 </div>
                                 <div class="mb-3">
                                     <label for="search_keywords" class="form-label">{% trans 'كلمات البحث' %}</label>
-                                    <textarea class="form-control" id="search_keywords" name="search_keywords" rows="2">{{ product.search_keywords|default:'' }}</textarea>
+                                    <textarea class="form-control" id="search_keywords" name="search_keywords" rows="2">{{ form_data.search_keywords|default:product.search_keywords|default:'' }}</textarea>
                                     <div class="form-text">{% trans 'كلمات مفتاحية تساعد في ظهور المنتج في نتائج البحث (مفصولة بفواصل أو مسافات)' %}</div>
                                 </div>
                             </div>
@@ -414,7 +462,7 @@
                                         <label for="status" class="form-label">{% trans 'حالة المنتج' %}</label>
                                         <select class="form-select" id="status" name="status">
                                             {% for status_code, status_name in status_choices %}
-                                                <option value="{{ status_code }}" {% if product.status == status_code %}selected{% endif %}>
+                                                <option value="{{ status_code }}" {% if form_data.status == status_code or product.status == status_code %}selected{% endif %}>
                                                     {{ status_name }}
                                                 </option>
                                             {% endfor %}
@@ -427,7 +475,7 @@
                                         <label for="condition" class="form-label">{% trans 'حالة المنتج الفعلية' %}</label>
                                         <select class="form-select" id="condition" name="condition">
                                             {% for condition_code, condition_name in condition_choices %}
-                                                <option value="{{ condition_code }}" {% if product.condition == condition_code %}selected{% endif %}>
+                                                <option value="{{ condition_code }}" {% if form_data.condition == condition_code or product.condition == condition_code %}selected{% endif %}>
                                                     {{ condition_name }}
                                                 </option>
                                             {% endfor %}
@@ -438,7 +486,8 @@
                                 <div class="row">
                                     <div class="col-md-3 mb-3">
                                         <div class="form-check form-check-lg">
-                                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if product.is_active %}checked{% endif %}>
+                                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active"
+                                                   {% if form_data.is_active or product.is_active %}checked{% endif %}>
                                             <label class="form-check-label" for="is_active">
                                                 {% trans 'منتج نشط' %}
                                             </label>
@@ -446,7 +495,8 @@
                                     </div>
                                     <div class="col-md-3 mb-3">
                                         <div class="form-check form-check-lg">
-                                            <input class="form-check-input" type="checkbox" id="is_featured" name="is_featured" {% if product.is_featured %}checked{% endif %}>
+                                            <input class="form-check-input" type="checkbox" id="is_featured" name="is_featured"
+                                                   {% if form_data.is_featured or product.is_featured %}checked{% endif %}>
                                             <label class="form-check-label" for="is_featured">
                                                 {% trans 'منتج مميز' %}
                                             </label>
@@ -454,7 +504,8 @@
                                     </div>
                                     <div class="col-md-3 mb-3">
                                         <div class="form-check form-check-lg">
-                                            <input class="form-check-input" type="checkbox" id="is_new" name="is_new" {% if product.is_new %}checked{% endif %}>
+                                            <input class="form-check-input" type="checkbox" id="is_new" name="is_new"
+                                                   {% if form_data.is_new or product.is_new %}checked{% endif %}>
                                             <label class="form-check-label" for="is_new">
                                                 {% trans 'منتج جديد' %}
                                             </label>
@@ -462,7 +513,8 @@
                                     </div>
                                     <div class="col-md-3 mb-3">
                                         <div class="form-check form-check-lg">
-                                            <input class="form-check-input" type="checkbox" id="is_best_seller" name="is_best_seller" {% if product.is_best_seller %}checked{% endif %}>
+                                            <input class="form-check-input" type="checkbox" id="is_best_seller" name="is_best_seller"
+                                                   {% if form_data.is_best_seller or product.is_best_seller %}checked{% endif %}>
                                             <label class="form-check-label" for="is_best_seller">
                                                 {% trans 'الأكثر مبيعاً' %}
                                             </label>
@@ -473,7 +525,8 @@
                                 <div class="row">
                                     <div class="col-md-4 mb-3">
                                         <div class="form-check form-check-lg">
-                                            <input class="form-check-input" type="checkbox" id="is_digital" name="is_digital" {% if product.is_digital %}checked{% endif %}>
+                                            <input class="form-check-input" type="checkbox" id="is_digital" name="is_digital"
+                                                   {% if form_data.is_digital or product.is_digital %}checked{% endif %}>
                                             <label class="form-check-label" for="is_digital">
                                                 {% trans 'منتج رقمي' %}
                                             </label>
@@ -481,7 +534,8 @@
                                     </div>
                                     <div class="col-md-4 mb-3">
                                         <div class="form-check form-check-lg">
-                                            <input class="form-check-input" type="checkbox" id="requires_shipping" name="requires_shipping" {% if product.requires_shipping %}checked{% endif %}>
+                                            <input class="form-check-input" type="checkbox" id="requires_shipping" name="requires_shipping"
+                                                   {% if form_data.requires_shipping or product.requires_shipping %}checked{% endif %}>
                                             <label class="form-check-label" for="requires_shipping">
                                                 {% trans 'يتطلب شحن' %}
                                             </label>
@@ -489,7 +543,8 @@
                                     </div>
                                     <div class="col-md-4 mb-3">
                                         <div class="form-check form-check-lg">
-                                            <input class="form-check-input" type="checkbox" id="allow_reviews" name="allow_reviews" {% if product.allow_reviews %}checked{% endif %}>
+                                            <input class="form-check-input" type="checkbox" id="allow_reviews" name="allow_reviews"
+                                                   {% if form_data.allow_reviews or product.allow_reviews %}checked{% endif %}>
                                             <label class="form-check-label" for="allow_reviews">
                                                 {% trans 'السماح بالتقييمات' %}
                                             </label>
@@ -547,13 +602,15 @@
                                 <h5 class="form-section-title">{% trans 'الفيديو والمعرض ثلاثي الأبعاد' %}</h5>
                                 <div class="mb-3">
                                     <label for="video_url" class="form-label">{% trans 'رابط الفيديو' %}</label>
-                                    <input type="url" class="form-control" id="video_url" name="video_url" value="{{ product.video_url|default:'' }}" dir="ltr">
+                                    <input type="url" class="form-control" id="video_url" name="video_url"
+                                           value="{{ form_data.video_url|default:product.video_url|default:'' }}" dir="ltr">
                                     <div class="form-text">
                                         {% trans 'يمكنك إضافة رابط فيديو من YouTube أو Vimeo (اختياري)' %}
                                     </div>
                                 </div>
                                 <div class="form-check mb-3">
-                                    <input class="form-check-input" type="checkbox" id="has_360_view" name="has_360_view" {% if product.has_360_view %}checked{% endif %}>
+                                    <input class="form-check-input" type="checkbox" id="has_360_view" name="has_360_view"
+                                           {% if form_data.has_360_view or product.has_360_view %}checked{% endif %}>
                                     <label class="form-check-label" for="has_360_view">
                                         {% trans 'تفعيل العرض ثلاثي الأبعاد (360 درجة)' %}
                                     </label>
@@ -566,12 +623,13 @@
                             <div class="form-section">
                                 <h5 class="form-section-title">{% trans 'التسعير' %}</h5>
                                 <div class="row">
-                                    <div class="col-md-4 mb-3">
-                                        <label for="base_price" class="form-label">{% trans 'السعر الأساسي' %} <span
-                                                class="text-danger">*</span></label>
+                                    <!-- السعر الأساسي (مطلوب) -->
+                                    <div class="col-md-4 mb-3 required-field">
+                                        <label for="base_price" class="form-label">{% trans 'السعر الأساسي' %}</label>
                                         <div class="input-group price-field">
-                                            <input type="number" class="form-control" id="base_price" name="base_price"
-                                                   step="0.01" min="0" value="0.00" required>
+                                            <input type="number" class="form-control {% if 'base_price' in field_errors %}is-invalid{% endif %}"
+                                                   id="base_price" name="base_price" step="0.01" min="0.01"
+                                                   value="{{ form_data.base_price|default:product.base_price|default:'0.01' }}" required>
                                             <span class="input-group-text">د.ا</span>
                                         </div>
                                         <div class="form-text">{% trans 'السعر الحالي للمنتج' %}</div>
@@ -579,7 +637,8 @@
                                     <div class="col-md-4 mb-3">
                                         <label for="compare_price" class="form-label">{% trans 'سعر المقارنة' %}</label>
                                         <div class="input-group price-field">
-                                            <input type="number" class="form-control" id="compare_price" name="compare_price" step="0.01" min="0" value="{{ product.compare_price|default:'' }}">
+                                            <input type="number" class="form-control" id="compare_price" name="compare_price" step="0.01" min="0"
+                                                   value="{{ form_data.compare_price|default:product.compare_price|default:'' }}">
                                             <span class="input-group-text">د.ا</span>
                                         </div>
                                         <div class="form-text">{% trans 'السعر القديم أو الأصلي قبل الخصم' %}</div>
@@ -587,7 +646,8 @@
                                     <div class="col-md-4 mb-3">
                                         <label for="cost" class="form-label">{% trans 'التكلفة' %}</label>
                                         <div class="input-group price-field">
-                                            <input type="number" class="form-control" id="cost" name="cost" step="0.01" min="0" value="{{ product.cost|default:'' }}">
+                                            <input type="number" class="form-control" id="cost" name="cost" step="0.01" min="0"
+                                                   value="{{ form_data.cost|default:product.cost|default:'' }}">
                                             <span class="input-group-text">د.ا</span>
                                         </div>
                                         <div class="form-text">{% trans 'تكلفة المنتج (للاستخدام الداخلي)' %}</div>
@@ -597,12 +657,14 @@
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
                                         <label for="tax_rate" class="form-label">{% trans 'نسبة الضريبة (%)' %}</label>
-                                        <input type="number" class="form-control" id="tax_rate" name="tax_rate" step="0.01" min="0" max="100" value="{{ product.tax_rate|default:'16' }}">
+                                        <input type="number" class="form-control" id="tax_rate" name="tax_rate" step="0.01" min="0" max="100"
+                                               value="{{ form_data.tax_rate|default:product.tax_rate|default:'16' }}">
                                         <div class="form-text">{% trans 'نسبة ضريبة القيمة المضافة (16% افتراضياً)' %}</div>
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label for="tax_class" class="form-label">{% trans 'فئة الضريبة' %}</label>
-                                        <input type="text" class="form-control" id="tax_class" name="tax_class" value="{{ product.tax_class|default:'' }}">
+                                        <input type="text" class="form-control" id="tax_class" name="tax_class"
+                                               value="{{ form_data.tax_class|default:product.tax_class|default:'' }}">
                                         <div class="form-text">{% trans 'فئة الضريبة المطبقة على المنتج (اختياري)' %}</div>
                                     </div>
                                 </div>
@@ -613,13 +675,14 @@
                                 <div class="row">
                                     <div class="col-md-4 mb-3">
                                         <label for="stock_quantity" class="form-label">{% trans 'الكمية المتوفرة' %}</label>
-                                        <input type="number" class="form-control" id="stock_quantity" name="stock_quantity" min="0" value="{{ product.stock_quantity|default:'0' }}">
+                                        <input type="number" class="form-control" id="stock_quantity" name="stock_quantity" min="0"
+                                               value="{{ form_data.stock_quantity|default:product.stock_quantity|default:'0' }}">
                                     </div>
                                     <div class="col-md-4 mb-3">
                                         <label for="stock_status" class="form-label">{% trans 'حالة المخزون' %}</label>
                                         <select class="form-select" id="stock_status" name="stock_status">
                                             {% for status_code, status_name in stock_status_choices %}
-                                                <option value="{{ status_code }}" {% if product.stock_status == status_code %}selected{% endif %}>
+                                                <option value="{{ status_code }}" {% if form_data.stock_status == status_code or product.stock_status == status_code %}selected{% endif %}>
                                                     {{ status_name }}
                                                 </option>
                                             {% endfor %}
@@ -627,13 +690,15 @@
                                     </div>
                                     <div class="col-md-4 mb-3">
                                         <label for="min_stock_level" class="form-label">{% trans 'الحد الأدنى للمخزون' %}</label>
-                                        <input type="number" class="form-control" id="min_stock_level" name="min_stock_level" min="0" value="{{ product.min_stock_level|default:'5' }}">
+                                        <input type="number" class="form-control" id="min_stock_level" name="min_stock_level" min="0"
+                                               value="{{ form_data.min_stock_level|default:product.min_stock_level|default:'5' }}">
                                         <div class="form-text">{% trans 'سيتم التنبيه عند انخفاض المخزون عن هذا الحد' %}</div>
                                     </div>
                                 </div>
 
                                 <div class="form-check mb-3">
-                                    <input class="form-check-input" type="checkbox" id="track_inventory" name="track_inventory" {% if product.track_inventory %}checked{% endif %}>
+                                    <input class="form-check-input" type="checkbox" id="track_inventory" name="track_inventory"
+                                           {% if form_data.track_inventory or product.track_inventory %}checked{% endif %}>
                                     <label class="form-check-label" for="track_inventory">
                                         {% trans 'تتبع المخزون' %}
                                     </label>
@@ -645,19 +710,23 @@
                                 <div class="row">
                                     <div class="col-md-3 mb-3">
                                         <label for="weight" class="form-label">{% trans 'الوزن (كجم)' %}</label>
-                                        <input type="number" class="form-control" id="weight" name="weight" step="0.001" min="0" value="{{ product.weight|default:'' }}">
+                                        <input type="number" class="form-control" id="weight" name="weight" step="0.001" min="0"
+                                               value="{{ form_data.weight|default:product.weight|default:'' }}">
                                     </div>
                                     <div class="col-md-3 mb-3">
                                         <label for="length" class="form-label">{% trans 'الطول (سم)' %}</label>
-                                        <input type="number" class="form-control" id="length" name="length" step="0.01" min="0" value="{{ product.length|default:'' }}">
+                                        <input type="number" class="form-control" id="length" name="length" step="0.01" min="0"
+                                               value="{{ form_data.length|default:product.length|default:'' }}">
                                     </div>
                                     <div class="col-md-3 mb-3">
                                         <label for="width" class="form-label">{% trans 'العرض (سم)' %}</label>
-                                        <input type="number" class="form-control" id="width" name="width" step="0.01" min="0" value="{{ product.width|default:'' }}">
+                                        <input type="number" class="form-control" id="width" name="width" step="0.01" min="0"
+                                               value="{{ form_data.width|default:product.width|default:'' }}">
                                     </div>
                                     <div class="col-md-3 mb-3">
                                         <label for="height" class="form-label">{% trans 'الارتفاع (سم)' %}</label>
-                                        <input type="number" class="form-control" id="height" name="height" step="0.01" min="0" value="{{ product.height|default:'' }}">
+                                        <input type="number" class="form-control" id="height" name="height" step="0.01" min="0"
+                                               value="{{ form_data.height|default:product.height|default:'' }}">
                                     </div>
                                 </div>
                             </div>
@@ -669,45 +738,92 @@
                                 <h5 class="form-section-title">{% trans 'وصف المنتج' %}</h5>
                                 <div class="mb-3">
                                     <label for="short_description" class="form-label">{% trans 'الوصف المختصر' %}</label>
-                                    <textarea class="form-control" id="short_description" name="short_description" rows="3">{{ product.short_description|default:'' }}</textarea>
-                                    <div class="form-text">{% trans 'وصف مختصر يظهر في قوائم المنتجات ونتائج البحث (لا يتجاوز 160 حرفاً)' %}</div>
+                                    <textarea class="form-control {% if 'short_description' in field_errors %}is-invalid{% endif %}"
+                                              id="short_description" name="short_description" rows="3">{{ form_data.short_description|default:product.short_description|default:'' }}</textarea>
+                                    <div class="form-text">{% trans 'وصف مختصر يظهر في قوائم المنتجات ونتائج البحث (لا يتجاوز 160 حرفاً، على الأقل 10 أحرف إذا تم إدخاله)' %}</div>
                                 </div>
-                                <div class="mb-3">
+
+                                <!-- الوصف الكامل (مطلوب) -->
+                                <div class="mb-3 required-field">
                                     <label for="description" class="form-label">{% trans 'الوصف الكامل' %}</label>
-                                    <textarea class="form-control rich-text-editor" id="description" name="description" rows="10">{{ product.description|default:'' }}</textarea>
-                                    <div class="form-text">{% trans 'وصف تفصيلي للمنتج. يمكنك إضافة صور ونصوص منسقة' %}</div>
+                                    <textarea class="form-control rich-text-editor {% if 'description' in field_errors %}is-invalid{% endif %}"
+                                              id="description" name="description" rows="10" required>{{ form_data.description|default:product.description|default:'' }}</textarea>
+                                    <div class="form-text">{% trans 'وصف تفصيلي للمنتج - على الأقل 20 حرف' %}</div>
                                 </div>
                             </div>
 
-                            <div class="form-section">
+                            <!-- قسم الميزات -->
+                            <div class="form-section" id="features-section">
                                 <h5 class="form-section-title">{% trans 'ميزات المنتج' %}</h5>
-                                <div class="mb-3">
-                                    <label for="features" class="form-label">{% trans 'ميزات المنتج' %}</label>
-                                    <textarea class="form-control features-editor" id="features" name="features" rows="5">{{ features_json|default:'' }}</textarea>
-                                    <div class="form-text">{% trans 'أدخل ميزات المنتج (فائدة واحدة في كل سطر أو استخدم صيغة JSON)' %}</div>
+
+                                <div id="features-editor" class="json-editor-container">
+                                    <div class="mb-3">
+                                        <div class="d-flex mb-2">
+                                            <div class="flex-grow-1 me-2">
+                                                <input type="text" id="feature-input" class="form-control" placeholder="أدخل ميزة جديدة للمنتج" dir="rtl">
+                                            </div>
+                                            <div>
+                                                <button type="button" id="add-feature-btn" class="btn btn-primary">إضافة</button>
+                                            </div>
+                                        </div>
+
+                                        <div class="small text-muted mb-3">
+                                            أدخل ميزات المنتج، ميزة واحدة في كل مرة (مثال: مقاوم للماء، بطارية تدوم طوال اليوم)
+                                        </div>
+
+                                        <ul id="features-list" class="list-group">
+                                            <!-- سيتم ملء هذا الجزء بواسطة JavaScript -->
+                                        </ul>
+                                    </div>
+
+                                    <!-- حقل مخفي لتخزين JSON -->
+                                    <input type="hidden" id="features" name="features" value="{{ features_json|default:'[]' }}">
                                 </div>
                             </div>
                         </div>
 
                         <!-- المواصفات -->
                         <div class="tab-pane fade" id="specifications" role="tabpanel" aria-labelledby="specifications-tab">
-                            <div class="form-section">
+                            <!-- قسم المواصفات -->
+                            <div class="form-section" id="specifications-section">
                                 <h5 class="form-section-title">{% trans 'المواصفات الفنية' %}</h5>
-                                <div class="mb-3">
-                                    <label for="specifications" class="form-label">{% trans 'المواصفات' %}</label>
-                                    <textarea class="form-control specifications-editor" id="specifications" name="specifications_json" rows="10">{{ specifications_json|default:'' }}</textarea>
-                                    <div class="form-text">{% trans 'أدخل المواصفات الفنية للمنتج بتنسيق JSON' %}</div>
-                                </div>
-                                <div class="alert alert-info">
-                                    <i class="fa fa-info-circle me-2"></i>
-                                    {% trans 'استخدم تنسيق JSON لإدخال المواصفات، على سبيل المثال:' %}
-                                    <pre class="mt-2 bg-light p-2 rounded">
-{
-    "الشاشة": "6.1 بوصة، Super Retina XDR",
-    "الذاكرة": "128 جيجابايت",
-    "المعالج": "A15 Bionic",
-    "الكاميرا": "ثنائية العدسة، 12 ميجابكسل"
-}</pre>
+
+                                <div id="specifications-editor" class="json-editor-container">
+                                    <div class="mb-3">
+                                        <div class="d-flex mb-2">
+                                            <div class="flex-grow-1 me-2">
+                                                <input type="text" id="spec-key" class="form-control" placeholder="اسم الخاصية (مثل: الشاشة، المعالج)" dir="rtl">
+                                            </div>
+                                            <div class="flex-grow-1 me-2">
+                                                <input type="text" id="spec-value" class="form-control" placeholder="القيمة (مثل: 6.7 بوصة، A15 Bionic)" dir="rtl">
+                                            </div>
+                                            <div>
+                                                <button type="button" id="add-spec-btn" class="btn btn-primary">إضافة</button>
+                                            </div>
+                                        </div>
+
+                                        <div class="small text-muted mb-3">
+                                            أدخل خصائص المنتج الفنية (مثال: اسم الخاصية = الشاشة، القيمة = 6.7 بوصة)
+                                        </div>
+
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered json-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>الخاصية</th>
+                                                        <th>القيمة</th>
+                                                        <th width="80">الإجراءات</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="specs-table-body">
+                                                    <!-- سيتم ملء هذا الجزء بواسطة JavaScript -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- حقل مخفي لتخزين JSON -->
+                                    <input type="hidden" id="specifications_json" name="specifications_json" value="{{ specifications_json|default:'{}' }}">
                                 </div>
                             </div>
 
@@ -730,9 +846,11 @@
                                                 <td>{{ attribute.name }}</td>
                                                 <td>
                                                     {% if attribute.attribute_type == 'text' %}
-                                                    <input type="text" class="form-control" name="attribute_{{ attribute.id }}" value="{{ attribute.value|default:'' }}">
+                                                    <input type="text" class="form-control" name="attribute_{{ attribute.id }}"
+                                                           value="{{ form_data.attribute_|add:attribute.id|default:attribute.value|default:'' }}">
                                                     {% elif attribute.attribute_type == 'number' %}
-                                                    <input type="number" class="form-control" name="attribute_{{ attribute.id }}" value="{{ attribute.value|default:'' }}">
+                                                    <input type="number" class="form-control" name="attribute_{{ attribute.id }}"
+                                                           value="{{ form_data.attribute_|add:attribute.id|default:attribute.value|default:'' }}">
                                                     {% elif attribute.attribute_type == 'boolean' %}
                                                     <select class="form-select" name="attribute_{{ attribute.id }}">
                                                         <option value="">{% trans 'اختر...' %}</option>
@@ -753,9 +871,11 @@
                                                         {% endfor %}
                                                     </select>
                                                     {% elif attribute.attribute_type == 'color' %}
-                                                    <input type="color" class="form-control form-control-color" name="attribute_{{ attribute.id }}" value="{{ attribute.value|default:'#000000' }}">
+                                                    <input type="color" class="form-control form-control-color" name="attribute_{{ attribute.id }}"
+                                                           value="{{ form_data.attribute_|add:attribute.id|default:attribute.value|default:'#000000' }}">
                                                     {% elif attribute.attribute_type == 'date' %}
-                                                    <input type="date" class="form-control" name="attribute_{{ attribute.id }}" value="{{ attribute.value|default:'' }}">
+                                                    <input type="date" class="form-control" name="attribute_{{ attribute.id }}"
+                                                           value="{{ form_data.attribute_|add:attribute.id|default:attribute.value|default:'' }}">
                                                     {% endif %}
                                                 </td>
                                             </tr>
@@ -778,17 +898,19 @@
                                 <h5 class="form-section-title">{% trans 'تحسين محركات البحث (SEO)' %}</h5>
                                 <div class="mb-3">
                                     <label for="meta_title" class="form-label">{% trans 'عنوان SEO' %}</label>
-                                    <input type="text" class="form-control" id="meta_title" name="meta_title" value="{{ product.meta_title|default:'' }}">
+                                    <input type="text" class="form-control" id="meta_title" name="meta_title"
+                                           value="{{ form_data.meta_title|default:product.meta_title|default:'' }}">
                                     <div class="form-text">{% trans 'عنوان الصفحة الذي سيظهر في نتائج البحث (60-70 حرف)' %}</div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="meta_description" class="form-label">{% trans 'وصف SEO' %}</label>
-                                    <textarea class="form-control" id="meta_description" name="meta_description" rows="3">{{ product.meta_description|default:'' }}</textarea>
+                                    <textarea class="form-control" id="meta_description" name="meta_description" rows="3">{{ form_data.meta_description|default:product.meta_description|default:'' }}</textarea>
                                     <div class="form-text">{% trans 'وصف مختصر للصفحة الذي سيظهر في نتائج البحث (150-160 حرف)' %}</div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="meta_keywords" class="form-label">{% trans 'الكلمات المفتاحية' %}</label>
-                                    <input type="text" class="form-control" id="meta_keywords" name="meta_keywords" value="{{ product.meta_keywords|default:'' }}">
+                                    <input type="text" class="form-control" id="meta_keywords" name="meta_keywords"
+                                           value="{{ form_data.meta_keywords|default:product.meta_keywords|default:'' }}">
                                     <div class="form-text">{% trans 'الكلمات المفتاحية مفصولة بفواصل' %}</div>
                                 </div>
 
@@ -810,12 +932,13 @@
                                 <h5 class="form-section-title">{% trans 'وسائل التواصل الاجتماعي' %}</h5>
                                 <div class="mb-3">
                                     <label for="social_title" class="form-label">{% trans 'عنوان المشاركة' %}</label>
-                                    <input type="text" class="form-control" id="social_title" name="social_title" value="{{ product.social_title|default:'' }}">
+                                    <input type="text" class="form-control" id="social_title" name="social_title"
+                                           value="{{ form_data.social_title|default:product.social_title|default:'' }}">
                                     <div class="form-text">{% trans 'عنوان المشاركة في وسائل التواصل الاجتماعي (اختياري)' %}</div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="social_description" class="form-label">{% trans 'وصف المشاركة' %}</label>
-                                    <textarea class="form-control" id="social_description" name="social_description" rows="3">{{ product.social_description|default:'' }}</textarea>
+                                    <textarea class="form-control" id="social_description" name="social_description" rows="3">{{ form_data.social_description|default:product.social_description|default:'' }}</textarea>
                                     <div class="form-text">{% trans 'وصف المشاركة في وسائل التواصل الاجتماعي (اختياري)' %}</div>
                                 </div>
                             </div>
@@ -856,7 +979,8 @@
                 <div class="card-body">
                     <div class="d-grid gap-2">
                         <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="status_switch" {% if product.status == 'published' %}checked{% endif %}>
+                            <input class="form-check-input" type="checkbox" id="status_switch"
+                                   {% if form_data.status == 'published' or product.status == 'published' %}checked{% endif %}>
                             <label class="form-check-label" for="status_switch">
                                 <span id="status_label">
                                     {% if product.status == 'published' %}
@@ -869,7 +993,8 @@
                         </div>
 
                         <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="visibility_switch" {% if product.is_active %}checked{% endif %}>
+                            <input class="form-check-input" type="checkbox" id="visibility_switch"
+                                   {% if form_data.is_active or product.is_active %}checked{% endif %}>
                             <label class="form-check-label" for="visibility_switch">
                                 <span id="visibility_label">
                                     {% if product.is_active %}
@@ -964,38 +1089,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.min.js"></script>
 <script>
     $(document).ready(function() {
-
-        // التأكد من أن حقول الأسعار تحتوي على قيم صالحة دائمًا
-    function ensureValidNumericFields() {
-        // تعيين قيمة افتراضية لحقل السعر الأساسي إذا كان فارغًا أو صفر
-        let basePrice = $('#base_price').val();
-        if (!basePrice || parseFloat(basePrice) <= 0) {
-            $('#base_price').val('0.01');  // تغيير من 0.00 إلى 0.01
-        }
-
-        // تعيين قيم افتراضية للحقول العددية الأخرى إذا كانت مطلوبة ولكنها فارغة
-        if ($('#tax_rate').prop('required') && !$('#tax_rate').val()) {
-            $('#tax_rate').val('16.00');
-        }
-
-        // معالجة الحقول العددية الأخرى
-        $('input[type="number"]').each(function() {
-            // إذا كان الحقل مطلوبًا ولكنه فارغ، نضع فيه قيمة افتراضية
-            if ($(this).prop('required') && !$(this).val()) {
-                if ($(this).attr('step') === '0.01') {
-                    // حقل عشري
-                    $(this).val('0.00');
-                } else {
-                    // حقل عدد صحيح
-                    $(this).val('0');
-                }
-            }
-        });
-    }
-
-    // تنفيذ التحقق عند تحميل الصفحة
-    ensureValidNumericFields();
-
         // تهيئة حقول Select2
         $('.select2').select2({
             dir: $('html').attr('dir'),
@@ -1026,14 +1119,255 @@
             confirmKeys: [13, 44, 32] // Enter, comma, space
         });
 
+        // محرر المواصفات
+        function initSpecificationsEditor() {
+            // العناصر
+            const container = document.getElementById('specifications-editor');
+            const outputField = document.getElementById('specifications_json');
+            const addButton = document.getElementById('add-spec-btn');
+            const keyInput = document.getElementById('spec-key');
+            const valueInput = document.getElementById('spec-value');
+            const tableBody = document.getElementById('specs-table-body');
+
+            // المواصفات الحالية
+            let specifications = {};
+
+            // قراءة القيمة الأولية
+            if (outputField && outputField.value) {
+                try {
+                    specifications = JSON.parse(outputField.value);
+                } catch (e) {
+                    specifications = {};
+                }
+            }
+
+            // عرض المواصفات الحالية
+            function renderSpecifications() {
+                tableBody.innerHTML = '';
+
+                // إذا لم تكن هناك مواصفات، نعرض رسالة
+                if (Object.keys(specifications).length === 0) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td colspan="3" class="text-center text-muted">
+                            لا توجد مواصفات حتى الآن. أضف مواصفات للمنتج.
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                    return;
+                }
+
+                // عرض المواصفات في الجدول
+                for (const key in specifications) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${key}</td>
+                        <td>${specifications[key]}</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-danger" data-key="${key}">
+                                حذف
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+
+                    // إضافة حدث للزر حذف
+                    row.querySelector('button').addEventListener('click', function() {
+                        const key = this.getAttribute('data-key');
+                        delete specifications[key];
+                        updateOutput();
+                        renderSpecifications();
+                    });
+                }
+            }
+
+            // تحديث حقل الإخراج
+            function updateOutput() {
+                outputField.value = JSON.stringify(specifications);
+            }
+
+            // إضافة مواصفة جديدة
+            function addSpecification() {
+                const key = keyInput.value.trim();
+                const value = valueInput.value.trim();
+
+                if (!key) {
+                    alert('الرجاء إدخال اسم الخاصية');
+                    keyInput.focus();
+                    return;
+                }
+
+                specifications[key] = value;
+                keyInput.value = '';
+                valueInput.value = '';
+                keyInput.focus();
+
+                updateOutput();
+                renderSpecifications();
+            }
+
+            // تسجيل الأحداث
+            if (addButton) {
+                addButton.addEventListener('click', addSpecification);
+            }
+
+            if (keyInput && valueInput) {
+                keyInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        valueInput.focus();
+                    }
+                });
+
+                valueInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addSpecification();
+                    }
+                });
+            }
+
+            // تهيئة العرض الأولي
+            renderSpecifications();
+        }
+
+        // محرر الميزات
+        function initFeaturesEditor() {
+            // العناصر
+            const container = document.getElementById('features-editor');
+            const outputField = document.getElementById('features');
+            const addButton = document.getElementById('add-feature-btn');
+            const featureInput = document.getElementById('feature-input');
+            const featuresList = document.getElementById('features-list');
+
+            // الميزات الحالية
+            let features = [];
+
+            // قراءة القيمة الأولية
+            if (outputField && outputField.value) {
+                try {
+                    // محاولة قراءة كـ JSON
+                    if (outputField.value.startsWith('[') || outputField.value.startsWith('{')) {
+                        features = JSON.parse(outputField.value);
+                        if (!Array.isArray(features)) {
+                            features = [];
+                        }
+                    } else {
+                        // قراءة كأسطر منفصلة
+                        features = outputField.value
+                            .split('\n')
+                            .map(line => line.trim())
+                            .filter(line => line);
+                    }
+                } catch (e) {
+                    features = [];
+                }
+            }
+
+            // عرض الميزات الحالية
+            function renderFeatures() {
+                featuresList.innerHTML = '';
+
+                // إذا لم تكن هناك ميزات، نعرض رسالة
+                if (features.length === 0) {
+                    const item = document.createElement('li');
+                    item.className = 'list-group-item text-center text-muted';
+                    item.textContent = 'لا توجد ميزات حتى الآن. أضف ميزات للمنتج.';
+                    featuresList.appendChild(item);
+                    return;
+                }
+
+                // عرض الميزات في القائمة
+                features.forEach((feature, index) => {
+                    const item = document.createElement('li');
+                    item.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    item.innerHTML = `
+                        <span>${feature}</span>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-sm btn-secondary" data-index="${index}" data-action="up" ${index === 0 ? 'disabled' : ''}>
+                                <i class="fa fa-arrow-up"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-secondary" data-index="${index}" data-action="down" ${index === features.length - 1 ? 'disabled' : ''}>
+                                <i class="fa fa-arrow-down"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-danger" data-index="${index}" data-action="delete">
+                                <i class="fa fa-times"></i>
+                            </button>
+                        </div>
+                    `;
+                    featuresList.appendChild(item);
+
+                    // إضافة أحداث للأزرار
+                    const buttons = item.querySelectorAll('button');
+                    buttons.forEach(button => {
+                        button.addEventListener('click', function() {
+                            const index = parseInt(this.getAttribute('data-index'));
+                            const action = this.getAttribute('data-action');
+
+                            if (action === 'delete') {
+                                features.splice(index, 1);
+                            } else if (action === 'up' && index > 0) {
+                                [features[index - 1], features[index]] = [features[index], features[index - 1]];
+                            } else if (action === 'down' && index < features.length - 1) {
+                                [features[index], features[index + 1]] = [features[index + 1], features[index]];
+                            }
+
+                            updateOutput();
+                            renderFeatures();
+                        });
+                    });
+                });
+            }
+
+            // تحديث حقل الإخراج
+            function updateOutput() {
+                outputField.value = JSON.stringify(features);
+            }
+
+            // إضافة ميزة جديدة
+            function addFeature() {
+                const feature = featureInput.value.trim();
+
+                if (!feature) {
+                    alert('الرجاء إدخال ميزة');
+                    featureInput.focus();
+                    return;
+                }
+
+                features.push(feature);
+                featureInput.value = '';
+                featureInput.focus();
+
+                updateOutput();
+                renderFeatures();
+            }
+
+            // تسجيل الأحداث
+            if (addButton) {
+                addButton.addEventListener('click', addFeature);
+            }
+
+            if (featureInput) {
+                featureInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addFeature();
+                    }
+                });
+            }
+
+            // تهيئة العرض الأولي
+            renderFeatures();
+        }
+
         // تحديث معاينة SEO
-        $('#meta_title').on('input', function() {
-            let title = $(this).val() || $('#name').val() || "{% trans 'عنوان المنتج' %}";
+        $('#meta_title, #name').on('input', function() {
+            let title = $('#meta_title').val() || $('#name').val() || "{% trans 'عنوان المنتج' %}";
             $('#seo-preview-title').text(title);
         });
 
-        $('#meta_description').on('input', function() {
-            let description = $(this).val() || $('#short_description').val() || "{% trans 'وصف المنتج سيظهر هنا. قم بإضافة وصف مختصر وجذاب للمنتج.' %}";
+        $('#meta_description, #short_description').on('input', function() {
+            let description = $('#meta_description').val() || $('#short_description').val() || "{% trans 'وصف المنتج سيظهر هنا. قم بإضافة وصف مختصر وجذاب للمنتج.' %}";
             $('#seo-preview-description').text(description);
         });
 
@@ -1113,123 +1447,33 @@
             }
         });
 
-        // منع إرسال النموذج عند الضغط على Enter
-        $(window).keydown(function(event) {
-            if (event.keyCode == 13 && event.target.nodeName != 'TEXTAREA') {
-                event.preventDefault();
-                return false;
+        // تهيئة محرري JSON
+        initSpecificationsEditor();
+        initFeaturesEditor();
+
+        // تمييز الحقول المطلوبة
+        const requiredFields = [
+            'name', 'category', 'base_price', 'description'
+        ];
+
+        requiredFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                const formGroup = field.closest('.mb-3') || field.closest('.form-group');
+                if (formGroup) {
+                    formGroup.classList.add('required-field');
+                }
             }
         });
 
-        // التحقق من صحة النموذج قبل الإرسال
-        $('#product-form').submit(function(event) {
-            let isValid = true;
-alert('hi')
-            // التحقق من الحقول المطلوبة
-            if (!$('#name').val()) {
-                $('#name').addClass('is-invalid');
-                isValid = false;
+        // منع إرسال النموذج عند النقر على Enter
+        document.getElementById('product-form').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' &&
+                !e.target.classList.contains('allow-enter')) {
+                e.preventDefault();
             }
-
-            let categoryValue = $('#category').val();
-        console.log('القيمة المختارة للفئة:', categoryValue);
-
-        if (!categoryValue || categoryValue === '') {
-            event.preventDefault();
-            alert('يرجى اختيار فئة للمنتج');
-            $('#category').select2('open'); // فتح القائمة المنسدلة
-            return false;
-        }
-/*
-            if (!$('#category').val()) {
-                $('#category').addClass('is-invalid');
-                isValid = false;
-            }
-*/
-            // معالجة حقل السعر الأساسي
-            let basePrice = $('#base_price').val();
-            basePrice = basePrice.replace(',', '.');
-
-            let basePriceNumber = parseFloat(basePrice);
-            if (isNaN(basePriceNumber) || basePriceNumber <= 0) {
-                alert('السعر الأساسي يجب أن يكون أكبر من صفر');
-                $('#base_price').val('0.01');
-                $('#base_price').focus();
-                return false;
-            }
-
-            // تنسيق الرقم ليكون بخانتين عشريتين
-            $('#base_price').val(basePriceNumber.toFixed(2));
-
-            // معالجة حقل نسبة الضريبة
-            let taxRate = $('#tax_rate').val();
-            if (!taxRate || taxRate.trim() === '') {
-                // استخدام القيمة الافتراضية إذا كانت فارغة
-                $('#tax_rate').val('16.00');
-            } else {
-                // استبدال الفاصلة بالنقطة
-                taxRate = taxRate.replace(',', '.');
-
-                // محاولة تحويل القيمة إلى رقم
-                let taxRateNumber = parseFloat(taxRate);
-                if (isNaN(taxRateNumber)) {
-                    alert('الرجاء إدخال رقم صالح لنسبة الضريبة');
-                    $('#tax_rate').focus();
-                    return false;
-                }
-
-                // تنسيق الرقم ليكون بخانتين عشريتين
-                $('#tax_rate').val(taxRateNumber.toFixed(2));
-            }
-
-            // معالجة الأسعار الأخرى
-            let comparePrice = $('#compare_price').val();
-            if (comparePrice && comparePrice.trim() !== '') {
-                comparePrice = comparePrice.replace(',', '.');
-                let comparePriceNumber = parseFloat(comparePrice);
-                if (!isNaN(comparePriceNumber)) {
-                    $('#compare_price').val(comparePriceNumber.toFixed(2));
-                }
-            }
-
-            let cost = $('#cost').val();
-            if (cost && cost.trim() !== '') {
-                cost = cost.replace(',', '.');
-                let costNumber = parseFloat(cost);
-                if (!isNaN(costNumber)) {
-                    $('#cost').val(costNumber.toFixed(2));
-                }
-            }
-
-            if (!isValid) {
-                event.preventDefault();
-                alert("الرجاء ملء جميع الحقول المطلوبة");
-                return false;
-            }
-
-            // التحقق من تنسيق JSON
-            try {
-                // التحقق من specifications
-                let specs = $('#specifications').val();
-                if (specs) {
-                    JSON.parse(specs);
-                }
-
-                // التحقق من features
-                let features = $('#features').val();
-                if (features && features.trim().startsWith('{')) {
-                    JSON.parse(features);
-                }
-            } catch (e) {
-                event.preventDefault();
-                alert("هناك خطأ في تنسيق JSON. الرجاء التحقق من المواصفات والميزات.");
-                return false;
-            }
-
-            return true;
         });
 
-        ensureValidNumericFields();
         // البحث عن المنتجات ذات الصلة
         $('#related_products').select2({
             dir: $('html').attr('dir'),
@@ -1258,6 +1502,77 @@ alert('hi')
                 cache: true
             },
             minimumInputLength: 2
+        });
+
+        // التأكد من صحة النموذج قبل الإرسال
+        $('#product-form').submit(function(event) {
+            let hasError = false;
+
+            // التحقق من اسم المنتج
+            if (!$('#name').val().trim()) {
+                $('#name').addClass('is-invalid');
+                hasError = true;
+            }
+
+            // التحقق من الفئة
+            if (!$('#category').val()) {
+                $('#category').addClass('is-invalid');
+                hasError = true;
+            }
+
+            // التحقق من السعر الأساسي
+            let basePrice = $('#base_price').val();
+            if (!basePrice || parseFloat(basePrice) <= 0) {
+                $('#base_price').addClass('is-invalid');
+                hasError = true;
+            }
+
+            // التحقق من الوصف
+            let description = $('#description').val();
+            if (!description || description.trim().length < 20) {
+                $('#description').addClass('is-invalid');
+                hasError = true;
+            }
+
+            // التحقق من الوصف المختصر (إذا كان موجوداً)
+            let shortDescription = $('#short_description').val();
+            if (shortDescription && shortDescription.trim().length < 10) {
+                $('#short_description').addClass('is-invalid');
+                hasError = true;
+            }
+
+            if (hasError) {
+                event.preventDefault();
+
+                // تحديد التبويب الذي يحتوي على الخطأ الأول
+                let firstErrorTab = $('.is-invalid').first().closest('.tab-pane').attr('id');
+                $('#productTabs a[href="#' + firstErrorTab + '"]').tab('show');
+
+                // التمرير إلى العنصر الذي يحتوي على الخطأ الأول
+                $('html, body').animate({
+                    scrollTop: $('.is-invalid').first().offset().top - 100
+                }, 200);
+
+                return false;
+            }
+
+            // تنسيق الأسعار
+            basePrice = parseFloat(basePrice.replace(',', '.')).toFixed(2);
+            $('#base_price').val(basePrice);
+
+            let comparePrice = $('#compare_price').val();
+            if (comparePrice) {
+                comparePrice = parseFloat(comparePrice.replace(',', '.')).toFixed(2);
+                $('#compare_price').val(comparePrice);
+            }
+
+            let cost = $('#cost').val();
+            if (cost) {
+                cost = parseFloat(cost.replace(',', '.')).toFixed(2);
+                $('#cost').val(cost);
+            }
+
+            return true;
         });
     });
 </script>
