@@ -207,7 +207,10 @@ class ProductFormView(DashboardAccessMixin, View):
         try:
             # تحويل القيم إلى أرقام عشرية وإدارة الأخطاء
             base_price_str = request.POST.get('base_price', '0').replace(',', '.')
-            base_price = round(float(base_price_str), 2)
+            base_price = Decimal(base_price_str)
+
+            if base_price < Decimal('0.01'):
+                base_price = Decimal('0.01')
 
             compare_price_str = request.POST.get('compare_price', '') or None
             compare_price = round(float(compare_price_str.replace(',', '.')), 2) if compare_price_str else None
@@ -424,7 +427,7 @@ class ProductFormView(DashboardAccessMixin, View):
             else:
                 product.related_products.clear()
 
-            return redirect('dashboard:dashboard_product_detail', product_id=product.id)
+            return redirect('dashboard:dashboard_product_detail', product_id=str(product.id))
 
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء حفظ المنتج: {str(e)}')
