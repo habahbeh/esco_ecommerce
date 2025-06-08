@@ -567,9 +567,11 @@
                                 <h5 class="form-section-title">{% trans 'التسعير' %}</h5>
                                 <div class="row">
                                     <div class="col-md-4 mb-3">
-                                        <label for="base_price" class="form-label">{% trans 'السعر الأساسي' %} <span class="text-danger">*</span></label>
+                                        <label for="base_price" class="form-label">{% trans 'السعر الأساسي' %} <span
+                                                class="text-danger">*</span></label>
                                         <div class="input-group price-field">
-                                            <input type="number" class="form-control" id="base_price" name="base_price" step="0.01" min="0" value="{{ product.base_price|stringformat:'f'|cut:',' }}" required>
+                                            <input type="number" class="form-control" id="base_price" name="base_price"
+                                                   step="0.01" min="0" value="0.00" required>
                                             <span class="input-group-text">د.ا</span>
                                         </div>
                                         <div class="form-text">{% trans 'السعر الحالي للمنتج' %}</div>
@@ -962,6 +964,37 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.min.js"></script>
 <script>
     $(document).ready(function() {
+
+        // التأكد من أن حقول الأسعار تحتوي على قيم صالحة دائمًا
+    function ensureValidNumericFields() {
+        // تعيين قيمة افتراضية لحقل السعر الأساسي إذا كان فارغًا
+        if (!$('#base_price').val()) {
+            $('#base_price').val('0.00');
+        }
+
+        // تعيين قيم افتراضية للحقول العددية الأخرى إذا كانت مطلوبة ولكنها فارغة
+        if ($('#tax_rate').prop('required') && !$('#tax_rate').val()) {
+            $('#tax_rate').val('16.00');
+        }
+
+        // معالجة الحقول العددية الأخرى
+        $('input[type="number"]').each(function() {
+            // إذا كان الحقل مطلوبًا ولكنه فارغ، نضع فيه قيمة افتراضية
+            if ($(this).prop('required') && !$(this).val()) {
+                if ($(this).attr('step') === '0.01') {
+                    // حقل عشري
+                    $(this).val('0.00');
+                } else {
+                    // حقل عدد صحيح
+                    $(this).val('0');
+                }
+            }
+        });
+    }
+
+    // تنفيذ التحقق عند تحميل الصفحة
+    ensureValidNumericFields();
+
         // تهيئة حقول Select2
         $('.select2').select2({
             dir: $('html').attr('dir'),
@@ -1191,7 +1224,7 @@
 
     return true;
 });
-
+        ensureValidNumericFields();
         // البحث عن المنتجات ذات الصلة
         $('#related_products').select2({
             dir: $('html').attr('dir'),
