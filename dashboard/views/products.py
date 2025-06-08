@@ -15,7 +15,6 @@ from django.utils.text import slugify
 import uuid
 import json
 from django.views.decorators.http import require_POST
-from decimal import Decimal
 
 from products.models import (
     Product, Category, Brand, Tag, ProductImage,
@@ -156,24 +155,50 @@ class ProductFormView(DashboardAccessMixin, View):
     """عرض إنشاء وتحديث المنتج"""
 
     def get(self, request, product_id=None):
+        """عرض نموذج إنشاء أو تحديث المنتج"""
+        # استرجاع المنتج إذا كنا في وضع التحرير
         if product_id:
             product = get_object_or_404(Product, id=product_id)
             form_title = 'تحديث المنتج'
             images = product.images.all().order_by('sort_order')
             variants = product.variants.all()
             attributes = product.attribute_values.select_related('attribute').all()
+
+            # استخراج البيانات الحالية للمواصفات والميزات
+            specifications_json = json.dumps(product.specifications, indent=4,
+                                             ensure_ascii=False) if product.specifications else '{}'
+
+            # معالجة الميزات
+            if product.features:
+                if isinstance(product.features, list):
+                    features_json = json.dumps(product.features, indent=4, ensure_ascii=False)
+                else:
+                    features_json = json.dumps(product.features, indent=4, ensure_ascii=False)
+            else:
+                features_json = '[]'
         else:
             product = None
             form_title = 'إنشاء منتج جديد'
             images = []
             variants = []
             attributes = []
+            specifications_json = '{}'
+            features_json = '[]'
+
+        # إنشاء form_data فارغ لتجنب أخطاء في القالب
+        form_data = {}
 
         # جلب البيانات اللازمة للنموذج
         categories = Category.objects.all()
         brands = Brand.objects.all().order_by('name')
         tags = Tag.objects.all().order_by('name')
         product_attributes = ProductAttribute.objects.all()
+
+        # تحضير المنتجات ذات الصلة
+        if product:
+            related_products = product.related_products.all()
+        else:
+            related_products = []
 
         context = {
             'product': product,
@@ -188,85 +213,193 @@ class ProductFormView(DashboardAccessMixin, View):
             'status_choices': Product.STATUS_CHOICES,
             'stock_status_choices': Product.STOCK_STATUS_CHOICES,
             'condition_choices': Product.CONDITION_CHOICES,
+            'related_products': related_products,
+            'form_data': form_data,  # إضافة form_data فارغ للقالب
+            'specifications_json': specifications_json,
+            'features_json': features_json,
         }
 
         return render(request, 'dashboard/products/product_form.html', context)
 
     def post(self, request, product_id=None):
-        # جمع البيانات الأساسية من النموذج
-        name = request.POST.get('name')
-        name_en = request.POST.get('name_en', '')
-        category_id = request.POST.get('category')
-        brand_id = request.POST.get('brand') or None
-        sku = request.POST.get('sku', '')
-        barcode = request.POST.get('barcode', '')
-        description = request.POST.get('description', '')
-        short_description = request.POST.get('short_description', '')
+        """معالجة نموذج إنشاء أو تحديث المنتج"""
+        # استرجاع المنتج إذا كنا في وضع التحرير
+        if product_id:
+            product = get_object_or_404(Product, id=product_id)
+            form_title = 'تحديث المنتج'
+            images = product.images.all().order_by('sort_order')
+            variants = product.variants.all()
+        else:
+            product = None
+            form_title = 'إنشاء منتج جديد'
+            images = []
+            variants = []
 
-        # معالجة الأسعار والقيم العددية
+        # جمع كل البيانات من النموذج - تأكد من أن form_data دائمًا قاموس
+        if request.method == 'POST':
+            form_data = {}
+            for key, value in request.POST.items():
+                form_data[key] = value
+        else:
+            form_data = {}
+
+        # قائمة للأخطاء
+        errors = []
+
+        # التحقق من الحقول المطلوبة
+
+        # 1. اسم المنتج (مطلوب، على الأقل حرفين)
+        name = form_data.get('name', '').strip()
+        if not name:
+            errors.append("اسم المنتج مطلوب")
+        elif len(name) < 2:
+            errors.append("اسم المنتج يجب أن يكون على الأقل حرفين")
+
+        # 2. الفئة (مطلوبة)
+        category_id = form_data.get('category')
+        if not category_id:
+            errors.append("يجب اختيار فئة للمنتج")
+
+        # 3. السعر الأساسي (مطلوب، أكبر من 0.01)
         try:
-            # تحويل القيم إلى أرقام عشرية وإدارة الأخطاء
-            base_price_str = request.POST.get('base_price', '0').replace(',', '.')
+            base_price_str = form_data.get('base_price', '0').replace(',', '.')
             base_price = Decimal(base_price_str)
-
             if base_price < Decimal('0.01'):
-                base_price = Decimal('0.01')
+                errors.append("السعر الأساسي يجب أن يكون أكبر من صفر")
+        except (ValueError, InvalidOperation):
+            errors.append("صيغة السعر الأساسي غير صحيحة")
 
-            compare_price_str = request.POST.get('compare_price', '') or None
-            compare_price = round(float(compare_price_str.replace(',', '.')), 2) if compare_price_str else None
+        # 4. الوصف الكامل (مطلوب، على الأقل 20 حرفًا)
+        description = form_data.get('description', '').strip()
+        if not description:
+            errors.append("وصف المنتج مطلوب")
+        elif len(description) < 20:
+            errors.append("وصف المنتج يجب أن يكون على الأقل 20 حرفًا")
 
-            cost_str = request.POST.get('cost', '') or None
-            cost = round(float(cost_str.replace(',', '.')), 2) if cost_str else None
+        # 5. الوصف المختصر (اختياري، لكن إذا أُدخل يجب أن يكون على الأقل 10 أحرف)
+        short_description = form_data.get('short_description', '').strip()
+        if short_description and len(short_description) < 10:
+            errors.append("الوصف المختصر يجب أن يكون على الأقل 10 أحرف أو تركه فارغًا")
 
-            tax_rate_str = request.POST.get('tax_rate', '16').replace(',', '.')
-            tax_rate = round(float(tax_rate_str), 2) if tax_rate_str else 16.00
+        # التحقق من تنسيق JSON
+        try:
+            specs_data = form_data.get('specifications_json', '{}')
+            if specs_data.strip():
+                json.loads(specs_data)
+        except json.JSONDecodeError:
+            errors.append("تنسيق JSON غير صحيح في حقل المواصفات")
 
-            stock_quantity_str = request.POST.get('stock_quantity', '0')
+        try:
+            features_data = form_data.get('features', '[]')
+            if features_data.strip():
+                if features_data.startswith('{') or features_data.startswith('['):
+                    json.loads(features_data)
+        except json.JSONDecodeError:
+            errors.append("تنسيق JSON غير صحيح في حقل الميزات")
+
+        # إذا كانت هناك أخطاء، نعيد عرض النموذج مع رسائل الخطأ
+        if errors:
+            for error in errors:
+                messages.error(request, error)
+
+            # جلب البيانات اللازمة للنموذج
+            categories = Category.objects.all()
+            brands = Brand.objects.all().order_by('name')
+            tags = Tag.objects.all().order_by('name')
+            product_attributes = ProductAttribute.objects.all()
+
+            # تحضير البيانات المدخلة مسبقًا
+            selected_tags = request.POST.getlist('tags')
+
+            if product_id:
+                attributes = product.attribute_values.select_related('attribute').all()
+                related_products = product.related_products.all()
+            else:
+                attributes = []
+                related_products = []
+
+            # إعداد سياق العرض مع البيانات المدخلة سابقًا
+            context = {
+                'product': product,
+                'form_title': form_title,
+                'categories': categories,
+                'brands': brands,
+                'tags': tags,
+                'images': images,
+                'variants': variants,
+                'attributes': attributes,
+                'product_attributes': product_attributes,
+                'status_choices': Product.STATUS_CHOICES,
+                'stock_status_choices': Product.STOCK_STATUS_CHOICES,
+                'condition_choices': Product.CONDITION_CHOICES,
+                'related_products': related_products,
+
+                # البيانات المدخلة سابقًا
+                'form_data': form_data,
+                'selected_category': category_id,
+                'selected_brand': form_data.get('brand'),
+                'selected_tags': selected_tags,
+                'specifications_json': specs_data,
+                'features_json': features_data,
+
+                # تحديد الحقول التي بها أخطاء
+                'field_errors': [field for field, msg in errors],
+            }
+
+            return render(request, 'dashboard/products/product_form.html', context)
+
+        # إذا لم تكن هناك أخطاء، نستمر في حفظ المنتج
+        try:
+            # البيانات الإضافية
+            name_en = form_data.get('name_en', '')
+            brand_id = form_data.get('brand') or None
+            sku = form_data.get('sku', '')
+            barcode = form_data.get('barcode', '')
+
+            # البيانات البوليانية
+            is_active = 'is_active' in form_data
+            is_featured = 'is_featured' in form_data
+            is_new = 'is_new' in form_data
+            is_best_seller = 'is_best_seller' in form_data
+            is_digital = 'is_digital' in form_data
+            requires_shipping = 'requires_shipping' in form_data
+
+            # الأرقام الإضافية
+            compare_price_str = form_data.get('compare_price', '')
+            compare_price = Decimal(compare_price_str.replace(',', '.')) if compare_price_str.strip() else None
+
+            cost_str = form_data.get('cost', '')
+            cost = Decimal(cost_str.replace(',', '.')) if cost_str.strip() else None
+
+            tax_rate_str = form_data.get('tax_rate', '16')
+            tax_rate = Decimal(tax_rate_str.replace(',', '.')) if tax_rate_str.strip() else Decimal('16')
+
+            stock_quantity_str = form_data.get('stock_quantity', '0')
             stock_quantity = int(stock_quantity_str) if stock_quantity_str.strip() else 0
 
-        except ValueError as e:
-            messages.error(request, f'خطأ في تنسيق الأرقام: {str(e)}')
-            return redirect(request.path)
+            # حالات المنتج
+            status = form_data.get('status', 'draft')
+            stock_status = form_data.get('stock_status', 'in_stock')
+            condition = form_data.get('condition', 'new')
 
-        # الخصائص والحالة
-        track_inventory = request.POST.get('track_inventory') == 'on'
-        status = request.POST.get('status', 'draft')
-        stock_status = request.POST.get('stock_status', 'in_stock')
-        condition = request.POST.get('condition', 'new')
-        is_active = request.POST.get('is_active') == 'on'
-        is_featured = request.POST.get('is_featured') == 'on'
+            # الأبعاد والوزن
+            weight_str = form_data.get('weight', '')
+            weight = float(weight_str.replace(',', '.')) if weight_str.strip() else None
 
-        # الخصائص البوليانية الأخرى
-        is_new = request.POST.get('is_new') == 'on'
-        is_digital = request.POST.get('is_digital') == 'on'
-        requires_shipping = request.POST.get('requires_shipping') == 'on'
-        is_best_seller = request.POST.get('is_best_seller') == 'on'
+            length_str = form_data.get('length', '')
+            length = float(length_str.replace(',', '.')) if length_str.strip() else None
 
-        # الأبعاد والوزن - معالجة القيم الفارغة
-        weight_str = request.POST.get('weight', '') or None
-        weight = float(weight_str.replace(',', '.')) if weight_str else None
+            width_str = form_data.get('width', '')
+            width = float(width_str.replace(',', '.')) if width_str.strip() else None
 
-        length_str = request.POST.get('length', '') or None
-        length = float(length_str.replace(',', '.')) if length_str else None
+            height_str = form_data.get('height', '')
+            height = float(height_str.replace(',', '.')) if height_str.strip() else None
 
-        width_str = request.POST.get('width', '') or None
-        width = float(width_str.replace(',', '.')) if width_str else None
-
-        height_str = request.POST.get('height', '') or None
-        height = float(height_str.replace(',', '.')) if height_str else None
-
-        # التحقق من البيانات المطلوبة
-        if not name or not category_id or base_price is None:
-            messages.error(request, 'الرجاء ملء جميع الحقول المطلوبة: الاسم، الفئة، السعر الأساسي')
-            return redirect(request.path)
-
-        # إنشاء أو تحديث المنتج
-        try:
+            # إنشاء أو تحديث المنتج
             if product_id:
-                product = get_object_or_404(Product, id=product_id)
+                # تحديث منتج موجود
                 was_published = product.status == 'published'
 
-                # تحديث الحقول
                 product.name = name
                 product.name_en = name_en
                 product.category_id = category_id
@@ -280,7 +413,6 @@ class ProductFormView(DashboardAccessMixin, View):
                 product.cost = cost
                 product.tax_rate = tax_rate
                 product.stock_quantity = stock_quantity
-                product.track_inventory = track_inventory
                 product.status = status
                 product.stock_status = stock_status
                 product.condition = condition
@@ -302,10 +434,8 @@ class ProductFormView(DashboardAccessMixin, View):
                 product.save()
                 messages.success(request, 'تم تحديث المنتج بنجاح')
             else:
-                # إنشاء سلج (slug) من الاسم
+                # إنشاء سلج من الاسم
                 slug = slugify(name, allow_unicode=True)
-
-                # التحقق من فريدية السلج
                 if Product.objects.filter(slug=slug).exists():
                     slug = f"{slug}-{uuid.uuid4().hex[:6]}"
 
@@ -325,7 +455,6 @@ class ProductFormView(DashboardAccessMixin, View):
                     cost=cost,
                     tax_rate=tax_rate,
                     stock_quantity=stock_quantity,
-                    track_inventory=track_inventory,
                     status=status,
                     stock_status=stock_status,
                     condition=condition,
@@ -375,11 +504,31 @@ class ProductFormView(DashboardAccessMixin, View):
                     except Exception as e:
                         messages.warning(request, f'حدث خطأ في حفظ الخاصية: {str(e)}')
 
+            # معالجة المواصفات
+            specs_data = request.POST.get('specifications_json', '{}')
+            try:
+                if specs_data.strip():
+                    product.specifications = json.loads(specs_data)
+                    product.save(update_fields=['specifications'])
+            except json.JSONDecodeError:
+                messages.warning(request, 'حدث خطأ في معالجة بيانات المواصفات')
+
+            # معالجة الميزات
+            features_data = request.POST.get('features', '[]')
+            try:
+                if features_data.strip():
+                    if features_data.startswith('{') or features_data.startswith('['):
+                        product.features = json.loads(features_data)
+                    else:
+                        product.features = [line.strip() for line in features_data.split('\n') if line.strip()]
+                    product.save(update_fields=['features'])
+            except json.JSONDecodeError:
+                messages.warning(request, 'حدث خطأ في معالجة بيانات الميزات')
+
             # معالجة صور المنتج
             images = request.FILES.getlist('product_images')
             if images:
                 for i, image_file in enumerate(images):
-                    # إنشاء صورة جديدة
                     is_primary = i == 0 and not product.images.filter(is_primary=True).exists()
                     ProductImage.objects.create(
                         product=product,
@@ -397,29 +546,6 @@ class ProductFormView(DashboardAccessMixin, View):
                 # تعيين الصورة الجديدة كرئيسية
                 ProductImage.objects.filter(id=primary_image_id).update(is_primary=True)
 
-            # معالجة المواصفات (specifications) كبيانات JSON
-            specs_data = request.POST.get('specifications_json', '{}')
-            try:
-                if specs_data.strip():
-                    product.specifications = json.loads(specs_data)
-                    product.save(update_fields=['specifications'])
-            except json.JSONDecodeError:
-                messages.warning(request, 'حدث خطأ في معالجة بيانات المواصفات')
-
-            # معالجة الميزات (features)
-            features_data = request.POST.get('features', '[]')
-            try:
-                if features_data.strip():
-                    if features_data.startswith('{') or features_data.startswith('['):
-                        # JSON format
-                        product.features = json.loads(features_data)
-                    else:
-                        # Line-by-line format
-                        product.features = [line.strip() for line in features_data.split('\n') if line.strip()]
-                    product.save(update_fields=['features'])
-            except json.JSONDecodeError:
-                messages.warning(request, 'حدث خطأ في معالجة بيانات الميزات')
-
             # تحديث المنتجات ذات الصلة
             related_product_ids = request.POST.getlist('related_products')
             if related_product_ids:
@@ -427,11 +553,53 @@ class ProductFormView(DashboardAccessMixin, View):
             else:
                 product.related_products.clear()
 
-            return redirect('dashboard:dashboard_product_detail', product_id=str(product.id))
+            # تحديد ما إذا كان يجب الاستمرار في التحرير أم العودة إلى صفحة التفاصيل
+            if 'save_and_continue' in form_data:
+                return redirect('dashboard:dashboard_product_edit', product_id=str(product.id))
+            else:
+                return redirect('dashboard:dashboard_product_detail', product_id=str(product.id))
 
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء حفظ المنتج: {str(e)}')
-            return redirect(request.path)
+
+            # في حالة حدوث استثناء، نعيد عرض النموذج مع البيانات المدخلة
+            categories = Category.objects.all()
+            brands = Brand.objects.all().order_by('name')
+            tags = Tag.objects.all().order_by('name')
+            product_attributes = ProductAttribute.objects.all()
+
+            if product_id:
+                attributes = product.attribute_values.select_related('attribute').all()
+                related_products = product.related_products.all()
+            else:
+                attributes = []
+                related_products = []
+
+            context = {
+                'product': product,
+                'form_title': form_title,
+                'categories': categories,
+                'brands': brands,
+                'tags': tags,
+                'images': images,
+                'variants': variants,
+                'attributes': attributes,
+                'product_attributes': product_attributes,
+                'status_choices': Product.STATUS_CHOICES,
+                'stock_status_choices': Product.STOCK_STATUS_CHOICES,
+                'condition_choices': Product.CONDITION_CHOICES,
+                'related_products': related_products,
+
+                # البيانات المدخلة سابقًا
+                'form_data': form_data,
+                'selected_category': category_id,
+                'selected_brand': form_data.get('brand'),
+                'selected_tags': request.POST.getlist('tags'),
+                'specifications_json': specs_data,
+                'features_json': features_data
+            }
+
+            return render(request, 'dashboard/products/product_form.html', context)
 
 
 class ProductDeleteView(DashboardAccessMixin, View):
@@ -542,106 +710,327 @@ class CategoryFormView(DashboardAccessMixin, View):
 
         return render(request, 'dashboard/products/category_form.html', context)
 
-    def post(self, request, category_id=None):
-        # جمع البيانات من النموذج
-        name = request.POST.get('name')
-        name_en = request.POST.get('name_en', '')
-        parent_id = request.POST.get('parent') or None
-        description = request.POST.get('description', '')
-        description_en = request.POST.get('description_en', '')
-        sort_order = request.POST.get('sort_order', 0)
-        is_active = request.POST.get('is_active') == 'on'
-        is_featured = request.POST.get('is_featured') == 'on'
-        show_in_menu = request.POST.get('show_in_menu') == 'on'
+    def post(self, request, product_id=None):
+        # استرجاع المنتج إذا كنا في وضع التحرير
+        if product_id:
+            product = get_object_or_404(Product, id=product_id)
+            form_title = 'تحديث المنتج'
+            images = product.images.all().order_by('sort_order')
+            variants = product.variants.all()
+        else:
+            product = None
+            form_title = 'إنشاء منتج جديد'
+            images = []
+            variants = []
 
-        # الحقول SEO
-        meta_title = request.POST.get('meta_title', '')
-        meta_description = request.POST.get('meta_description', '')
-        meta_keywords = request.POST.get('meta_keywords', '')
+        # جمع كل البيانات من النموذج
+        form_data = request.POST.copy()
+        form_files = request.FILES.copy()
 
-        # التحقق من البيانات المطلوبة
+        # قائمة للأخطاء
+        errors = []
+
+        # التحقق من الحقول المطلوبة
+
+        # 1. اسم المنتج (مطلوب، على الأقل حرفين)
+        name = form_data.get('name', '').strip()
         if not name:
-            messages.error(request, 'اسم الفئة مطلوب')
-            return redirect(request.path)
+            errors.append("اسم المنتج مطلوب")
+        elif len(name) < 2:
+            errors.append("اسم المنتج يجب أن يكون على الأقل حرفين")
 
-        # إنشاء سلج (slug) من الاسم
-        slug = request.POST.get('slug') or slugify(name, allow_unicode=True)
+        # 2. الفئة (مطلوبة)
+        category_id = form_data.get('category')
+        if not category_id:
+            errors.append("يجب اختيار فئة للمنتج")
+
+        # 3. السعر الأساسي (مطلوب، أكبر من 0.01)
+        try:
+            base_price_str = form_data.get('base_price', '0').replace(',', '.')
+            base_price = Decimal(base_price_str)
+            if base_price < Decimal('0.01'):
+                errors.append("السعر الأساسي يجب أن يكون أكبر من صفر")
+        except (ValueError, InvalidOperation):
+            errors.append("صيغة السعر الأساسي غير صحيحة")
+
+        # 4. الوصف الكامل (مطلوب، على الأقل 20 حرفًا)
+        description = form_data.get('description', '').strip()
+        if not description:
+            errors.append("وصف المنتج مطلوب")
+        elif len(description) < 20:
+            errors.append("وصف المنتج يجب أن يكون على الأقل 20 حرفًا")
+
+        # 5. الوصف المختصر (اختياري، لكن إذا أُدخل يجب أن يكون على الأقل 10 أحرف)
+        short_description = form_data.get('short_description', '').strip()
+        if short_description and len(short_description) < 10:
+            errors.append("الوصف المختصر يجب أن يكون على الأقل 10 أحرف أو تركه فارغًا")
+
+        # التحقق من تنسيق JSON
+        try:
+            specs_data = form_data.get('specifications_json', '{}')
+            if specs_data.strip():
+                json.loads(specs_data)
+        except json.JSONDecodeError:
+            errors.append("تنسيق JSON غير صحيح في حقل المواصفات")
 
         try:
-            if category_id:
-                # تحديث فئة موجودة
-                category = get_object_or_404(Category, id=category_id)
+            features_data = form_data.get('features', '[]')
+            if features_data.strip():
+                if features_data.startswith('{') or features_data.startswith('['):
+                    json.loads(features_data)
+        except json.JSONDecodeError:
+            errors.append("تنسيق JSON غير صحيح في حقل الميزات")
 
-                # التحقق من عدم اختيار الفئة نفسها كأب
-                if parent_id and int(parent_id) == category.id:
-                    messages.error(request, 'لا يمكن اختيار الفئة نفسها كفئة أب')
-                    return redirect(request.path)
+        # إذا كانت هناك أخطاء، نعيد عرض النموذج مع رسائل الخطأ
+        if errors:
+            for error in errors:
+                messages.error(request, error)
 
-                # تحديث البيانات
-                category.name = name
-                category.name_en = name_en
-                category.parent_id = parent_id
-                category.description = description
-                category.description_en = description_en
-                category.sort_order = sort_order
-                category.is_active = is_active
-                category.is_featured = is_featured
-                category.show_in_menu = show_in_menu
-                category.meta_title = meta_title
-                category.meta_description = meta_description
-                category.meta_keywords = meta_keywords
+            # جلب البيانات اللازمة للنموذج
+            categories = Category.objects.all()
+            brands = Brand.objects.all().order_by('name')
+            tags = Tag.objects.all().order_by('name')
+            product_attributes = ProductAttribute.objects.all()
 
-                # تحديث السلج إذا تغير
-                if slug != category.slug:
-                    # التحقق من فريدية السلج
-                    if Category.objects.filter(slug=slug).exclude(id=category_id).exists():
-                        slug = f"{slug}-{uuid.uuid4().hex[:6]}"
-                    category.slug = slug
+            # تحضير البيانات المدخلة مسبقًا
+            selected_tags = request.POST.getlist('tags')
 
-                category.save()
-                messages.success(request, 'تم تحديث الفئة بنجاح')
+            # إعداد سياق العرض مع البيانات المدخلة سابقًا
+            context = {
+                'product': product,
+                'form_title': form_title,
+                'categories': categories,
+                'brands': brands,
+                'tags': tags,
+                'images': images,
+                'variants': variants,
+                'product_attributes': product_attributes,
+                'status_choices': Product.STATUS_CHOICES,
+                'stock_status_choices': Product.STOCK_STATUS_CHOICES,
+                'condition_choices': Product.CONDITION_CHOICES,
+
+                # البيانات المدخلة سابقًا
+                'form_data': form_data,
+                'selected_category': category_id,
+                'selected_brand': form_data.get('brand'),
+                'selected_tags': selected_tags,
+                'specifications_json': specs_data,
+                'features_json': features_data,
+
+                # إعادة تحميل العناصر المرفوعة
+                'form_files': form_files
+            }
+
+            return render(request, 'dashboard/products/product_form.html', context)
+
+        # إذا لم تكن هناك أخطاء، نستمر في حفظ المنتج
+        try:
+            # البيانات الإضافية
+            name_en = form_data.get('name_en', '')
+            brand_id = form_data.get('brand') or None
+            sku = form_data.get('sku', '')
+            barcode = form_data.get('barcode', '')
+
+            # البيانات البوليانية
+            is_active = 'is_active' in form_data
+            is_featured = 'is_featured' in form_data
+            is_new = 'is_new' in form_data
+            is_best_seller = 'is_best_seller' in form_data
+            is_digital = 'is_digital' in form_data
+            requires_shipping = 'requires_shipping' in form_data
+
+            # الأرقام الإضافية
+            compare_price_str = form_data.get('compare_price', '')
+            compare_price = Decimal(compare_price_str.replace(',', '.')) if compare_price_str.strip() else None
+
+            cost_str = form_data.get('cost', '')
+            cost = Decimal(cost_str.replace(',', '.')) if cost_str.strip() else None
+
+            tax_rate_str = form_data.get('tax_rate', '16')
+            tax_rate = Decimal(tax_rate_str.replace(',', '.')) if tax_rate_str.strip() else Decimal('16')
+
+            stock_quantity_str = form_data.get('stock_quantity', '0')
+            stock_quantity = int(stock_quantity_str) if stock_quantity_str.strip() else 0
+
+            # حالات المنتج
+            status = form_data.get('status', 'draft')
+            stock_status = form_data.get('stock_status', 'in_stock')
+            condition = form_data.get('condition', 'new')
+
+            # الأبعاد والوزن
+            weight_str = form_data.get('weight', '')
+            weight = float(weight_str.replace(',', '.')) if weight_str.strip() else None
+
+            length_str = form_data.get('length', '')
+            length = float(length_str.replace(',', '.')) if length_str.strip() else None
+
+            width_str = form_data.get('width', '')
+            width = float(width_str.replace(',', '.')) if width_str.strip() else None
+
+            height_str = form_data.get('height', '')
+            height = float(height_str.replace(',', '.')) if height_str.strip() else None
+
+            # إنشاء أو تحديث المنتج
+            if product_id:
+                # تحديث منتج موجود
+                was_published = product.status == 'published'
+
+                product.name = name
+                product.name_en = name_en
+                product.category_id = category_id
+                product.brand_id = brand_id
+                product.sku = sku
+                product.barcode = barcode
+                product.description = description
+                product.short_description = short_description
+                product.base_price = base_price
+                product.compare_price = compare_price
+                product.cost = cost
+                product.tax_rate = tax_rate
+                product.stock_quantity = stock_quantity
+                product.status = status
+                product.stock_status = stock_status
+                product.condition = condition
+                product.is_active = is_active
+                product.is_featured = is_featured
+                product.is_new = is_new
+                product.is_best_seller = is_best_seller
+                product.is_digital = is_digital
+                product.requires_shipping = requires_shipping
+                product.weight = weight
+                product.length = length
+                product.width = width
+                product.height = height
+
+                # تعيين تاريخ النشر إذا تم تغيير الحالة إلى منشور
+                if status == 'published' and not was_published:
+                    product.published_at = timezone.now()
+
+                product.save()
+                messages.success(request, 'تم تحديث المنتج بنجاح')
             else:
-                # التحقق من فريدية السلج
-                if Category.objects.filter(slug=slug).exists():
+                # إنشاء سلج من الاسم
+                slug = slugify(name, allow_unicode=True)
+                if Product.objects.filter(slug=slug).exists():
                     slug = f"{slug}-{uuid.uuid4().hex[:6]}"
 
-                # إنشاء فئة جديدة
-                category = Category.objects.create(
+                # إنشاء منتج جديد
+                product = Product.objects.create(
                     name=name,
                     name_en=name_en,
                     slug=slug,
-                    parent_id=parent_id,
+                    category_id=category_id,
+                    brand_id=brand_id,
+                    sku=sku or Product().generate_sku(),  # استخدام الدالة المساعدة لتوليد SKU
+                    barcode=barcode,
                     description=description,
-                    description_en=description_en,
-                    sort_order=sort_order,
+                    short_description=short_description,
+                    base_price=base_price,
+                    compare_price=compare_price,
+                    cost=cost,
+                    tax_rate=tax_rate,
+                    stock_quantity=stock_quantity,
+                    status=status,
+                    stock_status=stock_status,
+                    condition=condition,
                     is_active=is_active,
                     is_featured=is_featured,
-                    show_in_menu=show_in_menu,
-                    meta_title=meta_title,
-                    meta_description=meta_description,
-                    meta_keywords=meta_keywords,
+                    is_new=is_new,
+                    is_best_seller=is_best_seller,
+                    is_digital=is_digital,
+                    requires_shipping=requires_shipping,
+                    weight=weight,
+                    length=length,
+                    width=width,
+                    height=height,
                     created_by=request.user,
                 )
-                messages.success(request, 'تم إنشاء الفئة بنجاح')
 
-            # معالجة الصور المرفوعة
-            image = request.FILES.get('image')
-            if image:
-                category.image = image
+                if status == 'published':
+                    product.published_at = timezone.now()
+                    product.save()
 
-            banner_image = request.FILES.get('banner_image')
-            if banner_image:
-                category.banner_image = banner_image
+                messages.success(request, 'تم إنشاء المنتج بنجاح')
 
-            # حفظ التغييرات على الصور
-            if image or banner_image:
-                category.save()
+            # معالجة الوسوم
+            tag_ids = request.POST.getlist('tags')
+            if tag_ids:
+                product.tags.set(Tag.objects.filter(id__in=tag_ids))
+            else:
+                product.tags.clear()
 
-            return redirect('dashboard:dashboard_categories')
+            # معالجة المواصفات
+            specs_data = request.POST.get('specifications_json', '{}')
+            try:
+                if specs_data.strip():
+                    product.specifications = json.loads(specs_data)
+                    product.save(update_fields=['specifications'])
+            except json.JSONDecodeError:
+                messages.warning(request, 'حدث خطأ في معالجة بيانات المواصفات')
+
+            # معالجة الميزات
+            features_data = request.POST.get('features', '[]')
+            try:
+                if features_data.strip():
+                    if features_data.startswith('{') or features_data.startswith('['):
+                        product.features = json.loads(features_data)
+                    else:
+                        product.features = [line.strip() for line in features_data.split('\n') if line.strip()]
+                    product.save(update_fields=['features'])
+            except json.JSONDecodeError:
+                messages.warning(request, 'حدث خطأ في معالجة بيانات الميزات')
+
+            # معالجة صور المنتج
+            images = request.FILES.getlist('product_images')
+            if images:
+                for i, image_file in enumerate(images):
+                    is_primary = i == 0 and not product.images.filter(is_primary=True).exists()
+                    ProductImage.objects.create(
+                        product=product,
+                        image=image_file,
+                        alt_text=product.name,
+                        is_primary=is_primary,
+                        sort_order=i
+                    )
+
+            # تحديد ما إذا كان يجب الاستمرار في التحرير أم العودة إلى صفحة التفاصيل
+            if 'save_and_continue' in form_data:
+                return redirect('dashboard:dashboard_product_edit', product_id=str(product.id))
+            else:
+                return redirect('dashboard:dashboard_product_detail', product_id=str(product.id))
 
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء حفظ الفئة: {str(e)}')
-            return redirect(request.path)
+            messages.error(request, f'حدث خطأ أثناء حفظ المنتج: {str(e)}')
+
+            # في حالة حدوث استثناء، نعيد عرض النموذج مع البيانات المدخلة
+            categories = Category.objects.all()
+            brands = Brand.objects.all().order_by('name')
+            tags = Tag.objects.all().order_by('name')
+            product_attributes = ProductAttribute.objects.all()
+
+            context = {
+                'product': product,
+                'form_title': form_title,
+                'categories': categories,
+                'brands': brands,
+                'tags': tags,
+                'images': images,
+                'variants': variants,
+                'product_attributes': product_attributes,
+                'status_choices': Product.STATUS_CHOICES,
+                'stock_status_choices': Product.STOCK_STATUS_CHOICES,
+                'condition_choices': Product.CONDITION_CHOICES,
+
+                # البيانات المدخلة سابقًا
+                'form_data': form_data,
+                'selected_category': category_id,
+                'selected_brand': form_data.get('brand'),
+                'selected_tags': request.POST.getlist('tags'),
+                'specifications_json': specs_data,
+                'features_json': features_data
+            }
+
+            return render(request, 'dashboard/products/product_form.html', context)
 
 
 class CategoryDeleteView(DashboardAccessMixin, View):
