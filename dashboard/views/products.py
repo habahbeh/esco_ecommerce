@@ -167,20 +167,24 @@ class ProductFormView(DashboardAccessMixin, View):
 
             # تحميل المواصفات والميزات إلى النموذج
             form.initial['specifications_json'] = json.dumps(product.specifications, indent=4, ensure_ascii=False)
-            # إلى هذا (للتعامل مع الميزات كقائمة نصية)
+
+            # تحميل الميزات
             if product.features:
                 if isinstance(product.features, list):
                     form.initial['features_json'] = json.dumps(product.features, indent=4, ensure_ascii=False)
                 else:
                     # تحويل من أشكال أخرى إلى قائمة
                     try:
-                        # إذا كان نص مفصول بأسطر أو تنسيق آخر
                         form.initial['features_json'] = json.dumps(list(product.features), indent=4, ensure_ascii=False)
                     except:
                         form.initial['features_json'] = '[]'
 
             # تحميل المنتجات ذات الصلة
             form.initial['related_products'] = product.related_products.all()
+
+            # تحميل منتجات البيع المتقاطع والتصاعدي
+            cross_sell_products = product.cross_sell_products.all()
+            upsell_products = product.upsell_products.all()
 
             # تحميل قيم الصفات
             for attr_value in product.attribute_values.select_related('attribute').all():
@@ -191,28 +195,8 @@ class ProductFormView(DashboardAccessMixin, View):
             form = ProductForm()
             form_title = _('إنشاء منتج جديد')
             images = []
-
-        # إضافة كود التشخيص للخصائص
-        print("=== تشخيص خصائص المنتج ===")
-        print(f"عدد الخصائص المتاحة: {len(form.product_attributes) if hasattr(form, 'product_attributes') else 0}")
-        if hasattr(form, 'product_attributes'):
-            for attr in form.product_attributes:
-                print(f"خاصية: {attr.name} (id: {attr.id})")
-            # التحقق من وجود حقول الخصائص في النموذج
-            for attr in form.product_attributes:
-                field_name = f'attribute_{attr.id}'
-                if field_name in form.fields:
-                    print(f"حقل {field_name} موجود في النموذج")
-                else:
-                    print(f"حقل {field_name} غير موجود في النموذج!")
-        else:
-            print("لا توجد خاصية product_attributes في النموذج!")
-
-        # التحقق من حقول النموذج
-        print("=== حقول النموذج ===")
-        for field_name in form.fields:
-            if field_name.startswith('attribute_'):
-                print(f"وجدت حقل خاصية: {field_name}")
+            cross_sell_products = []
+            upsell_products = []
 
         # تحميل البيانات اللازمة للقالب
         context = {
@@ -220,6 +204,8 @@ class ProductFormView(DashboardAccessMixin, View):
             'product': product,
             'form_title': form_title,
             'images': images,
+            'cross_sell_products': cross_sell_products,
+            'upsell_products': upsell_products,
             'status_choices': Product.STATUS_CHOICES,
             'stock_status_choices': Product.STOCK_STATUS_CHOICES,
             'condition_choices': Product.CONDITION_CHOICES,
@@ -262,6 +248,16 @@ class ProductFormView(DashboardAccessMixin, View):
                     # تعيين الصورة الجديدة كرئيسية
                     ProductImage.objects.filter(id=primary_image_id).update(is_primary=True)
 
+                # حفظ منتجات البيع المتقاطع إذا تم إرسالها
+                cross_sell_ids = request.POST.getlist('cross_sell_products')
+                if cross_sell_ids:
+                    product.cross_sell_products.set(Product.objects.filter(id__in=cross_sell_ids))
+
+                # حفظ منتجات البيع التصاعدي إذا تم إرسالها
+                upsell_ids = request.POST.getlist('upsell_products')
+                if upsell_ids:
+                    product.upsell_products.set(Product.objects.filter(id__in=upsell_ids))
+
                 messages.success(request, _('تم حفظ المنتج بنجاح'))
 
                 # تحديد ما إذا كان يجب الاستمرار في التحرير أم العودة إلى صفحة التفاصيل
@@ -280,20 +276,155 @@ class ProductFormView(DashboardAccessMixin, View):
 
         # تحميل البيانات اللازمة للقالب في حالة وجود خطأ
         images = []
+        cross_sell_products = []
+        upsell_products = []
+
         if product:
             images = product.images.all().order_by('sort_order')
+            cross_sell_products = product.cross_sell_products.all()
+            upsell_products = product.upsell_products.all()
 
         context = {
             'form': form,
             'product': product,
             'form_title': _('تحديث المنتج') if product_id else _('إنشاء منتج جديد'),
             'images': images,
+            'cross_sell_products': cross_sell_products,
+            'upsell_products': upsell_products,
             'status_choices': Product.STATUS_CHOICES,
             'stock_status_choices': Product.STOCK_STATUS_CHOICES,
             'condition_choices': Product.CONDITION_CHOICES,
         }
 
         return render(request, 'dashboard/products/product_form.html', context)
+
+    def process_product_variants(self, request, product):
+        """معالجة متغيرات المنتج من النموذج مع منع تكرار الأسماء"""
+        import json
+
+        # الحصول على المتغيرات من النموذج
+        variants_json = request.POST.get('product_variants_json', '[]')
+        deleted_variants_json = request.POST.get('deleted_variants_json', '[]')
+
+        try:
+            # تحويل البيانات من JSON
+            variants_data = json.loads(variants_json) if variants_json.strip() else []
+            deleted_variants = json.loads(deleted_variants_json) if deleted_variants_json.strip() else []
+
+            # حذف المتغيرات المحددة للحذف
+            if deleted_variants:
+                ProductVariant.objects.filter(id__in=deleted_variants, product=product).delete()
+
+            # الحصول على المتغيرات الموجودة للمنتج لمنع تكرار الأسماء
+            existing_variants = {}
+            for variant in ProductVariant.objects.filter(product=product):
+                existing_variants[variant.name] = variant.id
+
+            # تحديث/إنشاء المتغيرات
+            for variant_data in variants_data:
+                variant_id = variant_data.get('id')
+                variant_name = variant_data.get('name', '').strip()
+
+                # تخطي المتغيرات بدون اسم
+                if not variant_name:
+                    continue
+
+                # تخطي المتغيرات ذات المعرفات السالبة (المتغيرات المؤقتة)
+                if variant_id and int(variant_id) < 0:
+                    variant_id = None
+
+                # منع تكرار الأسماء للمتغيرات الجديدة
+                if not variant_id and variant_name in existing_variants:
+                    # إضافة رقم للاسم لمنع التكرار
+                    base_name = variant_name
+                    counter = 1
+                    while variant_name in existing_variants:
+                        variant_name = f"{base_name} ({counter})"
+                        counter += 1
+
+                # الإعدادات الافتراضية للمتغير
+                defaults = {
+                    'name': variant_name,
+                    'sku': variant_data.get('sku', ''),
+                    'attributes': variant_data.get('attributes', {}),
+                    'is_active': variant_data.get('is_active', True),
+                    'is_default': variant_data.get('is_default', False),
+                    'sort_order': variant_data.get('sort_order', 0),
+                }
+
+                # إضافة السعر إذا تم توفيره
+                if 'base_price' in variant_data and variant_data.get('base_price') not in [None, '']:
+                    try:
+                        defaults['base_price'] = float(variant_data.get('base_price'))
+                    except (ValueError, TypeError):
+                        pass
+
+                # إضافة كمية المخزون
+                if 'stock_quantity' in variant_data and variant_data.get('stock_quantity') not in [None, '']:
+                    try:
+                        defaults['stock_quantity'] = int(variant_data.get('stock_quantity'))
+                    except (ValueError, TypeError):
+                        defaults['stock_quantity'] = 0
+
+                # تحديث أو إنشاء المتغير
+                if variant_id and int(variant_id) > 0:
+                    # تحديث متغير موجود
+                    try:
+                        variant = ProductVariant.objects.get(id=variant_id, product=product)
+
+                        # منع تكرار الأسماء عند التحديث
+                        if variant.name != variant_name and variant_name in existing_variants and existing_variants[
+                            variant_name] != variant_id:
+                            base_name = variant_name
+                            counter = 1
+                            while variant_name in existing_variants and existing_variants[variant_name] != variant_id:
+                                variant_name = f"{base_name} ({counter})"
+                                counter += 1
+                            defaults['name'] = variant_name
+
+                        # تحديث المتغير
+                        for key, value in defaults.items():
+                            setattr(variant, key, value)
+                        variant.save()
+
+                        # تحديث القاموس
+                        existing_variants[variant_name] = variant.id
+
+                    except ProductVariant.DoesNotExist:
+                        # إنشاء متغير جديد
+                        defaults['product'] = product
+                        new_variant = ProductVariant.objects.create(**defaults)
+                        existing_variants[variant_name] = new_variant.id
+                else:
+                    # إنشاء متغير جديد
+                    # إنشاء SKU إذا لم يتم توفيره
+                    if not defaults.get('sku'):
+                        base_sku = product.sku
+                        variant_count = product.variants.count() + 1
+                        defaults['sku'] = f"{base_sku}-{variant_count}"
+
+                    # إنشاء المتغير
+                    defaults['product'] = product
+                    new_variant = ProductVariant.objects.create(**defaults)
+                    existing_variants[variant_name] = new_variant.id
+
+            # التأكد من وجود متغير افتراضي واحد فقط
+            default_variants = product.variants.filter(is_default=True)
+            if default_variants.count() > 1:
+                first_default = default_variants.first()
+                product.variants.filter(is_default=True).exclude(id=first_default.id).update(is_default=False)
+
+            return True
+
+        except Exception as e:
+            # تسجيل الخطأ
+            import logging
+            import traceback
+            logger = logging.getLogger(__name__)
+            logger.error(f"خطأ في معالجة متغيرات المنتج: {str(e)}")
+            print(f"خطأ في معالجة متغيرات المنتج: {str(e)}")
+            print(traceback.format_exc())
+            raise Exception(f"خطأ في معالجة متغيرات المنتج: {str(e)}")
 
 
 class ProductDeleteView(DashboardAccessMixin, View):
@@ -1455,3 +1586,129 @@ class TagDeleteView(DashboardAccessMixin, View):
             messages.error(request, f'حدث خطأ أثناء حذف الوسم: {str(e)}')
 
         return redirect('dashboard_tags')
+
+
+#======================
+class ProductVariantFormView(DashboardAccessMixin, View):
+    """عرض إنشاء وتحديث متغيرات المنتج"""
+
+    def get(self, request, product_id, variant_id=None):
+        """عرض نموذج إنشاء أو تحديث متغير المنتج"""
+        product = get_object_or_404(Product, id=product_id)
+
+        if variant_id:
+            variant = get_object_or_404(ProductVariant, id=variant_id, product=product)
+            form = ProductVariantForm(instance=variant, product=product)
+            form_title = _('تعديل متغير المنتج')
+        else:
+            variant = None
+            form = ProductVariantForm(product=product)
+            form_title = _('إضافة متغير جديد للمنتج')
+
+        context = {
+            'form': form,
+            'product': product,
+            'variant': variant,
+            'form_title': form_title,
+        }
+
+        return render(request, 'dashboard/products/product_variant_form.html', context)
+
+    def post(self, request, product_id, variant_id=None):
+        """معالجة نموذج إنشاء أو تحديث متغير المنتج"""
+        product = get_object_or_404(Product, id=product_id)
+
+        if variant_id:
+            variant = get_object_or_404(ProductVariant, id=variant_id, product=product)
+            form = ProductVariantForm(request.POST, instance=variant, product=product)
+        else:
+            variant = None
+            form = ProductVariantForm(request.POST, product=product)
+
+        if form.is_valid():
+            try:
+                variant = form.save(commit=False)
+                variant.product = product
+
+                # تحديث SKU إذا لم يتم توفيره
+                if not variant.sku:
+                    # توليد SKU للمتغير اعتمادًا على SKU المنتج الأساسي
+                    base_sku = product.sku
+                    variant_count = product.variants.count() + 1
+                    variant.sku = f"{base_sku}-{variant_count}"
+
+                variant.save()
+
+                messages.success(request, _('تم حفظ متغير المنتج بنجاح'))
+                return redirect('dashboard:dashboard_product_detail', product_id=product.id)
+
+            except Exception as e:
+                messages.error(request, f'حدث خطأ أثناء حفظ متغير المنتج: {str(e)}')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{form[field].label}: {error}")
+
+        context = {
+            'form': form,
+            'product': product,
+            'variant': variant,
+            'form_title': _('تعديل متغير المنتج') if variant_id else _('إضافة متغير جديد للمنتج'),
+        }
+
+        return render(request, 'dashboard/products/product_variant_form.html', context)
+
+
+class ProductVariantDeleteView(DashboardAccessMixin, View):
+    """حذف متغير المنتج"""
+
+    def post(self, request, product_id, variant_id):
+        product = get_object_or_404(Product, id=product_id)
+        variant = get_object_or_404(ProductVariant, id=variant_id, product=product)
+
+        try:
+            variant_name = variant.name
+            variant.delete()
+            messages.success(request, f'تم حذف متغير المنتج "{variant_name}" بنجاح')
+        except Exception as e:
+            messages.error(request, f'حدث خطأ أثناء حذف متغير المنتج: {str(e)}')
+
+        return redirect('dashboard:dashboard_product_detail', product_id=product.id)
+
+
+class ProductVariantBulkActionsView(DashboardAccessMixin, View):
+    """عمليات جماعية على متغيرات المنتج"""
+
+    def post(self, request, product_id):
+        product = get_object_or_404(Product, id=product_id)
+        action = request.POST.get('action')
+        variant_ids = request.POST.getlist('selected_variants')
+
+        if not variant_ids:
+            messages.error(request, 'لم يتم تحديد أي متغيرات للمنتج')
+            return redirect('dashboard:dashboard_product_detail', product_id=product.id)
+
+        variants = ProductVariant.objects.filter(id__in=variant_ids, product=product)
+        count = variants.count()
+
+        if action == 'activate':
+            variants.update(is_active=True)
+            messages.success(request, f'تم تفعيل {count} متغير بنجاح')
+
+        elif action == 'deactivate':
+            variants.update(is_active=False)
+            messages.success(request, f'تم إلغاء تفعيل {count} متغير بنجاح')
+
+        elif action == 'delete':
+            try:
+                variants.delete()
+                messages.success(request, f'تم حذف {count} متغير بنجاح')
+            except Exception as e:
+                messages.error(request, f'حدث خطأ أثناء حذف المتغيرات: {str(e)}')
+
+        elif action == 'update_stock':
+            # تحويل لصفحة تحديث المخزون للمتغيرات المحددة
+            variant_ids_str = ','.join(variant_ids)
+            return redirect(f'dashboard_update_variant_stock?variants={variant_ids_str}')
+
+        return redirect('dashboard:dashboard_product_detail', product_id=product.id)

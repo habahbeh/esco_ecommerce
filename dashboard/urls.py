@@ -219,4 +219,5 @@ urlpatterns = [
          name='dashboard_product_stock_update_api'),
     path('api/widget-data/', views.DashboardWidgetDataAPIView.as_view(), name='dashboard_widget_data_api'),
     path('api/payment-chart/', views.PaymentAPIView.as_view(), name='dashboard_payment_chart_api'),
+
 ]
