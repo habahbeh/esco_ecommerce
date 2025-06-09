@@ -24,6 +24,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // تهيئة أزرار الحالة
     setupStatusButtons();
+
+    // تهيئة وظائف الخصم
+    setupDiscountFunctions();
+
+    // تهيئة وظائف المخزون المتقدمة
+    setupAdvancedInventory();
+
+    // تهيئة تبويب التخطي للأخطاء
+    setupTabErrorNavigation();
 });
 
 // وظيفة للتحقق من صحة النموذج
@@ -56,6 +65,25 @@ function setupFormValidation() {
                     showError(element, field.message);
                     hasError = true;
                 }
+            }
+
+            // التحقق من قيم الخصم
+            const discountPercentage = parseFloat(document.getElementById('id_discount_percentage')?.value || 0);
+            const discountAmount = parseFloat(document.getElementById('id_discount_amount')?.value || 0);
+
+            if (discountPercentage > 0 && discountAmount > 0) {
+                showError(document.getElementById('id_discount_percentage'), 'لا يمكن استخدام نسبة الخصم ومبلغ الخصم معًا');
+                showError(document.getElementById('id_discount_amount'), 'لا يمكن استخدام نسبة الخصم ومبلغ الخصم معًا');
+                hasError = true;
+            }
+
+            // التحقق من تاريخ الخصم
+            const discountStart = document.getElementById('id_discount_start')?.value;
+            const discountEnd = document.getElementById('id_discount_end')?.value;
+
+            if (discountStart && discountEnd && new Date(discountStart) >= new Date(discountEnd)) {
+                showError(document.getElementById('id_discount_end'), 'تاريخ نهاية الخصم يجب أن يكون بعد تاريخ البداية');
+                hasError = true;
             }
 
             if (hasError) {
@@ -373,9 +401,9 @@ function setupSelect2() {
         });
 
         // البحث عن المنتجات ذات الصلة
-        jQuery('#id_related_products').select2({
+        jQuery('#id_related_products, #id_cross_sell_products, #id_upsell_products').select2({
             dir: document.documentElement.getAttribute('dir'),
-            placeholder: "اختر المنتجات ذات الصلة...",
+            placeholder: "اختر المنتجات...",
             allowClear: true,
             width: '100%',
             ajax: {
@@ -541,6 +569,188 @@ function setupStatusButtons() {
                 isActiveField.checked = false;
                 visibilityLabel.innerHTML = '<i class="fa fa-ban text-danger me-1"></i> غير نشط';
             }
+        });
+    }
+}
+
+// تهيئة وظائف الخصم
+function setupDiscountFunctions() {
+    // العناصر
+    const discountPercentage = document.getElementById('id_discount_percentage');
+    const discountAmount = document.getElementById('id_discount_amount');
+    const discountStart = document.getElementById('id_discount_start');
+    const discountEnd = document.getElementById('id_discount_end');
+    const basePrice = document.getElementById('id_base_price');
+    const previewContent = document.querySelector('.discount-preview-content');
+
+    if (!discountPercentage || !discountAmount || !basePrice || !previewContent) {
+        return;
+    }
+
+    // منع استخدام نسبة الخصم ومبلغ الخصم معًا
+    discountPercentage.addEventListener('input', function() {
+        if (parseFloat(this.value) > 0) {
+            discountAmount.value = 0;
+        }
+        updateDiscountPreview();
+    });
+
+    discountAmount.addEventListener('input', function() {
+        if (parseFloat(this.value) > 0) {
+            discountPercentage.value = 0;
+        }
+        updateDiscountPreview();
+    });
+
+    // تحديث المعاينة عند تغيير أي من حقول الخصم
+    basePrice.addEventListener('input', updateDiscountPreview);
+    discountStart.addEventListener('change', updateDiscountPreview);
+    discountEnd.addEventListener('change', updateDiscountPreview);
+
+    // دالة تحديث معاينة الخصم
+    function updateDiscountPreview() {
+        const base = parseFloat(basePrice.value) || 0;
+        const percentage = parseFloat(discountPercentage.value) || 0;
+        const amount = parseFloat(discountAmount.value) || 0;
+
+        let currentPrice = base;
+        let hasDiscount = false;
+        let savingsPercentage = 0;
+
+        // حساب السعر الحالي والخصم
+        if (percentage > 0) {
+            currentPrice = base - (base * percentage / 100);
+            hasDiscount = true;
+            savingsPercentage = percentage;
+        } else if (amount > 0) {
+            currentPrice = base - amount;
+            hasDiscount = true;
+            savingsPercentage = Math.round((amount / base) * 100);
+        }
+
+        // التحقق من فترة الخصم
+        const now = new Date();
+        const start = discountStart.value ? new Date(discountStart.value) : null;
+        const end = discountEnd.value ? new Date(discountEnd.value) : null;
+
+        // التحقق من أن الخصم نشط الآن
+        if (hasDiscount) {
+            if (start && start > now) {
+                hasDiscount = false; // الخصم لم يبدأ بعد
+            } else if (end && end < now) {
+                hasDiscount = false; // الخصم منتهي
+            }
+        }
+
+        // تحديث معاينة الخصم
+        if (hasDiscount && currentPrice < base) {
+            previewContent.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <div class="h5 mb-0 me-2 product-price">${currentPrice.toFixed(2)} د.ا</div>
+                    <div class="text-decoration-line-through text-muted">${base.toFixed(2)} د.ا</div>
+                    <div class="badge bg-danger ms-2">${savingsPercentage}% خصم</div>
+                </div>
+            `;
+        } else {
+            previewContent.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <div class="h5 mb-0 me-2 product-price">${base.toFixed(2)} د.ا</div>
+                </div>
+            `;
+        }
+    }
+
+    // تهيئة المعاينة عند تحميل الصفحة
+    updateDiscountPreview();
+}
+
+// تهيئة وظائف المخزون المتقدمة
+function setupAdvancedInventory() {
+    const trackInventory = document.getElementById('id_track_inventory');
+    const stockQuantity = document.getElementById('id_stock_quantity');
+    const reservedQuantity = document.getElementById('id_reserved_quantity');
+    const isDigital = document.getElementById('id_is_digital');
+
+    if (!trackInventory || !stockQuantity || !reservedQuantity || !isDigital) {
+        return;
+    }
+
+    // إلغاء تعطيل حقل الكمية المتوفرة للمنتجات الجديدة
+    stockQuantity.disabled = false;
+
+    // عند تغيير المنتج الرقمي، تعطيل تتبع المخزون
+    isDigital.addEventListener('change', function() {
+        if (this.checked) {
+            trackInventory.checked = false;
+            trackInventory.disabled = true;
+            stockQuantity.disabled = true;
+            reservedQuantity.disabled = true;
+        } else {
+            trackInventory.disabled = false;
+            stockQuantity.disabled = !trackInventory.checked;
+            reservedQuantity.disabled = !trackInventory.checked;
+        }
+    });
+
+    // عند تغيير تتبع المخزون
+    trackInventory.addEventListener('change', function() {
+        //stockQuantity.disabled = !this.checked;
+        reservedQuantity.disabled = !this.checked;
+    });
+
+    // تهيئة الحالة الأولية
+    if (isDigital.checked) {
+        trackInventory.checked = false;
+        trackInventory.disabled = true;
+        //stockQuantity.disabled = true;
+        reservedQuantity.disabled = true;
+    } else {
+        //stockQuantity.disabled = !trackInventory.checked;
+        reservedQuantity.disabled = !trackInventory.checked;
+    }
+}
+
+// تهيئة تبويب التخطي للأخطاء
+function setupTabErrorNavigation() {
+    // الانتقال بين التبويبات عند الضغط على التبويب
+    const tabLinks = document.querySelectorAll('#productTabs a[data-bs-toggle="tab"]');
+    tabLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            // حفظ التبويب المحدد في التخزين المحلي
+            localStorage.setItem('activeProductTab', this.getAttribute('href'));
+        });
+    });
+
+    // استعادة التبويب المحفوظ عند تحميل الصفحة
+    const savedTab = localStorage.getItem('activeProductTab');
+    if (savedTab) {
+        const tabElement = document.querySelector(`#productTabs a[href="${savedTab}"]`);
+        if (tabElement) {
+            tabElement.click();
+        }
+    }
+
+    // إضافة أيقونات الخطأ إلى علامات التبويب
+    const form = document.getElementById('product-form');
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            // إزالة جميع أيقونات الخطأ
+            document.querySelectorAll('.tab-error-icon').forEach(el => el.remove());
+
+            // التحقق من كل تبويب للأخطاء
+            document.querySelectorAll('.tab-pane').forEach(tabPane => {
+                const hasErrors = tabPane.querySelectorAll('.is-invalid, .alert-validation').length > 0;
+                if (hasErrors) {
+                    const tabId = tabPane.id;
+                    const tabLink = document.querySelector(`#productTabs a[href="#${tabId}"]`);
+
+                    // إضافة أيقونة خطأ إلى علامة التبويب
+                    const errorIcon = document.createElement('span');
+                    errorIcon.className = 'tab-error-icon ms-1 text-danger';
+                    errorIcon.innerHTML = '<i class="fa fa-exclamation-circle"></i>';
+                    tabLink.appendChild(errorIcon);
+                }
+            });
         });
     }
 }

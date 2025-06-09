@@ -80,6 +80,11 @@
                             </a>
                         </li>
                         <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="discount-tab" data-bs-toggle="tab" href="#discount" role="tab" aria-controls="discount" aria-selected="false">
+                                <i class="fa fa-percent me-1"></i> {% trans 'الخصومات' %}
+                            </a>
+                        </li>
+                        <li class="nav-item" role="presentation">
                             <a class="nav-link" id="description-tab" data-bs-toggle="tab" href="#description" role="tab" aria-controls="description" aria-selected="false">
                                 <i class="fa fa-file-alt me-1"></i> {% trans 'الوصف' %}
                             </a>
@@ -87,6 +92,11 @@
                         <li class="nav-item" role="presentation">
                             <a class="nav-link" id="specifications-tab" data-bs-toggle="tab" href="#specifications" role="tab" aria-controls="specifications" aria-selected="false">
                                 <i class="fa fa-clipboard-list me-1"></i> {% trans 'المواصفات' %}
+                            </a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="advanced-tab" data-bs-toggle="tab" href="#advanced" role="tab" aria-controls="advanced" aria-selected="false">
+                                <i class="fa fa-cogs me-1"></i> {% trans 'إعدادات متقدمة' %}
                             </a>
                         </li>
                         <li class="nav-item" role="presentation">
@@ -245,6 +255,18 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- إضافة حقل عرض السعر -->
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <div class="form-check form-check-lg">
+                                            {{ form.show_price }}
+                                            <label class="form-check-label" for="{{ form.show_price.id_for_label }}">
+                                                {% trans 'عرض السعر' %}
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -377,6 +399,52 @@
                                         <div class="form-text">{% trans 'سيتم التنبيه عند انخفاض المخزون عن هذا الحد' %}</div>
                                     </div>
                                 </div>
+
+                                <!-- إضافة حقول المخزون المتقدمة -->
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label for="id_reserved_quantity">{% trans 'الكمية المحجوزة' %}</label>
+                                        <input type="number" name="reserved_quantity" class="form-control" id="id_reserved_quantity"
+                                               value="{{ product.reserved_quantity|default:'0' }}" {% if not form.instance.pk %}disabled{% endif %}>
+                                        <div class="form-text">{% trans 'الكمية المحجوزة في طلبات معلقة' %}</div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="id_max_order_quantity">{% trans 'الحد الأقصى للطلب' %}</label>
+                                        <input type="number" name="max_order_quantity" class="form-control" id="id_max_order_quantity"
+                                               value="{{ product.max_order_quantity|default:'100' }}">
+                                        <div class="form-text">{% trans 'أقصى كمية يمكن طلبها في مرة واحدة' %}</div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <div class="form-check form-check-lg">
+                                            <input type="checkbox" name="track_inventory" class="form-check-input" id="id_track_inventory"
+                                                   {% if product.track_inventory %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_track_inventory">
+                                                {% trans 'تتبع المخزون' %}
+                                            </label>
+                                        </div>
+                                        <div class="form-text">{% trans 'تفعيل/إلغاء تتبع المخزون' %}</div>
+                                    </div>
+                                </div>
+
+                                <!-- إضافة قسم الطلب المسبق -->
+                                <h5 class="form-section-title mt-4">{% trans 'الطلب المسبق' %}</h5>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <div class="form-check form-check-lg">
+                                            <input type="checkbox" name="available_for_preorder" class="form-check-input" id="id_available_for_preorder"
+                                                   {% if product.available_for_preorder %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_available_for_preorder">
+                                                {% trans 'متاح للطلب المسبق' %}
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="id_preorder_message">{% trans 'رسالة الطلب المسبق' %}</label>
+                                        <input type="text" name="preorder_message" class="form-control" id="id_preorder_message"
+                                               value="{{ product.preorder_message|default:'' }}" maxlength="200">
+                                        <div class="form-text">{% trans 'رسالة تظهر للعملاء عند الطلب المسبق' %}</div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="form-section">
@@ -397,6 +465,102 @@
                                     <div class="col-md-3 mb-3">
                                         {{ form.height.label_tag }}
                                         {{ form.height }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- إضافة قسم الضمان -->
+                            <div class="form-section">
+                                <h5 class="form-section-title">{% trans 'الضمان' %}</h5>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="id_warranty_period">{% trans 'فترة الضمان' %}</label>
+                                        <input type="text" name="warranty_period" class="form-control" id="id_warranty_period"
+                                               value="{{ product.warranty_period|default:'' }}" maxlength="50">
+                                        <div class="form-text">{% trans 'مثال: سنة واحدة، 6 أشهر' %}</div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="id_warranty_details">{% trans 'تفاصيل الضمان' %}</label>
+                                        <textarea name="warranty_details" class="form-control" id="id_warranty_details" rows="3">{{ product.warranty_details|default:'' }}</textarea>
+                                        <div class="form-text">{% trans 'معلومات إضافية عن الضمان' %}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- تبويب جديد للخصومات -->
+                        <div class="tab-pane fade" id="discount" role="tabpanel" aria-labelledby="discount-tab">
+                            <div class="form-section">
+                                <h5 class="form-section-title">{% trans 'إعدادات الخصم' %}</h5>
+                                <div class="alert alert-info">
+                                    <i class="fa fa-info-circle me-2"></i>
+                                    {% trans 'يمكنك استخدام إما نسبة خصم أو مبلغ خصم ثابت. لا يمكن استخدام الاثنين معًا.' %}
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="id_discount_percentage">{% trans 'نسبة الخصم' %}</label>
+                                        <div class="input-group">
+                                            <input type="number" name="discount_percentage" class="form-control" id="id_discount_percentage"
+                                                   value="{{ product.discount_percentage|default:'0' }}" min="0" max="100" step="0.01">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        <div class="form-text">{% trans 'نسبة الخصم من 0 إلى 100%' %}</div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="id_discount_amount">{% trans 'مبلغ الخصم' %}</label>
+                                        <div class="input-group">
+                                            <input type="number" name="discount_amount" class="form-control" id="id_discount_amount"
+                                                   value="{{ product.discount_amount|default:'0' }}" min="0" step="0.01">
+                                            <span class="input-group-text">د.ا</span>
+                                        </div>
+                                        <div class="form-text">{% trans 'مبلغ الخصم الثابت' %}</div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="id_discount_start">{% trans 'بداية الخصم' %}</label>
+                                        <input type="datetime-local" name="discount_start" class="form-control" id="id_discount_start"
+                                               value="{{ product.discount_start|date:'Y-m-d\TH:i' }}">
+                                        <div class="form-text">{% trans 'تاريخ ووقت بدء الخصم' %}</div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="id_discount_end">{% trans 'نهاية الخصم' %}</label>
+                                        <input type="datetime-local" name="discount_end" class="form-control" id="id_discount_end"
+                                               value="{{ product.discount_end|date:'Y-m-d\TH:i' }}">
+                                        <div class="form-text">{% trans 'تاريخ ووقت انتهاء الخصم' %}</div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <div id="discount-preview" class="card bg-light">
+                                            <div class="card-body">
+                                                <h6>{% trans 'معاينة الخصم:' %}</h6>
+                                                <div class="discount-preview-content">
+                                                    <!-- سيتم تحديث هذا القسم عبر JavaScript -->
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="h5 mb-0 me-2 product-price">
+                                                            {% if product %}
+                                                                {% if product.has_discount %}
+                                                                    {{ product.current_price|floatformat:2 }}
+                                                                {% else %}
+                                                                    {{ product.base_price|floatformat:2 }}
+                                                                {% endif %}
+                                                            {% else %}
+                                                                0.00
+                                                            {% endif %}
+                                                            د.ا
+                                                        </div>
+                                                        {% if product.has_discount %}
+                                                        <div class="text-decoration-line-through text-muted">{{ product.base_price|floatformat:2 }} د.ا</div>
+                                                        <div class="badge bg-danger ms-2">{{ product.savings_percentage }}% خصم</div>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -505,78 +669,132 @@
                             </div>
 
                             <div class="form-section">
-    <h5 class="form-section-title">{% trans 'خصائص إضافية' %}</h5>
+                                <h5 class="form-section-title">{% trans 'خصائص إضافية' %}</h5>
 
-    <div id="attributes-editor" class="json-editor-container">
-        <div class="mb-3">
-            <div class="d-flex mb-2">
-                <div class="flex-grow-1 me-2">
-                    <input type="text" id="attr-name" class="form-control" placeholder="اسم الخاصية (مثل: اللون، الحجم)" dir="rtl">
-                </div>
-                <div class="flex-grow-1 me-2">
-                    <select id="attr-type" class="form-select">
-                        <option value="text">نص</option>
-                        <option value="number">رقم</option>
-                        <option value="select">قائمة خيارات</option>
-                        <option value="boolean">نعم/لا</option>
-                        <option value="color">لون</option>
-                    </select>
-                </div>
-                <div>
-                    <button type="button" id="add-attr-btn" class="btn btn-primary">إضافة</button>
-                </div>
-            </div>
+                                <div id="attributes-editor" class="json-editor-container">
+                                    <div class="mb-3">
+                                        <div class="d-flex mb-2">
+                                            <div class="flex-grow-1 me-2">
+                                                <input type="text" id="attr-name" class="form-control" placeholder="اسم الخاصية (مثل: اللون، الحجم)" dir="rtl">
+                                            </div>
+                                            <div class="flex-grow-1 me-2">
+                                                <select id="attr-type" class="form-select">
+                                                    <option value="text">نص</option>
+                                                    <option value="number">رقم</option>
+                                                    <option value="select">قائمة خيارات</option>
+                                                    <option value="boolean">نعم/لا</option>
+                                                    <option value="color">لون</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <button type="button" id="add-attr-btn" class="btn btn-primary">إضافة</button>
+                                            </div>
+                                        </div>
 
-            <div id="attr-options-container" class="mb-2" style="display: none;">
-                <input type="text" id="attr-options" class="form-control" placeholder="خيارات (مفصولة بفواصل، مثال: أحمر، أزرق، أخضر)" dir="rtl">
-            </div>
+                                        <div id="attr-options-container" class="mb-2" style="display: none;">
+                                            <input type="text" id="attr-options" class="form-control" placeholder="خيارات (مفصولة بفواصل، مثال: أحمر، أزرق، أخضر)" dir="rtl">
+                                        </div>
 
-            <div class="small text-muted mb-3">
-                أدخل خصائص المنتج الإضافية مع تحديد نوع كل خاصية. يمكنك إضافة خصائص مثل اللون، الحجم، المادة، إلخ.
-            </div>
+                                        <div class="small text-muted mb-3">
+                                            أدخل خصائص المنتج الإضافية مع تحديد نوع كل خاصية. يمكنك إضافة خصائص مثل اللون، الحجم، المادة، إلخ.
+                                        </div>
 
-            <div class="table-responsive">
-                <table class="table table-bordered">
-                    <thead class="table-light">
-                        <tr>
-                            <th>{% trans 'الخاصية' %}</th>
-                            <th>{% trans 'النوع' %}</th>
-                            <th>{% trans 'القيمة' %}</th>
-                            <th width="80">{% trans 'الإجراءات' %}</th>
-                        </tr>
-                    </thead>
-                    <tbody id="attributes-table-body">
-                        {% for attr in form.product_attributes %}
-                        <tr data-attr-id="{{ attr.id }}">
-                            <td>{{ attr.name }}</td>
-                            <td><span class="badge bg-secondary">{{ attr.attribute_type }}</span></td>
-                            <td>
-                                {% with field_name='attribute_'|add:attr.id|stringformat:"s" %}
-                                    {{ form|get_field:field_name }}
-                                {% endwith %}
-                            </td>
-                            <td>
-                                <button type="button" class="btn btn-sm btn-danger delete-attr-btn" data-attr-id="{{ attr.id }}">
-                                    <i class="fa fa-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr id="no-attributes-row">
-                            <td colspan="4" class="text-center text-muted py-3">
-                                <i class="fa fa-info-circle me-1"></i> {% trans 'لا توجد خصائص إضافية للمنتج. أضف خصائص باستخدام النموذج أعلاه.' %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>{% trans 'الخاصية' %}</th>
+                                                        <th>{% trans 'النوع' %}</th>
+                                                        <th>{% trans 'القيمة' %}</th>
+                                                        <th width="80">{% trans 'الإجراءات' %}</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="attributes-table-body">
+                                                    {% for attr in form.product_attributes %}
+                                                    <tr data-attr-id="{{ attr.id }}">
+                                                        <td>{{ attr.name }}</td>
+                                                        <td><span class="badge bg-secondary">{{ attr.attribute_type }}</span></td>
+                                                        <td>
+                                                            {% with field_name='attribute_'|add:attr.id|stringformat:"s" %}
+                                                                {{ form|get_field:field_name }}
+                                                            {% endwith %}
+                                                        </td>
+                                                        <td>
+                                                            <button type="button" class="btn btn-sm btn-danger delete-attr-btn" data-attr-id="{{ attr.id }}">
+                                                                <i class="fa fa-trash"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                    {% empty %}
+                                                    <tr id="no-attributes-row">
+                                                        <td colspan="4" class="text-center text-muted py-3">
+                                                            <i class="fa fa-info-circle me-1"></i> {% trans 'لا توجد خصائص إضافية للمنتج. أضف خصائص باستخدام النموذج أعلاه.' %}
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
 
-            <!-- حقل مخفي لتخزين معرفات الخصائص المحذوفة -->
-            <input type="hidden" name="deleted_attributes" id="deleted-attributes" value="">
-        </div>
-    </div>
-</div>
+                                        <!-- حقل مخفي لتخزين معرفات الخصائص المحذوفة -->
+                                        <input type="hidden" name="deleted_attributes" id="deleted-attributes" value="">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- تبويب جديد للإعدادات المتقدمة -->
+                        <div class="tab-pane fade" id="advanced" role="tabpanel" aria-labelledby="advanced-tab">
+                            <!-- المنتجات ذات الصلة -->
+                            <div class="form-section">
+                                <h5 class="form-section-title">{% trans 'المنتجات المرتبطة' %}</h5>
+
+                                <div class="mb-3">
+                                    <label for="id_related_products">{% trans 'المنتجات ذات الصلة' %}</label>
+                                    {{ form.related_products }}
+                                    <div class="form-text">{% trans 'المنتجات التي ستظهر في قسم "منتجات ذات صلة"' %}</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="id_cross_sell_products">{% trans 'منتجات البيع المتقاطع' %}</label>
+                                    <select name="cross_sell_products" id="id_cross_sell_products" class="form-select select2" multiple>
+                                        {% for product_item in cross_sell_products %}
+                                            <option value="{{ product_item.id }}" selected>{{ product_item.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">{% trans 'المنتجات التي تظهر في "قد يعجبك أيضًا" أو "المكملات"' %}</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="id_upsell_products">{% trans 'منتجات البيع التصاعدي' %}</label>
+                                    <select name="upsell_products" id="id_upsell_products" class="form-select select2" multiple>
+                                        {% for product_item in upsell_products %}
+                                            <option value="{{ product_item.id }}" selected>{{ product_item.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">{% trans 'منتجات ذات جودة/سعر أعلى تظهر كترقية للمنتج الحالي' %}</div>
+                                </div>
+                            </div>
+
+                            <!-- إعدادات زمنية متقدمة -->
+                            <div class="form-section">
+                                <h5 class="form-section-title">{% trans 'إعدادات زمنية' %}</h5>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="id_featured_until">{% trans 'مميز حتى' %}</label>
+                                        <input type="datetime-local" name="featured_until" class="form-control" id="id_featured_until"
+                                               value="{{ product.featured_until|date:'Y-m-d\TH:i' }}">
+                                        <div class="form-text">{% trans 'تاريخ انتهاء ميزة المنتج المميز (اختياري)' %}</div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="id_published_at">{% trans 'تاريخ النشر' %}</label>
+                                        <input type="datetime-local" name="published_at" class="form-control" id="id_published_at"
+                                               value="{{ product.published_at|date:'Y-m-d\TH:i' }}" {% if not form.instance.pk %}disabled{% endif %}>
+                                        <div class="form-text">{% trans 'يتم تعيينه تلقائيًا عند نشر المنتج' %}</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- SEO -->
@@ -731,17 +949,33 @@
                 </div>
             </div>
 
-            <!-- المنتجات ذات الصلة -->
+            <!-- إحصائيات المنتج -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-light">
-                    <h5 class="mb-0">{% trans 'المنتجات ذات الصلة' %}</h5>
+                    <h5 class="mb-0">{% trans 'إحصائيات المنتج' %}</h5>
                 </div>
                 <div class="card-body">
+                    {% if product %}
                     <div class="mb-3">
-                        {{ form.related_products.label_tag }}
-                        {{ form.related_products }}
-                        <div class="form-text">{% trans 'اختر المنتجات التي ستظهر في قسم "منتجات ذات صلة"' %}</div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>{% trans 'المشاهدات:' %}</span>
+                            <strong>{{ product.views_count|default:'0' }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>{% trans 'المبيعات:' %}</span>
+                            <strong>{{ product.sales_count|default:'0' }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>{% trans 'قوائم الأمنيات:' %}</span>
+                            <strong>{{ product.wishlist_count|default:'0' }}</strong>
+                        </div>
                     </div>
+                    {% else %}
+                    <div class="text-muted text-center">
+                        <i class="fa fa-chart-line fa-2x mb-2"></i>
+                        <p>{% trans 'ستظهر الإحصائيات بعد إنشاء المنتج' %}</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
