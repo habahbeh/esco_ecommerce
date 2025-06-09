@@ -365,13 +365,13 @@
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item" href="#">
+                        <a class="dropdown-item" href="{% url 'dashboard:dashboard_product_edit' product_id=product.id %}">
                             <i class="fa fa-copy me-2"></i> {% trans 'نسخ المنتج' %}
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item" href="#">
-                            <i class="fa fa-tags me-2"></i> {% trans 'إضافة متغير' %}
+                        <a class="dropdown-item" href="{% url 'dashboard:dashboard_product_edit' product_id=product.id %}#variants">
+                            <i class="fa fa-tags me-2"></i> {% trans 'إدارة المتغيرات' %}
                         </a>
                     </li>
                     <li>
@@ -600,15 +600,15 @@
                     <div class="card">
                         <div class="card-body product-content">
                             {% if product.short_description %}
-                            <div class="alert alert-light">
+                            <div class="product-short-description">
                                 <strong>{% trans 'الوصف المختصر:' %}</strong>
-                                <p class="mb-0">{{ product.short_description }}</p>
+                                <p class="mb-4">{{ product.short_description }}</p>
                             </div>
                             {% endif %}
 
                             {% if product.description %}
                             <div class="product-description">
-                                {{ product.description|linebreaks }}
+                                {{ product.description|safe }}
                             </div>
                             {% else %}
                             <div class="text-center py-4 text-muted">
@@ -663,6 +663,9 @@
                             <div class="text-center py-4 text-muted">
                                 <i class="fa fa-clipboard-list fa-2x mb-2"></i>
                                 <p>{% trans 'لا توجد مواصفات فنية للمنتج' %}</p>
+                                <a href="{% url 'dashboard:dashboard_product_edit' product_id=product.id %}#specifications" class="btn btn-outline-primary mt-2">
+                                    <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة مواصفات' %}
+                                </a>
                             </div>
                             {% endif %}
 
@@ -724,8 +727,8 @@
                         <div class="card-body product-content">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h4 class="mb-0">{% trans 'متغيرات المنتج' %}</h4>
-                                <a href="#" class="btn btn-sm btn-primary">
-                                    <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة متغير' %}
+                                <a href="{% url 'dashboard:dashboard_product_edit' product_id=product.id %}#variants" class="btn btn-sm btn-primary">
+                                    <i class="fa fa-cog me-1"></i> {% trans 'إدارة المتغيرات' %}
                                 </a>
                             </div>
 
@@ -739,7 +742,6 @@
                                             <th>{% trans 'السعر' %}</th>
                                             <th>{% trans 'المخزون' %}</th>
                                             <th>{% trans 'الحالة' %}</th>
-                                            <th>{% trans 'الإجراءات' %}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -782,16 +784,6 @@
                                                 <span class="badge bg-primary">{% trans 'افتراضي' %}</span>
                                                 {% endif %}
                                             </td>
-                                            <td>
-                                                <div class="btn-group btn-group-sm">
-                                                    <a href="#" class="btn btn-outline-secondary">
-                                                        <i class="fa fa-edit"></i>
-                                                    </a>
-                                                    <a href="#" class="btn btn-outline-danger">
-                                                        <i class="fa fa-trash"></i>
-                                                    </a>
-                                                </div>
-                                            </td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>
@@ -801,8 +793,8 @@
                             <div class="text-center py-4 text-muted">
                                 <i class="fa fa-tags fa-2x mb-2"></i>
                                 <p>{% trans 'لا توجد متغيرات لهذا المنتج' %}</p>
-                                <a href="#" class="btn btn-primary mt-2">
-                                    <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة متغير الآن' %}
+                                <a href="{% url 'dashboard:dashboard_product_edit' product_id=product.id %}#variants" class="btn btn-primary mt-2">
+                                    <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة متغير' %}
                                 </a>
                             </div>
                             {% endif %}
@@ -947,8 +939,8 @@
                         <div class="card-body product-content">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h4 class="mb-0">{% trans 'خصائص المنتج' %}</h4>
-                                <a href="#" class="btn btn-sm btn-primary">
-                                    <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة خاصية' %}
+                                <a href="{% url 'dashboard:dashboard_product_edit' product_id=product.id %}#attributes" class="btn btn-sm btn-primary">
+                                    <i class="fa fa-cog me-1"></i> {% trans 'إدارة الخصائص' %}
                                 </a>
                             </div>
 
@@ -960,7 +952,6 @@
                                             <th>{% trans 'الخاصية' %}</th>
                                             <th>{% trans 'القيمة' %}</th>
                                             <th>{% trans 'النوع' %}</th>
-                                            <th>{% trans 'الإجراءات' %}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -969,16 +960,6 @@
                                             <td>{{ attribute.attribute.name }}</td>
                                             <td>{{ attribute.value }}</td>
                                             <td>{{ attribute.attribute.get_attribute_type_display }}</td>
-                                            <td>
-                                                <div class="btn-group btn-group-sm">
-                                                    <a href="#" class="btn btn-outline-secondary">
-                                                        <i class="fa fa-edit"></i>
-                                                    </a>
-                                                    <a href="#" class="btn btn-outline-danger">
-                                                        <i class="fa fa-trash"></i>
-                                                    </a>
-                                                </div>
-                                            </td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>
@@ -988,8 +969,8 @@
                             <div class="text-center py-4 text-muted">
                                 <i class="fa fa-list-alt fa-2x mb-2"></i>
                                 <p>{% trans 'لا توجد خصائص لهذا المنتج' %}</p>
-                                <a href="#" class="btn btn-primary mt-2">
-                                    <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة خاصية الآن' %}
+                                <a href="{% url 'dashboard:dashboard_product_edit' product_id=product.id %}#attributes" class="btn btn-primary mt-2">
+                                    <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة خصائص' %}
                                 </a>
                             </div>
                             {% endif %}
@@ -1001,7 +982,12 @@
 
         <!-- المنتجات ذات الصلة -->
         <div class="related-products">
-            <h3 class="mb-3">{% trans 'المنتجات ذات الصلة' %}</h3>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="mb-0">{% trans 'المنتجات ذات الصلة' %}</h3>
+                <a href="{% url 'dashboard:dashboard_product_edit' product_id=product.id %}#advanced" class="btn btn-sm btn-primary">
+                    <i class="fa fa-cog me-1"></i> {% trans 'إدارة المنتجات ذات الصلة' %}
+                </a>
+            </div>
 
             {% if related_products %}
             <div class="swiper-container">
@@ -1039,7 +1025,7 @@
             <div class="alert alert-light text-center">
                 <i class="fa fa-link fa-2x mb-2"></i>
                 <p>{% trans 'لا توجد منتجات ذات صلة' %}</p>
-                <a href="#" class="btn btn-primary">
+                <a href="{% url 'dashboard:dashboard_product_edit' product_id=product.id %}#advanced" class="btn btn-primary">
                     <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة منتجات ذات صلة' %}
                 </a>
             </div>
@@ -1133,7 +1119,7 @@
                 </div>
 
                 <div class="mt-3">
-                    <a href="#" class="btn btn-outline-primary w-100">
+                    <a href="{% url 'dashboard:dashboard_product_edit' product_id=product.id %}#pricing" class="btn btn-outline-primary w-100">
                         <i class="fa fa-edit me-1"></i> {% trans 'تحديث المخزون' %}
                     </a>
                 </div>
@@ -1147,43 +1133,27 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    {% if product.status == 'published' %}
+                    <a href="{% url 'dashboard:dashboard_product_edit' product_id=product.id %}" class="btn btn-primary">
+                        <i class="fa fa-edit me-1"></i> {% trans 'تعديل المنتج' %}
+                    </a>
+
                     <a href="#" class="btn btn-outline-secondary">
-                        <i class="fa fa-eye-slash me-1"></i> {% trans 'تحويل لمسودة' %}
-                    </a>
-                    {% else %}
-                    <a href="#" class="btn btn-outline-success">
-                        <i class="fa fa-eye me-1"></i> {% trans 'نشر المنتج' %}
-                    </a>
-                    {% endif %}
-
-                    {% if product.is_active %}
-                    <a href="#" class="btn btn-outline-danger">
-                        <i class="fa fa-ban me-1"></i> {% trans 'إلغاء تفعيل المنتج' %}
-                    </a>
-                    {% else %}
-                    <a href="#" class="btn btn-outline-success">
-                        <i class="fa fa-check-circle me-1"></i> {% trans 'تفعيل المنتج' %}
-                    </a>
-                    {% endif %}
-
-                    {% if product.is_featured %}
-                    <a href="#" class="btn btn-outline-warning">
-                        <i class="fa fa-star me-1"></i> {% trans 'إلغاء تمييز المنتج' %}
-                    </a>
-                    {% else %}
-                    <a href="#" class="btn btn-outline-warning">
-                        <i class="fa fa-star me-1"></i> {% trans 'تمييز المنتج' %}
-                    </a>
-                    {% endif %}
-
-                    <a href="#" class="btn btn-outline-primary">
-                        <i class="fa fa-copy me-1"></i> {% trans 'نسخ المنتج' %}
+                        <i class="fa fa-eye me-1"></i> {% trans 'معاينة في الموقع' %}
                     </a>
 
                     <a href="#" class="btn btn-outline-secondary">
                         <i class="fa fa-barcode me-1"></i> {% trans 'طباعة الباركود' %}
                     </a>
+
+                    <a href="#" class="btn btn-outline-info">
+                        <i class="fa fa-chart-line me-1"></i> {% trans 'تقرير المبيعات' %}
+                    </a>
+
+                    {% if perms.products.delete_product %}
+                    <button type="button" class="btn btn-outline-danger delete-product-btn" data-product-id="{{ product.id }}" data-product-name="{{ product.name }}">
+                        <i class="fa fa-trash me-1"></i> {% trans 'حذف المنتج' %}
+                    </button>
+                    {% endif %}
                 </div>
             </div>
         </div>
