@@ -272,6 +272,8 @@ class ProductForm(forms.ModelForm):
 
         return cleaned_data
 
+    # dashboard/forms/products.py - يجب تعديل دالة save في نموذج ProductForm
+
     def save(self, commit=True, user=None):
         import json
         instance = super().save(commit=False)
@@ -306,24 +308,12 @@ class ProductForm(forms.ModelForm):
 
         if commit:
             instance.save()
-
             # حفظ العلاقات
             self.save_m2m()
 
             # حفظ المنتجات ذات الصلة
             if 'related_products' in self.cleaned_data:
                 instance.related_products.set(self.cleaned_data['related_products'])
-
-            # حفظ قيم الصفات
-            for attr in self.product_attributes:
-                field_name = f'attribute_{attr.id}'
-                if field_name in self.cleaned_data and self.cleaned_data[field_name]:
-                    value = self.cleaned_data[field_name]
-                    ProductAttributeValue.objects.update_or_create(
-                        product=instance,
-                        attribute=attr,
-                        defaults={'value': value}
-                    )
 
         return instance
 
