@@ -451,3 +451,29 @@ def dict_get_default(dictionary, key_default):
         key, default = key_default, ''
 
     return dictionary.get(key, default)
+
+# @register.filter
+# def getattribute(form, attr_name):
+#     """يسترجع حقل من النموذج عن طريق الاسم الديناميكي"""
+#     attr_id = attr_name.split('_')[-1]
+#     return form.get(f'{attr_name}{attr_id}', None)
+
+@register.filter
+def getattribute(form, attr_name):
+    """يسترجع حقل من النموذج عن طريق الاسم الديناميكي"""
+    try:
+        # استخراج معرف الخاصية
+        attr_id = attr_name.split('_')[-1]
+        # استخدام الاسم الكامل للحقل
+        field_name = f'attribute_{attr_id}'
+        return form[field_name]
+    except (KeyError, IndexError):
+        return None
+
+@register.filter
+def get_field(form, field_name):
+    """استرجاع حقل من النموذج بالاسم المباشر"""
+    try:
+        return form[field_name]
+    except KeyError:
+        return None

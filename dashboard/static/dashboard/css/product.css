@@ -1,0 +1,269 @@
+/* static/dashboard/css/product.css */
+
+/* تنسيق الأقسام */
+.form-section {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-section:last-child {
+    border-bottom: none;
+}
+
+.form-section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+/* تمييز الحقول المطلوبة */
+.required-field label:after {
+    content: " *";
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* تنسيق حقول التحرير */
+.json-editor-container {
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background-color: #f8f9fa;
+}
+
+/* تمييز حقل به خطأ */
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+
+.invalid-feedback {
+    display: block;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 80%;
+    color: #dc3545;
+}
+
+/* معاينات الصور */
+.image-preview-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.image-preview-item {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 0.25rem;
+    overflow: hidden;
+    border: 2px solid #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.image-preview-item:hover {
+    border-color: var(--bs-primary);
+}
+
+.image-preview-item.is-primary {
+    border-color: var(--bs-primary);
+}
+
+.image-preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-preview-actions {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 0.25rem;
+    display: flex;
+    gap: 0.25rem;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 0 0 0 0.25rem;
+}
+
+[dir="rtl"] .image-preview-actions {
+    right: auto;
+    left: 0;
+    border-radius: 0 0 0.25rem 0;
+}
+
+.image-preview-actions button {
+    padding: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.25rem;
+    border: none;
+    background-color: transparent;
+}
+
+.image-preview-actions button:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.image-preview-badge {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0.25rem;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    text-align: center;
+    font-size: 0.75rem;
+}
+
+.image-preview-placeholder {
+    width: 120px;
+    height: 120px;
+    border-radius: 0.25rem;
+    border: 2px dashed #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.image-preview-placeholder:hover {
+    border-color: var(--bs-primary);
+    color: var(--bs-primary);
+}
+
+/* تنسيقات أخرى */
+.tab-pane {
+    padding: 1.5rem;
+}
+
+.hidden-field {
+    display: none;
+}
+
+.select2-container--default .select2-selection--multiple {
+    border: 1px solid #ced4da;
+}
+
+.select2-container--default.select2-container--focus .select2-selection--multiple {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* تمييز الخطأ في النموذج */
+.alert-validation {
+    padding: 10px 15px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.alert-danger-validation {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+/* تنسيق الجدول */
+.json-table {
+    width: 100%;
+    margin-bottom: 1rem;
+    border-collapse: collapse;
+}
+
+.json-table th, .json-table td {
+    padding: 0.75rem;
+    border: 1px solid #dee2e6;
+}
+
+.json-table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+/* توضيح طريقة الإدخال */
+.help-text {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.price-field .input-group-text {
+    background-color: #f8f9fa;
+}
+
+.form-check-lg {
+    padding-left: 2rem;
+}
+
+[dir="rtl"] .form-check-lg {
+    padding-left: 0;
+    padding-right: 2rem;
+}
+
+.form-check-lg .form-check-input {
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-top: 0;
+    margin-left: -2rem;
+}
+
+[dir="rtl"] .form-check-lg .form-check-input {
+    margin-left: 0;
+    margin-right: -2rem;
+}
+
+.form-check-lg .form-check-label {
+    padding-top: 0.25rem;
+}
+
+.sticky-submit {
+    position: sticky;
+    bottom: 1rem;
+    z-index: 1000;
+    background-color: #fff;
+    box-shadow: 0 -5px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 0.25rem;
+    padding: 1rem;
+}
+
+/* SEO Preview */
+.seo-preview {
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    padding: 1rem;
+    margin-top: 1rem;
+    background-color: #f8f9fa;
+}
+
+.seo-preview-title {
+    color: #1a0dab;
+    font-size: 1.125rem;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.seo-preview-url {
+    color: #006621;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.seo-preview-description {
+    color: #545454;
+    font-size: 0.875rem;
+    line-height: 1.4;
+}

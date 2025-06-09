@@ -37970,3 +37970,1915 @@ Traceback (most recent call last):
     ^
 django.template.base.VariableDoesNotExist: Failed lookup for key [name_en] in None
 "GET /dashboard/products/create/ HTTP/1.1" 500 282643
+Internal Server Error: /dashboard/products/create/
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 890, in _resolve_lookup
+    raise TypeError
+TypeError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 901, in _resolve_lookup
+    current = getattr(current, bit)
+AttributeError: 'NoneType' object has no attribute 'sku'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 907, in _resolve_lookup
+    current = current[int(bit)]
+                      ~~~^^^^^
+ValueError: invalid literal for int() with base 10: 'sku'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/dashboard.py", line 36, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py", line 222, in get
+    return render(request, 'dashboard/products/product_form.html', context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/backends/django.py", line 107, in render
+    return self.template.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+           ~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1075, in render
+    output = self.filter_expression.resolve(context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 743, in resolve
+    arg_vals.append(arg.resolve(context))
+                    ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 854, in resolve
+    value = self._resolve_lookup(context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 914, in _resolve_lookup
+    raise VariableDoesNotExist(
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )  # missing attribute
+    ^
+django.template.base.VariableDoesNotExist: Failed lookup for key [sku] in None
+"GET /dashboard/products/create/ HTTP/1.1" 500 282474
+Internal Server Error: /dashboard/products/create/
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 890, in _resolve_lookup
+    raise TypeError
+TypeError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 901, in _resolve_lookup
+    current = getattr(current, bit)
+AttributeError: 'NoneType' object has no attribute 'search_keywords'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 907, in _resolve_lookup
+    current = current[int(bit)]
+                      ~~~^^^^^
+ValueError: invalid literal for int() with base 10: 'search_keywords'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/dashboard.py", line 36, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py", line 222, in get
+    return render(request, 'dashboard/products/product_form.html', context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/backends/django.py", line 107, in render
+    return self.template.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+           ~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1075, in render
+    output = self.filter_expression.resolve(context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 743, in resolve
+    arg_vals.append(arg.resolve(context))
+                    ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 854, in resolve
+    value = self._resolve_lookup(context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 914, in _resolve_lookup
+    raise VariableDoesNotExist(
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )  # missing attribute
+    ^
+django.template.base.VariableDoesNotExist: Failed lookup for key [search_keywords] in None
+"GET /dashboard/products/create/ HTTP/1.1" 500 282378
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+Internal Server Error: /dashboard/products/create/
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 890, in _resolve_lookup
+    raise TypeError
+TypeError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 901, in _resolve_lookup
+    current = getattr(current, bit)
+AttributeError: 'NoneType' object has no attribute 'search_keywords'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 907, in _resolve_lookup
+    current = current[int(bit)]
+                      ~~~^^^^^
+ValueError: invalid literal for int() with base 10: 'search_keywords'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/dashboard.py", line 36, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py", line 222, in get
+    return render(request, 'dashboard/products/product_form.html', context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/backends/django.py", line 107, in render
+    return self.template.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+           ~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1075, in render
+    output = self.filter_expression.resolve(context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 743, in resolve
+    arg_vals.append(arg.resolve(context))
+                    ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 854, in resolve
+    value = self._resolve_lookup(context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 914, in _resolve_lookup
+    raise VariableDoesNotExist(
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )  # missing attribute
+    ^
+django.template.base.VariableDoesNotExist: Failed lookup for key [search_keywords] in None
+"GET /dashboard/products/create/ HTTP/1.1" 500 282384
+Internal Server Error: /dashboard/products/create/
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 890, in _resolve_lookup
+    raise TypeError
+TypeError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 901, in _resolve_lookup
+    current = getattr(current, bit)
+AttributeError: 'NoneType' object has no attribute 'video_url'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 907, in _resolve_lookup
+    current = current[int(bit)]
+                      ~~~^^^^^
+ValueError: invalid literal for int() with base 10: 'video_url'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/dashboard.py", line 36, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py", line 222, in get
+    return render(request, 'dashboard/products/product_form.html', context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/backends/django.py", line 107, in render
+    return self.template.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+           ~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1075, in render
+    output = self.filter_expression.resolve(context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 743, in resolve
+    arg_vals.append(arg.resolve(context))
+                    ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 854, in resolve
+    value = self._resolve_lookup(context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 914, in _resolve_lookup
+    raise VariableDoesNotExist(
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )  # missing attribute
+    ^
+django.template.base.VariableDoesNotExist: Failed lookup for key [video_url] in None
+"GET /dashboard/products/create/ HTTP/1.1" 500 282145
+Internal Server Error: /dashboard/products/create/
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 890, in _resolve_lookup
+    raise TypeError
+TypeError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 901, in _resolve_lookup
+    current = getattr(current, bit)
+AttributeError: 'NoneType' object has no attribute 'base_price'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 907, in _resolve_lookup
+    current = current[int(bit)]
+                      ~~~^^^^^
+ValueError: invalid literal for int() with base 10: 'base_price'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/dashboard.py", line 36, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py", line 222, in get
+    return render(request, 'dashboard/products/product_form.html', context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/backends/django.py", line 107, in render
+    return self.template.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+           ~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1075, in render
+    output = self.filter_expression.resolve(context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 743, in resolve
+    arg_vals.append(arg.resolve(context))
+                    ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 854, in resolve
+    value = self._resolve_lookup(context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 914, in _resolve_lookup
+    raise VariableDoesNotExist(
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )  # missing attribute
+    ^
+django.template.base.VariableDoesNotExist: Failed lookup for key [base_price] in None
+"GET /dashboard/products/create/ HTTP/1.1" 500 282980
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+Internal Server Error: /dashboard/products/create/
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 890, in _resolve_lookup
+    raise TypeError
+TypeError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 901, in _resolve_lookup
+    current = getattr(current, bit)
+AttributeError: 'NoneType' object has no attribute 'base_price'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 907, in _resolve_lookup
+    current = current[int(bit)]
+                      ~~~^^^^^
+ValueError: invalid literal for int() with base 10: 'base_price'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/dashboard.py", line 36, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py", line 222, in get
+    return render(request, 'dashboard/products/product_form.html', context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/backends/django.py", line 107, in render
+    return self.template.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+           ~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1075, in render
+    output = self.filter_expression.resolve(context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 743, in resolve
+    arg_vals.append(arg.resolve(context))
+                    ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 854, in resolve
+    value = self._resolve_lookup(context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 914, in _resolve_lookup
+    raise VariableDoesNotExist(
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )  # missing attribute
+    ^
+django.template.base.VariableDoesNotExist: Failed lookup for key [base_price] in None
+"GET /dashboard/products/create/ HTTP/1.1" 500 282999
+Internal Server Error: /dashboard/products/create/
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 890, in _resolve_lookup
+    raise TypeError
+TypeError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 901, in _resolve_lookup
+    current = getattr(current, bit)
+AttributeError: 'NoneType' object has no attribute 'compare_price'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 907, in _resolve_lookup
+    current = current[int(bit)]
+                      ~~~^^^^^
+ValueError: invalid literal for int() with base 10: 'compare_price'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/dashboard.py", line 36, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py", line 222, in get
+    return render(request, 'dashboard/products/product_form.html', context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/backends/django.py", line 107, in render
+    return self.template.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+           ~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1075, in render
+    output = self.filter_expression.resolve(context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 743, in resolve
+    arg_vals.append(arg.resolve(context))
+                    ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 854, in resolve
+    value = self._resolve_lookup(context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 914, in _resolve_lookup
+    raise VariableDoesNotExist(
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )  # missing attribute
+    ^
+django.template.base.VariableDoesNotExist: Failed lookup for key [compare_price] in None
+"GET /dashboard/products/create/ HTTP/1.1" 500 282888
+"GET /dashboard/products/create/ HTTP/1.1" 200 107494
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+Internal Server Error: /dashboard/products/create/
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/dashboard.py", line 36, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py", line 222, in get
+    return render(request, 'dashboard/products/product_form1.html', context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: dashboard/products/product_form1.html
+- Broken pipe from ('127.0.0.1', 60655)
+Internal Server Error: /dashboard/products/create/
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/dashboard.py", line 36, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py", line 222, in get
+    return render(request, 'dashboard/products/product_form1.html', context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: dashboard/products/product_form1.html
+"GET /dashboard/products/create/ HTTP/1.1" 500 120661
+Internal Server Error: /dashboard/products/create/
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/dashboard.py", line 36, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py", line 222, in get
+    return render(request, 'dashboard/products/product_form1.html', context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: dashboard/products/product_form1.html
+"GET /dashboard/products/create/ HTTP/1.1" 500 120661
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+"GET /dashboard/products/create/ HTTP/1.1" 200 107494
+"GET /dashboard/products/ HTTP/1.1" 200 76578
+Not Found: /media/products/saws/stanley-20-inch-main.jpg
+"GET /media/products/saws/stanley-20-inch-main.jpg HTTP/1.1" 404 12857
+"GET /dashboard/products/create/ HTTP/1.1" 200 107494
+"GET /dashboard/products/ HTTP/1.1" 200 76578
+Not Found: /media/products/saws/stanley-20-inch-main.jpg
+"GET /media/products/saws/stanley-20-inch-main.jpg HTTP/1.1" 404 12857
+"GET /dashboard/products/ HTTP/1.1" 200 76578
+Not Found: /media/products/saws/stanley-20-inch-main.jpg
+"GET /media/products/saws/stanley-20-inch-main.jpg HTTP/1.1" 404 12857
+"GET /dashboard/products/create/ HTTP/1.1" 200 107494
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+Not Found: /dashboard/sourceMap/assets/css/shadow.css.map
+"GET /dashboard/sourceMap/assets/css/shadow.css.map HTTP/1.1" 404 60726
+"GET /dashboard/products/create/ HTTP/1.1" 200 107486
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+Not Found: /dashboard/sourceMap/assets/css/shadow.css.map
+"GET /dashboard/sourceMap/assets/css/shadow.css.map HTTP/1.1" 404 60726
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/products/models.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+"GET /dashboard/products/create/ HTTP/1.1" 200 107494
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /dashboard/products/create/ HTTP/1.1" 200 107486
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/products/models.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/forms/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+"GET /dashboard/products/create/ HTTP/1.1" 200 107494
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/forms/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+"GET /dashboard/products/create/ HTTP/1.1" 200 107495
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /dashboard/products/create/ HTTP/1.1" 200 107494
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /dashboard/products/create/ HTTP/1.1" 200 107485
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /static/dashboard/css/flag-icons.css HTTP/1.1" 200 2456
+"GET /static/dashboard/css/dashboard-rtl.css HTTP/1.1" 200 7512
+"GET /static/dashboard/css/custom-arabic.css HTTP/1.1" 200 6374
+"GET /static/dashboard/css/dashboard.css HTTP/1.1" 200 22154
+"GET /media/avatars/WhatsApp_Image_2025-05-22_at_5.29.34_PM.jpeg HTTP/1.1" 200 79812
+"GET /static/images/logo.png HTTP/1.1" 200 89401
+"GET /static/dashboard/js/dashboard.js HTTP/1.1" 200 25169
+"GET /static/dashboard/img/flags/jo.svg HTTP/1.1" 200 1751
+Not Found: /favicon.ico
+"GET /favicon.ico HTTP/1.1" 404 13167
+Not Found: /dashboard/sourceMap/assets/css/shadow.css.map
+"GET /dashboard/sourceMap/assets/css/shadow.css.map HTTP/1.1" 404 60726
+"GET /dashboard/products/create/ HTTP/1.1" 200 107540
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+Not Found: /dashboard/sourceMap/assets/css/shadow.css.map
+"GET /dashboard/sourceMap/assets/css/shadow.css.map HTTP/1.1" 404 60726
+"GET /dashboard/products/create/ HTTP/1.1" 200 106868
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+Not Found: /dashboard/sourceMap/assets/css/shadow.css.map
+"GET /dashboard/sourceMap/assets/css/shadow.css.map HTTP/1.1" 404 60726
+Not Found: /dashboard/sourceMap/assets/css/shadow.css.map
+"GET /dashboard/sourceMap/assets/css/shadow.css.map HTTP/1.1" 404 60726
+"GET /dashboard/products/create/ HTTP/1.1" 200 106983
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+Not Found: /dashboard/sourceMap/assets/css/shadow.css.map
+"GET /dashboard/sourceMap/assets/css/shadow.css.map HTTP/1.1" 404 60726
+Not Found: /dashboard/sourceMap/assets/css/shadow.css.map
+"GET /dashboard/sourceMap/assets/css/shadow.css.map HTTP/1.1" 404 60726
+"GET /dashboard/products/create/ HTTP/1.1" 200 107470
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+Not Found: /dashboard/sourceMap/assets/css/shadow.css.map
+"GET /dashboard/sourceMap/assets/css/shadow.css.map HTTP/1.1" 404 60726
+"GET /dashboard/products/create/ HTTP/1.1" 200 107470
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /static/dashboard/css/flag-icons.css HTTP/1.1" 200 2456
+"GET /static/dashboard/css/dashboard.css HTTP/1.1" 200 22154
+"GET /static/dashboard/css/dashboard-rtl.css HTTP/1.1" 200 7512
+"GET /static/dashboard/css/custom-arabic.css HTTP/1.1" 200 6374
+"GET /media/avatars/WhatsApp_Image_2025-05-22_at_5.29.34_PM.jpeg HTTP/1.1" 200 79812
+"GET /static/images/logo.png HTTP/1.1" 200 89401
+"GET /static/dashboard/js/dashboard.js HTTP/1.1" 200 25169
+"GET /static/dashboard/img/flags/jo.svg HTTP/1.1" 200 1751
+Not Found: /favicon.ico
+"GET /favicon.ico HTTP/1.1" 404 13167
+"GET /dashboard/products/create/ HTTP/1.1" 200 107470
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /static/dashboard/css/flag-icons.css HTTP/1.1" 200 2456
+"GET /static/dashboard/css/dashboard-rtl.css HTTP/1.1" 200 7512
+"GET /static/dashboard/css/custom-arabic.css HTTP/1.1" 200 6374
+"GET /static/dashboard/css/dashboard.css HTTP/1.1" 200 22154
+"GET /static/images/logo.png HTTP/1.1" 200 89401
+"GET /media/avatars/WhatsApp_Image_2025-05-22_at_5.29.34_PM.jpeg HTTP/1.1" 200 79812
+"GET /static/dashboard/js/dashboard.js HTTP/1.1" 200 25169
+"GET /static/dashboard/img/flags/jo.svg HTTP/1.1" 200 1751
+Not Found: /favicon.ico
+"GET /favicon.ico HTTP/1.1" 404 13167
+"GET /dashboard/products/create/ HTTP/1.1" 200 107470
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+- Broken pipe from ('127.0.0.1', 49868)
+"GET /static/dashboard/css/dashboard-rtl.css HTTP/1.1" 200 7512
+"GET /static/dashboard/css/custom-arabic.css HTTP/1.1" 200 6374
+"GET /static/dashboard/css/flag-icons.css HTTP/1.1" 200 2456
+"GET /static/dashboard/css/dashboard.css HTTP/1.1" 200 22154
+"GET /static/images/logo.png HTTP/1.1" 200 89401
+"GET /media/avatars/WhatsApp_Image_2025-05-22_at_5.29.34_PM.jpeg HTTP/1.1" 200 79812
+"GET /static/dashboard/js/dashboard.js HTTP/1.1" 200 25169
+"GET /media/avatars/WhatsApp_Image_2025-05-22_at_5.29.34_PM.jpeg HTTP/1.1" 200 79812
+"GET /static/dashboard/img/flags/jo.svg HTTP/1.1" 200 1751
+Not Found: /favicon.ico
+"GET /favicon.ico HTTP/1.1" 404 13167
+"GET /dashboard/products/create/ HTTP/1.1" 200 107470
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /static/dashboard/css/flag-icons.css HTTP/1.1" 200 2456
+"GET /static/dashboard/css/dashboard.css HTTP/1.1" 200 22154
+"GET /static/dashboard/css/dashboard-rtl.css HTTP/1.1" 200 7512
+"GET /static/dashboard/css/custom-arabic.css HTTP/1.1" 200 6374
+"GET /static/images/logo.png HTTP/1.1" 200 89401
+"GET /media/avatars/WhatsApp_Image_2025-05-22_at_5.29.34_PM.jpeg HTTP/1.1" 200 79812
+"GET /static/dashboard/js/dashboard.js HTTP/1.1" 200 25169
+"GET /static/dashboard/img/flags/jo.svg HTTP/1.1" 200 1751
+Not Found: /favicon.ico
+"GET /favicon.ico HTTP/1.1" 404 13167
+Not Found: /dashboard/sourceMap/assets/css/shadow.css.map
+"GET /dashboard/sourceMap/assets/css/shadow.css.map HTTP/1.1" 404 60726
+"GET /dashboard/products/create/ HTTP/1.1" 200 107453
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /static/dashboard/css/flag-icons.css HTTP/1.1" 200 2456
+"GET /static/dashboard/css/dashboard.css HTTP/1.1" 200 22154
+"GET /static/dashboard/css/dashboard-rtl.css HTTP/1.1" 200 7512
+"GET /static/dashboard/css/custom-arabic.css HTTP/1.1" 200 6374
+"GET /media/avatars/WhatsApp_Image_2025-05-22_at_5.29.34_PM.jpeg HTTP/1.1" 200 79812
+"GET /static/images/logo.png HTTP/1.1" 200 89401
+"GET /static/dashboard/js/dashboard.js HTTP/1.1" 200 25169
+"GET /media/avatars/WhatsApp_Image_2025-05-22_at_5.29.34_PM.jpeg HTTP/1.1" 200 79812
+"GET /static/dashboard/img/flags/jo.svg HTTP/1.1" 200 1751
+Not Found: /favicon.ico
+"GET /favicon.ico HTTP/1.1" 404 13167
+Not Found: /dashboard/sourceMap/assets/css/shadow.css.map
+"GET /dashboard/sourceMap/assets/css/shadow.css.map HTTP/1.1" 404 60726
+Not Found: /dashboard/sourceMap/assets/css/shadow.css.map
+"GET /dashboard/sourceMap/assets/css/shadow.css.map HTTP/1.1" 404 60726
+"GET /dashboard/products/ HTTP/1.1" 200 76578
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+Not Found: /media/products/saws/stanley-20-inch-main.jpg
+"GET /media/products/saws/stanley-20-inch-main.jpg HTTP/1.1" 404 12857
+"GET /media/products/2025/6/72e95b21-eaf9-48f0-b76c-5e797f196d32.jpg HTTP/1.1" 200 74791
+"GET /dashboard/products/17/edit/ HTTP/1.1" 200 109091
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+Not Found: /dashboard/products/sourceMap/assets/css/shadow.css.map
+"GET /dashboard/products/sourceMap/assets/css/shadow.css.map HTTP/1.1" 404 60753
+Not Found: /dashboard/products/sourceMap/assets/css/shadow.css.map
+"GET /dashboard/products/sourceMap/assets/css/shadow.css.map HTTP/1.1" 404 60753
+"GET /dashboard/products/17/edit/ HTTP/1.1" 200 108722
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /dashboard/products/ HTTP/1.1" 200 76578
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+Not Found: /media/products/saws/stanley-20-inch-main.jpg
+"GET /media/products/saws/stanley-20-inch-main.jpg HTTP/1.1" 404 12857
+"GET /dashboard/products/16/edit/ HTTP/1.1" 200 109011
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /dashboard/products/9/edit/ HTTP/1.1" 200 109741
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /dashboard/products/ HTTP/1.1" 200 76578
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+Not Found: /media/products/saws/stanley-20-inch-main.jpg
+"GET /media/products/saws/stanley-20-inch-main.jpg HTTP/1.1" 404 12857
+"GET /dashboard/products/17/edit/ HTTP/1.1" 200 109091
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /dashboard/products/17/edit/ HTTP/1.1" 200 109091
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+Internal Server Error: /dashboard/products/17/edit/
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/dashboard.py", line 36, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py", line 165, in get
+    selected_tags = list(product.tags.values_list('id', str=True))
+                         ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+TypeError: QuerySet.values_list() got an unexpected keyword argument 'str'
+"GET /dashboard/products/17/edit/ HTTP/1.1" 500 93066
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+"GET /dashboard/products/17/edit/ HTTP/1.1" 200 133301
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /dashboard/products/17/edit/ HTTP/1.1" 200 133709
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /dashboard/products/17/edit/ HTTP/1.1" 200 133709
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /static/dashboard/css/flag-icons.css HTTP/1.1" 200 2456
+"GET /static/dashboard/css/custom-arabic.css HTTP/1.1" 200 6374
+"GET /static/dashboard/css/dashboard.css HTTP/1.1" 200 22154
+"GET /static/dashboard/css/dashboard-rtl.css HTTP/1.1" 200 7512
+"GET /media/avatars/WhatsApp_Image_2025-05-22_at_5.29.34_PM.jpeg HTTP/1.1" 200 79812
+"GET /static/images/logo.png HTTP/1.1" 200 89401
+"GET /static/dashboard/js/dashboard.js HTTP/1.1" 200 25169
+"GET /static/dashboard/img/flags/jo.svg HTTP/1.1" 200 1751
+Not Found: /favicon.ico
+"GET /favicon.ico HTTP/1.1" 404 13167
+"GET /dashboard/products/17/edit/ HTTP/1.1" 200 137549
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /static/dashboard/css/custom-arabic.css HTTP/1.1" 200 6374
+"GET /static/dashboard/css/dashboard-rtl.css HTTP/1.1" 200 7512
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /static/dashboard/css/dashboard.css HTTP/1.1" 200 22154
+"GET /static/dashboard/css/flag-icons.css HTTP/1.1" 200 2456
+"GET /static/images/logo.png HTTP/1.1" 200 89401
+"GET /media/avatars/WhatsApp_Image_2025-05-22_at_5.29.34_PM.jpeg HTTP/1.1" 200 79812
+"GET /static/dashboard/js/dashboard.js HTTP/1.1" 200 25169
+"GET /static/dashboard/img/flags/jo.svg HTTP/1.1" 200 1751
+Not Found: /favicon.ico
+"GET /favicon.ico HTTP/1.1" 404 13167
+"GET /dashboard/products/17/edit/ HTTP/1.1" 200 161754
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /static/dashboard/css/dashboard-rtl.css HTTP/1.1" 200 7512
+"GET /static/dashboard/css/flag-icons.css HTTP/1.1" 200 2456
+"GET /static/dashboard/css/custom-arabic.css HTTP/1.1" 200 6374
+"GET /static/dashboard/css/dashboard.css HTTP/1.1" 200 22154
+"GET /media/avatars/WhatsApp_Image_2025-05-22_at_5.29.34_PM.jpeg HTTP/1.1" 200 79812
+"GET /static/images/logo.png HTTP/1.1" 200 89401
+"GET /static/dashboard/js/dashboard.js HTTP/1.1" 200 25169
+"GET /static/dashboard/img/flags/jo.svg HTTP/1.1" 200 1751
+Not Found: /favicon.ico
+"GET /favicon.ico HTTP/1.1" 404 13167
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+Internal Server Error: /dashboard/products/17/edit/
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 890, in _resolve_lookup
+    raise TypeError
+TypeError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 901, in _resolve_lookup
+    current = getattr(current, bit)
+AttributeError: 'Product' object has no attribute 'video_url'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 907, in _resolve_lookup
+    current = current[int(bit)]
+                      ~~~^^^^^
+ValueError: invalid literal for int() with base 10: 'video_url'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/dashboard.py", line 36, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py", line 222, in get
+    return render(request, 'dashboard/products/product_form.html', context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/backends/django.py", line 107, in render
+    return self.template.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 171, in render
+    return self._render(context)
+           ~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 163, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1016, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 977, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 1075, in render
+    output = self.filter_expression.resolve(context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 743, in resolve
+    arg_vals.append(arg.resolve(context))
+                    ~~~~~~~~~~~^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 854, in resolve
+    value = self._resolve_lookup(context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 914, in _resolve_lookup
+    raise VariableDoesNotExist(
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )  # missing attribute
+    ^
+django.template.base.VariableDoesNotExist: Failed lookup for key [video_url] in <Product: ميزان ماء Bosch Professional (BOSCH-LEVEL)>
+"GET /dashboard/products/17/edit/ HTTP/1.1" 500 299983
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/forms/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/templatetags/dashboard_tags.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+Internal Server Error: /dashboard/products/17/edit/
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/dashboard.py", line 36, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py", line 161, in get
+    form = ProductForm(instance=product)
+           ^^^^^^^^^^^
+NameError: name 'ProductForm' is not defined. Did you mean: 'ProductFormView'?
+"GET /dashboard/products/17/edit/ HTTP/1.1" 500 87832
+"GET /dashboard HTTP/1.1" 301 0
+"GET /dashboard/ HTTP/1.1" 200 63422
+Not Found: /media/products/saws/stanley-20-inch-main.jpg
+"GET /media/products/2025/6/72e95b21-eaf9-48f0-b76c-5e797f196d32.jpg HTTP/1.1" 304 0
+"GET /media/products/saws/stanley-20-inch-main.jpg HTTP/1.1" 404 12857
+"GET /dashboard/products/ HTTP/1.1" 200 76578
+Not Found: /media/products/saws/stanley-20-inch-main.jpg
+"GET /media/products/saws/stanley-20-inch-main.jpg HTTP/1.1" 404 12857
+Internal Server Error: /dashboard/products/create/
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/dashboard.py", line 36, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py", line 178, in get
+    form = ProductForm()
+           ^^^^^^^^^^^
+NameError: name 'ProductForm' is not defined. Did you mean: 'ProductFormView'?
+"GET /dashboard/products/create/ HTTP/1.1" 500 86983
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+Internal Server Error: /dashboard/products/create/
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/dashboard.py", line 36, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py", line 181, in get
+    form_title = _('إنشاء منتج جديد')
+                 ^
+NameError: name '_' is not defined
+"GET /dashboard/products/create/ HTTP/1.1" 500 87618
+Internal Server Error: /dashboard/products/create/
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/dashboard.py", line 36, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py", line 181, in get
+    form_title = _('إنشاء منتج جديد')
+                 ^
+NameError: name '_' is not defined
+"GET /dashboard/products/create/ HTTP/1.1" 500 87618
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+Internal Server Error: /dashboard/products/create/
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/dashboard.py", line 36, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py", line 196, in get
+    return render(request, 'dashboard/products/product_form.html', context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/backends/django.py", line 79, in get_template
+    return Template(self.engine.get_template(template_name), self)
+                    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+                       ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+        contents,
+    ...<2 lines>...
+        self.engine,
+    )
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 196, in compile_nodelist
+    nodelist = parser.parse()
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader_tags.py", line 299, in do_extends
+    nodelist = parser.parse()
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/defaulttags.py", line 862, in do_for
+    nodelist_loop = parser.parse(
+        (
+    ...<2 lines>...
+        )
+    )
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 489, in parse
+    raise self.error(token, e)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 487, in parse
+    filter_expression = self.compile_filter(token.contents)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 609, in compile_filter
+    return FilterExpression(token, self)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 705, in __init__
+    filter_func = parser.find_filter(filter_name)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 615, in find_filter
+    raise TemplateSyntaxError("Invalid filter: '%s'" % filter_name)
+django.template.exceptions.TemplateSyntaxError: Invalid filter: 'getattribute'
+"GET /dashboard/products/create/ HTTP/1.1" 500 344018
+"GET /dashboard/products/create/ HTTP/1.1" 200 62493
+"GET /static/dashboard/css/product.css HTTP/1.1" 200 5015
+"GET /static/dashboard/js/product.js HTTP/1.1" 200 17182
+"GET /dashboard/products/create/ HTTP/1.1" 200 62493
+"GET /static/dashboard/css/flag-icons.css HTTP/1.1" 200 2456
+"GET /static/dashboard/css/custom-arabic.css HTTP/1.1" 200 6374
+"GET /static/dashboard/css/dashboard-rtl.css HTTP/1.1" 200 7512
+"GET /static/dashboard/css/product.css HTTP/1.1" 200 5015
+"GET /static/dashboard/css/dashboard.css HTTP/1.1" 200 22154
+"GET /static/images/logo.png HTTP/1.1" 200 89401
+"GET /media/avatars/WhatsApp_Image_2025-05-22_at_5.29.34_PM.jpeg HTTP/1.1" 200 79812
+"GET /static/dashboard/js/dashboard.js HTTP/1.1" 200 25169
+"GET /static/dashboard/js/product.js HTTP/1.1" 200 17182
+"GET /static/dashboard/img/flags/jo.svg HTTP/1.1" 200 1751
+Not Found: /favicon.ico
+"GET /favicon.ico HTTP/1.1" 404 13167
+"POST /dashboard/products/create/ HTTP/1.1" 200 63864
+"GET /static/dashboard/css/product.css HTTP/1.1" 304 0
+"GET /static/dashboard/js/product.js HTTP/1.1" 304 0
+"POST /dashboard/products/create/ HTTP/1.1" 200 63799
+"POST /dashboard/products/create/ HTTP/1.1" 200 63844
+"GET /static/dashboard/js/product.js HTTP/1.1" 304 0
+"GET /static/dashboard/css/product.css HTTP/1.1" 304 0
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"POST /dashboard/products/create/ HTTP/1.1" 200 63844
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/forms/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+"POST /dashboard/products/create/ HTTP/1.1" 200 63950
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /static/dashboard/css/product.css HTTP/1.1" 304 0
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /static/dashboard/js/product.js HTTP/1.1" 304 0
+"POST /dashboard/products/create/ HTTP/1.1" 200 63950
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/forms/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/forms/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/forms/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/forms/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/forms/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/forms/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/forms/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+"GET /dashboard/products/create/ HTTP/1.1" 200 62493
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /static/dashboard/css/product.css HTTP/1.1" 304 0
+"GET /static/dashboard/js/product.js HTTP/1.1" 304 0
+Not Found: /dashboard/sourceMap/assets/css/shadow.css.map
+"GET /dashboard/sourceMap/assets/css/shadow.css.map HTTP/1.1" 404 60726
+"POST /dashboard/products/create/ HTTP/1.1" 302 0
+"GET /dashboard/products/23/ HTTP/1.1" 200 60222
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /media/products/2025/6/a61a6bca-2991-469d-907a-118aff857e65.jpg HTTP/1.1" 200 74791
+"GET /dashboard/products/23/ HTTP/1.1" 200 59792
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /media/products/2025/6/a61a6bca-2991-469d-907a-118aff857e65.jpg HTTP/1.1" 304 0
+"GET /dashboard/products/23/edit/ HTTP/1.1" 200 65216
+"GET /media/products/2025/6/a61a6bca-2991-469d-907a-118aff857e65.jpg HTTP/1.1" 304 0
+"POST /dashboard/products/23/edit/ HTTP/1.1" 302 0
+"GET /dashboard/products/23/edit/ HTTP/1.1" 200 66060
+"GET /static/dashboard/css/product.css HTTP/1.1" 304 0
+"GET /media/products/2025/6/a61a6bca-2991-469d-907a-118aff857e65.jpg HTTP/1.1" 304 0
+"GET /static/dashboard/js/product.js HTTP/1.1" 304 0
+"GET /dashboard/products/23 HTTP/1.1" 301 0
+"GET /dashboard/products/23/ HTTP/1.1" 200 60309
+"GET /media/products/2025/6/a61a6bca-2991-469d-907a-118aff857e65.jpg HTTP/1.1" 304 0
+"GET /dashboard/products/23/edit/ HTTP/1.1" 200 65259
+"GET /dashboard/ HTTP/1.1" 200 63422
+Not Found: /media/products/saws/stanley-20-inch-main.jpg
+"GET /media/products/saws/stanley-20-inch-main.jpg HTTP/1.1" 404 12857
+"GET /dashboard/products/ HTTP/1.1" 200 79095
+Not Found: /media/products/saws/stanley-20-inch-main.jpg
+"GET /media/products/2025/6/a61a6bca-2991-469d-907a-118aff857e65.jpg HTTP/1.1" 304 0
+"GET /media/products/saws/stanley-20-inch-main.jpg HTTP/1.1" 404 12857
+"GET /dashboard/products/23/ HTTP/1.1" 200 60309
+"GET /dashboard/products/create/ HTTP/1.1" 200 62493
+"GET /static/dashboard/css/product.css HTTP/1.1" 304 0
+"GET /static/dashboard/js/product.js HTTP/1.1" 304 0
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /dashboard/products/create/ HTTP/1.1" 200 62504
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /dashboard/products/create/ HTTP/1.1" 200 62504
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /static/dashboard/css/flag-icons.css HTTP/1.1" 200 2456
+"GET /static/dashboard/css/dashboard-rtl.css HTTP/1.1" 200 7512
+"GET /static/dashboard/css/dashboard.css HTTP/1.1" 200 22154
+"GET /static/dashboard/css/custom-arabic.css HTTP/1.1" 200 6374
+"GET /static/dashboard/css/product.css HTTP/1.1" 200 5015
+"GET /static/images/logo.png HTTP/1.1" 200 89401
+"GET /media/avatars/WhatsApp_Image_2025-05-22_at_5.29.34_PM.jpeg HTTP/1.1" 200 79812
+"GET /static/dashboard/js/dashboard.js HTTP/1.1" 200 25169
+"GET /static/dashboard/js/product.js HTTP/1.1" 200 11288
+"GET /static/dashboard/img/flags/jo.svg HTTP/1.1" 200 1751
+Not Found: /favicon.ico
+"GET /favicon.ico HTTP/1.1" 404 13167
+Not Found: /dashboard/sourceMap/assets/css/shadow.css.map
+"GET /dashboard/sourceMap/assets/css/shadow.css.map HTTP/1.1" 404 60726
+Not Found: /dashboard/sourceMap/assets/css/shadow.css.map
+"GET /dashboard/sourceMap/assets/css/shadow.css.map HTTP/1.1" 404 60726
+"POST /dashboard/products/create/ HTTP/1.1" 200 63573
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /static/dashboard/js/product.js HTTP/1.1" 304 0
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"POST /dashboard/products/create/ HTTP/1.1" 200 63573
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /static/dashboard/js/product.js HTTP/1.1" 304 0
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/forms/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+"POST /dashboard/products/create/ HTTP/1.1" 200 63573
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /static/dashboard/js/product.js HTTP/1.1" 304 0
+"POST /dashboard/products/create/ HTTP/1.1" 200 63573
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /static/dashboard/css/dashboard-rtl.css HTTP/1.1" 200 7512
+"GET /static/dashboard/css/dashboard.css HTTP/1.1" 200 22154
+"GET /static/dashboard/css/product.css HTTP/1.1" 200 5015
+"GET /static/dashboard/css/custom-arabic.css HTTP/1.1" 200 6374
+"GET /static/dashboard/css/flag-icons.css HTTP/1.1" 200 2456
+"GET /static/images/logo.png HTTP/1.1" 200 89401
+"GET /media/avatars/WhatsApp_Image_2025-05-22_at_5.29.34_PM.jpeg HTTP/1.1" 200 79812
+"GET /static/dashboard/js/product.js HTTP/1.1" 200 11288
+"GET /static/dashboard/js/dashboard.js HTTP/1.1" 200 25169
+"GET /static/dashboard/img/flags/jo.svg HTTP/1.1" 200 1751
+Not Found: /favicon.ico
+"GET /favicon.ico HTTP/1.1" 404 13167
+"POST /dashboard/products/create/ HTTP/1.1" 200 63573
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /static/dashboard/css/dashboard-rtl.css HTTP/1.1" 200 7512
+"GET /static/dashboard/css/flag-icons.css HTTP/1.1" 200 2456
+"GET /static/dashboard/css/custom-arabic.css HTTP/1.1" 200 6374
+"GET /static/dashboard/css/product.css HTTP/1.1" 200 5015
+"GET /static/dashboard/css/dashboard.css HTTP/1.1" 200 22154
+"GET /static/images/logo.png HTTP/1.1" 200 89401
+"GET /media/avatars/WhatsApp_Image_2025-05-22_at_5.29.34_PM.jpeg HTTP/1.1" 200 79812
+"GET /static/dashboard/js/dashboard.js HTTP/1.1" 200 25169
+"GET /static/dashboard/js/product.js HTTP/1.1" 200 11288
+"GET /static/dashboard/img/flags/jo.svg HTTP/1.1" 200 1751
+Not Found: /favicon.ico
+"GET /favicon.ico HTTP/1.1" 404 13167
+"GET /dashboard/products/create/ HTTP/1.1" 200 62504
+"GET /static/dashboard/js/product.js HTTP/1.1" 304 0
+"POST /dashboard/products/create/ HTTP/1.1" 200 63573
+"GET /dashboard/ HTTP/1.1" 200 63422
+Not Found: /media/products/saws/stanley-20-inch-main.jpg
+"GET /media/products/saws/stanley-20-inch-main.jpg HTTP/1.1" 404 12857
+"GET /dashboard/products/ HTTP/1.1" 200 79095
+Not Found: /media/products/saws/stanley-20-inch-main.jpg
+"GET /media/products/saws/stanley-20-inch-main.jpg HTTP/1.1" 404 12857
+"GET /media/products/2025/6/a61a6bca-2991-469d-907a-118aff857e65.jpg HTTP/1.1" 304 0
+"GET /dashboard/products/23/edit/ HTTP/1.1" 200 65270
+"POST /dashboard/products/23/edit/ HTTP/1.1" 200 66111
+"POST /dashboard/products/23/edit/ HTTP/1.1" 302 0
+"GET /dashboard/products/23/ HTTP/1.1" 200 60739
+"GET /dashboard/products/create/ HTTP/1.1" 200 62504
+"GET /static/dashboard/js/product.js HTTP/1.1" 304 0
+"POST /dashboard/products/create/ HTTP/1.1" 200 63573
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+"POST /dashboard/products/create/ HTTP/1.1" 200 63573
+"GET /static/dashboard/js/product.js HTTP/1.1" 304 0
+"POST /dashboard/products/create/ HTTP/1.1" 200 63573
+"GET /dashboard/products/create/ HTTP/1.1" 200 62504
+"GET /dashboard/products/create/ HTTP/1.1" 200 62504
+"POST /dashboard/products/create/ HTTP/1.1" 200 63568
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+"POST /dashboard/products/create/ HTTP/1.1" 200 63568
+"POST /dashboard/products/create/ HTTP/1.1" 200 63568
+"GET /dashboard/products/create/ HTTP/1.1" 200 62504
+"GET /static/dashboard/css/product.css HTTP/1.1" 304 0
+"GET /dashboard/products/create/ HTTP/1.1" 200 62504
+"GET /dashboard/products/create/ HTTP/1.1" 200 62504
+"GET /static/dashboard/css/product.css HTTP/1.1" 200 5015
+"GET /static/dashboard/css/custom-arabic.css HTTP/1.1" 200 6374
+"GET /static/dashboard/css/dashboard-rtl.css HTTP/1.1" 200 7512
+"GET /static/dashboard/css/flag-icons.css HTTP/1.1" 200 2456
+"GET /static/dashboard/css/dashboard.css HTTP/1.1" 200 22154
+"GET /static/images/logo.png HTTP/1.1" 200 89401
+"GET /media/avatars/WhatsApp_Image_2025-05-22_at_5.29.34_PM.jpeg HTTP/1.1" 200 79812
+"GET /static/dashboard/js/product.js HTTP/1.1" 200 11288
+"GET /static/dashboard/js/dashboard.js HTTP/1.1" 200 25169
+"GET /static/dashboard/img/flags/jo.svg HTTP/1.1" 200 1751
+Not Found: /favicon.ico
+"GET /favicon.ico HTTP/1.1" 404 13167
+"POST /dashboard/products/create/ HTTP/1.1" 200 63573
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+"POST /dashboard/products/create/ HTTP/1.1" 200 63573
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+"POST /dashboard/products/create/ HTTP/1.1" 200 63573
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+"POST /dashboard/products/create/ HTTP/1.1" 200 63573
+"GET /static/dashboard/js/product.js HTTP/1.1" 304 0
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/forms/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+"POST /dashboard/products/create/ HTTP/1.1" 200 63571
+"GET /static/dashboard/js/product.js HTTP/1.1" 304 0
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/forms/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+"POST /dashboard/products/create/ HTTP/1.1" 200 63573
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/forms/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/forms/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/forms/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+"POST /dashboard/products/create/ HTTP/1.1" 200 63879
+"GET /static/dashboard/js/product.js HTTP/1.1" 200 11417
+"POST /dashboard/products/create/ HTTP/1.1" 302 0
+"GET /dashboard/products/24/ HTTP/1.1" 200 60023
+Internal Server Error: /dashboard/settings/dashboard/
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/mixins.py", line 30, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/contrib/auth/mixins.py", line 73, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/edit.py", line 202, in get
+    return super().get(request, *args, **kwargs)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/edit.py", line 142, in get
+    return self.render_to_response(self.get_context_data())
+                                   ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/edit.py", line 72, in get_context_data
+    kwargs["form"] = self.get_form()
+                     ~~~~~~~~~~~~~^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/edit.py", line 37, in get_form
+    return form_class(**self.get_form_kwargs())
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/forms/dashboard.py", line 248, in __init__
+    HTML('<a href="{% url "dashboard:index" %}" class="btn btn-secondary">%s</a>' % _('إلغاء'))
+         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+TypeError: %u format: a real number is required, not __proxy__
+"GET /dashboard/settings/dashboard/ HTTP/1.1" 500 99643
+"GET /dashboard/products/24/ HTTP/1.1" 200 59593
+"GET / HTTP/1.1" 200 62938
+"GET /static/css/rtl.css HTTP/1.1" 200 5156
+"GET /static/css/style.css HTTP/1.1" 200 14660
+"GET /static/css/base.css HTTP/1.1" 200 16317
+"GET /static/images/hero-1.jpg HTTP/1.1" 404 1978
+"GET /static/css/enhanced-components.css HTTP/1.1" 200 11662
+"GET /static/images/avatar-1.jpg HTTP/1.1" 404 1984
+"GET /media/products/2025/6/72e95b21-eaf9-48f0-b76c-5e797f196d32.jpg HTTP/1.1" 304 0
+"GET /static/images/hero-2.jpg HTTP/1.1" 404 1978
+"GET /static/images/hero-3.jpg HTTP/1.1" 404 1978
+"GET /static/images/avatar-2.jpg HTTP/1.1" 404 1984
+"GET /static/images/category-default.jpg HTTP/1.1" 404 2008
+"GET /static/images/partner-1.png HTTP/1.1" 404 1987
+"GET /static/images/avatar-3.jpg HTTP/1.1" 404 1984
+"GET /static/images/partner-2.png HTTP/1.1" 404 1987
+"GET /static/images/partner-5.png HTTP/1.1" 404 1987
+"GET /static/images/partner-6.png HTTP/1.1" 404 1987
+"GET /static/images/partner-3.png HTTP/1.1" 404 1987
+"GET /static/images/partner-4.png HTTP/1.1" 404 1987
+"GET /static/js/base.js HTTP/1.1" 200 3756
+"GET /static/js/main.js HTTP/1.1" 200 42490
+"GET /static/images/category-default.jpg HTTP/1.1" 404 2008
+"GET /static/images/favicon.ico HTTP/1.1" 404 1981
+"GET /products/categories/ HTTP/1.1" 200 68026
+"GET /static/products/css/category_tree.css HTTP/1.1" 200 2941
+"GET /static/products/js/category_tree.js HTTP/1.1" 200 7428
+"GET /products/category/hand-tools/ HTTP/1.1" 200 68221
+"GET /products/category/hand-tools/ HTTP/1.1" 200 68221
+"GET /products/stanley-screwdriver-set-6pc/ HTTP/1.1" 200 121503
+"GET /media/products/2025/6/b9e78dc4-75fd-4f5b-a9b5-102657f9738d.png HTTP/1.1" 200 1555028
+"GET /dashboard/products/ HTTP/1.1" 200 81615
+"GET /media/products/2025/6/a61a6bca-2991-469d-907a-118aff857e65.jpg HTTP/1.1" 304 0
+Not Found: /media/products/saws/stanley-20-inch-main.jpg
+"GET /media/products/saws/stanley-20-inch-main.jpg HTTP/1.1" 404 12857
+"GET /dashboard/products/11/edit/ HTTP/1.1" 200 67499
+"GET /static/dashboard/css/product.css HTTP/1.1" 304 0
+"GET /static/dashboard/js/product.js HTTP/1.1" 304 0
+"POST /dashboard/products/11/edit/ HTTP/1.1" 302 0
+"GET /dashboard/products/11/ HTTP/1.1" 200 67433
+"GET /products/stanley-screwdriver-set-6pc/ HTTP/1.1" 200 121838
+"GET /dashboard/products/12/ HTTP/1.1" 200 92103
+"GET /dashboard/products/11/ HTTP/1.1" 200 67003
+"GET /dashboard/products/11/ HTTP/1.1" 200 67003
+"GET /dashboard/products/ HTTP/1.1" 200 81615
+Not Found: /media/products/saws/stanley-20-inch-main.jpg
+"GET /media/products/saws/stanley-20-inch-main.jpg HTTP/1.1" 404 12857
+"GET /dashboard/products/11/edit/ HTTP/1.1" 200 67517
+"GET /dashboard/products/ HTTP/1.1" 200 81615
+Not Found: /media/products/saws/stanley-20-inch-main.jpg
+"GET /media/products/saws/stanley-20-inch-main.jpg HTTP/1.1" 404 12857
+"GET /dashboard/products/11/ HTTP/1.1" 200 67003
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+"GET /dashboard/products/11/edit/ HTTP/1.1" 200 67517
+"GET /static/dashboard/js/product.js HTTP/1.1" 304 0
+"GET /dashboard/products/11/edit/ HTTP/1.1" 200 67517
+"GET /static/dashboard/css/dashboard-rtl.css HTTP/1.1" 200 7512
+"GET /static/dashboard/css/product.css HTTP/1.1" 200 5015
+"GET /static/dashboard/css/flag-icons.css HTTP/1.1" 200 2456
+"GET /static/dashboard/css/custom-arabic.css HTTP/1.1" 200 6374
+"GET /static/dashboard/css/dashboard.css HTTP/1.1" 200 22154
+"GET /static/images/logo.png HTTP/1.1" 200 89401
+"GET /media/avatars/WhatsApp_Image_2025-05-22_at_5.29.34_PM.jpeg HTTP/1.1" 200 79812
+"GET /media/products/2025/6/72e95b21-eaf9-48f0-b76c-5e797f196d32.jpg HTTP/1.1" 200 74791
+"GET /media/products/2025/6/b9e78dc4-75fd-4f5b-a9b5-102657f9738d.png HTTP/1.1" 200 1555028
+"GET /static/dashboard/js/product.js HTTP/1.1" 200 11417
+"GET /static/dashboard/js/dashboard.js HTTP/1.1" 200 25169
+"GET /static/dashboard/img/flags/jo.svg HTTP/1.1" 200 1751
+Not Found: /favicon.ico
+"GET /favicon.ico HTTP/1.1" 404 13167
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"POST /dashboard/products/11/edit/ HTTP/1.1" 302 0
+"GET /dashboard/products/11/ HTTP/1.1" 200 67433
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /dashboard/products/ HTTP/1.1" 200 81615
+Not Found: /media/products/saws/stanley-20-inch-main.jpg
+"GET /media/products/saws/stanley-20-inch-main.jpg HTTP/1.1" 404 12857
+"GET /dashboard/products/24/edit/ HTTP/1.1" 200 63665
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /dashboard/products/24/edit/ HTTP/1.1" 200 63665
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 13278
+"GET /dashboard/products/24/edit/ HTTP/1.1" 200 63665
+"GET /static/dashboard/css/product.css HTTP/1.1" 200 5015
+"GET /static/dashboard/css/flag-icons.css HTTP/1.1" 200 2456
+"GET /static/dashboard/css/dashboard-rtl.css HTTP/1.1" 200 7512
+"GET /static/dashboard/css/custom-arabic.css HTTP/1.1" 200 6374
+"GET /static/dashboard/css/dashboard.css HTTP/1.1" 200 22154
+"GET /static/images/logo.png HTTP/1.1" 200 89401
+"GET /media/avatars/WhatsApp_Image_2025-05-22_at_5.29.34_PM.jpeg HTTP/1.1" 200 79812
+"GET /static/dashboard/js/product.js HTTP/1.1" 200 14700
+"GET /static/dashboard/js/dashboard.js HTTP/1.1" 200 25169
+"GET /static/dashboard/img/flags/jo.svg HTTP/1.1" 200 1751
+Not Found: /favicon.ico
+"GET /favicon.ico HTTP/1.1" 404 13167
+"POST /dashboard/products/24/edit/ HTTP/1.1" 302 0
+"GET /dashboard/products/24/ HTTP/1.1" 200 60755
+"GET /dashboard/products/24/edit/ HTTP/1.1" 200 63697
+"GET /static/dashboard/js/product.js HTTP/1.1" 304 0
+"GET /dashboard/products/24/edit/ HTTP/1.1" 200 63697
+"GET /static/dashboard/js/product.js HTTP/1.1" 304 0
+"GET /dashboard/products/ HTTP/1.1" 200 81615
+"GET /media/products/2025/6/a61a6bca-2991-469d-907a-118aff857e65.jpg HTTP/1.1" 304 0
+Not Found: /media/products/saws/stanley-20-inch-main.jpg
+"GET /media/products/saws/stanley-20-inch-main.jpg HTTP/1.1" 404 12857
+"GET /dashboard/products/11/edit/ HTTP/1.1" 200 67517
+"GET /static/dashboard/js/product.js HTTP/1.1" 304 0
+"POST /dashboard/products/11/edit/ HTTP/1.1" 302 0
+"GET /dashboard/products/11/ HTTP/1.1" 200 67840
+"GET /dashboard/products/11/edit/ HTTP/1.1" 200 67541
+"GET /static/dashboard/js/product.js HTTP/1.1" 304 0
+"POST /dashboard/products/11/edit/ HTTP/1.1" 302 0
+"GET /dashboard/products/11/ HTTP/1.1" 200 67433
+"GET /dashboard/products/11/edit/ HTTP/1.1" 200 67517
+"GET /static/dashboard/js/product.js HTTP/1.1" 304 0
+"GET /dashboard/products/create/ HTTP/1.1" 200 62503
+"GET /static/dashboard/js/product.js HTTP/1.1" 304 0
+"GET /dashboard/products/create/ HTTP/1.1" 200 62503
+"GET /static/dashboard/css/product.css HTTP/1.1" 304 0
+"GET /static/dashboard/css/dashboard.css HTTP/1.1" 304 0
+"GET /static/dashboard/css/flag-icons.css HTTP/1.1" 304 0
+"GET /static/dashboard/css/custom-arabic.css HTTP/1.1" 304 0
+"GET /static/dashboard/css/dashboard-rtl.css HTTP/1.1" 304 0
+"GET /media/avatars/WhatsApp_Image_2025-05-22_at_5.29.34_PM.jpeg HTTP/1.1" 304 0
+"GET /static/dashboard/js/dashboard.js HTTP/1.1" 304 0
+"GET /static/dashboard/js/product.js HTTP/1.1" 200 20540
+"GET /static/dashboard/img/flags/jo.svg HTTP/1.1" 304 0
+Internal Server Error: /dashboard/products/create/
+Traceback (most recent call last):
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/dashboard.py", line 36, in dispatch
+    return super().dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/views/generic/base.py", line 143, in dispatch
+    return handler(request, *args, **kwargs)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py", line 207, in get
+    return render(request, 'dashboard/products/product_form.html', context)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader.py", line 15, in get_template
+    return engine.get_template(template_name)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/backends/django.py", line 79, in get_template
+    return Template(self.engine.get_template(template_name), self)
+                    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/engine.py", line 177, in get_template
+    template, origin = self.find_template(template_name)
+                       ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loaders/base.py", line 28, in get_template
+    return Template(
+        contents,
+    ...<2 lines>...
+        self.engine,
+    )
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 154, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 196, in compile_nodelist
+    nodelist = parser.parse()
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader_tags.py", line 299, in do_extends
+    nodelist = parser.parse()
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/defaulttags.py", line 962, in do_if
+    nodelist = parser.parse(("elif", "else", "endif"))
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/defaulttags.py", line 862, in do_for
+    nodelist_loop = parser.parse(
+        (
+    ...<2 lines>...
+        )
+    )
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 518, in parse
+    raise self.error(token, e)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 516, in parse
+    compiled_result = compile_func(self, token)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/defaulttags.py", line 1540, in do_with
+    nodelist = parser.parse(("endwith",))
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 489, in parse
+    raise self.error(token, e)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 487, in parse
+    filter_expression = self.compile_filter(token.contents)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 609, in compile_filter
+    return FilterExpression(token, self)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 705, in __init__
+    filter_func = parser.find_filter(filter_name)
+  File "/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/venv/lib/python3.13/site-packages/django/template/base.py", line 615, in find_filter
+    raise TemplateSyntaxError("Invalid filter: '%s'" % filter_name)
+django.template.exceptions.TemplateSyntaxError: Invalid filter: 'get_field'
+"GET /dashboard/products/create/ HTTP/1.1" 500 411466
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/templatetags/dashboard_tags.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+"GET /dashboard/products/create/ HTTP/1.1" 200 62022
+"GET /static/dashboard/js/product.js HTTP/1.1" 304 0
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/templatetags/dashboard_tags.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/templatetags/dashboard_tags.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/templatetags/dashboard_tags.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+/Users/mohammadhabahbeh/Desktop/My File/Project/esco_ecommerce/dashboard/views/products.py changed, reloading.
+Watching for file changes with StatReloader
+Products URLs: Using professional search views
+"GET /dashboard/products/create/ HTTP/1.1" 200 62499
+"GET /static/dashboard/js/product.js HTTP/1.1" 304 0
+"GET /dashboard/products/ HTTP/1.1" 200 81615
+"GET /media/products/2025/6/a61a6bca-2991-469d-907a-118aff857e65.jpg HTTP/1.1" 304 0
+"GET /media/products/2025/6/72e95b21-eaf9-48f0-b76c-5e797f196d32.jpg HTTP/1.1" 304 0
+Not Found: /media/products/saws/stanley-20-inch-main.jpg
+"GET /media/products/saws/stanley-20-inch-main.jpg HTTP/1.1" 404 12857
+"GET /dashboard/products/11/edit/ HTTP/1.1" 200 67513
+"GET /dashboard/products/11/edit/ HTTP/1.1" 200 69451
+"GET /static/dashboard/js/product.js HTTP/1.1" 304 0

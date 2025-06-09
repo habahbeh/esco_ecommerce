@@ -10,211 +10,256 @@ from mptt.forms import TreeNodeChoiceField
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, Div, HTML, Row, Column
 from crispy_forms.bootstrap import FormActions, TabHolder, Tab
-
+from django.utils.text import slugify
 import json
+from django.contrib.auth import get_user_model
 
 from products.models import (
     Product, Category, Brand, Tag, ProductVariant, ProductImage, ProductReview,
     ProductAttribute, ProductDiscount, ProductAttributeValue
 )
 
+User = get_user_model()
+
 
 class ProductForm(forms.ModelForm):
-    """نموذج إنشاء وتعديل المنتجات"""
+    """نموذج إنشاء وتحديث المنتج"""
+
+    # حقول إضافية غير موجودة في النموذج الأصلي
+    video_url = forms.URLField(
+        label=_("رابط الفيديو"),
+        required=False,
+        widget=forms.URLInput(attrs={'dir': 'ltr'})
+    )
+
+    has_360_view = forms.BooleanField(
+        label=_("تفعيل العرض ثلاثي الأبعاد (360 درجة)"),
+        required=False
+    )
+
+    specifications_json = forms.CharField(
+        label=_("المواصفات"),
+        widget=forms.Textarea(attrs={'class': 'hidden-field'}),
+        required=False
+    )
+
+    features_json = forms.CharField(
+        label=_("الميزات"),
+        widget=forms.Textarea(attrs={'class': 'hidden-field'}),
+        required=False
+    )
+
+    related_products = forms.ModelMultipleChoiceField(
+        queryset=Product.objects.filter(is_active=True, status='published'),
+        label=_("المنتجات ذات الصلة"),
+        required=False,
+        widget=forms.SelectMultiple(attrs={'class': 'select2'})
+    )
+
+    # إضافة حقل مخفي للمستخدم الذي أنشأ المنتج
+    created_by = forms.ModelChoiceField(
+        queryset=User.objects.all(),
+        required=False,
+        widget=forms.HiddenInput()
+    )
 
     class Meta:
         model = Product
         fields = [
-            'name', 'name_en', 'sku', 'barcode', 'category', 'brand',
-            'short_description', 'description', 'base_price', 'compare_price', 'cost',
-            'stock_quantity', 'stock_status', 'weight', 'length', 'width', 'height',
-            'condition', 'status', 'is_active', 'is_featured', 'is_new', 'is_best_seller',
-            'is_digital', 'requires_shipping', 'tax_rate', 'meta_title', 'meta_description',
-            'meta_keywords', 'tags', 'search_keywords'
+            'name', 'name_en', 'sku', 'barcode', 'category', 'brand', 'tags',
+            'short_description', 'description', 'base_price', 'compare_price',
+            'cost', 'tax_rate', 'tax_class', 'stock_quantity', 'stock_status',
+            'min_stock_level', 'condition', 'weight', 'length', 'width', 'height',
+            'status', 'is_active', 'is_featured', 'is_new', 'is_best_seller',
+            'is_digital', 'requires_shipping', 'allow_reviews',
+            'meta_title', 'meta_description', 'meta_keywords', 'search_keywords'
         ]
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'name_en': forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
-            'sku': forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
+            'sku': forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr', 'required': False}),
             'barcode': forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
-            'category': TreeNodeChoiceField(queryset=Category.objects.all()),
-            'brand': forms.Select(attrs={'class': 'form-select'}),
+            'category': forms.Select(attrs={'class': 'form-select'}),
+            'brand': forms.Select(attrs={'class': 'form-select select2'}),
+            'tags': forms.SelectMultiple(attrs={'class': 'form-select select2'}),
             'short_description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'description': forms.Textarea(attrs={'class': 'form-control rich-text-editor', 'rows': 10}),
-            # 'base_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'base_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'value': '0.00'}),
-            'compare_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'cost': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'stock_quantity': forms.NumberInput(attrs={'class': 'form-control'}),
+            'base_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0.01'}),
+            'compare_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+            'cost': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+            'tax_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'max': '100'}),
+            'tax_class': forms.TextInput(attrs={'class': 'form-control'}),
+            'stock_quantity': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
             'stock_status': forms.Select(attrs={'class': 'form-select'}),
-            'weight': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001'}),
-            'length': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'width': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'height': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'min_stock_level': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
             'condition': forms.Select(attrs={'class': 'form-select'}),
+            'weight': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'min': '0'}),
+            'length': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+            'width': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+            'height': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
             'status': forms.Select(attrs={'class': 'form-select'}),
-            'tax_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'meta_title': forms.TextInput(attrs={'class': 'form-control'}),
-            'meta_description': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
-            'meta_keywords': forms.TextInput(attrs={'class': 'form-control'}),
+            'meta_description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'meta_keywords': forms.TextInput(attrs={'class': 'form-control tagsinput'}),
             'search_keywords': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
-            'tags': forms.SelectMultiple(attrs={'class': 'form-select select2', 'multiple': 'multiple'}),
+        }
+        error_messages = {
+            'name': {
+                'required': _("اسم المنتج مطلوب"),
+                'min_length': _("اسم المنتج يجب أن يكون على الأقل حرفين"),
+            },
+            'category': {
+                'required': _("يجب اختيار فئة للمنتج"),
+            },
+            'base_price': {
+                'required': _("السعر الأساسي مطلوب"),
+                'min_value': _("السعر الأساسي يجب أن يكون أكبر من صفر"),
+            },
+            'description': {
+                'required': _("وصف المنتج مطلوب"),
+                'min_length': _("وصف المنتج يجب أن يكون على الأقل 20 حرفًا"),
+            },
         }
 
-    specifications = forms.CharField(
-        label=_('المواصفات الفنية'),
-        widget=forms.Textarea(attrs={'class': 'form-control json-editor', 'rows': 5}),
-        required=False,
-        help_text=_('أدخل المواصفات الفنية بتنسيق JSON')
-    )
-
-    features = forms.CharField(
-        label=_('الميزات'),
-        widget=forms.Textarea(attrs={'class': 'form-control json-editor', 'rows': 5}),
-        required=False,
-        help_text=_('أدخل ميزات المنتج بتنسيق JSON أو قائمة مفصولة بسطور')
-    )
-
     def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
+        self.fields['sku'].required = True
 
-        # تعبئة حقول JSON من النموذج
-        if self.instance.pk:
-            if self.instance.specifications:
-                self.fields['specifications'].initial = json.dumps(self.instance.specifications, indent=4,
-                                                                   ensure_ascii=False)
+        # إضافة الفئات بشكل متداخل
+        if 'category' in self.fields:
+            categories = Category.objects.all()
+            choices = []
 
-            if self.instance.features:
-                if isinstance(self.instance.features, list):
-                    self.fields['features'].initial = '\n'.join(self.instance.features)
-                else:
-                    self.fields['features'].initial = json.dumps(self.instance.features, indent=4, ensure_ascii=False)
+            for category in categories.filter(parent=None):
+                choices.append((category.id, category.name))
+                for child in category.children.all():
+                    choices.append((child.id, f"— {child.name}"))
+                    for grandchild in child.children.all():
+                        choices.append((grandchild.id, f"—— {grandchild.name}"))
 
-        # تحسين حقول الاختيار
-        self.fields['category'].queryset = Category.objects.filter(is_active=True)
-        self.fields['brand'].queryset = Brand.objects.filter(is_active=True)
-        self.fields['tags'].queryset = Tag.objects.filter(is_active=True)
+            self.fields['category'].choices = [('', _('اختر الفئة...'))] + choices
 
-        # إعداد Crispy Form
-        self.helper = FormHelper()
-        self.helper.form_tag = True
-        self.helper.form_class = 'form-horizontal'
-        self.helper.form_id = 'product-form'
+        # إضافة الصفات
+        self.product_attributes = ProductAttribute.objects.all()
+        for attr in self.product_attributes:
+            field_name = f'attribute_{attr.id}'
+            if attr.attribute_type == 'text':
+                self.fields[field_name] = forms.CharField(label=attr.name, required=False)
+            elif attr.attribute_type == 'number':
+                self.fields[field_name] = forms.DecimalField(label=attr.name, required=False)
+            elif attr.attribute_type == 'boolean':
+                self.fields[field_name] = forms.ChoiceField(
+                    label=attr.name,
+                    choices=[('', _('اختر...')), ('true', _('نعم')), ('false', _('لا'))],
+                    required=False
+                )
+            elif attr.attribute_type == 'select':
+                self.fields[field_name] = forms.ChoiceField(
+                    label=attr.name,
+                    choices=[('', _('اختر...'))] + [(option, option) for option in attr.options],
+                    required=False
+                )
+            elif attr.attribute_type == 'multiselect':
+                self.fields[field_name] = forms.MultipleChoiceField(
+                    label=attr.name,
+                    choices=[(option, option) for option in attr.options],
+                    required=False
+                )
+            elif attr.attribute_type == 'color':
+                self.fields[field_name] = forms.CharField(
+                    label=attr.name,
+                    widget=forms.TextInput(attrs={'type': 'color', 'class': 'form-control form-control-color'}),
+                    required=False
+                )
+            elif attr.attribute_type == 'date':
+                self.fields[field_name] = forms.DateField(
+                    label=attr.name,
+                    widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+                    required=False
+                )
 
-        self.helper.layout = Layout(
-            TabHolder(
-                Tab(_('المعلومات الأساسية'),
-                    Row(
-                        Column('name', css_class='col-md-6'),
-                        Column('name_en', css_class='col-md-6'),
-                    ),
-                    Row(
-                        Column('sku', css_class='col-md-4'),
-                        Column('barcode', css_class='col-md-4'),
-                        Column('status', css_class='col-md-4'),
-                    ),
-                    Row(
-                        Column('category', css_class='col-md-6'),
-                        Column('brand', css_class='col-md-6'),
-                    ),
-                    'short_description',
-                    'description'),
+    def clean_short_description(self):
+        short_description = self.cleaned_data.get('short_description', '')
+        if short_description and len(short_description.strip()) < 10:
+            raise forms.ValidationError(_("الوصف المختصر يجب أن يكون على الأقل 10 أحرف أو تركه فارغًا"))
+        return short_description
 
-                Tab(_('التسعير والمخزون'),
-                    Row(
-                        Column('base_price', css_class='col-md-4'),
-                        Column('compare_price', css_class='col-md-4'),
-                        Column('cost', css_class='col-md-4'),
-                    ),
-                    Row(
-                        Column('stock_quantity', css_class='col-md-6'),
-                        Column('stock_status', css_class='col-md-6'),
-                    ),
-                    Row(
-                        Column('tax_rate', css_class='col-md-6'),
-                        Column('condition', css_class='col-md-6'),
-                    )),
+    def clean(self):
+        cleaned_data = super().clean()
 
-                Tab(_('المواصفات والميزات'),
-                    'specifications',
-                    'features',
-                    Row(
-                        Column('weight', css_class='col-md-3'),
-                        Column('length', css_class='col-md-3'),
-                        Column('width', css_class='col-md-3'),
-                        Column('height', css_class='col-md-3'),
-                    )),
-
-                Tab(_('الإعدادات'),
-                    Row(
-                        Column(
-                            'is_active',
-                            'is_featured',
-                            'is_new',
-                            'is_best_seller',
-                            css_class='col-md-6'
-                        ),
-                        Column(
-                            'is_digital',
-                            'requires_shipping',
-                            css_class='col-md-6'
-                        ),
-                    )),
-
-                Tab(_('SEO والوسوم'),
-                    'meta_title',
-                    'meta_description',
-                    'meta_keywords',
-                    'search_keywords',
-                    'tags'),
-            ),
-
-            FormActions(
-                Submit('submit', _('حفظ'), css_class='btn btn-primary'),
-                HTML('<a href="{% url "dashboard:product_list" %}" class="btn btn-secondary">%s</a>' % _('إلغاء'))
-            )
-        )
-
-    def clean_specifications(self):
-        specs = self.cleaned_data.get('specifications')
-        if not specs:
-            return {}
+        # التحقق من تنسيق JSON
+        try:
+            specs_data = cleaned_data.get('specifications_json', '{}')
+            if specs_data.strip():
+                import json
+                json.loads(specs_data)
+        except:
+            self.add_error('specifications_json', _("تنسيق JSON غير صحيح في حقل المواصفات"))
 
         try:
-            return json.loads(specs)
-        except json.JSONDecodeError:
-            raise ValidationError(_('تنسيق JSON غير صالح للمواصفات الفنية'))
+            features_data = cleaned_data.get('features_json', '[]')
+            if features_data.strip():
+                import json
+                json.loads(features_data)
+        except:
+            self.add_error('features_json', _("تنسيق JSON غير صحيح في حقل الميزات"))
 
-    def clean_features(self):
-        features = self.cleaned_data.get('features')
-        if not features:
-            return []
+        return cleaned_data
 
-        try:
-            # محاولة معالجة كـ JSON
-            return json.loads(features)
-        except json.JSONDecodeError:
-            # معالجة كقائمة مفصولة بسطور
-            return [line.strip() for line in features.split('\n') if line.strip()]
+    def save(self, commit=True, user=None):
+        import json
+        instance = super().save(commit=False)
 
-    def save(self, commit=True):
-        product = super().save(commit=False)
+        # تعيين المستخدم الذي أنشأ المنتج إذا كان منتج جديد
+        if not instance.pk and user:
+            instance.created_by = user
 
-        # تعيين المستخدم الذي أنشأ المنتج
-        if not product.pk and self.user:
-            product.created_by = self.user
+        # إنشاء سلج للمنتجات الجديدة
+        if not instance.pk and not instance.slug:
+            slug = slugify(instance.name, allow_unicode=True)
+            # التحقق من تفرد السلج
+            from uuid import uuid4
+            if Product.objects.filter(slug=slug).exists():
+                slug = f"{slug}-{uuid4().hex[:6]}"
+            instance.slug = slug
 
-        # تعيين حالة النشر
-        if product.status == 'published' and not product.published_at:
-            product.published_at = timezone.now()
+        # إنشاء SKU للمنتجات الجديدة
+        if not instance.pk and not instance.sku:
+            instance.sku = Product().generate_sku()
 
-        # حفظ البيانات
+        # تعيين تاريخ النشر
+        if instance.status == 'published' and not instance.published_at:
+            instance.published_at = timezone.now()
+
+        # تحميل المواصفات والميزات
+        if 'specifications_json' in self.cleaned_data and self.cleaned_data['specifications_json'].strip():
+            instance.specifications = json.loads(self.cleaned_data['specifications_json'])
+
+        if 'features_json' in self.cleaned_data and self.cleaned_data['features_json'].strip():
+            instance.features = json.loads(self.cleaned_data['features_json'])
+
         if commit:
-            product.save()
-            self.save_m2m()  # لحفظ العلاقات مثل الوسوم
+            instance.save()
 
-        return product
+            # حفظ العلاقات
+            self.save_m2m()
+
+            # حفظ المنتجات ذات الصلة
+            if 'related_products' in self.cleaned_data:
+                instance.related_products.set(self.cleaned_data['related_products'])
+
+            # حفظ قيم الصفات
+            for attr in self.product_attributes:
+                field_name = f'attribute_{attr.id}'
+                if field_name in self.cleaned_data and self.cleaned_data[field_name]:
+                    value = self.cleaned_data[field_name]
+                    ProductAttributeValue.objects.update_or_create(
+                        product=instance,
+                        attribute=attr,
+                        defaults={'value': value}
+                    )
+
+        return instance
 
 
 class CategoryForm(forms.ModelForm):
@@ -369,7 +414,7 @@ class ProductVariantForm(forms.ModelForm):
         ]
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'sku': forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
+            'sku': forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr', 'required': False}),
             'base_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'stock_quantity': forms.NumberInput(attrs={'class': 'form-control'}),
             'weight': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001'}),
