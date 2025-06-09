@@ -186,9 +186,16 @@ class ProductFormView(DashboardAccessMixin, View):
             cross_sell_products = product.cross_sell_products.all()
             upsell_products = product.upsell_products.all()
 
-            # تحميل قيم الصفات
+            # تحميل صفات المنتج
+            product_attributes = []
             for attr_value in product.attribute_values.select_related('attribute').all():
                 form.initial[f'attribute_{attr_value.attribute_id}'] = attr_value.value
+                product_attributes.append(attr_value.attribute)
+
+            # تحميل متغيرات المنتج
+            product_variants = product.variants.all().order_by('sort_order')
+            # تحويل المتغيرات إلى JSON لاستخدامها في JavaScript
+            variants_json = self.prepare_variants_json(product_variants)
 
         else:
             product = None
@@ -197,6 +204,9 @@ class ProductFormView(DashboardAccessMixin, View):
             images = []
             cross_sell_products = []
             upsell_products = []
+            product_variants = []
+            variants_json = '[]'
+            product_attributes = []
 
         # تحميل البيانات اللازمة للقالب
         context = {
@@ -206,6 +216,9 @@ class ProductFormView(DashboardAccessMixin, View):
             'images': images,
             'cross_sell_products': cross_sell_products,
             'upsell_products': upsell_products,
+            'product_variants': product_variants,
+            'variants_json': variants_json,
+            'product_attributes': product_attributes,  # إضافة صفات المنتج إلى السياق
             'status_choices': Product.STATUS_CHOICES,
             'stock_status_choices': Product.STOCK_STATUS_CHOICES,
             'condition_choices': Product.CONDITION_CHOICES,
@@ -248,6 +261,12 @@ class ProductFormView(DashboardAccessMixin, View):
                     # تعيين الصورة الجديدة كرئيسية
                     ProductImage.objects.filter(id=primary_image_id).update(is_primary=True)
 
+                # معالجة صفات المنتج
+                self.process_product_attributes(request, product)
+
+                # معالجة متغيرات المنتج
+                self.process_product_variants(request, product)
+
                 # حفظ منتجات البيع المتقاطع إذا تم إرسالها
                 cross_sell_ids = request.POST.getlist('cross_sell_products')
                 if cross_sell_ids:
@@ -278,11 +297,20 @@ class ProductFormView(DashboardAccessMixin, View):
         images = []
         cross_sell_products = []
         upsell_products = []
+        product_variants = []
+        variants_json = '[]'
+        product_attributes = []
 
         if product:
             images = product.images.all().order_by('sort_order')
             cross_sell_products = product.cross_sell_products.all()
             upsell_products = product.upsell_products.all()
+            product_variants = product.variants.all().order_by('sort_order')
+            variants_json = self.prepare_variants_json(product_variants)
+
+            # تحميل صفات المنتج
+            for attr_value in product.attribute_values.select_related('attribute').all():
+                product_attributes.append(attr_value.attribute)
 
         context = {
             'form': form,
@@ -291,12 +319,64 @@ class ProductFormView(DashboardAccessMixin, View):
             'images': images,
             'cross_sell_products': cross_sell_products,
             'upsell_products': upsell_products,
+            'product_variants': product_variants,
+            'variants_json': variants_json,
+            'product_attributes': product_attributes,
             'status_choices': Product.STATUS_CHOICES,
             'stock_status_choices': Product.STOCK_STATUS_CHOICES,
             'condition_choices': Product.CONDITION_CHOICES,
         }
 
         return render(request, 'dashboard/products/product_form.html', context)
+
+    def prepare_variants_json(self, variants):
+        """تحويل متغيرات المنتج إلى تنسيق JSON للاستخدام في JavaScript"""
+        variants_data = []
+        for variant in variants:
+            variant_data = {
+                'id': variant.id,
+                'name': variant.name,
+                'sku': variant.sku,
+                'attributes': variant.attributes,
+                'base_price': float(variant.base_price) if variant.base_price else None,
+                'stock_quantity': variant.stock_quantity,
+                'is_active': variant.is_active,
+                'is_default': variant.is_default,
+                'sort_order': variant.sort_order
+            }
+            variants_data.append(variant_data)
+        return json.dumps(variants_data, ensure_ascii=False)
+
+    def process_product_attributes(self, request, product):
+        """معالجة صفات المنتج من النموذج"""
+        # البحث عن جميع حقول صفات المنتج في النموذج
+        attribute_fields = [field for field in request.POST if field.startswith('attribute_')]
+
+        # حذف جميع القيم القديمة
+        ProductAttributeValue.objects.filter(product=product).delete()
+
+        # إنشاء قيم جديدة
+        for field in attribute_fields:
+            try:
+                # استخراج معرف الصفة من اسم الحقل (attribute_123 -> 123)
+                attribute_id = int(field.split('_')[1])
+                value = request.POST.get(field, '').strip()
+
+                if value:  # تخطي القيم الفارغة
+                    # التحقق من وجود الصفة
+                    try:
+                        attribute = ProductAttribute.objects.get(id=attribute_id)
+
+                        # إنشاء قيمة الصفة
+                        ProductAttributeValue.objects.create(
+                            product=product,
+                            attribute=attribute,
+                            value=value
+                        )
+                    except ProductAttribute.DoesNotExist:
+                        pass  # تجاهل الصفات غير الموجودة
+            except (ValueError, IndexError):
+                pass  # تجاهل الأخطاء في تنسيق اسم الحقل
 
     def process_product_variants(self, request, product):
         """معالجة متغيرات المنتج من النموذج مع منع تكرار الأسماء"""

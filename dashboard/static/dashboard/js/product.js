@@ -33,6 +33,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // تهيئة تبويب التخطي للأخطاء
     setupTabErrorNavigation();
+
+    // إضافة استدعاء لمحرر المتغيرات
+    initProductVariantsEditor();
 });
 
 // وظيفة للتحقق من صحة النموذج
@@ -753,4 +756,444 @@ function setupTabErrorNavigation() {
             });
         });
     }
+}
+
+// إدارة متغيرات المنتج (Variants)
+function initProductVariantsEditor() {
+    console.log("تهيئة محرر متغيرات المنتج");
+
+    // العناصر
+    const variantsContainer = document.getElementById('variants-container');
+    const variantsTableBody = document.getElementById('variants-table-body');
+    const addVariantBtn = document.getElementById('add-variant-btn');
+    const variantsJsonInput = document.getElementById('product_variants_json');
+    const deletedVariantsInput = document.getElementById('deleted_variants_json');
+
+    if (!variantsContainer || !variantsTableBody || !addVariantBtn || !variantsJsonInput || !deletedVariantsInput) {
+        console.log("لم يتم العثور على عناصر متغيرات المنتج", {
+            variantsContainer: !!variantsContainer,
+            variantsTableBody: !!variantsTableBody,
+            addVariantBtn: !!addVariantBtn,
+            variantsJsonInput: !!variantsJsonInput,
+            deletedVariantsInput: !!deletedVariantsInput
+        });
+        return;
+    }
+
+    console.log("تم العثور على عناصر متغيرات المنتج");
+
+    // قائمة المتغيرات
+    let variants = [];
+    let deletedVariants = [];
+
+    // قراءة المتغيرات الحالية
+    try {
+        const variantsJson = variantsJsonInput.value;
+        if (variantsJson) {
+            variants = JSON.parse(variantsJson);
+            console.log("تم تحميل المتغيرات:", variants);
+        }
+    } catch (e) {
+        console.error("خطأ في تحليل متغيرات المنتج:", e);
+        variants = [];
+    }
+
+    // رقم سالب للمتغيرات الجديدة (المؤقتة)
+    let tempVariantId = -1;
+
+    // عرض المتغيرات
+    function renderVariants() {
+        variantsTableBody.innerHTML = '';
+
+        // إذا لم تكن هناك متغيرات، نعرض رسالة
+        if (variants.length === 0) {
+            const row = document.createElement('tr');
+            row.id = 'no-variants-row';
+            row.innerHTML = `
+                <td colspan="6" class="text-center text-muted py-3">
+                    <i class="fa fa-info-circle me-1"></i> لا توجد متغيرات للمنتج. أضف متغيرات باستخدام الزر أعلاه.
+                </td>
+            `;
+            variantsTableBody.appendChild(row);
+            return;
+        }
+
+        // عرض المتغيرات في الجدول
+        variants.forEach((variant, index) => {
+            const row = document.createElement('tr');
+            row.setAttribute('data-variant-id', variant.id || tempVariantId);
+
+            // محتوى الصف
+            row.innerHTML = `
+                <td>${variant.name}</td>
+                <td>${variant.sku || '-'}</td>
+                <td>
+                    ${renderAttributes(variant.attributes)}
+                </td>
+                <td>
+                    <div class="input-group input-group-sm">
+                        <input type="number" class="form-control variant-price" 
+                            value="${variant.base_price !== null ? variant.base_price : ''}" 
+                            placeholder="السعر الأساسي">
+                        <span class="input-group-text">د.ا</span>
+                    </div>
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm variant-stock" 
+                        value="${variant.stock_quantity !== null ? variant.stock_quantity : 0}" min="0">
+                </td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" class="btn btn-primary edit-variant-btn" title="تعديل">
+                            <i class="fa fa-edit"></i>
+                        </button>
+                        <button type="button" class="btn btn-danger delete-variant-btn" title="حذف">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            variantsTableBody.appendChild(row);
+
+            // أحداث التعديل والحذف
+            const editBtn = row.querySelector('.edit-variant-btn');
+            const deleteBtn = row.querySelector('.delete-variant-btn');
+            const priceInput = row.querySelector('.variant-price');
+            const stockInput = row.querySelector('.variant-stock');
+
+            // حدث زر التعديل
+            editBtn.addEventListener('click', () => {
+                editVariant(variant, index);
+            });
+
+            // حدث زر الحذف
+            deleteBtn.addEventListener('click', () => {
+                deleteVariant(variant, index);
+            });
+
+            // تحديث السعر
+            priceInput.addEventListener('change', () => {
+                const newPrice = parseFloat(priceInput.value) || null;
+                variants[index].base_price = newPrice;
+                updateVariantsJson();
+            });
+
+            // تحديث المخزون
+            stockInput.addEventListener('change', () => {
+                const newStock = parseInt(stockInput.value) || 0;
+                variants[index].stock_quantity = newStock;
+                updateVariantsJson();
+            });
+        });
+    }
+
+    // عرض خصائص المتغير
+    function renderAttributes(attributes) {
+        if (!attributes || Object.keys(attributes).length === 0) {
+            return '<span class="text-muted">-</span>';
+        }
+
+        const attributeItems = [];
+        for (const [key, value] of Object.entries(attributes)) {
+            attributeItems.push(`<span class="badge bg-light text-dark">${key}: ${value}</span>`);
+        }
+
+        return attributeItems.join(' ');
+    }
+
+    // إضافة متغير جديد
+    function addVariant() {
+        // فتح مربع حوار إضافة متغير
+        openVariantModal({
+            id: tempVariantId--,
+            name: '',
+            sku: '',
+            attributes: {},
+            base_price: null,
+            stock_quantity: 0,
+            is_active: true,
+            is_default: variants.length === 0, // جعل المتغير الأول افتراضياً
+            sort_order: variants.length
+        }, -1);
+    }
+
+    // تعديل متغير
+    function editVariant(variant, index) {
+        openVariantModal(variant, index);
+    }
+
+    // حذف متغير
+    function deleteVariant(variant, index) {
+        if (confirm('هل أنت متأكد من حذف هذا المتغير؟')) {
+            // إذا كان المتغير مخزناً في قاعدة البيانات، أضفه إلى قائمة المحذوفات
+            if (variant.id > 0) {
+                deletedVariants.push(variant.id);
+                deletedVariantsInput.value = JSON.stringify(deletedVariants);
+            }
+
+            // إزالة المتغير من القائمة
+            variants.splice(index, 1);
+            updateVariantsJson();
+            renderVariants();
+        }
+    }
+
+    // فتح مربع حوار المتغير
+    function openVariantModal(variant, index) {
+        // إنشاء مربع الحوار
+        const modal = document.createElement('div');
+        modal.className = 'modal fade';
+        modal.id = 'variantModal';
+        modal.setAttribute('tabindex', '-1');
+        modal.setAttribute('aria-labelledby', 'variantModalLabel');
+        modal.setAttribute('aria-hidden', 'true');
+
+        modal.innerHTML = `
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="variantModalLabel">
+                            ${index === -1 ? 'إضافة متغير جديد' : 'تعديل المتغير'}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="variant-name" class="form-label">اسم المتغير <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="variant-name" 
+                                    value="${variant.name}" placeholder="مثال: أحمر، كبير، 128GB" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="variant-sku" class="form-label">رقم المتغير (SKU)</label>
+                                <input type="text" class="form-control" id="variant-sku" 
+                                    value="${variant.sku}" placeholder="سيتم إنشاؤه تلقائياً إذا تُرك فارغاً">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="variant-price" class="form-label">السعر</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="variant-price" 
+                                        value="${variant.base_price !== null ? variant.base_price : ''}" 
+                                        placeholder="سعر المتغير (اختياري)">
+                                    <span class="input-group-text">د.ا</span>
+                                </div>
+                                <div class="form-text">اترك فارغاً لاستخدام سعر المنتج الأساسي</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="variant-stock" class="form-label">المخزون</label>
+                                <input type="number" class="form-control" id="variant-stock" 
+                                    value="${variant.stock_quantity}" min="0">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="variant-active" 
+                                        ${variant.is_active ? 'checked' : ''}>
+                                    <label class="form-check-label" for="variant-active">متغير نشط</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="variant-default" 
+                                        ${variant.is_default ? 'checked' : ''}>
+                                    <label class="form-check-label" for="variant-default">متغير افتراضي</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <h6>خصائص المتغير</h6>
+                        <p class="text-muted small">أضف خصائص مثل اللون، الحجم، السعة، إلخ.</p>
+
+                        <div id="variant-attributes">
+                            <!-- ستتم إضافة الخصائص هنا -->
+                        </div>
+
+                        <div class="d-flex mt-2 mb-3">
+                            <div class="flex-grow-1 me-2">
+                                <input type="text" class="form-control" id="attribute-key" placeholder="اسم الخاصية (مثل: اللون)">
+                            </div>
+                            <div class="flex-grow-1 me-2">
+                                <input type="text" class="form-control" id="attribute-value" placeholder="قيمة الخاصية (مثل: أحمر)">
+                            </div>
+                            <div>
+                                <button type="button" id="add-attribute-btn" class="btn btn-secondary">إضافة</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="button" class="btn btn-primary" id="save-variant-btn">حفظ المتغير</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // عرض الخصائص الحالية
+        const variantAttributes = document.getElementById('variant-attributes');
+        function renderVariantAttributes() {
+            variantAttributes.innerHTML = '';
+
+            if (Object.keys(variant.attributes).length === 0) {
+                variantAttributes.innerHTML = '<div class="text-muted">لا توجد خصائص محددة</div>';
+                return;
+            }
+
+            const attrTable = document.createElement('table');
+            attrTable.className = 'table table-sm table-bordered';
+            attrTable.innerHTML = `
+                <thead class="table-light">
+                    <tr>
+                        <th>الخاصية</th>
+                        <th>القيمة</th>
+                        <th width="60"></th>
+                    </tr>
+                </thead>
+                <tbody id="attr-table-body"></tbody>
+            `;
+            variantAttributes.appendChild(attrTable);
+
+            const attrTableBody = document.getElementById('attr-table-body');
+            for (const [key, value] of Object.entries(variant.attributes)) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${key}</td>
+                    <td>${value}</td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-danger delete-attr-btn" data-key="${key}">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </td>
+                `;
+                attrTableBody.appendChild(row);
+
+                // حدث حذف الخاصية
+                row.querySelector('.delete-attr-btn').addEventListener('click', function() {
+                    const key = this.getAttribute('data-key');
+                    delete variant.attributes[key];
+                    renderVariantAttributes();
+                });
+            }
+        }
+
+        renderVariantAttributes();
+
+        // إضافة خاصية جديدة
+        const addAttributeBtn = document.getElementById('add-attribute-btn');
+        const attributeKey = document.getElementById('attribute-key');
+        const attributeValue = document.getElementById('attribute-value');
+
+        addAttributeBtn.addEventListener('click', function() {
+            const key = attributeKey.value.trim();
+            const value = attributeValue.value.trim();
+
+            if (!key) {
+                alert('الرجاء إدخال اسم الخاصية');
+                attributeKey.focus();
+                return;
+            }
+
+            variant.attributes[key] = value;
+            attributeKey.value = '';
+            attributeValue.value = '';
+            attributeKey.focus();
+            renderVariantAttributes();
+        });
+
+        // إضافة الأحداث للحقول
+        attributeKey.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                attributeValue.focus();
+            }
+        });
+
+        attributeValue.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addAttributeBtn.click();
+            }
+        });
+
+        // زر حفظ المتغير
+        const saveVariantBtn = document.getElementById('save-variant-btn');
+        saveVariantBtn.addEventListener('click', function() {
+            const variantName = document.getElementById('variant-name').value.trim();
+            const variantSku = document.getElementById('variant-sku').value.trim();
+            const variantPrice = document.getElementById('variant-price').value.trim();
+            const variantStock = document.getElementById('variant-stock').value.trim();
+            const variantActive = document.getElementById('variant-active').checked;
+            const variantDefault = document.getElementById('variant-default').checked;
+
+            if (!variantName) {
+                alert('الرجاء إدخال اسم المتغير');
+                document.getElementById('variant-name').focus();
+                return;
+            }
+
+            // تحديث بيانات المتغير
+            variant.name = variantName;
+            variant.sku = variantSku;
+            variant.base_price = variantPrice ? parseFloat(variantPrice) : null;
+            variant.stock_quantity = variantStock ? parseInt(variantStock) : 0;
+            variant.is_active = variantActive;
+            variant.is_default = variantDefault;
+
+            // إضافة/تحديث المتغير في القائمة
+            if (index === -1) {
+                variants.push(variant);
+            } else {
+                variants[index] = variant;
+            }
+
+            // إذا تم تعيين هذا المتغير كافتراضي، إلغاء تعيين المتغيرات الأخرى
+            if (variant.is_default) {
+                variants.forEach((v, i) => {
+                    if (i !== index) {
+                        v.is_default = false;
+                    }
+                });
+            }
+
+            // تحديث JSON وإعادة عرض المتغيرات
+            updateVariantsJson();
+            renderVariants();
+
+            // إغلاق مربع الحوار
+            const modalElement = document.getElementById('variantModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalElement);
+            modalInstance.hide();
+
+
+        });
+
+        // عرض مربع الحوار
+        const modalElement = document.getElementById('variantModal');
+        const modalInstance = new bootstrap.Modal(modalElement);
+        modalInstance.show();
+
+        // تنظيف عند إغلاق مربع الحوار
+        modalElement.addEventListener('hidden.bs.modal', function() {
+            document.body.removeChild(modalElement);
+        });
+    }
+
+    // تحديث حقل JSON المخفي
+    function updateVariantsJson() {
+        variantsJsonInput.value = JSON.stringify(variants);
+    }
+
+    // إضافة الأحداث
+    addVariantBtn.addEventListener('click', addVariant);
+
+    // تهيئة العرض الأولي
+    renderVariants();
 }

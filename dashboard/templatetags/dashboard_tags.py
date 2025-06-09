@@ -477,3 +477,9 @@ def get_field(form, field_name):
         return form[field_name]
     except KeyError:
         return None
+
+
+@register.filter
+def get_item(dictionary, key):
+    """استخراج قيمة من قاموس باستخدام مفتاح"""
+    return dictionary.get(key, '')
