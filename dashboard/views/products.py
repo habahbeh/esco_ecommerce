@@ -267,6 +267,7 @@ class ProductFormView(DashboardAccessMixin, View):
                 # معالجة متغيرات المنتج
                 self.process_product_variants(request, product)
 
+
                 # حفظ منتجات البيع المتقاطع إذا تم إرسالها
                 cross_sell_ids = request.POST.getlist('cross_sell_products')
                 if cross_sell_ids:
@@ -352,14 +353,74 @@ class ProductFormView(DashboardAccessMixin, View):
         # البحث عن جميع حقول صفات المنتج في النموذج
         attribute_fields = [field for field in request.POST if field.startswith('attribute_')]
 
-        # حذف جميع القيم القديمة
-        ProductAttributeValue.objects.filter(product=product).delete()
+        # جمع معرفات الخصائص المحذوفة
+        deleted_attributes = []
+        if request.POST.get('deleted_attributes'):
+            try:
+                deleted_attributes = json.loads(request.POST.get('deleted_attributes'))
+            except json.JSONDecodeError:
+                pass
 
-        # إنشاء قيم جديدة
+        # حذف قيم الخصائص المحذوفة
+        if deleted_attributes:
+            ProductAttributeValue.objects.filter(
+                product=product,
+                attribute_id__in=deleted_attributes
+            ).delete()
+
+        # معالجة الخصائص الجديدة
+        new_attribute_fields = [field for field in attribute_fields if field.startswith('attribute_new_')]
+        for field in new_attribute_fields:
+            try:
+                # استخراج معرف الخاصية المؤقت من اسم الحقل (attribute_new_123456789 -> new_123456789)
+                temp_id = field.split('_', 1)[1]
+
+                # الحصول على اسم ونوع الخاصية الجديدة
+                name = request.POST.get(f'new_attribute_name_{temp_id}', '').strip()
+                attr_type = request.POST.get(f'new_attribute_type_{temp_id}', 'text').strip()
+                options = request.POST.get(f'new_attribute_options_{temp_id}', '').strip()
+                value = request.POST.get(field, '').strip()
+
+                if name and value:
+                    # إنشاء خاصية جديدة
+                    options_list = []
+                    if options and (attr_type == 'select' or attr_type == 'multiselect'):
+                        options_list = [opt.strip() for opt in options.split(',') if opt.strip()]
+
+                    # إنشاء سلج فريد للخاصية
+                    slug = slugify(name, allow_unicode=True)
+                    if ProductAttribute.objects.filter(slug=slug).exists():
+                        slug = f"{slug}-{uuid.uuid4().hex[:6]}"
+
+                    # إنشاء الخاصية
+                    attribute = ProductAttribute.objects.create(
+                        name=name,
+                        slug=slug,
+                        attribute_type=attr_type,
+                        options=options_list if options_list else []
+                    )
+
+                    # إنشاء قيمة الخاصية للمنتج
+                    ProductAttributeValue.objects.create(
+                        product=product,
+                        attribute=attribute,
+                        value=value
+                    )
+            except Exception as e:
+                # تسجيل الخطأ ومتابعة المعالجة
+                print(f"خطأ في معالجة الخاصية الجديدة: {str(e)}")
+
+        # معالجة الخصائص الموجودة
         for field in attribute_fields:
+            if field.startswith('attribute_new_'):
+                continue  # تمت معالجة الخصائص الجديدة بالفعل
+
             try:
                 # استخراج معرف الصفة من اسم الحقل (attribute_123 -> 123)
-                attribute_id = int(field.split('_')[1])
+                attribute_id = field.split('_')[1]
+                if attribute_id in deleted_attributes:
+                    continue  # تخطي الخصائص المحذوفة
+
                 value = request.POST.get(field, '').strip()
 
                 if value:  # تخطي القيم الفارغة
@@ -367,11 +428,11 @@ class ProductFormView(DashboardAccessMixin, View):
                     try:
                         attribute = ProductAttribute.objects.get(id=attribute_id)
 
-                        # إنشاء قيمة الصفة
-                        ProductAttributeValue.objects.create(
+                        # إنشاء أو تحديث قيمة الصفة
+                        ProductAttributeValue.objects.update_or_create(
                             product=product,
                             attribute=attribute,
-                            value=value
+                            defaults={'value': value}
                         )
                     except ProductAttribute.DoesNotExist:
                         pass  # تجاهل الصفات غير الموجودة

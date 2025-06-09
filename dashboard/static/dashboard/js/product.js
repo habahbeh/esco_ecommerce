@@ -36,6 +36,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // إضافة استدعاء لمحرر المتغيرات
     initProductVariantsEditor();
+
+    // تهيئة محرر الخصائص الإضافية
+    initAttributesEditor();
 });
 
 // وظيفة للتحقق من صحة النموذج
@@ -1196,4 +1199,138 @@ function initProductVariantsEditor() {
 
     // تهيئة العرض الأولي
     renderVariants();
+}
+
+// تهيئة محرر الخصائص الإضافية
+function initAttributesEditor() {
+    const addAttrBtn = document.getElementById('add-attr-btn');
+    const attrName = document.getElementById('attr-name');
+    const attrType = document.getElementById('attr-type');
+    const attrOptionsContainer = document.getElementById('attr-options-container');
+    const attrOptions = document.getElementById('attr-options');
+    const attributesTableBody = document.getElementById('attributes-table-body');
+    const deletedAttributes = document.getElementById('deleted-attributes');
+
+    // قائمة للخصائص المحذوفة
+    let deletedAttributeIds = [];
+
+    // تغيير عرض حقل الخيارات بناءً على نوع الخاصية
+    if (attrType) {
+        attrType.addEventListener('change', function() {
+            if (this.value === 'select' || this.value === 'multiselect') {
+                attrOptionsContainer.style.display = 'block';
+            } else {
+                attrOptionsContainer.style.display = 'none';
+            }
+        });
+    }
+
+    // إضافة خاصية جديدة
+    if (addAttrBtn && attrName && attrType) {
+        addAttrBtn.addEventListener('click', function() {
+            const name = attrName.value.trim();
+            const type = attrType.value;
+
+            if (!name) {
+                alert('الرجاء إدخال اسم الخاصية');
+                attrName.focus();
+                return;
+            }
+
+            // إنشاء معرف مؤقت للخاصية الجديدة
+            const tempId = 'new_' + new Date().getTime();
+
+            // إنشاء صف جديد
+            const row = document.createElement('tr');
+            row.setAttribute('data-attr-id', tempId);
+
+            // إنشاء محتوى الصف
+            row.innerHTML = `
+                <td>${name}</td>
+                <td><span class="badge bg-secondary">${type}</span></td>
+                <td>
+                    <input type="text" name="attribute_${tempId}" class="form-control form-control-sm">
+                    <input type="hidden" name="new_attribute_name_${tempId}" value="${name}">
+                    <input type="hidden" name="new_attribute_type_${tempId}" value="${type}">
+                    ${type === 'select' || type === 'multiselect' ? 
+                      `<input type="hidden" name="new_attribute_options_${tempId}" value="${attrOptions.value}">` : ''}
+                </td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-danger delete-attr-btn" data-attr-id="${tempId}">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                </td>
+            `;
+
+            // إضافة الصف للجدول
+            const noAttributesRow = document.getElementById('no-attributes-row');
+            if (noAttributesRow) {
+                noAttributesRow.remove();
+            }
+
+            attributesTableBody.appendChild(row);
+
+            // إضافة حدث للزر حذف
+            row.querySelector('.delete-attr-btn').addEventListener('click', function() {
+                const attrId = this.getAttribute('data-attr-id');
+                if (attrId.startsWith('new_')) {
+                    // إذا كانت خاصية جديدة، نحذفها فقط من DOM
+                    row.remove();
+                } else {
+                    // إذا كانت خاصية موجودة، نضيفها لقائمة المحذوفة
+                    deletedAttributeIds.push(attrId);
+                    deletedAttributes.value = JSON.stringify(deletedAttributeIds);
+                    row.remove();
+                }
+
+                // إعادة عرض رسالة "لا توجد خصائص" إذا لم تعد هناك خصائص
+                if (attributesTableBody.children.length === 0) {
+                    const emptyRow = document.createElement('tr');
+                    emptyRow.id = 'no-attributes-row';
+                    emptyRow.innerHTML = `
+                        <td colspan="4" class="text-center text-muted py-3">
+                            <i class="fa fa-info-circle me-1"></i> لا توجد خصائص إضافية للمنتج. أضف خصائص باستخدام النموذج أعلاه.
+                        </td>
+                    `;
+                    attributesTableBody.appendChild(emptyRow);
+                }
+            });
+
+            // إعادة تعيين النموذج
+            attrName.value = '';
+            attrType.value = 'text';
+            attrOptions.value = '';
+            attrOptionsContainer.style.display = 'none';
+            attrName.focus();
+        });
+    }
+
+    // إضافة أحداث للأزرار الموجودة مسبقًا
+    document.querySelectorAll('.delete-attr-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const attrId = this.getAttribute('data-attr-id');
+            const row = this.closest('tr');
+
+            if (confirm('هل أنت متأكد من حذف هذه الخاصية؟')) {
+                // إضافة معرف الخاصية لقائمة المحذوفة
+                deletedAttributeIds.push(attrId);
+                deletedAttributes.value = JSON.stringify(deletedAttributeIds);
+
+                // حذف الصف من الجدول
+                row.remove();
+
+                // إعادة عرض رسالة "لا توجد خصائص" إذا لم تعد هناك خصائص
+                if (attributesTableBody.children.length === 0) {
+                    const emptyRow = document.createElement('tr');
+                    emptyRow.id = 'no-attributes-row';
+                    emptyRow.innerHTML = `
+                        <td colspan="4" class="text-center text-muted py-3">
+                            <i class="fa fa-info-circle me-1"></i> لا توجد خصائص إضافية للمنتج. أضف خصائص باستخدام النموذج أعلاه.
+                        </td>
+                    `;
+                    attributesTableBody.appendChild(emptyRow);
+                }
+            }
+        });
+    });
 }
