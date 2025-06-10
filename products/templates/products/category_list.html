@@ -13,27 +13,17 @@
     <div class="row">
         <!-- شجرة الفئات -->
         <div class="col-md-3 mb-4">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">{% trans "الفئات" %}</h5>
+            <!-- زر فتح الفئات في الشاشات الصغيرة -->
+            <button class="categories-collapse-btn d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#categorySidebar" aria-expanded="false">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-list me-2"></i>
+                    <span>{% trans "فئات المنتجات" %}</span>
                 </div>
-                <div class="card-body p-0">
-                    <div class="category-tree">
-                        <ul id="categoryTree" class="category-tree-list">
+                <i class="fas fa-chevron-down toggle-icon"></i>
+            </button>
 
-                            {% if category_tree %}
-                                {% include 'products/partials/category_tree_items.html' with categories=category_tree %}
-                            {% else %}
-                                <li class="no-categories">
-                                    <div class="no-categories-message p-3 text-muted">
-                                        {% trans "لا توجد فئات متاحة" %}
-                                    </div>
-                                </li>
-                            {% endif %}
-                        </ul>
-                    </div>
-                </div>
-            </div>
+            <!-- شجرة الفئات -->
+            {% include 'products/partials/category_sidebar.html' with show_related_products=False %}
         </div>
 
         <!-- عرض الفئات على شكل شبكة -->
