@@ -61,3 +61,48 @@ function activateCategoryPath() {
         }
     });
 }
+
+// دالة لتهيئة شجرة الفئات
+function initCategoryTree() {
+    // التعامل مع أزرار الفتح والإغلاق
+    document.addEventListener('DOMContentLoaded', function() {
+        // فتح الفئة النشطة وآبائها في شجرة الفئات
+        if (typeof currentCategoryPath !== 'undefined' && currentCategoryPath.length > 0) {
+            currentCategoryPath.forEach(function(categoryId) {
+                const categoryItem = document.querySelector(`.category-item[data-category-id="${categoryId}"]`);
+                if (categoryItem) {
+                    // إضافة الفئة النشطة
+                    const categoryLink = categoryItem.querySelector('.category-link');
+                    if (categoryLink) {
+                        categoryLink.classList.add('active');
+                    }
+
+                    // فتح القائمة الفرعية
+                    let parent = categoryItem.closest('.accordion-collapse');
+                    while (parent) {
+                        if (!parent.classList.contains('show')) {
+                            parent.classList.add('show');
+
+                            // تغيير حالة الزر
+                            const button = document.querySelector(`[data-bs-target="#${parent.id}"]`);
+                            if (button) {
+                                button.classList.remove('collapsed');
+                            }
+                        }
+
+                        // الانتقال للأب التالي
+                        const parentItem = parent.closest('.accordion-item');
+                        if (parentItem) {
+                            parent = parentItem.closest('.accordion-collapse');
+                        } else {
+                            parent = null;
+                        }
+                    }
+                }
+            });
+        }
+    });
+}
+
+// تنفيذ دالة تهيئة شجرة الفئات
+initCategoryTree();

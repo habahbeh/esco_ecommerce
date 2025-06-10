@@ -344,3 +344,128 @@
         margin-bottom: 1.5rem;
     }
 }
+
+/* تصميم شريط الفئات */
+.category-sidebar {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+}
+
+.category-sidebar h5 {
+    margin-bottom: 1rem;
+    font-weight: 600;
+    color: var(--bs-primary);
+    display: flex;
+    align-items: center;
+}
+
+.category-accordion .accordion-item {
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
+}
+
+.category-accordion .accordion-item:first-child {
+    border-top: 0;
+}
+
+.category-accordion .accordion-item:last-child {
+    border-bottom: 0;
+}
+
+.category-accordion .accordion-button {
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    color: #333;
+}
+
+.category-accordion .accordion-button:not(.collapsed) {
+    color: var(--bs-primary);
+    background-color: rgba(var(--bs-primary-rgb), 0.05);
+    box-shadow: none;
+}
+
+.category-accordion .accordion-button:focus {
+    box-shadow: none;
+    border-color: rgba(var(--bs-primary-rgb), 0.25);
+}
+
+.category-accordion .accordion-body {
+    padding: 0.5rem 1rem 0.5rem 2rem;
+}
+
+.category-link {
+    display: block;
+    padding: 0.5rem 0;
+    color: #555;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.category-link:hover, .category-link.active {
+    color: var(--bs-primary);
+    font-weight: 500;
+}
+
+.no-categories-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: #6c757d;
+    text-align: center;
+}
+
+.no-categories-message i {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    opacity: 0.6;
+}
+
+/* زر فتح الفئات في الشاشات الصغيرة */
+.categories-collapse-btn {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+.categories-collapse-btn:hover {
+    background-color: #f8f9fa;
+}
+
+.toggle-icon {
+    transition: transform 0.3s;
+}
+
+@media (max-width: 991px) {
+    .category-sidebar {
+        margin-bottom: 30px;
+        position: relative;
+        top: 0;
+    }
+}
+
+@media (max-width: 767px) {
+    .categories-collapse-btn {
+        display: flex;
+    }
+
+    .category-sidebar {
+        display: none;
+    }
+
+    .category-sidebar.show {
+        display: block;
+    }
+}

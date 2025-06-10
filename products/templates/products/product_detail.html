@@ -568,73 +568,18 @@
          <!-- عمود الفئات -->
             <div class="col-lg-3 order-lg-1 order-2">
                 <!-- زر فتح الفئات في الشاشات الصغيرة -->
-                <button class="categories-collapse-btn d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#categorySidebar" aria-expanded="false">
-    <div class="d-flex align-items-center">
-        <i class="fas fa-list me-2"></i>
-        <span>{% trans "فئات المنتجات" %}</span>
-    </div>
-    <i class="fas fa-chevron-down toggle-icon"></i>
-</button>
+                <button class="categories-collapse-btn d-lg-none" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#categorySidebar" aria-expanded="false">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-list me-2"></i>
+                        <span>{% trans "فئات المنتجات" %}</span>
+                    </div>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </button>
 
                 <!-- شريط الفئات -->
-                <div class="category-sidebar collapse d-lg-block" id="categorySidebar">
-    <div class="card">
-        <div class="card-header bg-white">
-            <h5 class="mb-0 d-flex align-items-center">
-                <i class="fas fa-th-list me-2 text-primary"></i>
-                {% trans "فئات المنتجات" %}
-            </h5>
-        </div>
-        <div class="card-body p-0">
-            <!-- أكورديون الفئات -->
-            <div class="accordion category-accordion" id="categoryAccordion">
-                {% if category_tree %}
-                    {% include 'products/partials/category_tree_items.html' with categories=category_tree %}
-                {% else %}
-                    <div class="accordion-item no-categories">
-                        <div class="no-categories-message">
-                            <i class="fas fa-folder-open"></i>
-                            <p>{% trans "لا توجد فئات متاحة" %}</p>
-                        </div>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
+                    {% include 'products/partials/category_sidebar.html' with show_related_products=True %}
 
-    <!-- منتجات ذات صلة مصغرة -->
-    {% if related_products %}
-    <div class="card mt-4 related-products-mini">
-        <div class="card-header bg-white">
-            <h5 class="mb-0 d-flex align-items-center">
-                <i class="fas fa-exchange-alt me-2 text-primary"></i>
-                {% trans "منتجات مشابهة" %}
-            </h5>
-        </div>
-        <div class="card-body p-0">
-            <div class="list-group list-group-flush">
-                {% for related in related_products|slice:":5" %}
-                    <a href="{{ related.get_absolute_url }}" class="list-group-item list-group-item-action d-flex align-items-center p-3">
-                        <div class="flex-shrink-0 me-3" style="width: 40px; height: 40px;">
-                            {% if related.default_image %}
-                                <img src="{{ related.default_image.image.url }}" alt="{{ related.name }}" class="img-fluid rounded">
-                            {% else %}
-                                <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                    <i class="fas fa-image text-muted"></i>
-                                </div>
-                            {% endif %}
-                        </div>
-                        <div class="flex-grow-1 min-width-0">
-                            <h6 class="mb-0 text-truncate">{{ related.name }}</h6>
-                            <div class="small text-primary fw-bold">{{ related.current_price|floatformat:2 }} {% trans "د.أ" %}</div>
-                        </div>
-                    </a>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-    {% endif %}
-</div>
             </div>
             <!-- القسم الرئيسي للمنتج -->
             <div class="col-lg-9 order-lg-2 order-1">

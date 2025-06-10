@@ -11,36 +11,36 @@
                 {{ product.discount_percentage }}% {% trans "خصم" %}
             </span>
         {% endif %}
-        
+
         {% if product.is_new %}
             <span class="badge bg-success mb-1 d-block">
                 {% trans "جديد" %}
             </span>
         {% endif %}
-        
+
         {% if product.is_featured %}
             <span class="badge bg-warning text-dark mb-1 d-block">
                 {% trans "مميز" %}
             </span>
         {% endif %}
-        
+
         {% if product.is_best_seller %}
             <span class="badge bg-info mb-1 d-block">
                 {% trans "الأكثر مبيعاً" %}
             </span>
         {% endif %}
-        
+
         {% if not product.in_stock %}
             <span class="badge bg-secondary mb-1 d-block">
                 {% trans "نفذ المخزون" %}
             </span>
         {% endif %}
     </div>
-    
+
     <!-- Wishlist Button -->
     <div class="product-wishlist position-absolute top-0 end-0 p-2" style="z-index: 10;">
         {% if user.is_authenticated %}
-            <button class="btn btn-light btn-sm rounded-circle wishlist-btn" 
+            <button class="btn btn-light btn-sm rounded-circle wishlist-btn"
                     data-product-id="{{ product.id }}"
                     data-in-wishlist="{% if product.id in user_wishlist_ids %}true{% else %}false{% endif %}"
                     title="{% trans 'إضافة لقائمة الأمنيات' %}">
@@ -48,33 +48,33 @@
             </button>
         {% endif %}
     </div>
-    
+
     <!-- Product Image -->
     <div class="product-image-wrapper position-relative overflow-hidden">
         <a href="{% url 'products:product_detail' product.slug %}" class="d-block">
             {% if product.images.exists %}
-                <img src="{{ product.images.first.image.url }}" 
-                     class="product-image img-fluid w-100" 
+                <img src="{{ product.images.first.image.url }}"
+                     class="product-image img-fluid w-100"
                      alt="{{ product.name }}"
                      loading="lazy"
                      style="height: 250px; object-fit: contain; background: #f8f9fa;">
             {% else %}
-                <div class="product-image-placeholder d-flex align-items-center justify-content-center bg-light" 
+                <div class="product-image-placeholder d-flex align-items-center justify-content-center bg-light"
                      style="height: 250px;">
                     <i class="fas fa-image fa-3x text-muted"></i>
                 </div>
             {% endif %}
         </a>
-        
+
         <!-- Quick Actions Overlay -->
         <div class="product-overlay position-absolute w-100 h-100 top-0 start-0 d-flex align-items-center justify-content-center opacity-0 transition-all">
             <div class="d-flex gap-2">
-                <button class="btn btn-primary btn-sm quick-view-btn" 
+                <button class="btn btn-primary btn-sm quick-view-btn"
                         data-product-id="{{ product.id }}"
                         title="{% trans 'عرض سريع' %}">
                     <i class="fas fa-eye"></i>
                 </button>
-                <button class="btn btn-secondary btn-sm compare-btn" 
+                <button class="btn btn-secondary btn-sm compare-btn"
                         data-product-id="{{ product.id }}"
                         title="{% trans 'مقارنة' %}">
                     <i class="fas fa-exchange-alt"></i>
@@ -82,7 +82,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Product Info -->
     <div class="product-info p-3 flex-grow-1 d-flex flex-column">
         <!-- Category -->
@@ -91,14 +91,14 @@
                 {{ product.category.name }}
             </a>
         </p>
-        
+
         <!-- Product Name -->
         <h5 class="product-name mb-2">
             <a href="{% url 'products:product_detail' product.slug %}" class="text-decoration-none text-dark">
                 {{ product.name|truncatechars:60 }}
             </a>
         </h5>
-        
+
         <!-- Brand -->
         {% if product.brand %}
             <p class="product-brand text-muted small mb-2">
@@ -106,7 +106,7 @@
                 {{ product.brand.name }}
             </p>
         {% endif %}
-        
+
         <!-- Rating -->
         {% if product.rating %}
             <div class="product-rating mb-2">
@@ -126,7 +126,7 @@
                 </small>
             </div>
         {% endif %}
-        
+
         <!-- Price -->
         <div class="product-price mb-3 mt-auto">
             {% if product.show_price and product.category.show_prices %}
@@ -153,7 +153,7 @@
                 </span>
             {% endif %}
         </div>
-        
+
         <!-- Stock Status -->
         <div class="stock-status mb-3">
             {% if product.in_stock %}
@@ -171,7 +171,7 @@
                 </small>
             {% endif %}
         </div>
-        
+
         <!-- Actions -->
         <div class="product-actions">
             {% if product.in_stock %}
@@ -189,13 +189,13 @@
                     {% trans "غير متوفر" %}
                 </button>
             {% endif %}
-            
+
             <div class="d-flex gap-2">
                 <a href="{% url 'products:product_detail' product.slug %}" class="btn btn-outline-primary flex-fill">
                     {% trans "عرض التفاصيل" %}
                 </a>
                 {% if user.is_authenticated %}
-                    <button class="btn btn-outline-secondary share-product-btn" 
+                    <button class="btn btn-outline-secondary share-product-btn"
                             data-product-url="{% url 'products:product_detail' product.slug %}"
                             data-product-name="{{ product.name }}"
                             title="{% trans 'مشاركة' %}">
@@ -307,7 +307,7 @@ document.addEventListener('DOMContentLoaded', function() {
             toggleWishlist(this);
         });
     });
-    
+
     // Quick view functionality
     document.querySelectorAll('.quick-view-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
@@ -315,7 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
             quickViewProduct(this.dataset.productId);
         });
     });
-    
+
     // Compare functionality
     document.querySelectorAll('.compare-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
@@ -323,7 +323,7 @@ document.addEventListener('DOMContentLoaded', function() {
             addToCompare(this.dataset.productId);
         });
     });
-    
+
     // Share functionality
     document.querySelectorAll('.share-product-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
@@ -331,7 +331,7 @@ document.addEventListener('DOMContentLoaded', function() {
             shareProduct(this.dataset.productUrl, this.dataset.productName);
         });
     });
-    
+
     // Add to cart with AJAX
     document.querySelectorAll('.add-to-cart-form').forEach(form => {
         form.addEventListener('submit', function(e) {
@@ -345,9 +345,9 @@ function toggleWishlist(btn) {
     const productId = btn.dataset.productId;
     const isInWishlist = btn.dataset.inWishlist === 'true';
     const icon = btn.querySelector('i');
-    
+
     btn.disabled = true;
-    
+
     fetch(`/products/wishlist/toggle/${productId}/`, {
         method: 'POST',
         headers: {
@@ -440,10 +440,10 @@ function addToCartAjax(form) {
     const formData = new FormData(form);
     const submitBtn = form.querySelector('button[type="submit"]');
     const originalText = submitBtn.innerHTML;
-    
+
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> {% trans "جاري الإضافة..." %}';
-    
+
     fetch(form.action, {
         method: 'POST',
         body: formData,
@@ -456,12 +456,12 @@ function addToCartAjax(form) {
         if (data.success) {
             showToast(data.message || '{% trans "تمت الإضافة للسلة" %}', 'success');
             updateCartCount(data.cart_count);
-            
+
             // Temporary success state
             submitBtn.innerHTML = '<i class="fas fa-check"></i> {% trans "تمت الإضافة" %}';
             submitBtn.classList.add('btn-success');
             submitBtn.classList.remove('btn-primary');
-            
+
             setTimeout(() => {
                 submitBtn.innerHTML = originalText;
                 submitBtn.classList.remove('btn-success');

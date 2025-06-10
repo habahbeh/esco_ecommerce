@@ -9,7 +9,7 @@
                 <a href="{% url 'products:category_products' category.slug %}" class="category-link-btn" onclick="event.stopPropagation();">
                     <span class="category-name">{{ category.name }}</span>
                 </a>
-                <span class="badge rounded-pill ms-auto {% if category.products_count > 0 %}badge-has-products{% else %}badge-empty{% endif %}">
+                <span class="badge rounded-pill ms-auto {% if category.products_count > 0 %}badge-has-products{% else %}badge-empty{% endif %} text-black">
                     {{ category.products_count }}
                 </span>
             </button>
@@ -25,7 +25,7 @@
         <div class="accordion-item-simple">
             <a href="{% url 'products:category_products' category.slug %}" class="category-link">
                 <span class="category-name">{{ category.name }}</span>
-                <span class="badge rounded-pill ms-auto {% if category.products_count > 0 %}badge-has-products{% else %}badge-empty{% endif %}">
+                <span class="badge rounded-pill ms-auto {% if category.products_count > 0 %}badge-has-products{% else %}badge-empty{% endif %} text-black">
                     {{ category.products_count }}
                 </span>
             </a>

@@ -67,86 +67,7 @@
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
 
-    /* شجرة الفئات */
-    .category-sidebar {
-        position: sticky;
-        top: 100px;
-        background: white;
-        border-radius: 15px;
-        padding: 20px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        max-height: calc(100vh - 120px);
-        overflow-y: auto;
-    }
-
-    .category-sidebar h5 {
-        margin-bottom: 1.5rem;
-        font-weight: 600;
-        color: var(--bs-primary);
-        display: flex;
-        align-items: center;
-    }
-
-    .category-sidebar h5 i {
-        margin-right: 0.5rem;
-    }
-
-    /* تحسين شجرة الفئات */
-    .category-tree {
-        margin-top: 15px;
-    }
-
-    .category-tree-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    .category-item {
-        margin-bottom: 8px;
-    }
-
-    .category-item-content {
-        display: flex;
-        align-items: center;
-        padding: 8px 0;
-        cursor: pointer;
-    }
-
-    .toggle-icon, .no-toggle-icon {
-        margin-right: 8px;
-        width: 20px;
-        text-align: center;
-    }
-
-    .collapse-icon {
-        display: none;
-    }
-
-    .category-link {
-        flex: 1;
-        text-decoration: none;
-        color: #333;
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .category-link:hover {
-        color: var(--bs-primary);
-    }
-
-    .category-link.active {
-        color: var(--bs-primary);
-        font-weight: 700;
-    }
-
-    .subcategory-list {
-        list-style: none;
-        padding-right: 28px;
-        margin-top: 5px;
-    }
+    /* REMOVED: شجرة الفئات styles */
 
     /* فلاتر المنتجات */
     .filters-section {
@@ -263,37 +184,7 @@
     }
 
     /* الشاشات الصغيرة */
-    @media (max-width: 991px) {
-        .category-sidebar {
-            margin-bottom: 30px;
-            position: relative;
-            top: 0;
-        }
-    }
-
-    /* زر فتح الفئات في الشاشات الصغيرة */
-    .categories-collapse-btn {
-        display: none;
-        width: 100%;
-        text-align: right;
-        padding: 12px 15px;
-        background: white;
-        border: 1px solid #ddd;
-        border-radius: 10px;
-        margin-bottom: 20px;
-        font-weight: 500;
-    }
-
     @media (max-width: 767px) {
-        .categories-collapse-btn {
-            display: block;
-        }
-        .category-sidebar {
-            display: none;
-        }
-        .category-sidebar.show {
-            display: block;
-        }
         .page-title-compact {
             font-size: 1.5rem;
         }
@@ -374,122 +265,109 @@
     <div class="container">
         <!-- زر فتح الفئات في الشاشات الصغيرة -->
         <button class="categories-collapse-btn d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#categorySidebar">
-            <i class="fas fa-list me-2"></i>{% trans "عرض الفئات" %}
-            <i class="fas fa-chevron-down float-end mt-1"></i>
+            <div class="d-flex align-items-center">
+                <i class="fas fa-list me-2"></i>
+                <span>{% trans "عرض الفئات" %}</span>
+            </div>
+            <i class="fas fa-chevron-down toggle-icon"></i>
         </button>
 
         <div class="row">
             <!-- عمود شجرة الفئات -->
             <div class="col-lg-3">
-                <div class="category-sidebar" id="categorySidebar">
-                    <h5><i class="fas fa-th-list"></i>{% trans "فئات المنتجات" %}</h5>
+                <!-- شريط الفئات -->
+                {% include 'products/partials/category_sidebar.html' with show_related_products=False %}
 
-                    <!-- شجرة الفئات -->
-                    <div class="category-tree">
-                        <ul id="categoryTree" class="category-tree-list">
-                            {% if category_tree %}
-                                {% include 'products/partials/category_tree_items.html' with categories=category_tree %}
-                            {% else %}
-                                <li class="no-categories">
-                                    <div class="no-categories-message p-3 text-muted">
-                                        {% trans "لا توجد فئات متاحة" %}
-                                    </div>
-                                </li>
-                            {% endif %}
-                        </ul>
-                    </div>
+                <!-- فلاتر المنتجات -->
+                <div class="filters-section">
+                    <h5><i class="fas fa-filter me-2"></i>{% trans "تصفية النتائج" %}</h5>
 
-                    <!-- فلاتر المنتجات -->
-                    <div class="filters-section">
-                        <h5><i class="fas fa-filter"></i>{% trans "تصفية النتائج" %}</h5>
+                    <form action="" method="get" id="filterForm">
+                        <!-- الحفاظ على معايير البحث الحالية -->
+                        {% if request.GET.q %}
+                            <input type="hidden" name="q" value="{{ request.GET.q }}">
+                        {% endif %}
+                        {% if request.GET.sort %}
+                            <input type="hidden" name="sort" value="{{ request.GET.sort }}">
+                        {% endif %}
 
-                        <form action="" method="get" id="filterForm">
-                            <!-- الحفاظ على معايير البحث الحالية -->
-                            {% if request.GET.q %}
-                                <input type="hidden" name="q" value="{{ request.GET.q }}">
-                            {% endif %}
-                            {% if request.GET.sort %}
-                                <input type="hidden" name="sort" value="{{ request.GET.sort }}">
-                            {% endif %}
-
-                            <!-- تصفية حسب السعر -->
-                            <div class="filter-group mb-4">
-                                <div class="filter-heading" data-bs-toggle="collapse" data-bs-target="#priceFilter">
-                                    {% trans "نطاق السعر" %}
-                                    <i class="fas fa-chevron-down"></i>
-                                </div>
-                                <div class="filter-content collapse show" id="priceFilter">
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="mb-3">
-                                                <label class="form-label small">{% trans "من" %}</label>
-                                                <input type="number" name="min_price" class="form-control" placeholder="0" value="{{ request.GET.min_price }}">
-                                            </div>
+                        <!-- تصفية حسب السعر -->
+                        <div class="filter-group mb-4">
+                            <div class="filter-heading" data-bs-toggle="collapse" data-bs-target="#priceFilter">
+                                {% trans "نطاق السعر" %}
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="filter-content collapse show" id="priceFilter">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="mb-3">
+                                            <label class="form-label small">{% trans "من" %}</label>
+                                            <input type="number" name="min_price" class="form-control" placeholder="0" value="{{ request.GET.min_price }}">
                                         </div>
-                                        <div class="col-6">
-                                            <div class="mb-3">
-                                                <label class="form-label small">{% trans "إلى" %}</label>
-                                                <input type="number" name="max_price" class="form-control" placeholder="1000" value="{{ request.GET.max_price }}">
-                                            </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="mb-3">
+                                            <label class="form-label small">{% trans "إلى" %}</label>
+                                            <input type="number" name="max_price" class="form-control" placeholder="1000" value="{{ request.GET.max_price }}">
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            <!-- تصفية حسب العلامة التجارية -->
-                            {% if brands %}
-                            <div class="filter-group mb-4">
-                                <div class="filter-heading" data-bs-toggle="collapse" data-bs-target="#brandFilter">
-                                    {% trans "العلامة التجارية" %}
-                                    <i class="fas fa-chevron-down"></i>
+                        <!-- تصفية حسب العلامة التجارية -->
+                        {% if brands %}
+                        <div class="filter-group mb-4">
+                            <div class="filter-heading" data-bs-toggle="collapse" data-bs-target="#brandFilter">
+                                {% trans "العلامة التجارية" %}
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="filter-content collapse show" id="brandFilter">
+                                {% for brand in brands %}
+                                <div class="filter-option">
+                                    <input type="checkbox" class="filter-checkbox form-check-input" id="brand-{{ brand.id }}" name="brand" value="{{ brand.id }}" {% if brand.id|stringformat:"s" in request.GET.getlist.brand %}checked{% endif %}>
+                                    <label class="form-check-label w-100 d-flex justify-content-between" for="brand-{{ brand.id }}">
+                                        {{ brand.name }}
+                                        <span class="badge bg-light text-dark">{{ brand.product_count }}</span>
+                                    </label>
                                 </div>
-                                <div class="filter-content collapse show" id="brandFilter">
-                                    {% for brand in brands %}
-                                    <div class="filter-option">
-                                        <input type="checkbox" class="filter-checkbox form-check-input" id="brand-{{ brand.id }}" name="brand" value="{{ brand.id }}" {% if brand.id|stringformat:"s" in request.GET.getlist.brand %}checked{% endif %}>
-                                        <label class="form-check-label w-100 d-flex justify-content-between" for="brand-{{ brand.id }}">
-                                            {{ brand.name }}
-                                            <span class="badge bg-light text-dark">{{ brand.product_count }}</span>
-                                        </label>
-                                    </div>
-                                    {% endfor %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- تصفية حسب المميزات -->
+                        <div class="filter-group mb-4">
+                            <div class="filter-heading" data-bs-toggle="collapse" data-bs-target="#featuresFilter">
+                                {% trans "المميزات" %}
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="filter-content collapse show" id="featuresFilter">
+                                <div class="filter-option">
+                                    <input type="checkbox" class="filter-checkbox form-check-input" id="feature-discount" name="on_sale" value="1" {% if request.GET.on_sale %}checked{% endif %}>
+                                    <label class="form-check-label" for="feature-discount">
+                                        {% trans "منتجات بخصم" %}
+                                    </label>
+                                </div>
+                                <div class="filter-option">
+                                    <input type="checkbox" class="filter-checkbox form-check-input" id="feature-new" name="is_new" value="1" {% if request.GET.is_new %}checked{% endif %}>
+                                    <label class="form-check-label" for="feature-new">
+                                        {% trans "منتجات جديدة" %}
+                                    </label>
+                                </div>
+                                <div class="filter-option">
+                                    <input type="checkbox" class="filter-checkbox form-check-input" id="feature-stock" name="in_stock" value="1" {% if request.GET.in_stock %}checked{% endif %}>
+                                    <label class="form-check-label" for="feature-stock">
+                                        {% trans "متوفر في المخزون" %}
+                                    </label>
                                 </div>
                             </div>
-                            {% endif %}
+                        </div>
 
-                            <!-- تصفية حسب المميزات -->
-                            <div class="filter-group mb-4">
-                                <div class="filter-heading" data-bs-toggle="collapse" data-bs-target="#featuresFilter">
-                                    {% trans "المميزات" %}
-                                    <i class="fas fa-chevron-down"></i>
-                                </div>
-                                <div class="filter-content collapse show" id="featuresFilter">
-                                    <div class="filter-option">
-                                        <input type="checkbox" class="filter-checkbox form-check-input" id="feature-discount" name="on_sale" value="1" {% if request.GET.on_sale %}checked{% endif %}>
-                                        <label class="form-check-label" for="feature-discount">
-                                            {% trans "منتجات بخصم" %}
-                                        </label>
-                                    </div>
-                                    <div class="filter-option">
-                                        <input type="checkbox" class="filter-checkbox form-check-input" id="feature-new" name="is_new" value="1" {% if request.GET.is_new %}checked{% endif %}>
-                                        <label class="form-check-label" for="feature-new">
-                                            {% trans "منتجات جديدة" %}
-                                        </label>
-                                    </div>
-                                    <div class="filter-option">
-                                        <input type="checkbox" class="filter-checkbox form-check-input" id="feature-stock" name="in_stock" value="1" {% if request.GET.in_stock %}checked{% endif %}>
-                                        <label class="form-check-label" for="feature-stock">
-                                            {% trans "متوفر في المخزون" %}
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <button type="submit" class="btn btn-primary w-100">
-                                <i class="fas fa-filter me-2"></i>{% trans "تطبيق الفلاتر" %}
-                            </button>
-                        </form>
-                    </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-filter me-2"></i>{% trans "تطبيق الفلاتر" %}
+                        </button>
+                    </form>
                 </div>
             </div>
 
@@ -620,9 +498,6 @@
             document.getElementById('sortForm').submit();
         });
 
-        // تمكين شجرة الفئات
-        initCategoryTree();
-
         // تمكين التبديل للفلاتر في الشاشات الصغيرة
         const filterHeadings = document.querySelectorAll('.filter-heading');
         filterHeadings.forEach(heading => {
@@ -636,72 +511,5 @@
             });
         });
     });
-
-    // دالة لتهيئة شجرة الفئات
-    function initCategoryTree() {
-        const toggleIcons = document.querySelectorAll('.toggle-icon');
-        toggleIcons.forEach(icon => {
-            icon.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-
-                const listItem = this.closest('.category-item');
-                const subList = listItem.querySelector('.subcategory-list');
-
-                if (subList) {
-                    if (subList.style.display === 'none' || !subList.style.display) {
-                        subList.style.display = 'block';
-                        this.querySelector('.expand-icon').style.display = 'none';
-                        this.querySelector('.collapse-icon').style.display = 'inline';
-                    } else {
-                        subList.style.display = 'none';
-                        this.querySelector('.expand-icon').style.display = 'inline';
-                        this.querySelector('.collapse-icon').style.display = 'none';
-                    }
-                }
-            });
-        });
-
-        // فتح الفئات في المسار الحالي
-        if (currentCategoryPath && currentCategoryPath.length > 0) {
-            currentCategoryPath.forEach(categoryId => {
-                const categoryItem = document.querySelector(`.category-item[data-category-id="${categoryId}"]`);
-                if (categoryItem) {
-                    // تحديد الفئة النشطة
-                    const categoryLink = categoryItem.querySelector('.category-link');
-                    if (categoryLink) {
-                        categoryLink.classList.add('active');
-                    }
-
-                    // فتح القائمة الفرعية
-                    const subList = categoryItem.querySelector('.subcategory-list');
-                    const toggleIcon = categoryItem.querySelector('.toggle-icon');
-
-                    if (subList && toggleIcon) {
-                        subList.style.display = 'block';
-                        toggleIcon.querySelector('.expand-icon').style.display = 'none';
-                        toggleIcon.querySelector('.collapse-icon').style.display = 'inline';
-                    }
-
-                    // فتح الفئة الأم إذا كانت موجودة
-                    let parent = categoryItem.closest('.subcategory-list');
-                    while (parent) {
-                        parent.style.display = 'block';
-                        const parentItem = parent.closest('.category-item');
-                        if (parentItem) {
-                            const parentToggle = parentItem.querySelector('.toggle-icon');
-                            if (parentToggle) {
-                                parentToggle.querySelector('.expand-icon').style.display = 'none';
-                                parentToggle.querySelector('.collapse-icon').style.display = 'inline';
-                            }
-                            parent = parentItem.closest('.subcategory-list');
-                        } else {
-                            break;
-                        }
-                    }
-                }
-            });
-        }
-    }
 </script>
 {% endblock %}
