@@ -32,18 +32,21 @@ from .base_views import (
 )
 
 from .product_views import (
-    # Main product views
+    # عروض التصنيفات (كانت سابقاً في category_views.py)
+    CategoryListView,
+
+    # عروض المنتجات الأساسية
     ProductListView,
     ProductDetailView,
 
-    # Specialized product views
+    # عروض المنتجات المتخصصة
     SpecialOffersView,
     TagProductsView,
     BrandProductsView,
     NewProductsView,
     FeaturedProductsView,
     BestSellersView,
-    ProductVariantDetailView,
+    ProductVariantDetailView
 )
 
 from .api_views import (
@@ -152,10 +155,7 @@ from .utils import (
     PerformanceMonitor,
 )
 
-from .category_views import (
-    CategoryListView,
-    CategoryDetailView,
-)
+
 
 # Version info
 __version__ = '1.0.0'
