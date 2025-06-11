@@ -26,7 +26,8 @@ class SiteSettings(models.Model):
         ('#e53935', _('أحمر')),  # Red
         ('#fb8c00', _('برتقالي')),  # Orange
         ('#6d4c41', _('بني')),  # Brown
-        ('#2c5282', _('ازرق غامق')),  # Brown
+        # ('#2c5282', _('ازرق غامق')),  # Brown
+        ('#0357b5', _('ازرق غامق')),  # Brown
     ]
 
     primary_color = models.CharField(

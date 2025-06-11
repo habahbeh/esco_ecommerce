@@ -1,11 +1,12 @@
 # File: products/views/product_views.py
 """
-Product-specific views
-Handles product listing, detail, and related functionality
+Product and Category views
+Handles product and category listings, details, and related functionality
 """
 
 from typing import Optional, Dict, Any
-from django.shortcuts import get_object_or_404
+from django.shortcuts import render, get_object_or_404
+from django.views.generic import DetailView, ListView
 from django.db.models import Q, Avg, Count, Min, Max, Prefetch
 from django.utils.translation import gettext as _
 from django.http import Http404
@@ -13,10 +14,115 @@ import logging
 
 from .base_views import BaseProductListView, BaseProductDetailView
 from ..models import Product, Category, Brand, ProductImage, Tag
-from .category_views import CategoryListView
 
 logger = logging.getLogger(__name__)
 
+
+# =============================================
+# ============ عروض التصنيفات ===============
+# =============================================
+
+class CategoryListView(ListView):
+    """
+    عرض قائمة الفئات مع دعم لشجرة الفئات
+    """
+    model = Category
+    template_name = 'products/category_list.html'
+    context_object_name = 'categories'
+
+    def get_queryset(self):
+        """الحصول على الفئات الرئيسية مع عدد المنتجات"""
+        return Category.objects.filter(
+            parent=None,
+            is_active=True
+        ).annotate(
+            total_products=Count(
+                'products',
+                filter=Q(products__is_active=True, products__status='published')
+            ) + Count(
+                'children__products',
+                filter=Q(children__products__is_active=True, children__products__status='published')
+            )
+        ).order_by('sort_order', 'name')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # إضافة جميع الفئات للشجرة (بما في ذلك الفئات الفرعية)
+        context['all_categories'] = Category.objects.filter(
+            is_active=True
+        ).select_related('parent')
+
+        # بناء هيكل الشجرة للفئات
+        context['category_tree'] = self.build_category_tree()
+
+        # الفئات المميزة
+        context['featured_categories'] = Category.objects.filter(
+            is_featured=True,
+            is_active=True
+        ).order_by('sort_order')[:6]
+
+        context['title'] = _('جميع الفئات')
+        return context
+
+    def build_category_tree(self):
+        """بناء هيكل الشجرة للفئات"""
+        # الحصول على جميع الفئات النشطة مع حساب عدد المنتجات المباشرة
+        all_categories = Category.objects.filter(
+            is_active=True
+        ).select_related('parent').annotate(
+            direct_products_count=Count(
+                'products',
+                filter=Q(products__is_active=True, products__status='published')
+            )
+        ).order_by('sort_order', 'name')
+
+        # بناء قاموس للفئات الفرعية
+        children_map = {}
+        for category in all_categories:
+            parent_id = category.parent_id if category.parent_id else None
+            if parent_id not in children_map:
+                children_map[parent_id] = []
+            children_map[parent_id].append(category)
+
+        # بناء شجرة الفئات بشكل تكراري وحساب إجمالي المنتجات
+        def build_tree(parent_id=None):
+            if parent_id not in children_map:
+                return [], 0  # ترجع قائمة فارغة وعدد منتجات 0
+
+            result = []
+            total_products_in_subtree = 0  # إجمالي المنتجات في الشجرة الفرعية
+
+            for category in children_map[parent_id]:
+                # التحقق من وجود أطفال وحساب المنتجات في الفئات الفرعية
+                children, children_products_count = build_tree(category.id)
+
+                # حساب إجمالي المنتجات = المنتجات المباشرة + منتجات الفئات الفرعية
+                total_category_products = category.direct_products_count + children_products_count
+
+                # إضافة عدد منتجات هذه الفئة إلى المجموع الكلي للشجرة الفرعية
+                total_products_in_subtree += total_category_products
+
+                result.append({
+                    'id': category.id,
+                    'name': category.name,
+                    'slug': category.slug,
+                    'children': children,
+                    'products_count': total_category_products,  # العدد الإجمالي للمنتجات
+                    'has_children': bool(children)
+                })
+
+            return result, total_products_in_subtree
+
+        # بناء الشجرة بدءاً من الفئات الرئيسية
+        tree, _ = build_tree()
+
+        return tree
+
+
+# =============================================
+# ============= عروض المنتجات ===============
+# =============================================
 
 class ProductListView(BaseProductListView):
     """
@@ -95,7 +201,7 @@ class ProductListView(BaseProductListView):
         # Get total products count
         context['products_count'] = self.get_queryset().count()
 
-        # Get category tree using the category_views.py implementation
+        # Get category tree using the CategoryListView implementation
         category_view = CategoryListView()
         category_view.request = self.request
         context['category_tree'] = category_view.build_category_tree()

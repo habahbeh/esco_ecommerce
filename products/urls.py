@@ -6,8 +6,9 @@ Updated URLs configuration for products app
 from django.urls import path
 from django.http import JsonResponse
 
-# Import product views
+# Import product views (بعد دمج category_views.py في product_views.py)
 from .views.product_views import (
+    CategoryListView,  # الآن يتم استيرادها من product_views.py بدلاً من category_views.py
     ProductListView,
     ProductDetailView,
     SpecialOffersView,
@@ -44,6 +45,7 @@ try:
     SEARCH_VIEWS_AVAILABLE = True
 except ImportError:
     SEARCH_VIEWS_AVAILABLE = False
+
 
 app_name = 'products'
 
@@ -113,7 +115,7 @@ urlpatterns = [
     path('', ProductListView.as_view(), name='product_list'),
 
     # قوائم المنتجات الخاصة
-    path('categories/', ProductListView.as_view(), name='category_list'),  # تغيير من CategoryListView إلى ProductListView
+    path('categories/', CategoryListView.as_view(), name='category_list'),  # تم تحديثها لاستخدام CategoryListView من product_views.py
     path('category/<slug:category_slug>/', ProductListView.as_view(), name='category_products'),
     path('featured/', FeaturedProductsView.as_view(), name='featured_products'),
     path('new/', NewProductsView.as_view(), name='new_products'),
