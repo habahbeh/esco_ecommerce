@@ -32,6 +32,7 @@ from django.http import HttpResponseRedirect, Http404
 from django.contrib.sites.shortcuts import get_current_site
 from django.db.models import Q
 from django import forms
+from django.http import HttpResponseRedirect, Http404, JsonResponse
 
 from .models import User, UserProfile, UserAddress, UserActivity, Role
 from .forms import (
@@ -346,6 +347,94 @@ class CustomPasswordResetCompleteView(PasswordResetCompleteView):
     template_name = 'accounts/password_reset_complete.html'
 
 
+# class LoginView(View):
+#     """
+#     عرض تسجيل الدخول - يتيح للمستخدمين تسجيل الدخول
+#     Login view - allows users to log in
+#     """
+#     template_name = 'accounts/login.html'
+#
+#     @method_decorator(sensitive_post_parameters())
+#     @method_decorator(csrf_protect)
+#     def dispatch(self, request, *args, **kwargs):
+#         # إذا كان المستخدم مسجل الدخول بالفعل، قم بتحويله إلى الصفحة الرئيسية
+#         # If the user is already logged in, redirect to home page
+#         if request.user.is_authenticated:
+#             return redirect('core:home')
+#
+#         return super().dispatch(request, *args, **kwargs)
+#
+#     def get(self, request):
+#         form = CustomAuthenticationForm()
+#         return render(request, self.template_name, {'form': form})
+#
+#     def post(self, request):
+#         form = CustomAuthenticationForm(request, data=request.POST)
+#
+#         if form.is_valid():
+#             username = form.cleaned_data.get('username')
+#             password = form.cleaned_data.get('password')
+#             remember_me = form.cleaned_data.get('remember_me')
+#
+#             # محاولة تسجيل الدخول باستخدام اسم المستخدم أولاً
+#             user = authenticate(username=username, password=password)
+#
+#             # إذا فشل، حاول استخدام البريد الإلكتروني
+#             if user is None:
+#                 try:
+#                     user_obj = User.objects.get(email=username)
+#                     user = authenticate(username=user_obj.username, password=password)
+#                 except User.DoesNotExist:
+#                     user = None
+#
+#             if user is not None:
+#                 # التحقق مما إذا كان المستخدم نشطًا
+#                 if not user.is_active:
+#                     messages.error(request, _('حسابك غير نشط. يرجى الاتصال بالإدارة.'))
+#                     return render(request, self.template_name, {'form': form})
+#
+#                 # التحقق مما إذا كان البريد الإلكتروني موثقًا
+#                 if not user.is_verified:
+#                     messages.warning(request, _('يرجى تفعيل حسابك أولاً. تحقق من بريدك الإلكتروني.'))
+#                     return redirect('accounts:resend_verification')
+#
+#                 # تسجيل الدخول
+#                 login(request, user)
+#
+#                 # ضبط مدة صلاحية الجلسة إذا تم تحديد "تذكرني"
+#                 if not remember_me:
+#                     request.session.set_expiry(0)  # تنتهي عند إغلاق المتصفح
+#                 else:
+#                     # تعيين فترة أطول (30 يومًا)
+#                     request.session.set_expiry(60 * 60 * 24 * 30)
+#
+#                 # إنشاء سجل نشاط
+#                 UserActivity.objects.create(
+#                     user=user,
+#                     activity_type='login',
+#                     description=_('تسجيل الدخول'),
+#                     ip_address=request.META.get('REMOTE_ADDR')
+#                 )
+#
+#                 # التحقق مما إذا كان هناك عنوان URL للتحويل إليه
+#                 next_url = request.GET.get('next')
+#                 if next_url:
+#                     return redirect(next_url)
+#
+#                 # توجيه المستخدمين المشرفين إلى لوحة التحكم
+#                 if user.is_staff or user.is_superuser:
+#                     return redirect('dashboard:index')
+#
+#                 return redirect('core:home')
+#             else:
+#                 messages.error(request, _('اسم المستخدم أو كلمة المرور غير صحيحة'))
+#         else:
+#             for field, errors in form.errors.items():
+#                 for error in errors:
+#                     messages.error(request, error)
+#
+#         return render(request, self.template_name, {'form': form})
+
 class LoginView(View):
     """
     عرض تسجيل الدخول - يتيح للمستخدمين تسجيل الدخول
@@ -392,10 +481,23 @@ class LoginView(View):
                     messages.error(request, _('حسابك غير نشط. يرجى الاتصال بالإدارة.'))
                     return render(request, self.template_name, {'form': form})
 
-                # التحقق مما إذا كان البريد الإلكتروني موثقًا
+                # تعديل: السماح بتسجيل الدخول حتى لو كان البريد الإلكتروني غير موثق
+                # اختياري: تفعيل المستخدم تلقائياً إذا لم يكن مفعلاً
                 if not user.is_verified:
-                    messages.warning(request, _('يرجى تفعيل حسابك أولاً. تحقق من بريدك الإلكتروني.'))
-                    return redirect('accounts:resend_verification')
+                    user.is_verified = True
+                    user.verification_token = None
+                    user.verification_token_expires = None
+                    user.save(update_fields=['is_verified', 'verification_token', 'verification_token_expires'])
+
+                    # إنشاء سجل نشاط
+                    UserActivity.objects.create(
+                        user=user,
+                        activity_type='email_verified',
+                        description=_('تم تفعيل البريد الإلكتروني تلقائياً عند تسجيل الدخول'),
+                        ip_address=request.META.get('REMOTE_ADDR')
+                    )
+
+                    messages.success(request, _('تم تفعيل حسابك تلقائياً.'))
 
                 # تسجيل الدخول
                 login(request, user)
@@ -422,7 +524,8 @@ class LoginView(View):
 
                 # توجيه المستخدمين المشرفين إلى لوحة التحكم
                 if user.is_staff or user.is_superuser:
-                    return redirect('dashboard:index')
+                    # return redirect('dashboard:index')
+                    return redirect('core:home')
 
                 return redirect('core:home')
             else:
@@ -433,7 +536,6 @@ class LoginView(View):
                     messages.error(request, error)
 
         return render(request, self.template_name, {'form': form})
-
 
 class LogoutView(View):
     """

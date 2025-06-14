@@ -842,14 +842,14 @@
         <div class="carousel-inner">
             <div class="carousel-item active">
                 <div class="hero-slide">
-                    <img src="{% static 'images/1.png' %}" class="hero-bg" alt="Industrial Equipment">
+                    <img src="{% static 'images/1.jpeg' %}" class="hero-bg" alt="Industrial Equipment">
                     <div class="container">
                         <div class="hero-content">
                             <p class="hero-subtitle">{% trans "الجودة التي تثق بها" %}</p>
                             <h1 class="hero-title">{% trans "معدات صناعية متطورة" %}</h1>
                             <p class="hero-description">{% trans "نوفر أفضل الحلول الصناعية من أرقى العلامات التجارية العالمية" %}</p>
                             <div class="hero-buttons">
-                                <a href="{% url 'products:category_list' %}" class="btn hero-btn hero-btn-primary">
+                                <a href="{% url 'products:product_list' %}" class="btn hero-btn hero-btn-primary">
                                     {% trans "تسوق الآن" %}
                                 </a>
                                 <a href="{% url 'core:contact' %}" class="btn hero-btn hero-btn-outline">
@@ -863,7 +863,7 @@
 
             <div class="carousel-item">
                 <div class="hero-slide">
-                    <img src="{% static 'images/2.png' %}" class="hero-bg" alt="Power Generators">
+                    <img src="{% static 'images/2.jpeg' %}" class="hero-bg" alt="Power Generators">
                     <div class="container">
                         <div class="hero-content">
                             <p class="hero-subtitle">{% trans "حلول طاقة موثوقة" %}</p>
@@ -884,10 +884,73 @@
 
             <div class="carousel-item">
                 <div class="hero-slide">
-                    <img src="{% static 'images/4.jpg' %}" class="hero-bg" alt="Technical Support">
+                    <img src="{% static 'images/3.jpeg' %}" class="hero-bg" alt="Technical Support">
                     <div class="container">
                         <div class="hero-content">
                             <p class="hero-subtitle">{% trans "دعم فني متخصص" %}</p>
+                            <h1 class="hero-title">{% trans "خبراء في خدمتك دائماً" %}</h1>
+                            <p class="hero-description">{% trans "فريق من المهندسين المتخصصين لتقديم أفضل الحلول والدعم الفني" %}</p>
+                            <div class="hero-buttons">
+                                <a href="{% url 'core:contact' %}" class="btn hero-btn hero-btn-primary">
+                                    {% trans "تواصل معنا" %}
+                                </a>
+                                <a href="#" class="btn hero-btn hero-btn-outline">
+                                    {% trans "طلب استشارة" %}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="carousel-item">
+                <div class="hero-slide">
+                    <img src="{% static 'images/4.jpeg' %}" class="hero-bg" alt="Technical Support">
+                    <div class="container">
+                        <div class="hero-content">
+                            <p class="hero-subtitle">{% trans "اسعار تنافسية" %}</p>
+                            <h1 class="hero-title">{% trans "خبراء في خدمتك دائماً" %}</h1>
+                            <p class="hero-description">{% trans "فريق من المهندسين المتخصصين لتقديم أفضل الحلول والدعم الفني" %}</p>
+                            <div class="hero-buttons">
+                                <a href="{% url 'core:contact' %}" class="btn hero-btn hero-btn-primary">
+                                    {% trans "تواصل معنا" %}
+                                </a>
+                                <a href="#" class="btn hero-btn hero-btn-outline">
+                                    {% trans "طلب استشارة" %}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="carousel-item">
+                <div class="hero-slide">
+                    <img src="{% static 'images/5.jpeg' %}" class="hero-bg" alt="Technical Support">
+                    <div class="container">
+                        <div class="hero-content">
+                            <p class="hero-subtitle">{% trans "توصيل سريع" %}</p>
+                            <h1 class="hero-title">{% trans "خبراء في خدمتك دائماً" %}</h1>
+                            <p class="hero-description">{% trans "فريق من المهندسين المتخصصين لتقديم أفضل الحلول والدعم الفني" %}</p>
+                            <div class="hero-buttons">
+                                <a href="{% url 'core:contact' %}" class="btn hero-btn hero-btn-primary">
+                                    {% trans "تواصل معنا" %}
+                                </a>
+                                <a href="#" class="btn hero-btn hero-btn-outline">
+                                    {% trans "طلب استشارة" %}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="carousel-item">
+                <div class="hero-slide">
+                    <img src="{% static 'images/6.jpeg' %}" class="hero-bg" alt="Technical Support">
+                    <div class="container">
+                        <div class="hero-content">
+                            <p class="hero-subtitle">{% trans "جودة مضمونة" %}</p>
                             <h1 class="hero-title">{% trans "خبراء في خدمتك دائماً" %}</h1>
                             <p class="hero-description">{% trans "فريق من المهندسين المتخصصين لتقديم أفضل الحلول والدعم الفني" %}</p>
                             <div class="hero-buttons">
@@ -1011,8 +1074,8 @@
         </div>
 
         <div class="text-center mt-5">
-            <a href="{% url 'products:category_list' %}" class="btn btn-primary btn-lg">
-                {% trans "جميع الفئات" %} <i class="fas fa-th-large ms-2"></i>
+            <a href="{% url 'products:product_list' %}" class="btn btn-primary btn-lg">
+                {% trans "المنتجات" %} <i class="fas fa-th-large ms-2"></i>
             </a>
         </div>
     </div>
@@ -1106,7 +1169,7 @@
         </div>
 
         <div class="text-center mt-5">
-            <a href="{% url 'products:category_list' %}" class="btn btn-outline-primary btn-lg">
+            <a href="{% url 'products:product_list' %}" class="btn btn-outline-primary btn-lg">
                 {% trans "عرض جميع المنتجات" %} <i class="fas fa-arrow-right ms-2"></i>
             </a>
         </div>

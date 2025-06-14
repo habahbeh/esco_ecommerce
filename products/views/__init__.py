@@ -274,7 +274,7 @@ __all__ = [
 product_list = ProductListView.as_view()
 product_detail = ProductDetailView.as_view()
 category_list = CategoryListView.as_view()
-category_detail = CategoryDetailView.as_view()
+# category_detail = CategoryDetailView.as_view()
 search_results = SearchView.as_view()
 advanced_search = AdvancedSearchView.as_view()
 special_offers = SpecialOffersView.as_view()
@@ -287,7 +287,7 @@ VIEW_MAPPINGS = {
     'product_list': ProductListView,
     'product_detail': ProductDetailView,
     'category_list': CategoryListView,
-    'category_detail': CategoryDetailView,
+    # 'category_detail': CategoryDetailView,
     'search': SearchView,
     'advanced_search': AdvancedSearchView,
     'special_offers': SpecialOffersView,

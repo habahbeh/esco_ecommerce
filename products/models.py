@@ -1499,18 +1499,57 @@ class ProductImage(TimeStampedModel):
         return f"{self.product.name} - Image {self.pk}"
 
     def save(self, *args, **kwargs):
-        # Ensure only one primary image per product
-        if self.is_primary:
-            ProductImage.objects.filter(
-                product=self.product,
-                is_primary=True
-            ).exclude(pk=self.pk).update(is_primary=False)
-
+        """
+        تعديل دالة الحفظ لتغيير حجم الصور تلقائيًا
+        Override save method to automatically resize images
+        """
+        # حفظ النموذج أولاً للحصول على الملف الأصلي
+        # Save the model first to get the original file
         super().save(*args, **kwargs)
 
-        # Generate image variants
+        # تغيير حجم الصورة الرئيسية إلى 280×200
+        # Resize main image to 280x200
+        if self.image:
+            self.resize_image(self.image, (280, 200))
+
+        # إنشاء النسخة المصغرة (اختياري - يمكنك ضبط الحجم حسب الحاجة)
+        # Create thumbnail (optional - you can adjust the size as needed)
         if self.image and not self.image_thumbnail:
-            self.generate_thumbnails()
+            # استخدام نفس الملف المعاد تحجيمه للنسخة المصغرة
+            # Use the same resized file for thumbnail
+            self.image_thumbnail.name = self.image.name.replace('.', '_thumbnail.')
+            self.image_thumbnail = self.image
+
+        # إنشاء النسخة المتوسطة (اختياري - يمكنك ضبط الحجم حسب الحاجة)
+        # Create medium version (optional - you can adjust the size as needed)
+        if self.image and not self.image_medium:
+            # استخدام نفس الملف المعاد تحجيمه للنسخة المتوسطة
+            # Use the same resized file for medium version
+            self.image_medium.name = self.image.name.replace('.', '_medium.')
+            self.image_medium = self.image
+
+        # حفظ النموذج مرة أخرى بدون الدخول في حلقة لانهائية
+        # Save the model again without triggering an infinite loop
+        super().save(update_fields=['image', 'image_thumbnail', 'image_medium'])
+
+    def resize_image(self, image_field, size):
+        """
+        دالة مساعدة لتغيير حجم الصورة
+        Helper function to resize an image
+        """
+        img = Image.open(image_field.path)
+
+        # تغيير الحجم مع الحفاظ على النسبة
+        # Resize while maintaining aspect ratio
+        img.thumbnail(size)
+
+        # للحصول على صورة بالضبط 280×200 (قد يؤدي إلى اقتصاص)
+        # For exact 280x200 (may crop the image)
+        # img = img.resize(size, Image.LANCZOS)
+
+        # حفظ الصورة بنفس المسار
+        # Save the image at the same path
+        img.save(image_field.path, quality=90, optimize=True)
 
     def generate_thumbnails(self):
         """Generate thumbnail and medium size images"""

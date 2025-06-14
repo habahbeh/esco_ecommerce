@@ -1,0 +1,26 @@
+<!-- checkout/templates/checkout/coming_soon.html -->
+{% extends 'core/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "الدفع قادم قريباً" %} | ESCO{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="text-center py-5">
+        <div class="mb-4">
+            <i class="fas fa-clock fa-5x text-primary"></i>
+        </div>
+        <h1 class="display-4 mb-4">{% trans "صفحة الدفع قادمة قريباً" %}</h1>
+        <p class="lead mb-4">{% trans "نعمل على تجهيز نظام الدفع الإلكتروني. سيكون متاحاً قريباً!" %}</p>
+        <div class="d-flex justify-content-center gap-3 mt-4">
+            <a href="{% url 'cart:cart_detail' %}" class="btn btn-outline-primary">
+                <i class="fas fa-shopping-cart me-2"></i>{% trans "العودة إلى السلة" %}
+            </a>
+            <a href="{% url 'products:product_list' %}" class="btn btn-primary">
+                <i class="fas fa-arrow-left me-2"></i>{% trans "مواصلة التسوق" %}
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
