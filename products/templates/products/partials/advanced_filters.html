@@ -1,0 +1,857 @@
+{% load i18n %}
+
+<div class="advanced-filters-container">
+    <div class="filters-header d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">
+            <i class="fas fa-sliders-h me-2"></i>{% trans "تصفية المنتجات" %}
+        </h5>
+        <button type="button" class="btn btn-sm btn-outline-secondary clear-filters-btn">
+            <i class="fas fa-times-circle me-1"></i>{% trans "مسح الكل" %}
+        </button>
+    </div>
+
+    <form id="advancedFilterForm" method="get" action="">
+        <!-- الحفاظ على معايير البحث الحالية -->
+        {% if request.GET.q %}
+            <input type="hidden" name="q" value="{{ request.GET.q }}">
+        {% endif %}
+        {% if request.GET.sort %}
+            <input type="hidden" name="sort" value="{{ request.GET.sort }}">
+        {% endif %}
+
+        <!-- نطاق السعر مع شريط تمرير -->
+        <div class="filter-card mb-3">
+            <div class="filter-card-header" data-bs-toggle="collapse" data-bs-target="#priceFilterContent">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-tags me-2"></i>{% trans "نطاق السعر" %}
+                    </h6>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+            </div>
+            <div class="filter-card-body collapse show" id="priceFilterContent">
+                <div class="price-slider-container">
+                    <div class="price-range-slider" id="priceRangeSlider"></div>
+                    <div class="price-inputs row mt-3">
+                        <div class="col-6">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">{% trans "من" %}</span>
+                                <input type="number" class="form-control" name="min_price" id="minPrice" value="{{ request.GET.min_price|default:0 }}" min="0">
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">{% trans "إلى" %}</span>
+                                <input type="number" class="form-control" name="max_price" id="maxPrice" value="{{ request.GET.max_price|default:1000 }}" min="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="price-quick-filters mt-3">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <button type="button" class="btn btn-sm btn-outline-primary w-100 price-preset" data-min="0" data-max="50">
+                                    {% trans "أقل من" %} 50 {% trans "د.أ" %}
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button type="button" class="btn btn-sm btn-outline-primary w-100 price-preset" data-min="50" data-max="100">
+                                    50 - 100 {% trans "د.أ" %}
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button type="button" class="btn btn-sm btn-outline-primary w-100 price-preset" data-min="100" data-max="200">
+                                    100 - 200 {% trans "د.أ" %}
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button type="button" class="btn btn-sm btn-outline-primary w-100 price-preset" data-min="200" data-max="">
+                                    {% trans "أكثر من" %} 200 {% trans "د.أ" %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- العلامات التجارية مع بحث -->
+        {% if brands %}
+        <div class="filter-card mb-3">
+            <div class="filter-card-header" data-bs-toggle="collapse" data-bs-target="#brandFilterContent">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-copyright me-2"></i>{% trans "العلامة التجارية" %}
+                    </h6>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+            </div>
+            <div class="filter-card-body collapse show" id="brandFilterContent">
+                <div class="input-group input-group-sm mb-2">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" class="form-control brand-search" placeholder="{% trans 'بحث في العلامات التجارية' %}">
+                </div>
+                <div class="scrollable-filter-list">
+                    {% for brand in brands %}
+                    <div class="form-check d-flex justify-content-between align-items-center brand-item">
+                        <div>
+                            <input class="form-check-input" type="checkbox" name="brand" value="{{ brand.id }}" id="brand-{{ brand.id }}" {% if brand.id|stringformat:"s" in request.GET.getlist.brand %}checked{% endif %}>
+                            <label class="form-check-label" for="brand-{{ brand.id }}">
+                                {{ brand.name }}
+                            </label>
+                        </div>
+                        <span class="badge bg-light text-dark">{{ brand.product_count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- الفئات -->
+        {% if category_filters %}
+        <div class="filter-card mb-3">
+            <div class="filter-card-header" data-bs-toggle="collapse" data-bs-target="#categoryFilterContent">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-folder me-2"></i>{% trans "الفئات" %}
+                    </h6>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+            </div>
+            <div class="filter-card-body collapse show" id="categoryFilterContent">
+                <div class="input-group input-group-sm mb-2">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" class="form-control category-search" placeholder="{% trans 'بحث في الفئات' %}">
+                </div>
+                <div class="scrollable-filter-list">
+                    {% for category in category_filters %}
+                    <div class="form-check d-flex justify-content-between align-items-center category-item">
+                        <div>
+                            <input class="form-check-input" type="checkbox" name="category" value="{{ category.id }}" id="category-{{ category.id }}" {% if category.id|stringformat:"s" in request.GET.getlist.category %}checked{% endif %}>
+                            <label class="form-check-label" for="category-{{ category.id }}">
+                                {{ category.name }}
+                            </label>
+                        </div>
+                        <span class="badge bg-light text-dark">{{ category.products_count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- خصائص المنتج (المميزات) -->
+        <div class="filter-card mb-3">
+            <div class="filter-card-header" data-bs-toggle="collapse" data-bs-target="#featuresFilterContent">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-star me-2"></i>{% trans "المميزات" %}
+                    </h6>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+            </div>
+            <div class="filter-card-body collapse show" id="featuresFilterContent">
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="form-check feature-check-card">
+                            <input class="form-check-input" type="checkbox" name="on_sale" value="1" id="feature-discount" {% if request.GET.on_sale %}checked{% endif %}>
+                            <label class="form-check-label w-100" for="feature-discount">
+                                <i class="fas fa-percent text-danger"></i>
+                                <span>{% trans "منتجات بخصم" %}</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="form-check feature-check-card">
+                            <input class="form-check-input" type="checkbox" name="is_new" value="1" id="feature-new" {% if request.GET.is_new %}checked{% endif %}>
+                            <label class="form-check-label w-100" for="feature-new">
+                                <i class="fas fa-bolt text-warning"></i>
+                                <span>{% trans "منتجات جديدة" %}</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="form-check feature-check-card">
+                            <input class="form-check-input" type="checkbox" name="in_stock" value="1" id="feature-stock" {% if request.GET.in_stock %}checked{% endif %}>
+                            <label class="form-check-label w-100" for="feature-stock">
+                                <i class="fas fa-box-open text-success"></i>
+                                <span>{% trans "متوفر بالمخزون" %}</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="form-check feature-check-card">
+                            <input class="form-check-input" type="checkbox" name="is_featured" value="1" id="feature-featured" {% if request.GET.is_featured %}checked{% endif %}>
+                            <label class="form-check-label w-100" for="feature-featured">
+                                <i class="fas fa-award text-primary"></i>
+                                <span>{% trans "منتجات مميزة" %}</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- التقييم -->
+        <div class="filter-card mb-3">
+            <div class="filter-card-header" data-bs-toggle="collapse" data-bs-target="#ratingFilterContent">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-star-half-alt me-2"></i>{% trans "التقييم" %}
+                    </h6>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+            </div>
+            <div class="filter-card-body collapse show" id="ratingFilterContent">
+                <div class="rating-filters">
+                    {% for i in "54321" %}
+                    <div class="form-check rating-filter-item">
+                        <input class="form-check-input" type="radio" name="min_rating" value="{{ i }}" id="rating-{{ i }}" {% if request.GET.min_rating == i %}checked{% endif %}>
+                        <label class="form-check-label d-flex align-items-center" for="rating-{{ i }}">
+                            <div class="star-rating">
+                                {% for star in "12345" %}
+                                    {% if star|add:0 <= i|add:0 %}
+                                        <i class="fas fa-star text-warning"></i>
+                                    {% else %}
+                                        <i class="far fa-star text-warning"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <span class="ms-2">{% trans "أو أعلى" %}</span>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- الفلاتر النشطة -->
+        <div class="active-filters mb-3" id="activeFilters">
+            {% if request.GET.min_price or request.GET.max_price or request.GET.brand or request.GET.category or request.GET.on_sale or request.GET.is_new or request.GET.in_stock or request.GET.min_rating or request.GET.is_featured %}
+            <h6 class="mb-2">{% trans "الفلاتر النشطة" %}</h6>
+            <div class="active-filters-list">
+                {% if request.GET.min_price or request.GET.max_price %}
+                    <span class="active-filter-badge">
+                        <span>{% trans "السعر" %}: {{ request.GET.min_price|default:"0" }} - {{ request.GET.max_price|default:"∞" }} {% trans "د.أ" %}</span>
+                        <button type="button" class="remove-filter" data-filter="price">×</button>
+                    </span>
+                {% endif %}
+
+                {% for brand_id in request.GET.getlist.brand %}
+                    {% for brand in brands %}
+                        {% if brand.id|stringformat:"s" == brand_id %}
+                        <span class="active-filter-badge">
+                            <span>{% trans "العلامة" %}: {{ brand.name }}</span>
+                            <button type="button" class="remove-filter" data-filter="brand" data-value="{{ brand_id }}">×</button>
+                        </span>
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+
+                {% if request.GET.on_sale %}
+                    <span class="active-filter-badge">
+                        <span>{% trans "منتجات بخصم" %}</span>
+                        <button type="button" class="remove-filter" data-filter="on_sale">×</button>
+                    </span>
+                {% endif %}
+
+                {% if request.GET.is_new %}
+                    <span class="active-filter-badge">
+                        <span>{% trans "منتجات جديدة" %}</span>
+                        <button type="button" class="remove-filter" data-filter="is_new">×</button>
+                    </span>
+                {% endif %}
+
+                {% if request.GET.in_stock %}
+                    <span class="active-filter-badge">
+                        <span>{% trans "متوفر بالمخزون" %}</span>
+                        <button type="button" class="remove-filter" data-filter="in_stock">×</button>
+                    </span>
+                {% endif %}
+
+                {% if request.GET.is_featured %}
+                    <span class="active-filter-badge">
+                        <span>{% trans "منتجات مميزة" %}</span>
+                        <button type="button" class="remove-filter" data-filter="is_featured">×</button>
+                    </span>
+                {% endif %}
+
+                {% if request.GET.min_rating %}
+                    <span class="active-filter-badge">
+                        <span>{% trans "التقييم" %}: {{ request.GET.min_rating }}+ ⭐</span>
+                        <button type="button" class="remove-filter" data-filter="min_rating">×</button>
+                    </span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="filter-actions mb-3">
+            <button type="submit" class="btn btn-primary w-100 mb-2">
+                <i class="fas fa-filter me-2"></i>{% trans "تطبيق الفلاتر" %}
+            </button>
+            <button type="button" class="btn btn-outline-secondary w-100 toggle-filter-sidebar d-lg-none">
+                <i class="fas fa-times me-2"></i>{% trans "إغلاق" %}
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+/* أنماط خاصة بالفلاتر المتطورة */
+.advanced-filters-container {
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    padding: 20px;
+}
+
+.filters-header h5 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.filter-card {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.filter-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.filter-card-header {
+    padding: 12px 15px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.filter-card-header:hover {
+    background-color: #f1f3f5;
+}
+
+.filter-card-header h6 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.filter-card-body {
+    padding: 15px;
+    border-top: 1px solid #e9ecef;
+}
+
+.toggle-icon {
+    transition: transform 0.3s ease;
+    font-size: 0.8rem;
+}
+
+.filter-card-header[aria-expanded="true"] .toggle-icon {
+    transform: rotate(180deg);
+}
+
+/* قائمة الفلاتر القابلة للتمرير */
+.scrollable-filter-list {
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.scrollable-filter-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.scrollable-filter-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.scrollable-filter-list::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+
+.scrollable-filter-list::-webkit-scrollbar-thumb:hover {
+    background: #aaa;
+}
+
+/* شريط تمرير السعر */
+.price-range-slider {
+    height: 6px;
+    margin: 10px 0;
+    position: relative;
+}
+
+.price-range-slider .noUi-connect {
+    background: var(--bs-primary);
+}
+
+.price-range-slider .noUi-handle {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid var(--bs-primary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    top: -7px;
+    right: -9px;
+    cursor: pointer;
+}
+
+.price-range-slider .noUi-handle:before,
+.price-range-slider .noUi-handle:after {
+    display: none;
+}
+
+/* الفلاتر النشطة */
+.active-filters-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.active-filter-badge {
+    display: inline-flex;
+    align-items: center;
+    background-color: #e9f0ff;
+    color: var(--bs-primary);
+    border-radius: 50px;
+    padding: 5px 12px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.remove-filter {
+    background: none;
+    border: none;
+    color: #777;
+    font-size: 1rem;
+    margin-left: 5px;
+    padding: 0 5px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.remove-filter:hover {
+    color: var(--bs-danger);
+}
+
+/* بطاقات المميزات */
+.feature-check-card {
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 10px;
+    transition: all 0.2s ease;
+    margin-bottom: 0;
+}
+
+.feature-check-card:hover {
+    border-color: var(--bs-primary);
+    background-color: #f8f9ff;
+}
+
+.feature-check-card label {
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 5px;
+}
+
+.feature-check-card i {
+    font-size: 1rem;
+}
+
+.feature-check-card span {
+    font-size: 0.85rem;
+    display: block;
+}
+
+.feature-check-card input:checked + label {
+    color: var(--bs-primary);
+}
+
+/* تقييمات النجوم */
+.rating-filter-item {
+    margin-bottom: 8px;
+}
+
+.star-rating {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+/* للشاشات الصغيرة */
+@media (max-width: 991.98px) {
+    .advanced-filters-container {
+        padding: 15px;
+    }
+
+    .filters-sidebar-container {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 100%;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1050;
+        display: none;
+    }
+
+    .filters-sidebar-container.active {
+        display: block;
+    }
+
+    .advanced-filters-container {
+        height: 100%;
+        width: 320px;
+        max-width: 90%;
+        margin-right: 0;
+        margin-left: auto;
+        overflow-y: auto;
+        border-radius: 0;
+        animation: slideInRight 0.3s ease;
+    }
+
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+        }
+        to {
+            transform: translateX(0);
+        }
+    }
+}
+
+/* الحالة الثابتة للفلاتر */
+@media (min-width: 992px) {
+    .filters-sidebar-sticky {
+        position: sticky;
+        top: 20px;
+    }
+}
+</style>
+
+
+{% block extra_js %}
+<script>
+// Advanced Filters JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    // تهيئة شريط تمرير نطاق السعر (noUiSlider)
+    initPriceRangeSlider();
+
+    // تهيئة البحث في الفلاتر
+    initFilterSearch();
+
+    // تهيئة الفلاتر النشطة
+    initActiveFilters();
+
+    // تهيئة حدث مسح جميع الفلاتر
+    initClearFilters();
+
+    // تهيئة التبديل التلقائي للفلاتر
+    initAutoApplyFilters();
+
+    // تهيئة فتح/إغلاق الفلاتر في الشاشات الصغيرة
+    initMobileFiltersToggle();
+
+    // تهيئة أزرار نطاق السعر السريعة
+    initPricePresetButtons();
+});
+
+/**
+ * تهيئة شريط تمرير نطاق السعر باستخدام noUiSlider
+ */
+function initPriceRangeSlider() {
+    const priceSlider = document.getElementById('priceRangeSlider');
+
+    if (!priceSlider || typeof noUiSlider === 'undefined') return;
+
+    const minPriceInput = document.getElementById('minPrice');
+    const maxPriceInput = document.getElementById('maxPrice');
+
+    // الحصول على القيم الحالية من الفورم
+    const minPrice = parseInt(minPriceInput.value) || 0;
+    const maxPrice = parseInt(maxPriceInput.value) || 1000;
+
+    // تهيئة شريط التمرير
+    noUiSlider.create(priceSlider, {
+        start: [minPrice, maxPrice],
+        connect: true,
+        step: 5,
+        range: {
+            'min': 0,
+            'max': 1000
+        },
+        format: {
+            to: value => Math.round(value),
+            from: value => Math.round(value)
+        }
+    });
+
+    // تحديث حقول الإدخال عند تحريك شريط التمرير
+    priceSlider.noUiSlider.on('update', function(values, handle) {
+        if (handle === 0) {
+            minPriceInput.value = values[0];
+        } else {
+            maxPriceInput.value = values[1];
+        }
+    });
+
+    // تحديث شريط التمرير عند تغيير قيم حقول الإدخال
+    minPriceInput.addEventListener('change', function() {
+        priceSlider.noUiSlider.set([this.value, null]);
+    });
+
+    maxPriceInput.addEventListener('change', function() {
+        priceSlider.noUiSlider.set([null, this.value]);
+    });
+}
+
+/**
+ * تهيئة وظيفة البحث في قوائم الفلاتر (العلامات التجارية والفئات)
+ */
+function initFilterSearch() {
+    // البحث في العلامات التجارية
+    const brandSearch = document.querySelector('.brand-search');
+    if (brandSearch) {
+        brandSearch.addEventListener('input', function() {
+            filterListItems(this.value, '.brand-item');
+        });
+    }
+
+    // البحث في الفئات
+    const categorySearch = document.querySelector('.category-search');
+    if (categorySearch) {
+        categorySearch.addEventListener('input', function() {
+            filterListItems(this.value, '.category-item');
+        });
+    }
+}
+
+/**
+ * فلترة عناصر القائمة بناءً على نص البحث
+ */
+function filterListItems(searchText, itemSelector) {
+    const items = document.querySelectorAll(itemSelector);
+    const searchLower = searchText.toLowerCase();
+
+    items.forEach(item => {
+        const text = item.querySelector('label').textContent.toLowerCase();
+        if (text.includes(searchLower)) {
+            item.style.display = '';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+/**
+ * تهيئة أزرار إزالة الفلاتر النشطة
+ */
+function initActiveFilters() {
+    document.querySelectorAll('.remove-filter').forEach(button => {
+        button.addEventListener('click', function() {
+            const filter = this.dataset.filter;
+            const value = this.dataset.value;
+
+            removeFilter(filter, value);
+        });
+    });
+}
+
+/**
+ * إزالة فلتر معين وإعادة تحميل الصفحة
+ */
+function removeFilter(filter, value) {
+    const form = document.getElementById('advancedFilterForm');
+
+    if (filter === 'price') {
+        // إزالة فلتر السعر
+        const minPrice = form.querySelector('[name="min_price"]');
+        const maxPrice = form.querySelector('[name="max_price"]');
+
+        if (minPrice) minPrice.value = '';
+        if (maxPrice) maxPrice.value = '';
+    } else if (value) {
+        // إزالة فلتر بقيمة محددة (مثل علامة تجارية معينة)
+        const inputs = form.querySelectorAll(`[name="${filter}"][value="${value}"]`);
+        inputs.forEach(input => {
+            input.checked = false;
+        });
+    } else {
+        // إزالة فلتر بسيط (مثل الفلترات الثنائية)
+        const input = form.querySelector(`[name="${filter}"]`);
+        if (input) {
+            if (input.type === 'checkbox') {
+                input.checked = false;
+            } else if (input.type === 'radio') {
+                input.checked = false;
+            } else {
+                input.value = '';
+            }
+        }
+    }
+
+    // تقديم النموذج لتحديث النتائج
+    form.submit();
+}
+
+/**
+ * تهيئة زر مسح جميع الفلاتر
+ */
+function initClearFilters() {
+    const clearButton = document.querySelector('.clear-filters-btn');
+    if (clearButton) {
+        clearButton.addEventListener('click', function() {
+            clearAllFilters();
+        });
+    }
+}
+
+/**
+ * مسح جميع الفلاتر والعودة إلى الصفحة الأساسية
+ */
+function clearAllFilters() {
+    // الحصول على الرابط الأساسي بدون معلمات
+    const baseUrl = window.location.pathname;
+
+    // الحفاظ على معلمات معينة مثل البحث والترتيب
+    const urlParams = new URLSearchParams(window.location.search);
+    const newParams = new URLSearchParams();
+
+    // الاحتفاظ بمعلمات البحث والترتيب فقط
+    if (urlParams.has('q')) {
+        newParams.set('q', urlParams.get('q'));
+    }
+
+    if (urlParams.has('sort')) {
+        newParams.set('sort', urlParams.get('sort'));
+    }
+
+    // إعادة تحميل الصفحة مع المعلمات المحفوظة فقط
+    const newUrl = baseUrl + (newParams.toString() ? '?' + newParams.toString() : '');
+    window.location.href = newUrl;
+}
+
+/**
+ * تطبيق الفلاتر تلقائيًا عند تغيير أي فلتر
+ */
+function initAutoApplyFilters() {
+    const autoSubmitElements = document.querySelectorAll(
+        '#advancedFilterForm input[type="checkbox"], ' +
+        '#advancedFilterForm input[type="radio"]'
+    );
+
+    autoSubmitElements.forEach(element => {
+        element.addEventListener('change', function() {
+            // يمكن تفعيل التقديم التلقائي إذا أردت
+            // document.getElementById('advancedFilterForm').submit();
+
+            // أو إظهار زر التطبيق بتأثير لفت الانتباه
+            const applyButton = document.querySelector('#advancedFilterForm button[type="submit"]');
+            if (applyButton) {
+                applyButton.classList.add('btn-pulse');
+                setTimeout(() => {
+                    applyButton.classList.remove('btn-pulse');
+                }, 1500);
+            }
+        });
+    });
+}
+
+/**
+ * تهيئة أزرار فتح/إغلاق الفلاتر في الشاشات الصغيرة
+ */
+function initMobileFiltersToggle() {
+    // زر فتح الفلاتر
+    const openFilterBtn = document.querySelector('.open-filter-sidebar');
+    if (openFilterBtn) {
+        openFilterBtn.addEventListener('click', function() {
+            document.querySelector('.filters-sidebar-container').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+    }
+
+    // زر إغلاق الفلاتر
+    const closeFilterBtn = document.querySelector('.toggle-filter-sidebar');
+    if (closeFilterBtn) {
+        closeFilterBtn.addEventListener('click', function() {
+            document.querySelector('.filters-sidebar-container').classList.remove('active');
+            document.body.style.overflow = '';
+        });
+    }
+
+    // إغلاق عند النقر خارج منطقة الفلاتر
+    const filterContainer = document.querySelector('.filters-sidebar-container');
+    if (filterContainer) {
+        filterContainer.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+    }
+}
+
+/**
+ * تهيئة أزرار نطاق السعر السريعة
+ */
+function initPricePresetButtons() {
+    document.querySelectorAll('.price-preset').forEach(button => {
+        button.addEventListener('click', function() {
+            const minPrice = this.dataset.min;
+            const maxPrice = this.dataset.max;
+
+            const minInput = document.getElementById('minPrice');
+            const maxInput = document.getElementById('maxPrice');
+
+            if (minInput) minInput.value = minPrice;
+            if (maxInput) maxInput.value = maxPrice;
+
+            // تحديث شريط التمرير إذا كان موجودًا
+            const priceSlider = document.getElementById('priceRangeSlider');
+            if (priceSlider && priceSlider.noUiSlider) {
+                priceSlider.noUiSlider.set([minPrice, maxPrice || 1000]);
+            }
+        });
+    });
+}
+
+/**
+ * إضافة تأثير نبض للزر
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes btn-pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(var(--bs-primary-rgb), 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(var(--bs-primary-rgb), 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(var(--bs-primary-rgb), 0);
+            }
+        }
+
+        .btn-pulse {
+            animation: btn-pulse 1.5s cubic-bezier(0.66, 0, 0, 1);
+        }
+    `;
+    document.head.appendChild(style);
+});
+</script>
+{% endblock %}

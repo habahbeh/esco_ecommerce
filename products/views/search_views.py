@@ -68,7 +68,7 @@ class SearchMixin:
                     Q(name__icontains=term) |
                     Q(name_en__icontains=term) |
                     Q(description__icontains=term) |
-                    Q(description_en__icontains=term) |
+                    # Q(description_en__icontains=term) |
                     Q(short_description__icontains=term) |
                     Q(sku__icontains=term) |
                     Q(tags__name__icontains=term) |

@@ -7,7 +7,7 @@ Handles product and category listings, details, and related functionality
 from typing import Optional, Dict, Any
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import DetailView, ListView
-from django.db.models import Q, Avg, Count, Min, Max, Prefetch
+from django.db.models import Q, Avg, Count, Min, Max, Prefetch, Q, F
 from django.utils.translation import gettext as _
 from django.http import Http404
 import logging
@@ -126,7 +126,7 @@ class CategoryListView(ListView):
 
 class ProductListView(BaseProductListView):
     """
-    Enhanced product list view with category tree sidebar
+    Enhanced product list view with advanced filtering and category tree sidebar
     """
     template_name = 'products/product_list.html'
 
@@ -149,26 +149,66 @@ class ProductListView(BaseProductListView):
         else:
             self.category = None
 
+        # Multiple categories filter (for advanced filtering)
+        category_ids = self.request.GET.getlist('category')
+        if category_ids:
+            queryset = queryset.filter(category_id__in=category_ids)
+
         # Brand filter
         brand_ids = self.request.GET.getlist('brand')
         if brand_ids:
             queryset = queryset.filter(brand_id__in=brand_ids)
 
-        # Price range filter
+        # Price range filter - تعديل لاستخدام base_price بدلاً من current_price
         min_price = self.request.GET.get('min_price')
         max_price = self.request.GET.get('max_price')
         if min_price:
-            queryset = queryset.filter(current_price__gte=min_price)
+            # نفترض أن المنتجات المخفضة يمكن أن تكون أقل من سعر الأساس
+            # لذلك نبحث في المنتجات التي:
+            # - سعرها الأساسي أكبر من الحد الأدنى و ليس لها خصم
+            # - أو سعرها بعد الخصم أكبر من الحد الأدنى
+            min_price_value = float(min_price)
+            discount_condition = Q(
+                # منتجات بخصم نسبة مئوية والسعر بعد الخصم أكبر من الحد الأدنى
+                Q(discount_percentage__gt=0) &
+                Q(base_price__gte=min_price_value / (1 - F('discount_percentage') / 100))
+            ) | Q(
+                # منتجات بخصم ثابت والسعر بعد الخصم أكبر من الحد الأدنى
+                Q(discount_amount__gt=0) &
+                Q(base_price__gte=min_price_value + F('discount_amount'))
+            ) | Q(
+                # منتجات بدون خصم وسعرها الأساسي أكبر من الحد الأدنى
+                Q(discount_percentage=0) &
+                Q(discount_amount=0) &
+                Q(base_price__gte=min_price_value)
+            )
+            queryset = queryset.filter(discount_condition)
+
         if max_price:
-            queryset = queryset.filter(current_price__lte=max_price)
+            # نبحث في المنتجات التي سعرها الأساسي أقل من الحد الأقصى
+            # أو سعرها بعد الخصم أقل من الحد الأقصى
+            max_price_value = float(max_price)
+            # للتبسيط، سنفترض أن السعر الأساسي هو الأهم
+            queryset = queryset.filter(base_price__lte=max_price_value)
 
         # Feature filters
         if self.request.GET.get('is_new'):
             queryset = queryset.filter(is_new=True)
         if self.request.GET.get('on_sale'):
-            queryset = queryset.filter(has_discount=True)
+            # منتجات بخصم: إما لها نسبة خصم أو مبلغ خصم
+            queryset = queryset.filter(Q(discount_percentage__gt=0) | Q(discount_amount__gt=0))
         if self.request.GET.get('in_stock'):
-            queryset = queryset.filter(in_stock=True)
+            queryset = queryset.filter(stock_quantity__gt=F('reserved_quantity'))
+        # إضافة: منتجات مميزة
+        if self.request.GET.get('is_featured'):
+            queryset = queryset.filter(is_featured=True)
+
+        # إضافة: فلترة حسب التقييم
+        min_rating = self.request.GET.get('min_rating')
+        if min_rating:
+            queryset = queryset.annotate(
+                avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True))
+            ).filter(avg_rating__gte=min_rating)
 
         # Sort products
         sort_by = self.request.GET.get('sort', 'newest')
@@ -181,15 +221,22 @@ class ProductListView(BaseProductListView):
         if sort_by == 'newest':
             return queryset.order_by('-created_at')
         elif sort_by == 'price_low':
-            return queryset.order_by('current_price')
+            # للتبسيط، نرتب حسب السعر الأساسي
+            return queryset.order_by('base_price')
         elif sort_by == 'price_high':
-            return queryset.order_by('-current_price')
+            return queryset.order_by('-base_price')
         elif sort_by == 'name_az':
             return queryset.order_by('name')
         elif sort_by == 'best_rated':
             return queryset.annotate(
                 avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True))
             ).order_by('-avg_rating', '-created_at')
+        # إضافة: ترتيب حسب الأكثر مبيعاً
+        elif sort_by == 'best_selling':
+            return queryset.order_by('-sales_count', '-created_at')
+        # إضافة: ترتيب حسب الأكثر مشاهدة
+        elif sort_by == 'most_viewed':
+            return queryset.order_by('-views_count', '-created_at')
 
         # Default to newest
         return queryset.order_by('-created_at')
@@ -230,8 +277,98 @@ class ProductListView(BaseProductListView):
             ))
         ).filter(product_count__gt=0).order_by('-product_count')
 
+        # إضافة معلومات للفلاتر النشطة
+        context['active_filters'] = self.get_active_filters()
+
+        # إضافة نطاق السعر للمنتجات - تعديل لاستخدام base_price
+        price_range = Product.objects.filter(
+            is_active=True,
+            status='published'
+        ).aggregate(
+            min_price=Min('base_price'),
+            max_price=Max('base_price')
+        )
+        context['price_range'] = price_range
+
         return context
 
+    def get_active_filters(self):
+        """Get active filters for display"""
+        active_filters = []
+
+        # نطاق السعر
+        min_price = self.request.GET.get('min_price')
+        max_price = self.request.GET.get('max_price')
+        if min_price or max_price:
+            active_filters.append({
+                'type': 'price',
+                'label': _('السعر'),
+                'display': f"{min_price or '0'} - {max_price or '∞'} {_('د.أ')}"
+            })
+
+        # العلامات التجارية
+        brand_ids = self.request.GET.getlist('brand')
+        if brand_ids:
+            brands = Brand.objects.filter(id__in=brand_ids)
+            for brand in brands:
+                active_filters.append({
+                    'type': 'brand',
+                    'value': str(brand.id),
+                    'label': _('العلامة التجارية'),
+                    'display': brand.name
+                })
+
+        # الفئات
+        category_ids = self.request.GET.getlist('category')
+        if category_ids:
+            categories = Category.objects.filter(id__in=category_ids)
+            for category in categories:
+                active_filters.append({
+                    'type': 'category',
+                    'value': str(category.id),
+                    'label': _('الفئة'),
+                    'display': category.name
+                })
+
+        # المميزات
+        if self.request.GET.get('is_new'):
+            active_filters.append({
+                'type': 'is_new',
+                'label': _('المميزات'),
+                'display': _('منتجات جديدة')
+            })
+
+        if self.request.GET.get('on_sale'):
+            active_filters.append({
+                'type': 'on_sale',
+                'label': _('المميزات'),
+                'display': _('منتجات بخصم')
+            })
+
+        if self.request.GET.get('in_stock'):
+            active_filters.append({
+                'type': 'in_stock',
+                'label': _('المميزات'),
+                'display': _('متوفر في المخزون')
+            })
+
+        if self.request.GET.get('is_featured'):
+            active_filters.append({
+                'type': 'is_featured',
+                'label': _('المميزات'),
+                'display': _('منتجات مميزة')
+            })
+
+        # التقييم
+        min_rating = self.request.GET.get('min_rating')
+        if min_rating:
+            active_filters.append({
+                'type': 'min_rating',
+                'label': _('التقييم'),
+                'display': f"{min_rating}+ ⭐"
+            })
+
+        return active_filters
 
 class ProductDetailView(BaseProductDetailView):
     """

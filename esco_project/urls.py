@@ -77,6 +77,7 @@ urlpatterns += i18n_patterns(
 
     # Shopping cart - سلة التسوق
     path('cart/', include('cart.urls', namespace='cart')),
+    path('checkout/', include('checkout.urls')),
     path('basket/', RedirectView.as_view(url='/cart/', permanent=True)),
 
     # Orders - الطلبات

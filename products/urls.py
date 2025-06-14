@@ -68,7 +68,7 @@ def fallback_search_view(request):
             Q(name__icontains=query) |
             Q(name_en__icontains=query) |
             Q(description__icontains=query) |
-            Q(description_en__icontains=query) |
+            # Q(description_en__icontains=query) |
             Q(sku__icontains=query),
             is_active=True,
             status='published'
@@ -115,7 +115,7 @@ urlpatterns = [
     path('', ProductListView.as_view(), name='product_list'),
 
     # قوائم المنتجات الخاصة
-    path('categories/', CategoryListView.as_view(), name='category_list'),  # تم تحديثها لاستخدام CategoryListView من product_views.py
+    # path('categories/', CategoryListView.as_view(), name='category_list'),  # تم تحديثها لاستخدام CategoryListView من product_views.py
     path('category/<slug:category_slug>/', ProductListView.as_view(), name='category_products'),
     path('featured/', FeaturedProductsView.as_view(), name='featured_products'),
     path('new/', NewProductsView.as_view(), name='new_products'),

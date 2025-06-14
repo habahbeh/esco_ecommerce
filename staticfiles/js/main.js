@@ -310,6 +310,110 @@
             });
         },
 
+        initCartPreview: function () {
+            // البحث عن عنصر معاينة السلة في الصفحة إذا كان موجوداً
+            const cartIcon = document.querySelector('.cart-btn, .header-cart-icon, .action-btn.cart-btn');
+            if (!cartIcon) return;
+
+            // إنشاء عنصر معاينة السلة إذا لم يكن موجوداً
+            let cartPreview = document.querySelector('.cart-preview-container');
+            if (!cartPreview) {
+                cartPreview = document.createElement('div');
+                cartPreview.className = 'cart-preview-container';
+                cartPreview.style.cssText = `
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 300px;
+            background: var(--bs-body-bg);
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            z-index: 1040;
+            display: none;
+            overflow: hidden;
+        `;
+
+                // إضافة لمستند الصفحة في المكان المناسب
+                const headerActions = document.querySelector('.header-actions');
+                if (headerActions) {
+                    const cartBtnParent = cartIcon.parentElement;
+                    cartBtnParent.style.position = 'relative';
+                    cartBtnParent.appendChild(cartPreview);
+                } else {
+                    document.body.appendChild(cartPreview);
+                    cartPreview.style.position = 'fixed';
+                    cartPreview.style.top = '80px';
+                    cartPreview.style.right = '20px';
+                }
+
+                // التصحيح للغة العربية
+                if (document.documentElement.dir === 'rtl') {
+                    cartPreview.style.right = 'auto';
+                    cartPreview.style.left = '0';
+                }
+            }
+
+            // إضافة معالج أحداث لإظهار معاينة السلة عند تحريك الماوس فوق أيقونة السلة
+            cartIcon.addEventListener('mouseenter', () => {
+                this.fetchCartPreview();
+            });
+
+            // إخفاء المعاينة عند مغادرة منطقة المعاينة
+            cartPreview.addEventListener('mouseleave', () => {
+                cartPreview.style.display = 'none';
+            });
+        },
+
+        fetchCartPreview: function () {
+            const cartPreview = document.querySelector('.cart-preview-container');
+            if (!cartPreview) return;
+
+            // إظهار حالة التحميل
+            cartPreview.innerHTML = '<div class="p-3 text-center"><i class="fas fa-spinner fa-spin"></i></div>';
+            cartPreview.style.display = 'block';
+
+            // في بيئة حقيقية، نقوم بطلب AJAX لجلب محتوى السلة
+            // لكن هنا نقوم بمحاكاة الاستجابة
+            setTimeout(() => {
+                if (cartPreview.style.display === 'none') return;
+
+                // التحقق من وجود منتجات في السلة
+                const cartBadge = document.querySelector('.cart-badge');
+                const hasItems = cartBadge && cartBadge.style.display !== 'none';
+
+                if (hasItems) {
+                    cartPreview.innerHTML = `
+                <div class="p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0">سلة التسوق</h6>
+                        <a href="/cart/" class="text-primary">عرض الكل</a>
+                    </div>
+                    <div class="cart-items">
+                        <div class="cart-item d-flex py-2 border-bottom">
+                            <div class="placeholder-image bg-light rounded" style="width:50px;height:50px;flex-shrink:0"></div>
+                            <div class="ms-2 flex-grow-1">
+                                <p class="mb-0 small">منتج في السلة</p>
+                                <span class="text-primary fw-bold">السعر</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="/cart/checkout/" class="btn btn-primary btn-sm w-100">إتمام الطلب</a>
+                    </div>
+                </div>
+            `;
+                } else {
+                    cartPreview.innerHTML = `
+                <div class="p-3 text-center">
+                    <i class="fas fa-shopping-cart text-muted mb-2" style="font-size:2rem"></i>
+                    <p class="mb-2">سلة التسوق فارغة</p>
+                    <a href="/products/" class="btn btn-outline-primary btn-sm">تسوق الآن</a>
+                </div>
+            `;
+                }
+            }, 500);
+        },
+
         handleAddToCart: async function(form) {
             const button = form.querySelector('button[type="submit"]');
             const originalText = button.innerHTML;
