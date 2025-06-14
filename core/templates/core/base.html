@@ -123,6 +123,56 @@
         background: {{ site_settings.primary_color }};
     }
 
+    /* Footer styling with dynamic colors */
+    .modern-footer {
+        background: {{ site_settings.primary_color }};
+        color: white;
+    }
+
+    /* Dark mode override */
+    [data-bs-theme="dark"] .modern-footer {
+        background: {{ site_settings.primary_color }};
+        filter: brightness(0.8);
+    }
+
+    /* Footer widget titles */
+    .footer-widget h5 {
+        color: white;
+    }
+
+    .footer-widget h5::after {
+        background: white;
+    }
+
+    /* Footer links */
+    .footer-links a {
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .footer-links a:hover {
+        color: white;
+    }
+
+    /* Social links */
+    .social-link {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .social-link:hover {
+        background: white;
+        color: {{ site_settings.primary_color }};
+    }
+
+    /* Footer copyright section */
+    .modern-footer .border-top {
+        border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    /* Footer contact info icons */
+    .footer-links .text-primary {
+        color: white !important;
+    }
+
     /* Focus states */
     .form-control:focus {
         border-color: {{ site_settings.primary_color }};
