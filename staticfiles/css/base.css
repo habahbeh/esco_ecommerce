@@ -84,19 +84,18 @@ body {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    padding: 1rem 0rem ;
+    padding: 1rem 0 1rem 180px;
    /* min-height: var(--header-height);*/
 }
 
 html[dir="rtl"] .nav-container {
-    padding: 1rem 0;
-    /* حذفنا padding-right: 180px; لنفس السبب */
+    padding: 1rem 180px 1rem 0;
 }
 
 /* Logo */
 .logo-wrapper {
     position: absolute;
-    top: 20%;
+    top: 50%;
     left: 20px;
     transform: translateY(-50%);
     z-index: 1045;
@@ -436,15 +435,17 @@ html[dir="rtl"] .mobile-menu.active {
     }
 
     .nav-container {
-        padding: 0.5rem 0;
+        min-height: var(--mobile-nav-height);
+        padding: 0.5rem 0 0.5rem 90px;
     }
 
     html[dir="rtl"] .nav-container {
-         padding: 0.5rem 0;
+        padding: 0.5rem 90px 0.5rem 0;
     }
 
     .logo-wrapper {
-       top: 10px;
+        padding: 10px;
+        left: 10px;
     }
 
     html[dir="rtl"] .logo-wrapper {
@@ -533,8 +534,8 @@ html[dir="rtl"] .mobile-menu.active {
 
 /* Footer Improvements */
 .modern-footer {
-    background: var(--bs-primary);
-    color: white;
+    /*background: #1a1a1a;*/
+    color: #e0e0e0;
     padding: 3rem 0 1rem;
     position: relative;
     overflow: hidden;
@@ -547,7 +548,7 @@ html[dir="rtl"] .mobile-menu.active {
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, rgba(255,255,255,0.8), #6c757d, rgba(255,255,255,0.8));
+    background: linear-gradient(90deg, var(--bs-primary), #6c757d, var(--bs-primary));
     background-size: 200% 100%;
     animation: gradient-shift 3s ease infinite;
 }
@@ -572,12 +573,7 @@ html[dir="rtl"] .mobile-menu.active {
     left: 0;
     width: 50px;
     height: 2px;
-    background: white;
-}
-
-html[dir="rtl"] .footer-widget h5::after {
-    left: auto;
-    right: 0;
+    background: var(--bs-primary);
 }
 
 .footer-links {
@@ -591,7 +587,7 @@ html[dir="rtl"] .footer-widget h5::after {
 }
 
 .footer-links a {
-    color: rgba(255, 255, 255, 0.8);
+    color: #b0b0b0;
     text-decoration: none;
     transition: all 0.3s ease;
     display: inline-flex;
@@ -599,7 +595,7 @@ html[dir="rtl"] .footer-widget h5::after {
 }
 
 .footer-links a:hover {
-    color: white;
+    color: var(--bs-primary);
     transform: translateX(5px);
 }
 
@@ -617,7 +613,7 @@ html[dir="rtl"] .footer-links a:hover {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -627,20 +623,9 @@ html[dir="rtl"] .footer-links a:hover {
 }
 
 .social-link:hover {
-    background: white;
-    color: var(--bs-primary);
+    background: var(--bs-primary);
     transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(255,255,255,0.3);
-}
-
-/* Fix footer contact info icons */
-.footer-links .text-primary {
-    color: white !important;
-}
-
-/* Footer copyright section */
-.modern-footer .border-top {
-    border-color: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 5px 15px rgba(var(--bs-primary-rgb), 0.3);
 }
 
 /* Smooth Scroll to Top */
@@ -693,8 +678,7 @@ html[dir="rtl"] .footer-links a:hover {
 }
 
 [data-bs-theme="dark"] .modern-footer {
-    background: var(--bs-primary);
-    filter: brightness(0.8);
+    background: #0d0d0d;
 }
 
 /* Message Alerts */
