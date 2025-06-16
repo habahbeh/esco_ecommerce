@@ -110,6 +110,8 @@ urlpatterns += i18n_patterns(
 
     path('payment/', include('payment.urls', namespace='payment')),
     path('checkout/', RedirectView.as_view(url='/payment/', permanent=True)),
+    path('events/', include('events.urls', namespace='events')),
+
     # Maintenance mode (يمكن تفعيلها عند الحاجة)
     # path('maintenance/', TemplateView.as_view(template_name='maintenance.html'), name='maintenance'),
 

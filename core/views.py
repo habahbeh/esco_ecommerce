@@ -6,9 +6,15 @@ from django.db.models import Q
 from django.utils import timezone
 from products.models import Product, Category
 from django.contrib.admin.views.decorators import staff_member_required
+from django.shortcuts import redirect
 
-from .models import SiteSettings
+from .models import SiteSettings, Newsletter, SliderItem
 from .forms import SiteSettingsForm
+from events.models import Event
+from django.utils import timezone
+from django.contrib import messages
+from django.utils.translation import gettext as _
+
 
 class HomeView(TemplateView):
     """
@@ -19,6 +25,9 @@ class HomeView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
+        # إضافة عناصر السلايدر النشطة للسياق
+        context['slider_items'] = SliderItem.objects.filter(is_active=True).order_by('order')
 
         # الحصول على المنتجات المميزة - Get featured products
         context['featured_products'] = Product.objects.filter(
@@ -52,6 +61,15 @@ class HomeView(TemplateView):
         ).filter(
             Q(discount_end__isnull=True) | Q(discount_end__gte=now)
         ).select_related('category', 'brand').prefetch_related('images').order_by('-discount_percentage')[:8]
+
+        now = timezone.now()
+
+        # الفعاليات للعرض في معرض الشرائح
+        context['slider_events'] = Event.objects.filter(
+            is_active=True,
+            display_in__in=['slider', 'both'],
+            end_date__gte=now
+        ).order_by('order', 'start_date')
 
         return context
 
@@ -184,3 +202,20 @@ def preview_color(request):
         })
 
     return JsonResponse({'success': False})
+
+def newsletter_subscribe(request):
+    """معالجة الاشتراك في النشرة البريدية"""
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        if email:
+            try:
+                newsletter, created = Newsletter.objects.get_or_create(email=email)
+                if created:
+                    messages.success(request, _('تم الاشتراك بنجاح! شكراً لك.'))
+                else:
+                    messages.info(request, _('أنت مشترك بالفعل في النشرة البريدية.'))
+            except Exception as e:
+                print(f"Error: {e}")  # للتصحيح
+                messages.error(request, _('حدث خطأ أثناء الاشتراك. يرجى المحاولة مرة أخرى.'))
+        return redirect(request.META.get('HTTP_REFERER', '/'))
+    return redirect('/')  # إعادة توجيه إلى الصفحة الرئيسية إذا لم تكن طلب POST

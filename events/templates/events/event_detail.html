@@ -1,0 +1,373 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{{ event.title }} | {{ site_settings.site_name|default:"ESCO" }}{% endblock %}
+
+{% block content %}
+<!-- Event Header -->
+<section class="event-header" style="background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('{{ event.cover_image.url }}') center/cover no-repeat;">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+                <div class="event-status-badge {{ event.status_text }}">{{ event.status_text }}</div>
+                <h1 class="display-4 fw-bold">{{ event.title }}</h1>
+                <div class="event-meta">
+                    <div class="event-meta-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>{{ event.start_date|date:"j F Y" }}{% if event.start_date.date != event.end_date.date %} - {{ event.end_date|date:"j F Y" }}{% endif %}</span>
+                    </div>
+                    <div class="event-meta-item">
+                        <i class="fas fa-clock"></i>
+                        <span>{{ event.start_date|date:"g:i a" }} - {{ event.end_date|date:"g:i a" }}</span>
+                    </div>
+                    {% if event.location %}
+                    <div class="event-meta-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>{{ event.location }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if event.is_upcoming or event.is_ongoing %}
+                    {% if event.registration_url %}
+                    <a href="{{ event.registration_url }}" class="btn btn-primary btn-lg mt-4" target="_blank">
+                        <i class="fas fa-check-circle me-2"></i>{% trans "التسجيل الآن" %}
+                    </a>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Event Content -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Event Description -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h3 class="mb-4">{% trans "تفاصيل الفعالية" %}</h3>
+                        <div class="event-description">
+                            {{ event.description|linebreaks }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Event Gallery -->
+                {% if images %}
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h3 class="mb-4">{% trans "معرض الصور" %}</h3>
+                        <div class="event-gallery">
+                            <div class="row g-3">
+                                {% for image in images %}
+                                <div class="col-md-4 col-6">
+                                    <a href="{{ image.image.url }}" class="gallery-item" data-fancybox="event-gallery" data-caption="{{ image.caption }}">
+                                        <img src="{{ image.image.url }}" alt="{{ image.caption|default:event.title }}" class="img-fluid rounded">
+                                    </a>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Social Sharing -->
+                <div class="card">
+                    <div class="card-body">
+                        <h5>{% trans "مشاركة الفعالية" %}</h5>
+                        <div class="social-sharing">
+                            <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" class="btn btn-outline-primary btn-sm" target="_blank">
+                                <i class="fab fa-facebook-f"></i> Facebook
+                            </a>
+                            <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri }}&text={{ event.title }}" class="btn btn-outline-info btn-sm" target="_blank">
+                                <i class="fab fa-twitter"></i> Twitter
+                            </a>
+                            <a href="https://api.whatsapp.com/send?text={{ event.title }} {{ request.build_absolute_uri }}" class="btn btn-outline-success btn-sm" target="_blank">
+                                <i class="fab fa-whatsapp"></i> WhatsApp
+                            </a>
+                            <a href="mailto:?subject={{ event.title }}&body={{ event.short_description }} {{ request.build_absolute_uri }}" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-envelope"></i> Email
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <!-- Event Summary Card -->
+                <div class="card mb-4 event-summary-card">
+                    <div class="card-body">
+                        <h4 class="card-title">{% trans "ملخص الفعالية" %}</h4>
+                        <ul class="event-summary-list">
+                            <li>
+                                <i class="fas fa-calendar-alt"></i>
+                                <div>
+                                    <strong>{% trans "التاريخ" %}</strong>
+                                    <p>{{ event.start_date|date:"j F Y" }}{% if event.start_date.date != event.end_date.date %} - {{ event.end_date|date:"j F Y" }}{% endif %}</p>
+                                </div>
+                            </li>
+                            <li>
+                                <i class="fas fa-clock"></i>
+                                <div>
+                                    <strong>{% trans "الوقت" %}</strong>
+                                    <p>{{ event.start_date|date:"g:i a" }} - {{ event.end_date|date:"g:i a" }}</p>
+                                </div>
+                            </li>
+                            {% if event.location %}
+                            <li>
+                                <i class="fas fa-map-marker-alt"></i>
+                                <div>
+                                    <strong>{% trans "الموقع" %}</strong>
+                                    <p>{{ event.location }}</p>
+                                </div>
+                            </li>
+                            {% endif %}
+                            <li>
+                                <i class="fas fa-tag"></i>
+                                <div>
+                                    <strong>{% trans "الحالة" %}</strong>
+                                    <p><span class="badge bg-{{ event.is_upcoming|yesno:'primary,success,secondary' }}">{{ event.status_text }}</span></p>
+                                </div>
+                            </li>
+                        </ul>
+                        
+                        {% if event.is_upcoming or event.is_ongoing %}
+                            {% if event.registration_url %}
+                            <a href="{{ event.registration_url }}" class="btn btn-primary w-100" target="_blank">
+                                <i class="fas fa-check-circle me-2"></i>{% trans "التسجيل الآن" %}
+                            </a>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Other Events -->
+                {% if other_events %}
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{% trans "فعاليات أخرى" %}</h5>
+                        <div class="other-events">
+                            {% for other_event in other_events %}
+                            <div class="other-event-item">
+                                <img src="{{ other_event.cover_image.url }}" alt="{{ other_event.title }}" class="other-event-img">
+                                <div class="other-event-content">
+                                    <h6>{{ other_event.title|truncatechars:30 }}</h6>
+                                    <p><i class="fas fa-calendar-alt"></i> {{ other_event.start_date|date:"j F Y" }}</p>
+                                    <a href="{{ other_event.get_absolute_url }}" class="btn btn-sm btn-outline-primary">{% trans "عرض" %}</a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@4.0/dist/fancybox.css" />
+
+<style>
+    /* Event Header */
+    .event-header {
+        padding: 100px 0;
+        color: white;
+        margin-bottom: 50px;
+        position: relative;
+    }
+    
+    .event-status-badge {
+        display: inline-block;
+        padding: 8px 20px;
+        border-radius: 20px;
+        font-weight: bold;
+        margin-bottom: 15px;
+    }
+    
+    .event-status-badge.قادمة {
+        background-color: var(--bs-primary);
+    }
+    
+    .event-status-badge.جارية {
+        background-color: var(--bs-success);
+    }
+    
+    .event-status-badge.منتهية {
+        background-color: var(--bs-secondary);
+    }
+    
+    .event-meta {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin-top: 20px;
+    }
+    
+    .event-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .event-meta-item i {
+        background: rgba(255,255,255,0.2);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Event Description */
+    .event-description {
+        font-size: 1.1rem;
+        line-height: 1.7;
+    }
+    
+    /* Event Gallery */
+    .event-gallery .gallery-item {
+        display: block;
+        overflow: hidden;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .event-gallery .gallery-item:hover {
+        transform: scale(1.03);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .event-gallery img {
+        transition: transform 0.5s ease;
+        height: 180px;
+        object-fit: cover;
+        width: 100%;
+    }
+    
+    .event-gallery .gallery-item:hover img {
+        transform: scale(1.1);
+    }
+    
+    /* Social Sharing */
+    .social-sharing {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    /* Event Summary Card */
+    .event-summary-card {
+        position: sticky;
+        top: 100px;
+    }
+    
+    .event-summary-list {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 20px;
+    }
+    
+    .event-summary-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 15px;
+        padding: 15px 0;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .event-summary-list li:last-child {
+        border-bottom: none;
+    }
+    
+    .event-summary-list i {
+        color: var(--bs-primary);
+        font-size: 1.2rem;
+        width: 24px;
+        text-align: center;
+    }
+    
+    .event-summary-list div {
+        flex: 1;
+    }
+    
+    .event-summary-list strong {
+        display: block;
+        margin-bottom: 5px;
+        color: #333;
+    }
+    
+    .event-summary-list p {
+        margin: 0;
+        color: #666;
+    }
+    
+    /* Other Events */
+    .other-event-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 15px 0;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .other-event-item:last-child {
+        border-bottom: none;
+    }
+    
+    .other-event-img {
+        width: 80px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+    
+    .other-event-content {
+        flex: 1;
+    }
+    
+    .other-event-content h6 {
+        margin: 0 0 5px;
+        font-size: 0.95rem;
+    }
+    
+    .other-event-content p {
+        margin: 0 0 8px;
+        font-size: 0.85rem;
+        color: #666;
+    }
+    
+    /* Responsive */
+    @media (max-width: 767.98px) {
+        .event-meta {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .event-summary-card {
+            position: static;
+            margin-top: 30px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        Fancybox.bind("[data-fancybox]", {
+            // Options here
+        });
+    });
+</script>
+{% endblock %}

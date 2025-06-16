@@ -89,3 +89,48 @@ class SiteSettings(models.Model):
                 settings = cls.objects.create(site_name="ESCO")
 
         return settings
+
+
+class Newsletter(models.Model):
+    """نموذج لتخزين معلومات المشتركين في النشرة البريدية"""
+    email = models.EmailField(_("البريد الإلكتروني"), unique=True)
+    is_active = models.BooleanField(_("نشط"), default=True)
+    created_at = models.DateTimeField(_("تاريخ الاشتراك"), auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("اشتراك في النشرة البريدية")
+        verbose_name_plural = _("اشتراكات النشرة البريدية")
+
+    def __str__(self):
+        return self.email
+
+
+class SliderItem(models.Model):
+    """
+    نموذج عناصر السلايدر - يخزن العناصر المعروضة في السلايدر الرئيسي
+    Slider items model - stores items displayed in the main slider
+    """
+    title = models.CharField(_("العنوان"), max_length=100)
+    subtitle = models.CharField(_("العنوان الفرعي"), max_length=150)
+    description = models.TextField(_("الوصف"), blank=True)
+    image = models.ImageField(_("الصورة"), upload_to='sliders/')
+
+    # زر أساسي
+    primary_button_text = models.CharField(_("نص الزر الرئيسي"), max_length=50)
+    primary_button_url = models.CharField(_("رابط الزر الرئيسي"), max_length=200)
+
+    # زر ثانوي (اختياري)
+    secondary_button_text = models.CharField(_("نص الزر الثانوي"), max_length=50, blank=True)
+    secondary_button_url = models.CharField(_("رابط الزر الثانوي"), max_length=200, blank=True)
+
+    # الترتيب والحالة
+    order = models.PositiveIntegerField(_("الترتيب"), default=0)
+    is_active = models.BooleanField(_("نشط"), default=True)
+
+    class Meta:
+        verbose_name = _("عنصر السلايدر")
+        verbose_name_plural = _("عناصر السلايدر")
+        ordering = ['order']  # ترتيب العناصر حسب الحقل order
+
+    def __str__(self):
+        return self.title
