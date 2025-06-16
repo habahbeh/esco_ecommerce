@@ -18,4 +18,7 @@ urlpatterns = [
 
     path('settings/', views.site_settings_view, name='site_settings'),
     path('preview-color/', views.preview_color, name='preview_color'),
+
+    path('newsletter/subscribe/', views.newsletter_subscribe, name='newsletter_subscribe'),
+
 ]

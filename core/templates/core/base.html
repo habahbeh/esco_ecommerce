@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load color_filters %}
 
+
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}" {% if site_settings.default_dark_mode %}data-bs-theme="dark"{% endif %} dir="{% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}">
 <head>
@@ -61,6 +62,8 @@
 
     <!-- Base CSS -->
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
+
+    <link rel="stylesheet" href="{% static 'css/events.css' %}">
 
     {% block extra_css %}{% endblock %}
 
@@ -196,6 +199,7 @@
 </style>
 </head>
 <body>
+    {% include 'core/includes/event_banner.html' %}
     <!-- Page Loader -->
     <div class="page-loader" id="pageLoader">
         <div class="loader-spinner"></div>
@@ -241,6 +245,7 @@
     <!-- Custom JavaScript -->
     <script src="{% static 'js/main.js' %}" defer></script>
     <script src="{% static 'js/base.js' %}" defer></script>
+    <script src="{% static 'js/events.js' %}"></script>
 
     {% block extra_js %}{% endblock %}
 </body>

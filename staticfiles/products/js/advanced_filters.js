@@ -30,6 +30,7 @@ function initPriceRangeSlider() {
 
     if (!priceSlider || typeof noUiSlider === 'undefined') return;
 
+    s
     const minPriceInput = document.getElementById('minPrice');
     const maxPriceInput = document.getElementById('maxPrice');
 

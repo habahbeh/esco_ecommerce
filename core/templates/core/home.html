@@ -840,6 +840,33 @@
 <section class="hero-carousel">
     <div id="heroCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5000">
         <div class="carousel-inner">
+
+            <!-- الفعاليات النشطة -->
+            {% for event in slider_events %}
+            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                <div class="hero-slide">
+                    <img src="{{ event.cover_image.url }}" class="hero-bg" alt="{{ event.title }}">
+                    <div class="container">
+                        <div class="hero-content">
+                            <p class="hero-subtitle">{{ event.status_text }}</p>
+                            <h1 class="hero-title">{{ event.title }}</h1>
+                            <p class="hero-description">{{ event.short_description }}</p>
+                            <div class="hero-buttons">
+                                <a href="{{ event.get_absolute_url }}" class="btn hero-btn hero-btn-primary">
+                                    {{ event.button_text }}
+                                </a>
+                                {% if event.registration_url %}
+                                <a href="{{ event.registration_url }}" class="btn hero-btn hero-btn-outline">
+                                    {% trans "التسجيل الآن" %}
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
             <div class="carousel-item active">
                 <div class="hero-slide">
                     <img src="{% static 'images/1.jpeg' %}" class="hero-bg" alt="Industrial Equipment">
@@ -1081,6 +1108,27 @@
     </div>
 </section>
 
+        <!-- CTA Section -->
+<section class="cta-section">
+    <div class="container">
+        <div class="cta-content" data-aos="fade-up">
+            <h2 class="cta-title">{% trans "احصل على أحدث العروض والمنتجات" %}</h2>
+            <p class="cta-description">{% trans "اشترك في نشرتنا البريدية واحصل على خصم 10% على طلبك الأول" %}</p>
+
+            <form class="cta-form" method="post" action="{% url 'core:newsletter_subscribe' %}">
+                {% csrf_token %}
+                <div class="cta-input-group">
+                    <input type="email" name="email" class="cta-input" placeholder="{% trans 'بريدك الإلكتروني' %}"
+                           required>
+                    <button type="submit" class="cta-submit">
+                        {% trans "اشترك الآن" %} <i class="fas fa-paper-plane ms-2"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
 <!-- Products Section -->
 <section class="products-section">
     <div class="container">
@@ -1176,6 +1224,7 @@
     </div>
 </section>
 
+
 <!-- Stats Section -->
 <section class="stats-section" hidden>
     <div class="container">
@@ -1215,27 +1264,10 @@
     </div>
 </section>
 
-<!-- CTA Section -->
-<section class="cta-section">
-    <div class="container">
-        <div class="cta-content" data-aos="fade-up">
-            <h2 class="cta-title">{% trans "احصل على أحدث العروض والمنتجات" %}</h2>
-            <p class="cta-description">{% trans "اشترك في نشرتنا البريدية واحصل على خصم 10% على طلبك الأول" %}</p>
 
-            <form class="cta-form">
-                <div class="cta-input-group">
-                    <input type="email" class="cta-input" placeholder="{% trans 'بريدك الإلكتروني' %}" required>
-                    <button type="submit" class="cta-submit">
-                        {% trans "اشترك الآن" %} <i class="fas fa-paper-plane ms-2"></i>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</section>
 
 <!-- Testimonials Section -->
-<section class="testimonials-section">
+<section class="testimonials-section" hidden>
     <div class="container">
         <div class="section-title text-center mb-5" data-aos="fade-up">
             <h2 class="display-4 fw-bold mb-3">{% trans "آراء عملائنا" %}</h2>
@@ -1390,19 +1422,6 @@
         }, 3000);
     }
 
-    // Newsletter Form
-    const ctaForm = document.querySelector('.cta-form');
-    if (ctaForm) {
-        ctaForm.addEventListener('submit', function(e) {
-            e.preventDefault();
 
-            const email = this.querySelector('input[type="email"]').value;
-            console.log('Newsletter subscription:', email);
-
-            // Show success message
-            alert('شكراً لك! تم الاشتراك بنجاح.');
-            this.reset();
-        });
-    }
 </script>
 {% endblock %}

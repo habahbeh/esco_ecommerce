@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'dashboard.apps.DashboardConfig',
     'checkout',
     'payment',
+    'events',
 
     # تطبيقات Django المدمجة - Django built-in apps
     'django.contrib.admin',

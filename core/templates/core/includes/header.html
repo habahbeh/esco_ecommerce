@@ -36,7 +36,8 @@
                             <i class="fas fa-user"></i>
                             <span>
                                 {% if user.is_authenticated %}
-                                    {{ user.get_full_name|default:user.username|truncatechars:10 }}
+                                    {{ user.first_name|default:user.username|truncatechars:10 }}
+{#                                    {{ user.get_full_name|default:user.username|truncatechars:10 }}#}
                                 {% else %}
                                     {% trans "الحساب" %}
                                 {% endif %}
@@ -150,6 +151,7 @@
                     <li><a href="{% url 'core:home' %}" class="{% if request.path == '/' %}active{% endif %}"><i class="fas fa-home me-2"></i>{% trans "الرئيسية" %}</a></li>
                     <li><a href="{% url 'products:product_list' %}" class="{% if '/products/' in request.path %}active{% endif %}"><i class="fas fa-th-large me-2"></i>{% trans "المنتجات" %}</a></li>
                     <li><a href="{% url 'products:special_offers' %}" class="{% if '/products/offers/' in request.path %}active{% endif %}"><i class="fas fa-tags me-2"></i>{% trans "العروض الخاصة" %}</a></li>
+                    <li><a href="{% url 'events:event_list' %}" class="{% if '/events/' in request.path %}active{% endif %}"><i class="fas fa-calendar-alt me-2"></i>{% trans "الفعاليات" %}</a></li>
                     <li><a href="{% url 'core:about' %}" class="{% if '/about/' in request.path %}active{% endif %}"><i class="fas fa-info-circle me-2"></i>{% trans "من نحن" %}</a></li>
                     <li><a href="{% url 'core:contact' %}" class="{% if '/contact/' in request.path %}active{% endif %}"><i class="fas fa-envelope me-2"></i>{% trans "اتصل بنا" %}</a></li>
                 </ul>
@@ -230,9 +232,11 @@
     overflow: hidden;
 }
 
+/*
 .cart-widget:hover .cart-dropdown {
     display: block;
 }
+*/
 
 .cart-dropdown::before {
     content: '';
@@ -367,3 +371,40 @@ html[dir="rtl"] .cart-dropdown::before {
     }
 }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // التحقق من وجود القائمة المنسدلة للسلة
+        const cartWidget = document.querySelector('.cart-widget');
+        const cartDropdown = document.querySelector('.cart-dropdown');
+
+        // إذا لم يكن أحد العناصر موجوداً، نخرج من الدالة
+        if (!cartWidget || !cartDropdown) return;
+
+        let timeout;
+
+        // عرض القائمة عند تمرير المؤشر فوق أيقونة السلة
+        cartWidget.addEventListener('mouseenter', function() {
+            clearTimeout(timeout);
+            cartDropdown.style.display = 'block';
+        });
+
+        // إخفاء القائمة بعد مغادرة المؤشر
+        cartWidget.addEventListener('mouseleave', function(e) {
+            timeout = setTimeout(() => {
+                // تحقق مرة أخرى أن العنصر لا يزال موجودًا
+                if (cartDropdown) {
+                    cartDropdown.style.display = 'none';
+                }
+            }, 300);
+        });
+
+        // إخفاء القائمة عند النقر خارجها
+        document.addEventListener('click', function(e) {
+            // تحقق أن العناصر موجودة قبل استخدامها
+            if (cartWidget && cartDropdown && !cartWidget.contains(e.target)) {
+                cartDropdown.style.display = 'none';
+            }
+        });
+    });
+</script>
