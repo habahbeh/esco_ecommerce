@@ -4,16 +4,18 @@
 
 <!-- Modern Header -->
 <header class="modern-header" id="header">
-    <div class="header-wrapper">
-        <div class="container">
-            <div class="nav-container">
+    <div class="header-wrapper " >
+        <div class="container" >
+
+
+            <div class="nav-container ">
                 <!-- Logo -->
                 <div class="logo-wrapper1">
                     <a href="{% url 'core:home' %}" aria-label="{% trans 'الصفحة الرئيسية' %}">
                         {% if site_settings.logo %}
                             <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name|default:'ESCO' }}">
                         {% else %}
-                            <img src="{% static 'images/logo.png' %}" height="100" alt="ESCO">
+                            <img src="{% static 'images/logo.png' %}" height="80" alt="ESCO">
                         {% endif %}
                     </a>
                 </div>
@@ -235,8 +237,7 @@
 /*
 .cart-widget:hover .cart-dropdown {
     display: block;
-}
-*/
+}*/
 
 .cart-dropdown::before {
     content: '';
@@ -370,41 +371,126 @@ html[dir="rtl"] .cart-dropdown::before {
         left: -10px;
     }
 }
+
+    .logo-wrapper1 {
+    position: absolute;
+    top: 30%;
+    left: 20px;
+    transform: translateY(-50%);
+    z-index: 1045;
+    {#padding: 12px;#}
+    border-radius: 8px ;
+    min-width: 160px;
+    display: flex;
+    justify-content: center;
+    transition: all 0.3s ease;
+        border: 2px solid var(--bs-primary);
+}
+    html[dir="rtl"] .logo-wrapper1 {
+    left: auto;
+    right: 20px;
+}
+
+    .nav-container {
+    padding-left: 180px;
+}
+
+html[dir="rtl"] .nav-container {
+    padding-left: 0;
+    padding-right: 180px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 991.98px) {
+    .logo-wrapper1 {
+        padding: 12px;
+        left: 10px;
+        min-width: auto;
+        top: 45%;
+    }
+
+    html[dir="rtl"] .logo-wrapper1 {
+        right: 10px;
+    }
+
+    .nav-container {
+        padding-left: 90px;
+    }
+
+    html[dir="rtl"] .nav-container {
+        padding-left: 0;
+        padding-right: 90px;
+    }
+
+    .logo-wrapper1 img {
+        height: 80px;
+    }
+}
+
+@media (min-width: 1400px) {
+    .logo-wrapper1 {
+        left: 40px;
+    }
+
+    html[dir="rtl"] .logo-wrapper1 {
+        right: 40px;
+    }
+
+    .nav-container {
+        padding-left: 200px;
+    }
+
+    html[dir="rtl"] .nav-container {
+        padding-left: 0;
+        padding-right: 200px;
+    }
+}
+
+
+    /* iPhone and small mobile devices */
+@media screen and (max-width: 576px) {
+    .logo-wrapper1 {
+        left: 10px;
+        padding: 5px;
+       /* max-width: 80px;*/
+    }
+
+    html[dir="rtl"] .logo-wrapper1 {
+        right: 10px;
+    }
+
+    .logo-wrapper1 img {
+        max-height: 35px;
+    }
+
+    .nav-container {
+        padding-left: 100px;
+    }
+
+    html[dir="rtl"] .nav-container {
+        padding-left: 0;
+        padding-right: 100px;
+    }
+}
+
+/* Medium mobile devices (iPhone Plus sizes) */
+@media screen and (min-width: 577px) and (max-width: 767px) {
+    .logo-wrapper1 {
+        {#max-width: 100px;#}
+    }
+
+    .logo-wrapper1 img {
+        max-height: 50px;
+    }
+}
+
+/* Fix for iOS Safari specific issues */
+@supports (-webkit-touch-callout: none) {
+    .logo-wrapper1 {
+        /* iOS Safari specific fixes */
+        transform: translateY(-50%) translateZ(0);
+        -webkit-transform: translateY(-50%) translateZ(0);
+    }
+}
+
 </style>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // التحقق من وجود القائمة المنسدلة للسلة
-        const cartWidget = document.querySelector('.cart-widget');
-        const cartDropdown = document.querySelector('.cart-dropdown');
-
-        // إذا لم يكن أحد العناصر موجوداً، نخرج من الدالة
-        if (!cartWidget || !cartDropdown) return;
-
-        let timeout;
-
-        // عرض القائمة عند تمرير المؤشر فوق أيقونة السلة
-        cartWidget.addEventListener('mouseenter', function() {
-            clearTimeout(timeout);
-            cartDropdown.style.display = 'block';
-        });
-
-        // إخفاء القائمة بعد مغادرة المؤشر
-        cartWidget.addEventListener('mouseleave', function(e) {
-            timeout = setTimeout(() => {
-                // تحقق مرة أخرى أن العنصر لا يزال موجودًا
-                if (cartDropdown) {
-                    cartDropdown.style.display = 'none';
-                }
-            }, 300);
-        });
-
-        // إخفاء القائمة عند النقر خارجها
-        document.addEventListener('click', function(e) {
-            // تحقق أن العناصر موجودة قبل استخدامها
-            if (cartWidget && cartDropdown && !cartWidget.contains(e.target)) {
-                cartDropdown.style.display = 'none';
-            }
-        });
-    });
-</script>
