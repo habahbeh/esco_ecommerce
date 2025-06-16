@@ -842,30 +842,30 @@
         <div class="carousel-inner">
 
             <!-- الفعاليات النشطة -->
-            {% for event in slider_events %}
-            <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                <div class="hero-slide">
-                    <img src="{{ event.cover_image.url }}" class="hero-bg" alt="{{ event.title }}">
-                    <div class="container">
-                        <div class="hero-content">
-                            <p class="hero-subtitle">{{ event.status_text }}</p>
-                            <h1 class="hero-title">{{ event.title }}</h1>
-                            <p class="hero-description">{{ event.short_description }}</p>
-                            <div class="hero-buttons">
-                                <a href="{{ event.get_absolute_url }}" class="btn hero-btn hero-btn-primary">
-                                    {{ event.button_text }}
-                                </a>
-                                {% if event.registration_url %}
-                                <a href="{{ event.registration_url }}" class="btn hero-btn hero-btn-outline">
-                                    {% trans "التسجيل الآن" %}
-                                </a>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
+{#            {% for event in slider_events %}#}
+{#            <div class="carousel-item {% if forloop.first %}active{% endif %}">#}
+{#                <div class="hero-slide">#}
+{#                    <img src="{{ event.cover_image.url }}" class="hero-bg" alt="{{ event.title }}">#}
+{#                    <div class="container">#}
+{#                        <div class="hero-content">#}
+{#                            <p class="hero-subtitle">{{ event.status_text }}</p>#}
+{#                            <h1 class="hero-title">{{ event.title }}</h1>#}
+{#                            <p class="hero-description">{{ event.short_description }}</p>#}
+{#                            <div class="hero-buttons">#}
+{#                                <a href="{{ event.get_absolute_url }}" class="btn hero-btn hero-btn-primary">#}
+{#                                    {{ event.button_text }}#}
+{#                                </a>#}
+{#                                {% if event.registration_url %}#}
+{#                                <a href="{{ event.registration_url }}" class="btn hero-btn hero-btn-outline">#}
+{#                                    {% trans "التسجيل الآن" %}#}
+{#                                </a>#}
+{#                                {% endif %}#}
+{#                            </div>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#            {% endfor %}#}
 
             <div class="carousel-item active">
                 <div class="hero-slide">
