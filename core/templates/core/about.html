@@ -5,6 +5,8 @@
 {% block title %}{% trans "من نحن" %} | ESCO{% endblock %}
 
 {% block content %}
+    {% get_current_language as CURRENT_LANGUAGE %}
+
 <!-- Page Header -->
 <section class="bg-primary text-white py-5 mb-5">
     <div class="container">
@@ -34,6 +36,14 @@
                 <p class="lead">{% trans "شركة رائدة في مجال توريد المعدات الصناعية في الأردن والشرق الأوسط" %}</p>
                 <p>{% trans "تأسست شركة ESCO في عام 2005، وقد نمت من خلال الالتزام بتقديم منتجات عالية الجودة وخدمة ممتازة للعملاء. نحن متخصصون في توفير المعدات الصناعية والحلول المتكاملة للشركات والمصانع في مختلف القطاعات." %}</p>
                 <p>{% trans "نفتخر بكوننا الموزع الحصري للعديد من العلامات التجارية العالمية المرموقة في الأردن. نعمل بجد لضمان أن عملائنا يحصلون على أفضل المنتجات بأسعار تنافسية وخدمة دعم استثنائية." %}</p>
+
+                <!-- إضافة زر البروفايل هنا -->
+                <div class="mt-4">
+                    <a href="{% if CURRENT_LANGUAGE == 'en' %}/media/pdf/ESCO-Profile-English.pdf{% else %}/media/pdf/ESCO-Profile-Arabic.pdf{% endif %}" target="_blank" class="btn btn-primary">
+                        <i class="fas fa-file-pdf me-2"></i>{% trans "تحميل البروفايل" %}
+                    </a>
+                </div>
+
             </div>
         </div>
     </div>

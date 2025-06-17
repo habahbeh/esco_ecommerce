@@ -1,6 +1,7 @@
 <!-- core/templates/core/includes/header.html -->
 {% load static %}
 {% load i18n %}
+{% get_current_language as CURRENT_LANGUAGE %}
 
 <!-- Modern Header -->
 <header class="modern-header" id="header">
@@ -154,6 +155,12 @@
                     <li><a href="{% url 'products:product_list' %}" class="{% if '/products/' in request.path %}active{% endif %}"><i class="fas fa-th-large me-2"></i>{% trans "المنتجات" %}</a></li>
                     <li><a href="{% url 'products:special_offers' %}" class="{% if '/products/offers/' in request.path %}active{% endif %}"><i class="fas fa-tags me-2"></i>{% trans "العروض الخاصة" %}</a></li>
                     <li><a href="{% url 'events:event_list' %}" class="{% if '/events/' in request.path %}active{% endif %}"><i class="fas fa-calendar-alt me-2"></i>{% trans "الفعاليات" %}</a></li>
+                    <li>
+                        <a href="{% if CURRENT_LANGUAGE == 'en' %}/media/pdf/ESCO-Catalog-English.pdf{% else %}/media/pdf/ESCO-Catalog-Arabic.pdf{% endif %}"
+                           target="_blank">
+                            <i class="fas fa-book me-2"></i>{% trans "كتالوج" %}
+                        </a>
+                    </li>
                     <li><a href="{% url 'core:about' %}" class="{% if '/about/' in request.path %}active{% endif %}"><i class="fas fa-info-circle me-2"></i>{% trans "من نحن" %}</a></li>
                     <li><a href="{% url 'core:contact' %}" class="{% if '/contact/' in request.path %}active{% endif %}"><i class="fas fa-envelope me-2"></i>{% trans "اتصل بنا" %}</a></li>
                 </ul>
@@ -190,7 +197,15 @@
     <ul class="mobile-nav-list">
         <li><a href="{% url 'core:home' %}"><i class="fas fa-home"></i>{% trans "الرئيسية" %}</a></li>
         <li><a href="{% url 'products:product_list' %}"><i class="fas fa-th-large"></i>{% trans "المنتجات" %}</a></li>
-        <li><a href="{% url 'products:special_offers' %}"><i class="fas fa-tags"></i>{% trans "العروض الخاصة" %}</a></li>
+        <li><a href="{% url 'products:special_offers' %}"><i class="fas fa-tags"></i>{% trans "العروض الخاصة" %}</a>
+        </li>
+        <li><a href="{% url 'events:event_list' %}"><i class="fas fa-calendar-alt"></i>{% trans "الفعاليات" %}</a></li>
+        <li>
+            <a href="{% if CURRENT_LANGUAGE == 'en' %}/media/pdf/ESCO-Catalog-English.pdf{% else %}/media/pdf/ESCO-Catalog-Arabic.pdf{% endif %}"
+               target="_blank">
+                <i class="fas fa-book"></i>{% trans "كتالوج" %}
+            </a>
+        </li>
         <li><a href="{% url 'core:about' %}"><i class="fas fa-info-circle"></i>{% trans "من نحن" %}</a></li>
         <li><a href="{% url 'core:contact' %}"><i class="fas fa-envelope"></i>{% trans "اتصل بنا" %}</a></li>
         <li><a href="{% url 'orders:track_order' %}"><i class="fas fa-truck"></i>{% trans "تتبع الطلب" %}</a></li>
