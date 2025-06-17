@@ -86,7 +86,7 @@
                 </div>
             </div>
             <div class="filter-card-body collapse show" id="brandFilterContent">
-                <div class="input-group input-group-sm mb-2">
+                <div class="input-group input-group-sm mb-2" hidden>
                     <span class="input-group-text">
                         <i class="fas fa-search"></i>
                     </span>
@@ -197,7 +197,7 @@
         </div>
 
         <!-- التقييم -->
-        <div class="filter-card mb-3">
+        <div class="filter-card mb-3" hidden>
             <div class="filter-card-header" data-bs-toggle="collapse" data-bs-target="#ratingFilterContent">
                 <div class="d-flex justify-content-between align-items-center">
                     <h6 class="mb-0">
@@ -545,6 +545,7 @@
 
 
 {% block extra_js %}
+
 <script>
 // Advanced Filters JavaScript
 document.addEventListener('DOMContentLoaded', function() {
@@ -854,4 +855,57 @@ document.addEventListener('DOMContentLoaded', function() {
     document.head.appendChild(style);
 });
 </script>
+
+    <script>
+// تنفيذ فوري لتهيئة البحث بعد تحميل الصفحة
+(function() {
+    // دالة تنفذ عند اكتمال تحميل DOM
+    function initSearch() {
+        // البحث في العلامات التجارية
+        const brandSearch = document.querySelector('.brand-search');
+        if (brandSearch) {
+            brandSearch.addEventListener('input', function() {
+                const items = document.querySelectorAll('.brand-item');
+                const searchLower = this.value.toLowerCase();
+
+                items.forEach(item => {
+                    const text = item.querySelector('label').textContent.toLowerCase();
+                    if (text.includes(searchLower)) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        // البحث في الفئات
+        const categorySearch = document.querySelector('.category-search');
+        if (categorySearch) {
+            categorySearch.addEventListener('input', function() {
+                const items = document.querySelectorAll('.category-item');
+                const searchLower = this.value.toLowerCase();
+
+                items.forEach(item => {
+                    const text = item.querySelector('label').textContent.toLowerCase();
+                    if (text.includes(searchLower)) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        }
+    }
+
+    // التحقق مما إذا كان DOM قد تم تحميله بالفعل
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSearch);
+    } else {
+        initSearch();
+    }
+})();
+</script>
+
 {% endblock %}
+

@@ -534,8 +534,8 @@ html[dir="rtl"] .mobile-menu.active {
 
 /* Footer Improvements */
 .modern-footer {
-    /*background: #1a1a1a;*/
-    color: #e0e0e0;
+    background: var(--bs-primary);
+    color: white;
     padding: 3rem 0 1rem;
     position: relative;
     overflow: hidden;
@@ -548,7 +548,7 @@ html[dir="rtl"] .mobile-menu.active {
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, var(--bs-primary), #6c757d, var(--bs-primary));
+    background: linear-gradient(90deg, rgba(255,255,255,0.8), #6c757d, rgba(255,255,255,0.8));
     background-size: 200% 100%;
     animation: gradient-shift 3s ease infinite;
 }
@@ -573,7 +573,12 @@ html[dir="rtl"] .mobile-menu.active {
     left: 0;
     width: 50px;
     height: 2px;
-    background: var(--bs-primary);
+    background: white;
+}
+
+html[dir="rtl"] .footer-widget h5::after {
+    left: auto;
+    right: 0;
 }
 
 .footer-links {
@@ -587,7 +592,7 @@ html[dir="rtl"] .mobile-menu.active {
 }
 
 .footer-links a {
-    color: #b0b0b0;
+    color: rgba(255, 255, 255, 0.8);
     text-decoration: none;
     transition: all 0.3s ease;
     display: inline-flex;
@@ -595,7 +600,7 @@ html[dir="rtl"] .mobile-menu.active {
 }
 
 .footer-links a:hover {
-    color: var(--bs-primary);
+    color: white;
     transform: translateX(5px);
 }
 
@@ -613,7 +618,7 @@ html[dir="rtl"] .footer-links a:hover {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.2);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -623,9 +628,20 @@ html[dir="rtl"] .footer-links a:hover {
 }
 
 .social-link:hover {
-    background: var(--bs-primary);
+    background: white;
+    color: var(--bs-primary);
     transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(var(--bs-primary-rgb), 0.3);
+    box-shadow: 0 5px 15px rgba(255,255,255,0.3);
+}
+
+/* Fix footer contact info icons */
+.footer-links .text-primary {
+    color: white !important;
+}
+
+/* Footer copyright section */
+.modern-footer .border-top {
+    border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* Smooth Scroll to Top */
@@ -678,7 +694,8 @@ html[dir="rtl"] .footer-links a:hover {
 }
 
 [data-bs-theme="dark"] .modern-footer {
-    background: #0d0d0d;
+    background: var(--bs-primary);
+    filter: brightness(0.8);
 }
 
 /* Message Alerts */
@@ -860,6 +877,7 @@ html[dir="rtl"] .dropdown-item:hover {
 [data-bs-theme="dark"] .dropdown-item:hover {
     background: rgba(255,255,255,0.1);
 }
+
 
 [data-bs-theme="dark"] .dropdown-divider {
     border-color: rgba(255,255,255,0.1);
