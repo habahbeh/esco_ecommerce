@@ -374,44 +374,7 @@
 
             // في بيئة حقيقية، نقوم بطلب AJAX لجلب محتوى السلة
             // لكن هنا نقوم بمحاكاة الاستجابة
-            setTimeout(() => {
-                if (cartPreview.style.display === 'none') return;
 
-                // التحقق من وجود منتجات في السلة
-                const cartBadge = document.querySelector('.cart-badge');
-                const hasItems = cartBadge && cartBadge.style.display !== 'none';
-
-                if (hasItems) {
-                    cartPreview.innerHTML = `
-                <div class="p-3">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h6 class="mb-0">سلة التسوق</h6>
-                        <a href="/cart/" class="text-primary">عرض الكل</a>
-                    </div>
-                    <div class="cart-items">
-                        <div class="cart-item d-flex py-2 border-bottom">
-                            <div class="placeholder-image bg-light rounded" style="width:50px;height:50px;flex-shrink:0"></div>
-                            <div class="ms-2 flex-grow-1">
-                                <p class="mb-0 small">منتج في السلة</p>
-                                <span class="text-primary fw-bold">السعر</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="text-center mt-3">
-                        <a href="/cart/checkout/" class="btn btn-primary btn-sm w-100">إتمام الطلب</a>
-                    </div>
-                </div>
-            `;
-                } else {
-                    cartPreview.innerHTML = `
-                <div class="p-3 text-center">
-                    <i class="fas fa-shopping-cart text-muted mb-2" style="font-size:2rem"></i>
-                    <p class="mb-2">سلة التسوق فارغة</p>
-                    <a href="/products/" class="btn btn-outline-primary btn-sm">تسوق الآن</a>
-                </div>
-            `;
-                }
-            }, 500);
         },
 
         handleAddToCart: async function(form) {

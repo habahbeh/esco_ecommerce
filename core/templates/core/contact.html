@@ -26,33 +26,63 @@
 <section class="py-5">
     <div class="container">
         <div class="row g-4">
-            <div class="col-md-4">
+            <div class="col-lg-4">
                 <div class="card h-100 text-center p-4 shadow-sm">
                     <div class="icon-wrapper mb-3">
                         <i class="fas fa-map-marker-alt fa-3x text-primary"></i>
                     </div>
-                    <h4>{% trans "العنوان" %}</h4>
-                    <p>{% trans "شارع المدينة المنورة، عمّان، الأردن" %}</p>
+                    <h4>{% trans "العناوين" %}</h4>
+                    <div class="mt-3">
+                        <p><strong>{% trans "الفرع الرئيسي:" %}</strong><br>{% trans "عمان - سحاب - مقابل مدينة الملك عبدالله الثاني الصناعية - بجانب الملعب البلدي" %}</p>
+                        <p><strong>{% trans "الفرع الثاني:" %}</strong><br>{% trans "عمان-أبو علندا-شارع عبد الكريم الحديدي- مجمع الجعبري عماره رقم 69" %}</p>
+                        <p><strong>{% trans "الفرع الثالث:" %}</strong><br>{% trans "عمان-القسطل-شارع الشحن الجوي- مجمع الجعبري 3" %}</p>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-lg-4">
                 <div class="card h-100 text-center p-4 shadow-sm">
                     <div class="icon-wrapper mb-3">
                         <i class="fas fa-phone-alt fa-3x text-primary"></i>
                     </div>
                     <h4>{% trans "الهاتف" %}</h4>
-                    <p>{% trans "المبيعات" %}: +962 6 5555555</p>
-                    <p>{% trans "الدعم الفني" %}: +962 6 5555556</p>
+                    <p class="mt-3">{% trans "الهاتف الرئيسي" %}: 064027888</p>
+                    <p>{% trans "واتساب" %}: 0775599466</p>
+                    <div class="mt-3">
+                        <a href="tel:+96264027888" class="btn btn-outline-primary rounded-pill">
+                            <i class="fas fa-phone-alt me-2"></i> {% trans "اتصل بنا" %}
+                        </a>
+                        <a href="https://wa.me/962775599466" class="btn btn-outline-success rounded-pill mt-2">
+                            <i class="fab fa-whatsapp me-2"></i> {% trans "واتساب" %}
+                        </a>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-lg-4">
                 <div class="card h-100 text-center p-4 shadow-sm">
                     <div class="icon-wrapper mb-3">
                         <i class="fas fa-envelope fa-3x text-primary"></i>
                     </div>
                     <h4>{% trans "البريد الإلكتروني" %}</h4>
-                    <p>{% trans "المبيعات" %}: sales@esco.jo</p>
-                    <p>{% trans "الدعم الفني" %}: support@esco.jo</p>
+                    <p class="mt-3">contact@esco.jo</p>
+                    <div class="mt-3">
+                        <a href="mailto:contact@esco.jo" class="btn btn-outline-primary rounded-pill">
+                            <i class="fas fa-envelope me-2"></i> {% trans "راسلنا" %}
+                        </a>
+                    </div>
+                    <div class="mt-4">
+                        <h5>{% trans "تواصل معنا" %}</h5>
+                        <div class="social-links d-flex justify-content-center mt-3">
+                            <a href="https://www.facebook.com/Engineering-Stores-المخازن-الهندسية" class="social-link" target="_blank" aria-label="Facebook">
+                                <i class="fab fa-facebook-f"></i>
+                            </a>
+                            <a href="https://www.instagram.com/Engineeringstores" class="social-link" target="_blank" aria-label="Instagram">
+                                <i class="fab fa-instagram"></i>
+                            </a>
+                            <a href="https://www.linkedin.com/company/engineering-stores-company" class="social-link" target="_blank" aria-label="LinkedIn">
+                                <i class="fab fa-linkedin-in"></i>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -63,13 +93,59 @@
 <section class="py-5 bg-light">
     <div class="container">
         <div class="row">
-            <!-- Map -->
+            <!-- Maps with Tabs -->
             <div class="col-lg-6 mb-4 mb-lg-0">
                 <div class="card shadow-sm h-100">
                     <div class="card-body p-0">
-                        <h3 class="card-title p-4 border-bottom">{% trans "موقعنا" %}</h3>
-                        <div class="map-container">
-                            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3383.5040809173983!2d35.85899491520204!3d31.996336281218685!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x151ca17818ded72d%3A0xb6a54c76dcfbf36c!2z2LTYp9ix2Lkg2KfZhNmF2K_ZitmG2Kkg2KfZhNmF2YbZiNix2Kkg2LnZhdmR2KfZhg!5e0!3m2!1sar!2sjo!4v1653294058639!5m2!1sar!2sjo" width="100%" height="400" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                        <h3 class="card-title p-4 border-bottom">{% trans "مواقعنا" %}</h3>
+
+                        <!-- Location Tabs -->
+                        <ul class="nav nav-tabs" id="locationTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="location1-tab" data-bs-toggle="tab" data-bs-target="#location1" type="button" role="tab" aria-controls="location1" aria-selected="true">{% trans "سحاب" %}</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="location2-tab" data-bs-toggle="tab" data-bs-target="#location2" type="button" role="tab" aria-controls="location2" aria-selected="false">{% trans "أبو علندا" %}</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="location3-tab" data-bs-toggle="tab" data-bs-target="#location3" type="button" role="tab" aria-controls="location3" aria-selected="false">{% trans "القسطل" %}</button>
+                            </li>
+                        </ul>
+
+                        <!-- Tab Content -->
+                        <div class="tab-content" id="locationTabsContent">
+                            <!-- Location 1: Sahab -->
+                            <div class="tab-pane fade show active" id="location1" role="tabpanel" aria-labelledby="location1-tab">
+                                <div class="p-3">
+                                    <h5>{% trans "الفرع الرئيسي - سحاب" %}</h5>
+                                    <p>{% trans "عمان - سحاب - مقابل مدينة الملك عبدالله الثاني الصناعية - بجانب الملعب البلدي" %}</p>
+                                </div>
+                                <div class="map-container">
+                                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3385.7!2d36.0035939!3d31.8570497!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x151b5bdf74b8fecd%3A0x8938079e5b830e6!2z2LTYsdmD2Kkg2KfZhNmF2K7Yp9iy2YYg2KfZhNmH2YbYr9iz2YrYqQ!5e0!3m2!1sen!2sjo!4v1624365025481!5m2!1sen!2sjo" width="100%" height="350" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                                </div>
+                            </div>
+
+                            <!-- Location 2: Abu Alanda -->
+                            <div class="tab-pane fade" id="location2" role="tabpanel" aria-labelledby="location2-tab">
+                                <div class="p-3">
+                                    <h5>{% trans "فرع أبو علندا" %}</h5>
+                                    <p>{% trans "عمان-أبو علندا-شارع عبد الكريم الحديدي- مجمع الجعبري عماره رقم 69" %}</p>
+                                </div>
+                                <div class="map-container">
+                                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3385.7!2d35.9480358!3d31.9032343!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x151b5ffa4bccded5%3A0x27c373fcc7a208bd!2z2LTYsdmD2Kkg2KfZhNmF2K7Yp9iy2YYg2KfZhNmH2YbYr9iz2YrYqQ!5e0!3m2!1sen!2sjo!4v1624365085847!5m2!1sen!2sjo" width="100%" height="350" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                                </div>
+                            </div>
+
+                            <!-- Location 3: Al Qastal -->
+                            <div class="tab-pane fade" id="location3" role="tabpanel" aria-labelledby="location3-tab">
+                                <div class="p-3">
+                                    <h5>{% trans "فرع القسطل" %}</h5>
+                                    <p>{% trans "عمان-القسطل-شارع الشحن الجوي- مجمع الجعبري 3" %}</p>
+                                </div>
+                                <div class="map-container">
+                                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3385.7!2d35.9650285!3d31.7582789!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x151b577e9b5a6829%3A0x4993050cfd59601d!2z2LTYsdmD2Kkg2KfZhNmF2K7Yp9iy2YYg2KfZhNmH2YbYr9iz2YrYqQ!5e0!3m2!1sen!2sjo!4v1624365153912!5m2!1sen!2sjo" width="100%" height="350" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -80,14 +156,20 @@
                 <div class="card shadow-sm h-100">
                     <div class="card-body">
                         <h3 class="card-title mb-4">{% trans "أرسل لنا رسالة" %}</h3>
-                        <form id="contactForm">
+                        <form id="contactForm" class="needs-validation" novalidate>
                             <div class="mb-3">
                                 <label for="name" class="form-label">{% trans "الاسم الكامل" %} *</label>
                                 <input type="text" class="form-control" id="name" required>
+                                <div class="invalid-feedback">
+                                    {% trans "يرجى إدخال الاسم الكامل" %}
+                                </div>
                             </div>
                             <div class="mb-3">
                                 <label for="email" class="form-label">{% trans "البريد الإلكتروني" %} *</label>
                                 <input type="email" class="form-control" id="email" required>
+                                <div class="invalid-feedback">
+                                    {% trans "يرجى إدخال بريد إلكتروني صحيح" %}
+                                </div>
                             </div>
                             <div class="mb-3">
                                 <label for="phone" class="form-label">{% trans "رقم الهاتف" %}</label>
@@ -96,10 +178,16 @@
                             <div class="mb-3">
                                 <label for="subject" class="form-label">{% trans "الموضوع" %} *</label>
                                 <input type="text" class="form-control" id="subject" required>
+                                <div class="invalid-feedback">
+                                    {% trans "يرجى إدخال موضوع الرسالة" %}
+                                </div>
                             </div>
                             <div class="mb-3">
                                 <label for="message" class="form-label">{% trans "الرسالة" %} *</label>
                                 <textarea class="form-control" id="message" rows="5" required></textarea>
+                                <div class="invalid-feedback">
+                                    {% trans "يرجى إدخال نص الرسالة" %}
+                                </div>
                             </div>
                             <button type="submit" class="btn btn-primary">{% trans "إرسال" %}</button>
                         </form>
@@ -120,16 +208,12 @@
                     <table class="table table-striped">
                         <tbody>
                             <tr>
-                                <td>{% trans "الأحد - الخميس" %}</td>
-                                <td>9:00 AM - 5:00 PM</td>
+                                <td>{% trans "السبت - الخميس" %}</td>
+                                <td>8:00 AM - 5:00 PM</td>
                             </tr>
                             <tr>
                                 <td>{% trans "الجمعة" %}</td>
                                 <td>{% trans "مغلق" %}</td>
-                            </tr>
-                            <tr>
-                                <td>{% trans "السبت" %}</td>
-                                <td>10:00 AM - 2:00 PM</td>
                             </tr>
                         </tbody>
                     </table>
@@ -140,7 +224,7 @@
 </section>
 
 <!-- FAQ Section -->
-<section class="py-5 bg-light">
+<section class="py-5 bg-light" hidden>
     <div class="container">
         <div class="section-title text-center mb-5">
             <h2>{% trans "الأسئلة الشائعة" %}</h2>
@@ -212,11 +296,14 @@
                 <h2 class="fw-bold">{% trans "هل لديك استفسارات أخرى؟" %}</h2>
                 <p class="lead">{% trans "فريقنا جاهز للإجابة على جميع أسئلتك واستفساراتك" %}</p>
                 <div class="mt-4">
-                    <a href="tel:+96265555555" class="btn btn-light btn-lg me-2 mb-2">
+                    <a href="tel:+96264027888" class="btn btn-light btn-lg me-2 mb-2">
                         <i class="fas fa-phone-alt me-2"></i> {% trans "اتصل بنا" %}
                     </a>
-                    <a href="mailto:info@esco.jo" class="btn btn-outline-light btn-lg mb-2">
+                    <a href="mailto:contact@esco.jo" class="btn btn-outline-light btn-lg mb-2">
                         <i class="fas fa-envelope me-2"></i> {% trans "راسلنا" %}
+                    </a>
+                    <a href="https://wa.me/962775599466" class="btn btn-success btn-lg mb-2">
+                        <i class="fab fa-whatsapp me-2"></i> {% trans "واتساب" %}
                     </a>
                 </div>
             </div>
@@ -229,7 +316,7 @@
 <style>
     /* Map Container */
     .map-container {
-        height: 400px;
+        height: 350px;
         width: 100%;
     }
 
@@ -243,6 +330,12 @@
         justify-content: center;
         align-items: center;
         margin: 0 auto;
+        transition: all 0.3s ease;
+    }
+
+    .card:hover .icon-wrapper {
+        transform: scale(1.1);
+        background-color: rgba(var(--bs-primary-rgb), 0.1);
     }
 
     /* Contact Form Validation */
@@ -255,72 +348,94 @@
         border-color: #dc3545;
         box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
     }
+
+    /* Location Tabs */
+    #locationTabs {
+        padding: 0 1rem;
+        border-bottom: none;
+    }
+
+    #locationTabs .nav-link {
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: var(--bs-body-color);
+        font-weight: 500;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+
+    #locationTabs .nav-link:hover {
+        background-color: rgba(var(--bs-primary-rgb), 0.05);
+    }
+
+    #locationTabs .nav-link.active {
+        color: var(--bs-primary);
+        border-bottom-color: var(--bs-primary);
+        background-color: transparent;
+    }
+
+    /* Social Links */
+    .social-links {
+        gap: 0.5rem;
+    }
+
+    .social-link {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(var(--bs-primary-rgb), 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--bs-primary);
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .social-link:hover {
+        background: var(--bs-primary);
+        color: white;
+        transform: translateY(-3px);
+    }
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Simple form validation
+        // Form validation
         const contactForm = document.getElementById('contactForm');
 
         if (contactForm) {
             contactForm.addEventListener('submit', function(e) {
                 e.preventDefault();
 
+                if (!this.checkValidity()) {
+                    e.stopPropagation();
+                    this.classList.add('was-validated');
+                    return;
+                }
+
                 // Get form fields
                 const nameField = document.getElementById('name');
                 const emailField = document.getElementById('email');
+                const phoneField = document.getElementById('phone');
                 const subjectField = document.getElementById('subject');
                 const messageField = document.getElementById('message');
 
-                // Validate fields
-                let isValid = true;
-
-                if (!nameField.value.trim()) {
-                    nameField.classList.add('is-invalid');
-                    isValid = false;
-                } else {
-                    nameField.classList.remove('is-invalid');
-                }
-
-                if (!emailField.value.trim() || !validateEmail(emailField.value)) {
-                    emailField.classList.add('is-invalid');
-                    isValid = false;
-                } else {
-                    emailField.classList.remove('is-invalid');
-                }
-
-                if (!subjectField.value.trim()) {
-                    subjectField.classList.add('is-invalid');
-                    isValid = false;
-                } else {
-                    subjectField.classList.remove('is-invalid');
-                }
-
-                if (!messageField.value.trim()) {
-                    messageField.classList.add('is-invalid');
-                    isValid = false;
-                } else {
-                    messageField.classList.remove('is-invalid');
-                }
-
-                // If form is valid, show success message
-                if (isValid) {
-                    // Here you would typically send the form data to a server
-                    // For demo purposes, we'll just show a success alert
-                    alert('تم إرسال رسالتك بنجاح! سنتواصل معك قريبًا.');
-                    contactForm.reset();
-                }
+                // Here you would typically send the form data to a server
+                // For demo purposes, we'll just show a success alert
+                alert('تم إرسال رسالتك بنجاح! سنتواصل معك قريبًا.');
+                this.reset();
+                this.classList.remove('was-validated');
             });
         }
 
-        // Email validation helper function
-        function validateEmail(email) {
-            const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-            return re.test(String(email).toLowerCase());
+        // Initialize Bootstrap tabs
+        const locationTabs = document.getElementById('locationTabs');
+        if (locationTabs) {
+            const tabs = new bootstrap.Tab(locationTabs);
         }
     });
 </script>
-
 {% endblock %}

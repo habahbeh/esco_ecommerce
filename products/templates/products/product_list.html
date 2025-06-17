@@ -119,6 +119,82 @@
         margin-top: 30px;
     }
 
+    /* تصميم بطاقة المنتج الجديدة */
+    .product-card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .product-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+    }
+
+    .product-card .card-img-top {
+        height: 220px;
+        object-fit: cover;
+    }
+
+    .product-badge-new,
+    .product-badge-featured,
+    .product-badge-sale {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+        z-index: 1;
+    }
+
+    .product-badge-new {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .product-badge-featured {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .product-badge-sale {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .product-details {
+        margin: 15px 0;
+    }
+
+    .product-info {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+        color: #6c757d;
+    }
+
+    .product-info i {
+        width: 20px;
+        margin-right: 10px;
+        color: var(--bs-primary);
+    }
+
+    html[dir="rtl"] .product-info i {
+        margin-right: 0;
+        margin-left: 10px;
+    }
+
+    .product-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
     /* التنقل بين الصفحات */
     .pagination-container {
         margin-top: 40px;
@@ -179,6 +255,15 @@
 
     .filter-sidebar-toggle i {
         font-size: 1.2rem;
+    }
+
+    /* أقسام المنتجات */
+    .products-section {
+        margin-bottom: 40px;
+    }
+
+    .section-title {
+        margin-bottom: 25px;
     }
 
     /* الشاشات الصغيرة */
@@ -318,11 +403,57 @@
                     </div>
                 </div>
 
-                <!-- شبكة المنتجات -->
-                <div class="products-grid">
+                <!-- المنتجات المميزة -->
+                {% if featured_products %}
+                <section class="products-section">
+                    <div class="section-title text-center mb-4">
+                        <h2>{% trans "منتجات مميزة" %}</h2>
+                        <p class="lead text-muted">{% trans "أفضل المنتجات المختارة خصيصاً لكم" %}</p>
+                    </div>
+
+                    <div class="row g-4">
+                        {% for product in featured_products %}
+                            <div class="col-md-6" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
+                                <div class="card product-card h-100">
+                                    <div class="product-badge-featured">{% trans "مميز" %}</div>
+                                    <img src="{{ product.default_image.image.url|default:'#' }}" class="card-img-top" alt="{{ product.name }}">
+                                    <div class="card-body">
+                                        <h3 class="card-title">{{ product.name }}</h3>
+                                        <div class="product-details">
+                                            <div class="product-info">
+                                                <i class="fas fa-tag"></i>
+                                                <span>{{ product.current_price|floatformat:2 }} {% trans "د.أ" %}</span>
+                                            </div>
+                                            <div class="product-info">
+                                                <i class="fas fa-layer-group"></i>
+                                                <span>{{ product.category.name }}</span>
+                                            </div>
+                                        </div>
+                                        <p class="card-text">{{ product.short_description }}</p>
+                                        <div class="product-actions">
+                                            <a href="{% url 'products:product_detail' product.slug %}" class="btn btn-primary">{% trans "عرض التفاصيل" %}</a>
+                                            {% if product.in_stock %}
+                                            <form action="{% url 'cart:add_to_cart' product.id %}" method="post" class="d-inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="product_id" value="{{ product.id }}">
+                                                <input type="hidden" name="quantity" value="1">
+                                                <button type="submit" class="btn btn-outline-primary">{% trans "إضافة للسلة" %}</button>
+                                            </form>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </section>
+                {% endif %}
+
+                <!-- جميع المنتجات -->
+                <section class="products-section">
                     <div class="row g-4">
                         {% for product in products %}
-                            <div class="col-md-6">
+                            <div class="col-md-6" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
                                 {% include 'products/base/_product_card.html' with product=product %}
                             </div>
                         {% empty %}
@@ -336,7 +467,7 @@
                             </div>
                         {% endfor %}
                     </div>
-                </div>
+                </section>
 
                 <!-- التنقل بين الصفحات -->
                 {% if paginator.num_pages > 1 %}
@@ -410,7 +541,7 @@
 {% block extra_js %}
 <script src="{% static 'products/js/category_tree.js' %}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.6.1/nouislider.min.js"></script>
-<script src="{% static 'products/js/advanced_filters.js' %}"></script>
+{#<script src="{% static 'products/js/advanced_filters.js' %}"></script>#}
 <script>
     // متغير مسار الفئة الحالية
     var currentCategoryPath = {{ current_category_path|default:"[]"|safe }};
