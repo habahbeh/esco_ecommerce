@@ -413,17 +413,52 @@ class SpecialOffersView(BaseProductListView):
         from django.utils import timezone
         now = timezone.now()
 
-        return self.get_optimized_product_queryset().filter(
+        filter_type = self.request.GET.get('filter', 'all')
+        queryset = self.get_optimized_product_queryset().filter(
             Q(discount_percentage__gt=0) | Q(discount_amount__gt=0)
         ).filter(
             Q(discount_start__isnull=True) | Q(discount_start__lte=now)
         ).filter(
             Q(discount_end__isnull=True) | Q(discount_end__gte=now)
-        ).order_by('-discount_percentage', '-created_at')
+        )
+
+        # تطبيق فلاتر إضافية حسب النوع
+        if filter_type == 'hot':
+            # العروض الساخنة: ترتيب حسب نسبة الخصم والمبيعات
+            queryset = queryset.order_by('-discount_percentage', '-sales_count')
+        elif filter_type == 'ending':
+            # العروض التي تنتهي قريبًا: ترتيب حسب تاريخ الانتهاء
+            queryset = queryset.filter(
+                discount_end__isnull=False
+            ).order_by('discount_end')
+        elif filter_type == 'new':
+            # العروض الجديدة: ترتيب حسب تاريخ البداية
+            queryset = queryset.filter(
+                discount_start__isnull=False
+            ).order_by('-discount_start')
+        else:
+            # الافتراضي: ترتيب حسب نسبة الخصم
+            queryset = queryset.order_by('-discount_percentage', '-created_at')
+
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = _('العروض الخاصة')
+
+        # إضافة معلومات عن أقرب تاريخ انتهاء للعروض
+        from django.utils import timezone
+        now = timezone.now()
+        products_with_expiry = self.get_queryset().filter(
+            discount_end__isnull=False,
+            discount_end__gt=now
+        ).order_by('discount_end')
+
+        if products_with_expiry.exists():
+            context['nearest_expiry_date'] = products_with_expiry.first().discount_end
+        else:
+            # إذا لم يكن هناك تاريخ انتهاء، نستخدم تاريخ افتراضي (7 أيام من الآن)
+            context['nearest_expiry_date'] = now + timezone.timedelta(days=7)
 
         # Add category tree for sidebar navigation
         category_view = CategoryListView()
@@ -439,6 +474,19 @@ class SpecialOffersView(BaseProductListView):
         )
         context['total_savings'] = total_savings
         context['products_count'] = products.count()
+
+        # إضافة إحصائيات العروض
+        context['offers_stats'] = {
+            'ending_today_count': products.filter(
+                discount_end__date=now.date()
+            ).count(),
+            'ending_this_week_count': products.filter(
+                discount_end__range=[now, now + timezone.timedelta(days=7)]
+            ).count(),
+            'high_discount_count': products.filter(
+                discount_percentage__gte=50
+            ).count(),
+        }
 
         return context
 

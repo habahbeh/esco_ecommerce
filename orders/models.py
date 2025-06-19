@@ -3,6 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 from cart.models import Cart
 import uuid
+from model_utils import FieldTracker
 
 
 class Order(models.Model):
@@ -64,6 +65,9 @@ class Order(models.Model):
                                  null=True, blank=True, related_name='orders',
                                  verbose_name=_("الخصم المطبق"))
     coupon_code = models.CharField(_("كود الكوبون"), max_length=50, blank=True)
+
+    # إضافة tracker لتتبع تغييرات حالة الطلب وحالة الدفع
+    tracker = FieldTracker(['status', 'payment_status'])
 
     created_at = models.DateTimeField(_("تاريخ الإنشاء"), auto_now_add=True)
     updated_at = models.DateTimeField(_("تاريخ التحديث"), auto_now=True)
