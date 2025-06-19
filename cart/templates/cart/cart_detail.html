@@ -104,9 +104,23 @@
                             <strong>{{ cart_total|floatformat:2 }} {% trans "د.أ" %}</strong>
                         </div>
                         
-                        <a href="{% url 'checkout:checkout' %}" class="btn btn-primary w-100">
-                            {% trans "إتمام الطلب" %}
-                        </a>
+{#                        <a href="{% url 'checkout:checkout' %}" class="btn btn-primary w-100">#}
+{#                            {% trans "إتمام الطلب" %}#}
+{#                        </a>#}
+
+                        {% if is_authenticated %}
+                            <a href="{% url 'checkout:checkout' %}" class="btn btn-primary w-100">
+                                {% trans "إتمام الطلب" %}
+                            </a>
+                        {% else %}
+                            <div class="alert alert-warning mb-3">
+                                <i class="fas fa-info-circle me-2"></i> {% trans "يجب تسجيل الدخول لإتمام عملية الشراء" %}
+                            </div>
+                            <a href="{{ login_url }}" class="btn btn-primary w-100">
+                                <i class="fas fa-sign-in-alt me-2"></i> {% trans "تسجيل الدخول للشراء" %}
+                            </a>
+                        {% endif %}
+
                     </div>
                 </div>
             </div>

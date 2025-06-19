@@ -47,17 +47,18 @@ class CartMixin:
         return total
 
 
+# cart/views.py (تعديل CartDetailView)
 class CartDetailView(CartMixin, TemplateView):
     """
     Display cart details
     """
     template_name = 'cart/cart_detail.html'
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         cart = self.get_cart(self.request)
         cart_items = []
-        
+
         for item_id, item_data in cart.items():
             try:
                 product = Product.objects.get(id=item_data['product_id'])
@@ -67,7 +68,7 @@ class CartDetailView(CartMixin, TemplateView):
                         variant = ProductVariant.objects.get(id=item_data['variant_id'])
                     except ProductVariant.DoesNotExist:
                         pass
-                
+
                 cart_items.append({
                     'id': item_id,
                     'product': product,
@@ -78,13 +79,16 @@ class CartDetailView(CartMixin, TemplateView):
                 })
             except Product.DoesNotExist:
                 continue
-        
+
         context['cart_items'] = cart_items
         context['cart_total'] = self.get_cart_total(self.request)
         context['cart_count'] = self.get_cart_items_count(self.request)
-        
-        return context
 
+        # إضافة معلومات عما إذا كان المستخدم مسجل دخول أم لا
+        context['is_authenticated'] = self.request.user.is_authenticated
+        context['login_url'] = '/accounts/login/?next=/checkout/'  # تعديل هذا حسب مسار تسجيل الدخول في مشروعك
+
+        return context
 
 class AddToCartView(CartMixin, View):
     """
