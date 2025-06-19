@@ -1,0 +1,129 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "تأكيد الدفع" %} | ESCO{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">{% trans "تأكيد الدفع" %}</h1>
+    
+    <!-- خطوات الدفع -->
+    <div class="checkout-steps mb-5">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="step completed">
+                    <span class="step-number">1</span>
+                    <span class="step-title">{% trans "معلومات الشحن" %}</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="step completed">
+                    <span class="step-number">2</span>
+                    <span class="step-title">{% trans "طريقة الدفع" %}</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="step active">
+                    <span class="step-number">3</span>
+                    <span class="step-title">{% trans "تأكيد الطلب" %}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{% trans "تأكيد الدفع" %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-4">
+                        <h5 class="alert-heading">{% trans "طريقة الدفع المختارة" %}: {{ payment_method.name }}</h5>
+                        {% if payment_method.instructions %}
+                            <p class="mb-0">{{ payment_method.instructions|linebreaks }}</p>
+                        {% elif payment_method.payment_type == 'bank_transfer' %}
+                            <p>{% trans "يرجى تحويل المبلغ إلى الحساب البنكي التالي:" %}</p>
+                            <p class="mb-1"><strong>{% trans "اسم البنك:" %}</strong> بنك الأردن</p>
+                            <p class="mb-1"><strong>{% trans "اسم الحساب:" %}</strong> شركة ESCO للتجارة الإلكترونية</p>
+                            <p class="mb-1"><strong>{% trans "رقم الحساب:" %}</strong> 1234567890</p>
+                            <p class="mb-0"><strong>{% trans "IBAN:" %}</strong> JO123456789012345678901234567</p>
+                        {% elif payment_method.code == 'click' or payment_method.payment_type == 'digital_wallet' %}
+                            <p>{% trans "قم بالدفع على رقم الهاتف: 0790123456" %}</p>
+                            <p>{% trans "اسم المستفيد: ESCO للتجارة الإلكترونية" %}</p>
+                            <p class="mb-0">{% trans "بعد إتمام عملية الدفع، يرجى إرفاق صورة من الإيصال" %}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <form method="post" action="{% url 'checkout:payment_confirmation' %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        {% if payment_method.payment_type == 'bank_transfer' or payment_method.code == 'click' or payment_method.payment_type == 'digital_wallet' %}
+                            <div class="mb-4">
+                                <label for="receipt" class="form-label">{% trans "إرفاق إيصال الدفع" %} *</label>
+                                <input type="file" class="form-control" id="receipt" name="receipt" accept="image/*,.pdf" required>
+                                <div class="form-text">
+                                    {% trans "يرجى إرفاق صورة واضحة من إيصال الدفع. الصيغ المدعومة: JPG, PNG, PDF" %}
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'checkout:payment_method' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-right me-2"></i>{% trans "الرجوع" %}
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check me-2"></i>{% trans "تأكيد الطلب والدفع" %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{% trans "ملخص الطلب" %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        {% for item in cart_items %}
+                            <div class="d-flex justify-content-between mb-2">
+                                <div>
+                                    <span>{{ item.name }}</span>
+                                    <small class="text-muted d-block">{{ item.quantity }} × {{ item.price|floatformat:2 }}</small>
+                                </div>
+                                <span>{{ item.total|floatformat:2 }} {% trans "د.أ" %}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>{% trans "المجموع الفرعي" %}</span>
+                        <span>{{ total|floatformat:2 }} {% trans "د.أ" %}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>{% trans "الشحن" %}</span>
+                        <span>{{ shipping_cost|floatformat:2 }} {% trans "د.أ" %}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>{% trans "الضريبة" %}</span>
+                        <span>{{ tax_amount|floatformat:2 }} {% trans "د.أ" %}</span>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <strong>{% trans "المجموع" %}</strong>
+                        <strong>{{ grand_total|floatformat:2 }} {% trans "د.أ" %}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

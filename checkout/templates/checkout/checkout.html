@@ -1,0 +1,152 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "إتمام الطلب" %} | ESCO{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">{% trans "إتمام الطلب" %}</h1>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{% trans "معلومات الشحن" %}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'checkout:checkout' %}">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="full_name" class="form-label">{% trans "الاسم الكامل" %} *</label>
+                                <input type="text" class="form-control" id="full_name" name="full_name"
+                                       value="{{ user_data.full_name }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">{% trans "البريد الإلكتروني" %} *</label>
+                                <input type="email" class="form-control" id="email" name="email"
+                                       value="{{ user_data.email }}" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">{% trans "رقم الهاتف" %} *</label>
+                            <input type="tel" class="form-control" id="phone" name="phone"
+                                   value="{{ user_data.phone }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="address" class="form-label">{% trans "العنوان" %} *</label>
+                            <input type="text" class="form-control" id="address" name="address"
+                                   value="{{ user_data.address }}" required>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="city" class="form-label">{% trans "المدينة" %} *</label>
+                                <input type="text" class="form-control" id="city" name="city"
+                                       value="{{ user_data.city }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="state" class="form-label">{% trans "المحافظة" %} *</label>
+                                <input type="text" class="form-control" id="state" name="state"
+                                       value="{{ user_data.state }}" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="country" class="form-label">{% trans "الدولة" %}</label>
+                                <input type="text" class="form-control" id="country" name="country"
+                                       value="{{ user_data.country|default:'الأردن' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="postal_code" class="form-label">{% trans "الرمز البريدي" %}</label>
+                                <input type="text" class="form-control" id="postal_code" name="postal_code"
+                                       value="{{ user_data.postal_code }}">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="shipping_method" class="form-label">{% trans "طريقة الشحن" %} *</label>
+                            <select class="form-select" id="shipping_method" name="shipping_method" required>
+                                {% for method in shipping_methods %}
+                                    <option value="{{ method.id }}" {% if method.is_default %}selected{% endif %}>
+                                        {{ method.name }} - {{ method.base_cost }} {% trans "د.أ" %}
+                                        {% if method.free_shipping_threshold > 0 %}
+                                            ({% trans "شحن مجاني للطلبات فوق" %} {{ method.free_shipping_threshold }} {% trans "د.أ" %})
+                                        {% endif %}
+                                    </option>
+                                {% empty %}
+                                    <option value="1">{% trans "شحن قياسي" %} - 5.00 {% trans "د.أ" %}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">{% trans "ملاحظات" %}</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3">{{ user_data.notes }}</textarea>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">{% trans "متابعة إلى الدفع" %}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{% trans "ملخص الطلب" %}</h5>
+                </div>
+                <div class="card-body">
+                    {% if cart_items %}
+                        <div class="mb-4">
+                            {% for item in cart_items %}
+                                <div class="d-flex justify-content-between mb-2">
+                                    <div>
+                                        <span>{{ item.product.name }}</span>
+                                        <small class="text-muted d-block">{{ item.quantity }} × {{ item.price|floatformat:2 }}</small>
+                                    </div>
+                                    <span>{{ item.subtotal|floatformat:2 }} {% trans "د.أ" %}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>{% trans "المجموع الفرعي" %}</span>
+                            <span>{{ cart_subtotal|floatformat:2 }} {% trans "د.أ" %}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>{% trans "الشحن" %}</span>
+                            <span>{{ cart_shipping|floatformat:2 }} {% trans "د.أ" %}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>{% trans "الضريبة" %}</span>
+                            <span>{{ cart_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="d-flex justify-content-between mb-2">
+                            <strong>{% trans "المجموع" %}</strong>
+                            <strong>{{ cart_total|floatformat:2 }} {% trans "د.أ" %}</strong>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <p>{% trans "لا توجد منتجات في السلة" %}</p>
+                            <a href="{% url 'products:product_list' %}" class="btn btn-outline-primary">{% trans "تسوق الآن" %}</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

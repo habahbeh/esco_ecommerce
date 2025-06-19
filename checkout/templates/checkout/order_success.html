@@ -1,0 +1,76 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "تم إتمام الطلب بنجاح" %} | ESCO{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-check-circle text-success fa-5x"></i>
+                    </div>
+                    <h1 class="mb-3">{% trans "شكراً لك على طلبك!" %}</h1>
+                    <p class="lead mb-4">{% trans "تم استلام طلبك بنجاح وسيتم معالجته في أقرب وقت ممكن." %}</p>
+                    
+                    {% if order %}
+                        <div class="alert alert-info">
+                            <p class="mb-1"><strong>{% trans "رقم الطلب:" %}</strong> {{ order.order_number }}</p>
+                            <p class="mb-0">
+                                {% trans "يمكنك متابعة حالة طلبك من خلال" %} 
+                                <a href="{% url 'orders:order_detail' order.id %}">{% trans "صفحة تفاصيل الطلب" %}</a>
+                            </p>
+                        </div>
+                        
+                        <div class="order-details mt-4 text-start">
+                            <h5>{% trans "تفاصيل الطلب" %}</h5>
+                            <hr>
+                            <div class="row mb-2">
+                                <div class="col-md-4 fw-bold">{% trans "الاسم:" %}</div>
+                                <div class="col-md-8">{{ order.full_name }}</div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-4 fw-bold">{% trans "البريد الإلكتروني:" %}</div>
+                                <div class="col-md-8">{{ order.email }}</div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-4 fw-bold">{% trans "الهاتف:" %}</div>
+                                <div class="col-md-8">{{ order.phone }}</div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-4 fw-bold">{% trans "العنوان:" %}</div>
+                                <div class="col-md-8">
+                                    {{ order.shipping_address }}, {{ order.shipping_city }}, {{ order.shipping_state }}
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-4 fw-bold">{% trans "طريقة الدفع:" %}</div>
+                                <div class="col-md-8">{{ order.payment_method }}</div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-4 fw-bold">{% trans "المجموع:" %}</div>
+                                <div class="col-md-8">{{ order.grand_total|floatformat:2 }} {% trans "د.أ" %}</div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-4 fw-bold">{% trans "حالة الطلب:" %}</div>
+                                <div class="col-md-8">
+                                    <span class="badge bg-primary">{{ order.get_status_display }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mt-5">
+                        <a href="{% url 'products:product_list' %}" class="btn btn-primary">
+                            <i class="fas fa-shopping-cart me-2"></i>{% trans "مواصلة التسوق" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

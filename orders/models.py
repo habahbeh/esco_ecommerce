@@ -26,7 +26,7 @@ class Order(models.Model):
         ('refunded', _('مسترجع')),
     ]
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_index=True)
     order_number = models.CharField(_("رقم الطلب"), max_length=20, unique=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
                              related_name='orders', verbose_name=_("المستخدم"))
