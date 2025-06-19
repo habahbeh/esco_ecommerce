@@ -1,6 +1,7 @@
 {% extends 'core/base.html' %}
 {% load static %}
 {% load i18n %}
+{% load product_filters %}
 
 {% block title %}{% trans "العروض الخاصة" %} | {{ site_settings.site_name|default:"ESCO" }}{% endblock %}
 
@@ -8,13 +9,14 @@
 <style>
     /* Page Header */
     .offers-header {
-        background: linear-gradient(135deg, #ff5722 0%, #ff7043 100%);
+        background: linear-gradient(135deg, var(--bs-primary) 0%, rgba(var(--bs-primary-rgb), 0.8) 100%);
         color: white;
         padding: 4rem 0 3rem;
         position: relative;
         overflow: hidden;
     }
 
+    /* باقي الأكواد بدون تغيير */
     .offers-header::before {
         content: '';
         position: absolute;
@@ -101,7 +103,7 @@
         display: block;
         font-size: 2.5rem;
         font-weight: 800;
-        color: #ff5722;
+        color: var(--bs-primary);
         line-height: 1;
         margin-bottom: 0.5rem;
     }
@@ -141,14 +143,14 @@
     }
 
     .filter-tab:hover {
-        border-color: #ff5722;
-        color: #ff5722;
+        border-color: var(--bs-primary);
+        color: var(--bs-primary);
     }
 
     .filter-tab.active {
-        background: #ff5722;
+        background: var(--bs-primary);
         color: white;
-        border-color: #ff5722;
+        border-color: var(--bs-primary);
     }
 
     /* Products Grid */
@@ -178,19 +180,40 @@
         position: absolute;
         top: 1rem;
         left: 1rem;
-        background: #ff5722;
+        background: var(--bs-primary);
         color: white;
         padding: 0.75rem 1.5rem;
         border-radius: 50px;
         font-weight: 700;
         font-size: 1.125rem;
         z-index: 10;
-        box-shadow: 0 5px 15px rgba(255, 87, 34, 0.3);
+        box-shadow: 0 5px 15px rgba(var(--bs-primary-rgb), 0.3);
     }
+
+    .timer-badge-compact {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    z-index: 10;
+    max-width: 45%;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.timer-badge-compact i {
+    color: #ffc107;
+    margin-inline-end: 0.3rem;
+}
 
     .hot-deal-badge {
         position: absolute;
-        top: 1rem;
+        top: 4rem;
         right: 1rem;
         background: linear-gradient(135deg, #f39c12 0%, #e74c3c 100%);
         color: white;
@@ -239,8 +262,8 @@
     .offer-image img {
         width: 100%;
         height: 100%;
-        object-fit: contain;
-        padding: 2rem;
+        object-fit: cover;
+        padding: 0rem;
         transition: transform 0.5s ease;
     }
 
@@ -258,6 +281,17 @@
         color: var(--text-muted);
         margin-bottom: 0.5rem;
     }
+
+    /* إضافة نمط للحالة عندما لا توجد صورة */
+.offer-image .no-image {
+    width: 100%;
+    height: 100%;
+    background-color: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 
     .offer-name {
         font-size: 1.25rem;
@@ -280,7 +314,7 @@
     .current-price {
         font-size: 2rem;
         font-weight: 800;
-        color: #ff5722;
+        color: var(--bs-primary);
     }
 
     .original-price {
@@ -296,7 +330,14 @@
         border-radius: 10px;
         font-weight: 600;
         margin-bottom: 1rem;
-        text-align: center;
+    }
+
+    .savings-badge {
+        background: #2e7d32;
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 5px;
+        font-size: 0.875rem;
     }
 
     /* Progress Bar */
@@ -319,9 +360,31 @@
     }
 
     .progress-bar {
-        background: linear-gradient(90deg, #ff5722 0%, #ff7043 100%);
+        background: linear-gradient(90deg, var(--bs-primary) 0%, rgba(var(--bs-primary-rgb), 0.8) 100%);
         height: 100%;
         transition: width 0.3s ease;
+    }
+
+    .progress-bar.bg-danger {
+        background: linear-gradient(90deg, #ff3b30 0%, #ff5e3a 100%);
+    }
+
+    .progress-bar.bg-warning {
+        background: linear-gradient(90deg, #ff9500 0%, #ffcc00 100%);
+    }
+
+    .progress-bar.bg-success {
+        background: linear-gradient(90deg, #34c759 0%, #30d158 100%);
+    }
+
+    .low-stock-alert {
+        background: #fff3cd;
+        color: #856404;
+        padding: 0.5rem;
+        border-radius: 5px;
+        font-size: 0.875rem;
+        text-align: center;
+        margin-bottom: 1rem;
     }
 
     /* Action Buttons */
@@ -363,7 +426,7 @@
 
     /* Newsletter Section */
     .newsletter-section {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, var(--bs-primary) 0%, rgba(var(--bs-primary-rgb), 0.8) 100%);
         color: white;
         padding: 4rem 0;
         margin-top: 5rem;
@@ -410,7 +473,7 @@
     .newsletter-btn {
         padding: 1rem 2rem;
         background: white;
-        color: #667eea;
+        color: var(--bs-primary);
         border: none;
         border-radius: 50px;
         font-weight: 700;
@@ -431,9 +494,118 @@
 
     .empty-icon {
         font-size: 6rem;
-        color: #ff5722;
+        color: var(--bs-primary);
         margin-bottom: 1.5rem;
         opacity: 0.3;
+    }
+
+    /* تحسين وإضافة أقسام مميزة للعروض */
+    .offer-sections-banner {
+        background: #fff;
+        padding: 2rem;
+        border-radius: 20px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        margin-bottom: 3rem;
+    }
+
+    .section-header {
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .section-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        position: relative;
+        display: inline-block;
+    }
+
+    .section-title::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 4px;
+        background: var(--bs-primary);
+        border-radius: 2px;
+    }
+
+    .section-subtitle {
+        color: var(--text-muted);
+    }
+
+    .filter-category-labels {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .offer-type-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .offer-type-badge.all {
+        background: rgba(var(--bs-primary-rgb), 0.1);
+        color: var(--bs-primary);
+    }
+
+    .offer-type-badge.high-discount {
+        background: #fce4ec;
+        color: #c2185b;
+    }
+
+    .offer-type-badge.ending-soon {
+        background: #fff3e0;
+        color: #f57c00;
+    }
+
+    .offer-type-badge.ending-today {
+        background: #ffebee;
+        color: #d32f2f;
+    }
+
+    /* تعزيز الجانب البصري للعروض المنتهية قريبًا */
+    @keyframes pulse-red {
+        0% { box-shadow: 0 0 0 0 rgba(var(--bs-primary-rgb), 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(var(--bs-primary-rgb), 0); }
+        100% { box-shadow: 0 0 0 0 rgba(var(--bs-primary-rgb), 0); }
+    }
+
+    .ending-soon {
+        animation: pulse-red 2s infinite;
+        border: 2px solid var(--bs-primary);
+    }
+
+    .timer-badge.ending-soon {
+        background: rgba(var(--bs-primary-rgb), 0.9);
+        font-weight: 700;
+    }
+
+    .timer-badge.expired {
+        background: rgba(0, 0, 0, 0.5);
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    /* مشاركة العروض */
+    .share-offer {
+        margin-top: 1rem;
+        text-align: center;
+    }
+
+    .share-btn {
+        font-size: 0.875rem;
+        padding: 0.5rem 1rem;
+        width: 100%;
+        border-radius: 5px;
     }
 
     /* Responsive */
@@ -506,10 +678,10 @@
     <div class="timer-banner" data-aos="fade-up">
         <h2 class="timer-title">
             <i class="fas fa-fire text-danger me-2"></i>
-            {% trans "عروض نهاية الأسبوع - خصومات تصل إلى 70%" %}
+            {% trans "عروض استثنائية - خصومات تصل إلى 70%" %}
         </h2>
         <p class="text-muted mb-0">{% trans "العرض ينتهي خلال:" %}</p>
-        <div class="countdown-timer" id="countdown">
+        <div class="countdown-timer" id="countdown" data-end-date="{{ nearest_expiry_date|date:'Y-m-d H:i:s' }}">
             <div class="timer-unit">
                 <span class="timer-value" id="days">00</span>
                 <span class="timer-label">{% trans "يوم" %}</span>
@@ -530,6 +702,29 @@
     </div>
 </section>
 
+<!-- أقسام مميزة للعروض -->
+{% if offers_stats.ending_today_count > 0 %}
+<div class="container mb-5">
+    <div class="alert alert-danger p-3 shadow-sm" role="alert">
+        <h4 class="alert-heading">
+            <i class="fas fa-bolt me-2"></i>{% trans "عروض تنتهي اليوم!" %}
+        </h4>
+        <p>{% blocktrans with count=offers_stats.ending_today_count %}لديك {{ count }} عروض تنتهي اليوم. تسوق الآن قبل فوات الأوان!{% endblocktrans %}</p>
+    </div>
+</div>
+{% endif %}
+
+{% if offers_stats.high_discount_count > 0 %}
+<div class="container mb-5">
+    <div class="section-header">
+        <h2 class="section-title">
+            <i class="fas fa-percent me-2"></i>{% trans "خصومات كبيرة" %}
+        </h2>
+        <p class="section-subtitle">{% trans "منتجات بخصم 50% أو أكثر" %}</p>
+    </div>
+</div>
+{% endif %}
+
 <!-- Offers Section -->
 <section class="offers-section">
     <div class="container">
@@ -549,6 +744,14 @@
             </a>
         </div>
 
+        <!-- أنواع العروض المختلفة -->
+        <div class="filter-category-labels mb-4 text-center">
+            <span class="offer-type-badge all">{% trans "جميع العروض" %} ({{ products_count }})</span>
+            <span class="offer-type-badge high-discount">{% trans "خصومات كبيرة" %} ({{ offers_stats.high_discount_count }})</span>
+            <span class="offer-type-badge ending-soon">{% trans "تنتهي قريبًا" %} ({{ offers_stats.ending_this_week_count }})</span>
+            <span class="offer-type-badge ending-today">{% trans "تنتهي اليوم" %} ({{ offers_stats.ending_today_count }})</span>
+        </div>
+
         <!-- Products Grid -->
         {% if products %}
             <div class="offers-grid">
@@ -558,31 +761,47 @@
                         <span class="discount-badge">
                             {{ product.discount_percentage }}% {% trans "خصم" %}
                         </span>
-                        
-                        {% if forloop.counter <= 3 %}
-                            <span class="hot-deal-badge">
-                                <i class="fas fa-fire me-1"></i>{% trans "صفقة ساخنة" %}
-                            </span>
-                        {% endif %}
-                        
+
+{#                        {% if forloop.counter <= 3 %}#}
+{#                            <span class="hot-deal-badge">#}
+{#                                <i class="fas fa-fire me-1"></i>{% trans "صفقة ساخنة" %}#}
+{#                            </span>#}
+{#                        {% endif %}#}
+
                         {% if product.discount_end %}
-                            <div class="timer-badge">
-                                <i class="fas fa-clock"></i>
-                                {% trans "ينتهي العرض خلال" %} {{ product.discount_end|timeuntil }}
-                            </div>
-                        {% endif %}
-                        
+<div class="timer-badge-compact">
+    <i class="fas fa-clock-o"></i>
+    <span class="product-countdown" data-end-date="{{ product.discount_end|date:'Y-m-d H:i:s' }}">
+        <span class="countdown-value">{{ product.discount_end|timeuntil }}</span>
+    </span>
+</div>
+{% endif %}
+
                         <!-- Product Image -->
-                        <div class="offer-image">
-                            <a href="{% url 'products:product_detail' product.slug %}">
-                                {% if product.images.exists %}
-                                    <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}">
-                                {% else %}
-                                    <img src="{{ product.default_image.url }}" alt="{{ product.name }}">
-                                {% endif %}
-                            </a>
-                        </div>
-                        
+{#                        <div class="offer-image">#}
+{#                            <a href="{% url 'products:product_detail' product.slug %}">#}
+{#                                {% if product.images.exists %}#}
+{#                                    <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}">#}
+{#                                {% else %}#}
+{#                                    <img src="{{ product.default_image.url }}" alt="{{ product.name }}">#}
+{#                                {% endif %}#}
+{#                            </a>#}
+{#                        </div>#}
+
+                    <!-- Product Image -->
+<div class="offer-image">
+    <a href="{% url 'products:product_detail' product.slug %}">
+        {% if product.default_image %}
+            <img src="{{ product.default_image.image.url }}" alt="{{ product.name }}">
+        {% else %}
+            <div class="no-image d-flex align-items-center justify-content-center h-100">
+                <i class="far fa-image fa-3x text-muted"></i>
+            </div>
+        {% endif %}
+    </a>
+</div>
+
+
                         <!-- Product Info -->
                         <div class="offer-info">
                             <p class="offer-category">{{ product.category.name }}</p>
@@ -591,30 +810,52 @@
                                     {{ product.name }}
                                 </a>
                             </h3>
-                            
+
                             <div class="offer-prices">
                                 <span class="current-price">{{ product.current_price|floatformat:2 }} {% trans "د.أ" %}</span>
                                 <span class="original-price">{{ product.base_price|floatformat:2 }}</span>
                             </div>
-                            
+
                             <div class="savings-info">
-                                <i class="fas fa-tag me-1"></i>
-                                {% blocktrans with amount=product.savings_amount|floatformat:2 %}توفر {{ amount }} د.أ{% endblocktrans %}
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>
+                                        <i class="fas fa-tag me-1"></i>
+                                        {% blocktrans with amount=product.savings_amount|floatformat:2 %}توفر {{ amount }} د.أ{% endblocktrans %}
+                                    </span>
+                                    <span class="savings-badge">{{ product.savings_percentage }}%</span>
+                                </div>
                             </div>
-                            
+
                             <!-- Stock Progress -->
                             {% if product.track_inventory %}
                                 <div class="stock-progress">
-                                    <div class="progress-label">
-                                        <span>{% trans "تم بيع" %} {{ product.sales_count }}</span>
-                                        <span>{% trans "متبقي" %} {{ product.stock_quantity }}</span>
+                                    <div class="progress-label" hidden>
+                                        <span>
+                                            <i class="fas fa-shopping-cart me-1"></i>
+                                            {% blocktrans with sold=product.sales_count %}تم بيع {{ sold }}{% endblocktrans %}
+                                        </span>
+                                        <span>
+                                            <i class="fas fa-box me-1"></i>
+                                            {% blocktrans with available=product.stock_quantity %}متبقي {{ available }}{% endblocktrans %}
+                                        </span>
                                     </div>
-                                    <div class="progress">
-                                        <div class="progress-bar" style="width: {% widthratio product.sales_count product.sales_count|add:product.stock_quantity 100 %}%"></div>
+                                    <div class="progress" hidden>
+                                        {% with total_units=product.sales_count|add:product.stock_quantity %}
+                                        {% with progress_percentage=product.sales_count|mul:100|div:total_units %}
+                                        <div class="progress-bar {% if progress_percentage > 80 %}bg-danger{% elif progress_percentage > 50 %}bg-warning{% else %}bg-success{% endif %}" style="width: {{ progress_percentage }}%"></div>
+                                        {% endwith %}
+                                        {% endwith %}
                                     </div>
                                 </div>
+
+                                {% if product.stock_quantity <= product.min_stock_level and product.stock_quantity > 0 %}
+                                <div class="low-stock-alert">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    {% trans "كمية محدودة متبقية" %}
+                                </div>
+                                {% endif %}
                             {% endif %}
-                            
+
                             <!-- Actions -->
                             <div class="offer-actions">
                                 <form action="{% url 'cart:add_to_cart' product.id %}" method="post" class="flex-fill">
@@ -633,11 +874,18 @@
                                     <i class="fas fa-eye"></i>
                                 </a>
                             </div>
+
+                            <!-- مشاركة العرض -->
+                            <div class="share-offer mt-2">
+                                <button class="btn btn-sm btn-outline-secondary share-btn" data-product-id="{{ product.id }}" data-product-name="{{ product.name }}">
+                                    <i class="fas fa-share-alt me-1"></i> {% trans "مشاركة العرض" %}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 {% endfor %}
             </div>
-            
+
             <!-- Pagination -->
             {% if page_obj.has_other_pages %}
                 <nav aria-label="{% trans 'التنقل بين الصفحات' %}" class="mt-5">
@@ -654,7 +902,7 @@
                                 </a>
                             </li>
                         {% endif %}
-                        
+
                         {% for num in page_obj.paginator.page_range %}
                             {% if page_obj.number == num %}
                                 <li class="page-item active">
@@ -666,7 +914,7 @@
                                 </li>
                             {% endif %}
                         {% endfor %}
-                        
+
                         {% if page_obj.has_next %}
                             <li class="page-item">
                                 <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.filter %}&filter={{ request.GET.filter }}{% endif %}">
@@ -700,7 +948,7 @@
 </section>
 
 <!-- Newsletter Section -->
-<section class="newsletter-section">
+<section class="newsletter-section" hidden>
     <div class="container">
         <div class="newsletter-content" data-aos="fade-up">
             <h2 class="newsletter-title">{% trans "لا تفوت أي عرض!" %}</h2>
@@ -725,14 +973,21 @@
         offset: 50
     });
 
-    // Countdown Timer
+    // الدالة المحسنة للعداد التنازلي الرئيسي
     function startCountdown() {
-        // Set the date we're counting down to (example: 7 days from now)
-        const countDownDate = new Date().getTime() + (7 * 24 * 60 * 60 * 1000);
+        // استخدام تاريخ الانتهاء من البيانات المرسلة من الخادم
+        const countdownElement = document.getElementById('countdown');
+        const countDownDate = new Date(countdownElement.dataset.endDate).getTime();
 
         const timer = setInterval(function() {
             const now = new Date().getTime();
             const distance = countDownDate - now;
+
+            if (distance < 0) {
+                clearInterval(timer);
+                document.getElementById("countdown").innerHTML = "<div class='alert alert-danger'>{% trans 'انتهى العرض' %}</div>";
+                return;
+            }
 
             const days = Math.floor(distance / (1000 * 60 * 60 * 24));
             const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -743,34 +998,112 @@
             document.getElementById("hours").innerHTML = hours.toString().padStart(2, '0');
             document.getElementById("minutes").innerHTML = minutes.toString().padStart(2, '0');
             document.getElementById("seconds").innerHTML = seconds.toString().padStart(2, '0');
-
-            if (distance < 0) {
-                clearInterval(timer);
-                document.getElementById("countdown").innerHTML = "{% trans 'انتهى العرض' %}";
-            }
         }, 1000);
     }
 
-    // Start countdown on page load
-    startCountdown();
+    // دالة لتحديث عدادات المنتجات
+    function initProductCountdowns() {
+        document.querySelectorAll('.product-countdown').forEach(counter => {
+            const endDate = new Date(counter.dataset.endDate).getTime();
+            const countdownDisplay = counter.querySelector('.countdown-value');
+
+            const interval = setInterval(() => {
+                const now = new Date().getTime();
+                const distance = endDate - now;
+
+                if (distance < 0) {
+                    clearInterval(interval);
+                    countdownDisplay.innerHTML = "{% trans 'انتهى العرض' %}";
+                    counter.closest('.timer-badge').classList.add('expired');
+                    return;
+                }
+
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                if (days > 0) {
+                    countdownDisplay.innerHTML = `${days} ${days === 1 ? "{% trans 'يوم' %}" : "{% trans 'أيام' %}"} ${hours} ${hours === 1 ? "{% trans 'ساعة' %}" : "{% trans 'ساعات' %}"}`;
+                } else if (hours > 0) {
+                    countdownDisplay.innerHTML = `${hours} ${hours === 1 ? "{% trans 'ساعة' %}" : "{% trans 'ساعات' %}"} ${minutes} ${minutes === 1 ? "{% trans 'دقيقة' %}" : "{% trans 'دقائق' %}"}`;
+                } else {
+                    countdownDisplay.innerHTML = `${minutes} ${minutes === 1 ? "{% trans 'دقيقة' %}" : "{% trans 'دقائق' %}"} ${seconds} ${seconds === 1 ? "{% trans 'ثانية' %}" : "{% trans 'ثواني' %}"}`;
+                }
+            }, 1000);
+        });
+    }
+
+    // دالة لتمييز العروض المنتهية قريبًا
+    function highlightEndingSoon() {
+        document.querySelectorAll('.product-countdown').forEach(counter => {
+            const endDate = new Date(counter.dataset.endDate).getTime();
+            const now = new Date().getTime();
+            const hoursRemaining = (endDate - now) / (1000 * 60 * 60);
+
+            if (hoursRemaining <= 24 && hoursRemaining > 0) {
+                counter.closest('.timer-badge').classList.add('ending-soon');
+                counter.closest('.offer-card').classList.add('ending-soon');
+            }
+        });
+    }
+
+    // دالة مشاركة العروض
+    function initShareButtons() {
+        document.querySelectorAll('.share-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const productId = this.dataset.productId;
+                const productName = this.dataset.productName;
+                const shareUrl = `${window.location.origin}/products/${productId}/`;
+
+                if (navigator.share) {
+                    navigator.share({
+                        title: `عرض خاص: ${productName}`,
+                        text: `تفقد هذا العرض المميز على ${productName}!`,
+                        url: shareUrl
+                    });
+                } else {
+                    // نسخ الرابط إلى الحافظة
+                    navigator.clipboard.writeText(shareUrl).then(() => {
+                        // تغيير نص الزر مؤقتًا للإشارة إلى النسخ
+                        const originalText = this.innerHTML;
+                        this.innerHTML = '<i class="fas fa-check me-1"></i> {% trans "تم نسخ الرابط" %}';
+
+                        // إعادة النص الأصلي بعد ثانيتين
+                        setTimeout(() => {
+                            this.innerHTML = originalText;
+                        }, 2000);
+                    });
+                }
+            });
+        });
+    }
+
+    // تشغيل العدادات التنازلية عند تحميل الصفحة
+    document.addEventListener('DOMContentLoaded', () => {
+        startCountdown();
+        initProductCountdowns();
+        highlightEndingSoon();
+        initShareButtons();
+    });
 
     // Newsletter Form
     document.getElementById('newsletterForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        
+
         const email = this.querySelector('input[type="email"]').value;
         const button = this.querySelector('button');
         const originalText = button.textContent;
-        
+
         // Show loading state
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{% trans "جاري الاشتراك..." %}';
-        
+
         // Simulate API call
         setTimeout(() => {
             button.innerHTML = '<i class="fas fa-check me-2"></i>{% trans "تم الاشتراك!" %}';
             this.reset();
-            
+
             setTimeout(() => {
                 button.disabled = false;
                 button.textContent = originalText;
@@ -781,6 +1114,8 @@
     // Add to Cart Animation
     document.querySelectorAll('.btn-add-cart').forEach(button => {
         button.addEventListener('click', function(e) {
+            if (this.disabled) return;
+
             // Create flying cart icon
             const flyingCart = document.createElement('i');
             flyingCart.className = 'fas fa-shopping-cart';
@@ -792,25 +1127,25 @@
                 pointer-events: none;
                 transition: all 1s ease;
             `;
-            
+
             const rect = this.getBoundingClientRect();
             flyingCart.style.left = rect.left + 'px';
             flyingCart.style.top = rect.top + 'px';
-            
+
             document.body.appendChild(flyingCart);
-            
+
             // Animate to cart icon in header
             const cartIcon = document.querySelector('.cart-btn');
             if (cartIcon) {
                 const cartRect = cartIcon.getBoundingClientRect();
-                
+
                 setTimeout(() => {
                     flyingCart.style.left = cartRect.left + 'px';
                     flyingCart.style.top = cartRect.top + 'px';
                     flyingCart.style.fontSize = '0';
                     flyingCart.style.opacity = '0';
                 }, 100);
-                
+
                 setTimeout(() => {
                     flyingCart.remove();
                     // Add pulse animation to cart

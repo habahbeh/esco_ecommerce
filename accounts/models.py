@@ -501,7 +501,7 @@ class UserActivity(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='activities', verbose_name=_("المستخدم"))
     activity_type = models.CharField(_("نوع النشاط"), max_length=50)
     description = models.TextField(_("الوصف"))
-    object_id = models.PositiveIntegerField(_("معرف الكائن"), null=True, blank=True)
+    object_id = models.CharField(_("معرف الكائن"), max_length=100, null=True, blank=True)  # تم تغييره من PositiveIntegerField إلى CharField
     content_type = models.CharField(_("نوع المحتوى"), max_length=100, blank=True)
     timestamp = models.DateTimeField(_("التوقيت"), auto_now_add=True)
     ip_address = models.GenericIPAddressField(_("عنوان IP"), null=True, blank=True)
