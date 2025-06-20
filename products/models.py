@@ -1509,8 +1509,8 @@ class ProductImage(TimeStampedModel):
 
         # تغيير حجم الصورة الرئيسية إلى 280×200
         # Resize main image to 280x200
-        if self.image:
-            self.resize_image(self.image, (280, 200))
+        # if self.image:
+        #     self.resize_image(self.image, (280, 200))
 
         # إنشاء النسخة المصغرة (اختياري - يمكنك ضبط الحجم حسب الحاجة)
         # Create thumbnail (optional - you can adjust the size as needed)
