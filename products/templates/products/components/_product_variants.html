@@ -3,7 +3,7 @@
 {% if product.variants.exists %}
 <div class="product-variants" data-product-id="{{ product.id }}">
 
-    <!-- Color Variants -->
+    <!-- Color Variants - تحسين عرض الألوان -->
     {% regroup product.variants.all by color as color_list %}
     {% for color_group in color_list %}
         {% if color_group.grouper %}
@@ -46,7 +46,7 @@
         {% endif %}
     {% endfor %}
 
-    <!-- Size Variants -->
+    <!-- Size Variants - تحسين عرض المقاسات -->
     {% regroup product.variants.all by size as size_list %}
     {% for size_group in size_list %}
         {% if size_group.grouper %}
@@ -76,6 +76,7 @@
                         data-size="{{ variant.size }}"
                         data-price="{{ variant.current_price }}"
                         data-stock="{{ variant.stock_quantity }}"
+                        data-image-url="{% if variant.images.first %}{{ variant.images.first.image.url }}{% endif %}"
                         {% if not variant.is_in_stock %}disabled aria-disabled="true"{% endif %}>
                     {{ variant.get_size_display }}
                     {% if not variant.is_in_stock %}
@@ -90,74 +91,27 @@
         {% endif %}
     {% endfor %}
 
-    <!-- Material Variants -->
-    {% regroup product.variants.all by material as material_list %}
-    {% for material_group in material_list %}
-        {% if material_group.grouper %}
-            <div class="variant-group" data-variant-type="material">
-                <label class="variant-label" for="variant-material">
-                    {% trans "المادة" %}:
-                </label>
-                <select class="form-select variant-select"
-                        id="variant-material"
-                        data-variant-type="material">
-                    {% for variant in material_group.list %}
-                    <option value="{{ variant.id }}"
-                            data-price="{{ variant.current_price }}"
-                            data-stock="{{ variant.stock_quantity }}"
-                            data-sku="{{ variant.sku }}"
-                            {% if forloop.first %}selected{% endif %}
-                            {% if not variant.is_in_stock %}disabled{% endif %}>
-                        {{ variant.material }}
-                        {% if not variant.is_in_stock %} - {% trans "غير متوفر" %}{% endif %}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-        {% endif %}
-    {% endfor %}
+    <!-- إضافة جديدة: عرض صورة لكل متغير عند التحويل -->
+    <div class="variant-preview" id="variantPreview">
+        <!-- سيتم ملء هذا القسم ديناميكيًا عند اختيار متغير -->
+    </div>
 
-    <!-- Pattern Variants -->
-    {% regroup product.variants.all by pattern as pattern_list %}
-    {% for pattern_group in pattern_list %}
-        {% if pattern_group.grouper %}
-            <div class="variant-group" data-variant-type="pattern">
-                <label class="variant-label" for="variant-pattern">
-                    {% trans "النقشة" %}:
-                </label>
-                <select class="form-select variant-select"
-                        id="variant-pattern"
-                        data-variant-type="pattern">
-                    {% for variant in pattern_group.list %}
-                    <option value="{{ variant.id }}"
-                            data-price="{{ variant.current_price }}"
-                            data-stock="{{ variant.stock_quantity }}"
-                            data-sku="{{ variant.sku }}"
-                            {% if forloop.first %}selected{% endif %}
-                            {% if not variant.is_in_stock %}disabled{% endif %}>
-                        {{ variant.pattern }}
-                        {% if not variant.is_in_stock %} - {% trans "غير متوفر" %}{% endif %}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-        {% endif %}
-    {% endfor %}
-
-    <!-- Selected Variant Info -->
+    <!-- معلومات المتغير المحدد -->
     <div class="selected-variant-info" id="variantInfo" aria-live="polite">
         <div class="info-grid">
             <div class="info-item">
                 <span class="info-label">{% trans "رقم المنتج" %}:</span>
-                <span class="info-value" data-sku>-</span>
+                <span class="info-value" data-sku>{{ product.sku }}</span>
             </div>
             <div class="info-item">
                 <span class="info-label">{% trans "السعر" %}:</span>
-                <span class="info-value" data-price>-</span>
+                <span class="info-value" data-price>{{ product.current_price|floatformat:2 }} {% trans "د.أ" %}</span>
             </div>
             <div class="info-item">
                 <span class="info-label">{% trans "المتوفر" %}:</span>
-                <span class="info-value" data-stock>-</span>
+                <span class="info-value" data-stock>
+                    {% if product.in_stock %}{{ product.available_quantity }} {% trans "قطعة" %}{% else %}{% trans "غير متوفر" %}{% endif %}
+                </span>
             </div>
         </div>
     </div>
@@ -190,7 +144,7 @@
     font-weight: 400;
     font-size: 0.875rem;
     color: var(--bs-primary);
-    margin-left: 0.5rem;
+    margin-right: 0.5rem;
 }
 
 /* Size Guide Button */
@@ -302,6 +256,33 @@
     opacity: 0.6;
 }
 
+/* معاينة المتغير - إضافة جديدة */
+.variant-preview {
+    width: 100%;
+    max-height: 150px;
+    overflow: hidden;
+    margin: 1rem 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: var(--variant-transition);
+}
+
+.variant-preview.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.variant-preview img {
+    max-width: 100%;
+    max-height: 140px;
+    object-fit: contain;
+}
+
 /* Variant Tooltip */
 .variant-tooltip {
     position: absolute;
@@ -378,12 +359,6 @@
     font-weight: 600;
 }
 
-/* Custom Variants Select */
-.variant-select {
-    max-width: 320px;
-    font-weight: 500;
-}
-
 /* Selected Variant Info */
 .selected-variant-info {
     margin-top: 1.5rem;
@@ -420,7 +395,7 @@
     color: var(--text-primary);
 }
 
-/* Responsive Design */
+/* تحسينات للهواتف المحمولة */
 @media (max-width: 575.98px) {
     .variant-group {
         margin-bottom: 1.25rem;
@@ -479,6 +454,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const sizeOptions = variantContainer.querySelectorAll('.size-option');
     const variantSelects = variantContainer.querySelectorAll('.variant-select');
     const variantInfo = document.getElementById('variantInfo');
+    const variantPreview = document.getElementById('variantPreview');
 
     let selectedVariants = {
         color: null,
@@ -487,7 +463,7 @@ document.addEventListener('DOMContentLoaded', function() {
         pattern: null
     };
 
-    // Initialize first available variant
+    // تهيئة أول متغير متاح
     function initializeVariants() {
         const firstColor = document.querySelector('.color-option:not(.out-of-stock)');
         const firstSize = document.querySelector('.size-option:not(.out-of-stock)');
@@ -499,7 +475,7 @@ document.addEventListener('DOMContentLoaded', function() {
             firstSize.click();
         }
 
-        // Initialize selects
+        // تهيئة القوائم المنسدلة
         variantSelects.forEach(select => {
             if (select.value) {
                 const selectedOption = select.options[select.selectedIndex];
@@ -508,7 +484,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Handle color selection
+    // معالجة اختيار اللون
     colorOptions.forEach(option => {
         option.addEventListener('click', function() {
             if (this.classList.contains('out-of-stock')) return;
@@ -519,10 +495,15 @@ document.addEventListener('DOMContentLoaded', function() {
             selectedVariants.color = this.dataset.variantId;
             updateVariantInfo(this.dataset);
             updateColorLabel(this.getAttribute('aria-label'));
+
+            // تحديث صورة المعاينة إذا كانت متوفرة
+            if (this.dataset.imageUrl) {
+                updateVariantPreview(this.dataset.imageUrl);
+            }
         });
     });
 
-    // Handle size selection
+    // معالجة اختيار المقاس
     sizeOptions.forEach(option => {
         option.addEventListener('click', function() {
             if (this.disabled) return;
@@ -532,21 +513,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
             selectedVariants.size = this.dataset.variantId;
             updateVariantInfo(this.dataset);
+
+            // تحديث صورة المعاينة إذا كانت متوفرة
+            if (this.dataset.imageUrl) {
+                updateVariantPreview(this.dataset.imageUrl);
+            }
         });
     });
 
-    // Handle custom variant selection
-    variantSelects.forEach(select => {
-        select.addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            const variantType = this.dataset.variantType;
+    // تحديث معاينة المتغير
+    function updateVariantPreview(imageUrl) {
+        if (!variantPreview || !imageUrl) return;
 
-            selectedVariants[variantType] = this.value;
-            updateVariantInfo(selectedOption.dataset);
-        });
-    });
+        // إنشاء أو تحديث عنصر الصورة
+        let img = variantPreview.querySelector('img');
+        if (!img) {
+            img = document.createElement('img');
+            variantPreview.innerHTML = '';
+            variantPreview.appendChild(img);
+        }
 
-    // Update variant info display
+        img.src = imageUrl;
+        variantPreview.classList.add('active');
+    }
+
+    // تحديث معلومات المتغير المعروضة
     function updateVariantInfo(data) {
         if (!variantInfo) return;
 
@@ -569,7 +560,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                      stock > 0 ? 'var(--bs-warning)' : 'var(--bs-danger)';
         }
 
-        // Trigger custom event for price update
+        // إطلاق حدث مخصص لتحديث السعر
         window.dispatchEvent(new CustomEvent('variantChanged', {
             detail: {
                 variantId: data.variantId,
@@ -580,7 +571,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }));
     }
 
-    // Update color label
+    // تحديث تسمية اللون
     function updateColorLabel(colorName) {
         const colorLabel = document.querySelector('[data-selected-color]');
         if (colorLabel) {
@@ -588,15 +579,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Format price
+    // تنسيق السعر
     function formatPrice(price) {
-        return new Intl.NumberFormat('ar-SA', {
+        return new Intl.NumberFormat('ar-JO', {
             style: 'currency',
-            currency: 'SAR'
+            currency: 'JOD',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
         }).format(price);
     }
 
-    // Initialize
+    // تهيئة
     initializeVariants();
 });
 </script>
