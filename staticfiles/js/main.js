@@ -355,7 +355,7 @@
 
             // إضافة معالج أحداث لإظهار معاينة السلة عند تحريك الماوس فوق أيقونة السلة
             cartIcon.addEventListener('mouseenter', () => {
-                this.fetchCartPreview();
+               // this.fetchCartPreview();
             });
 
             // إخفاء المعاينة عند مغادرة منطقة المعاينة
