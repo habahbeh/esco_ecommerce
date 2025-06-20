@@ -97,28 +97,41 @@ class AddToCartView(CartMixin, View):
     def post(self, request, product_id):
         # Get product
         product = get_object_or_404(Product, id=product_id, is_active=True, status='published')
-        
+
         # Get cart
         cart = self.get_cart(request)
-        
+
         # Get quantity and variant
         quantity = int(request.POST.get('quantity', 1))
         variant_id = request.POST.get('variant_id')
-        
+
+        # التحقق من المتغير وإضافة معلوماته إذا وجد
+        variant = None
+        if variant_id:
+            try:
+                variant = ProductVariant.objects.get(id=variant_id, product=product, is_active=True)
+
+                # التحقق من المخزون للمتغير
+                if variant.track_inventory and hasattr(variant, 'available_quantity') and variant.available_quantity < quantity:
+                    messages.error(request, _('الكمية المطلوبة غير متوفرة'))
+                    return redirect(request.META.get('HTTP_REFERER', 'products:product_list'))
+            except ProductVariant.DoesNotExist:
+                variant = None
+
         # Create cart item key
         cart_item_key = str(product_id)
         if variant_id:
             cart_item_key = f"{product_id}_{variant_id}"
-        
-        # Check stock
-        if product.track_inventory:
+
+        # Check stock for product if no variant
+        if not variant and product.track_inventory:
             available_qty = product.available_quantity
             current_qty = cart.get(cart_item_key, {}).get('quantity', 0)
-            
+
             if current_qty + quantity > available_qty:
                 messages.error(request, _('الكمية المطلوبة غير متوفرة'))
                 return redirect(request.META.get('HTTP_REFERER', 'products:product_list'))
-        
+
         # Add to cart
         if cart_item_key in cart:
             cart[cart_item_key]['quantity'] += quantity
@@ -127,26 +140,29 @@ class AddToCartView(CartMixin, View):
                 'product_id': product_id,
                 'quantity': quantity,
                 'name': product.name,
-                'price': str(product.current_price)
+                'price': str(variant.current_price if variant and hasattr(variant, 'current_price') else product.current_price)
             }
-            
-            if variant_id:
-                try:
-                    variant = ProductVariant.objects.get(id=variant_id)
-                    cart[cart_item_key]['variant_id'] = variant_id
-                    cart[cart_item_key]['variant_name'] = variant.name
-                except ProductVariant.DoesNotExist:
-                    pass
-        
+
+            if variant:
+                cart[cart_item_key]['variant_id'] = variant.id
+                cart[cart_item_key]['variant_name'] = variant.name if hasattr(variant, 'name') else ''
+
+                # إضافة معلومات متغير إضافية إذا كانت متاحة
+                if hasattr(variant, 'color'):
+                    cart[cart_item_key]['color'] = variant.get_color_display() if hasattr(variant, 'get_color_display') else str(variant.color)
+                if hasattr(variant, 'size'):
+                    cart[cart_item_key]['size'] = variant.get_size_display() if hasattr(variant, 'get_size_display') else str(variant.size)
+
         # Save cart
         self.save_cart(request, cart)
-        
+
         # Success message
-        messages.success(request, _('تمت إضافة المنتج إلى السلة'))
+        variant_text = f" - {variant.name}" if variant and hasattr(variant, 'name') else ""
+        messages.success(request, _(f'تمت إضافة "{product.name}{variant_text}" إلى السلة'))
 
         # إطلاق الإشارة
         emit_cart_item_added(request, product_id, quantity)
-        
+
         # Return response
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({
@@ -155,7 +171,7 @@ class AddToCartView(CartMixin, View):
                 'cart_count': self.get_cart_items_count(request),
                 'cart_total': str(self.get_cart_total(request))
             })
-        
+
         return redirect(request.META.get('HTTP_REFERER', 'products:product_list'))
 
 

@@ -1,14 +1,251 @@
-<!-- cart/templates/cart/includes/add_to_cart_button.html -->
-<form action="{% url 'cart:add_to_cart' product.id %}" method="post" class="add-to-cart-form">
-    {% csrf_token %}
-    <input type="hidden" name="quantity" value="{{ quantity }}">
-    {% if variant %}
-        <input type="hidden" name="variant_id" value="{{ variant.id }}">
+{% load i18n %}
+
+<div class="add-to-cart-container">
+    {% if show_variants and has_variants %}
+        <form action="{% url 'cart:add_to_cart' product.id %}" method="post" class="variant-selection-form">
+            {% csrf_token %}
+            <input type="hidden" name="quantity" value="{{ quantity }}">
+
+            <!-- عرض اختيار اللون إذا وجد -->
+            {% if variants.colors %}
+                <div class="variant-group mb-3">
+                    <label class="form-label">{% trans "اللون" %}:</label>
+                    <div class="color-options">
+                        {% for variant_id, color in variants.colors.items %}
+                            <button type="button"
+                                    class="color-option {% if not color.in_stock %}out-of-stock{% endif %}"
+                                    data-variant-id="{{ color.id }}"
+                                    data-price="{{ color.price }}"
+                                    {% if not color.in_stock %}disabled{% endif %}
+                                    title="{{ color.name }}">
+                                {% if color.code %}
+                                    <span class="color-swatch" style="background-color: {{ color.code }}"></span>
+                                {% else %}
+                                    <span class="color-name">{{ color.name }}</span>
+                                {% endif %}
+                            </button>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- عرض اختيار المقاس إذا وجد -->
+            {% if variants.sizes %}
+                <div class="variant-group mb-3">
+                    <label class="form-label">{% trans "المقاس" %}:</label>
+                    <div class="size-options">
+                        {% for variant_id, size in variants.sizes.items %}
+                            <button type="button"
+                                    class="size-option {% if not size.in_stock %}out-of-stock{% endif %}"
+                                    data-variant-id="{{ size.id }}"
+                                    data-price="{{ size.price }}"
+                                    {% if not size.in_stock %}disabled{% endif %}>
+                                {{ size.name }}
+                            </button>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- حقل مخفي لتخزين معرف المتغير المحدد -->
+            <input type="hidden" name="variant_id" id="selected_variant_id"
+                   value="{% if selected_variant %}{{ selected_variant.id }}{% endif %}">
+
+            <!-- زر إضافة للسلة -->
+            <button type="submit" class="add-to-cart-btn {{ css_class }}"
+                    {% if not in_stock %}disabled{% endif %}>
+                <i class="fas fa-shopping-cart"></i>
+                {% if show_text %}
+                    {% if in_stock %}
+                        {% trans "إضافة للسلة" %}
+                    {% else %}
+                        {% trans "غير متوفر" %}
+                    {% endif %}
+                {% endif %}
+            </button>
+        </form>
+
+        <!-- عرض السعر المحدث بناءً على المتغير -->
+        <div class="variant-price mt-2">
+            <span class="price-label">{% trans "السعر" %}:</span>
+            <span class="price-value" id="variant_price">
+                {{ selected_variant.price|default:product.current_price|floatformat:2 }} {% trans "د.أ" %}
+            </span>
+        </div>
+
+        <!-- JavaScript لتحديث معرف المتغير والسعر عند الاختيار -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // اختيار اللون
+                const colorOptions = document.querySelectorAll('.color-option');
+                colorOptions.forEach(option => {
+                    option.addEventListener('click', function() {
+                        if (this.disabled) return;
+
+                        // إزالة الفئة النشطة من جميع الخيارات
+                        colorOptions.forEach(opt => opt.classList.remove('active'));
+
+                        // إضافة الفئة النشطة للخيار المحدد
+                        this.classList.add('active');
+
+                        // تحديث معرف المتغير المحدد
+                        document.getElementById('selected_variant_id').value = this.dataset.variantId;
+
+                        // تحديث السعر
+                        updatePrice(this.dataset.price);
+                    });
+                });
+
+                // اختيار المقاس
+                const sizeOptions = document.querySelectorAll('.size-option');
+                sizeOptions.forEach(option => {
+                    option.addEventListener('click', function() {
+                        if (this.disabled) return;
+
+                        // إزالة الفئة النشطة من جميع الخيارات
+                        sizeOptions.forEach(opt => opt.classList.remove('active'));
+
+                        // إضافة الفئة النشطة للخيار المحدد
+                        this.classList.add('active');
+
+                        // تحديث معرف المتغير المحدد
+                        document.getElementById('selected_variant_id').value = this.dataset.variantId;
+
+                        // تحديث السعر
+                        updatePrice(this.dataset.price);
+                    });
+                });
+
+                // دالة تحديث السعر
+                function updatePrice(price) {
+                    if (!price) return;
+
+                    const priceElement = document.getElementById('variant_price');
+                    if (priceElement) {
+                        priceElement.textContent = formatPrice(price);
+                    }
+                }
+
+                // دالة تنسيق السعر
+                function formatPrice(price) {
+                    return parseFloat(price).toFixed(2) + ' ' + '{% trans "د.أ" %}';
+                }
+
+                // تحديد أول متغير متاح افتراضيًا
+                const firstColorOption = document.querySelector('.color-option:not([disabled])');
+                if (firstColorOption) {
+                    firstColorOption.click();
+                }
+
+                const firstSizeOption = document.querySelector('.size-option:not([disabled])');
+                if (firstSizeOption) {
+                    firstSizeOption.click();
+                }
+            });
+        </script>
+
+        <style>
+            .variant-group {
+                margin-bottom: 1rem;
+            }
+
+            .color-options, .size-options {
+                display: flex;
+                gap: 0.5rem;
+                flex-wrap: wrap;
+            }
+
+            .color-option {
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                border: 2px solid #ddd;
+                padding: 0;
+                background: none;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+
+            .color-option:hover:not(:disabled) {
+                transform: scale(1.1);
+                border-color: #999;
+            }
+
+            .color-option.active {
+                border-color: var(--bs-primary, #0d6efd);
+                transform: scale(1.1);
+            }
+
+            .color-swatch {
+                display: block;
+                width: 100%;
+                height: 100%;
+                border-radius: 50%;
+            }
+
+            .color-name {
+                display: block;
+                width: 100%;
+                text-align: center;
+                font-size: 0.75rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .size-option {
+                padding: 0.5rem 0.75rem;
+                border: 1px solid #ddd;
+                border-radius: 0.25rem;
+                background: white;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+
+            .size-option:hover:not(:disabled) {
+                border-color: #999;
+                background-color: #f9f9f9;
+            }
+
+            .size-option.active {
+                border-color: var(--bs-primary, #0d6efd);
+                background-color: var(--bs-primary, #0d6efd);
+                color: white;
+            }
+
+            .out-of-stock {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+
+            .variant-price {
+                font-size: 1.1rem;
+            }
+
+            .price-value {
+                font-weight: bold;
+                color: var(--bs-primary, #0d6efd);
+            }
+
+            /* تعديلات RTL */
+            [dir="rtl"] .variant-group {
+                text-align: right;
+            }
+        </style>
+    {% else %}
+        <!-- نموذج إضافة للسلة البسيط (بدون متغيرات) -->
+        <form action="{% url 'cart:add_to_cart' product.id %}" method="post" class="add-to-cart-form">
+            {% csrf_token %}
+            <input type="hidden" name="quantity" value="{{ quantity }}">
+            {% if variant %}
+                <input type="hidden" name="variant_id" value="{{ variant.id }}">
+            {% endif %}
+            <button type="submit" class="{{ css_class }}" {% if not in_stock %}disabled{% endif %}>
+                <i class="fas fa-shopping-cart"></i>
+                {% if show_text %}
+                    {% if in_stock %}{% trans "أضف للسلة" %}{% else %}{% trans "غير متوفر" %}{% endif %}
+                {% endif %}
+            </button>
+        </form>
     {% endif %}
-    <button type="submit" class="{{ css_class }}" {% if not in_stock %}disabled{% endif %}>
-        <i class="fas fa-shopping-cart"></i>
-        {% if show_text %}
-            {% if in_stock %}أضف للسلة{% else %}غير متوفر{% endif %}
-        {% endif %}
-    </button>
-</form>
+</div>
