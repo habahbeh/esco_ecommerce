@@ -468,11 +468,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const firstColor = document.querySelector('.color-option:not(.out-of-stock)');
         const firstSize = document.querySelector('.size-option:not(.out-of-stock)');
 
+        // تعيين أول متغير متاح افتراضيًا
         if (firstColor) {
             firstColor.click();
+            // تعيين قيمة المتغير المحدد مباشرة إذا كان لديه بيانات
+            if (firstColor.dataset.variantId) {
+                document.getElementById('selectedVariantId').value = firstColor.dataset.variantId;
+            }
         }
+
         if (firstSize) {
             firstSize.click();
+            // إذا كان للحجم متغير مختلف، سيتم تحديثه
+            if (firstSize.dataset.variantId) {
+                document.getElementById('selectedVariantId').value = firstSize.dataset.variantId;
+            }
         }
 
         // تهيئة القوائم المنسدلة
@@ -544,6 +554,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const skuElement = variantInfo.querySelector('[data-sku]');
         const priceElement = variantInfo.querySelector('[data-price]');
         const stockElement = variantInfo.querySelector('[data-stock]');
+
+        // تعيين قيمة المتغير المحدد في النموذج
+        const selectedVariantIdField = document.getElementById('selectedVariantId');
+        if (selectedVariantIdField && data.variantId) {
+            selectedVariantIdField.value = data.variantId;
+        }
 
         if (skuElement && data.sku) {
             skuElement.textContent = data.sku;

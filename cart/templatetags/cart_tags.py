@@ -139,18 +139,80 @@ def cart_item_savings(original_price, current_price, quantity=1):
 
 
 @register.inclusion_tag('cart/includes/add_to_cart_button.html')
-def add_to_cart_button(product, quantity=1, variant=None, css_class="btn btn-primary", show_text=True):
+def add_to_cart_button(product, quantity=1, variant=None, css_class="btn btn-primary", show_text=True,
+                       show_variants=False):
     """
-    Render add to cart button
-    Usage: {% add_to_cart_button product %}
+    عرض زر إضافة المنتج للسلة
+    الاستخدام: {% add_to_cart_button product %}
+    المعلمات:
+    - product: المنتج المراد إضافته
+    - quantity: الكمية المبدئية (افتراضي: 1)
+    - variant: متغير المنتج المحدد (اختياري)
+    - css_class: فئات CSS للزر
+    - show_text: عرض النص مع الزر
+    - show_variants: عرض قائمة المتغيرات المتاحة (إذا كان للمنتج متغيرات)
     """
+    # التحقق من توفر المنتج في المخزون
+    in_stock = product.in_stock if hasattr(product, 'in_stock') else True
+
+    # التحقق إذا كان للمنتج متغيرات نشطة
+    has_variants = False
+    variants = []
+
+    if hasattr(product, 'variants') and show_variants:
+        # الحصول على المتغيرات النشطة فقط
+        active_variants = product.variants.filter(is_active=True)
+        has_variants = active_variants.exists()
+
+        # تجميع المتغيرات حسب النوع (لون، حجم، الخ)
+        if has_variants:
+            # تجميع الألوان
+            colors = {}
+            for v in active_variants.filter(color__isnull=False).distinct('color'):
+                colors[v.id] = {
+                    'id': v.id,
+                    'name': v.get_color_display() if hasattr(v, 'get_color_display') else v.color,
+                    'code': v.color_code if hasattr(v, 'color_code') else None,
+                    'price': v.current_price if hasattr(v, 'current_price') else product.current_price,
+                    'in_stock': v.is_in_stock if hasattr(v, 'is_in_stock') else True
+                }
+
+            # تجميع المقاسات
+            sizes = {}
+            for v in active_variants.filter(size__isnull=False).distinct('size'):
+                sizes[v.id] = {
+                    'id': v.id,
+                    'name': v.get_size_display() if hasattr(v, 'get_size_display') else v.size,
+                    'price': v.current_price if hasattr(v, 'current_price') else product.current_price,
+                    'in_stock': v.is_in_stock if hasattr(v, 'is_in_stock') else True
+                }
+
+            variants = {
+                'colors': colors,
+                'sizes': sizes
+            }
+
+    # معلومات المتغير المحدد (إذا وجد)
+    selected_variant = None
+    if variant and hasattr(variant, 'id'):
+        selected_variant = {
+            'id': variant.id,
+            'sku': variant.sku if hasattr(variant, 'sku') else product.sku,
+            'price': variant.current_price if hasattr(variant, 'current_price') else product.current_price,
+            'in_stock': variant.is_in_stock if hasattr(variant, 'is_in_stock') else in_stock
+        }
+
     return {
         'product': product,
         'quantity': quantity,
         'variant': variant,
+        'selected_variant': selected_variant,
         'css_class': css_class,
         'show_text': show_text,
-        'in_stock': product.in_stock if hasattr(product, 'in_stock') else True,
+        'in_stock': in_stock,
+        'has_variants': has_variants,
+        'variants': variants,
+        'show_variants': show_variants
     }
 
 
