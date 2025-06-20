@@ -95,84 +95,119 @@ class AddToCartView(CartMixin, View):
     Add product to cart
     """
     def post(self, request, product_id):
-        # Get product
-        product = get_object_or_404(Product, id=product_id, is_active=True, status='published')
+        try:
+            # الحصول على المنتج
+            product = get_object_or_404(Product, id=product_id, is_active=True, status='published')
 
-        # Get cart
-        cart = self.get_cart(request)
+            # الحصول على سلة التسوق
+            cart = self.get_cart(request)
 
-        # Get quantity and variant
-        quantity = int(request.POST.get('quantity', 1))
-        variant_id = request.POST.get('variant_id')
+            # الحصول على الكمية والمتغير
+            quantity = int(request.POST.get('quantity', 1))
+            variant_id = request.POST.get('variant_id')
 
-        # التحقق من المتغير وإضافة معلوماته إذا وجد
-        variant = None
-        if variant_id:
-            try:
-                variant = ProductVariant.objects.get(id=variant_id, product=product, is_active=True)
+            # التحقق من المتغير وإضافة معلوماته إذا وجد
+            variant = None
+            if variant_id:
+                try:
+                    variant = ProductVariant.objects.get(id=variant_id, product=product, is_active=True)
 
-                # التحقق من المخزون للمتغير
-                if variant.track_inventory and hasattr(variant, 'available_quantity') and variant.available_quantity < quantity:
-                    messages.error(request, _('الكمية المطلوبة غير متوفرة'))
-                    return redirect(request.META.get('HTTP_REFERER', 'products:product_list'))
-            except ProductVariant.DoesNotExist:
-                variant = None
+                    # التحقق من المخزون للمتغير
+                    if variant.track_inventory and variant.available_quantity < quantity:
+                        error_msg = _('الكمية المطلوبة غير متوفرة')
+                        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                            return JsonResponse({
+                                'success': False,
+                                'message': str(error_msg)
+                            })
+                        messages.error(request, error_msg)
+                        return redirect(request.META.get('HTTP_REFERER', 'products:product_list'))
+                except ProductVariant.DoesNotExist:
+                    variant = None
 
-        # Create cart item key
-        cart_item_key = str(product_id)
-        if variant_id:
-            cart_item_key = f"{product_id}_{variant_id}"
-
-        # Check stock for product if no variant
-        if not variant and product.track_inventory:
-            available_qty = product.available_quantity
-            current_qty = cart.get(cart_item_key, {}).get('quantity', 0)
-
-            if current_qty + quantity > available_qty:
-                messages.error(request, _('الكمية المطلوبة غير متوفرة'))
+            # التحقق من المتغيرات - إذا كان للمنتج متغيرات ولم يتم تحديد متغير
+            if product.variants.exists() and not variant:
+                error_msg = _('الرجاء اختيار متغير المنتج')
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': False,
+                        'message': str(error_msg)
+                    })
+                messages.error(request, error_msg)
                 return redirect(request.META.get('HTTP_REFERER', 'products:product_list'))
 
-        # Add to cart
-        if cart_item_key in cart:
-            cart[cart_item_key]['quantity'] += quantity
-        else:
-            cart[cart_item_key] = {
-                'product_id': product_id,
-                'quantity': quantity,
-                'name': product.name,
-                'price': str(variant.current_price if variant and hasattr(variant, 'current_price') else product.current_price)
-            }
+            # إنشاء مفتاح عنصر السلة
+            cart_item_key = str(product_id)
+            if variant_id:
+                cart_item_key = f"{product_id}_{variant_id}"
 
-            if variant:
-                cart[cart_item_key]['variant_id'] = variant.id
-                cart[cart_item_key]['variant_name'] = variant.name if hasattr(variant, 'name') else ''
+            # التحقق من المخزون للمنتج إذا لم يكن هناك متغير
+            if not variant and product.track_inventory:
+                available_qty = product.available_quantity
+                current_qty = cart.get(cart_item_key, {}).get('quantity', 0)
 
-                # إضافة معلومات متغير إضافية إذا كانت متاحة
-                if hasattr(variant, 'color'):
-                    cart[cart_item_key]['color'] = variant.get_color_display() if hasattr(variant, 'get_color_display') else str(variant.color)
-                if hasattr(variant, 'size'):
-                    cart[cart_item_key]['size'] = variant.get_size_display() if hasattr(variant, 'get_size_display') else str(variant.size)
+                if current_qty + quantity > available_qty:
+                    error_msg = _('الكمية المطلوبة غير متوفرة')
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        return JsonResponse({
+                            'success': False,
+                            'message': str(error_msg)
+                        })
+                    messages.error(request, error_msg)
+                    return redirect(request.META.get('HTTP_REFERER', 'products:product_list'))
 
-        # Save cart
-        self.save_cart(request, cart)
+            # إضافة إلى السلة
+            if cart_item_key in cart:
+                cart[cart_item_key]['quantity'] += quantity
+            else:
+                cart[cart_item_key] = {
+                    'product_id': product_id,
+                    'quantity': quantity,
+                    'name': product.name,
+                    'price': str(variant.current_price if variant and hasattr(variant, 'current_price') else product.current_price)
+                }
 
-        # Success message
-        variant_text = f" - {variant.name}" if variant and hasattr(variant, 'name') else ""
-        messages.success(request, _(f'تمت إضافة "{product.name}{variant_text}" إلى السلة'))
+                if variant:
+                    cart[cart_item_key]['variant_id'] = variant.id
+                    cart[cart_item_key]['variant_name'] = variant.name if hasattr(variant, 'name') else ''
 
-        # إطلاق الإشارة
-        emit_cart_item_added(request, product_id, quantity)
+                    # إضافة معلومات متغير إضافية إذا كانت متاحة
+                    if hasattr(variant, 'color'):
+                        cart[cart_item_key]['color'] = variant.get_color_display() if hasattr(variant, 'get_color_display') else str(variant.color)
+                    if hasattr(variant, 'size'):
+                        cart[cart_item_key]['size'] = variant.get_size_display() if hasattr(variant, 'get_size_display') else str(variant.size)
 
-        # Return response
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({
-                'success': True,
-                'message': str(_('تمت إضافة المنتج إلى السلة')),
-                'cart_count': self.get_cart_items_count(request),
-                'cart_total': str(self.get_cart_total(request))
-            })
+            # حفظ السلة
+            self.save_cart(request, cart)
 
-        return redirect(request.META.get('HTTP_REFERER', 'products:product_list'))
+            # رسالة النجاح
+            variant_text = f" - {variant.name}" if variant and hasattr(variant, 'name') else ""
+            success_msg = _(f'تمت إضافة "{product.name}{variant_text}" إلى السلة')
+
+            # إطلاق الإشارة
+            emit_cart_item_added(request, product_id, quantity)
+
+            # إرجاع الاستجابة
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': str(success_msg),
+                    'cart_count': self.get_cart_items_count(request),
+                    'cart_total': str(self.get_cart_total(request))
+                })
+
+            messages.success(request, success_msg)
+            return redirect(request.META.get('HTTP_REFERER', 'products:product_list'))
+
+        except Exception as e:
+            error_msg = _('حدث خطأ أثناء إضافة المنتج للسلة')
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'message': str(error_msg)
+                })
+            messages.error(request, error_msg)
+            return redirect(request.META.get('HTTP_REFERER', 'products:product_list'))
 
 
 class UpdateCartItemView(CartMixin, View):
