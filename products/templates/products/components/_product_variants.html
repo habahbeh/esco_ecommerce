@@ -2,602 +2,274 @@
 
 {% if product.variants.exists %}
 <div class="product-variants" data-product-id="{{ product.id }}">
+    <h5 class="mb-3">{% trans "اختر المتغير المناسب" %}</h5>
 
-    <!-- Color Variants -->
-    {% regroup product.variants.all by color as color_list %}
-    {% for color_group in color_list %}
-        {% if color_group.grouper %}
-            {% if forloop.first %}
-            <div class="variant-group" data-variant-type="color">
-                <label class="variant-label">
-                    <span>{% trans "اللون" %}</span>
-                    <span class="variant-selection" data-selected-color></span>
-                </label>
-                <div class="color-variants">
-            {% endif %}
-            {% for variant in color_group.list %}
-                <button type="button"
-                        class="color-option {% if forloop.parentloop.first and forloop.first %}active{% endif %} {% if not variant.is_in_stock %}out-of-stock{% endif %}"
-                        data-variant-id="{{ variant.id }}"
-                        data-color="{{ variant.color }}"
-                        data-price="{{ variant.current_price }}"
-                        data-stock="{{ variant.stock_quantity }}"
-                        data-sku="{{ variant.sku }}"
-                        aria-label="{{ variant.get_color_display }}"
-                        {% if not variant.is_in_stock %}aria-disabled="true"{% endif %}>
-                    {% if variant.color_code %}
-                        <span class="color-swatch" style="background-color: {{ variant.color_code }}">
-                            {% if not variant.is_in_stock %}
-                                <svg class="stock-indicator" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <line x1="4" y1="20" x2="20" y2="4" stroke-width="2"/>
-                                </svg>
+    <!-- جدول متغيرات المنتج -->
+    <div class="variants-table-container">
+        <table class="table table-hover variants-table">
+            <thead>
+                <tr>
+                    <th>{% trans "اختيار" %}</th>
+                    {% if product.variants.first.color %}
+                    <th>{% trans "اللون" %}</th>
+                    {% endif %}
+                    {% if product.variants.first.size %}
+                    <th>{% trans "المقاس" %}</th>
+                    {% endif %}
+                    {% if product.variants.first.material %}
+                    <th>{% trans "المادة" %}</th>
+                    {% endif %}
+                    <th>{% trans "السعر" %}</th>
+                    <th>{% trans "التوفر" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for variant in product.variants.all %}
+                <tr class="variant-row {% if not variant.is_in_stock %}out-of-stock{% endif %}"
+                    data-variant-id="{{ variant.id }}"
+                    data-price="{{ variant.current_price }}"
+                    data-stock="{{ variant.stock_quantity }}"
+                    data-sku="{{ variant.sku }}">
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input variant-selector"
+                                   type="radio"
+                                   name="variant-option"
+                                   id="variant-{{ variant.id }}"
+                                   value="{{ variant.id }}"
+                                   {% if forloop.first and variant.is_in_stock %}checked{% endif %}
+                                   {% if not variant.is_in_stock %}disabled{% endif %}>
+                            <label class="form-check-label" for="variant-{{ variant.id }}">
+                                {% trans "اختر" %}
+                            </label>
+                        </div>
+                    </td>
+                    {% if variant.color %}
+                    <td>
+                        <div class="d-flex align-items-center">
+                            {% if variant.color_code %}
+                            <span class="color-box me-2" style="background-color: {{ variant.color_code }}"></span>
                             {% endif %}
-                        </span>
-                    {% else %}
-                        <span class="color-name">{{ variant.get_color_display }}</span>
+                            {{ variant.get_color_display }}
+                        </div>
+                    </td>
                     {% endif %}
-                    <span class="variant-tooltip">{{ variant.get_color_display }}</span>
-                </button>
-            {% endfor %}
-            {% if forloop.last %}
-                </div>
-            </div>
-            {% endif %}
-        {% endif %}
-    {% endfor %}
-
-    <!-- Size Variants -->
-    {% regroup product.variants.all by size as size_list %}
-    {% for size_group in size_list %}
-        {% if size_group.grouper %}
-            {% if forloop.first %}
-            <div class="variant-group" data-variant-type="size">
-                <label class="variant-label">
-                    <span>{% trans "المقاس" %}</span>
-                    <button type="button" class="size-guide-btn"
-                            data-bs-toggle="modal"
-                            data-bs-target="#sizeGuideModal"
-                            aria-label="{% trans 'عرض دليل المقاسات' %}">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <rect x="2" y="6" width="20" height="12" stroke-width="2"/>
-                            <line x1="2" y1="12" x2="22" y2="12" stroke-width="2"/>
-                            <line x1="7" y1="6" x2="7" y2="18" stroke-width="2"/>
-                            <line x1="17" y1="6" x2="17" y2="18" stroke-width="2"/>
-                        </svg>
-                        {% trans "دليل المقاسات" %}
-                    </button>
-                </label>
-                <div class="size-variants">
-            {% endif %}
-            {% for variant in size_group.list %}
-                <button type="button"
-                        class="size-option {% if forloop.parentloop.first and forloop.first %}active{% endif %} {% if not variant.is_in_stock %}out-of-stock{% endif %}"
-                        data-variant-id="{{ variant.id }}"
-                        data-size="{{ variant.size }}"
-                        data-price="{{ variant.current_price }}"
-                        data-stock="{{ variant.stock_quantity }}"
-                        {% if not variant.is_in_stock %}disabled aria-disabled="true"{% endif %}>
-                    {{ variant.get_size_display }}
-                    {% if not variant.is_in_stock %}
-                        <span class="stock-badge">{% trans "نفذ" %}</span>
+                    {% if variant.size %}
+                    <td>{{ variant.get_size_display }}</td>
                     {% endif %}
-                </button>
-            {% endfor %}
-            {% if forloop.last %}
-                </div>
-            </div>
-            {% endif %}
-        {% endif %}
-    {% endfor %}
+                    {% if variant.material %}
+                    <td>{{ variant.material }}</td>
+                    {% endif %}
+                    <td class="fw-bold">{{ variant.current_price }} {% trans "د.أ" %}</td>
+                    <td>
+                        {% if variant.is_in_stock %}
+                        <span class="badge bg-success">{% trans "متوفر" %}</span>
+                        {% if variant.stock_quantity %}
+                        <small class="text-muted">({{ variant.stock_quantity }})</small>
+                        {% endif %}
+                        {% else %}
+                        <span class="badge bg-danger">{% trans "نفذ" %}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-    <!-- Material Variants -->
-    {% regroup product.variants.all by material as material_list %}
-    {% for material_group in material_list %}
-        {% if material_group.grouper %}
-            <div class="variant-group" data-variant-type="material">
-                <label class="variant-label" for="variant-material">
-                    {% trans "المادة" %}:
-                </label>
-                <select class="form-select variant-select"
-                        id="variant-material"
-                        data-variant-type="material">
-                    {% for variant in material_group.list %}
-                    <option value="{{ variant.id }}"
-                            data-price="{{ variant.current_price }}"
-                            data-stock="{{ variant.stock_quantity }}"
-                            data-sku="{{ variant.sku }}"
-                            {% if forloop.first %}selected{% endif %}
-                            {% if not variant.is_in_stock %}disabled{% endif %}>
-                        {{ variant.material }}
-                        {% if not variant.is_in_stock %} - {% trans "غير متوفر" %}{% endif %}
-                    </option>
-                    {% endfor %}
-                </select>
+    <!-- معلومات المتغير المحدد -->
+    <div class="selected-variant-info mt-4 p-3 border rounded" id="variantInfo">
+        <h6 class="fw-bold">{% trans "تفاصيل المتغير المحدد" %}</h6>
+        <div class="row">
+            <div class="col-md-4">
+                <small class="text-muted">{% trans "رقم المنتج" %}</small>
+                <div class="fw-bold" id="selectedVariantSku">-</div>
             </div>
-        {% endif %}
-    {% endfor %}
-
-    <!-- Pattern Variants -->
-    {% regroup product.variants.all by pattern as pattern_list %}
-    {% for pattern_group in pattern_list %}
-        {% if pattern_group.grouper %}
-            <div class="variant-group" data-variant-type="pattern">
-                <label class="variant-label" for="variant-pattern">
-                    {% trans "النقشة" %}:
-                </label>
-                <select class="form-select variant-select"
-                        id="variant-pattern"
-                        data-variant-type="pattern">
-                    {% for variant in pattern_group.list %}
-                    <option value="{{ variant.id }}"
-                            data-price="{{ variant.current_price }}"
-                            data-stock="{{ variant.stock_quantity }}"
-                            data-sku="{{ variant.sku }}"
-                            {% if forloop.first %}selected{% endif %}
-                            {% if not variant.is_in_stock %}disabled{% endif %}>
-                        {{ variant.pattern }}
-                        {% if not variant.is_in_stock %} - {% trans "غير متوفر" %}{% endif %}
-                    </option>
-                    {% endfor %}
-                </select>
+            <div class="col-md-4">
+                <small class="text-muted">{% trans "السعر" %}</small>
+                <div class="fw-bold text-success" id="selectedVariantPrice">-</div>
             </div>
-        {% endif %}
-    {% endfor %}
-
-    <!-- Selected Variant Info -->
-    <div class="selected-variant-info" id="variantInfo" aria-live="polite">
-        <div class="info-grid">
-            <div class="info-item">
-                <span class="info-label">{% trans "رقم المنتج" %}:</span>
-                <span class="info-value" data-sku>-</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">{% trans "السعر" %}:</span>
-                <span class="info-value" data-price>-</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">{% trans "المتوفر" %}:</span>
-                <span class="info-value" data-stock>-</span>
+            <div class="col-md-4">
+                <small class="text-muted">{% trans "المتوفر" %}</small>
+                <div class="fw-bold" id="selectedVariantStock">-</div>
             </div>
         </div>
     </div>
 </div>
 
 <style>
-:root {
-    --variant-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.variants-table-container {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 1rem;
 }
 
-.product-variants {
-    margin-bottom: 2rem;
-}
-
-.variant-group {
-    margin-bottom: 1.5rem;
-}
-
-.variant-label {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-weight: 600;
-    margin-bottom: 0.875rem;
-    color: var(--text-primary);
-    font-size: 0.9375rem;
-}
-
-.variant-selection {
-    font-weight: 400;
-    font-size: 0.875rem;
-    color: var(--bs-primary);
-    margin-left: 0.5rem;
-}
-
-/* Size Guide Button */
-.size-guide-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    background: none;
-    border: none;
-    color: var(--bs-primary);
-    font-size: 0.8125rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: var(--variant-transition);
-    padding: 0.25rem 0.5rem;
-    border-radius: var(--radius-sm);
-}
-
-.size-guide-btn:hover {
-    background: rgba(var(--bs-primary-rgb), 0.1);
-}
-
-.size-guide-btn svg {
-    stroke: currentColor;
-}
-
-/* Color Variants */
-.color-variants {
-    display: flex;
-    gap: 0.625rem;
-    flex-wrap: wrap;
-}
-
-.color-option {
+.variants-table {
     position: relative;
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    transition: var(--variant-transition);
 }
 
-.color-option:disabled {
-    cursor: not-allowed;
-}
-
-.color-swatch {
-    position: relative;
-    display: block;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    border: 3px solid transparent;
-    box-shadow:
-        inset 0 0 0 1px rgba(0, 0, 0, 0.08),
-        0 2px 4px rgba(0, 0, 0, 0.04);
-    transition: var(--variant-transition);
-    overflow: hidden;
-}
-
-.color-option:hover:not(.out-of-stock) .color-swatch {
-    transform: scale(1.08);
-    box-shadow:
-        inset 0 0 0 1px rgba(0, 0, 0, 0.12),
-        0 4px 8px rgba(0, 0, 0, 0.08);
-}
-
-.color-option.active .color-swatch {
-    border-color: var(--bs-primary);
-    transform: scale(1.1);
-    box-shadow:
-        inset 0 0 0 1px rgba(0, 0, 0, 0.08),
-        0 0 0 2px var(--bs-primary),
-        0 4px 12px rgba(var(--bs-primary-rgb), 0.2);
-}
-
-.stock-indicator {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 20px;
-    height: 20px;
-    color: #dc3545;
-}
-
-.color-name {
-    display: inline-block;
-    padding: 0.5rem 1.25rem;
-    border: 2px solid var(--border-color);
-    border-radius: var(--radius-pill);
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: var(--variant-transition);
-}
-
-.color-option:hover:not(.out-of-stock) .color-name {
-    border-color: var(--bs-primary);
-    background: rgba(var(--bs-primary-rgb), 0.05);
-}
-
-.color-option.active .color-name {
-    border-color: var(--bs-primary);
-    background: var(--bs-primary);
-    color: white;
-}
-
-.color-option.out-of-stock {
-    opacity: 0.6;
-}
-
-/* Variant Tooltip */
-.variant-tooltip {
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%) translateY(-0.5rem);
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 0.375rem 0.75rem;
-    border-radius: var(--radius-sm);
-    font-size: 0.75rem;
-    white-space: nowrap;
-    opacity: 0;
-    visibility: hidden;
-    transition: var(--variant-transition);
-    pointer-events: none;
+.variants-table thead th {
+    position: sticky;
+    top: 0;
+    background-color: #fff;
     z-index: 10;
 }
 
-.color-option:hover .variant-tooltip {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(-50%) translateY(-0.75rem);
-}
-
-/* Size Variants */
-.size-variants {
-    display: flex;
-    gap: 0.625rem;
-    flex-wrap: wrap;
-}
-
-.size-option {
-    position: relative;
-    padding: 0.625rem 1.25rem;
-    border: 2px solid var(--border-color);
-    background: white;
-    border-radius: var(--radius-md);
-    font-weight: 500;
-    font-size: 0.9375rem;
+.variant-row {
     cursor: pointer;
-    transition: var(--variant-transition);
-    min-width: 60px;
-    text-align: center;
+    transition: all 0.2s ease;
 }
 
-.size-option:hover:not(:disabled) {
-    border-color: var(--bs-primary);
-    background: rgba(var(--bs-primary-rgb), 0.05);
-    transform: translateY(-2px);
+.variant-row:hover:not(.out-of-stock) {
+    background-color: rgba(var(--bs-primary-rgb), 0.05);
 }
 
-.size-option.active {
-    background: var(--bs-primary);
-    border-color: var(--bs-primary);
-    color: white;
+.variant-row.selected {
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
 }
 
-.size-option:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    background: rgba(0, 0, 0, 0.02);
+.variant-row.out-of-stock {
+    opacity: 0.6;
+    background-color: rgba(0,0,0,0.03);
 }
 
-.stock-badge {
-    position: absolute;
-    top: -0.375rem;
-    right: -0.375rem;
-    background: #dc3545;
-    color: white;
-    font-size: 0.625rem;
-    padding: 0.125rem 0.375rem;
-    border-radius: var(--radius-sm);
-    font-weight: 600;
+.color-box {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-block;
+    border: 1px solid #ddd;
 }
 
-/* Custom Variants Select */
-.variant-select {
-    max-width: 320px;
-    font-weight: 500;
-}
-
-/* Selected Variant Info */
 .selected-variant-info {
-    margin-top: 1.5rem;
-    padding: 1.25rem;
-    background: linear-gradient(135deg,
-        rgba(var(--bs-primary-rgb), 0.05) 0%,
-        rgba(var(--bs-primary-rgb), 0.02) 100%);
-    border: 1px solid rgba(var(--bs-primary-rgb), 0.1);
-    border-radius: var(--radius-lg);
-    transition: var(--variant-transition);
-}
-
-.info-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 1rem;
-}
-
-.info-item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-}
-
-.info-label {
-    font-size: 0.8125rem;
-    color: var(--text-muted);
-    font-weight: 500;
-}
-
-.info-value {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-/* Responsive Design */
-@media (max-width: 575.98px) {
-    .variant-group {
-        margin-bottom: 1.25rem;
-    }
-
-    .color-swatch {
-        width: 38px;
-        height: 38px;
-    }
-
-    .color-option.active .color-swatch {
-        transform: scale(1.05);
-    }
-
-    .size-option {
-        padding: 0.5rem 1rem;
-        font-size: 0.875rem;
-        min-width: 50px;
-    }
-
-    .info-grid {
-        grid-template-columns: 1fr;
-        gap: 0.75rem;
-    }
-
-    .selected-variant-info {
-        padding: 1rem;
-    }
-}
-
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-    .size-option {
-        background: var(--dark-bg-secondary);
-        border-color: var(--dark-border);
-    }
-
-    .size-option:hover:not(:disabled) {
-        background: rgba(var(--bs-primary-rgb), 0.15);
-    }
-
-    .selected-variant-info {
-        background: linear-gradient(135deg,
-            rgba(var(--bs-primary-rgb), 0.1) 0%,
-            rgba(var(--bs-primary-rgb), 0.05) 100%);
-    }
+    background-color: rgba(var(--bs-primary-rgb), 0.05);
 }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // متغيرات عامة
     const variantContainer = document.querySelector('.product-variants');
     if (!variantContainer) return;
 
-    const colorOptions = variantContainer.querySelectorAll('.color-option');
-    const sizeOptions = variantContainer.querySelectorAll('.size-option');
-    const variantSelects = variantContainer.querySelectorAll('.variant-select');
-    const variantInfo = document.getElementById('variantInfo');
+    const variantRows = document.querySelectorAll('.variant-row');
+    const variantSelectors = document.querySelectorAll('.variant-selector');
+    const variantForm = document.getElementById('addToCartForm');
+    const selectedVariantIdField = document.getElementById('selectedVariantId');
 
-    let selectedVariants = {
-        color: null,
-        size: null,
-        material: null,
-        pattern: null
-    };
+    // عناصر معلومات المتغير المحدد
+    const selectedVariantSku = document.getElementById('selectedVariantSku');
+    const selectedVariantPrice = document.getElementById('selectedVariantPrice');
+    const selectedVariantStock = document.getElementById('selectedVariantStock');
 
-    // Initialize first available variant
-    function initializeVariants() {
-        const firstColor = document.querySelector('.color-option:not(.out-of-stock)');
-        const firstSize = document.querySelector('.size-option:not(.out-of-stock)');
+    // تحديث معلومات المتغير المحدد
+    function updateSelectedVariantInfo(variantRow) {
+        const variantId = variantRow.dataset.variantId;
+        const price = variantRow.dataset.price;
+        const stock = variantRow.dataset.stock;
+        const sku = variantRow.dataset.sku;
 
-        if (firstColor) {
-            firstColor.click();
-        }
-        if (firstSize) {
-            firstSize.click();
+        // تحديث الحقل المخفي
+        if (selectedVariantIdField) {
+            selectedVariantIdField.value = variantId;
         }
 
-        // Initialize selects
-        variantSelects.forEach(select => {
-            if (select.value) {
-                const selectedOption = select.options[select.selectedIndex];
-                updateVariantInfo(selectedOption.dataset);
+        // تحديث معلومات العرض
+        if (selectedVariantSku) selectedVariantSku.textContent = sku || '-';
+        if (selectedVariantPrice) selectedVariantPrice.textContent = `${price} د.أ`;
+
+        if (selectedVariantStock) {
+            const stockNum = parseInt(stock);
+            if (stockNum > 10) {
+                selectedVariantStock.textContent = 'متوفر';
+                selectedVariantStock.className = 'fw-bold text-success';
+            } else if (stockNum > 0) {
+                selectedVariantStock.textContent = `${stockNum} قطعة فقط`;
+                selectedVariantStock.className = 'fw-bold text-warning';
+            } else {
+                selectedVariantStock.textContent = 'نفذ من المخزون';
+                selectedVariantStock.className = 'fw-bold text-danger';
+            }
+        }
+
+        // إزالة الفئة selected من جميع الصفوف
+        variantRows.forEach(row => row.classList.remove('selected'));
+
+        // إضافة الفئة selected إلى الصف المحدد
+        variantRow.classList.add('selected');
+    }
+
+    // تحديث حالة الزر "إضافة إلى السلة" بناء على توفر المتغير
+    function updateAddToCartButton() {
+        const addToCartBtn = document.querySelector('.btn-add-to-cart');
+        const selectedVariant = document.querySelector('.variant-selector:checked');
+
+        if (!addToCartBtn) return;
+
+        if (selectedVariant) {
+            const variantRow = selectedVariant.closest('.variant-row');
+            const isInStock = !variantRow.classList.contains('out-of-stock');
+
+            addToCartBtn.disabled = !isInStock;
+
+            if (isInStock) {
+                addToCartBtn.innerHTML = '<i class="fas fa-shopping-cart me-2"></i>إضافة إلى السلة';
+                addToCartBtn.classList.remove('btn-secondary');
+                addToCartBtn.classList.add('btn-add-to-cart');
+            } else {
+                addToCartBtn.innerHTML = '<i class="fas fa-times-circle me-2"></i>غير متوفر حالياً';
+                addToCartBtn.classList.remove('btn-add-to-cart');
+                addToCartBtn.classList.add('btn-secondary');
+            }
+        }
+    }
+
+    // معالجة النقر على صف المتغير
+    variantRows.forEach(row => {
+        row.addEventListener('click', function() {
+            // تفعيل زر الاختيار إذا كان المتغير متوفراً
+            if (!this.classList.contains('out-of-stock')) {
+                const selector = this.querySelector('.variant-selector');
+                if (selector) {
+                    selector.checked = true;
+                    updateSelectedVariantInfo(this);
+                    updateAddToCartButton();
+                }
             }
         });
-    }
-
-    // Handle color selection
-    colorOptions.forEach(option => {
-        option.addEventListener('click', function() {
-            if (this.classList.contains('out-of-stock')) return;
-
-            colorOptions.forEach(opt => opt.classList.remove('active'));
-            this.classList.add('active');
-
-            selectedVariants.color = this.dataset.variantId;
-            updateVariantInfo(this.dataset);
-            updateColorLabel(this.getAttribute('aria-label'));
-        });
     });
 
-    // Handle size selection
-    sizeOptions.forEach(option => {
-        option.addEventListener('click', function() {
-            if (this.disabled) return;
-
-            sizeOptions.forEach(opt => opt.classList.remove('active'));
-            this.classList.add('active');
-
-            selectedVariants.size = this.dataset.variantId;
-            updateVariantInfo(this.dataset);
-        });
-    });
-
-    // Handle custom variant selection
-    variantSelects.forEach(select => {
-        select.addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            const variantType = this.dataset.variantType;
-
-            selectedVariants[variantType] = this.value;
-            updateVariantInfo(selectedOption.dataset);
-        });
-    });
-
-    // Update variant info display
-    function updateVariantInfo(data) {
-        if (!variantInfo) return;
-
-        const skuElement = variantInfo.querySelector('[data-sku]');
-        const priceElement = variantInfo.querySelector('[data-price]');
-        const stockElement = variantInfo.querySelector('[data-stock]');
-
-        if (skuElement && data.sku) {
-            skuElement.textContent = data.sku;
-        }
-
-        if (priceElement && data.price) {
-            priceElement.textContent = formatPrice(data.price);
-        }
-
-        if (stockElement && data.stock !== undefined) {
-            const stock = parseInt(data.stock);
-            stockElement.textContent = stock > 0 ? `${stock} قطعة` : 'غير متوفر';
-            stockElement.style.color = stock > 5 ? 'var(--bs-success)' :
-                                     stock > 0 ? 'var(--bs-warning)' : 'var(--bs-danger)';
-        }
-
-        // Trigger custom event for price update
-        window.dispatchEvent(new CustomEvent('variantChanged', {
-            detail: {
-                variantId: data.variantId,
-                price: data.price,
-                stock: data.stock,
-                sku: data.sku
+    // معالجة تغيير زر الاختيار
+    variantSelectors.forEach(selector => {
+        selector.addEventListener('change', function() {
+            if (this.checked) {
+                const variantRow = this.closest('.variant-row');
+                updateSelectedVariantInfo(variantRow);
+                updateAddToCartButton();
             }
-        }));
+        });
+    });
+
+    // التحقق من النموذج قبل الإرسال
+    if (variantForm) {
+        variantForm.addEventListener('submit', function(e) {
+            // التحقق من اختيار متغير إذا كانت هناك متغيرات
+            if (variantContainer && !selectedVariantIdField.value) {
+                e.preventDefault();
+                alert('الرجاء اختيار متغير المنتج');
+                return false;
+            }
+            return true;
+        });
     }
 
-    // Update color label
-    function updateColorLabel(colorName) {
-        const colorLabel = document.querySelector('[data-selected-color]');
-        if (colorLabel) {
-            colorLabel.textContent = `(${colorName})`;
-        }
+    // تهيئة المتغير الافتراضي عند تحميل الصفحة
+    const defaultVariant = document.querySelector('.variant-selector:checked');
+    if (defaultVariant) {
+        const variantRow = defaultVariant.closest('.variant-row');
+        updateSelectedVariantInfo(variantRow);
+        updateAddToCartButton();
     }
-
-    // Format price
-    function formatPrice(price) {
-        return new Intl.NumberFormat('ar-SA', {
-            style: 'currency',
-            currency: 'SAR'
-        }).format(price);
-    }
-
-    // Initialize
-    initializeVariants();
 });
 </script>
 {% endif %}

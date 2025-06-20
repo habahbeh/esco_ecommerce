@@ -336,15 +336,33 @@ function initProductZoom() {
  * ========= وظائف إضافية =========
  */
 
-// التحكم بالكمية
+// التحكم بالكمية مع مراعاة المتغير المحدد
 function changeQuantity(change) {
     const input = document.getElementById('quantity');
     const currentValue = parseInt(input.value) || 1;
     const newValue = currentValue + change;
-    const max = parseInt(input.getAttribute('max')) || 999;
 
+    // الحصول على الحد الأقصى من المخزون المتوفر
+    let max = parseInt(input.getAttribute('max')) || 999;
+
+    // إذا كان هناك متغير محدد، استخدم كمية المخزون الخاصة به
+    const selectedVariant = document.querySelector('.variant-selector:checked');
+    if (selectedVariant) {
+        const variantRow = selectedVariant.closest('.variant-row');
+        const variantStock = parseInt(variantRow.dataset.stock) || 0;
+        if (variantStock > 0) {
+            max = variantStock;
+        }
+    }
+
+    // التحقق من الحدود
     if (newValue >= 1 && newValue <= max) {
         input.value = newValue;
+    }
+
+    // إذا وصلنا للحد الأقصى، أظهر تنبيه
+    if (newValue >= max) {
+        showNotification('warning', 'لقد وصلت إلى الحد الأقصى المتوفر من هذا المنتج');
     }
 }
 
@@ -427,26 +445,77 @@ document.addEventListener('DOMContentLoaded', function() {
             const btn = this.querySelector('button[type="submit"]');
             const originalText = btn.innerHTML;
 
+            // التحقق من اختيار متغير إذا كان هناك متغيرات
+            const variantsContainer = document.querySelector('.product-variants');
+            const selectedVariantId = document.getElementById('selectedVariantId');
+
+            if (variantsContainer && !selectedVariantId.value) {
+                showNotification('error', 'الرجاء اختيار متغير المنتج أولاً');
+                return false;
+            }
+
             // إظهار حالة التحميل
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري الإضافة...';
 
-            // محاكاة طلب API
-            setTimeout(() => {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-check me-2"></i>تمت الإضافة بنجاح';
+            // إرسال النموذج باستخدام AJAX
+            const formData = new FormData(this);
 
-                // إظهار إشعار النجاح
-                showNotification('success', 'تمت إضافة المنتج إلى السلة بنجاح');
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    btn.innerHTML = '<i class="fas fa-check me-2"></i>تمت الإضافة بنجاح';
 
-                // تحديث عدد العناصر في السلة
-                updateCartCount();
+                    // تحديث عدد العناصر في السلة
+                    const cartBadge = document.querySelector('.cart-count');
+                    if (cartBadge) {
+                        cartBadge.textContent = data.cart_count;
+                    }
 
-                // إعادة تعيين الزر بعد ثانيتين
-                setTimeout(() => {
+                    // إظهار إشعار النجاح
+                    let productName = document.querySelector('.product-title').textContent;
+                    let variantInfo = '';
+
+                    // إضافة معلومات المتغير إذا كان محدداً
+                    if (selectedVariantId.value) {
+                        const selectedVariant = document.querySelector(`.variant-row[data-variant-id="${selectedVariantId.value}"]`);
+                        if (selectedVariant) {
+                            const color = selectedVariant.querySelector('td:nth-child(2)')?.textContent.trim();
+                            const size = selectedVariant.querySelector('td:nth-child(3)')?.textContent.trim();
+                            if (color || size) {
+                                variantInfo = ` (${color}${size ? ' - ' + size : ''})`;
+                            }
+                        }
+                    }
+
+                    showNotification('success', `تمت إضافة "${productName}${variantInfo}" إلى السلة بنجاح`);
+
+                    // إعادة تعيين الزر بعد ثانيتين
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.innerHTML = originalText;
+                    }, 2000);
+                } else {
+                    // في حالة الخطأ
+                    btn.disabled = false;
                     btn.innerHTML = originalText;
-                }, 2000);
-            }, 1000);
+                    showNotification('error', data.message || 'حدث خطأ أثناء إضافة المنتج للسلة');
+                }
+            })
+            .catch(error => {
+                // في حالة خطأ في الاتصال
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                showNotification('error', 'حدث خطأ في الاتصال، يرجى المحاولة مرة أخرى');
+                console.error('Error:', error);
+            });
         });
     }
 });
