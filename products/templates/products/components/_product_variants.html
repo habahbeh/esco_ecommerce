@@ -1,12 +1,12 @@
 {% load i18n %}
 
 {% if product.variants.exists %}
-<div class="product-variants" data-product-id="{{ product.id }}">
-    <h5 class="mb-3">{% trans "اختر المتغير المناسب" %}</h5>
+<div class="product-options" data-product-id="{{ product.id }}">
+    <h5 class="options-title mb-3">{% trans "اختر مواصفات المنتج" %}</h5>
 
-    <!-- جدول متغيرات المنتج -->
-    <div class="variants-table-container">
-        <table class="table table-hover variants-table">
+    <!-- جدول خيارات المنتج -->
+    <div class="options-table-container">
+        <table class="table table-hover options-table">
             <thead>
                 <tr>
                     <th>{% trans "اختيار" %}</th>
@@ -19,28 +19,31 @@
                     {% if product.variants.first.material %}
                     <th>{% trans "المادة" %}</th>
                     {% endif %}
+                    {% if product.variants.first.pattern %}
+                    <th>{% trans "النقشة" %}</th>
+                    {% endif %}
                     <th>{% trans "السعر" %}</th>
                     <th>{% trans "التوفر" %}</th>
                 </tr>
             </thead>
             <tbody>
                 {% for variant in product.variants.all %}
-                <tr class="variant-row {% if not variant.is_in_stock %}out-of-stock{% endif %}"
-                    data-variant-id="{{ variant.id }}"
+                <tr class="option-row {% if not variant.is_in_stock %}out-of-stock{% endif %}"
+                    data-option-id="{{ variant.id }}"
                     data-price="{{ variant.current_price }}"
                     data-stock="{{ variant.stock_quantity }}"
                     data-sku="{{ variant.sku }}">
                     <td>
                         <div class="form-check">
-                            <input class="form-check-input variant-selector"
+                            <input class="form-check-input option-selector"
                                    type="radio"
-                                   name="variant-option"
-                                   id="variant-{{ variant.id }}"
+                                   name="option-choice"
+                                   id="option-{{ variant.id }}"
                                    value="{{ variant.id }}"
                                    {% if forloop.first and variant.is_in_stock %}checked{% endif %}
                                    {% if not variant.is_in_stock %}disabled{% endif %}>
-                            <label class="form-check-label" for="variant-{{ variant.id }}">
-                                {% trans "اختر" %}
+                            <label class="form-check-label" for="option-{{ variant.id }}">
+                                <i class="fas fa-check-circle check-icon"></i>
                             </label>
                         </div>
                     </td>
@@ -60,15 +63,20 @@
                     {% if variant.material %}
                     <td>{{ variant.material }}</td>
                     {% endif %}
-                    <td class="fw-bold">{{ variant.current_price }} {% trans "د.أ" %}</td>
+                    {% if variant.pattern %}
+                    <td>{{ variant.pattern }}</td>
+                    {% endif %}
+                    <td class="price-column">{{ variant.current_price }} {% trans "د.أ" %}</td>
                     <td>
                         {% if variant.is_in_stock %}
-                        <span class="badge bg-success">{% trans "متوفر" %}</span>
-                        {% if variant.stock_quantity %}
-                        <small class="text-muted">({{ variant.stock_quantity }})</small>
-                        {% endif %}
+                        <div class="stock-status">
+                            <span class="badge bg-success stock-badge">{% trans "متوفر" %}</span>
+                            {% if variant.stock_quantity %}
+                            <small class="stock-count">({{ variant.stock_quantity }})</small>
+                            {% endif %}
+                        </div>
                         {% else %}
-                        <span class="badge bg-danger">{% trans "نفذ" %}</span>
+                        <span class="badge bg-danger stock-badge">{% trans "نفذ" %}</span>
                         {% endif %}
                     </td>
                 </tr>
@@ -77,138 +85,254 @@
         </table>
     </div>
 
-    <!-- معلومات المتغير المحدد -->
-    <div class="selected-variant-info mt-4 p-3 border rounded" id="variantInfo">
-        <h6 class="fw-bold">{% trans "تفاصيل المتغير المحدد" %}</h6>
-        <div class="row">
-            <div class="col-md-4">
-                <small class="text-muted">{% trans "رقم المنتج" %}</small>
-                <div class="fw-bold" id="selectedVariantSku">-</div>
-            </div>
-            <div class="col-md-4">
-                <small class="text-muted">{% trans "السعر" %}</small>
-                <div class="fw-bold text-success" id="selectedVariantPrice">-</div>
-            </div>
-            <div class="col-md-4">
-                <small class="text-muted">{% trans "المتوفر" %}</small>
-                <div class="fw-bold" id="selectedVariantStock">-</div>
+    <!-- معلومات المواصفات المحددة -->
+    <div class="selected-option-info mt-4 p-3 border rounded" id="optionInfo">
+        <h6 class="option-info-title">{% trans "تفاصيل المواصفات المحددة" %}</h6>
+        <div class="option-info-content">
+            <div class="row mt-3">
+                <div class="col-md-4 mb-2">
+                    <div class="option-detail">
+                        <span class="detail-label">{% trans "رقم المنتج" %}</span>
+                        <span class="detail-value" id="selectedOptionSku">-</span>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <div class="option-detail">
+                        <span class="detail-label">{% trans "السعر" %}</span>
+                        <span class="detail-value price-value" id="selectedOptionPrice">-</span>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <div class="option-detail">
+                        <span class="detail-label">{% trans "المتوفر" %}</span>
+                        <span class="detail-value" id="selectedOptionStock">-</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <style>
-.variants-table-container {
+/* تنسيقات محسنة لخيارات المنتج */
+.product-options {
+    background-color: #f9fafb;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.options-title {
+    font-weight: 700;
+    color: #333;
+    position: relative;
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.25rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.options-table-container {
     max-height: 300px;
     overflow-y: auto;
     margin-bottom: 1rem;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background-color: white;
 }
 
-.variants-table {
+.options-table {
     position: relative;
+    margin-bottom: 0;
 }
 
-.variants-table thead th {
+.options-table thead th {
     position: sticky;
     top: 0;
-    background-color: #fff;
+    background-color: #f8f9fa;
     z-index: 10;
+    border-bottom: 2px solid var(--bs-primary);
+    padding: 0.75rem;
+    font-weight: 600;
+    color: #444;
 }
 
-.variant-row {
+.option-row {
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.25s ease;
 }
 
-.variant-row:hover:not(.out-of-stock) {
+.option-row:hover:not(.out-of-stock) {
     background-color: rgba(var(--bs-primary-rgb), 0.05);
+    transform: translateY(-2px);
 }
 
-.variant-row.selected {
+.option-row.selected {
     background-color: rgba(var(--bs-primary-rgb), 0.1);
+    border-left: 3px solid var(--bs-primary);
 }
 
-.variant-row.out-of-stock {
-    opacity: 0.6;
-    background-color: rgba(0,0,0,0.03);
+.option-row.out-of-stock {
+    opacity: 0.65;
+    background-color: rgba(0,0,0,0.02);
+}
+
+.check-icon {
+    color: var(--bs-primary);
+    display: none;
+}
+
+.option-selector:checked + .form-check-label .check-icon {
+    display: inline-block;
 }
 
 .color-box {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     display: inline-block;
     border: 1px solid #ddd;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.selected-variant-info {
-    background-color: rgba(var(--bs-primary-rgb), 0.05);
+.price-column {
+    font-weight: 700;
+    color: var(--bs-primary);
+}
+
+.stock-status {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.stock-badge {
+    font-size: 0.75rem;
+    padding: 0.35em 0.65em;
+}
+
+.stock-count {
+    color: #6c757d;
+    font-size: 0.8rem;
+}
+
+/* تنسيقات معلومات الخيار المحدد */
+.selected-option-info {
+    background: linear-gradient(to right, rgba(var(--bs-primary-rgb), 0.03), rgba(var(--bs-primary-rgb), 0.07));
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    transition: all 0.3s ease;
+}
+
+.option-info-title {
+    font-weight: 600;
+    color: #333;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.1);
+}
+
+.option-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.detail-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.detail-value {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #333;
+}
+
+.price-value {
+    color: var(--bs-primary);
+}
+
+/* تحسينات للشاشات الصغيرة */
+@media (max-width: 767px) {
+    .options-table-container {
+        max-height: 400px;
+    }
+
+    .product-options {
+        padding: 1rem;
+    }
 }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // متغيرات عامة
-    const variantContainer = document.querySelector('.product-variants');
-    if (!variantContainer) return;
+    const optionContainer = document.querySelector('.product-options');
+    if (!optionContainer) return;
 
-    const variantRows = document.querySelectorAll('.variant-row');
-    const variantSelectors = document.querySelectorAll('.variant-selector');
-    const variantForm = document.getElementById('addToCartForm');
+    const optionRows = document.querySelectorAll('.option-row');
+    const optionSelectors = document.querySelectorAll('.option-selector');
+    const addToCartForm = document.getElementById('addToCartForm');
     const selectedVariantIdField = document.getElementById('selectedVariantId');
 
-    // عناصر معلومات المتغير المحدد
-    const selectedVariantSku = document.getElementById('selectedVariantSku');
-    const selectedVariantPrice = document.getElementById('selectedVariantPrice');
-    const selectedVariantStock = document.getElementById('selectedVariantStock');
+    // عناصر معلومات الخيار المحدد
+    const selectedOptionSku = document.getElementById('selectedOptionSku');
+    const selectedOptionPrice = document.getElementById('selectedOptionPrice');
+    const selectedOptionStock = document.getElementById('selectedOptionStock');
 
-    // تحديث معلومات المتغير المحدد
-    function updateSelectedVariantInfo(variantRow) {
-        const variantId = variantRow.dataset.variantId;
-        const price = variantRow.dataset.price;
-        const stock = variantRow.dataset.stock;
-        const sku = variantRow.dataset.sku;
+    // تحديث معلومات الخيار المحدد
+    function updateSelectedOptionInfo(optionRow) {
+        const optionId = optionRow.dataset.optionId;
+        const price = optionRow.dataset.price;
+        const stock = optionRow.dataset.stock;
+        const sku = optionRow.dataset.sku;
 
         // تحديث الحقل المخفي
         if (selectedVariantIdField) {
-            selectedVariantIdField.value = variantId;
+            selectedVariantIdField.value = optionId;
+            console.log("تم تحديث معرف المتغير:", optionId); // للتأكد من التحديث
         }
 
         // تحديث معلومات العرض
-        if (selectedVariantSku) selectedVariantSku.textContent = sku || '-';
-        if (selectedVariantPrice) selectedVariantPrice.textContent = `${price} د.أ`;
+        if (selectedOptionSku) selectedOptionSku.textContent = sku || '-';
+        if (selectedOptionPrice) selectedOptionPrice.textContent = `${price} د.أ`;
 
-        if (selectedVariantStock) {
+        if (selectedOptionStock) {
             const stockNum = parseInt(stock);
             if (stockNum > 10) {
-                selectedVariantStock.textContent = 'متوفر';
-                selectedVariantStock.className = 'fw-bold text-success';
+                selectedOptionStock.textContent = 'متوفر بكميات كافية';
+                selectedOptionStock.className = 'detail-value text-success';
             } else if (stockNum > 0) {
-                selectedVariantStock.textContent = `${stockNum} قطعة فقط`;
-                selectedVariantStock.className = 'fw-bold text-warning';
+                selectedOptionStock.textContent = `${stockNum} قطعة فقط`;
+                selectedOptionStock.className = 'detail-value text-warning';
             } else {
-                selectedVariantStock.textContent = 'نفذ من المخزون';
-                selectedVariantStock.className = 'fw-bold text-danger';
+                selectedOptionStock.textContent = 'نفذ من المخزون';
+                selectedOptionStock.className = 'detail-value text-danger';
             }
         }
 
         // إزالة الفئة selected من جميع الصفوف
-        variantRows.forEach(row => row.classList.remove('selected'));
+        optionRows.forEach(row => row.classList.remove('selected'));
 
         // إضافة الفئة selected إلى الصف المحدد
-        variantRow.classList.add('selected');
+        optionRow.classList.add('selected');
+
+        // تمرير الصفحة إلى معلومات الخيار المحدد
+        document.getElementById('optionInfo').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-    // تحديث حالة الزر "إضافة إلى السلة" بناء على توفر المتغير
+    // تحديث حالة الزر "إضافة إلى السلة" بناء على توفر الخيار
     function updateAddToCartButton() {
         const addToCartBtn = document.querySelector('.btn-add-to-cart');
-        const selectedVariant = document.querySelector('.variant-selector:checked');
+        const selectedOption = document.querySelector('.option-selector:checked');
 
         if (!addToCartBtn) return;
 
-        if (selectedVariant) {
-            const variantRow = selectedVariant.closest('.variant-row');
-            const isInStock = !variantRow.classList.contains('out-of-stock');
+        if (selectedOption) {
+            const optionRow = selectedOption.closest('.option-row');
+            const isInStock = !optionRow.classList.contains('out-of-stock');
 
             addToCartBtn.disabled = !isInStock;
 
@@ -224,15 +348,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // معالجة النقر على صف المتغير
-    variantRows.forEach(row => {
+    // معالجة النقر على صف الخيار
+    optionRows.forEach(row => {
         row.addEventListener('click', function() {
-            // تفعيل زر الاختيار إذا كان المتغير متوفراً
+            // تفعيل زر الاختيار إذا كان الخيار متوفراً
             if (!this.classList.contains('out-of-stock')) {
-                const selector = this.querySelector('.variant-selector');
+                const selector = this.querySelector('.option-selector');
                 if (selector) {
                     selector.checked = true;
-                    updateSelectedVariantInfo(this);
+                    updateSelectedOptionInfo(this);
                     updateAddToCartButton();
                 }
             }
@@ -240,35 +364,54 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // معالجة تغيير زر الاختيار
-    variantSelectors.forEach(selector => {
+    optionSelectors.forEach(selector => {
         selector.addEventListener('change', function() {
             if (this.checked) {
-                const variantRow = this.closest('.variant-row');
-                updateSelectedVariantInfo(variantRow);
+                const optionRow = this.closest('.option-row');
+                updateSelectedOptionInfo(optionRow);
                 updateAddToCartButton();
             }
         });
     });
 
     // التحقق من النموذج قبل الإرسال
-    if (variantForm) {
-        variantForm.addEventListener('submit', function(e) {
-            // التحقق من اختيار متغير إذا كانت هناك متغيرات
-            if (variantContainer && !selectedVariantIdField.value) {
+    if (addToCartForm) {
+        addToCartForm.addEventListener('submit', function(e) {
+            // التحقق من اختيار خيار إذا كانت هناك خيارات متاحة
+            if (optionContainer && (!selectedVariantIdField || !selectedVariantIdField.value)) {
                 e.preventDefault();
-                alert('الرجاء اختيار متغير المنتج');
+
+                // عرض رسالة تنبيه للمستخدم
+                if (typeof showNotification === 'function') {
+                    showNotification('error', 'الرجاء اختيار مواصفات المنتج قبل الإضافة للسلة');
+                } else {
+                    alert('الرجاء اختيار مواصفات المنتج قبل الإضافة للسلة');
+                }
+
+                // تمرير الصفحة إلى قسم الخيارات
+                optionContainer.scrollIntoView({ behavior: 'smooth' });
+
                 return false;
             }
             return true;
         });
     }
 
-    // تهيئة المتغير الافتراضي عند تحميل الصفحة
-    const defaultVariant = document.querySelector('.variant-selector:checked');
-    if (defaultVariant) {
-        const variantRow = defaultVariant.closest('.variant-row');
-        updateSelectedVariantInfo(variantRow);
+    // تهيئة الخيار الافتراضي عند تحميل الصفحة
+    const defaultOption = document.querySelector('.option-selector:checked');
+    if (defaultOption) {
+        const optionRow = defaultOption.closest('.option-row');
+        updateSelectedOptionInfo(optionRow);
         updateAddToCartButton();
+    } else {
+        // إذا لم يكن هناك خيار محدد افتراضيًا، حاول تحديد أول خيار متوفر
+        const firstAvailableOption = document.querySelector('.option-selector:not(:disabled)');
+        if (firstAvailableOption) {
+            firstAvailableOption.checked = true;
+            const optionRow = firstAvailableOption.closest('.option-row');
+            updateSelectedOptionInfo(optionRow);
+            updateAddToCartButton();
+        }
     }
 });
 </script>
