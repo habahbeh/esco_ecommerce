@@ -100,8 +100,8 @@
                         </div>
                         {% endif %}
 
-                        <div class="item">
-                            <i class="fas fa-barcode"></i>
+                        <div class="item" >
+                            <i class="fas fa-barcode">&nbsp;</i>
                             <span>{% trans "رمز المنتج" %}: {{ product.sku }}</span>
                         </div>
 
@@ -162,7 +162,6 @@
                         <div class="location">
                             <i class="fas fa-map-marker-alt"></i>
                             <span>{% trans "التوصيل إلى" %}: {% trans "عمّان، الأردن" %}</span>
-                            <a href="#" class="ms-2 text-primary small">{% trans "تغيير" %}</a>
                         </div>
                         <div class="delivery-time mt-2">
                             <i class="fas fa-truck text-success me-2"></i>
@@ -186,64 +185,14 @@
                         </div>
                     {% endif %}
 
-                    <!-- نموذج إضافة المنتج للسلة -->
-                    <form action="{% url 'cart:add_to_cart' product.id %}" method="post" id="addToCartForm"
-                          class="mt-4">
-                        {% csrf_token %}
-                        <input type="hidden" name="variant_id" id="selectedVariantId" value="">
+                {% if product.variants.exists %}
+    <div class="variants-section mb-4">
+        {% include 'products/components/_product_variants.html' %}
+    </div>
+{% endif %}
 
-                        <!-- المتغيرات إذا وجدت -->
-                        {% if product.variants.exists %}
-                            <div class="variants-section mb-4">
-                                {% include 'products/components/_product_variants.html' %}
-                            </div>
-                        {% endif %}
-
-                        <!-- محدد الكمية -->
-                        <div class="mb-4">
-                            <label class="form-label fw-bold d-block mb-2">{% trans "الكمية" %}:</label>
-                            <div class="quantity-selector">
-                                <button type="button" class="quantity-btn" onclick="changeQuantity(-1)">
-                                    <i class="fas fa-minus"></i>
-                                </button>
-                                <input type="number"
-                                       class="quantity-input"
-                                       id="quantity"
-                                       name="quantity"
-                                       value="1"
-                                       min="1"
-                                       max="{{ product.stock_quantity|default:999 }}">
-                                <button type="button" class="quantity-btn" onclick="changeQuantity(1)">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- أزرار الشراء -->
-                        {% if product.in_stock or product.variants.exists %}
-                            <button type="submit" class="amazon-style-button btn-add-to-cart">
-                                <i class="fas fa-shopping-cart me-2"></i>
-                                {% trans "إضافة إلى السلة" %}
-                            </button>
-                        {% else %}
-                            <button type="button" class="amazon-style-button btn-secondary" disabled>
-                                <i class="fas fa-times-circle me-2"></i>
-                                {% trans "غير متوفر حالياً" %}
-                            </button>
-                        {% endif %}
-
-                        <!-- الإجراءات الثانوية -->
-                        <div class="secondary-actions mt-3">
-                            <button type="button" class="action-btn" onclick="addToWishlist({{ product.id }})">
-                                <i class="far fa-heart"></i>
-                                <span>{% trans "إضافة للمفضلة" %}</span>
-                            </button>
-                            <button type="button" class="action-btn" onclick="shareProduct()">
-                                <i class="fas fa-share-alt"></i>
-                                <span>{% trans "مشاركة" %}</span>
-                            </button>
-                        </div>
-                    </form>
+                    <!-- استخدام نموذج إضافة المنتج للسلة المشترك بدلاً من النموذج المباشر -->
+                    {% include 'products/components/_add_to_cart_form.html' with product=product %}
 
                     <!-- ميزات المنتج السريعة -->
                     <div class="features-grid">
@@ -510,8 +459,8 @@
 
 <script src="{% static 'products/js/category_tree.js' %}"></script>
 <script src="{% static 'products/js/product_detail.js' %}"></script>
-    <script src="{% static 'products/js/product_zoom_simple.js' %}"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.6.1/nouislider.min.js"></script>
+<script src="{% static 'products/js/product_zoom_simple.js' %}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.6.1/nouislider.min.js"></script>
 
 
 <!-- تعريف متغير مسار الفئة الحالية -->

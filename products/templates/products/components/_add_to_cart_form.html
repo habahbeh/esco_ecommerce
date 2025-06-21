@@ -1,6 +1,6 @@
 {% load i18n %}
 
-<form class="add-to-cart-form" method="post" action="{% url 'cart:add_to_cart' product.id %}" id="addToCartForm">
+<form class="product-add-to-cart-form" method="post" action="{% url 'cart:add_to_cart' product.id %}" id="addToCartForm">
     {% csrf_token %}
 
     <!-- Quantity Selection -->
@@ -46,7 +46,7 @@
                     </span>
                 </button>
 
-                <button type="submit" class="btn btn-success btn-lg btn-buy-now" name="action" value="buy_now">
+                <button type="submit" class="btn btn-success btn-lg btn-buy-now" name="action" value="buy_now" hidden>
                     <i class="fas fa-bolt"></i>
                     <span>{% trans "اشتري الآن" %}</span>
                 </button>
@@ -65,7 +65,7 @@
             {% endif %}
         </div>
 
-        <div class="secondary-actions">
+        <div class="secondary-actions" hidden>
             <button type="button" class="btn btn-outline-secondary btn-icon wishlist-btn"
                     data-product-id="{{ product.id }}"
                     aria-label="{% trans 'إضافة لقائمة الأمنيات' %}">
@@ -87,7 +87,7 @@
             <span>{% trans "تمت إضافة المنتج إلى السلة بنجاح!" %}</span>
         </div>
         <div class="success-actions">
-            <a href="{% url 'cart:cart' %}" class="btn btn-primary btn-sm">
+            <a href="{% url 'cart:cart_detail' %}" class="btn btn-primary btn-sm">
                 {% trans "عرض السلة" %}
             </a>
             <button type="button" class="btn btn-outline-primary btn-sm continue-shopping">
@@ -323,7 +323,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 if (submitBtn.value === 'buy_now') {
-                    window.location.href = data.redirect_url || '{% url "cart:checkout" %}';
+                    window.location.href = data.redirect_url || '{% url "checkout:checkout" %}';
                 } else {
                     // Show success message
                     form.querySelector('.cart-success-message').style.display = 'block';
