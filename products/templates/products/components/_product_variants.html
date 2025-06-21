@@ -2,136 +2,151 @@
 
 {% if product.variants.exists %}
 <div class="product-variants-container" data-product-id="{{ product.id }}">
-    <h5 class="variants-title">{% trans "اختر مواصفات المنتج" %}</h5>
+    <!-- بطاقة المواصفات المحسنة -->
+    <div class="variant-details-card" id="variantDetailsCard">
+        <!-- أزرار المتغيرات المحسنة -->
+        <div class="variants-selection">
+            <h6 class="section-heading">{% trans "اختر المواصفات" %}</h6>
 
-    <!-- جدول خيارات المنتج مع أزرار إضافة للسلة لكل متغير -->
-    <div class="variants-table-container mb-4">
-        <table class="table table-hover variants-table">
-            <thead>
-                <tr>
-                    <th>{% trans "اختيار" %}</th>
-                    {% if product.variants.first.attributes.color or product.variants.first.color %}
-                    <th>{% trans "اللون" %}</th>
-                    {% endif %}
-                    {% if product.variants.first.attributes.size or product.variants.first.size %}
-                    <th>{% trans "المقاس" %}</th>
-                    {% endif %}
-                    {% if product.variants.first.attributes.material or product.variants.first.material %}
-                    <th>{% trans "المادة" %}</th>
-                    {% endif %}
-                    {% if product.variants.first.attributes.pattern or product.variants.first.pattern %}
-                    <th>{% trans "النقشة" %}</th>
-                    {% endif %}
-                    <th>{% trans "السعر" %}</th>
-                    <th>{% trans "التوفر" %}</th>
-                    <th>{% trans "الإجراء" %}</th>
-                </tr>
-            </thead>
-            <tbody>
+            <!-- صف المتغيرات (بدون المنتج الرئيسي) -->
+            <div class="variants-options-wrapper">
                 {% for variant in product.variants.all %}
-                <tr class="variant-row {% if not variant.is_in_stock %}out-of-stock{% endif %}"
-                    data-variant-id="{{ variant.id }}"
-                    data-price="{{ variant.current_price }}"
-                    data-stock="{{ variant.stock_quantity }}"
-                    data-sku="{{ variant.sku }}"
-                    data-attributes="{{ variant.attributes|safe }}">
-                    <td>
-                        <div class="form-check">
-                            <input class="form-check-input variant-selector"
-                                   type="radio"
-                                   name="variant-choice"
-                                   id="variant-{{ variant.id }}"
-                                   value="{{ variant.id }}"
-                                   {% if forloop.first and variant.is_in_stock %}checked{% endif %}
-                                   {% if not variant.is_in_stock %}disabled{% endif %}>
-                            <label class="form-check-label" for="variant-{{ variant.id }}">
-                                <i class="fas fa-check-circle check-icon"></i>
-                            </label>
+                <div class="variant-option {% if not variant.is_in_stock %}disabled{% endif %}"
+                     data-variant-id="{{ variant.id }}"
+                     data-price="{{ variant.current_price }}"
+                     data-stock="{{ variant.stock_quantity }}"
+                     data-sku="{{ variant.sku }}"
+                     data-attributes="{{ variant.attributes|safe }}">
+
+                    <div class="variant-specs">
+                        {% if variant.attributes.color or variant.color %}
+                        <div class="variant-color">
+                            <span class="color-swatch" style="background-color: {{ variant.attributes.color_code|default:variant.color_code|default:'#ccc' }}"></span>
+                            <span class="spec-label">{{ variant.attributes.color|default:variant.get_color_display }}</span>
                         </div>
-                    </td>
-                    {% if variant.attributes.color or variant.color %}
-                    <td>
-                        <div class="d-flex align-items-center">
-                            {% if variant.attributes.color_code or variant.color_code %}
-                            <span class="color-box me-2" style="background-color: {{ variant.attributes.color_code|default:variant.color_code }}"></span>
-                            {% endif %}
-                            {{ variant.attributes.color|default:variant.get_color_display }}
-                        </div>
-                    </td>
-                    {% endif %}
-                    {% if variant.attributes.size or variant.size %}
-                    <td>{{ variant.attributes.size|default:variant.get_size_display }}</td>
-                    {% endif %}
-                    {% if variant.attributes.material or variant.material %}
-                    <td>{{ variant.attributes.material|default:variant.material }}</td>
-                    {% endif %}
-                    {% if variant.attributes.pattern or variant.pattern %}
-                    <td>{{ variant.attributes.pattern|default:variant.pattern }}</td>
-                    {% endif %}
-                    <td class="price-column">{{ variant.current_price }} {% trans "د.أ" %}</td>
-                    <td>
-                        {% if variant.is_in_stock %}
-                        <div class="stock-status">
-                            <span class="badge bg-success stock-badge">{% trans "متوفر" %}</span>
-                            {% if variant.stock_quantity %}
-                            <small class="stock-count">({{ variant.stock_quantity }})</small>
-                            {% endif %}
-                        </div>
-                        {% else %}
-                        <span class="badge bg-danger stock-badge">{% trans "نفذ" %}</span>
                         {% endif %}
-                    </td>
-                    <td>
-                        <!-- زر إضافة للسلة خاص بالمتغير -->
-                        {% if variant.is_in_stock %}
-                        <form method="post" action="{% url 'cart:add_to_cart' product.id %}" class="variant-add-to-cart-form">
-                            {% csrf_token %}
-                            <input type="hidden" name="variant_id" value="{{ variant.id }}">
-                            <input type="hidden" name="quantity" value="1">
-                            <button type="submit" class="btn btn-sm btn-primary add-variant-btn">
-                                <i class="fas fa-cart-plus"></i> {% trans "أضف للسلة" %}
-                            </button>
-                        </form>
-                        {% else %}
-                        <button class="btn btn-sm btn-secondary" disabled>
-                            <i class="fas fa-times-circle"></i> {% trans "غير متوفر" %}
-                        </button>
+
+                        {% if variant.attributes.size or variant.size %}
+                        <div class="variant-size">
+                            <i class="fas fa-ruler fa-sm"></i>
+                            <span class="spec-label">{{ variant.attributes.size|default:variant.get_size_display }}</span>
+                        </div>
                         {% endif %}
-                    </td>
-                </tr>
+
+                        {% if variant.attributes.material or variant.material %}
+                        <div class="variant-material">
+                            <i class="fas fa-layer-group fa-sm"></i>
+                            <span class="spec-label">{{ variant.attributes.material|default:variant.material }}</span>
+                        </div>
+                        {% endif %}
+
+                        {% if variant.attributes.pattern or variant.pattern %}
+                        <div class="variant-pattern">
+                            <i class="fas fa-chess-board fa-sm"></i>
+                            <span class="spec-label">{{ variant.attributes.pattern|default:variant.pattern }}</span>
+                        </div>
+                        {% endif %}
+
+                        <!-- عرض خصائص أخرى إذا لم تكن هناك خصائص قياسية -->
+                        {% if not variant.attributes.color and not variant.color and not variant.attributes.size and not variant.size and not variant.attributes.material and not variant.material and not variant.attributes.pattern and not variant.pattern %}
+                            {% for key, value in variant.attributes.items %}
+                                {% if key != 'color_code' and key != 'name' %}
+                                <div class="variant-spec">
+                                    <i class="fas fa-tag fa-sm"></i>
+                                    <span class="spec-label">{{ value }}</span>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <div class="variant-details">
+                        <div class="variant-price">{{ variant.current_price }} {% trans "د.أ" %}</div>
+                        <div class="variant-status">
+                            {% if variant.is_in_stock %}
+                                {% if variant.stock_quantity > 10 %}
+                                <span class="stock-badge in-stock">{% trans "متوفر" %}</span>
+                                {% else %}
+                                <span class="stock-badge limited">{{ variant.stock_quantity }}</span>
+                                {% endif %}
+                            {% else %}
+                            <span class="stock-badge out-of-stock">{% trans "نفذ" %}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
                 {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <!-- بطاقة المتغير المحدد - القسم المحسن -->
-    <div class="selected-variant-card" id="selectedVariantInfo">
-        <h6 class="selected-variant-title">{% trans "تفاصيل المواصفات المحددة" %}</h6>
-
-        <!-- معلومات المتغير الأساسية -->
-        <div class="selected-variant-details">
-            <div class="variant-detail">
-                <span class="detail-label">{% trans "رقم المنتج" %}</span>
-                <span class="detail-value" id="selectedVariantSku">-</span>
-            </div>
-            <div class="variant-detail">
-                <span class="detail-label">{% trans "السعر" %}</span>
-                <span class="detail-value price-value" id="selectedVariantPrice">-</span>
-            </div>
-            <div class="variant-detail">
-                <span class="detail-label">{% trans "المتوفر" %}</span>
-                <span class="detail-value" id="selectedVariantStock">-</span>
             </div>
         </div>
 
-        <!-- خصائص المتغير المحددة -->
-        <div class="mt-3 pt-3 border-top" id="selectedVariantAttributes">
-            <h6 class="mb-3">{% trans "خصائص المنتج" %}</h6>
-            <div class="row" id="attributesContainer">
-                <!-- سيتم تعبئة هذا القسم عن طريق جافاسكريبت -->
-                <div class="col-12 text-muted text-center" id="noAttributesMsg">
-                    <em>{% trans "الرجاء اختيار متغير لعرض الخصائص" %}</em>
+        <!-- معلومات المتغير المحدد -->
+        <div class="selected-variant-info">
+            <h6 class="section-heading">{% trans "التفاصيل" %}</h6>
+
+            <div class="detail-panels">
+                <div class="detail-panel">
+                    <div class="detail-panel-icon">
+                        <i class="fas fa-barcode"></i>
+                    </div>
+                    <div class="detail-panel-content">
+                        <div class="detail-panel-label">{% trans "رقم المنتج" %}</div>
+                        <div class="detail-panel-value" id="selectedVariantSku">{{ product.sku }}</div>
+                    </div>
                 </div>
+
+                <div class="detail-panel">
+                    <div class="detail-panel-icon">
+                        <i class="fas fa-tag"></i>
+                    </div>
+                    <div class="detail-panel-content">
+                        <div class="detail-panel-label">{% trans "السعر" %}</div>
+                        <div class="detail-panel-value price-value" id="selectedVariantPrice">{{ product.current_price }} {% trans "د.أ" %}</div>
+                    </div>
+                </div>
+
+                <div class="detail-panel">
+                    <div class="detail-panel-icon">
+                        <i class="fas fa-warehouse"></i>
+                    </div>
+                    <div class="detail-panel-content">
+                        <div class="detail-panel-label">{% trans "التوفر" %}</div>
+                        <div class="detail-panel-value" id="selectedVariantStock">
+                            {% if product.in_stock %}
+                                {% if product.stock_quantity > 10 %}
+                                <span class="text-success"><i class="fas fa-check-circle me-1"></i>{% trans "متوفر" %}</span>
+                                {% else %}
+                                <span class="text-warning"><i class="fas fa-exclamation-circle me-1"></i>{{ product.stock_quantity }} {% trans "قطع متبقية" %}</span>
+                                {% endif %}
+                            {% else %}
+                            <span class="text-danger"><i class="fas fa-times-circle me-1"></i>{% trans "غير متوفر" %}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- إضافة عرض خصائص المتغير المحدد -->
+            <div class="variant-attributes" id="selectedVariantAttributes">
+                <!-- سيتم تعبئة هذا القسم بواسطة جافاسكريبت -->
+            </div>
+
+            <!-- قسم إضافة للسلة -->
+            <div class="add-to-cart-section">
+                <form method="post" action="{% url 'cart:add_to_cart' product.id %}" class="add-to-cart-form">
+                    {% csrf_token %}
+                    <input type="hidden" id="selectedVariantId" name="variant_id" value="">
+                    <div class="add-to-cart-controls">
+                        <div class="quantity-control">
+                            <button type="button" class="quantity-btn minus-btn" onclick="changeQuantity(this, -1)">-</button>
+                            <input type="number" name="quantity" value="1" min="1" max="999" class="quantity-input" readonly>
+                            <button type="button" class="quantity-btn plus-btn" onclick="changeQuantity(this, 1)">+</button>
+                        </div>
+                        <button type="submit" class="add-to-cart-btn" id="addToCartBtn" disabled>
+                            <i class="fas fa-cart-plus"></i>
+                            <span>{% trans "إضافة للسلة" %}</span>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -140,161 +155,184 @@
 <style>
 /* تنسيقات محسنة لمتغيرات المنتج */
 .product-variants-container {
-    background: linear-gradient(135deg, #f9fbfd 0%, #f1f6fc 100%);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.04);
+    margin-bottom: 1.5rem;
 }
 
-.variants-title {
-    font-weight: 700;
-    color: #333;
-    margin-bottom: 1.25rem;
-    position: relative;
-    padding-bottom: 0.75rem;
+/* بطاقة التفاصيل */
+.variant-details-card {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.variants-title:after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 80px;
-    height: 3px;
-    background: var(--bs-primary);
-    border-radius: 3px;
-}
-
-html[dir="rtl"] .variants-title:after {
-    left: auto;
-    right: 0;
-}
-
-.variants-table-container {
-    max-height: 300px;
-    overflow-y: auto;
-    border-radius: 8px;
-    border: 1px solid rgba(0,0,0,0.1);
-    background-color: white;
-}
-
-.variants-table {
-    position: relative;
-    margin-bottom: 0;
-}
-
-.variants-table thead th {
-    position: sticky;
-    top: 0;
-    background-color: #f8f9fa;
-    z-index: 10;
-    border-bottom: 2px solid var(--bs-primary);
-    padding: 0.75rem;
+/* العناوين */
+.section-heading {
     font-weight: 600;
-    color: #444;
+    font-size: 0.9rem;
+    color: #666;
+    margin: 0;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.variant-row {
+/* قسم اختيار المتغيرات */
+.variants-selection {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.variants-options-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    padding: 1rem;
+}
+
+.variant-option {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #e5e8ec;
+    border-radius: 8px;
+    padding: 0.8rem;
     cursor: pointer;
-    transition: all 0.25s ease;
+    transition: all 0.2s ease;
+    background: white;
+    width: 170px;
+    position: relative;
 }
 
-.variant-row:hover:not(.out-of-stock) {
-    background-color: rgba(var(--bs-primary-rgb), 0.05);
+.variant-option:hover:not(.disabled) {
+    border-color: var(--bs-primary);
     transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
 }
 
-.variant-row.selected {
-    background-color: rgba(var(--bs-primary-rgb), 0.1);
-    border-left: 3px solid var(--bs-primary);
+.variant-option.active {
+    border-color: var(--bs-primary);
+    background-color: rgba(var(--bs-primary-rgb), 0.05);
 }
 
-.variant-row.out-of-stock {
-    opacity: 0.65;
-    background-color: rgba(0,0,0,0.02);
+.variant-option.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #f8f8f8;
 }
 
-.check-icon {
-    color: var(--bs-primary);
-    display: none;
+/* عناصر خصائص المتغير */
+.variant-specs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-bottom: 0.6rem;
 }
 
-.variant-selector:checked + .form-check-label .check-icon {
-    display: inline-block;
-}
-
-.color-box {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    display: inline-block;
-    border: 1px solid #ddd;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-.price-column {
-    font-weight: 700;
-    color: var(--bs-primary);
-}
-
-.stock-status {
+.variant-color, .variant-size, .variant-material, .variant-pattern, .variant-spec {
     display: flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.color-swatch {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    display: inline-block;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.spec-label {
+    color: #333;
+    font-weight: 500;
+}
+
+/* تفاصيل المتغير (السعر والتوفر) */
+.variant-details {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.variant-price {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--bs-primary);
 }
 
 .stock-badge {
-    font-size: 0.75rem;
-    padding: 0.35em 0.65em;
-}
-
-.stock-count {
-    color: #6c757d;
-    font-size: 0.8rem;
-}
-
-/* تنسيقات بطاقة المتغير المحدد */
-.selected-variant-card {
-    margin-top: 1.5rem;
-    padding: 1.5rem;
-    border-radius: 10px;
-    background: #fff;
-    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.05);
-    border: 1px solid rgba(var(--bs-primary-rgb), 0.1);
-    transition: all 0.3s ease;
-}
-
-.selected-variant-title {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 30px;
     font-weight: 600;
-    font-size: 1.1rem;
-    color: #333;
-    margin-bottom: 1.25rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    background-color: #f8f9fa;
 }
 
-.selected-variant-details {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 0.5rem;
+.stock-badge.in-stock {
+    background-color: #e6f4ea;
+    color: #137333;
 }
 
-.variant-detail {
+.stock-badge.limited {
+    background-color: #fef7e0;
+    color: #b06000;
+}
+
+.stock-badge.out-of-stock {
+    background-color: #fce8e6;
+    color: #c5221f;
+}
+
+/* معلومات المتغير المحدد */
+.selected-variant-info {
+    padding-bottom: 1rem;
+}
+
+.detail-panels {
     display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
+    flex-wrap: wrap;
+    padding: 1rem;
+    gap: 1rem;
 }
 
-.detail-label {
-    font-size: 0.85rem;
-    color: #777;
+.detail-panel {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    flex: 1;
+    min-width: 150px;
 }
 
-.detail-value {
+.detail-panel-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
+    color: var(--bs-primary);
+    border-radius: 50%;
+    margin-right: 0.75rem;
+}
+
+.detail-panel-content {
+    flex-grow: 1;
+}
+
+.detail-panel-label {
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 0.25rem;
+}
+
+.detail-panel-value {
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 0.9rem;
     color: #333;
 }
 
@@ -302,86 +340,135 @@ html[dir="rtl"] .variants-title:after {
     color: var(--bs-primary);
 }
 
-.detail-value.in-stock {
-    color: #28a745;
-}
-
-.detail-value.limited-stock {
-    color: #fd7e14;
-}
-
-.detail-value.out-of-stock {
-    color: #dc3545;
-}
-
-/* تنسيقات خصائص المتغير */
-.attribute-item {
+/* عرض خصائص المتغير المحدد */
+.variant-attributes {
+    padding: 0 1rem;
     margin-bottom: 1rem;
-    padding: 0.75rem;
-    border-radius: 8px;
+}
+
+.attributes-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin-top: 0.5rem;
+}
+
+.attribute-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
     background-color: #f8f9fa;
-    transition: all 0.2s ease;
+    border-radius: 30px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
 }
 
-.attribute-item:hover {
-    background-color: #f0f4f8;
-    transform: translateY(-2px);
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-}
-
-.attribute-name {
-    font-weight: 600;
-    color: #444;
-    margin-bottom: 0.25rem;
-    font-size: 0.9rem;
-}
-
-.attribute-value {
+.attribute-tag i {
     color: var(--bs-primary);
-    font-weight: 500;
 }
 
-/* تنسيقات أزرار المتغيرات */
-.add-variant-btn {
-    white-space: nowrap;
+.attribute-tag span {
+    font-weight: 500;
+    color: #333;
+}
+
+/* قسم إضافة للسلة */
+.add-to-cart-section {
+    padding: 0 1rem 1rem;
+}
+
+.add-to-cart-controls {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.quantity-control {
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    overflow: hidden;
+}
+
+.quantity-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    background-color: #f8f9fa;
+    color: #495057;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.quantity-btn:hover {
+    background-color: #e9ecef;
+}
+
+.quantity-input {
+    width: 50px;
+    text-align: center;
+    border: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.25rem 0;
+}
+
+.add-to-cart-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-grow: 1;
+    padding: 0.5rem 1rem;
+    background-color: var(--bs-primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
     transition: all 0.2s ease;
 }
 
-.add-variant-btn:hover {
+.add-to-cart-btn:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(var(--bs-primary-rgb), 0.2);
+    box-shadow: 0 4px 8px rgba(var(--bs-primary-rgb), 0.25);
 }
 
-.variant-add-to-cart-form {
-    display: inline-block;
+.add-to-cart-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #6c757d;
 }
 
 /* تحسينات للشاشات الصغيرة */
-@media (max-width: 767px) {
-    .variants-table-container {
-        max-height: 400px;
+@media (max-width: 767.98px) {
+    .add-to-cart-controls {
+        flex-direction: column;
     }
 
-    .product-variants-container {
-        padding: 1rem;
+    .quantity-control {
+        width: 100%;
+        margin-bottom: 0.5rem;
     }
 
-    .selected-variant-details {
-        grid-template-columns: 1fr;
-        gap: 1rem;
+    .detail-panels {
+        flex-direction: column;
     }
 
-    .add-variant-btn {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.75rem;
+    .detail-panel {
+        width: 100%;
     }
+}
 
-    .add-variant-btn i {
-        margin-right: 0;
-    }
-
-    .add-variant-btn span {
-        display: none;
+@media (max-width: 576px) {
+    .variant-option {
+        width: 100%;
     }
 }
 </style>
@@ -392,39 +479,52 @@ document.addEventListener('DOMContentLoaded', function() {
     const variantContainer = document.querySelector('.product-variants-container');
     if (!variantContainer) return;
 
-    const variantRows = document.querySelectorAll('.variant-row');
-    const variantSelectors = document.querySelectorAll('.variant-selector');
-    const addToCartForm = document.getElementById('addToCartForm');
+    const variantOptions = document.querySelectorAll('.variant-option');
     const selectedVariantIdField = document.getElementById('selectedVariantId');
+    const addToCartForm = document.querySelector('.add-to-cart-form');
+    const addToCartBtn = document.getElementById('addToCartBtn');
 
     // عناصر معلومات المتغير المحدد
     const selectedVariantSku = document.getElementById('selectedVariantSku');
     const selectedVariantPrice = document.getElementById('selectedVariantPrice');
     const selectedVariantStock = document.getElementById('selectedVariantStock');
-    const attributesContainer = document.getElementById('attributesContainer');
-    const noAttributesMsg = document.getElementById('noAttributesMsg');
+    const selectedVariantAttributes = document.getElementById('selectedVariantAttributes');
+
+    // وظيفة تغيير الكمية
+    window.changeQuantity = function(button, change) {
+        const form = button.closest('form');
+        const input = form.querySelector('input[name="quantity"]');
+        const currentValue = parseInt(input.value) || 1;
+        const maxValue = parseInt(input.getAttribute('max')) || 999;
+
+        let newValue = currentValue + change;
+        if (newValue < 1) newValue = 1;
+        if (newValue > maxValue) newValue = maxValue;
+
+        input.value = newValue;
+    };
 
     // تحديث معلومات المتغير المحدد
-    function updateSelectedVariantInfo(variantRow) {
-        const variantId = variantRow.dataset.variantId;
-        const price = variantRow.dataset.price;
-        const stock = variantRow.dataset.stock;
-        const sku = variantRow.dataset.sku;
-        let attributes = {};
+    function updateSelectedVariantInfo(option) {
+        // إزالة الفئة active من جميع الخيارات
+        variantOptions.forEach(opt => opt.classList.remove('active'));
 
-        // محاولة تحليل بيانات الخصائص
-        try {
-            if (variantRow.dataset.attributes) {
-                attributes = JSON.parse(variantRow.dataset.attributes.replace(/'/g, '"'));
-            }
-        } catch (e) {
-            console.error('خطأ في تحليل بيانات الخصائص:', e);
+        // إضافة الفئة active للخيار المحدد
+        option.classList.add('active');
+
+        const variantId = option.dataset.variantId || '';
+        const price = option.dataset.price;
+        const stock = option.dataset.stock;
+        const sku = option.dataset.sku;
+
+        // تفعيل زر الإضافة للسلة
+        if (addToCartBtn) {
+            addToCartBtn.disabled = false;
         }
 
-        // تحديث الحقل المخفي في النموذج الرئيسي إذا كان موجوداً
+        // تحديث الحقل المخفي في النموذج
         if (selectedVariantIdField) {
             selectedVariantIdField.value = variantId;
-            console.log("تم تحديث معرف المتغير:", variantId);
         }
 
         // تحديث معلومات العرض
@@ -434,105 +534,109 @@ document.addEventListener('DOMContentLoaded', function() {
         if (selectedVariantStock) {
             const stockNum = parseInt(stock);
             if (stockNum > 10) {
-                selectedVariantStock.textContent = 'متوفر بكميات كافية';
-                selectedVariantStock.className = 'detail-value in-stock';
+                selectedVariantStock.innerHTML = '<span class="text-success"><i class="fas fa-check-circle me-1"></i>متوفر</span>';
             } else if (stockNum > 0) {
-                selectedVariantStock.textContent = `${stockNum} قطعة فقط`;
-                selectedVariantStock.className = 'detail-value limited-stock';
+                selectedVariantStock.innerHTML = `<span class="text-warning"><i class="fas fa-exclamation-circle me-1"></i>${stockNum} قطع متبقية</span>`;
             } else {
-                selectedVariantStock.textContent = 'نفذ من المخزون';
-                selectedVariantStock.className = 'detail-value out-of-stock';
+                selectedVariantStock.innerHTML = '<span class="text-danger"><i class="fas fa-times-circle me-1"></i>غير متوفر</span>';
             }
         }
 
-        // تحديث عرض الخصائص
-        if (attributesContainer) {
-            // إزالة كل الخصائص السابقة
-            while (attributesContainer.firstChild) {
-                attributesContainer.removeChild(attributesContainer.firstChild);
-            }
-
-            // إذا كانت هناك خصائص، أظهرها
-            if (attributes && Object.keys(attributes).length > 0) {
-                noAttributesMsg.style.display = 'none';
-
-                // إنشاء عنصر لكل خاصية
-                for (const [key, value] of Object.entries(attributes)) {
-                    if (key === 'color_code') continue; // تخطي كود اللون لأنه مستخدم فقط للعرض
-
-                    // تنسيق اسم الخاصية (تحويل snake_case إلى كلمات عادية)
-                    const formattedKey = key.replace(/_/g, ' ')
-                                           .replace(/\b\w/g, l => l.toUpperCase());
-
-                    const attributeCol = document.createElement('div');
-                    attributeCol.className = 'col-md-6 col-lg-4 mb-3';
-
-                    const attributeItem = document.createElement('div');
-                    attributeItem.className = 'attribute-item';
-
-                    const attributeName = document.createElement('div');
-                    attributeName.className = 'attribute-name';
-                    attributeName.textContent = formattedKey;
-
-                    const attributeValue = document.createElement('div');
-                    attributeValue.className = 'attribute-value';
-                    attributeValue.textContent = value;
-
-                    attributeItem.appendChild(attributeName);
-                    attributeItem.appendChild(attributeValue);
-                    attributeCol.appendChild(attributeItem);
-                    attributesContainer.appendChild(attributeCol);
-                }
-            } else {
-                // إذا لم تكن هناك خصائص، أظهر رسالة
-                noAttributesMsg.style.display = 'block';
+        // تحديث الكمية القصوى في نموذج الإضافة للسلة
+        if (addToCartForm) {
+            const quantityInput = addToCartForm.querySelector('input[name="quantity"]');
+            if (quantityInput) {
+                quantityInput.setAttribute('max', stock > 0 ? stock : 1);
+                // إعادة تعيين الكمية إلى 1
+                quantityInput.value = 1;
             }
         }
 
-        // إزالة الفئة selected من جميع الصفوف
-        variantRows.forEach(row => row.classList.remove('selected'));
-
-        // إضافة الفئة selected إلى الصف المحدد
-        variantRow.classList.add('selected');
-
-        // تمرير الصفحة إلى معلومات المتغير المحدد
-        document.getElementById('selectedVariantInfo').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        // عرض خصائص المتغير المحدد
+        if (selectedVariantAttributes && option.dataset.attributes) {
+            updateVariantAttributesTags(option.dataset.attributes);
+        }
     }
 
-    // معالجة النقر على صف المتغير
-    variantRows.forEach(row => {
-        row.addEventListener('click', function(e) {
-            // تجنب تنفيذ العملية إذا تم النقر على زر الإضافة للسلة
-            if (e.target.closest('.variant-add-to-cart-form') || e.target.closest('.add-variant-btn')) {
+    // عرض خصائص المتغير المحدد كعلامات
+    function updateVariantAttributesTags(attributesData) {
+        // محاولة تحليل بيانات الخصائص
+        let attributes = {};
+        try {
+            attributes = JSON.parse(attributesData.replace(/'/g, '"'));
+        } catch (e) {
+            console.error('خطأ في تحليل بيانات الخصائص:', e);
+            return;
+        }
+
+        // إفراغ القسم
+        selectedVariantAttributes.innerHTML = '';
+
+        // تجهيز عرض الخصائص
+        const attributesKeys = Object.keys(attributes).filter(key =>
+            key !== 'color_code' && key !== 'name'
+        );
+
+        if (attributesKeys.length > 0) {
+            // إنشاء عنوان للخصائص
+            const title = document.createElement('div');
+            title.className = 'attributes-title';
+            title.innerHTML = '<small>خصائص إضافية:</small>';
+            selectedVariantAttributes.appendChild(title);
+
+            // إنشاء شبكة الخصائص
+            const grid = document.createElement('div');
+            grid.className = 'attributes-grid';
+
+            // إضافة كل خاصية
+            attributesKeys.forEach(key => {
+                let iconClass = 'fas fa-tag';
+
+                // اختيار أيقونة مناسبة للخاصية
+                if (key === 'color') iconClass = 'fas fa-palette';
+                else if (key === 'size') iconClass = 'fas fa-ruler';
+                else if (key === 'material') iconClass = 'fas fa-layer-group';
+                else if (key === 'pattern') iconClass = 'fas fa-chess-board';
+                else if (key === 'weight') iconClass = 'fas fa-weight';
+                else if (key === 'dimensions') iconClass = 'fas fa-cube';
+
+                // تنسيق اسم الخاصية
+                const formattedKey = key.replace(/_/g, ' ')
+                                        .replace(/\b\w/g, l => l.toUpperCase());
+
+                // إنشاء علامة الخاصية
+                const tag = document.createElement('div');
+                tag.className = 'attribute-tag';
+                tag.innerHTML = `
+                    <i class="${iconClass}"></i>
+                    <span>${formattedKey}: ${attributes[key]}</span>
+                `;
+
+                grid.appendChild(tag);
+            });
+
+            selectedVariantAttributes.appendChild(grid);
+        }
+    }
+
+    // معالجة النقر على خيارات المتغيرات
+    variantOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            if (!this.classList.contains('disabled')) {
+                updateSelectedVariantInfo(this);
+            }
+        });
+    });
+
+    // معالجة إضافة المنتج للسلة
+    if (addToCartForm) {
+        addToCartForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            if (!selectedVariantIdField.value) {
+                showNotification('warning', 'الرجاء اختيار متغير أولاً');
                 return;
             }
-
-            // تفعيل زر الاختيار إذا كان المتغير متوفراً
-            if (!this.classList.contains('out-of-stock')) {
-                const selector = this.querySelector('.variant-selector');
-                if (selector) {
-                    selector.checked = true;
-                    updateSelectedVariantInfo(this);
-                }
-            }
-        });
-    });
-
-    // معالجة تغيير زر الاختيار
-    variantSelectors.forEach(selector => {
-        selector.addEventListener('change', function() {
-            if (this.checked) {
-                const variantRow = this.closest('.variant-row');
-                updateSelectedVariantInfo(variantRow);
-            }
-        });
-    });
-
-    // معالجة إضافة المتغير للسلة
-    const variantForms = document.querySelectorAll('.variant-add-to-cart-form');
-    variantForms.forEach(form => {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
 
             const btn = this.querySelector('button[type="submit"]');
             const originalText = btn.innerHTML;
@@ -587,7 +691,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 btn.innerHTML = originalText;
             });
         });
-    });
+    }
 
     // وظيفة إظهار الإشعارات
     function showNotification(type, message) {
@@ -628,25 +732,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 3000);
     }
 
-    // تهيئة المتغير الافتراضي عند تحميل الصفحة
-    const defaultVariant = document.querySelector('.variant-selector:checked');
-    if (defaultVariant) {
-        const variantRow = defaultVariant.closest('.variant-row');
-        updateSelectedVariantInfo(variantRow);
-    } else {
-        // إذا لم يكن هناك متغير محدد افتراضيًا، حاول تحديد أول متغير متوفر
-        const firstAvailableVariant = document.querySelector('.variant-selector:not(:disabled)');
-        if (firstAvailableVariant) {
-            firstAvailableVariant.checked = true;
-            const variantRow = firstAvailableVariant.closest('.variant-row');
-            updateSelectedVariantInfo(variantRow);
-        }
-    }
-
-    // تغيير عنوان زر الإضافة الرئيسي ليوضح أنه للمنتج الأساسي
-    const mainAddToCartBtn = document.querySelector('#addToCartForm .btn-add-to-cart');
-    if (mainAddToCartBtn && addToCartForm && !selectedVariantIdField.value) {
-        mainAddToCartBtn.innerHTML = '<i class="fas fa-shopping-cart me-2"></i>إضافة المنتج الرئيسي للسلة';
+    // تحديد أول متغير متوفر افتراضياً
+    const firstAvailableVariant = document.querySelector('.variant-option:not(.disabled)');
+    if (firstAvailableVariant) {
+        updateSelectedVariantInfo(firstAvailableVariant);
     }
 });
 </script>
