@@ -301,10 +301,12 @@
             this.initQuantityControls();
         },
 
-        initAddToCart: function() {
-            document.addEventListener('submit', function(e) {
-                if (e.target.matches('.add-to-cart-form')) {
+        initAddToCart: function () {
+            document.addEventListener('submit', function (e) {
+                // تجاهل النماذج التي تم معالجتها بواسطة كود آخر
+                if (e.target.matches('.add-to-cart-form') && !e.target.hasAttribute('data-handled')) {
                     e.preventDefault();
+                    console.log("إرسال النموذج من CartModule");
                     CartModule.handleAddToCart(e.target);
                 }
             });
