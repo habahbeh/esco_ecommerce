@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import SiteSettings, Newsletter, SliderItem
+from .models import SiteSettings, Newsletter, SliderItem, StaticContent
 from django.utils.translation import gettext as _
 
 
@@ -62,3 +62,35 @@ class SliderItemAdmin(admin.ModelAdmin):
             'fields': ('order', 'is_active')
         }),
     )
+
+
+@admin.register(StaticContent)
+class StaticContentAdmin(admin.ModelAdmin):
+    """
+    إدارة المحتوى الثابت - تتيح للمشرفين إدارة المحتوى الثابت للموقع بلغات متعددة
+    Static content admin - allows administrators to manage static content in multiple languages
+    """
+    list_display = ('key', 'last_updated')
+    search_fields = ('key', 'content_ar', 'content_en')
+    list_filter = ('last_updated',)
+    readonly_fields = ('last_updated',)
+
+    fieldsets = (
+        (_('معلومات أساسية'), {
+            'fields': ('key', 'last_updated')
+        }),
+        (_('المحتوى العربي'), {
+            'fields': ('content_ar',),
+            'classes': ('extrapretty',)
+        }),
+        (_('المحتوى الإنجليزي'), {
+            'fields': ('content_en',),
+            'classes': ('extrapretty',)
+        }),
+    )
+
+    def get_readonly_fields(self, request, obj=None):
+        # منع تعديل المفتاح بعد الإنشاء - Prevent key modification after creation
+        if obj:  # إذا كان الكائن موجود بالفعل (تحرير وليس إنشاء)
+            return self.readonly_fields + ('key',)
+        return self.readonly_fields

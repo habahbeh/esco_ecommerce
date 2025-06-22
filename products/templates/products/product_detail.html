@@ -234,7 +234,7 @@
 
                         <!-- الإجراءات الثانوية -->
                         <div class="secondary-actions mt-3">
-                            <button type="button" class="action-btn" onclick="addToWishlist({{ product.id }})">
+                            <button type="button" class="action-btn" onclick="addToWishlist({{ product.id }})" hidden>
                                 <i class="far fa-heart"></i>
                                 <span>{% trans "إضافة للمفضلة" %}</span>
                             </button>
@@ -284,7 +284,7 @@
                             <div class="amazon-tab" data-tab="specifications">
                                 <i class="fas fa-list-ul me-2"></i>{% trans "المواصفات" %}
                             </div>
-                            <div class="amazon-tab" data-tab="reviews">
+                            <div class="amazon-tab" data-tab="reviews" hidden>
                                 <i class="fas fa-star me-2"></i>{% trans "التقييمات" %}
                                 {% if product.review_count > 0 %}
                                     <span class="badge bg-primary ms-1">{{ product.review_count }}</span>

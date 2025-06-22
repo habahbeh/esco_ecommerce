@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'django.contrib.humanize',
+    'ckeditor',
 
 ]
 
@@ -104,6 +105,7 @@ TEMPLATES = [
                 # Cart context processors
                 'cart.context_processors.cart_context',  # Full cart context
                 'cart.context_processors.cart_preview_context',  # Lightweight preview
+                # 'cart.context_processors.static_content',
             ],
             'loaders': [
                 'django.template.loaders.filesystem.Loader',

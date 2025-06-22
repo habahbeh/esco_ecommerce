@@ -8,7 +8,7 @@ from products.models import Product, Category
 from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import redirect
 
-from .models import SiteSettings, Newsletter, SliderItem
+from .models import SiteSettings, Newsletter, SliderItem, StaticContent
 from .forms import SiteSettingsForm
 from events.models import Event
 from django.utils import timezone
@@ -80,6 +80,18 @@ class AboutView(TemplateView):
     About view - displays the about page
     """
     template_name = 'core/about.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # إضافة المحتوى الثابت إلى السياق
+        try:
+            about_content = StaticContent.objects.get(key="about")
+            context['about_content'] = about_content
+        except StaticContent.DoesNotExist:
+            context['about_content'] = None
+
+        return context
 
 
 class ContactView(TemplateView):

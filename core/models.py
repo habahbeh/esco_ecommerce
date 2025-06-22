@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from ckeditor.fields import RichTextField
 
 
 class SiteSettings(models.Model):
@@ -134,3 +135,34 @@ class SliderItem(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class StaticContent(models.Model):
+    """
+    نموذج للمحتوى الثابت - يتيح تخزين المحتوى باللغات المختلفة
+    Static content model - allows storing content in different languages
+    """
+    key = models.CharField(_("المفتاح"), max_length=100, unique=True)
+    content_ar = RichTextField(_("المحتوى بالعربية"))
+    content_en = RichTextField(_("المحتوى بالإنجليزية"))
+    last_updated = models.DateTimeField(_("آخر تحديث"), auto_now=True)
+
+    class Meta:
+        verbose_name = _("محتوى ثابت")
+        verbose_name_plural = _("محتويات ثابتة")
+
+    def __str__(self):
+        return self.key
+
+    def get_content(self, lang_code=None):
+        """
+        الحصول على المحتوى حسب رمز اللغة
+        Get content based on language code
+        """
+        if not lang_code:
+            from django.utils.translation import get_language
+            lang_code = get_language()
+
+        if lang_code == 'en':
+            return self.content_en
+        return self.content_ar

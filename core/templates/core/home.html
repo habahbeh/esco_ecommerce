@@ -1073,7 +1073,30 @@
     </div>
 </section>
 
-<!-- Categories Section -->
+
+
+        <!-- CTA Section -->
+<section class="cta-section">
+    <div class="container">
+        <div class="cta-content" data-aos="fade-up">
+            <h2 class="cta-title">{% trans "احصل على أحدث العروض والمنتجات" %}</h2>
+            <p class="cta-description">{% trans "اشترك في نشرتنا البريدية واحصل على خصم 10% على طلبك الأول" %}</p>
+
+            <form class="cta-form" method="post" action="{% url 'core:newsletter_subscribe' %}">
+                {% csrf_token %}
+                <div class="cta-input-group">
+                    <input type="email" name="email" class="cta-input" placeholder="{% trans 'بريدك الإلكتروني' %}"
+                           required>
+                    <button type="submit" class="cta-submit">
+                        {% trans "اشترك الآن" %} <i class="fas fa-paper-plane ms-2"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+    <!-- Categories Section -->
 <section class="categories-section">
     <div class="container">
         <div class="section-title text-center mb-5" data-aos="fade-up">
@@ -1108,29 +1131,8 @@
     </div>
 </section>
 
-        <!-- CTA Section -->
-<section class="cta-section">
-    <div class="container">
-        <div class="cta-content" data-aos="fade-up">
-            <h2 class="cta-title">{% trans "احصل على أحدث العروض والمنتجات" %}</h2>
-            <p class="cta-description">{% trans "اشترك في نشرتنا البريدية واحصل على خصم 10% على طلبك الأول" %}</p>
-
-            <form class="cta-form" method="post" action="{% url 'core:newsletter_subscribe' %}">
-                {% csrf_token %}
-                <div class="cta-input-group">
-                    <input type="email" name="email" class="cta-input" placeholder="{% trans 'بريدك الإلكتروني' %}"
-                           required>
-                    <button type="submit" class="cta-submit">
-                        {% trans "اشترك الآن" %} <i class="fas fa-paper-plane ms-2"></i>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</section>
-
 <!-- Products Section -->
-<section class="products-section">
+<section class="products-section" hidden>
     <div class="container">
         <div class="section-title text-center mb-4" data-aos="fade-up">
             <h2 class="display-4 fw-bold mb-3">{% trans "المنتجات المميزة" %}</h2>

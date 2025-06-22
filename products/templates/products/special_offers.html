@@ -178,12 +178,13 @@
     /* Discount Badge */
     .discount-badge {
         position: absolute;
-        top: 1rem;
-        left: 1rem;
-        background: var(--bs-primary);
+        {#top: 1rem;#}
+        left: 0rem;
+        {#background: var(--bs-primary);#}
+        background: linear-gradient(135deg, #f39c12 0%, #e74c3c 40%);
         color: white;
-        padding: 0.75rem 1.5rem;
-        border-radius: 50px;
+        padding: 0.75rem 1rem;
+        {#border-radius: 50px;#}
         font-weight: 700;
         font-size: 1.125rem;
         z-index: 10;
@@ -191,19 +192,20 @@
     }
 
     .timer-badge-compact {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
+    {#position: absolute;#}
+    {#top: 1rem;#}
+    {#right: 1rem;#}
     background: rgba(0,0,0,0.7);
     color: white;
     padding: 0.5rem 0.75rem;
     border-radius: 50px;
     font-size: 0.75rem;
     z-index: 10;
-    max-width: 45%;
+    {#max-width: 45%;#}
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
+        text-align: center;
 }
 
 .timer-badge-compact i {
@@ -759,7 +761,7 @@
                     <div class="offer-card" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
                         <!-- Badges -->
                         <span class="discount-badge">
-                            {{ product.discount_percentage }}% {% trans "خصم" %}
+                            {{ product.discount_percentage|floatformat:0 }}% {% trans "خصم" %}
                         </span>
 
 {#                        {% if forloop.counter <= 3 %}#}
@@ -768,14 +770,7 @@
 {#                            </span>#}
 {#                        {% endif %}#}
 
-                        {% if product.discount_end %}
-<div class="timer-badge-compact">
-    <i class="fas fa-clock-o"></i>
-    <span class="product-countdown" data-end-date="{{ product.discount_end|date:'Y-m-d H:i:s' }}">
-        <span class="countdown-value">{{ product.discount_end|timeuntil }}</span>
-    </span>
-</div>
-{% endif %}
+
 
                         <!-- Product Image -->
 {#                        <div class="offer-image">#}
@@ -827,34 +822,7 @@
                             </div>
 
                             <!-- Stock Progress -->
-                            {% if product.track_inventory %}
-                                <div class="stock-progress">
-                                    <div class="progress-label" hidden>
-                                        <span>
-                                            <i class="fas fa-shopping-cart me-1"></i>
-                                            {% blocktrans with sold=product.sales_count %}تم بيع {{ sold }}{% endblocktrans %}
-                                        </span>
-                                        <span>
-                                            <i class="fas fa-box me-1"></i>
-                                            {% blocktrans with available=product.stock_quantity %}متبقي {{ available }}{% endblocktrans %}
-                                        </span>
-                                    </div>
-                                    <div class="progress" hidden>
-                                        {% with total_units=product.sales_count|add:product.stock_quantity %}
-                                        {% with progress_percentage=product.sales_count|mul:100|div:total_units %}
-                                        <div class="progress-bar {% if progress_percentage > 80 %}bg-danger{% elif progress_percentage > 50 %}bg-warning{% else %}bg-success{% endif %}" style="width: {{ progress_percentage }}%"></div>
-                                        {% endwith %}
-                                        {% endwith %}
-                                    </div>
-                                </div>
 
-                                {% if product.stock_quantity <= product.min_stock_level and product.stock_quantity > 0 %}
-                                <div class="low-stock-alert">
-                                    <i class="fas fa-exclamation-triangle me-1"></i>
-                                    {% trans "كمية محدودة متبقية" %}
-                                </div>
-                                {% endif %}
-                            {% endif %}
 
                             <!-- Actions -->
                             <div class="offer-actions">
@@ -873,6 +841,7 @@
                                 <a href="{% url 'products:product_detail' product.slug %}" class="btn-view">
                                     <i class="fas fa-eye"></i>
                                 </a>
+
                             </div>
 
                             <!-- مشاركة العرض -->
@@ -881,6 +850,14 @@
                                     <i class="fas fa-share-alt me-1"></i> {% trans "مشاركة العرض" %}
                                 </button>
                             </div>
+                            {% if product.discount_end %}
+<div class="timer-badge-compact">
+    <i class="fas fa-clock-o"></i>
+    <span class="product-countdown" data-end-date="{{ product.discount_end|date:'Y-m-d H:i:s' }}">
+        <span class="countdown-value">{{ product.discount_end|timeuntil }}</span>
+    </span>
+</div>
+{% endif %}
                         </div>
                     </div>
                 {% endfor %}

@@ -1,3 +1,4 @@
+
 {% load i18n %}
 
 {% if product.variants.exists %}
@@ -6,26 +7,18 @@
 
     <!-- جدول متغيرات المنتج -->
     <div class="variants-table-container">
-        <table class="table table-hover variants-table">
+        <table class="table variants-table">
             <thead>
                 <tr>
-                    <th>{% trans "اختيار" %}</th>
-                    {% if product.variants.first.color %}
-                    <th>{% trans "اللون" %}</th>
-                    {% endif %}
-                    {% if product.variants.first.size %}
-                    <th>{% trans "المقاس" %}</th>
-                    {% endif %}
-                    {% if product.variants.first.material %}
-                    <th>{% trans "المادة" %}</th>
-                    {% endif %}
+                    <th>{% trans "رقم المنتج" %}</th>
+                    <th>{% trans "الخصائص" %}</th>
                     <th>{% trans "السعر" %}</th>
                     <th>{% trans "التوفر" %}</th>
                 </tr>
             </thead>
             <tbody>
                 {% for variant in product.variants.all %}
-                <tr class="variant-row {% if not variant.is_in_stock %}out-of-stock{% endif %}"
+                <tr class="variant-row text-center {% if not variant.is_in_stock %}out-of-stock{% endif %}"
                     data-variant-id="{{ variant.id }}"
                     data-price="{{ variant.current_price }}"
                     data-stock="{{ variant.stock_quantity }}"
@@ -40,26 +33,23 @@
                                    {% if forloop.first and variant.is_in_stock %}checked{% endif %}
                                    {% if not variant.is_in_stock %}disabled{% endif %}>
                             <label class="form-check-label" for="variant-{{ variant.id }}">
-                                {% trans "اختر" %}
+                                    {{ variant.sku }}
                             </label>
                         </div>
                     </td>
-                    {% if variant.color %}
                     <td>
-                        <div class="d-flex align-items-center">
-                            {% if variant.color_code %}
-                            <span class="color-box me-2" style="background-color: {{ variant.color_code }}"></span>
-                            {% endif %}
-                            {{ variant.get_color_display }}
-                        </div>
+                        <div>
+                                                        {% if variant.attributes %}
+                                                        <div class=" text-muted">
+                                                            {% for key, value in variant.attributes.items %}
+                                                            <div><strong>
+                                                            {{ key }}: {{ value }}{% if not forloop.last %}, {% endif %}
+</strong></div>
+                                                            {% endfor %}
+                                                        </div>
+                                                        {% endif %}
+                                                    </div>
                     </td>
-                    {% endif %}
-                    {% if variant.size %}
-                    <td>{{ variant.get_size_display }}</td>
-                    {% endif %}
-                    {% if variant.material %}
-                    <td>{{ variant.material }}</td>
-                    {% endif %}
                     <td class="fw-bold">{{ variant.current_price }} {% trans "د.أ" %}</td>
                     <td>
                         {% if variant.is_in_stock %}
@@ -77,72 +67,212 @@
         </table>
     </div>
 
-    <!-- معلومات المتغير المحدد -->
-    <div class="selected-variant-info mt-4 p-3 border rounded" id="variantInfo">
-        <h6 class="fw-bold">{% trans "تفاصيل المتغير المحدد" %}</h6>
-        <div class="row">
-            <div class="col-md-4">
-                <small class="text-muted">{% trans "رقم المنتج" %}</small>
-                <div class="fw-bold" id="selectedVariantSku">-</div>
-            </div>
-            <div class="col-md-4">
-                <small class="text-muted">{% trans "السعر" %}</small>
-                <div class="fw-bold text-success" id="selectedVariantPrice">-</div>
-            </div>
-            <div class="col-md-4">
-                <small class="text-muted">{% trans "المتوفر" %}</small>
-                <div class="fw-bold" id="selectedVariantStock">-</div>
-            </div>
-        </div>
-    </div>
 </div>
 
 <style>
+/* تنسيقات جدول متغيرات المنتج - شكل بطاقات */
 .variants-table-container {
-    max-height: 300px;
+    max-height: 350px;
     overflow-y: auto;
     margin-bottom: 1rem;
+    border-radius: 12px;
+    padding: 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .variants-table {
-    position: relative;
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
 }
 
 .variants-table thead th {
     position: sticky;
     top: 0;
-    background-color: #fff;
+    background-color: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    text-align: center;
+    padding: 12px 15px;
+    border-bottom: 2px solid rgba(var(--bs-primary-rgb), 0.2);
     z-index: 10;
+    font-size: 0.9rem;
+}
+
+.variants-table th:first-child,
+.variants-table td:first-child {
+    padding-right: 15px;
+}
+
+.variants-table th:last-child,
+.variants-table td:last-child {
+    padding-left: 15px;
 }
 
 .variant-row {
     cursor: pointer;
     transition: all 0.2s ease;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.variant-row td {
+    padding: 15px;
+    vertical-align: middle;
+    border: none;
+}
+
+.variant-row:last-child {
+    border-bottom: none;
 }
 
 .variant-row:hover:not(.out-of-stock) {
     background-color: rgba(var(--bs-primary-rgb), 0.05);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
 }
 
 .variant-row.selected {
     background-color: rgba(var(--bs-primary-rgb), 0.1);
+    border-right: 3px solid var(--bs-primary);
 }
 
 .variant-row.out-of-stock {
-    opacity: 0.6;
-    background-color: rgba(0,0,0,0.03);
+    opacity: 0.7;
+    background-color: rgba(0,0,0,0.02);
+    cursor: not-allowed;
+}
+
+.form-check {
+    margin: 0;
+    padding-right: 25px;
+}
+
+.form-check-input {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+}
+
+.form-check-input:checked {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+}
+
+.form-check-label {
+    font-size: 0.9rem;
+    cursor: pointer;
 }
 
 .color-box {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
     display: inline-block;
     border: 1px solid #ddd;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
+}
+
+.variant-row td:nth-child(5) {
+    font-size: 1.1rem;
+    color: var(--bs-primary);
+    font-weight: 700;
+}
+
+.badge {
+    padding: 5px 10px;
+    border-radius: 30px;
+    font-weight: 500;
+    font-size: 0.8rem;
+}
+
+.badge.bg-success {
+    background-color: rgba(25, 135, 84, 0.15) !important;
+    color: #198754;
+}
+
+.badge.bg-danger {
+    background-color: rgba(220, 53, 69, 0.15) !important;
+    color: #dc3545;
 }
 
 .selected-variant-info {
-    background-color: rgba(var(--bs-primary-rgb), 0.05);
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border-color: rgba(var(--bs-primary-rgb), 0.2) !important;
+}
+
+#selectedVariantPrice {
+    color: var(--bs-primary) !important;
+    font-size: 1.1rem;
+}
+
+/* تعديلات للأجهزة المحمولة */
+@media (max-width: 767.98px) {
+    .variants-table thead {
+        display: none;
+    }
+
+    .variants-table,
+    .variants-table tbody,
+    .variants-table tr,
+    .variants-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .variant-row {
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 10px;
+        border: 1px solid #eee;
+        position: relative;
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .variant-row td {
+        border: none;
+        padding: 8px 15px;
+        text-align: right;
+        position: relative;
+    }
+
+    .variant-row td:first-child {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .variant-row td:not(:first-child):before {
+        content: attr(data-label);
+        float: right;
+        font-weight: 600;
+        margin-left: 10px;
+    }
+
+    .variant-row td:nth-child(2):before {
+        content: "اللون";
+    }
+
+    .variant-row td:nth-child(3):before {
+        content: "المقاس";
+    }
+
+    .variant-row td:nth-child(4):before {
+        content: "المادة";
+    }
+
+    .variant-row td:nth-child(5):before {
+        content: "السعر";
+    }
+
+    .variant-row td:nth-child(6):before {
+        content: "التوفر";
+    }
 }
 </style>
 
