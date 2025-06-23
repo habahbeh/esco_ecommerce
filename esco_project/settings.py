@@ -273,9 +273,9 @@ CART_SESSION_ID = 'cart'  # معرف السلة في الجلسة
 
 # Cart Settings
 DEFAULT_TAX_RATE = Decimal('0.16')
-BASE_SHIPPING_COST = Decimal('5.00')
-SHIPPING_WEIGHT_RATE = Decimal('0.50')
-FREE_SHIPPING_THRESHOLD = Decimal('50.00')
+BASE_SHIPPING_COST = Decimal('0.00')
+SHIPPING_WEIGHT_RATE = Decimal('0.00')
+FREE_SHIPPING_THRESHOLD = Decimal('0.00')
 MAX_CART_QUANTITY_PER_ITEM = 10
 
 CACHES = {

@@ -1185,3 +1185,30 @@ class UpdateAvatarView(LoginRequiredMixin, View):
             'success': False,
             'error': _('لم يتم توفير صورة')
         })
+
+
+class SetDefaultAddressView(LoginRequiredMixin, View):
+    """
+    عرض تعيين العنوان الافتراضي - يتيح للمستخدمين تعيين عنوان كعنوان افتراضي
+    Default address view - allows users to set an address as default
+    """
+    def post(self, request, pk):
+        try:
+            address = UserAddress.objects.get(pk=pk, user=request.user)
+
+            # إلغاء تعيين أي عنوان افتراضي سابق
+            UserAddress.objects.filter(user=request.user, is_default=True).update(is_default=False)
+
+            # تعيين العنوان الحالي كافتراضي
+            address.is_default = True
+            address.save()
+
+            # إضافة رسالة نجاح
+            messages.success(request, _('تم تعيين العنوان كعنوان افتراضي بنجاح'))
+
+        except UserAddress.DoesNotExist:
+            # إضافة رسالة خطأ إذا لم يتم العثور على العنوان
+            messages.error(request, _('العنوان غير موجود أو ليس لديك الصلاحية للوصول إليه'))
+
+        # إعادة التوجيه إلى قائمة العناوين
+        return redirect('accounts:address_list')

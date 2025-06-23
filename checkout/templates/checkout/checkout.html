@@ -69,21 +69,21 @@
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="shipping_method" class="form-label">{% trans "طريقة الشحن" %} *</label>
-                            <select class="form-select" id="shipping_method" name="shipping_method" required>
-                                {% for method in shipping_methods %}
-                                    <option value="{{ method.id }}" {% if method.is_default %}selected{% endif %}>
-                                        {{ method.name }} - {{ method.base_cost }} {% trans "د.أ" %}
-                                        {% if method.free_shipping_threshold > 0 %}
-                                            ({% trans "شحن مجاني للطلبات فوق" %} {{ method.free_shipping_threshold }} {% trans "د.أ" %})
-                                        {% endif %}
-                                    </option>
-                                {% empty %}
-                                    <option value="1">{% trans "شحن قياسي" %} - 5.00 {% trans "د.أ" %}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
+{#                        <div class="mb-3" hidden>#}
+{#                            <label for="shipping_method" class="form-label">{% trans "طريقة الشحن" %} *</label>#}
+{#                            <select class="form-select" id="shipping_method" name="shipping_method" required>#}
+{#                                {% for method in shipping_methods %}#}
+{#                                    <option value="{{ method.id }}" {% if method.is_default %}selected{% endif %}>#}
+{#                                        {{ method.name }} - {{ method.base_cost }} {% trans "د.أ" %}#}
+{#                                        {% if method.free_shipping_threshold > 0 %}#}
+{#                                            ({% trans "شحن مجاني للطلبات فوق" %} {{ method.free_shipping_threshold }} {% trans "د.أ" %})#}
+{#                                        {% endif %}#}
+{#                                    </option>#}
+{#                                {% empty %}#}
+{#                                    <option value="1">{% trans "شحن قياسي" %} - 5.00 {% trans "د.أ" %}</option>#}
+{#                                {% endfor %}#}
+{#                            </select>#}
+{#                        </div>#}
 
                         <div class="mb-3">
                             <label for="notes" class="form-label">{% trans "ملاحظات" %}</label>
@@ -123,10 +123,10 @@
                             <span>{% trans "المجموع الفرعي" %}</span>
                             <span>{{ cart_subtotal|floatformat:2 }} {% trans "د.أ" %}</span>
                         </div>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>{% trans "الشحن" %}</span>
-                            <span>{{ cart_shipping|floatformat:2 }} {% trans "د.أ" %}</span>
-                        </div>
+{#                        <div class="d-flex justify-content-between mb-2">#}
+{#                            <span>{% trans "الشحن" %}</span>#}
+{#                            <span>{{ cart_shipping|floatformat:2 }} {% trans "د.أ" %}</span>#}
+{#                        </div>#}
                         <div class="d-flex justify-content-between mb-2">
                             <span>{% trans "الضريبة" %}</span>
                             <span>{{ cart_tax|floatformat:2 }} {% trans "د.أ" %}</span>

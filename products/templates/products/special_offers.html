@@ -680,7 +680,7 @@
     <div class="timer-banner" data-aos="fade-up">
         <h2 class="timer-title">
             <i class="fas fa-fire text-danger me-2"></i>
-            {% trans "عروض استثنائية - خصومات تصل إلى 70%" %}
+            {% trans "عروض استثنائية" %}
         </h2>
         <p class="text-muted mb-0">{% trans "العرض ينتهي خلال:" %}</p>
         <div class="countdown-timer" id="countdown" data-end-date="{{ nearest_expiry_date|date:'Y-m-d H:i:s' }}">
@@ -950,66 +950,189 @@
         offset: 50
     });
 
-    // الدالة المحسنة للعداد التنازلي الرئيسي
-    function startCountdown() {
-        // استخدام تاريخ الانتهاء من البيانات المرسلة من الخادم
-        const countdownElement = document.getElementById('countdown');
-        const countDownDate = new Date(countdownElement.dataset.endDate).getTime();
+    // كود العداد التنازلي المحسّن (يتعامل مع العروض بشكل صحيح)
+function startCountdown() {
+    // استخدام تاريخ الانتهاء من البيانات المرسلة من الخادم
+    const countdownElement = document.getElementById('countdown');
 
-        const timer = setInterval(function() {
+    // التحقق من وجود تاريخ انتهاء صالح
+    if (!countdownElement || !countdownElement.dataset.endDate) {
+        console.log("لا يوجد عنصر عد تنازلي أو لا يوجد تاريخ انتهاء");
+        setAllCounterValues("00");
+        return;
+    }
+
+    // محاولة تحويل تاريخ الانتهاء إلى تاريخ صالح
+    let countDownDate;
+    try {
+        // نحاول تحويل التاريخ بعدة صيغ محتملة
+        const dateString = countdownElement.dataset.endDate.trim();
+        countDownDate = new Date(dateString).getTime();
+
+        // إذا كان التاريخ غير صالح، نحاول صيغة أخرى (تاريخ Django النموذجي)
+        if (isNaN(countDownDate) && dateString.includes('-')) {
+            // تجربة صيغة تاريخ أخرى (YYYY-MM-DD HH:MM:SS)
+            const parts = dateString.split(' ');
+            if (parts.length === 2) {
+                const dateParts = parts[0].split('-');
+                const timeParts = parts[1].split(':');
+
+                if (dateParts.length === 3 && timeParts.length >= 2) {
+                    const year = parseInt(dateParts[0]);
+                    const month = parseInt(dateParts[1]) - 1; // الشهور من 0-11 في JavaScript
+                    const day = parseInt(dateParts[2]);
+                    const hour = parseInt(timeParts[0]);
+                    const minute = parseInt(timeParts[1]);
+                    const second = timeParts.length > 2 ? parseInt(timeParts[2]) : 0;
+
+                    const dateObj = new Date(year, month, day, hour, minute, second);
+                    countDownDate = dateObj.getTime();
+                }
+            }
+        }
+    } catch (e) {
+        console.error("خطأ في تحويل التاريخ:", e);
+        countDownDate = NaN;
+    }
+
+    // التحقق النهائي من صلاحية التاريخ
+    if (isNaN(countDownDate)) {
+        console.log("تاريخ الانتهاء غير صالح:", countdownElement.dataset.endDate);
+        setAllCounterValues("00");
+        return;
+    }
+
+    // تشغيل العداد
+    const timer = setInterval(function() {
+        const now = new Date().getTime();
+        const distance = countDownDate - now;
+
+        if (distance < 0) {
+            clearInterval(timer);
+            setAllCounterValues("00");
+            // يمكنك إضافة رسالة انتهاء العرض إذا أردت
+            // document.getElementById("countdown").innerHTML = "<div class='alert alert-danger'>انتهى العرض</div>";
+            return;
+        }
+
+        // حساب الوقت بشكل صحيح
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        // التحقق من القيم قبل عرضها - إذا كانت NaN تُعرض كأصفار
+        updateCounterValue("days", days);
+        updateCounterValue("hours", hours);
+        updateCounterValue("minutes", minutes);
+        updateCounterValue("seconds", seconds);
+    }, 1000);
+}
+
+// دالة مساعدة لتحديث قيمة العداد
+function updateCounterValue(elementId, value) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.innerHTML = !isNaN(value) && value >= 0 ? value.toString().padStart(2, '0') : "00";
+    }
+}
+
+// دالة مساعدة لتعيين جميع قيم العداد
+function setAllCounterValues(value) {
+    updateCounterValue("days", value === "00" ? NaN : value);
+    updateCounterValue("hours", value === "00" ? NaN : value);
+    updateCounterValue("minutes", value === "00" ? NaN : value);
+    updateCounterValue("seconds", value === "00" ? NaN : value);
+}
+
+// دالة محسنة للعدادات التنازلية للمنتجات الفردية
+function initProductCountdowns() {
+    document.querySelectorAll('.product-countdown').forEach(counter => {
+        // التحقق من وجود تاريخ انتهاء صالح
+        if (!counter || !counter.dataset.endDate) {
+            console.log("منتج بدون تاريخ انتهاء");
+            const countdownDisplay = counter.querySelector('.countdown-value');
+            if (countdownDisplay) {
+                countdownDisplay.innerHTML = "0 ساعة 0 دقيقة";
+            }
+            return;
+        }
+
+        // محاولة تحويل تاريخ الانتهاء بعدة صيغ محتملة
+        let endDate;
+        try {
+            const dateString = counter.dataset.endDate.trim();
+            endDate = new Date(dateString).getTime();
+
+            // إذا كان التاريخ غير صالح، نحاول صيغة أخرى
+            if (isNaN(endDate) && dateString.includes('-')) {
+                // تجربة صيغة تاريخ أخرى (YYYY-MM-DD HH:MM:SS)
+                const parts = dateString.split(' ');
+                if (parts.length === 2) {
+                    const dateParts = parts[0].split('-');
+                    const timeParts = parts[1].split(':');
+
+                    if (dateParts.length === 3 && timeParts.length >= 2) {
+                        const year = parseInt(dateParts[0]);
+                        const month = parseInt(dateParts[1]) - 1; // الشهور من 0-11 في JavaScript
+                        const day = parseInt(dateParts[2]);
+                        const hour = parseInt(timeParts[0]);
+                        const minute = parseInt(timeParts[1]);
+                        const second = timeParts.length > 2 ? parseInt(timeParts[2]) : 0;
+
+                        const dateObj = new Date(year, month, day, hour, minute, second);
+                        endDate = dateObj.getTime();
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("خطأ في تحويل تاريخ المنتج:", e);
+            endDate = NaN;
+        }
+
+        // التحقق النهائي من صلاحية التاريخ
+        if (isNaN(endDate)) {
+            console.log("تاريخ انتهاء المنتج غير صالح:", counter.dataset.endDate);
+            const countdownDisplay = counter.querySelector('.countdown-value');
+            if (countdownDisplay) {
+                countdownDisplay.innerHTML = "0 ساعة 0 دقيقة";
+            }
+            return;
+        }
+
+        const countdownDisplay = counter.querySelector('.countdown-value');
+        if (!countdownDisplay) return;
+
+        const interval = setInterval(() => {
             const now = new Date().getTime();
-            const distance = countDownDate - now;
+            const distance = endDate - now;
 
             if (distance < 0) {
-                clearInterval(timer);
-                document.getElementById("countdown").innerHTML = "<div class='alert alert-danger'>{% trans 'انتهى العرض' %}</div>";
+                clearInterval(interval);
+                countdownDisplay.innerHTML = "انتهى العرض";
+                counter.closest('.timer-badge')?.classList.add('expired');
                 return;
             }
 
+            // حساب الوقت بشكل صحيح
             const days = Math.floor(distance / (1000 * 60 * 60 * 24));
             const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-            document.getElementById("days").innerHTML = days.toString().padStart(2, '0');
-            document.getElementById("hours").innerHTML = hours.toString().padStart(2, '0');
-            document.getElementById("minutes").innerHTML = minutes.toString().padStart(2, '0');
-            document.getElementById("seconds").innerHTML = seconds.toString().padStart(2, '0');
+            // التحقق من القيم قبل عرضها
+            if (isNaN(days) || isNaN(hours) || isNaN(minutes) || isNaN(seconds)) {
+                countdownDisplay.innerHTML = "0 يوم 0 ساعة";
+            } else if (days > 0) {
+                countdownDisplay.innerHTML = `${days} ${days === 1 ? "يوم" : "أيام"} ${hours} ${hours === 1 ? "ساعة" : "ساعات"}`;
+            } else if (hours > 0) {
+                countdownDisplay.innerHTML = `${hours} ${hours === 1 ? "ساعة" : "ساعات"} ${minutes} ${minutes === 1 ? "دقيقة" : "دقائق"}`;
+            } else {
+                countdownDisplay.innerHTML = `${minutes} ${minutes === 1 ? "دقيقة" : "دقائق"} ${seconds} ${seconds === 1 ? "ثانية" : "ثواني"}`;
+            }
         }, 1000);
-    }
-
-    // دالة لتحديث عدادات المنتجات
-    function initProductCountdowns() {
-        document.querySelectorAll('.product-countdown').forEach(counter => {
-            const endDate = new Date(counter.dataset.endDate).getTime();
-            const countdownDisplay = counter.querySelector('.countdown-value');
-
-            const interval = setInterval(() => {
-                const now = new Date().getTime();
-                const distance = endDate - now;
-
-                if (distance < 0) {
-                    clearInterval(interval);
-                    countdownDisplay.innerHTML = "{% trans 'انتهى العرض' %}";
-                    counter.closest('.timer-badge').classList.add('expired');
-                    return;
-                }
-
-                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-                if (days > 0) {
-                    countdownDisplay.innerHTML = `${days} ${days === 1 ? "{% trans 'يوم' %}" : "{% trans 'أيام' %}"} ${hours} ${hours === 1 ? "{% trans 'ساعة' %}" : "{% trans 'ساعات' %}"}`;
-                } else if (hours > 0) {
-                    countdownDisplay.innerHTML = `${hours} ${hours === 1 ? "{% trans 'ساعة' %}" : "{% trans 'ساعات' %}"} ${minutes} ${minutes === 1 ? "{% trans 'دقيقة' %}" : "{% trans 'دقائق' %}"}`;
-                } else {
-                    countdownDisplay.innerHTML = `${minutes} ${minutes === 1 ? "{% trans 'دقيقة' %}" : "{% trans 'دقائق' %}"} ${seconds} ${seconds === 1 ? "{% trans 'ثانية' %}" : "{% trans 'ثواني' %}"}`;
-                }
-            }, 1000);
-        });
-    }
+    });
+}
 
     // دالة لتمييز العروض المنتهية قريبًا
     function highlightEndingSoon() {

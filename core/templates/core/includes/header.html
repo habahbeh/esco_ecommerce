@@ -49,7 +49,7 @@
                         <ul class="dropdown-menu dropdown-menu-end">
                             {% if user.is_authenticated %}
                                 <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="fas fa-user-circle me-2"></i> {% trans "الملف الشخصي" %}</a></li>
-                                <li><a class="dropdown-item" href="{% url 'accounts:order_history' %}"><i class="fas fa-box me-2"></i> {% trans "طلباتي" %}</a></li>
+                                <li hidden><a class="dropdown-item" href="{% url 'accounts:order_history' %}"><i class="fas fa-box me-2"></i> {% trans "طلباتي" %}</a></li>
 {#                                {% if user.is_staff %}#}
 {#                                    <li><hr class="dropdown-divider"></li>#}
 {#                                    <li><a class="dropdown-item" href="{% url 'dashboard:index' %}"><i class="fas fa-tachometer-alt me-2"></i> {% trans "لوحة التحكم" %}</a></li>#}
@@ -214,7 +214,7 @@
     {% if user.is_authenticated %}
         <div class="mobile-nav-list mt-3 pt-3 border-top">
             <a href="{% url 'accounts:profile' %}"><i class="fas fa-user-circle"></i>{% trans "الملف الشخصي" %}</a>
-            <a href="{% url 'accounts:order_history' %}"><i class="fas fa-box"></i>{% trans "طلباتي" %}</a>
+            <a href="{% url 'accounts:order_history' %}" hidden><i class="fas fa-box"></i>{% trans "طلباتي" %}</a>
 {#            {% if user.is_staff %}#}
 {#                <a href="{% url 'dashboard:index' %}"><i class="fas fa-tachometer-alt"></i>{% trans "لوحة التحكم" %}</a>#}
 {#            {% endif %}#}
