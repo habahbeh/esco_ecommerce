@@ -425,13 +425,28 @@ function showNotification(type, message) {
 }
 
 // تحديث عدد العناصر في السلة
-function updateCartCount() {
-    // تحديث عدد العناصر في السلة في الهيدر
-    const cartBadge = document.querySelector('.cart-count');
-    if (cartBadge) {
-        const currentCount = parseInt(cartBadge.textContent) || 0;
-        cartBadge.textContent = currentCount + 1;
-    }
+// function updateCartCount() {
+//     // تحديث عدد العناصر في السلة في الهيدر
+//     const cartBadge = document.querySelector('.cart-count');
+//     if (cartBadge) {
+//         const currentCount = parseInt(cartBadge.textContent) || 0;
+//         cartBadge.textContent = currentCount + 1;
+//     }
+// }
+
+function updateCartCount(count) {
+    // 1. تحديث جميع علامات السلة في الصفحة
+    const cartBadges = document.querySelectorAll('.cart-badge');
+    cartBadges.forEach(badge => {
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'block' : 'none';
+    });
+
+    // 2. تحديث أي عناصر أخرى تعرض عدد العناصر
+    const cartCountElements = document.querySelectorAll('.cart-count');
+    cartCountElements.forEach(element => {
+        element.textContent = count;
+    });
 }
 
 // نموذج إضافة المنتج للسلة (يتم تنفيذه بعد تحميل الصفحة)
@@ -478,6 +493,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (cartBadge) {
                         cartBadge.textContent = data.cart_count;
                     }
+
+                    updateCartCount(data.cart_count);
 
                     // إظهار إشعار النجاح
                     let productName = document.querySelector('.product-title').textContent;
