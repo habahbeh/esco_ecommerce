@@ -1,7 +1,9 @@
 <!-- core/templates/core/includes/header.html -->
 {% load static %}
 {% load i18n %}
-{% get_current_language as CURRENT_LANGUAGE %}
+{#{% get_current_language as CURRENT_LANGUAGE %}#}
+{% get_current_language as LANGUAGE_CODE %}
+                   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.11.0/css/flag-icons.min.css"/>
 
 <!-- Modern Header -->
 <header class="modern-header" id="header">
@@ -114,23 +116,48 @@
                     </div>
 
                     <!-- Language Switcher -->
-                    <div class="dropdown">
-                        <button class="action-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-globe"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            {% get_current_language as CURRENT_LANGUAGE %}
-                            {% get_available_languages as AVAILABLE_LANGUAGES %}
-                            {% get_language_info_list for AVAILABLE_LANGUAGES as languages %}
-                            {% for language in languages %}
-                                <li>
-                                    <a class="dropdown-item{% if language.code == CURRENT_LANGUAGE %} active{% endif %}" href="{% url 'core:set_language' language.code %}">
-                                        {{ language.name_local }}
-                                    </a>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
+<div class="dropdown">
+    <button class="action-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        {% get_current_language as CURRENT_LANGUAGE %}
+        {% if CURRENT_LANGUAGE == 'ar' %}
+            <span class="fi fi-jo fis"></span>
+        {% else %}
+            <span class="fi fi-us fis"></span>
+        {% endif %}
+ <span class="d-none d-md-inline ms-2">
+                                {% if CURRENT_LANGUAGE == 'ar' %}العربية{% else %}English{% endif %}
+                            </span>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end">
+        {% get_current_language as CURRENT_LANGUAGE %}
+        {% get_available_languages as AVAILABLE_LANGUAGES %}
+        {% get_language_info_list for AVAILABLE_LANGUAGES as languages %}
+        {% for language in languages %}
+            <li>
+                <form action="{% url 'set_language' %}" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <input name="next" type="hidden" value="{{ request.get_full_path|slice:'3:' }}" />
+                    <input name="language" type="hidden" value="{{ language.code }}" />
+                    <button type="submit" class="dropdown-item language-btn{% if language.code == CURRENT_LANGUAGE %} active{% endif %}">
+                        <span class="language-option">
+                            {% if language.code == 'ar' %}
+                                <span class="fi fi-jo me-2"></span>
+                            {% else %}
+                                <span class="fi fi-us me-2"></span>
+                            {% endif %}
+                            {{ language.name_local }}
+                        </span>
+                        {% if language.code == CURRENT_LANGUAGE %}
+                            <i class="fas fa-check text-primary ms-auto"></i>
+                        {% endif %}
+                    </button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+
+
 
                     <!-- Dark Mode Toggle -->
                     {% if site_settings.enable_dark_mode %}
@@ -508,4 +535,101 @@ html[dir="rtl"] .nav-container {
     }
 }
 
+    /* Mobile Flag Fixes */
+@media (max-width: 768px) {
+    /* تكبير الأعلام في الموبايل */
+    .fi {
+        width: 1.5em !important;
+        height: 1.1em !important;
+    }
+
+    .fis {
+        width: 2em !important;
+        height: 1.5em !important;
+    }
+
+    /* تحسين أزرار اللغة للموبايل */
+    .language-btn {
+        padding: 1rem !important;
+        font-size: 1rem !important;
+        min-height: 50px;
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    /* تحسين dropdown في الموبايل */
+    .dropdown-menu {
+        min-width: 200px !important;
+        margin-top: 5px !important;
+    }
+
+    /* إخفاء النص في الزر الرئيسي على الشاشات الصغيرة جداً */
+    .action-btn .d-none.d-sm-inline {
+        display: none !important;
+    }
+
+    /* تكبير الزر الرئيسي */
+    .action-btn {
+        padding: 0.75rem !important;
+        min-width: 50px;
+        min-height: 50px;
+    }
+}
+
+/* تحسينات عامة */
+.language-btn {
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s ease;
+    touch-action: manipulation; /* تحسين اللمس */
+}
+
+.language-btn:hover,
+.language-btn:focus {
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
+    outline: none;
+}
+
+.language-btn.active {
+    background-color: var(--bs-primary);
+    color: white;
+}
+
+.language-btn.active .text-primary {
+    color: white !important;
+}
+
+.language-option {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+/* RTL Support */
+html[dir="rtl"] .language-btn {
+    text-align: right;
+}
+
+html[dir="rtl"] .me-2 {
+    margin-right: 0;
+    margin-left: 0.5rem;
+}
+
+html[dir="rtl"] .ms-2 {
+    margin-left: 0;
+    margin-right: 0.5rem;
+}
+
+html[dir="rtl"] .ms-auto {
+    margin-left: 0;
+    margin-right: auto;
+}
+
 </style>
+

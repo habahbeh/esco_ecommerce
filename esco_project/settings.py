@@ -157,23 +157,31 @@ LOGOUT_REDIRECT_URL = 'core:home'
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
 LANGUAGE_CODE = 'ar'
-
 TIME_ZONE = 'Asia/Amman'
-
 USE_I18N = True
-
 USE_TZ = True
 
-# اللغات المتاحة - Available languages
+# اللغات المتاحة
 LANGUAGES = [
     ('ar', _('العربية')),
     ('en', _('English')),
 ]
 
-# مجلد ملفات الترجمة - Translation files directory
+# مجلد ملفات الترجمة
 LOCALE_PATHS = [
-    os.path.join(BASE_DIR, 'locale'),
+    BASE_DIR / 'locale',
 ]
+
+# إعدادات cookies للغة
+LANGUAGE_COOKIE_NAME = 'django_language'
+LANGUAGE_COOKIE_AGE = 60 * 60 * 24 * 30  # 30 days
+LANGUAGE_COOKIE_DOMAIN = None
+LANGUAGE_COOKIE_PATH = '/'
+LANGUAGE_COOKIE_SECURE = False  # True in production with HTTPS
+LANGUAGE_COOKIE_HTTPONLY = False
+LANGUAGE_COOKIE_SAMESITE = None
+
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
@@ -278,15 +286,15 @@ SHIPPING_WEIGHT_RATE = Decimal('0.00')
 FREE_SHIPPING_THRESHOLD = Decimal('0.00')
 MAX_CART_QUANTITY_PER_ITEM = 10
 
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
-    }
-}
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+#     }
+# }
 
 
 
 # مسارات تسجيل الدخول
-LOGIN_URL = 'dashboard:dashboard_login'
-LOGIN_REDIRECT_URL = 'dashboard:dashboard_home'
-LOGOUT_REDIRECT_URL = 'dashboard:dashboard_login'
+# LOGIN_URL = 'dashboard:dashboard_login'
+# LOGIN_REDIRECT_URL = 'dashboard:dashboard_home'
+# LOGOUT_REDIRECT_URL = 'dashboard:dashboard_login'
