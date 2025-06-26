@@ -116,39 +116,40 @@
                     </div>
 
                     <!-- Language Switcher -->
-<div class="dropdown">
-    <button class="action-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-        {% get_current_language as CURRENT_LANGUAGE %}
-        {% if CURRENT_LANGUAGE == 'ar' %}
-            <span class="fi fi-jo fis"></span>
-        {% else %}
-            <span class="fi fi-us fis"></span>
-        {% endif %}
-        <span class="d-none d-md-inline ms-2">
-            {% if CURRENT_LANGUAGE == 'ar' %}العربية{% else %}English{% endif %}
-        </span>
-    </button>
-    <ul class="dropdown-menu dropdown-menu-end">
-        {% get_current_language as CURRENT_LANGUAGE %}
-        {% get_available_languages as AVAILABLE_LANGUAGES %}
-        {% get_language_info_list for AVAILABLE_LANGUAGES as languages %}
-        {% for language in languages %}
-            <li>
-                <form action="{% url 'set_language' %}" method="post" style="display: inline;">
-                    {% csrf_token %}
-                    <!-- الحل: استخدام template logic لتنظيف المسار -->
-                    {% if request.path|slice:":3" == "/ar" %}
-                        <input name="next" type="hidden" value="{{ request.path|slice:"3:" }}" />
-                    {% elif request.path|slice:":4" == "/en/" %}
-                        <input name="next" type="hidden" value="{{ request.path|slice:"3:" }}" />
-                    {% elif request.path|slice:":3" == "/en" %}
-                        <input name="next" type="hidden" value="/" />
-                    {% else %}
-                        <input name="next" type="hidden" value="{{ request.path }}" />
-                    {% endif %}
+                    <div class="dropdown">
+                        <button class="action-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            {% get_current_language as CURRENT_LANGUAGE %}
+                            {% if CURRENT_LANGUAGE == 'ar' %}
+                                <span class="fi fi-jo fis"></span>
+                            {% else %}
+                                <span class="fi fi-us fis"></span>
+                            {% endif %}
+                            <span class="d-none d-md-inline ms-2">
+                                {% if CURRENT_LANGUAGE == 'ar' %}العربية{% else %}English{% endif %}
+                            </span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            {% get_current_language as CURRENT_LANGUAGE %}
+                            {% get_available_languages as AVAILABLE_LANGUAGES %}
+                            {% get_language_info_list for AVAILABLE_LANGUAGES as languages %}
+                            {% for language in languages %}
+                                <li>
+                                    <form action="{% url 'set_language' %}" method="post" style="display: inline;">
+                                        {% csrf_token %}
+                                        <!-- الحل: استخدام template logic لتنظيف المسار -->
+                                        {% if request.path|slice:":3" == "/ar" %}
+                                            <input name="next" type="hidden" value="{{ request.path|slice:"3:" }}"/>
+                                        {% elif request.path|slice:":4" == "/en/" %}
+                                            <input name="next" type="hidden" value="{{ request.path|slice:"3:" }}"/>
+                                        {% elif request.path|slice:":3" == "/en" %}
+                                            <input name="next" type="hidden" value="/"/>
+                                        {% else %}
+                                            <input name="next" type="hidden" value="{{ request.path }}"/>
+                                        {% endif %}
 
-                    <input name="language" type="hidden" value="{{ language.code }}" />
-                    <button type="submit" class="dropdown-item language-btn{% if language.code == CURRENT_LANGUAGE %} active{% endif %}">
+                                        <input name="language" type="hidden" value="{{ language.code }}"/>
+                                        <button type="submit"
+                                                class="dropdown-item language-btn{% if language.code == CURRENT_LANGUAGE %} active{% endif %}">
                         <span class="language-option">
                             {% if language.code == 'ar' %}
                                 <span class="fi fi-jo me-2"></span>
@@ -157,15 +158,15 @@
                             {% endif %}
                             {{ language.name_local }}
                         </span>
-                        {% if language.code == CURRENT_LANGUAGE %}
-                            <i class="fas fa-check text-primary ms-auto"></i>
-                        {% endif %}
-                    </button>
-                </form>
-            </li>
-        {% endfor %}
-    </ul>
-</div>
+                                            {% if language.code == CURRENT_LANGUAGE %}
+                                                <i class="fas fa-check text-primary ms-auto"></i>
+                                            {% endif %}
+                                        </button>
+                                    </form>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
 
 
 
