@@ -247,6 +247,23 @@
     <script src="{% static 'js/base.js' %}" defer></script>
     <script src="{% static 'js/events.js' %}"></script>
 
-    {% block extra_js %}{% endblock %}
+    {% block extra_js %}
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language switcher forms
+            const languageForms = document.querySelectorAll('form[action*="set_language"]');
+
+            languageForms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    const button = this.querySelector('button');
+                    if (button) {
+                        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحميل...';
+                        button.disabled = true;
+                    }
+                });
+            });
+        });
+    </script>
+    {% endblock %}
 </body>
 </html>

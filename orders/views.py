@@ -4,6 +4,10 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.translation import gettext_lazy as _
 from django.contrib import messages
 from .models import Order, OrderItem
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.contrib.auth.decorators import login_required
+
 
 class ThankYouView(TemplateView):
     """
@@ -108,3 +112,29 @@ class TrackOrderView(TemplateView):
         except Order.DoesNotExist:
             messages.error(request, _('لم يتم العثور على الطلب. يرجى التحقق من رقم الطلب والبريد الإلكتروني.'))
             return render(request, self.template_name)
+
+@login_required
+def cancel_order(request, order_id):
+    """
+    إلغاء الطلب - يسمح للمستخدم بإلغاء طلب لم يتم شحنه بعد
+    Cancel order - allows a user to cancel an order that hasn't been shipped yet
+    """
+    # الحصول على الطلب - Get the order
+    order = get_object_or_404(Order, id=order_id)
+
+    # التحقق من أن الطلب ينتمي للمستخدم الحالي - Verify the order belongs to current user
+    if order.user != request.user:
+        messages.error(request, _('لا يمكنك إلغاء طلب لا ينتمي إليك.'))
+        return HttpResponseRedirect(reverse('orders:order_list'))
+
+    # التحقق من حالة الطلب - Check order status
+    if order.status in ['shipped', 'delivered', 'cancelled']:
+        messages.error(request, _('لا يمكن إلغاء طلب تم شحنه أو تسليمه أو إلغاؤه مسبقاً.'))
+    else:
+        # تغيير حالة الطلب إلى ملغي - Change order status to cancelled
+        order.status = 'cancelled'
+        order.save()
+        messages.success(request, _('تم إلغاء الطلب بنجاح.'))
+
+    # إعادة التوجيه إلى صفحة تفاصيل الطلب - Redirect to order details page
+    return HttpResponseRedirect(reverse('orders:order_detail', args=[order_id]))

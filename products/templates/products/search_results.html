@@ -1,6 +1,6 @@
 {% extends 'core/base.html' %}
-{% load i18n %}
 {% load static %}
+{% load i18n %}
 
 {% block title %}
     {% if search_query %}
@@ -11,7 +11,186 @@
 {% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{% static 'products/css/category_tree.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.6.1/nouislider.min.css">
+{% get_current_language_bidi as LANGUAGE_BIDI %}
+{% if LANGUAGE_BIDI %}
+<!-- إضافة ملف Bootstrap للغات RTL -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+{% endif %}
 <style>
+    /* تصميم صفحة المنتجات */
+    .products-container {
+        background: #f9fafb;
+        min-height: 100vh;
+        padding: 20px 0 30px;
+    }
+
+    /* تصميم رأس الصفحة المصغر */
+    .page-header-compact {
+        background: linear-gradient(135deg, var(--bs-primary) 0%, #0056b3 100%);
+        color: white;
+        padding: 1.5rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header-compact::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+        background-size: 20px 20px;
+        opacity: 0.5;
+    }
+
+    .page-title-compact {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+        position: relative;
+    }
+
+    .page-subtitle-compact {
+        font-size: 0.95rem;
+        opacity: 0.9;
+        position: relative;
+    }
+
+    .products-count-badge {
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(5px);
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    /* عنوان المنتجات وأدوات الترتيب */
+    .products-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .products-count {
+        font-size: 1rem;
+        color: #555;
+    }
+
+    .products-count strong {
+        color: var(--bs-primary);
+    }
+
+    .sort-options {
+        display: flex;
+        align-items: center;
+    }
+
+    .sort-label {
+        margin-right: 10px;
+        color: #555;
+        font-weight: 500;
+    }
+
+    .sort-select {
+        padding: 8px 15px;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        background-color: #f8f9fa;
+        font-size: 0.9rem;
+    }
+
+    /* عرض المنتجات في شبكة */
+    .products-grid {
+        margin-top: 30px;
+    }
+
+    /* الفلاتر الجانبية */
+    .filter-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .filter-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .filter-option {
+        margin-bottom: 0.5rem;
+    }
+
+    .filter-option label {
+        cursor: pointer;
+        width: 100%;
+        padding: 0.25rem;
+        border-radius: 0.25rem;
+        transition: background-color 0.2s ease;
+    }
+
+    .filter-option label:hover {
+        background-color: rgba(0,0,0,0.03);
+    }
+
+    /* بدون نتائج */
+    .no-results-container {
+        text-align: center;
+        padding: 3rem;
+    }
+
+    .suggestions-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+        margin: 1rem 0;
+    }
+
+    .suggestion-tag {
+        padding: 0.3rem 0.8rem;
+        border-radius: 50px;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+    /* الشاشات الصغيرة */
+    @media (max-width: 767px) {
+        .page-title-compact {
+            font-size: 1.5rem;
+        }
+
+        .page-subtitle-compact {
+            font-size: 0.85rem;
+        }
+
+        .products-count-badge {
+            display: none;
+        }
+        .products-header {
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-start;
+        }
+    }
+
     /* تحسينات نتائج البحث */
     .products-container.loading {
         position: relative;
@@ -52,8 +231,31 @@
         100% { transform: translate(-50%, -50%) rotate(360deg); }
     }
 
-    /* تحسين مظهر الهيدر */
-    .search-header {
+    .search-tip-list {
+        text-align: right;
+        padding-right: 1.5rem;
+    }
+
+    html[dir="ltr"] .search-tip-list {
+        text-align: left;
+        padding-left: 1.5rem;
+        padding-right: 0;
+    }
+
+    .sticky-sidebar {
+        position: sticky;
+        top: 100px;
+    }
+
+/* تصميم صفحة المنتجات */
+    .products-container {
+        background: #f9fafb;
+        min-height: 100vh;
+        padding: 20px 0 30px;
+    }
+
+    /* تصميم رأس الصفحة المصغر */
+    .page-header-compact {
         background: linear-gradient(135deg, var(--bs-primary) 0%, #0056b3 100%);
         color: white;
         padding: 1.5rem 0;
@@ -63,7 +265,7 @@
         overflow: hidden;
     }
 
-    .search-header::before {
+    .page-header-compact::before {
         content: '';
         position: absolute;
         top: -50%;
@@ -73,6 +275,19 @@
         background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
         background-size: 20px 20px;
         opacity: 0.5;
+    }
+
+    .page-title-compact {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+        position: relative;
+    }
+
+    .page-subtitle-compact {
+        font-size: 0.95rem;
+        opacity: 0.9;
+        position: relative;
     }
 
     .products-count-badge {
@@ -86,86 +301,223 @@
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
 
-    .line-clamp-2 {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        height: 48px;
-    }
-
-    .sticky-sidebar {
-        position: sticky;
-        top: 100px;
-    }
-
-    .filter-group {
-        margin-bottom: 1.5rem;
-    }
-
-    .filter-title {
+    /* عنوان المنتجات وأدوات الترتيب */
+    .products-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 1rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 1px solid rgba(0,0,0,0.1);
-        font-weight: 600;
-        cursor: pointer;
+        margin-bottom: 20px;
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
 
-    .filter-option {
-        margin-bottom: 0.5rem;
+    .products-count {
+        font-size: 1rem;
+        color: #555;
     }
 
-    .filter-option label {
-        cursor: pointer;
-        width: 100%;
-        padding: 0.25rem;
-        border-radius: 0.25rem;
-        transition: background-color 0.2s ease;
+    .products-count strong {
+        color: var(--bs-primary);
     }
 
-    .filter-option label:hover {
-        background-color: rgba(0,0,0,0.03);
-    }
-
-    .no-results-container {
-        text-align: center;
-        padding: 3rem;
-    }
-
-    .suggestions-container {
+    .sort-options {
         display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        justify-content: center;
-        margin: 1rem 0;
+        align-items: center;
     }
 
-    .suggestion-tag {
-        padding: 0.3rem 0.8rem;
-        border-radius: 50px;
+    .sort-label {
+        margin-right: 10px;
+        color: #555;
+        font-weight: 500;
+    }
+
+    .sort-select {
+        padding: 8px 15px;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        background-color: #f8f9fa;
         font-size: 0.9rem;
+    }
+
+    /* عرض المنتجات في شبكة */
+    .products-grid {
+        margin-top: 30px;
+    }
+
+    /* تصميم بطاقة المنتج الجديدة */
+    .product-card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .product-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+    }
+
+    .product-card .card-img-top {
+        height: 220px;
+        object-fit: cover;
+    }
+
+    .product-badge-new,
+    .product-badge-featured,
+    .product-badge-sale {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+        z-index: 1;
+    }
+
+    .product-badge-new {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .product-badge-featured {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .product-badge-sale {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .product-details {
+        margin: 15px 0;
+    }
+
+    .product-info {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+        color: #6c757d;
+    }
+
+    .product-info i {
+        width: 20px;
+        margin-right: 10px;
+        color: var(--bs-primary);
+    }
+
+    html[dir="rtl"] .product-info i {
+        margin-right: 0;
+        margin-left: 10px;
+    }
+
+    .product-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    /* التنقل بين الصفحات */
+    .pagination-container {
+        margin-top: 40px;
+        display: flex;
+        justify-content: center;
+    }
+
+    /* مسار التنقل */
+    .breadcrumb {
+        background-color: #f8f9fa;
+        padding: 0.75rem 1rem;
+        border-radius: 0.375rem;
+        margin-bottom: 1rem;
+        font-size: 0.9rem;
+    }
+
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: "›";
+        color: #6c757d;
+    }
+
+    .breadcrumb-item a {
+        color: var(--bs-primary);
+        text-decoration: none;
+    }
+
+    .breadcrumb-item a:hover {
+        text-decoration: underline;
+    }
+
+    .breadcrumb-item.active {
+        color: #6c757d;
+    }
+
+    /* زر فتح الفلاتر */
+    .filter-sidebar-toggle {
+        position: fixed;
+        left: 15px;
+        bottom: 20px;
+        z-index: 999;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background-color: var(--bs-primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        border: none;
         transition: all 0.3s ease;
     }
 
-    .search-tip-list {
-        text-align: right;
-        padding-right: 1.5rem;
+    .filter-sidebar-toggle:hover {
+        transform: scale(1.1);
+        background-color: var(--bs-primary-dark, #0056b3);
     }
 
-    html[dir="ltr"] .search-tip-list {
-        text-align: left;
-        padding-left: 1.5rem;
-        padding-right: 0;
+    .filter-sidebar-toggle i {
+        font-size: 1.2rem;
+    }
+
+    /* أقسام المنتجات */
+    .products-section {
+        margin-bottom: 40px;
+    }
+
+    .section-title {
+        margin-bottom: 25px;
+    }
+
+    /* الشاشات الصغيرة */
+    @media (max-width: 767px) {
+        .page-title-compact {
+            font-size: 1.5rem;
+        }
+
+        .page-subtitle-compact {
+            font-size: 0.85rem;
+        }
+
+        .products-count-badge {
+            display: none;
+        }
+        .products-header {
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-start;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
+<!-- مسار التنقل (Breadcrumbs) -->
 <div class="container mt-4">
-    <!-- مسار التنقل (Breadcrumbs) -->
     <nav aria-label="{% trans 'مسار التنقل' %}">
         <ol class="breadcrumb">
             <li class="breadcrumb-item">
@@ -182,9 +534,11 @@
             </li>
         </ol>
     </nav>
+</div>
 
-    <!-- رأس الصفحة المصغر -->
-    <div class="search-header mb-4">
+<!-- رأس الصفحة المصغر -->
+<div class="container">
+    <div class="page-header-compact">
         <div class="container">
             <div class="d-flex align-items-center justify-content-between">
                 <div>
@@ -228,333 +582,358 @@
             </div>
         </div>
     </div>
+</div>
 
-    <!-- نموذج البحث -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="get" class="row g-3">
-                <div class="col-md-8">
-                    <div class="input-group">
-                        <input
-                            type="text"
-                            name="q"
-                            value="{{ search_query }}"
-                            placeholder="{% trans 'ابحث عن المنتجات...' %}"
-                            class="form-control"
-                        >
-                        <button
-                            type="submit"
-                            class="btn btn-primary"
-                        >
-                            <i class="fas fa-search me-1"></i> {% trans "بحث" %}
-                        </button>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <select name="sort" class="form-select" onchange="this.form.submit()">
-                        {% for value, label in sort_options %}
-                        <option value="{{ value }}" {% if current_sort == value %}selected{% endif %}>
-                            {{ label }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    {% if search_query %}
-        <div class="row">
-            <!-- الفلاتر الجانبية -->
-            <div class="col-lg-3">
-                <div class="card sticky-sidebar mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0 d-flex align-items-center">
-                            <i class="fas fa-filter me-2"></i>
-                            {% trans "تصفية النتائج" %}
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <form method="get" id="filter-form">
-                            <input type="hidden" name="q" value="{{ search_query }}">
-                            <input type="hidden" name="sort" value="{{ current_sort }}">
-
-                            <!-- فلتر السعر -->
-                            <div class="filter-group">
-                                <div class="filter-title" data-bs-toggle="collapse" data-bs-target="#priceFilter">
-                                    {% trans "نطاق السعر" %}
-                                    <i class="fas fa-chevron-down"></i>
-                                </div>
-                                <div class="collapse show" id="priceFilter">
-                                    <div class="row g-2">
-                                        <div class="col-6">
-                                            <input
-                                                type="number"
-                                                name="min_price"
-                                                value="{{ filters.min_price|default:'' }}"
-                                                placeholder="{% trans 'الحد الأدنى' %}"
-                                                class="form-control form-control-sm"
-                                            >
-                                        </div>
-                                        <div class="col-6">
-                                            <input
-                                                type="number"
-                                                name="max_price"
-                                                value="{{ filters.max_price|default:'' }}"
-                                                placeholder="{% trans 'الحد الأقصى' %}"
-                                                class="form-control form-control-sm"
-                                            >
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- فلاتر إضافية -->
-                            <div class="filter-group">
-                                <div class="filter-title" data-bs-toggle="collapse" data-bs-target="#featuresFilter">
-                                    {% trans "خيارات إضافية" %}
-                                    <i class="fas fa-chevron-down"></i>
-                                </div>
-                                <div class="collapse show" id="featuresFilter">
-                                    <div class="filter-option">
-                                        <div class="form-check">
-                                            <input
-                                                type="checkbox"
-                                                name="is_featured"
-                                                value="1"
-                                                id="is_featured"
-                                                {% if filters.is_featured %}checked{% endif %}
-                                                class="form-check-input"
-                                            >
-                                            <label class="form-check-label w-100 d-flex justify-content-between" for="is_featured">
-                                                <span>{% trans "منتجات مميزة" %}</span>
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                    <div class="filter-option">
-                                        <div class="form-check">
-                                            <input
-                                                type="checkbox"
-                                                name="is_new"
-                                                value="1"
-                                                id="is_new"
-                                                {% if filters.is_new %}checked{% endif %}
-                                                class="form-check-input"
-                                            >
-                                            <label class="form-check-label w-100 d-flex justify-content-between" for="is_new">
-                                                <span>{% trans "منتجات جديدة" %}</span>
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                    <div class="filter-option">
-                                        <div class="form-check">
-                                            <input
-                                                type="checkbox"
-                                                name="on_sale"
-                                                value="1"
-                                                id="on_sale"
-                                                {% if filters.on_sale %}checked{% endif %}
-                                                class="form-check-input"
-                                            >
-                                            <label class="form-check-label w-100 d-flex justify-content-between" for="on_sale">
-                                                <span>{% trans "منتجات مخفضة" %}</span>
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                    <div class="filter-option">
-                                        <div class="form-check">
-                                            <input
-                                                type="checkbox"
-                                                name="in_stock"
-                                                value="1"
-                                                id="in_stock"
-                                                {% if filters.in_stock %}checked{% endif %}
-                                                class="form-check-input"
-                                            >
-                                            <label class="form-check-label w-100 d-flex justify-content-between" for="in_stock">
-                                                <span>{% trans "متوفر في المخزن" %}</span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
+<div class="products-container">
+    <div class="container">
+        <!-- نموذج البحث -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-8">
+                        <div class="input-group">
+                            <input
+                                type="text"
+                                name="q"
+                                value="{{ search_query }}"
+                                placeholder="{% trans 'ابحث عن المنتجات...' %}"
+                                class="form-control"
+                            >
                             <button
                                 type="submit"
-                                class="btn btn-primary w-100 mb-2"
+                                class="btn btn-primary"
                             >
-                                <i class="fas fa-filter me-2"></i>{% trans "تطبيق الفلاتر" %}
+                                <i class="fas fa-search me-1"></i> {% trans "بحث" %}
                             </button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <select name="sort" class="form-select" onchange="this.form.submit()">
+                            {% for value, label in sort_options %}
+                            <option value="{{ value }}" {% if current_sort == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-                            {% if request.GET|length > 1 %}
-                            <a href="?q={{ search_query }}" class="btn btn-outline-secondary w-100">
-                                <i class="fas fa-undo-alt me-2"></i>{% trans "إعادة تعيين" %}
-                            </a>
-                            {% endif %}
-                        </form>
+        {% if search_query %}
+            <div class="row">
+                <!-- الفلاتر الجانبية -->
+                <div class="col-lg-3" hidden>
+                    <div class="card sticky-sidebar mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0 d-flex align-items-center">
+                                <i class="fas fa-filter me-2"></i>
+                                {% trans "تصفية النتائج" %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="get" id="filter-form">
+                                <input type="hidden" name="q" value="{{ search_query }}">
+                                <input type="hidden" name="sort" value="{{ current_sort }}">
+
+                                <!-- فلتر السعر -->
+                                <div class="filter-group">
+                                    <div class="filter-title" data-bs-toggle="collapse" data-bs-target="#priceFilter">
+                                        {% trans "نطاق السعر" %}
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                    <div class="collapse show" id="priceFilter">
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <input
+                                                    type="number"
+                                                    name="min_price"
+                                                    value="{{ filters.min_price|default:'' }}"
+                                                    placeholder="{% trans 'الحد الأدنى' %}"
+                                                    class="form-control form-control-sm"
+                                                >
+                                            </div>
+                                            <div class="col-6">
+                                                <input
+                                                    type="number"
+                                                    name="max_price"
+                                                    value="{{ filters.max_price|default:'' }}"
+                                                    placeholder="{% trans 'الحد الأقصى' %}"
+                                                    class="form-control form-control-sm"
+                                                >
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- فلاتر إضافية -->
+                                <div class="filter-group">
+                                    <div class="filter-title" data-bs-toggle="collapse" data-bs-target="#featuresFilter">
+                                        {% trans "خيارات إضافية" %}
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                    <div class="collapse show" id="featuresFilter">
+                                        <div class="filter-option">
+                                            <div class="form-check">
+                                                <input
+                                                    type="checkbox"
+                                                    name="is_featured"
+                                                    value="1"
+                                                    id="is_featured"
+                                                    {% if filters.is_featured %}checked{% endif %}
+                                                    class="form-check-input"
+                                                >
+                                                <label class="form-check-label w-100 d-flex justify-content-between" for="is_featured">
+                                                    <span>{% trans "منتجات مميزة" %}</span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="filter-option">
+                                            <div class="form-check">
+                                                <input
+                                                    type="checkbox"
+                                                    name="is_new"
+                                                    value="1"
+                                                    id="is_new"
+                                                    {% if filters.is_new %}checked{% endif %}
+                                                    class="form-check-input"
+                                                >
+                                                <label class="form-check-label w-100 d-flex justify-content-between" for="is_new">
+                                                    <span>{% trans "منتجات جديدة" %}</span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="filter-option">
+                                            <div class="form-check">
+                                                <input
+                                                    type="checkbox"
+                                                    name="on_sale"
+                                                    value="1"
+                                                    id="on_sale"
+                                                    {% if filters.on_sale %}checked{% endif %}
+                                                    class="form-check-input"
+                                                >
+                                                <label class="form-check-label w-100 d-flex justify-content-between" for="on_sale">
+                                                    <span>{% trans "منتجات مخفضة" %}</span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="filter-option">
+                                            <div class="form-check">
+                                                <input
+                                                    type="checkbox"
+                                                    name="in_stock"
+                                                    value="1"
+                                                    id="in_stock"
+                                                    {% if filters.in_stock %}checked{% endif %}
+                                                    class="form-check-input"
+                                                >
+                                                <label class="form-check-label w-100 d-flex justify-content-between" for="in_stock">
+                                                    <span>{% trans "متوفر في المخزن" %}</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    class="btn btn-primary w-100 mb-2"
+                                >
+                                    <i class="fas fa-filter me-2"></i>{% trans "تطبيق الفلاتر" %}
+                                </button>
+
+                                {% if request.GET|length > 1 %}
+                                <a href="?q={{ search_query }}" class="btn btn-outline-secondary w-100">
+                                    <i class="fas fa-undo-alt me-2"></i>{% trans "إعادة تعيين" %}
+                                </a>
+                                {% endif %}
+                            </form>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- النتائج -->
-            <div class="col-lg-9 products-container">
-                {% if products or object_list %}
-                    <!-- شبكة المنتجات -->
-                    <div class="row g-4">
-                        {% for product in products|default:object_list %}
-                            <div class="col-md-6 col-lg-4">
-                                {% include 'products/base/_product_card.html' with product=product %}
+                <!-- النتائج -->
+                <div class="col-lg-12">
+                    {% if products or object_list %}
+                        <!-- رأس قائمة المنتجات -->
+                        <div class="products-header">
+                            <div class="products-count">
+                                {% trans "عرض" %} <strong>
+                                {% if results_count %}{{ results_count }}{% else %}{{ object_list|length }}{% endif %}
+                                </strong> {% trans "منتج" %}
                             </div>
-                        {% endfor %}
-                    </div>
+                            <div class="sort-options">
+                                <label class="sort-label">{% trans "ترتيب حسب:" %}</label>
+                                <select class="sort-select" id="sortSelect" onchange="this.form.submit()">
+                                    <option value="newest" {% if current_sort == 'newest' or not current_sort %}selected{% endif %}>
+                                        {% trans "الأحدث" %}
+                                    </option>
+                                    <option value="price_low" {% if current_sort == 'price_low' %}selected{% endif %}>
+                                        {% trans "السعر: من الأقل للأعلى" %}
+                                    </option>
+                                    <option value="price_high" {% if current_sort == 'price_high' %}selected{% endif %}>
+                                        {% trans "السعر: من الأعلى للأقل" %}
+                                    </option>
+                                    <option value="name_az" {% if current_sort == 'name_az' %}selected{% endif %}>
+                                        {% trans "الاسم: أ-ي" %}
+                                    </option>
+                                    <option value="best_rated" {% if current_sort == 'best_rated' %}selected{% endif %}>
+                                        {% trans "الأعلى تقييماً" %}
+                                    </option>
+                                </select>
+                                <form id="sortForm" method="get">
+                                    <input type="hidden" name="sort" id="sort">
+                                    <input type="hidden" name="q" value="{{ search_query }}">
+                                    <!-- حفظ الفلاتر الأخرى -->
+                                    {% for key, value in request.GET.items %}
+                                        {% if key != 'sort' and key != 'page' and key != 'q' %}
+                                            <input type="hidden" name="{{ key }}" value="{{ value }}">
+                                        {% endif %}
+                                    {% endfor %}
+                                </form>
+                            </div>
+                        </div>
 
-                    <!-- ترقيم الصفحات -->
-                    {% if is_paginated %}
-                        <div class="d-flex justify-content-center mt-4">
-                            <nav aria-label="Page navigation">
-                                <ul class="pagination">
-                                    {% if page_obj.has_previous %}
-                                        <li class="page-item">
-                                            <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="First">
-                                                <span aria-hidden="true">&laquo;&laquo;</span>
-                                            </a>
-                                        </li>
-                                        <li class="page-item">
-                                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous">
-                                                <span aria-hidden="true">&laquo;</span>
-                                            </a>
-                                        </li>
-                                    {% endif %}
+                        <!-- شبكة المنتجات -->
+                        <div class="row g-4">
+                            {% for product in products|default:object_list %}
+                                <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
+                                    {% include 'products/base/_product_card.html' with product=product %}
+                                </div>
+                            {% endfor %}
+                        </div>
 
-                                    {% for num in paginator.page_range %}
-                                        {% if page_obj.number == num %}
-                                            <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
-                                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <!-- ترقيم الصفحات -->
+                        {% if is_paginated %}
+                            <div class="d-flex justify-content-center mt-4">
+                                <nav aria-label="Page navigation">
+                                    <ul class="pagination">
+                                        {% if page_obj.has_previous %}
                                             <li class="page-item">
-                                                <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                                                    {{ num }}
+                                                <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="First">
+                                                    <span aria-hidden="true">&laquo;&laquo;</span>
+                                                </a>
+                                            </li>
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous">
+                                                    <span aria-hidden="true">&laquo;</span>
                                                 </a>
                                             </li>
                                         {% endif %}
-                                    {% endfor %}
 
-                                    {% if page_obj.has_next %}
-                                        <li class="page-item">
-                                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next">
-                                                <span aria-hidden="true">&raquo;</span>
-                                            </a>
-                                        </li>
-                                        <li class="page-item">
-                                            <a class="page-link" href="?page={{ paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Last">
-                                                <span aria-hidden="true">&raquo;&raquo;</span>
-                                            </a>
-                                        </li>
-                                    {% endif %}
-                                </ul>
-                            </nav>
+                                        {% for num in paginator.page_range %}
+                                            {% if page_obj.number == num %}
+                                                <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                                <li class="page-item">
+                                                    <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                                        {{ num }}
+                                                    </a>
+                                                </li>
+                                            {% endif %}
+                                        {% endfor %}
+
+                                        {% if page_obj.has_next %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next">
+                                                    <span aria-hidden="true">&raquo;</span>
+                                                </a>
+                                            </li>
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Last">
+                                                    <span aria-hidden="true">&raquo;&raquo;</span>
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <!-- لا توجد نتائج -->
+                        <div class="card">
+                            <div class="card-body no-results-container">
+                                <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                                <h3 class="h4 mb-3">
+                                    {% trans "لم نجد أي منتجات" %}
+                                </h3>
+                                <p class="text-muted mb-4">
+                                    {% blocktrans %}لا توجد نتائج للبحث عن "{{ search_query }}"{% endblocktrans %}
+                                </p>
+
+                                <!-- اقتراحات البحث إذا كانت متوفرة -->
+                                {% if search_suggestions %}
+                                    <div class="mb-4">
+                                        <p class="text-muted mb-2">{% trans "جرب البحث عن:" %}</p>
+                                        <div class="suggestions-container">
+                                            {% for suggestion in search_suggestions %}
+                                                <a
+                                                    href="?q={{ suggestion|urlencode }}"
+                                                    class="suggestion-tag bg-light text-dark"
+                                                >
+                                                    {{ suggestion }}
+                                                </a>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+
+                                <!-- نصائح البحث -->
+                                <div class="card bg-light mb-4">
+                                    <div class="card-body">
+                                        <p class="fw-bold mb-2">{% trans "جرب ما يلي:" %}</p>
+                                        <ul class="search-tip-list mb-0">
+                                            <li>{% trans "تحقق من الإملاء" %}</li>
+                                            <li>{% trans "استخدم كلمات مختلفة" %}</li>
+                                            <li>{% trans "استخدم كلمات أقل تحديداً" %}</li>
+                                            <li>{% trans "جرب البحث باللغة الإنجليزية" %}</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <a
+                                    href="{% url 'products:product_list' %}"
+                                    class="btn btn-primary"
+                                >
+                                    <i class="fas fa-th-large me-1"></i> {% trans "تصفح جميع المنتجات" %}
+                                </a>
+                            </div>
                         </div>
                     {% endif %}
-
-                {% else %}
-                    <!-- لا توجد نتائج -->
-                    <div class="card">
-                        <div class="card-body no-results-container">
-                            <i class="fas fa-search fa-4x text-muted mb-3"></i>
-                            <h3 class="h4 mb-3">
-                                {% trans "لم نجد أي منتجات" %}
-                            </h3>
-                            <p class="text-muted mb-4">
-                                {% blocktrans %}لا توجد نتائج للبحث عن "{{ search_query }}"{% endblocktrans %}
-                            </p>
-
-                            <!-- اقتراحات البحث إذا كانت متوفرة -->
-                            {% if search_suggestions %}
-                                <div class="mb-4">
-                                    <p class="text-muted mb-2">{% trans "جرب البحث عن:" %}</p>
-                                    <div class="suggestions-container">
-                                        {% for suggestion in search_suggestions %}
-                                            <a
-                                                href="?q={{ suggestion|urlencode }}"
-                                                class="suggestion-tag bg-light text-dark"
-                                            >
-                                                {{ suggestion }}
-                                            </a>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                            {% endif %}
-
-                            <!-- نصائح البحث -->
-                            <div class="card bg-light mb-4">
-                                <div class="card-body">
-                                    <p class="fw-bold mb-2">{% trans "جرب ما يلي:" %}</p>
-                                    <ul class="search-tip-list mb-0">
-                                        <li>{% trans "تحقق من الإملاء" %}</li>
-                                        <li>{% trans "استخدم كلمات مختلفة" %}</li>
-                                        <li>{% trans "استخدم كلمات أقل تحديداً" %}</li>
-                                        <li>{% trans "جرب البحث باللغة الإنجليزية" %}</li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <!-- عمليات بحث شائعة -->
-                            {% if popular_searches %}
-                                <div class="mb-4">
-                                    <p class="text-muted mb-2">{% trans "عمليات بحث شائعة:" %}</p>
-                                    <div class="suggestions-container">
-                                        {% for search_term in popular_searches %}
-                                            <a
-                                                href="?q={{ search_term|urlencode }}"
-                                                class="suggestion-tag bg-primary text-white"
-                                            >
-                                                {{ search_term }}
-                                            </a>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                            {% endif %}
-
-                            <a
-                                href="{% url 'products:product_list' %}"
-                                class="btn btn-primary"
-                            >
-                                <i class="fas fa-th-large me-1"></i> {% trans "تصفح جميع المنتجات" %}
-                            </a>
-                        </div>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-    {% else %}
-        <!-- عرض بدون بحث -->
-        <div class="card mb-5">
-            <div class="card-body text-center py-5">
-                <i class="fas fa-search fa-4x text-primary mb-4"></i>
-                <h2 class="h3 mb-3">
-                    {% trans "ابحث في منتجاتنا" %}
-                </h2>
-                <p class="text-muted mb-4">
-                    {% trans "استخدم نموذج البحث أعلاه للعثور على المنتجات التي تبحث عنها" %}
-                </p>
-
-                <!-- روابط سريعة -->
-                <div class="d-flex flex-wrap justify-content-center gap-2">
-                    <a href="{% url 'products:featured_products' %}" class="btn btn-outline-primary">
-                        <i class="fas fa-star me-1"></i> {% trans "المنتجات المميزة" %}
-                    </a>
-                    <a href="{% url 'products:new_products' %}" class="btn btn-outline-success">
-                        <i class="fas fa-certificate me-1"></i> {% trans "المنتجات الجديدة" %}
-                    </a>
-                    <a href="{% url 'products:special_offers' %}" class="btn btn-outline-danger">
-                        <i class="fas fa-tags me-1"></i> {% trans "العروض الخاصة" %}
-                    </a>
                 </div>
             </div>
-        </div>
-    {% endif %}
+        {% else %}
+            <!-- عرض بدون بحث -->
+            <div class="card mb-5">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-search fa-4x text-primary mb-4"></i>
+                    <h2 class="h3 mb-3">
+                        {% trans "ابحث في منتجاتنا" %}
+                    </h2>
+                    <p class="text-muted mb-4">
+                        {% trans "استخدم نموذج البحث أعلاه للعثور على المنتجات التي تبحث عنها" %}
+                    </p>
+
+                    <!-- روابط سريعة -->
+                    <div class="d-flex flex-wrap justify-content-center gap-2">
+                        <a href="{% url 'products:featured_products' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-star me-1"></i> {% trans "المنتجات المميزة" %}
+                        </a>
+                        <a href="{% url 'products:new_products' %}" class="btn btn-outline-success">
+                            <i class="fas fa-certificate me-1"></i> {% trans "المنتجات الجديدة" %}
+                        </a>
+                        <a href="{% url 'products:special_offers' %}" class="btn btn-outline-danger">
+                            <i class="fas fa-tags me-1"></i> {% trans "العروض الخاصة" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
 </div>
 
 <!-- JavaScript للفلاتر التلقائية -->
@@ -562,15 +941,38 @@
 document.addEventListener('DOMContentLoaded', function() {
     const filterForm = document.getElementById('filter-form');
     if (filterForm) {
-        const inputs = filterForm.querySelectorAll('input[type="checkbox"]');
+        const inputs = filterForm.querySelectorAll('input[type="checkbox"], input[type="number"]');
         const productsContainer = document.querySelector('.products-container');
 
         inputs.forEach(input => {
-            input.addEventListener('change', function() {
+            if (input.type === 'checkbox') {
+                input.addEventListener('change', function() {
+                    if (productsContainer) {
+                        productsContainer.classList.add('loading');
+                    }
+                    filterForm.submit();
+                });
+            }
+        });
+
+        // تطبيق فلتر السعر عند فقدان التركيز
+        const priceInputs = filterForm.querySelectorAll('input[type="number"]');
+        priceInputs.forEach(input => {
+            input.addEventListener('blur', function() {
                 if (productsContainer) {
                     productsContainer.classList.add('loading');
                 }
                 filterForm.submit();
+            });
+
+            // تطبيق عند الضغط على مفتاح Enter
+            input.addEventListener('keyup', function(event) {
+                if (event.key === 'Enter') {
+                    if (productsContainer) {
+                        productsContainer.classList.add('loading');
+                    }
+                    filterForm.submit();
+                }
             });
         });
 
@@ -585,6 +987,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
                 }
             });
+        });
+    }
+
+    // ترتيب المنتجات
+    const sortSelect = document.getElementById('sortSelect');
+    if (sortSelect) {
+        sortSelect.addEventListener('change', function() {
+            const sortForm = document.getElementById('sortForm');
+            document.getElementById('sort').value = this.value;
+            sortForm.submit();
         });
     }
 });

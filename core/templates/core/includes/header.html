@@ -1,7 +1,9 @@
 <!-- core/templates/core/includes/header.html -->
 {% load static %}
 {% load i18n %}
-{% get_current_language as CURRENT_LANGUAGE %}
+{#{% get_current_language as CURRENT_LANGUAGE %}#}
+{% get_current_language as LANGUAGE_CODE %}
+                   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.11.0/css/flag-icons.min.css"/>
 
 <!-- Modern Header -->
 <header class="modern-header" id="header">
@@ -16,7 +18,7 @@
                         {% if site_settings.logo %}
                             <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name|default:'ESCO' }}">
                         {% else %}
-                            <img src="{% static 'images/logo.png' %}" height="80" alt="ESCO">
+                            <img src="{% static 'images/logo1.png' %}" height="80" alt="ESCO">
                         {% endif %}
                     </a>
                 </div>
@@ -49,7 +51,7 @@
                         <ul class="dropdown-menu dropdown-menu-end">
                             {% if user.is_authenticated %}
                                 <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="fas fa-user-circle me-2"></i> {% trans "الملف الشخصي" %}</a></li>
-                                <li><a class="dropdown-item" href="{% url 'accounts:order_history' %}"><i class="fas fa-box me-2"></i> {% trans "طلباتي" %}</a></li>
+                                <li hidden><a class="dropdown-item" href="{% url 'accounts:order_history' %}"><i class="fas fa-box me-2"></i> {% trans "طلباتي" %}</a></li>
 {#                                {% if user.is_staff %}#}
 {#                                    <li><hr class="dropdown-divider"></li>#}
 {#                                    <li><a class="dropdown-item" href="{% url 'dashboard:index' %}"><i class="fas fa-tachometer-alt me-2"></i> {% trans "لوحة التحكم" %}</a></li>#}
@@ -116,7 +118,15 @@
                     <!-- Language Switcher -->
                     <div class="dropdown">
                         <button class="action-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-globe"></i>
+                            {% get_current_language as CURRENT_LANGUAGE %}
+                            {% if CURRENT_LANGUAGE == 'ar' %}
+                                <span class="fi fi-jo fis"></span>
+                            {% else %}
+                                <span class="fi fi-us fis"></span>
+                            {% endif %}
+                            <span class="d-none d-md-inline ms-2">
+                                {% if CURRENT_LANGUAGE == 'ar' %}العربية{% else %}English{% endif %}
+                            </span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
                             {% get_current_language as CURRENT_LANGUAGE %}
@@ -124,13 +134,41 @@
                             {% get_language_info_list for AVAILABLE_LANGUAGES as languages %}
                             {% for language in languages %}
                                 <li>
-                                    <a class="dropdown-item{% if language.code == CURRENT_LANGUAGE %} active{% endif %}" href="{% url 'core:set_language' language.code %}">
-                                        {{ language.name_local }}
-                                    </a>
+                                    <form action="{% url 'set_language' %}" method="post" style="display: inline;">
+                                        {% csrf_token %}
+                                        <!-- الحل: استخدام template logic لتنظيف المسار -->
+                                        {% if request.path|slice:":3" == "/ar" %}
+                                            <input name="next" type="hidden" value="{{ request.path|slice:"3:" }}"/>
+                                        {% elif request.path|slice:":4" == "/en/" %}
+                                            <input name="next" type="hidden" value="{{ request.path|slice:"3:" }}"/>
+                                        {% elif request.path|slice:":3" == "/en" %}
+                                            <input name="next" type="hidden" value="/"/>
+                                        {% else %}
+                                            <input name="next" type="hidden" value="{{ request.path }}"/>
+                                        {% endif %}
+
+                                        <input name="language" type="hidden" value="{{ language.code }}"/>
+                                        <button type="submit"
+                                                class="dropdown-item language-btn{% if language.code == CURRENT_LANGUAGE %} active{% endif %}">
+                        <span class="language-option">
+                            {% if language.code == 'ar' %}
+                                <span class="fi fi-jo me-2"></span>
+                            {% else %}
+                                <span class="fi fi-us me-2"></span>
+                            {% endif %}
+                            {{ language.name_local }}
+                        </span>
+                                            {% if language.code == CURRENT_LANGUAGE %}
+                                                <i class="fas fa-check text-primary ms-auto"></i>
+                                            {% endif %}
+                                        </button>
+                                    </form>
                                 </li>
                             {% endfor %}
                         </ul>
                     </div>
+
+
 
                     <!-- Dark Mode Toggle -->
                     {% if site_settings.enable_dark_mode %}
@@ -214,7 +252,7 @@
     {% if user.is_authenticated %}
         <div class="mobile-nav-list mt-3 pt-3 border-top">
             <a href="{% url 'accounts:profile' %}"><i class="fas fa-user-circle"></i>{% trans "الملف الشخصي" %}</a>
-            <a href="{% url 'accounts:order_history' %}"><i class="fas fa-box"></i>{% trans "طلباتي" %}</a>
+            <a href="{% url 'accounts:order_history' %}" hidden><i class="fas fa-box"></i>{% trans "طلباتي" %}</a>
 {#            {% if user.is_staff %}#}
 {#                <a href="{% url 'dashboard:index' %}"><i class="fas fa-tachometer-alt"></i>{% trans "لوحة التحكم" %}</a>#}
 {#            {% endif %}#}
@@ -399,7 +437,7 @@ html[dir="rtl"] .cart-dropdown::before {
     display: flex;
     justify-content: center;
     transition: all 0.3s ease;
-        border: 2px solid var(--bs-primary);
+    border: 1px solid var(--bs-primary);
 }
     html[dir="rtl"] .logo-wrapper1 {
     left: auto;
@@ -508,4 +546,101 @@ html[dir="rtl"] .nav-container {
     }
 }
 
+    /* Mobile Flag Fixes */
+@media (max-width: 768px) {
+    /* تكبير الأعلام في الموبايل */
+    .fi {
+        width: 1.5em !important;
+        height: 1.1em !important;
+    }
+
+    .fis {
+        width: 2em !important;
+        height: 1.5em !important;
+    }
+
+    /* تحسين أزرار اللغة للموبايل */
+    .language-btn {
+        padding: 1rem !important;
+        font-size: 1rem !important;
+        min-height: 50px;
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    /* تحسين dropdown في الموبايل */
+    .dropdown-menu {
+        min-width: 200px !important;
+        margin-top: 5px !important;
+    }
+
+    /* إخفاء النص في الزر الرئيسي على الشاشات الصغيرة جداً */
+    .action-btn .d-none.d-sm-inline {
+        display: none !important;
+    }
+
+    /* تكبير الزر الرئيسي */
+    .action-btn {
+        padding: 0.75rem !important;
+        min-width: 50px;
+        min-height: 50px;
+    }
+}
+
+/* تحسينات عامة */
+.language-btn {
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s ease;
+    touch-action: manipulation; /* تحسين اللمس */
+}
+
+.language-btn:hover,
+.language-btn:focus {
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
+    outline: none;
+}
+
+.language-btn.active {
+    background-color: var(--bs-primary);
+    color: white;
+}
+
+.language-btn.active .text-primary {
+    color: white !important;
+}
+
+.language-option {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+/* RTL Support */
+html[dir="rtl"] .language-btn {
+    text-align: right;
+}
+
+html[dir="rtl"] .me-2 {
+    margin-right: 0;
+    margin-left: 0.5rem;
+}
+
+html[dir="rtl"] .ms-2 {
+    margin-left: 0;
+    margin-right: 0.5rem;
+}
+
+html[dir="rtl"] .ms-auto {
+    margin-left: 0;
+    margin-right: auto;
+}
+
 </style>
+

@@ -58,6 +58,11 @@ urlpatterns = [
     path('products/', views.ProductListView.as_view(), name='dashboard_products'),
     path('products/create/', views.ProductFormView.as_view(), name='dashboard_product_create'),
     path('products/bulk-actions/', views.ProductBulkActionsView.as_view(), name='dashboard_product_bulk_actions'),
+    path('products/api/', views.ProductDataTableView.as_view(), name='dashboard_products_api'),
+
+    path('products/<str:product_id>/duplicate/',
+     views.products.duplicate_product,
+     name='dashboard_product_duplicate'),
 
     # إدارة الفئات
     path('products/categories/', views.CategoryListView.as_view(), name='dashboard_categories'),

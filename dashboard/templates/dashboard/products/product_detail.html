@@ -354,7 +354,7 @@
                 <i class="fa fa-edit me-1"></i> {% trans 'تعديل المنتج' %}
             </a>
             {% endif %}
-            <div class="dropdown">
+            <div class="dropdown" hidden>
                 <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="productActionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="fa fa-ellipsis-v"></i>
                 </button>
@@ -477,7 +477,7 @@
                                     {% endif %}
                                 </td>
                             </tr>
-                            <tr>
+                            <tr hidden>
                                 <th>{% trans 'الوسوم' %}</th>
                                 <td>
                                     {% for tag in product.tags.all %}
@@ -545,7 +545,7 @@
                                     {% endif %}
                                 </td>
                             </tr>
-                            <tr>
+                            <tr hidden>
                                 <th>{% trans 'الشحن' %}</th>
                                 <td>
                                     {% if product.requires_shipping %}
@@ -583,7 +583,7 @@
                         {% trans 'المتغيرات' %} <span class="badge bg-secondary">{{ variants.count }}</span>
                     </button>
                 </li>
-                <li class="nav-item" role="presentation">
+                <li class="nav-item" role="presentation" hidden>
                     <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button" role="tab" aria-controls="reviews" aria-selected="false">
                         {% trans 'التقييمات' %} <span class="badge bg-secondary">{{ reviews.count }}</span>
                     </button>
@@ -669,7 +669,7 @@
                             </div>
                             {% endif %}
 
-                            <div class="row mt-4">
+                            <div class="row mt-4" hidden>
                                 <div class="col-md-6">
                                     <h5>{% trans 'الأبعاد والوزن' %}</h5>
                                     <table class="table table-sm">
@@ -939,7 +939,7 @@
                         <div class="card-body product-content">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h4 class="mb-0">{% trans 'خصائص المنتج' %}</h4>
-                                <a href="{% url 'dashboard:dashboard_product_edit' product_id=product.id %}#attributes" class="btn btn-sm btn-primary">
+                                <a href="{% url 'dashboard:dashboard_product_edit' product_id=product.id %}#specifications" class="btn btn-sm btn-primary">
                                     <i class="fa fa-cog me-1"></i> {% trans 'إدارة الخصائص' %}
                                 </a>
                             </div>
@@ -981,7 +981,7 @@
         </div>
 
         <!-- المنتجات ذات الصلة -->
-        <div class="related-products">
+        <div class="related-products" hidden>
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h3 class="mb-0">{% trans 'المنتجات ذات الصلة' %}</h3>
                 <a href="{% url 'dashboard:dashboard_product_edit' product_id=product.id %}#advanced" class="btn btn-sm btn-primary">
@@ -1036,7 +1036,7 @@
     <!-- جانب المنتج -->
     <div class="col-lg-3">
         <!-- إحصائيات المبيعات -->
-        <div class="card shadow-sm mb-4">
+        <div class="card shadow-sm mb-4" hidden>
             <div class="card-header bg-light">
                 <h5 class="mb-0">{% trans 'إحصائيات المبيعات' %}</h5>
             </div>
@@ -1087,10 +1087,10 @@
                         <div class="sales-stat-value">{{ stock_info.available }}</div>
                     </div>
                     <div class="sales-stat-item">
-                        <div class="sales-stat-label">{% trans 'الكمية المحجوزة' %}</div>
-                        <div class="sales-stat-value">{{ stock_info.reserved }}</div>
+                        <div class="sales-stat-label">{% trans 'الحد الأدنى للمخزون' %}</div>
+                        <div class="sales-stat-value">{{ stock_info.min_stock_level }}</div>
                     </div>
-                    <div class="sales-stat-item">
+                    <div class="sales-stat-item" hidden>
                         <div class="sales-stat-label">{% trans 'إجمالي المخزون' %}</div>
                         <div class="sales-stat-value">{{ stock_info.total }}</div>
                     </div>
@@ -1137,15 +1137,15 @@
                         <i class="fa fa-edit me-1"></i> {% trans 'تعديل المنتج' %}
                     </a>
 
-                    <a href="#" class="btn btn-outline-secondary">
+                    <a href="{{ product.get_absolute_url }}" target="_blank" class="btn btn-outline-secondary">
                         <i class="fa fa-eye me-1"></i> {% trans 'معاينة في الموقع' %}
                     </a>
 
-                    <a href="#" class="btn btn-outline-secondary">
+                    <a href="#" class="btn btn-outline-secondary" hidden>
                         <i class="fa fa-barcode me-1"></i> {% trans 'طباعة الباركود' %}
                     </a>
 
-                    <a href="#" class="btn btn-outline-info">
+                    <a href="#" class="btn btn-outline-info" hidden>
                         <i class="fa fa-chart-line me-1"></i> {% trans 'تقرير المبيعات' %}
                     </a>
 

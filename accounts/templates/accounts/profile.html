@@ -238,7 +238,7 @@
                     </div>
 
                     <div class="profile-stats">
-                        <div class="stat-item">
+                        <div class="stat-item" hidden>
                             <div class="stat-value">{{ user.total_orders }}</div>
                             <div class="stat-label">{% trans "الطلبات" %}</div>
                         </div>
@@ -246,7 +246,7 @@
                             <div class="stat-value">{{ user.date_joined|date:"M Y" }}</div>
                             <div class="stat-label">{% trans "تاريخ الانضمام" %}</div>
                         </div>
-                        <div class="stat-item">
+                        <div class="stat-item" hidden>
                             <div class="stat-value">{{ user.total_spent|floatformat:2 }}</div>
                             <div class="stat-label">{% trans "د.أ" %}</div>
                         </div>
@@ -265,7 +265,7 @@
                                 <i class="fas fa-map-marker-alt me-2"></i>{% trans "العناوين" %}
                             </a>
                         </li>
-                        <li class="nav-item">
+                        <li class="nav-item" hidden>
                             <a class="nav-link" href="{% url 'accounts:order_history' %}">
                                 <i class="fas fa-box me-2"></i>{% trans "الطلبات" %}
                             </a>
@@ -275,7 +275,7 @@
                                 <i class="fas fa-lock me-2"></i>{% trans "كلمة المرور" %}
                             </a>
                         </li>
-                        <li class="nav-item">
+                        <li class="nav-item" hidden>
                             <a class="nav-link" href="{% url 'accounts:notification_preferences' %}">
                                 <i class="fas fa-bell me-2"></i>{% trans "الإشعارات" %}
                             </a>
@@ -359,7 +359,6 @@
                                                 <option value="">{% trans "اختر..." %}</option>
                                                 <option value="M" {% if user.gender == 'M' %}selected{% endif %}>{% trans "ذكر" %}</option>
                                                 <option value="F" {% if user.gender == 'F' %}selected{% endif %}>{% trans "أنثى" %}</option>
-                                                <option value="O" {% if user.gender == 'O' %}selected{% endif %}>{% trans "آخر" %}</option>
                                             </select>
                                             {% if form.gender.errors %}
                                                 <div class="text-danger mt-1">
@@ -548,7 +547,7 @@
                                     </div>
                                 </div>
 
-                                <div class="card mb-3 card-hover">
+                                <div class="card mb-3 card-hover" hidden>
                                     <div class="card-body">
                                         <h5 class="card-title">{% trans "الإشعارات" %}</h5>
                                         <p class="card-text text-muted">{% trans "إدارة تفضيلات الإشعارات" %}</p>

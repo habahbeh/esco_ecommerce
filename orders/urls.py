@@ -15,4 +15,8 @@ urlpatterns = [
 
     # تتبع الطلب - Track order
     path('track/', views.TrackOrderView.as_view(), name='track_order'),
+
+    # إلغاء الطلب - Cancel order
+    path('cancel/<uuid:order_id>/', views.cancel_order, name='cancel_order'),
+
 ]

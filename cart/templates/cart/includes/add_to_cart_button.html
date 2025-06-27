@@ -76,6 +76,21 @@
         <!-- JavaScript لتحديث معرف المتغير والسعر عند الاختيار -->
         <script>
             document.addEventListener('DOMContentLoaded', function() {
+
+                // تحديث عناصر السلة بالقيمة الحالية من الخادم
+    const cartCount = {{ cart_count|default:0 }};
+    console.log("التهيئة الأولية لعدادات السلة:", cartCount);
+
+    // تحديث جميع العناصر
+    document.querySelectorAll('.cart-badge').forEach(badge => {
+        badge.textContent = cartCount;
+        badge.style.display = cartCount > 0 ? 'block' : 'none';
+    });
+
+    document.querySelectorAll('.cart-count').forEach(element => {
+        element.textContent = cartCount;
+    });
+
                 // اختيار اللون
                 const colorOptions = document.querySelectorAll('.color-option');
                 colorOptions.forEach(option => {

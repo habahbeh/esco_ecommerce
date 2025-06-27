@@ -91,7 +91,7 @@ class CheckoutSessionAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at', 'expires_at', 'completed_at')
     fieldsets = (
         (_('معلومات أساسية'), {
-            'fields': ('id', 'user', 'cart', 'order', 'session_key')
+            'fields': ( 'user', 'cart', 'order', 'session_key')
         }),
         (_('معلومات العميل'), {
             'fields': ('email', 'phone_number', 'notes')

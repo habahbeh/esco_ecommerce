@@ -5,6 +5,7 @@ Updated URLs configuration for products app
 
 from django.urls import path
 from django.http import JsonResponse
+from django.urls import re_path
 
 # Import product views (بعد دمج category_views.py في product_views.py)
 from .views.product_views import (
@@ -116,7 +117,9 @@ urlpatterns = [
 
     # قوائم المنتجات الخاصة
     # path('categories/', CategoryListView.as_view(), name='category_list'),  # تم تحديثها لاستخدام CategoryListView من product_views.py
-    path('category/<slug:category_slug>/', ProductListView.as_view(), name='category_products'),
+    # path('category/<slug:category_slug>/', ProductListView.as_view(), name='category_products'),
+    re_path(r'category/(?P<category_slug>[-\w\u0600-\u06FF]+)/', ProductListView.as_view(), name='category_products'),
+
     path('featured/', FeaturedProductsView.as_view(), name='featured_products'),
     path('new/', NewProductsView.as_view(), name='new_products'),
     path('bestsellers/', BestSellersView.as_view(), name='best_sellers'),
@@ -127,7 +130,9 @@ urlpatterns = [
     path('tag/<slug:tag_slug>/', TagProductsView.as_view(), name='tag_products'),
 
     # تفاصيل المنتج
-    path('<slug:slug>/', ProductDetailView.as_view(), name='product_detail'),
+    # path('<slug:slug>/', ProductDetailView.as_view(), name='product_detail'),
+    re_path(r'products/(?P<slug>[-\w\u0600-\u06FF]+)/$', ProductDetailView.as_view(), name='product_detail'),
+
     path('variant/<int:variant_id>/', ProductVariantDetailView.as_view(), name='variant_detail'),
 
     # URLs التقييمات

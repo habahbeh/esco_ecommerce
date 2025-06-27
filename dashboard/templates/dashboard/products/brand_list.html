@@ -316,17 +316,7 @@
                             {% endif %}
                         </div>
 
-                        <div class="brand-products-count">
-                            {{ brand.products_count }} {% trans 'منتج' %}
-                        </div>
-
-                        {% if brand.country %}
-                        <div class="brand-info">
-                            <i class="fa fa-map-marker-alt"></i> {{ brand.country }}
-                            {% if brand.city %}, {{ brand.city }}{% endif %}
-                        </div>
-                        {% endif %}
-
+                       
                         {% if brand.website %}
                         <div class="brand-info">
                             <i class="fa fa-globe"></i> <a href="{{ brand.website }}" target="_blank" dir="ltr">{{ brand.website|truncatechars:25 }}</a>
@@ -379,9 +369,6 @@
                             <tr>
                                 <th style="width: 60px;"></th>
                                 <th>{% trans 'العلامة التجارية' %}</th>
-                                <th>{% trans 'البلد' %}</th>
-                                <th>{% trans 'الموقع الإلكتروني' %}</th>
-                                <th>{% trans 'المنتجات' %}</th>
                                 <th>{% trans 'الحالة' %}</th>
                                 <th>{% trans 'الإجراءات' %}</th>
                             </tr>
@@ -409,24 +396,7 @@
                                     <div class="text-muted small">{{ brand.name_en }}</div>
                                     {% endif %}
                                 </td>
-                                <td>
-                                    {% if brand.country %}
-                                    {{ brand.country }}
-                                    {% if brand.city %}, {{ brand.city }}{% endif %}
-                                    {% else %}
-                                    <span class="text-muted">--</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if brand.website %}
-                                    <a href="{{ brand.website }}" target="_blank" dir="ltr" class="small">{{ brand.website|truncatechars:30 }}</a>
-                                    {% else %}
-                                    <span class="text-muted">--</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <span class="badge bg-info text-light">{{ brand.products_count }}</span>
-                                </td>
+
                                 <td>
                                     {% if brand.is_active %}
                                     <span class="badge bg-success">{% trans 'نشطة' %}</span>

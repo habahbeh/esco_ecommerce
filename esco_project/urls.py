@@ -10,7 +10,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import TemplateView, RedirectView
 from django.contrib.sitemaps.views import sitemap
-from django.views.i18n import set_language, JavaScriptCatalog
+# from django.views.i18n import set_language, JavaScriptCatalog
 from django.conf.urls.i18n import i18n_patterns
 
 # Sitemaps (يمكن تفعيلها لاحقاً)
@@ -30,10 +30,10 @@ urlpatterns = [
 
     # Language and internationalization
     path('i18n/', include('django.conf.urls.i18n')),
-    path('set-language/', set_language, name='set_language'),
+    # path('set-language/', set_language, name='set_language'),
 
     # JavaScript translations
-    path('jsi18n/', JavaScriptCatalog.as_view(), name='javascript-catalog'),
+    # path('jsi18n/', JavaScriptCatalog.as_view(), name='javascript-catalog'),
 
     # API endpoints (لا تحتاج ترجمة)
     path('api/', include([

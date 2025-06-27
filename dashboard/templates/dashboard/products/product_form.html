@@ -100,12 +100,12 @@
                                 <i class="fa fa-sitemap me-1"></i> {% trans 'المتغيرات' %}
                             </a>
                         </li>
-                        <li class="nav-item" role="presentation">
+                        <li class="nav-item" role="presentation" hidden>
                             <a class="nav-link" id="advanced-tab" data-bs-toggle="tab" href="#advanced" role="tab" aria-controls="advanced" aria-selected="false">
                                 <i class="fa fa-cogs me-1"></i> {% trans 'إعدادات متقدمة' %}
                             </a>
                         </li>
-                        <li class="nav-item" role="presentation">
+                        <li class="nav-item" role="presentation" hidden>
                             <a class="nav-link" id="seo-tab" data-bs-toggle="tab" href="#seo" role="tab" aria-controls="seo" aria-selected="false">
                                 <i class="fa fa-search me-1"></i> {% trans 'SEO' %}
                             </a>
@@ -124,9 +124,9 @@
                                         {{ form.name }}
                                         <div class="form-text">{% trans 'اسم المنتج الرئيسي (باللغة العربية)' %}</div>
                                         {% if form.name.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ form.name.errors }}
-                                        </div>
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.name.errors }}
+                                            </div>
                                         {% endif %}
                                     </div>
                                     <div class="col-md-6 mb-3">
@@ -155,22 +155,58 @@
                                 <div class="row">
                                     <div class="col-md-6 mb-3 required-field">
                                         {{ form.category.label_tag }}
-                                        {{ form.category }}
+                                        <select name="{{ form.category.html_name }}"
+                                                id="{{ form.category.id_for_label }}"
+                                                class="form-select select2-with-search" required>
+                                            <option value="">{% trans 'اختر الفئة...' %}</option>
+                                            {% for category in form.category.field.queryset %}
+                                                {% if category.level == 0 %}
+                                                    <option value="{{ category.id }}"
+                                                            {% if form.category.value|stringformat:'s' == category.id|stringformat:'s' %}selected{% endif %}>
+                                                        {{ category.name }}
+                                                    </option>
+                                                    {% for child in category.get_children %}
+                                                        <option value="{{ child.id }}"
+                                                                {% if form.category.value|stringformat:'s' == child.id|stringformat:'s' %}selected{% endif %}>
+                                                            &nbsp;&nbsp;&nbsp;&nbsp;{{ child.name }}
+                                                        </option>
+                                                        {% for grandchild in child.get_children %}
+                                                            <option value="{{ grandchild.id }}"
+                                                                    {% if form.category.value|stringformat:'s' == grandchild.id|stringformat:'s' %}selected{% endif %}>
+                                                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ grandchild.name }}
+                                                            </option>
+                                                        {% endfor %}
+                                                    {% endfor %}
+                                                {% endif %}
+                                            {% endfor %}
+                                        </select>
                                         <div class="form-text">{% trans 'اختر الفئة المناسبة للمنتج' %}</div>
                                         {% if form.category.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ form.category.errors }}
-                                        </div>
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.category.errors }}
+                                            </div>
                                         {% endif %}
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         {{ form.brand.label_tag }}
-                                        {{ form.brand }}
+                                        <select id="{{ form.brand.id_for_label }}" name="{{ form.brand.html_name }}"
+                                                class="form-select select2">
+                                            <option value="">{% trans 'اختر العلامة التجارية...' %}</option>
+                                            {% for choice in form.brand.field.choices %}
+                                                {% if choice.0 %}
+                                                    <option value="{{ choice.0 }}"
+                                                            {% if form.brand.value|stringformat:'s' == choice.0|stringformat:'s' %}selected{% endif %}>
+                                                        {{ choice.1 }}
+                                                    </option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                        <div class="form-text">{% trans 'يمكنك ترك هذا الحقل فارغًا إذا لم يكن للمنتج علامة تجارية' %}</div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="form-section">
+                            <div class="form-section" hidden>
                                 <h5 class="form-section-title">{% trans 'الوسوم والتصنيفات' %}</h5>
                                 <div class="mb-3">
                                     {{ form.tags.label_tag }}
@@ -184,315 +220,275 @@
                                 </div>
                             </div>
 
+
                             <div class="form-section">
                                 <h5 class="form-section-title">{% trans 'إعدادات المنتج' %}</h5>
                                 <div class="row mb-3">
                                     <div class="col-md-6 mb-3">
                                         {{ form.status.label_tag }}
-                                        {{ form.status }}
+                                        <select name="{{ form.status.html_name }}" id="{{ form.status.id_for_label }}"
+                                                class="form-select select2">
+                                            {% for choice in form.status.field.choices %}
+                                                <option value="{{ choice.0 }}"
+                                                        {% if form.status.value == choice.0 %}selected{% endif %}>
+                                                    {{ choice.1 }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
                                         <div class="form-text">
                                             {% trans 'المنتجات المنشورة ستظهر مباشرةً في الموقع' %}
                                         </div>
                                     </div>
-                                    <div class="col-md-6 mb-3">
-                                        {{ form.condition.label_tag }}
-                                        {{ form.condition }}
-                                    </div>
                                 </div>
 
-                                <div class="row">
-                                    <div class="col-md-3 mb-3">
-                                        <div class="form-check form-check-lg">
-                                            {{ form.is_active }}
-                                            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
-                                                {{ form.is_active.label }}
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3 mb-3">
-                                        <div class="form-check form-check-lg">
-                                            {{ form.is_featured }}
-                                            <label class="form-check-label" for="{{ form.is_featured.id_for_label }}">
-                                                {{ form.is_featured.label }}
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3 mb-3">
-                                        <div class="form-check form-check-lg">
-                                            {{ form.is_new }}
-                                            <label class="form-check-label" for="{{ form.is_new.id_for_label }}">
-                                                {{ form.is_new.label }}
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3 mb-3">
-                                        <div class="form-check form-check-lg">
-                                            {{ form.is_best_seller }}
-                                            <label class="form-check-label" for="{{ form.is_best_seller.id_for_label }}">
-                                                {{ form.is_best_seller.label }}
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
+                                <!-- خيارات العرض والتصنيف -->
+                                <div class="row mb-3">
+    <div class="col-12">
+        <h6 class="text-muted mb-3">{% trans 'خيارات العرض والتصنيف' %}</h6>
+        <div class="row">
+            <!-- نشط -->
+            <div class="col-md-3 mb-3">
+                <div class="form-check form-switch feature-switch">
+                    {{ form.is_active }}
+                    <label class="form-check-label"
+                           for="{{ form.is_active.id_for_label }}">
+                        <i class="feature-icon fas fa-check-circle text-success"></i>
+                        <span class="feature-text">{% trans 'نشط' %}</span>
+                    </label>
+                </div>
+            </div>
 
-                                <div class="row">
-                                    <div class="col-md-4 mb-3">
-                                        <div class="form-check form-check-lg">
-                                            {{ form.is_digital }}
-                                            <label class="form-check-label" for="{{ form.is_digital.id_for_label }}">
-                                                {{ form.is_digital.label }}
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4 mb-3">
-                                        <div class="form-check form-check-lg">
-                                            {{ form.requires_shipping }}
-                                            <label class="form-check-label" for="{{ form.requires_shipping.id_for_label }}">
-                                                {{ form.requires_shipping.label }}
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4 mb-3">
-                                        <div class="form-check form-check-lg">
-                                            {{ form.allow_reviews }}
-                                            <label class="form-check-label" for="{{ form.allow_reviews.id_for_label }}">
-                                                {{ form.allow_reviews.label }}
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
+            <!-- مميز -->
+            <div class="col-md-3 mb-3">
+                <div class="form-check form-switch feature-switch">
+                    {{ form.is_featured }}
+                    <label class="form-check-label"
+                           for="{{ form.is_featured.id_for_label }}">
+                        <i class="feature-icon fas fa-star text-warning"></i>
+                        <span class="feature-text">{{ form.is_featured.label }}</span>
+                    </label>
+                </div>
+            </div>
 
-                                <!-- إضافة حقل عرض السعر -->
-                                <div class="row">
-                                    <div class="col-md-4 mb-3">
-                                        <div class="form-check form-check-lg">
-                                            {{ form.show_price }}
-                                            <label class="form-check-label" for="{{ form.show_price.id_for_label }}">
-                                                {% trans 'عرض السعر' %}
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
+            <!-- جديد -->
+            <div class="col-md-3 mb-3">
+                <div class="form-check form-switch feature-switch">
+                    {{ form.is_new }}
+                    <label class="form-check-label"
+                           for="{{ form.is_new.id_for_label }}">
+                        <i class="feature-icon fas fa-certificate text-primary"></i>
+                        <span class="feature-text">{{ form.is_new.label }}</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- الأكثر مبيعًا -->
+            <div class="col-md-3 mb-3">
+                <div class="form-check form-switch feature-switch">
+                    {{ form.is_best_seller }}
+                    <label class="form-check-label"
+                           for="{{ form.is_best_seller.id_for_label }}">
+                        <i class="feature-icon fas fa-fire text-danger"></i>
+                        <span class="feature-text">{{ form.is_best_seller.label }}</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- عرض السعر -->
+            <div class="col-md-3 mb-3">
+                <div class="form-check form-switch feature-switch">
+                    {{ form.show_price }}
+                    <label class="form-check-label"
+                           for="{{ form.show_price.id_for_label }}">
+                        <i class="feature-icon fas fa-tag text-info"></i>
+                        <span class="feature-text">{% trans 'عرض السعر' %}</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
                             </div>
                         </div>
 
                         <!-- الصور -->
                         <div class="tab-pane fade" id="images" role="tabpanel" aria-labelledby="images-tab">
                             <div class="form-section">
-                                <h5 class="form-section-title">{% trans 'صور المنتج' %}</h5>
-                                <p>{% trans 'أضف صوراً عالية الجودة للمنتج. الصورة الأولى ستكون الصورة الرئيسية.' %}</p>
+                                <h5 class="form-section-title mb-3">{% trans 'صور المنتج' %}</h5>
 
-                                <div class="image-preview-container">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="upload-info flex-grow-1">
+                                        <div class="text-muted ">
+                                            <i class="fa fa-info-circle me-1"></i>
+                                            {% trans 'أضف صوراً عالية الجودة للمنتج. الصورة المحددة كرئيسية ستظهر أولاً في الموقع.' %}
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-primary ms-3" id="add-image-btn">
+                                        <i class="fa fa-upload me-1"></i> {% trans 'رفع صور' %}
+                                    </button>
+                                </div>
+
+                                <div class="images-dropzone mb-3">
+                                    <div class="dropzone-message text-center p-4">
+                                        <i class="fa fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                                        <h6>{% trans 'اسحب وأفلت الصور هنا' %}</h6>
+                                        <p class="text-muted small mb-0">{% trans 'أو انقر على زر "رفع صور" لتحديد الملفات' %}</p>
+                                    </div>
+                                </div>
+
+                                <div class="image-preview-container" id="image-previews">
                                     <!-- الصور الحالية -->
                                     {% for image in images %}
-                                    <div class="image-preview-item {% if image.is_primary %}is-primary{% endif %}">
-                                        <img src="{{ image.image.url }}" alt="{{ image.alt_text|default:product.name }}">
-                                        <div class="image-preview-actions">
-                                            <button type="button" class="btn-make-primary" data-image-id="{{ image.id }}" title="{% trans 'تعيين كصورة رئيسية' %}">
-                                                <i class="fa fa-star {% if image.is_primary %}text-warning{% else %}text-muted{% endif %}"></i>
-                                            </button>
-                                            <button type="button" class="btn-remove-image" data-image-id="{{ image.id }}" title="{% trans 'حذف الصورة' %}">
-                                                <i class="fa fa-trash text-danger"></i>
-                                            </button>
+                                        <div class="image-preview-item {% if image.is_primary %}is-primary{% endif %}"
+                                             data-image-id="{{ image.id }}">
+                                            <div class="image-preview-inner">
+                                                <img src="{{ image.image.url }}"
+                                                     alt="{{ image.alt_text|default:product.name }}">
+
+                                                <div class="image-preview-overlay">
+                                                    <div class="image-preview-actions">
+                                                        <button type="button"
+                                                                class="btn btn-light btn-sm rounded-circle btn-make-primary"
+                                                                data-image-id="{{ image.id }}"
+                                                                title="{% trans 'تعيين كصورة رئيسية' %}">
+                                                            <i class="fa fa-star {% if image.is_primary %}text-warning{% else %}text-muted{% endif %}"></i>
+                                                        </button>
+                                                        <button type="button"
+                                                                class="btn btn-light btn-sm rounded-circle btn-remove-image"
+                                                                data-image-id="{{ image.id }}"
+                                                                title="{% trans 'حذف الصورة' %}">
+                                                            <i class="fa fa-trash text-danger"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                {% if image.is_primary %}
+                                                    <div class="image-preview-badge">
+                                                        <i class="fa fa-check-circle me-1"></i>{% trans 'رئيسية' %}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="image-meta mt-1 small">
+                                                <span class="text-muted">{{ image.image.name|truncatechars:20 }}</span>
+                                            </div>
+                                            <input type="hidden" name="image_ids[]" value="{{ image.id }}">
                                         </div>
-                                        {% if image.is_primary %}
-                                        <div class="image-preview-badge">{% trans 'الصورة الرئيسية' %}</div>
-                                        {% endif %}
-                                        <input type="hidden" name="image_ids[]" value="{{ image.id }}">
-                                        <input type="hidden" name="primary_image" id="primary_image" value="{{ image.id|default:'' }}">
-                                    </div>
                                     {% endfor %}
-
-                                    <!-- زر إضافة صورة جديدة -->
-                                    <div class="image-preview-placeholder" id="add-image-btn">
-                                        <div class="text-center">
-                                            <i class="fa fa-plus fa-2x mb-2"></i>
-                                            <div>{% trans 'إضافة صورة' %}</div>
-                                        </div>
-                                    </div>
                                 </div>
 
-                                <input type="file" id="product_images" name="product_images" multiple accept="image/*" class="d-none">
-
-                                <div class="alert alert-info mt-3">
-                                    <i class="fa fa-info-circle me-2"></i>
-                                    {% trans 'للحصول على أفضل النتائج، استخدم صور بدقة عالية (على الأقل 800×800 بكسل) بخلفية بيضاء.' %}
-                                </div>
-                            </div>
-
-                            <div class="form-section">
-                                <h5 class="form-section-title">{% trans 'الفيديو والمعرض ثلاثي الأبعاد' %}</h5>
-                                <div class="mb-3">
-                                    {{ form.video_url.label_tag }}
-                                    {{ form.video_url }}
-                                    <div class="form-text">
-                                        {% trans 'يمكنك إضافة رابط فيديو من YouTube أو Vimeo (اختياري)' %}
-                                    </div>
-                                </div>
-                                <div class="form-check mb-3">
-                                    {{ form.has_360_view }}
-                                    <label class="form-check-label" for="{{ form.has_360_view.id_for_label }}">
-                                        {{ form.has_360_view.label }}
-                                    </label>
-                                </div>
+                                <!-- حقل مخفي للصورة الرئيسية -->
+                                <input type="hidden" name="primary_image" id="primary_image"
+                                       value="{{ images.0.id|default:'' }}">
+                                <!-- حقل إدخال الملفات (مخفي) -->
+                                <input type="file" id="product_images" name="product_images" multiple accept="image/*"
+                                       class="d-none">
                             </div>
                         </div>
 
                         <!-- التسعير والمخزون -->
-                        <div class="tab-pane fade" id="pricing" role="tabpanel" aria-labelledby="pricing-tab">
-                            <div class="form-section">
-                                <h5 class="form-section-title">{% trans 'التسعير' %}</h5>
-                                <div class="row">
-                                    <div class="col-md-4 mb-3 required-field">
-                                        {{ form.base_price.label_tag }}
-                                        <div class="input-group price-field">
-                                            {{ form.base_price }}
-                                            <span class="input-group-text">د.ا</span>
-                                        </div>
-                                        <div class="form-text">{% trans 'السعر الحالي للمنتج' %}</div>
-                                        {% if form.base_price.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ form.base_price.errors }}
-                                        </div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-4 mb-3">
-                                        {{ form.compare_price.label_tag }}
-                                        <div class="input-group price-field">
-                                            {{ form.compare_price }}
-                                            <span class="input-group-text">د.ا</span>
-                                        </div>
-                                        <div class="form-text">{% trans 'السعر القديم أو الأصلي قبل الخصم' %}</div>
-                                    </div>
-                                    <div class="col-md-4 mb-3">
-                                        {{ form.cost.label_tag }}
-                                        <div class="input-group price-field">
-                                            {{ form.cost }}
-                                            <span class="input-group-text">د.ا</span>
-                                        </div>
-                                        <div class="form-text">{% trans 'تكلفة المنتج (للاستخدام الداخلي)' %}</div>
-                                    </div>
-                                </div>
+<div class="tab-pane fade" id="pricing" role="tabpanel" aria-labelledby="pricing-tab">
+    <div class="form-section pricing-inventory-section">
+        <h5 class="form-section-title mb-4">{% trans 'التسعير والمخزون' %}</h5>
 
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        {{ form.tax_rate.label_tag }}
-                                        {{ form.tax_rate }}
-                                        <div class="form-text">{% trans 'نسبة ضريبة القيمة المضافة (16% افتراضياً)' %}</div>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        {{ form.tax_class.label_tag }}
-                                        {{ form.tax_class }}
-                                        <div class="form-text">{% trans 'فئة الضريبة المطبقة على المنتج (اختياري)' %}</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="form-section">
-                                <h5 class="form-section-title">{% trans 'المخزون' %}</h5>
-                                <div class="row">
-                                    <div class="col-md-4 mb-3">
-                                        {{ form.stock_quantity.label_tag }}
-                                        {{ form.stock_quantity }}
-                                    </div>
-                                    <div class="col-md-4 mb-3">
-                                        {{ form.stock_status.label_tag }}
-                                        {{ form.stock_status }}
-                                    </div>
-                                    <div class="col-md-4 mb-3">
-                                        {{ form.min_stock_level.label_tag }}
-                                        {{ form.min_stock_level }}
-                                        <div class="form-text">{% trans 'سيتم التنبيه عند انخفاض المخزون عن هذا الحد' %}</div>
-                                    </div>
-                                </div>
-
-                                <!-- إضافة حقول المخزون المتقدمة -->
-                                <div class="row">
-                                    <div class="col-md-4 mb-3">
-                                        <label for="id_reserved_quantity">{% trans 'الكمية المحجوزة' %}</label>
-                                        <input type="number" name="reserved_quantity" class="form-control" id="id_reserved_quantity"
-                                               value="{{ product.reserved_quantity|default:'0' }}" {% if not form.instance.pk %}disabled{% endif %}>
-                                        <div class="form-text">{% trans 'الكمية المحجوزة في طلبات معلقة' %}</div>
-                                    </div>
-                                    <div class="col-md-4 mb-3">
-                                        <label for="id_max_order_quantity">{% trans 'الحد الأقصى للطلب' %}</label>
-                                        <input type="number" name="max_order_quantity" class="form-control" id="id_max_order_quantity"
-                                               value="{{ product.max_order_quantity|default:'100' }}">
-                                        <div class="form-text">{% trans 'أقصى كمية يمكن طلبها في مرة واحدة' %}</div>
-                                    </div>
-                                    <div class="col-md-4 mb-3">
-                                        <div class="form-check form-check-lg">
-                                            <input type="checkbox" name="track_inventory" class="form-check-input" id="id_track_inventory"
-                                                   {% if product.track_inventory %}checked{% endif %}>
-                                            <label class="form-check-label" for="id_track_inventory">
-                                                {% trans 'تتبع المخزون' %}
-                                            </label>
-                                        </div>
-                                        <div class="form-text">{% trans 'تفعيل/إلغاء تتبع المخزون' %}</div>
-                                    </div>
-                                </div>
-
-                                <!-- إضافة قسم الطلب المسبق -->
-                                <h5 class="form-section-title mt-4">{% trans 'الطلب المسبق' %}</h5>
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <div class="form-check form-check-lg">
-                                            <input type="checkbox" name="available_for_preorder" class="form-check-input" id="id_available_for_preorder"
-                                                   {% if product.available_for_preorder %}checked{% endif %}>
-                                            <label class="form-check-label" for="id_available_for_preorder">
-                                                {% trans 'متاح للطلب المسبق' %}
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label for="id_preorder_message">{% trans 'رسالة الطلب المسبق' %}</label>
-                                        <input type="text" name="preorder_message" class="form-control" id="id_preorder_message"
-                                               value="{{ product.preorder_message|default:'' }}" maxlength="200">
-                                        <div class="form-text">{% trans 'رسالة تظهر للعملاء عند الطلب المسبق' %}</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="form-section">
-                                <h5 class="form-section-title">{% trans 'الأبعاد والشحن' %}</h5>
-                                <div class="row">
-                                    <div class="col-md-3 mb-3">
-                                        {{ form.weight.label_tag }}
-                                        {{ form.weight }}
-                                    </div>
-                                    <div class="col-md-3 mb-3">
-                                        {{ form.length.label_tag }}
-                                        {{ form.length }}
-                                    </div>
-                                    <div class="col-md-3 mb-3">
-                                        {{ form.width.label_tag }}
-                                        {{ form.width }}
-                                    </div>
-                                    <div class="col-md-3 mb-3">
-                                        {{ form.height.label_tag }}
-                                        {{ form.height }}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- إضافة قسم الضمان -->
-                            <div class="form-section">
-                                <h5 class="form-section-title">{% trans 'الضمان' %}</h5>
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="id_warranty_period">{% trans 'فترة الضمان' %}</label>
-                                        <input type="text" name="warranty_period" class="form-control" id="id_warranty_period"
-                                               value="{{ product.warranty_period|default:'' }}" maxlength="50">
-                                        <div class="form-text">{% trans 'مثال: سنة واحدة، 6 أشهر' %}</div>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label for="id_warranty_details">{% trans 'تفاصيل الضمان' %}</label>
-                                        <textarea name="warranty_details" class="form-control" id="id_warranty_details" rows="3">{{ product.warranty_details|default:'' }}</textarea>
-                                        <div class="form-text">{% trans 'معلومات إضافية عن الضمان' %}</div>
-                                    </div>
-                                </div>
-                            </div>
+        <!-- الصف الأول: التسعير -->
+        <div class="row g-4 mb-4">
+            <!-- السعر الأساسي -->
+            <div class="col-md-6">
+                <div class="pricing-card">
+                    <div class="pricing-card-icon">
+                        <i class="fas fa-tag"></i>
+                    </div>
+                    <div class="pricing-card-content">
+                        {{ form.base_price.label_tag }}
+                        <div class="input-group">
+                            {{ form.base_price }}
+                            <span class="input-group-text">د.ا</span>
                         </div>
+                        <div class="form-text">{% trans 'السعر الحالي للمنتج' %}</div>
+                        {% if form.base_price.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.base_price.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- تكلفة المنتج -->
+            <div class="col-md-6">
+                <div class="pricing-card">
+                    <div class="pricing-card-icon">
+                        <i class="fas fa-money-bill"></i>
+                    </div>
+                    <div class="pricing-card-content">
+                        {{ form.cost.label_tag }}
+                        <div class="input-group">
+                            {{ form.cost }}
+                            <span class="input-group-text">د.ا</span>
+                        </div>
+                        <div class="form-text">{% trans 'تكلفة المنتج (للاستخدام الداخلي)' %}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- الصف الثاني: المخزون -->
+        <div class="row g-4">
+            <!-- الكمية المتوفرة -->
+            <div class="col-md-4">
+                <div class="inventory-card">
+                    <div class="inventory-card-icon">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                    <div class="inventory-card-content">
+                        {{ form.stock_quantity.label_tag }}
+                        {{ form.stock_quantity }}
+                        <div class="form-text">{% trans 'الكمية المتوفرة في المخزون' %}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- حالة المخزون -->
+            <div class="col-md-4">
+    <div class="inventory-card">
+        <div class="inventory-card-icon">
+            <i class="fas fa-warehouse"></i>
+        </div>
+        <div class="inventory-card-content">
+            {{ form.stock_status.label_tag }}
+            <select name="{{ form.stock_status.html_name }}" id="{{ form.stock_status.id_for_label }}" class="form-select select2-stock-status">
+                {% for choice in form.stock_status.field.choices %}
+                <option value="{{ choice.0 }}" {% if form.stock_status.value == choice.0 %}selected{% endif %}
+                        data-icon="{% if choice.0 == 'in_stock' %}fa-check-circle{% elif choice.0 == 'out_of_stock' %}fa-times-circle{% elif choice.0 == 'pre_order' %}fa-clock{% else %}fa-ban{% endif %}">
+                    {{ choice.1 }}
+                </option>
+                {% endfor %}
+            </select>
+            <div class="form-text">{% trans 'حالة توفر المنتج' %}</div>
+        </div>
+    </div>
+</div>
+
+            <!-- الحد الأدنى للمخزون -->
+            <div class="col-md-4">
+                <div class="inventory-card">
+                    <div class="inventory-card-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="inventory-card-content">
+                        {{ form.min_stock_level.label_tag }}
+                        {{ form.min_stock_level }}
+                        <div class="form-text">{% trans 'التنبيه عند انخفاض المخزون عن هذا الحد' %}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
                         <!-- تبويب جديد للخصومات -->
                         <div class="tab-pane fade" id="discount" role="tabpanel" aria-labelledby="discount-tab">
@@ -507,8 +503,11 @@
                                     <div class="col-md-6 mb-3">
                                         <label for="id_discount_percentage">{% trans 'نسبة الخصم' %}</label>
                                         <div class="input-group">
-                                            <input type="number" name="discount_percentage" class="form-control" id="id_discount_percentage"
-                                                   value="{{ product.discount_percentage|default:'0' }}" min="0" max="100" step="0.01">
+                                            <input type="number" name="discount_percentage" id="id_discount_percentage"
+                                                   class="form-control" step="0.01" min="0" max="100"
+                                                   value="
+                                                           {% if form.discount_percentage.value != None %}{{ form.discount_percentage.value }}{% else %}0{% endif %}"
+                                                   oninput="if(this.value === '') this.value = 0;">
                                             <span class="input-group-text">%</span>
                                         </div>
                                         <div class="form-text">{% trans 'نسبة الخصم من 0 إلى 100%' %}</div>
@@ -516,8 +515,11 @@
                                     <div class="col-md-6 mb-3">
                                         <label for="id_discount_amount">{% trans 'مبلغ الخصم' %}</label>
                                         <div class="input-group">
-                                            <input type="number" name="discount_amount" class="form-control" id="id_discount_amount"
-                                                   value="{{ product.discount_amount|default:'0' }}" min="0" step="0.01">
+                                            <input type="number" name="discount_amount" id="id_discount_amount"
+                                                   class="form-control" step="0.01" min="0"
+                                                   value="
+                                                           {% if form.discount_amount.value != None %}{{ form.discount_amount.value }}{% else %}0{% endif %}"
+                                                   oninput="if(this.value === '') this.value = 0;">
                                             <span class="input-group-text">د.ا</span>
                                         </div>
                                         <div class="form-text">{% trans 'مبلغ الخصم الثابت' %}</div>
@@ -717,44 +719,35 @@
                                                 </thead>
                                                 <tbody id="attributes-table-body">
                                                 {% for attr in product_attributes %}
-                                                    <tr data-attr-id="{{ attr.id }}">
-                                                        <td>{{ attr.name }}</td>
-                                                        <td><span
-                                                                class="badge bg-secondary">{{ attr.attribute_type }}</span>
-                                                        </td>
-                                                        <td>
-                                                            {% if form.initial %}
-                                                                {% with field_name='attribute_'|add:attr.id|stringformat:"s" %}
-                                                                    {% if field_name in form.initial %}
-                                                                        <input type="text" name="{{ field_name }}"
-                                                                               value="{{ form.initial|get_item:field_name }}"
-                                                                               class="form-control form-control-sm">
-                                                                    {% else %}
-                                                                        <input type="text" name="{{ field_name }}"
-                                                                               value=""
-                                                                               class="form-control form-control-sm">
-                                                                    {% endif %}
-                                                                {% endwith %}
-                                                            {% else %}
-                                                                <input type="text" name="attribute_{{ attr.id }}"
-                                                                       value="" class="form-control form-control-sm">
-                                                            {% endif %}
-                                                        </td>
-                                                        <td>
-                                                            <button type="button"
-                                                                    class="btn btn-sm btn-danger delete-attr-btn"
-                                                                    data-attr-id="{{ attr.id }}">
-                                                                <i class="fa fa-trash"></i>
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                {% empty %}
-                                                    <tr id="no-attributes-row">
-                                                        <td colspan="4" class="text-center text-muted py-3">
-                                                            <i class="fa fa-info-circle me-1"></i> {% trans 'لا توجد خصائص إضافية للمنتج. أضف خصائص باستخدام النموذج أعلاه.' %}
-                                                        </td>
-                                                    </tr>
-                                                {% endfor %}
+<tr data-attr-id="{{ attr.id }}">
+    <td>{{ attr.name }}</td>
+    <td><span class="badge bg-secondary">{{ attr.attribute_type }}</span></td>
+    <td>
+        {% if product %}
+            {% for attr_value in product.attribute_values.all %}
+                {% if attr_value.attribute.id == attr.id %}
+                    <input type="text" name="attribute_{{ attr.id }}" value="{{ attr_value.value }}" class="form-control form-control-sm">
+                {% endif %}
+            {% empty %}
+                <input type="text" name="attribute_{{ attr.id }}" value="" class="form-control form-control-sm">
+            {% endfor %}
+        {% else %}
+            <input type="text" name="attribute_{{ attr.id }}" value="" class="form-control form-control-sm">
+        {% endif %}
+    </td>
+    <td>
+        <button type="button" class="btn btn-sm btn-danger delete-attr-btn" data-attr-id="{{ attr.id }}">
+            <i class="fa fa-trash"></i>
+        </button>
+    </td>
+</tr>
+{% empty %}
+<tr id="no-attributes-row">
+    <td colspan="4" class="text-center text-muted py-3">
+        <i class="fa fa-info-circle me-1"></i> {% trans 'لا توجد خصائص إضافية للمنتج. أضف خصائص باستخدام النموذج أعلاه.' %}
+    </td>
+</tr>
+{% endfor %}
                                                 </tbody>
                                             </table>
                                         </div>
@@ -939,7 +932,7 @@
                             </label>
                         </div>
 
-                        <div class="form-check form-switch">
+                        <div class="form-check form-switch" >
                             <input class="form-check-input" type="checkbox" id="visibility_switch"
                                    {% if form.initial.is_active or product.is_active %}checked{% endif %}>
                             <label class="form-check-label" for="visibility_switch">
@@ -985,7 +978,7 @@
                     </div>
                 </div>
             </div>
-
+        {% if product %}
             <!-- الإجراءات السريعة -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-light">
@@ -993,27 +986,27 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        {% if product %}
-                        <a href="#" class="btn btn-outline-primary">
-                            <i class="fa fa-eye me-1"></i> {% trans 'معاينة المنتج' %}
-                        </a>
-                        <a href="#" class="btn btn-outline-secondary">
-                            <i class="fa fa-clone me-1"></i> {% trans 'نسخ المنتج' %}
-                        </a>
-                        <a href="#" class="btn btn-outline-info">
-                            <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة متغير' %}
-                        </a>
-                        {% endif %}
+
+                            <!-- معاينة المنتج - يفتح في نافذة جديدة -->
+                            <a href="{{ product.get_absolute_url }}" target="_blank" class="btn btn-outline-primary">
+                                <i class="fa fa-eye me-1"></i> {% trans 'معاينة المنتج' %}
+                            </a>
+
+                            <!-- نسخ المنتج - يتطلب تنفيذ URL خاص بنسخ المنتج -->
+                            <a href="{% url 'dashboard:dashboard_product_duplicate' product_id=product.id %}" class="btn btn-outline-secondary" >
+                                <i class="fa fa-clone me-1"></i> {% trans 'نسخ المنتج' %}
+                            </a>
+
                     </div>
                 </div>
             </div>
-
+        {% endif %}
             <!-- إحصائيات المنتج -->
-            <div class="card shadow-sm mb-4">
+            <div class="card shadow-sm mb-4" hidden>
                 <div class="card-header bg-light">
                     <h5 class="mb-0">{% trans 'إحصائيات المنتج' %}</h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body" >
                     {% if product %}
                     <div class="mb-3">
                         <div class="d-flex justify-content-between mb-2">
@@ -1040,6 +1033,8 @@
         </div>
     </div>
 </form>
+
+
 {% endblock %}
 
 {% block extra_js %}

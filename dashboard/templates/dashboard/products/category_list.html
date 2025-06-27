@@ -203,6 +203,11 @@
         background-color: #e9ecef;
         text-decoration: none;
     }
+    /* تمييز الفئات المطابقة للبحث */
+    .search-matched {
+        background-color: rgba(var(--bs-primary-rgb), 0.1) !important;
+        border-left: 3px solid var(--bs-primary) !important;
+    }
 </style>
 {% endblock %}
 
@@ -281,7 +286,10 @@
                     <div class="search-container mb-2 mb-md-0">
                         <form method="GET" id="search-form">
                             <div class="input-group">
-                                <input type="text" name="q" class="form-control" placeholder="{% trans 'بحث عن فئة...' %}" value="{{ query }}">
+                                <input type="text" name="q" class="form-control"
+                                       placeholder="{% trans 'بحث عن فئة...' %}" value="{{ query }}">
+                                <!-- إضافة حقل مخفي لحفظ وضع العرض -->
+                                <input type="hidden" name="view_mode" id="current_view_mode" value="{{ view_mode }}">
                                 <button class="btn" type="submit">
                                     <i class="fa fa-search"></i>
                                 </button>
@@ -353,9 +361,7 @@
                                     <span class="badge bg-warning text-dark category-badge">{% trans 'مميز' %}</span>
                                     {% endif %}
 
-                                    <span class="badge bg-info text-light category-badge">
-                                        {{ category.products_count }} {% trans 'منتج' %}
-                                    </span>
+
                                 </div>
                                 <div class="category-actions">
                                     <a href="{% url 'dashboard:dashboard_category_edit' category_id=category.id %}" class="btn btn-sm btn-outline-secondary" title="{% trans 'تعديل' %}">
@@ -393,9 +399,7 @@
                                             <span class="badge bg-warning text-dark category-badge">{% trans 'مميز' %}</span>
                                             {% endif %}
 
-                                            <span class="badge bg-info text-light category-badge">
-                                                {{ child.products_count }} {% trans 'منتج' %}
-                                            </span>
+
                                         </div>
                                         <div class="category-actions">
                                             <a href="{% url 'dashboard:dashboard_category_edit' category_id=child.id %}" class="btn btn-sm btn-outline-secondary" title="{% trans 'تعديل' %}">
@@ -432,9 +436,7 @@
                                                     <span class="badge bg-warning text-dark category-badge">{% trans 'مميز' %}</span>
                                                     {% endif %}
 
-                                                    <span class="badge bg-info text-light category-badge">
-                                                        {{ grandchild.products_count }} {% trans 'منتج' %}
-                                                    </span>
+
                                                 </div>
                                                 <div class="category-actions">
                                                     <a href="{% url 'dashboard:dashboard_category_edit' category_id=grandchild.id %}" class="btn btn-sm btn-outline-secondary" title="{% trans 'تعديل' %}">
@@ -510,9 +512,6 @@
                             <span class="badge bg-warning text-dark">{% trans 'مميز' %}</span>
                             {% endif %}
 
-                            <span class="badge bg-info">
-                                {{ category.products_count }} {% trans 'منتج' %}
-                            </span>
                         </div>
 
                         {% if category.description %}
@@ -648,6 +647,67 @@
                 }
             }
         });
+
+
+
+        // توسيع الفئات التي تحتوي على نتائج البحث
+    {% if query and matched_ids %}
+        // توسيع الفئات التي تحتوي على نتائج بحث
+        {% for id in matched_ids %}
+            // العثور على جميع الفئات الأم لهذه الفئة
+            expandParentsOfCategory({{ id }});
+        {% endfor %}
+
+        // تمييز الفئات المطابقة للبحث
+        {% for id in matched_ids %}
+            $('[data-category-id="{{ id }}"]').addClass('search-matched');
+        {% endfor %}
+    {% endif %}
+
+    function expandParentsOfCategory(categoryId) {
+        // العثور على الفئة
+        let categoryElement = $('[data-category-id="' + categoryId + '"]');
+
+        // إذا وجدت الفئة
+        if (categoryElement.length) {
+            // توسيع الفئة
+            let childrenContainer = $('#children-' + categoryId);
+            if (childrenContainer.length) {
+                childrenContainer.show();
+                categoryElement.find('.category-expand-icon').addClass('open');
+                categoryElement.addClass('active');
+            }
+
+            // البحث عن الفئة الأم
+            let parentItem = categoryElement.closest('.category-tree-item');
+            let parentList = parentItem.closest('.category-tree-children');
+
+            if (parentList.length) {
+                // استخراج معرف الفئة الأم من معرف القائمة
+                let parentId = parentList.attr('id').replace('children-', '');
+
+                // توسيع الفئة الأم أيضًا
+                if (parentId) {
+                    expandParentsOfCategory(parentId);
+                }
+            }
+        }
+    }
+
+
+    $('#tree-view-btn').click(function() {
+    $('#current_view_mode').val('tree');
+    saveViewMode('tree');
+    applyViewMode('tree');
+});
+
+$('#grid-view-btn').click(function() {
+    $('#current_view_mode').val('grid');
+    saveViewMode('grid');
+    applyViewMode('grid');
+});
+
+
     });
 </script>
 {% endblock %}
