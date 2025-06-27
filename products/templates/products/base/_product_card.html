@@ -46,16 +46,16 @@
 {#            </div>#}
 {#            {% endif %}#}
         </div>
-        <div class="product-actions1">
+        <div class="product-actions">
             <a href="{% url 'products:product_detail' product.slug %}" class="btn btn-primary">{% trans "عرض التفاصيل" %}</a>
-            {% if product.in_stock %}
-            <form action="{% url 'cart:add_to_cart' product.id %}" method="post" class="d-inline add-to-cart-form">
-                {% csrf_token %}
-                <input type="hidden" name="product_id" value="{{ product.id }}">
-                <input type="hidden" name="quantity" value="1">
-                <button type="submit" class="btn btn-outline-primary">{% trans "إضافة للسلة" %}</button>
-            </form>
-            {% endif %}
+{#            {% if product.in_stock %}#}
+{#            <form action="{% url 'cart:add_to_cart' product.id %}" method="post" class="d-inline add-to-cart-form1">#}
+{#                {% csrf_token %}#}
+{#                <input type="hidden" name="product_id" value="{{ product.id }}">#}
+{#                <input type="hidden" name="quantity" value="1">#}
+{#                <button type="submit" class="btn btn-outline-primary">{% trans "إضافة للسلة" %}</button>#}
+{#            </form>#}
+{#            {% endif %}#}
 
         </div>
     </div>

@@ -67,4 +67,7 @@ urlpatterns = [
 
     # سجل النشاطات - Activity log
     path('admin/activities/', views.UserActivityListView.as_view(), name='admin_activity_list'),
+
+    path('addresses/<int:pk>/set-default/', views.SetDefaultAddressView.as_view(), name='set_default_address'),
+
 ]

@@ -1073,40 +1073,7 @@
     </div>
 </section>
 
-<!-- Categories Section -->
-<section class="categories-section">
-    <div class="container">
-        <div class="section-title text-center mb-5" data-aos="fade-up">
-            <h2 class="display-4 fw-bold mb-3">{% trans "تصفح حسب الفئة" %}</h2>
-            <p class="lead text-muted">{% trans "اكتشف مجموعتنا الواسعة من المنتجات الصناعية" %}</p>
-        </div>
 
-        <div class="category-grid">
-            {% for category in main_categories|slice:":6" %}
-                <div class="category-card" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
-                    {% if category.image %}
-                        <img src="{{ category.image.url }}" class="category-image" alt="{{ category.name }}">
-                    {% else %}
-                        <img src="{% static 'images/category-default.jpg' %}" class="category-image" alt="{{ category.name }}">
-                    {% endif %}
-                    <div class="category-overlay">
-                        <h3 class="category-name">{{ category.name }}</h3>
-                        <p class="category-count">{{ category.products.count }} {% trans "منتج" %}</p>
-                        <a href="{% url 'products:category_products' category.slug %}" class="category-btn">
-                            {% trans "استكشف المنتجات" %} <i class="fas fa-arrow-right ms-2"></i>
-                        </a>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-
-        <div class="text-center mt-5">
-            <a href="{% url 'products:product_list' %}" class="btn btn-primary btn-lg">
-                {% trans "المنتجات" %} <i class="fas fa-th-large ms-2"></i>
-            </a>
-        </div>
-    </div>
-</section>
 
         <!-- CTA Section -->
 <section class="cta-section">
@@ -1129,8 +1096,43 @@
     </div>
 </section>
 
+    <!-- Categories Section -->
+<section class="categories-section">
+    <div class="container">
+        <div class="section-title text-center mb-5" data-aos="fade-up">
+            <h2 class="display-4 fw-bold mb-3">{% trans "تصفح حسب الفئة" %}</h2>
+            <p class="lead text-muted">{% trans "اكتشف مجموعتنا الواسعة من المنتجات الصناعية" %}</p>
+        </div>
+
+        <div class="category-grid">
+            {% for category in main_categories|slice:":6" %}
+                <div class="category-card" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
+                    {% if category.image %}
+                        <img src="{{ category.image.url }}" class="category-image" alt="{{ category.name }}">
+                    {% else %}
+                        <img src="{% static 'images/category-default.jpg' %}" class="category-image" alt="{{ category.name }}">
+                    {% endif %}
+                    <div class="category-overlay">
+                        <h3 class="category-name">{{ category.name }}</h3>
+                        <p class="category-count">{{ category.products.count }} {% trans "منتج" %}</p>
+                        <a href="{% url 'products:category_products' category.slug %}" class="category-btn" style="color: white">
+                            {% trans "استكشف المنتجات" %} <i class="fas fa-arrow-right ms-2"></i>
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="text-center mt-5">
+            <a href="{% url 'products:product_list' %}" class="btn btn-primary btn-lg">
+                {% trans "المنتجات" %} <i class="fas fa-th-large ms-2"></i>
+            </a>
+        </div>
+    </div>
+</section>
+
 <!-- Products Section -->
-<section class="products-section">
+<section class="products-section" hidden>
     <div class="container">
         <div class="section-title text-center mb-4" data-aos="fade-up">
             <h2 class="display-4 fw-bold mb-3">{% trans "المنتجات المميزة" %}</h2>

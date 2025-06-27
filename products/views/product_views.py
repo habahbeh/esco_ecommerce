@@ -430,8 +430,10 @@ class SpecialOffersView(BaseProductListView):
         category_view.request = self.request
         context['category_tree'] = category_view.build_category_tree()
 
-        # Calculate total savings
+        # الحصول على المنتجات مع العروض النشطة
         products = self.get_queryset()
+
+        # حساب إجمالي التوفير
         total_savings = sum(
             (product.base_price - product.current_price)
             for product in products
@@ -440,8 +442,49 @@ class SpecialOffersView(BaseProductListView):
         context['total_savings'] = total_savings
         context['products_count'] = products.count()
 
-        return context
+        # إضافة جديدة: الحصول على أقرب تاريخ انتهاء للعروض
+        from django.utils import timezone
+        now = timezone.now()
 
+        # تحضير البيانات الإحصائية للعروض
+        offers_stats = {
+            'ending_today_count': 0,
+            'ending_this_week_count': 0,
+            'high_discount_count': 0,
+        }
+
+        # البحث عن أقرب تاريخ انتهاء من بين جميع المنتجات النشطة
+        nearest_expiry = None
+        one_day_later = now + timezone.timedelta(days=1)
+        one_week_later = now + timezone.timedelta(days=7)
+
+        for product in products:
+            # حساب إحصائيات العروض
+            if product.discount_end:
+                if product.discount_end <= one_day_later:
+                    offers_stats['ending_today_count'] += 1
+                elif product.discount_end <= one_week_later:
+                    offers_stats['ending_this_week_count'] += 1
+
+            if product.discount_percentage >= 50:
+                offers_stats['high_discount_count'] += 1
+
+            # تحديد أقرب تاريخ انتهاء مستقبلي
+            if product.discount_end and product.discount_end > now:
+                if nearest_expiry is None or product.discount_end < nearest_expiry:
+                    nearest_expiry = product.discount_end
+
+        # إضافة تاريخ الانتهاء الأقرب إلى السياق
+        if nearest_expiry:
+            context['nearest_expiry_date'] = nearest_expiry
+        else:
+            # إذا لم يكن هناك تاريخ انتهاء، استخدم تاريخًا افتراضيًا (أسبوع من الآن)
+            context['nearest_expiry_date'] = now + timezone.timedelta(days=7)
+
+        # إضافة إحصائيات العروض
+        context['offers_stats'] = offers_stats
+
+        return context
 
 class TagProductsView(BaseProductListView):
     """

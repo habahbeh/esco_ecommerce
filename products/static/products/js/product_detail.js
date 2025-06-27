@@ -529,6 +529,29 @@ function showNotification(type, message) {
 }
 
 // تحديث عدد العناصر في السلة
+<<<<<<< HEAD
+// function updateCartCount() {
+//     // تحديث عدد العناصر في السلة في الهيدر
+//     const cartBadge = document.querySelector('.cart-count');
+//     if (cartBadge) {
+//         const currentCount = parseInt(cartBadge.textContent) || 0;
+//         cartBadge.textContent = currentCount + 1;
+//     }
+// }
+
+function updateCartCount(count) {
+    // 1. تحديث جميع علامات السلة في الصفحة
+    const cartBadges = document.querySelectorAll('.cart-badge');
+    cartBadges.forEach(badge => {
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'block' : 'none';
+    });
+
+    // 2. تحديث أي عناصر أخرى تعرض عدد العناصر
+    const cartCountElements = document.querySelectorAll('.cart-count');
+    cartCountElements.forEach(element => {
+        element.textContent = count;
+=======
 function updateCartCount(count) {
     // تحديث عدد العناصر في السلة في الهيدر
     const cartBadges = document.querySelectorAll('.cart-badge');
@@ -539,6 +562,7 @@ function updateCartCount(count) {
         } else {
             badge.style.display = 'none';
         }
+>>>>>>> main
     });
 }
 
@@ -636,8 +660,44 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log("بيانات الاستجابة:", data);
 
                 if (data.success) {
+<<<<<<< HEAD
+                    btn.innerHTML = '<i class="fas fa-check me-2"></i>تمت الإضافة بنجاح';
+
+                    // تحديث عدد العناصر في السلة
+                    const cartBadge = document.querySelector('.cart-count');
+                    if (cartBadge) {
+                        cartBadge.textContent = data.cart_count;
+                    }
+
+                    updateCartCount(data.cart_count);
+
+                    // إظهار إشعار النجاح
+                    let productName = document.querySelector('.product-title').textContent;
+                    let variantInfo = '';
+
+                    // إضافة معلومات المتغير إذا كان محدداً
+                    if (selectedVariantId.value) {
+                        const selectedVariant = document.querySelector(`.variant-row[data-variant-id="${selectedVariantId.value}"]`);
+                        if (selectedVariant) {
+                            const color = selectedVariant.querySelector('td:nth-child(2)')?.textContent.trim();
+                            const size = selectedVariant.querySelector('td:nth-child(3)')?.textContent.trim();
+                            if (color || size) {
+                                variantInfo = ` (${color}${size ? ' - ' + size : ''})`;
+                            }
+                        }
+                    }
+
+                    showNotification('success', `تمت إضافة "${productName}${variantInfo}" إلى السلة بنجاح`);
+
+                    // إعادة تعيين الزر بعد ثانيتين
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.innerHTML = originalText;
+                    }, 2000);
+=======
                     showNotification('success', data.message || 'تمت إضافة المنتج إلى السلة');
                     updateCartCount(data.cart_count);
+>>>>>>> main
                 } else {
                     showNotification('error', data.message || 'حدث خطأ أثناء إضافة المنتج للسلة');
                 }

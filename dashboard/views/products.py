@@ -2,7 +2,7 @@
 # عروض إدارة المنتجات والتصنيفات
 
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.contrib import messages
@@ -17,6 +17,10 @@ import json
 from django.views.decorators.http import require_POST
 from dashboard.forms.products import ProductForm
 from django.utils.translation import gettext as _
+from datetime import datetime
+import re
+
+from decimal import Decimal, InvalidOperation
 
 
 from products.models import (
@@ -28,6 +32,153 @@ from .dashboard import DashboardAccessMixin
 
 
 # ========================= إدارة المنتجات =========================
+
+class ProductDataTableView(DashboardAccessMixin, View):
+    """واجهة برمجية لجدول المنتجات بالتحميل الجزئي"""
+
+    def post(self, request):
+        # استلام معلمات DataTables
+        draw = int(request.POST.get('draw', 1))
+        start = int(request.POST.get('start', 0))
+        length = int(request.POST.get('length', 25))
+        search_value = request.POST.get('search[value]', '')
+        order_column = request.POST.get('order[0][column]', 7)  # العمود 7 هو التاريخ
+        order_dir = request.POST.get('order[0][dir]', 'desc')
+
+        # معلمات التصفية الإضافية
+        category_filter = request.POST.get('category', '')
+        brand_filter = request.POST.get('brand', '')
+        status_filter = request.POST.get('status', '')
+
+        # بناء الاستعلام
+        queryset = Product.objects.select_related('category', 'brand')
+
+        # تطبيق البحث
+        if search_value:
+            queryset = queryset.filter(
+                Q(name__icontains=search_value) |
+                Q(sku__icontains=search_value) |
+                Q(description__icontains=search_value) |
+                Q(search_keywords__icontains=search_value)
+            )
+
+        # تطبيق التصفية
+        if category_filter:
+            category = Category.objects.get(id=category_filter)
+            # الحصول على جميع الفئات الفرعية
+            subcategories = category.get_all_children(include_self=True)
+            queryset = queryset.filter(category__in=subcategories)
+
+        if brand_filter:
+            queryset = queryset.filter(brand_id=brand_filter)
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+
+        # تطبيق فلتر السعر
+        price_min = request.POST.get('price_min', '')
+        price_max = request.POST.get('price_max', '')
+
+        if price_min:
+            try:
+                price_min = float(price_min)
+                queryset = queryset.filter(base_price__gte=price_min)
+            except (ValueError, TypeError):
+                pass
+
+        if price_max:
+            try:
+                price_max = float(price_max)
+                queryset = queryset.filter(base_price__lte=price_max)
+            except (ValueError, TypeError):
+                pass
+
+        # تطبيق فلتر المخزون
+        stock_filter = request.POST.get('stock', '')
+        if stock_filter:
+            if stock_filter == 'in_stock':
+                queryset = queryset.filter(stock_status='in_stock')
+            elif stock_filter == 'out_of_stock':
+                queryset = queryset.filter(stock_status='out_of_stock')
+            elif stock_filter == 'low_stock':
+                # يمكن تعديل هذا حسب كيفية تعريف "كمية منخفضة" في النظام
+                queryset = queryset.filter(
+                    stock_status='in_stock',
+                    low_stock=True
+                )
+            elif stock_filter == 'pre_order':
+                queryset = queryset.filter(stock_status='pre_order')
+
+        # تطبيق فلتر التاريخ
+        date_from = request.POST.get('date_from', '')
+        date_to = request.POST.get('date_to', '')
+
+        if date_from:
+            try:
+                # تحويل التاريخ إلى كائن date
+                from_date = datetime.strptime(date_from, '%Y-%m-%d').date()
+                # إضافة فلتر من بداية اليوم
+                queryset = queryset.filter(created_at__date__gte=from_date)
+            except (ValueError, TypeError):
+                pass
+
+        if date_to:
+            try:
+                # تحويل التاريخ إلى كائن date
+                to_date = datetime.strptime(date_to, '%Y-%m-%d').date()
+                # إضافة فلتر حتى نهاية اليوم
+                queryset = queryset.filter(created_at__date__lte=to_date)
+            except (ValueError, TypeError):
+                pass
+
+        # إجمالي السجلات قبل التصفية
+        total_records = Product.objects.count()
+        # إجمالي السجلات بعد التصفية
+        total_filtered = queryset.count()
+
+        # تطبيق الترتيب
+        order_columns = [
+            'id', 'name', 'sku', 'category__name',
+            'base_price', 'stock_quantity', 'status', 'created_at'
+        ]
+        if int(order_column) < len(order_columns):
+            order_field = order_columns[int(order_column)]
+            if order_dir == 'desc':
+                order_field = f"-{order_field}"
+            queryset = queryset.order_by(order_field)
+
+        # تطبيق التقسيم
+        queryset = queryset[start:start + length]
+
+        # إعداد البيانات للعرض
+        data = []
+        for product in queryset:
+            data.append({
+                'id': str(product.id),
+                'name': product.name,
+                'sku': product.sku,
+                'category_name': product.category.name if product.category else '',
+                'brand_name': product.brand.name if product.brand else '',
+                'current_price': str(product.current_price),
+                'compare_price': str(product.compare_price) if product.compare_price else '',
+                'available_quantity': product.available_quantity,
+                'low_stock': product.low_stock,
+                'stock_status': product.stock_status,
+                'status': product.status,
+                'is_active': product.is_active,
+                'is_featured': product.is_featured,
+                'created_at': product.created_at.strftime('%Y/%m/%d'),
+                'published_at': product.published_at.strftime('%Y/%m/%d') if product.published_at else '',
+                'has_image': product.default_image is not None,
+                'image_url': product.default_image.image.url if product.default_image else ''
+            })
+
+        # إرجاع النتيجة بتنسيق DataTables
+        return JsonResponse({
+            'draw': draw,
+            'recordsTotal': total_records,
+            'recordsFiltered': total_filtered,
+            'data': data
+        })
 
 class ProductListView(DashboardAccessMixin, View):
     """عرض قائمة المنتجات مع البحث والتصفية"""
@@ -135,6 +286,7 @@ class ProductDetailView(DashboardAccessMixin, View):
         stock_info = {
             'available': product.available_quantity,
             'reserved': product.reserved_quantity,
+            'min_stock_level': product.min_stock_level,
             'total': product.stock_quantity,
             'status': product.stock_status,
             'low_stock': product.low_stock,
@@ -581,7 +733,7 @@ class ProductDeleteView(DashboardAccessMixin, View):
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء حذف المنتج: {str(e)}')
 
-        return redirect('dashboard_products')
+        return redirect('dashboard:dashboard_products')
 
 
 class ProductBulkActionsView(DashboardAccessMixin, View):
@@ -635,21 +787,69 @@ class CategoryListView(DashboardAccessMixin, View):
     """عرض قائمة الفئات"""
 
     def get(self, request):
-        # الحصول على جميع الفئات مرتبة حسب المستوى
-        categories = Category.objects.all().order_by('level', 'sort_order', 'name')
+        # استرجاع معلمة البحث
+        query = request.GET.get('q', '')
+
+        # تحديد إذا كان المستخدم يستخدم العرض الشجري أو الشبكي
+        view_mode = request.GET.get('view_mode', 'tree')
+
+        # تعريف context أولاً
+        context = {
+            'query': query,
+            'view_mode': view_mode,
+        }
+
+        if query:
+            # في حالة البحث
+            from django.db.models import Q
+
+            if view_mode == 'grid':
+                # للعرض الشبكي، نعرض فقط الفئات التي تطابق معايير البحث
+                categories = Category.objects.filter(
+                    Q(name__icontains=query) |
+                    Q(name_en__icontains=query) |
+                    Q(description__icontains=query)
+                ).distinct()
+            else:
+                # للعرض الشجري، نعرض الفئات التي تطابق معايير البحث مع فئاتها الأم
+                matched_categories = Category.objects.filter(
+                    Q(name__icontains=query) |
+                    Q(name_en__icontains=query) |
+                    Q(description__icontains=query)
+                ).distinct()
+
+                # إضافة علامة خاصة للفئات المطابقة للبحث
+                for category in matched_categories:
+                    category.matched_by_search = True
+
+                # استرجاع الفئات الجذرية مع الفئات الفرعية المطابقة
+                categories = Category.objects.filter(
+                    level=0  # فقط الفئات الجذرية
+                ).distinct()
+
+                # إعداد قائمة بجميع الفئات المطابقة ومعرفاتها
+                matched_ids = list(matched_categories.values_list('id', flat=True))
+
+                # الآن يمكننا استخدام context بأمان
+                context['matched_categories'] = matched_categories
+                context['matched_ids'] = matched_ids
+        else:
+            # استرجاع جميع الفئات مرتبة حسب الهيكل الشجري
+            categories = Category.objects.all().order_by('tree_id', 'lft')
 
         # الإحصائيات
         stats = {
-            'total': categories.count(),
-            'active': categories.filter(is_active=True).count(),
-            'featured': categories.filter(is_featured=True).count(),
-            'root_categories': categories.filter(level=0).count(),
+            'total': Category.objects.count(),
+            'active': Category.objects.filter(is_active=True).count(),
+            'featured': Category.objects.filter(is_featured=True).count(),
+            'root_categories': Category.objects.filter(level=0).count(),
         }
 
-        context = {
+        # تحديث context بباقي البيانات
+        context.update({
             'categories': categories,
             'stats': stats,
-        }
+        })
 
         return render(request, 'dashboard/products/category_list.html', context)
 
@@ -676,20 +876,17 @@ class CategoryFormView(DashboardAccessMixin, View):
 
         return render(request, 'dashboard/products/category_form.html', context)
 
-    def post(self, request, product_id=None):
-        # استرجاع المنتج إذا كنا في وضع التحرير
-        if product_id:
-            product = get_object_or_404(Product, id=product_id)
-            form_title = 'تحديث المنتج'
-            images = product.images.all().order_by('sort_order')
-            variants = product.variants.all()
+    def post(self, request, category_id=None):
+        """معالجة طلب إنشاء أو تحديث الفئة"""
+        # استرجاع الفئة إذا كنا في وضع التحرير
+        if category_id:
+            category = get_object_or_404(Category, id=category_id)
+            form_title = 'تحديث الفئة'
         else:
-            product = None
-            form_title = 'إنشاء منتج جديد'
-            images = []
-            variants = []
+            category = None
+            form_title = 'إنشاء فئة جديدة'
 
-        # جمع كل البيانات من النموذج
+        # جمع البيانات من النموذج
         form_data = request.POST.copy()
         form_files = request.FILES.copy()
 
@@ -697,306 +894,193 @@ class CategoryFormView(DashboardAccessMixin, View):
         errors = []
 
         # التحقق من الحقول المطلوبة
-
-        # 1. اسم المنتج (مطلوب، على الأقل حرفين)
         name = form_data.get('name', '').strip()
         if not name:
-            errors.append("اسم المنتج مطلوب")
+            errors.append("اسم الفئة مطلوب")
         elif len(name) < 2:
-            errors.append("اسم المنتج يجب أن يكون على الأقل حرفين")
+            errors.append("اسم الفئة يجب أن يكون على الأقل حرفين")
 
-        # 2. الفئة (مطلوبة)
-        category_id = form_data.get('category')
-        if not category_id:
-            errors.append("يجب اختيار فئة للمنتج")
+        # طباعة بيانات النموذج للتشخيص
+        print("بيانات النموذج المستلمة:")
+        for key, value in form_data.items():
+            print(f"{key}: {value}")
 
-        # 3. السعر الأساسي (مطلوب، أكبر من 0.01)
-        try:
-            base_price_str = form_data.get('base_price', '0').replace(',', '.')
-            base_price = Decimal(base_price_str)
-            if base_price < Decimal('0.01'):
-                errors.append("السعر الأساسي يجب أن يكون أكبر من صفر")
-        except (ValueError, InvalidOperation):
-            errors.append("صيغة السعر الأساسي غير صحيحة")
-
-        # 4. الوصف الكامل (مطلوب، على الأقل 20 حرفًا)
+        # التحقق من الوصف إذا تم إدخاله
         description = form_data.get('description', '').strip()
-        if not description:
-            errors.append("وصف المنتج مطلوب")
-        elif len(description) < 20:
-            errors.append("وصف المنتج يجب أن يكون على الأقل 20 حرفًا")
+        if description and len(description) < 10:
+            errors.append("الوصف يجب أن يكون على الأقل 10 أحرف أو تركه فارغًا")
 
-        # 5. الوصف المختصر (اختياري، لكن إذا أُدخل يجب أن يكون على الأقل 10 أحرف)
-        short_description = form_data.get('short_description', '').strip()
-        if short_description and len(short_description) < 10:
-            errors.append("الوصف المختصر يجب أن يكون على الأقل 10 أحرف أو تركه فارغًا")
+        description_en = form_data.get('description_en', '').strip()
+        if description_en and len(description_en) < 10:
+            errors.append("الوصف الإنجليزي يجب أن يكون على الأقل 10 أحرف أو تركه فارغًا")
 
-        # التحقق من تنسيق JSON
-        try:
-            specs_data = form_data.get('specifications_json', '{}')
-            if specs_data.strip():
-                json.loads(specs_data)
-        except json.JSONDecodeError:
-            errors.append("تنسيق JSON غير صحيح في حقل المواصفات")
+        # التحقق من تنسيق اللون إذا تم إدخاله
+        color = form_data.get('color', '').strip()
+        if color and not re.match(r'^#[0-9A-Fa-f]{6}$', color):
+            errors.append("اللون يجب أن يكون بصيغة سداسية عشرية صحيحة (مثل #FF5733)")
 
-        try:
-            features_data = form_data.get('features', '[]')
-            if features_data.strip():
-                if features_data.startswith('{') or features_data.startswith('['):
-                    json.loads(features_data)
-        except json.JSONDecodeError:
-            errors.append("تنسيق JSON غير صحيح في حقل الميزات")
+        # التحقق من الأيقونة إذا تم إدخالها
+        icon = form_data.get('icon', '').strip()
+        if icon and not re.match(r'^[a-zA-Z\s\-]+$', icon):
+            errors.append("صيغة الأيقونة غير صحيحة")
+
+        # التحقق من نسبة العمولة إذا تم إدخالها
+        commission_rate_str = form_data.get('commission_rate', '').strip()
+        if commission_rate_str:
+            try:
+                commission_rate = Decimal(commission_rate_str.replace(',', '.'))
+                if commission_rate < 0 or commission_rate > 100:
+                    errors.append("نسبة العمولة يجب أن تكون بين 0 و 100")
+            except (ValueError, InvalidOperation):
+                errors.append("صيغة نسبة العمولة غير صحيحة")
 
         # إذا كانت هناك أخطاء، نعيد عرض النموذج مع رسائل الخطأ
         if errors:
             for error in errors:
                 messages.error(request, error)
 
-            # جلب البيانات اللازمة للنموذج
-            categories = Category.objects.all()
-            brands = Brand.objects.all().order_by('name')
-            tags = Tag.objects.all().order_by('name')
-            product_attributes = ProductAttribute.objects.all()
+            # الحصول على قائمة الفئات للاختيار كأب
+            parent_categories = Category.objects.exclude(id=category_id if category_id else None)
 
-            # تحضير البيانات المدخلة مسبقًا
-            selected_tags = request.POST.getlist('tags')
-
-            # إعداد سياق العرض مع البيانات المدخلة سابقًا
             context = {
-                'product': product,
+                'category': category,
                 'form_title': form_title,
-                'categories': categories,
-                'brands': brands,
-                'tags': tags,
-                'images': images,
-                'variants': variants,
-                'product_attributes': product_attributes,
-                'status_choices': Product.STATUS_CHOICES,
-                'stock_status_choices': Product.STOCK_STATUS_CHOICES,
-                'condition_choices': Product.CONDITION_CHOICES,
-
-                # البيانات المدخلة سابقًا
+                'parent_categories': parent_categories,
                 'form_data': form_data,
-                'selected_category': category_id,
-                'selected_brand': form_data.get('brand'),
-                'selected_tags': selected_tags,
-                'specifications_json': specs_data,
-                'features_json': features_data,
-
-                # إعادة تحميل العناصر المرفوعة
-                'form_files': form_files
+                'form_files': form_files,
             }
 
-            return render(request, 'dashboard/products/product_form.html', context)
+            return render(request, 'dashboard/products/category_form.html', context)
 
-        # إذا لم تكن هناك أخطاء، نستمر في حفظ المنتج
+        # إذا لم تكن هناك أخطاء، نستمر في حفظ الفئة
         try:
-            # البيانات الإضافية
-            name_en = form_data.get('name_en', '')
-            brand_id = form_data.get('brand') or None
-            sku = form_data.get('sku', '')
-            barcode = form_data.get('barcode', '')
+            # استخراج البيانات
+            name_en = form_data.get('name_en', '').strip()
+            parent_id = form_data.get('parent') or None
+            description = form_data.get('description', '').strip()
+            description_en = form_data.get('description_en', '').strip()
+            sort_order_str = form_data.get('sort_order', '0').strip()
+            sort_order = int(sort_order_str) if sort_order_str else 0
+            icon = form_data.get('icon', '').strip()
+            color = form_data.get('color', '').strip()
 
             # البيانات البوليانية
             is_active = 'is_active' in form_data
             is_featured = 'is_featured' in form_data
-            is_new = 'is_new' in form_data
-            is_best_seller = 'is_best_seller' in form_data
-            is_digital = 'is_digital' in form_data
-            requires_shipping = 'requires_shipping' in form_data
+            show_in_menu = 'show_in_menu' in form_data
+            show_prices = 'show_prices' in form_data
 
-            # الأرقام الإضافية
-            compare_price_str = form_data.get('compare_price', '')
-            compare_price = Decimal(compare_price_str.replace(',', '.')) if compare_price_str.strip() else None
+            # معالجة نسبة العمولة
+            commission_rate_str = form_data.get('commission_rate', '0').strip()
+            commission_rate = Decimal(commission_rate_str.replace(',', '.')) if commission_rate_str else Decimal('0')
 
-            cost_str = form_data.get('cost', '')
-            cost = Decimal(cost_str.replace(',', '.')) if cost_str.strip() else None
+            # معالجة محتوى JSON
+            content_blocks = {}
+            content_blocks_str = form_data.get('content_blocks', '{}').strip()
+            if content_blocks_str:
+                try:
+                    content_blocks = json.loads(content_blocks_str)
+                except json.JSONDecodeError:
+                    messages.warning(request, 'حدث خطأ في معالجة بيانات كتل المحتوى')
 
-            tax_rate_str = form_data.get('tax_rate', '16')
-            tax_rate = Decimal(tax_rate_str.replace(',', '.')) if tax_rate_str.strip() else Decimal('16')
+            # معالجة الصور
+            image = form_files.get('image')
+            banner_image = form_files.get('banner_image')
 
-            stock_quantity_str = form_data.get('stock_quantity', '0')
-            stock_quantity = int(stock_quantity_str) if stock_quantity_str.strip() else 0
+            # إنشاء أو تحديث الفئة
+            if category_id:
+                # تحديث فئة موجودة
+                category.name = name
+                category.name_en = name_en
+                category.parent_id = parent_id
+                category.description = description
+                category.description_en = description_en
+                category.sort_order = sort_order
+                category.icon = icon
+                category.color = color
+                category.is_active = is_active
+                category.is_featured = is_featured
+                category.show_in_menu = show_in_menu
+                category.show_prices = show_prices
+                category.commission_rate = commission_rate
+                category.content_blocks = content_blocks
 
-            # حالات المنتج
-            status = form_data.get('status', 'draft')
-            stock_status = form_data.get('stock_status', 'in_stock')
-            condition = form_data.get('condition', 'new')
+                if image:
+                    category.image = image
 
-            # الأبعاد والوزن
-            weight_str = form_data.get('weight', '')
-            weight = float(weight_str.replace(',', '.')) if weight_str.strip() else None
+                if banner_image:
+                    category.banner_image = banner_image
 
-            length_str = form_data.get('length', '')
-            length = float(length_str.replace(',', '.')) if length_str.strip() else None
-
-            width_str = form_data.get('width', '')
-            width = float(width_str.replace(',', '.')) if width_str.strip() else None
-
-            height_str = form_data.get('height', '')
-            height = float(height_str.replace(',', '.')) if height_str.strip() else None
-
-            # إنشاء أو تحديث المنتج
-            if product_id:
-                # تحديث منتج موجود
-                was_published = product.status == 'published'
-
-                product.name = name
-                product.name_en = name_en
-                product.category_id = category_id
-                product.brand_id = brand_id
-                product.sku = sku
-                product.barcode = barcode
-                product.description = description
-                product.short_description = short_description
-                product.base_price = base_price
-                product.compare_price = compare_price
-                product.cost = cost
-                product.tax_rate = tax_rate
-                product.stock_quantity = stock_quantity
-                product.status = status
-                product.stock_status = stock_status
-                product.condition = condition
-                product.is_active = is_active
-                product.is_featured = is_featured
-                product.is_new = is_new
-                product.is_best_seller = is_best_seller
-                product.is_digital = is_digital
-                product.requires_shipping = requires_shipping
-                product.weight = weight
-                product.length = length
-                product.width = width
-                product.height = height
-
-                # تعيين تاريخ النشر إذا تم تغيير الحالة إلى منشور
-                if status == 'published' and not was_published:
-                    product.published_at = timezone.now()
-
-                product.save()
-                messages.success(request, 'تم تحديث المنتج بنجاح')
+                category.save()
+                messages.success(request, 'تم تحديث الفئة بنجاح')
             else:
                 # إنشاء سلج من الاسم
                 slug = slugify(name, allow_unicode=True)
-                if Product.objects.filter(slug=slug).exists():
+                if Category.objects.filter(slug=slug).exists():
                     slug = f"{slug}-{uuid.uuid4().hex[:6]}"
 
-                # إنشاء منتج جديد
-                product = Product.objects.create(
-                    name=name,
-                    name_en=name_en,
-                    slug=slug,
-                    category_id=category_id,
-                    brand_id=brand_id,
-                    sku=sku or Product().generate_sku(),  # استخدام الدالة المساعدة لتوليد SKU
-                    barcode=barcode,
-                    description=description,
-                    short_description=short_description,
-                    base_price=base_price,
-                    compare_price=compare_price,
-                    cost=cost,
-                    tax_rate=tax_rate,
-                    stock_quantity=stock_quantity,
-                    status=status,
-                    stock_status=stock_status,
-                    condition=condition,
-                    is_active=is_active,
-                    is_featured=is_featured,
-                    is_new=is_new,
-                    is_best_seller=is_best_seller,
-                    is_digital=is_digital,
-                    requires_shipping=requires_shipping,
-                    weight=weight,
-                    length=length,
-                    width=width,
-                    height=height,
-                    created_by=request.user,
-                )
+                # إنشاء فئة جديدة
+                try:
+                    # محاولة إنشاء الفئة مباشرة
+                    category = Category()
+                    category.name = name
+                    category.name_en = name_en
+                    category.slug = slug
+                    category.parent_id = parent_id
+                    category.description = description
+                    category.description_en = description_en
+                    category.sort_order = sort_order
+                    category.icon = icon
+                    category.color = color
+                    category.is_active = is_active
+                    category.is_featured = is_featured
+                    category.show_in_menu = show_in_menu
+                    category.show_prices = show_prices
+                    category.commission_rate = commission_rate
+                    category.content_blocks = content_blocks
+                    category.created_by = request.user
 
-                if status == 'published':
-                    product.published_at = timezone.now()
-                    product.save()
+                    if image:
+                        category.image = image
+                    if banner_image:
+                        category.banner_image = banner_image
 
-                messages.success(request, 'تم إنشاء المنتج بنجاح')
+                    # حفظ الفئة
+                    category.save()
 
-            # معالجة الوسوم
-            tag_ids = request.POST.getlist('tags')
-            if tag_ids:
-                product.tags.set(Tag.objects.filter(id__in=tag_ids))
-            else:
-                product.tags.clear()
+                    # طباعة رسالة تأكيد في سجل التطبيق
+                    print(f"تم إنشاء الفئة بنجاح: {category.id} - {category.name}")
 
-            # معالجة المواصفات
-            specs_data = request.POST.get('specifications_json', '{}')
-            try:
-                if specs_data.strip():
-                    product.specifications = json.loads(specs_data)
-                    product.save(update_fields=['specifications'])
-            except json.JSONDecodeError:
-                messages.warning(request, 'حدث خطأ في معالجة بيانات المواصفات')
+                except Exception as creation_error:
+                    # طباعة الخطأ الدقيق في سجل التطبيق
+                    print(f"خطأ في إنشاء الفئة: {str(creation_error)}")
+                    raise
 
-            # معالجة الميزات
-            features_data = request.POST.get('features', '[]')
-            try:
-                if features_data.strip():
-                    if features_data.startswith('{') or features_data.startswith('['):
-                        product.features = json.loads(features_data)
-                    else:
-                        product.features = [line.strip() for line in features_data.split('\n') if line.strip()]
-                    product.save(update_fields=['features'])
-            except json.JSONDecodeError:
-                messages.warning(request, 'حدث خطأ في معالجة بيانات الميزات')
+                messages.success(request, 'تم إنشاء الفئة بنجاح')
 
-            # معالجة صور المنتج
-            images = request.FILES.getlist('product_images')
-            if images:
-                for i, image_file in enumerate(images):
-                    is_primary = i == 0 and not product.images.filter(is_primary=True).exists()
-                    ProductImage.objects.create(
-                        product=product,
-                        image=image_file,
-                        alt_text=product.name,
-                        is_primary=is_primary,
-                        sort_order=i
-                    )
-
-            # تحديد ما إذا كان يجب الاستمرار في التحرير أم العودة إلى صفحة التفاصيل
+            # تحديد ما إذا كان يجب الاستمرار في التحرير أم العودة إلى صفحة القائمة
             if 'save_and_continue' in form_data:
-                return redirect('dashboard:dashboard_product_edit', product_id=str(product.id))
+                return redirect('dashboard:dashboard_category_edit', category_id=str(category.id))
             else:
-                return redirect('dashboard:dashboard_product_detail', product_id=str(product.id))
+                return redirect('dashboard:dashboard_categories')
 
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء حفظ المنتج: {str(e)}')
+            # طباعة الخطأ الدقيق في سجل التطبيق
+            print(f"خطأ عام أثناء حفظ الفئة: {str(e)}")
+            messages.error(request, f'حدث خطأ أثناء حفظ الفئة: {str(e)}')
 
-            # في حالة حدوث استثناء، نعيد عرض النموذج مع البيانات المدخلة
-            categories = Category.objects.all()
-            brands = Brand.objects.all().order_by('name')
-            tags = Tag.objects.all().order_by('name')
-            product_attributes = ProductAttribute.objects.all()
+            # الحصول على قائمة الفئات للاختيار كأب
+            parent_categories = Category.objects.exclude(id=category_id if category_id else None)
 
             context = {
-                'product': product,
+                'category': category,
                 'form_title': form_title,
-                'categories': categories,
-                'brands': brands,
-                'tags': tags,
-                'images': images,
-                'variants': variants,
-                'product_attributes': product_attributes,
-                'status_choices': Product.STATUS_CHOICES,
-                'stock_status_choices': Product.STOCK_STATUS_CHOICES,
-                'condition_choices': Product.CONDITION_CHOICES,
-
-                # البيانات المدخلة سابقًا
+                'parent_categories': parent_categories,
                 'form_data': form_data,
-                'selected_category': category_id,
-                'selected_brand': form_data.get('brand'),
-                'selected_tags': request.POST.getlist('tags'),
-                'specifications_json': specs_data,
-                'features_json': features_data
+                'form_files': form_files,
             }
 
-            return render(request, 'dashboard/products/product_form.html', context)
+            return render(request, 'dashboard/products/category_form.html', context)
 
 
 class CategoryDeleteView(DashboardAccessMixin, View):
@@ -1853,3 +1937,132 @@ class ProductVariantBulkActionsView(DashboardAccessMixin, View):
             return redirect(f'dashboard_update_variant_stock?variants={variant_ids_str}')
 
         return redirect('dashboard:dashboard_product_detail', product_id=product.id)
+
+
+@login_required
+@permission_required('products.add_product')
+def duplicate_product(request, product_id):
+    """نسخ منتج موجود مع الاحتفاظ بمعظم بياناته"""
+    # الحصول على المنتج الأصلي
+    original_product = get_object_or_404(Product, id=product_id)
+
+    if request.method == 'POST':
+        # إنشاء نسخة جديدة من المنتج
+        new_product = Product()
+
+        # نسخ الحقول الأساسية
+        for field in original_product._meta.fields:
+            if field.name not in ['id', 'pk', 'created_at', 'updated_at', 'published_at', 'slug']:
+                setattr(new_product, field.name, getattr(original_product, field.name))
+
+        # تعديل البيانات التي يجب تغييرها
+        new_product.name = f"{original_product.name} (copy)"  # استخدام كلمة إنجليزية لتجنب مشاكل الـ slug
+        new_product.sku = f"{original_product.sku}_copy" if original_product.sku else ""
+        new_product.slug = None  # سيتم إنشاء slug جديد تلقائياً
+        new_product.sales_count = 0
+        new_product.views_count = 0
+        new_product.wishlist_count = 0
+        new_product.status = 'draft'
+        new_product.published_at = None
+        new_product.created_by = request.user
+
+        # نسخ البيانات المخزنة في حقول JSON
+        if hasattr(original_product, 'features_json') and original_product.features_json:
+            new_product.features_json = original_product.features_json
+
+        if hasattr(original_product, 'specifications_json') and original_product.specifications_json:
+            new_product.specifications_json = original_product.specifications_json
+
+        # حفظ المنتج الجديد
+        new_product.save()
+
+        # نسخ العلاقات المتعددة (ManyToMany)
+        if hasattr(original_product, 'tags'):
+            new_product.tags.set(original_product.tags.all())
+
+        if hasattr(original_product, 'related_products'):
+            new_product.related_products.set(original_product.related_products.all())
+
+        # نسخ الصور مع محتوى الملفات الفعلية
+        from django.core.files.base import ContentFile
+        import os
+
+        for image in original_product.images.all():
+            # فتح الملف الأصلي وقراءة محتواه
+            image_path = image.image.path if os.path.exists(image.image.path) else None
+
+            if image_path:
+                # إنشاء صورة جديدة مع نسخ الملف
+                new_image = ProductImage(
+                    product=new_product,
+                    alt_text=image.alt_text,
+                    is_primary=image.is_primary,
+                    sort_order=image.sort_order
+                )
+
+                # نسخ محتوى الملف
+                with open(image_path, 'rb') as f:
+                    file_content = f.read()
+                    file_name = os.path.basename(image.image.name)
+                    new_image.image.save(file_name, ContentFile(file_content), save=False)
+
+                new_image.save()
+
+        # نسخ الخصائص والقيم
+        for attr_value in original_product.attribute_values.all():
+            new_attr_value = ProductAttributeValue(
+                product=new_product,
+                attribute=attr_value.attribute,
+                value=attr_value.value
+            )
+            new_attr_value.save()
+
+        # نسخ متغيرات المنتج بكامل تفاصيلها
+        for variant in original_product.variants.all():
+            # إنشاء نسخة جديدة من المتغير
+            new_variant = ProductVariant()
+
+            # نسخ جميع حقول المتغير (باستثناء الحقول المحددة)
+            for field in variant._meta.fields:
+                if field.name not in ['id', 'pk', 'product']:
+                    setattr(new_variant, field.name, getattr(variant, field.name))
+
+            new_variant.product = new_product
+            new_variant.sku = f"{variant.sku}_copy" if variant.sku else ""
+            new_variant.save()
+
+            # نسخ صور المتغير إذا وجدت
+            if hasattr(variant, 'images'):
+                for var_image in variant.images.all():
+                    var_image_path = var_image.image.path if os.path.exists(var_image.image.path) else None
+
+                    if var_image_path:
+                        new_var_image = ProductVariantImage(
+                            variant=new_variant,
+                            alt_text=var_image.alt_text
+                        )
+
+                        with open(var_image_path, 'rb') as f:
+                            file_content = f.read()
+                            file_name = os.path.basename(var_image.image.name)
+                            new_var_image.image.save(file_name, ContentFile(file_content), save=False)
+
+                        new_var_image.save()
+
+            # نسخ خصائص المتغير
+            if hasattr(variant, 'attribute_values'):
+                for var_attr in variant.attribute_values.all():
+                    new_var_attr = ProductVariantAttributeValue(
+                        variant=new_variant,
+                        attribute=var_attr.attribute,
+                        value=var_attr.value
+                    )
+                    new_var_attr.save()
+
+        messages.success(request, _('تم نسخ المنتج بنجاح، يمكنك الآن تعديل النسخة الجديدة'))
+        return redirect('dashboard:dashboard_product_edit', product_id=new_product.id)
+
+    # في حالة GET، اعرض صفحة تأكيد
+    return render(request, 'dashboard/products/product_duplicate_confirm.html', {
+        'product': original_product
+    })

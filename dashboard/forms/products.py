@@ -67,7 +67,14 @@ class ProductForm(forms.ModelForm):
         min_value=0,
         max_value=100,
         decimal_places=2,
-        widget=forms.NumberInput(attrs={'step': '0.01', 'min': '0', 'max': '100', 'class': 'form-control'})
+        initial=0,  # القيمة الافتراضية
+        widget=forms.NumberInput(attrs={
+            'step': '0.01',
+            'min': '0',
+            'max': '100',
+            'class': 'form-control',
+            'value': '0'  # القيمة الأولية المعروضة
+        })
     )
 
     discount_amount = forms.DecimalField(
@@ -75,7 +82,13 @@ class ProductForm(forms.ModelForm):
         required=False,
         min_value=0,
         decimal_places=2,
-        widget=forms.NumberInput(attrs={'step': '0.01', 'min': '0', 'class': 'form-control'})
+        initial=0,  # القيمة الافتراضية
+        widget=forms.NumberInput(attrs={
+            'step': '0.01',
+            'min': '0',
+            'class': 'form-control',
+            'value': '0'  # القيمة الأولية المعروضة
+        })
     )
 
     discount_start = forms.DateTimeField(
@@ -180,9 +193,9 @@ class ProductForm(forms.ModelForm):
             'name', 'name_en', 'sku', 'barcode', 'category', 'brand', 'tags',
             'short_description', 'description', 'base_price', 'compare_price',
             'cost', 'tax_rate', 'tax_class', 'stock_quantity', 'stock_status',
-            'min_stock_level', 'condition', 'weight', 'length', 'width', 'height',
-            'status', 'is_active', 'is_featured', 'is_new', 'is_best_seller',
-            'is_digital', 'requires_shipping', 'allow_reviews', 'show_price',
+            'min_stock_level', 'weight', 'length', 'width', 'height',
+            'status',  'is_featured', 'is_new', 'is_best_seller',
+              'is_active','show_price',
             'meta_title', 'meta_description', 'meta_keywords', 'search_keywords',
             # إضافة الحقول الجديدة لتضمينها في النموذج
             'discount_percentage', 'discount_amount', 'discount_start', 'discount_end',
@@ -208,7 +221,6 @@ class ProductForm(forms.ModelForm):
             'stock_quantity': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
             'stock_status': forms.Select(attrs={'class': 'form-select'}),
             'min_stock_level': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
-            'condition': forms.Select(attrs={'class': 'form-select'}),
             'weight': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'min': '0'}),
             'length': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
             'width': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),

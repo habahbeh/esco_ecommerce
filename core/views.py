@@ -8,7 +8,7 @@ from products.models import Product, Category
 from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import redirect
 
-from .models import SiteSettings, Newsletter, SliderItem
+from .models import SiteSettings, Newsletter, SliderItem, StaticContent
 from .forms import SiteSettingsForm
 from events.models import Event
 from django.utils import timezone
@@ -81,6 +81,18 @@ class AboutView(TemplateView):
     """
     template_name = 'core/about.html'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # إضافة المحتوى الثابت إلى السياق
+        try:
+            about_content = StaticContent.objects.get(key="about")
+            context['about_content'] = about_content
+        except StaticContent.DoesNotExist:
+            context['about_content'] = None
+
+        return context
+
 
 class ContactView(TemplateView):
     """
@@ -106,49 +118,49 @@ class PrivacyView(TemplateView):
     template_name = 'core/privacy.html'
 
 
-def set_language(request, lang_code):
-    """
-    تغيير لغة الموقع - يتيح للمستخدم تغيير لغة الموقع
-    Set language - allows the user to change the site language
-    """
-    from django.http import HttpResponseRedirect
-    from django.urls import translate_url
-    from django.utils.translation import activate
-    from django.utils.http import url_has_allowed_host_and_scheme
-
-    # التحقق من صحة كود اللغة
-    if lang_code not in [lang[0] for lang in settings.LANGUAGES]:
-        lang_code = settings.LANGUAGE_CODE
-
-    activate(lang_code)
-
-    # الحصول على الرابط السابق بشكل آمن
-    next_url = request.META.get('HTTP_REFERER', '/')
-
-    # التحقق من أن الرابط آمن ومن نفس الموقع
-    if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
-        next_url = '/'
-
-    # ترجمة الرابط إلى اللغة الجديدة
-    try:
-        next_url = translate_url(next_url, lang_code)
-    except:
-        # في حالة فشل الترجمة، استخدم الصفحة الرئيسية
-        next_url = '/'
-
-    response = HttpResponseRedirect(next_url)
-    response.set_cookie(
-        settings.LANGUAGE_COOKIE_NAME,
-        lang_code,
-        max_age=settings.LANGUAGE_COOKIE_AGE if hasattr(settings, 'LANGUAGE_COOKIE_AGE') else None,
-        path=settings.LANGUAGE_COOKIE_PATH if hasattr(settings, 'LANGUAGE_COOKIE_PATH') else '/',
-        domain=settings.LANGUAGE_COOKIE_DOMAIN if hasattr(settings, 'LANGUAGE_COOKIE_DOMAIN') else None,
-        secure=settings.LANGUAGE_COOKIE_SECURE if hasattr(settings, 'LANGUAGE_COOKIE_SECURE') else False,
-        httponly=settings.LANGUAGE_COOKIE_HTTPONLY if hasattr(settings, 'LANGUAGE_COOKIE_HTTPONLY') else False,
-        samesite=settings.LANGUAGE_COOKIE_SAMESITE if hasattr(settings, 'LANGUAGE_COOKIE_SAMESITE') else None,
-    )
-
-    return response
+# def set_language(request, lang_code):
+#     """
+#     تغيير لغة الموقع - يتيح للمستخدم تغيير لغة الموقع
+#     Set language - allows the user to change the site language
+#     """
+#     from django.http import HttpResponseRedirect
+#     from django.urls import translate_url
+#     from django.utils.translation import activate
+#     from django.utils.http import url_has_allowed_host_and_scheme
+#
+#     # التحقق من صحة كود اللغة
+#     if lang_code not in [lang[0] for lang in settings.LANGUAGES]:
+#         lang_code = settings.LANGUAGE_CODE
+#
+#     activate(lang_code)
+#
+#     # الحصول على الرابط السابق بشكل آمن
+#     next_url = request.META.get('HTTP_REFERER', '/')
+#
+#     # التحقق من أن الرابط آمن ومن نفس الموقع
+#     if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+#         next_url = '/'
+#
+#     # ترجمة الرابط إلى اللغة الجديدة
+#     try:
+#         next_url = translate_url(next_url, lang_code)
+#     except:
+#         # في حالة فشل الترجمة، استخدم الصفحة الرئيسية
+#         next_url = '/'
+#
+#     response = HttpResponseRedirect(next_url)
+#     response.set_cookie(
+#         settings.LANGUAGE_COOKIE_NAME,
+#         lang_code,
+#         max_age=settings.LANGUAGE_COOKIE_AGE if hasattr(settings, 'LANGUAGE_COOKIE_AGE') else None,
+#         path=settings.LANGUAGE_COOKIE_PATH if hasattr(settings, 'LANGUAGE_COOKIE_PATH') else '/',
+#         domain=settings.LANGUAGE_COOKIE_DOMAIN if hasattr(settings, 'LANGUAGE_COOKIE_DOMAIN') else None,
+#         secure=settings.LANGUAGE_COOKIE_SECURE if hasattr(settings, 'LANGUAGE_COOKIE_SECURE') else False,
+#         httponly=settings.LANGUAGE_COOKIE_HTTPONLY if hasattr(settings, 'LANGUAGE_COOKIE_HTTPONLY') else False,
+#         samesite=settings.LANGUAGE_COOKIE_SAMESITE if hasattr(settings, 'LANGUAGE_COOKIE_SAMESITE') else None,
+#     )
+#
+#     return response
 
 
 @staff_member_required
