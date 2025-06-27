@@ -13,6 +13,9 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.bootstrap5.min.css">
 <style>
     .product-actions {
         display: flex;
@@ -79,10 +82,6 @@
     .select-all-container {
         width: 55px;
     }
-    .pagination-info {
-        font-size: 0.9rem;
-        color: #6c757d;
-    }
     .stats-card {
         border-right: 3px solid transparent;
         transition: all 0.3s ease;
@@ -132,6 +131,84 @@
         background-color: transparent;
         color: #6c757d;
     }
+
+    /* تخصيصات DataTables */
+    div.dataTables_wrapper div.dataTables_filter {
+        text-align: left;
+    }
+    [dir="rtl"] div.dataTables_wrapper div.dataTables_filter {
+        text-align: right;
+    }
+    .dataTables_filter input {
+        border-radius: 50px;
+        padding: 5px 15px;
+        margin-left: 8px;
+        margin-right: 8px;
+        border: 1px solid #ddd;
+    }
+    div.dataTables_wrapper div.dataTables_info {
+        padding-top: 15px;
+    }
+    .filters-container {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .filter-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #495057;
+    }
+    .filter-reset {
+        cursor: pointer;
+        color: #dc3545;
+        font-size: 0.8rem;
+    }
+    .dt-buttons {
+        margin-bottom: 15px;
+    }
+    .dt-button {
+        border-radius: 4px !important;
+        font-size: 0.85rem !important;
+        padding: 5px 10px !important;
+    }
+    table.dataTable tbody tr.selected {
+        background-color: rgba(var(--bs-primary-rgb), 0.1);
+    }
+
+    /* أزرار الإجراءات الجماعية */
+    .bulk-actions-container {
+        background-color: #e9f7f0;
+        border-radius: 8px;
+        padding: 12px 15px;
+        margin-bottom: 20px;
+        display: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        animation: fadeIn 0.3s ease-in-out;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .bulk-badge {
+        background-color: #fff;
+        color: #198754;
+        padding: 5px 12px;
+        border-radius: 50px;
+        font-weight: 600;
+        margin-right: 10px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+[dir="rtl"] .dt-button-collection {
+    {#right: auto !important;#}
+    {#left: 0 !important;#}
+
+    left: auto !important;;
+}
 </style>
 {% endblock %}
 
@@ -200,22 +277,20 @@
     </div>
 </div>
 
-<!-- أدوات البحث والإجراءات -->
+<!-- فلاتر متقدمة وإجراءات -->
 <div class="row mb-4">
     <div class="col-12">
         <div class="card shadow-sm">
             <div class="card-body">
                 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
-                    <!-- البحث -->
-                    <div class="search-container mb-2 mb-md-0">
-                        <form method="GET" id="search-form">
-                            <div class="input-group">
-                                <input type="text" name="q" class="form-control" placeholder="{% trans 'بحث عن منتج...' %}" value="{{ query }}">
-                                <button class="btn" type="submit">
-                                    <i class="fa fa-search"></i>
-                                </button>
-                            </div>
-                        </form>
+                    <!-- العنوان وزر إضافة منتج -->
+                    <div class="d-flex align-items-center">
+                        <h5 class="mb-0">{% trans 'قائمة المنتجات' %}</h5>
+                        <div class="ms-3">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="toggle-filters">
+                                <i class="fa fa-filter"></i> {% trans 'الفلاتر' %}
+                            </button>
+                        </div>
                     </div>
 
                     <!-- زر إضافة منتج -->
@@ -228,53 +303,168 @@
                     {% endif %}
                 </div>
 
-                <div class="row">
-                    <!-- التصفية حسب الفئة -->
-                    <div class="col-md-4 mb-3">
-                        <label for="category_filter" class="form-label">{% trans 'تصفية حسب الفئة' %}</label>
-                        <select id="category_filter" name="category" class="form-select select2">
-                            <option value="">{% trans 'جميع الفئات' %}</option>
-                            {% for category in categories %}
-                            <option value="{{ category.id }}" {% if category_filter == category.id|stringformat:"s" %}selected{% endif %}>
-                                {{ category.name }}
-                                {% if category.children.exists %}
-                                <optgroup label="{{ category.name }}">
-                                    {% for child in category.children.all %}
-                                    <option value="{{ child.id }}" {% if category_filter == child.id|stringformat:"s" %}selected{% endif %}>
-                                        &nbsp;&nbsp;{{ child.name }}
-                                    </option>
-                                    {% endfor %}
-                                </optgroup>
-                                {% endif %}
+                <!-- قسم الإجراءات الجماعية -->
+                <div class="bulk-actions-container mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <span class="bulk-badge"><span id="selected-count">0</span> {% trans 'محدد' %}</span>
+                            <div class="btn-group">
+                                <select id="bulk-action" class="form-select form-select-sm">
+                                    <option value="">{% trans 'اختر إجراء...' %}</option>
+                                    <option value="activate">{% trans 'تفعيل' %}</option>
+                                    <option value="deactivate">{% trans 'إلغاء تفعيل' %}</option>
+                                    <option value="publish">{% trans 'نشر' %}</option>
+                                    <option value="draft">{% trans 'مسودة' %}</option>
+                                    <option value="delete">{% trans 'حذف' %}</option>
+                                    <option value="update_stock">{% trans 'تحديث المخزون' %}</option>
+                                </select>
+                                <button type="button" id="apply-bulk-action" class="btn btn-sm btn-success">
+                                    {% trans 'تطبيق' %}
+                                </button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="cancel-selection">
+                            <i class="fa fa-times"></i> {% trans 'إلغاء التحديد' %}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- قسم الفلاتر المتقدمة -->
+                <div class="filters-container" id="filters-container">
+                    <div class="row">
+                        <!-- فلتر الفئة -->
+                        <div class="col-md-4 mb-3">
+    <div class="filter-title d-flex justify-content-between align-items-center">
+        <span>{% trans 'تصفية حسب الفئة' %}</span>
+        <span class="filter-reset" id="reset-category">{% trans 'مسح' %}</span>
+    </div>
+    <select id="category_filter" class="form-select select2">
+        <option value="">{% trans 'جميع الفئات' %}</option>
+        {% for category in categories %}
+            {% if category.is_active %}
+            <option value="{{ category.id }}" {% if category_filter == category.id|stringformat:"s" %}selected{% endif %}>
+                {{ category.name }}
+            </option>
+                {% for child in category.get_children %}
+                    {% if child.is_active %}
+                    <option value="{{ child.id }}" {% if category_filter == child.id|stringformat:"s" %}selected{% endif %}>
+                        &nbsp;&nbsp;&nbsp;&nbsp;{{ child.name }}
+                    </option>
+                        {% for grandchild in child.get_children %}
+                            {% if grandchild.is_active %}
+                            <option value="{{ grandchild.id }}" {% if category_filter == grandchild.id|stringformat:"s" %}selected{% endif %}>
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ grandchild.name }}
                             </option>
-                            {% endfor %}
-                        </select>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        {% endfor %}
+    </select>
+</div>
+
+                        <!-- فلتر العلامة التجارية -->
+                        <div class="col-md-4 mb-3">
+                            <div class="filter-title d-flex justify-content-between align-items-center">
+                                <span>{% trans 'تصفية حسب العلامة التجارية' %}</span>
+                                <span class="filter-reset" id="reset-brand">{% trans 'مسح' %}</span>
+                            </div>
+                            <select id="brand_filter" class="form-select select2">
+                                <option value="">{% trans 'جميع العلامات' %}</option>
+                                {% for brand in brands %}
+                                <option value="{{ brand.id }}" {% if brand_filter == brand.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ brand.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- فلتر الحالة -->
+                        <div class="col-md-4 mb-3">
+                            <div class="filter-title d-flex justify-content-between align-items-center">
+                                <span>{% trans 'تصفية حسب الحالة' %}</span>
+                                <span class="filter-reset" id="reset-status">{% trans 'مسح' %}</span>
+                            </div>
+                            <select id="status_filter" class="form-select">
+                                <option value="">{% trans 'جميع الحالات' %}</option>
+                                {% for status_code, status_name in status_choices %}
+                                <option value="{{ status_code }}" {% if status_filter == status_code %}selected{% endif %}>
+                                    {{ status_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
 
-                    <!-- التصفية حسب العلامة التجارية -->
-                    <div class="col-md-4 mb-3">
-                        <label for="brand_filter" class="form-label">{% trans 'تصفية حسب العلامة التجارية' %}</label>
-                        <select id="brand_filter" name="brand" class="form-select select2">
-                            <option value="">{% trans 'جميع العلامات' %}</option>
-                            {% for brand in brands %}
-                            <option value="{{ brand.id }}" {% if brand_filter == brand.id|stringformat:"s" %}selected{% endif %}>
-                                {{ brand.name }}
-                            </option>
-                            {% endfor %}
-                        </select>
+                    <div class="row">
+                        <!-- فلتر المخزون -->
+                        <div class="col-md-4 mb-3">
+    <div class="filter-title d-flex justify-content-between align-items-center">
+        <span>{% trans 'تصفية حسب المخزون' %}</span>
+        <span class="filter-reset" id="reset-stock">{% trans 'مسح' %}</span>
+    </div>
+    <select id="stock_filter" class="form-select">
+        <option value="">{% trans 'جميع حالات المخزون' %}</option>
+        <option value="in_stock">{% trans 'متوفر' %}</option>
+        <option value="out_of_stock">{% trans 'نفذت الكمية' %}</option>
+    </select>
+</div>
+
+                        <!-- فلتر حسب السعر -->
+                        <div class="col-md-4 mb-3">
+    <div class="filter-title d-flex justify-content-between align-items-center">
+        <span>{% trans 'نطاق السعر' %}</span>
+        <span class="filter-reset" id="reset-price">{% trans 'مسح' %}</span>
+    </div>
+    <div class="row">
+        <div class="col-6">
+            <div class="input-group">
+                <span class="input-group-text">{% trans 'من' %}</span>
+                <input type="number" id="price_min" class="form-control" min="0" step="0.01" placeholder="0">
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="input-group">
+                <span class="input-group-text">{% trans 'إلى' %}</span>
+                <input type="number" id="price_max" class="form-control" min="0" step="0.01" placeholder="∞">
+            </div>
+        </div>
+    </div>
+</div>
+
+                        <!-- فلتر التاريخ -->
+                        <div class="col-md-4 mb-3">
+    <div class="filter-title d-flex justify-content-between align-items-center">
+        <span>{% trans 'تاريخ الإنشاء' %}</span>
+        <span class="filter-reset" id="reset-date">{% trans 'مسح' %}</span>
+    </div>
+    <div class="row">
+        <div class="col-6">
+            <div class="input-group">
+                <span class="input-group-text"><i class="fa fa-calendar"></i></span>
+                <input type="date" id="date_from" class="form-control">
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="input-group">
+                <span class="input-group-text"><i class="fa fa-calendar"></i></span>
+                <input type="date" id="date_to" class="form-control">
+            </div>
+        </div>
+    </div>
+</div>
                     </div>
 
-                    <!-- التصفية حسب الحالة -->
-                    <div class="col-md-4 mb-3">
-                        <label for="status_filter" class="form-label">{% trans 'تصفية حسب الحالة' %}</label>
-                        <select id="status_filter" name="status" class="form-select">
-                            <option value="">{% trans 'جميع الحالات' %}</option>
-                            {% for status_code, status_name in status_choices %}
-                            <option value="{{ status_code }}" {% if status_filter == status_code %}selected{% endif %}>
-                                {{ status_name }}
-                            </option>
-                            {% endfor %}
-                        </select>
+                    <div class="row mt-2">
+                        <div class="col-12 text-center">
+                            <button type="button" id="apply-filters" class="btn btn-primary px-4">
+                                <i class="fa fa-search me-1"></i> {% trans 'بحث وتصفية' %}
+                            </button>
+                            <button type="button" id="reset-all-filters" class="btn btn-outline-secondary ms-2">
+                                <i class="fa fa-times me-1"></i> {% trans 'مسح كل الفلاتر' %}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -289,94 +479,26 @@
             <div class="card-body">
                 <form id="bulk-action-form" method="post" action="{% url 'dashboard:dashboard_product_bulk_actions' %}">
                     {% csrf_token %}
-                    <!-- إجراءات جماعية -->
-                    <div class="bulk-actions alert alert-light d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <div class="d-inline-block me-2">
-                                <span class="selected-count">0</span> {% trans 'منتج محدد' %}
-                            </div>
-                            <div class="btn-group">
-                                <select name="action" class="form-select form-select-sm">
-                                    <option value="">{% trans 'اختر إجراء...' %}</option>
-                                    <option value="activate">{% trans 'تفعيل' %}</option>
-                                    <option value="deactivate">{% trans 'إلغاء تفعيل' %}</option>
-                                    <option value="publish">{% trans 'نشر' %}</option>
-                                    <option value="draft">{% trans 'مسودة' %}</option>
-                                    <option value="delete">{% trans 'حذف' %}</option>
-                                    <option value="update_stock">{% trans 'تحديث المخزون' %}</option>
-                                </select>
-                                <button type="submit" class="btn btn-sm btn-secondary">{% trans 'تطبيق' %}</button>
-                            </div>
-                        </div>
-                        <button type="button" class="btn btn-sm btn-outline-secondary cancel-selection">
-                            {% trans 'إلغاء التحديد' %}
-                        </button>
-                    </div>
-
-                    <!-- جدول المنتجات (يتم تحميله من products_table.html) -->
-                    <div class="table-responsive" id="products-table-container">
-                        {% include 'dashboard/products/products_table.html' %}
-                    </div>
+                    <table id="products-datatable" class="table table-hover align-middle w-100">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="50">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="select-all">
+                                    </div>
+                                </th>
+                                <th>{% trans 'المنتج' %}</th>
+                                <th>{% trans 'SKU' %}</th>
+                                <th>{% trans 'الفئة' %}</th>
+                                <th>{% trans 'السعر' %}</th>
+                                <th>{% trans 'المخزون' %}</th>
+                                <th>{% trans 'الحالة' %}</th>
+                                <th>{% trans 'التاريخ' %}</th>
+                                <th width="120">{% trans 'الإجراءات' %}</th>
+                            </tr>
+                        </thead>
+                    </table>
                 </form>
-
-                <!-- ترقيم الصفحات -->
-                <div class="d-flex justify-content-between align-items-center mt-4">
-                    <div class="pagination-info">
-                        {% trans 'عرض' %} {{ products.start_index }} {% trans 'إلى' %} {{ products.end_index }} {% trans 'من' %} {{ paginator.count }} {% trans 'منتج' %}
-                    </div>
-
-                    <nav aria-label="Page navigation">
-                        <ul class="pagination">
-                            {% if products.has_previous %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if brand_filter %}&brand={{ brand_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" aria-label="First">
-                                    <span aria-hidden="true">&laquo;&laquo;</span>
-                                </a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ products.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if brand_filter %}&brand={{ brand_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" aria-label="Previous">
-                                    <span aria-hidden="true">&laquo;</span>
-                                </a>
-                            </li>
-                            {% else %}
-                            <li class="page-item disabled">
-                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
-                                    <span aria-hidden="true">&laquo;</span>
-                                </a>
-                            </li>
-                            {% endif %}
-
-                            {% for i in paginator.page_range %}
-                                {% if products.number == i %}
-                                <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
-                                {% elif i > products.number|add:'-3' and i < products.number|add:'3' %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ i }}{% if query %}&q={{ query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if brand_filter %}&brand={{ brand_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">{{ i }}</a>
-                                </li>
-                                {% endif %}
-                            {% endfor %}
-
-                            {% if products.has_next %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ products.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if brand_filter %}&brand={{ brand_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" aria-label="Next">
-                                    <span aria-hidden="true">&raquo;</span>
-                                </a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if brand_filter %}&brand={{ brand_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" aria-label="Last">
-                                    <span aria-hidden="true">&raquo;&raquo;</span>
-                                </a>
-                            </li>
-                            {% else %}
-                            <li class="page-item disabled">
-                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
-                                    <span aria-hidden="true">&raquo;</span>
-                                </a>
-                            </li>
-                            {% endif %}
-                        </ul>
-                    </nav>
-                </div>
             </div>
         </div>
     </div>
@@ -404,58 +526,329 @@
         </div>
     </div>
 </div>
+
+<!-- نافذة تأكيد الإجراءات الجماعية -->
+<div class="modal fade" id="bulkActionModal" tabindex="-1" aria-labelledby="bulkActionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bulkActionModalLabel">{% trans 'تأكيد الإجراء' %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="bulk-action-message">{% trans 'هل أنت متأكد من تنفيذ هذا الإجراء على المنتجات المحددة؟' %}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans 'إلغاء' %}</button>
+                <button type="button" id="confirm-bulk-action" class="btn btn-primary">{% trans 'تأكيد' %}</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.print.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
 <script>
     $(document).ready(function() {
+        // إخفاء قسم الفلاتر افتراضيًا
+        $("#filters-container").hide();
+
+        // زر إظهار/إخفاء الفلاتر
+        $("#toggle-filters").click(function() {
+            $("#filters-container").slideToggle(300);
+            $(this).toggleClass("active");
+        });
+
         // تهيئة Select2
         $('.select2').select2({
             dir: $('html').attr('dir'),
             placeholder: "{% trans 'اختر...' %}",
-            allowClear: true
+            allowClear: true,
+            width: '100%'
         });
 
-        // تغيير التصفية تلقائياً
-        $('#category_filter, #brand_filter, #status_filter').change(function() {
-            applyFilters();
-        });
+        // إعداد DataTables
+        const productsTable = $('#products-datatable').DataTable({
+            processing: true,
+            serverSide: true,
+            responsive: true,
+            ajax: {
+                url: "{% url 'dashboard:dashboard_products_api' %}",
+                type: "POST",
+                data: function(d) {
+                    d.category = $('#category_filter').val();
+                    d.brand = $('#brand_filter').val();
+                    d.status = $('#status_filter').val();
+                    d.stock = $('#stock_filter').val();
+                    d.price_min = $('#price_min').val();
+                    d.price_max = $('#price_max').val();
+                    d.date_from = $('#date_from').val();
+                    d.date_to = $('#date_to').val();
+                    d.csrfmiddlewaretoken = '{{ csrf_token }}';
+                }
+            },
+            columns: [
+                {
+                    data: null,
+                    orderable: false,
+                    searchable: false,
+                    className: 'select-checkbox',
+                    render: function(data) {
+                        return '<div class="form-check"><input class="form-check-input product-checkbox" type="checkbox" name="selected_products" value="' + data.id + '"></div>';
+                    }
+                },
+                {
+                    data: null,
+                    render: function(data) {
+                        let img = data.has_image
+                            ? '<img src="' + data.image_url + '" alt="' + data.name + '" class="product-thumbnail me-2">'
+                            : '<div class="product-thumbnail-placeholder me-2"><i class="fa fa-image"></i></div>';
 
-        // تطبيق التصفية
-        function applyFilters() {
-            let url = new URL(window.location.href);
+                        let brand = data.brand_name
+                            ? '<div class="product-brand small">' + data.brand_name + '</div>'
+                            : '';
 
-            // إضافة تصفية الفئة
-            let category = $('#category_filter').val();
-            if (category) {
-                url.searchParams.set('category', category);
-            } else {
-                url.searchParams.delete('category');
+                        return '<div class="d-flex align-items-center">' +
+                            img +
+                            '<div><div class="product-name">' + data.name + '</div>' + brand + '</div></div>';
+                    }
+                },
+                { data: 'sku' },
+                {
+                    data: 'category_name',
+                    render: function(data) {
+                        return '<span class="badge bg-light text-dark">' + data + '</span>';
+                    }
+                },
+                {
+                    data: null,
+                    render: function(data) {
+                        let comparePrice = data.compare_price && data.compare_price > data.current_price
+                            ? '<div class="product-compare-price">' + data.compare_price + ' د.ا</div>'
+                            : '';
+
+                        return '<div class="product-price">' + data.current_price + ' د.ا</div>' + comparePrice;
+                    }
+                },
+                {
+                    data: null,
+                    render: function(data) {
+                        let stockBadge = '';
+                        if (data.stock_status === 'in_stock') {
+                            if (data.low_stock) {
+                                stockBadge = '<span class="stock-badge bg-warning-subtle text-warning"><i class="fa fa-exclamation-triangle"></i> {% trans "منخفض" %} (' + data.available_quantity + ')</span>';
+                            } else {
+                                stockBadge = '<span class="stock-badge bg-success-subtle text-success"><i class="fa fa-check-circle"></i> ' + data.available_quantity + '</span>';
+                            }
+                        } else if (data.stock_status === 'out_of_stock') {
+                            stockBadge = '<span class="stock-badge bg-danger-subtle text-danger"><i class="fa fa-times-circle"></i> {% trans "نفذت الكمية" %}</span>';
+                        } else if (data.stock_status === 'pre_order') {
+                            stockBadge = '<span class="stock-badge bg-info-subtle text-info"><i class="fa fa-clock"></i> {% trans "طلب مسبق" %}</span>';
+                        } else {
+                            stockBadge = '<span class="stock-badge bg-secondary-subtle text-secondary"><i class="fa fa-ban"></i> {% trans "متوقف" %}</span>';
+                        }
+                        return stockBadge;
+                    }
+                },
+                {
+                    data: null,
+                    render: function(data) {
+                        let statusBadge = '';
+                        if (data.status === 'published') {
+                            statusBadge = '<span class="badge bg-success"><i class="fa fa-check-circle"></i> {% trans "منشور" %}</span>';
+                        } else if (data.status === 'draft') {
+                            statusBadge = '<span class="badge bg-secondary"><i class="fa fa-edit"></i> {% trans "مسودة" %}</span>';
+                        } else if (data.status === 'pending_review') {
+                            statusBadge = '<span class="badge bg-warning"><i class="fa fa-clock"></i> {% trans "قيد المراجعة" %}</span>';
+                        } else {
+                            statusBadge = '<span class="badge bg-danger"><i class="fa fa-archive"></i> {% trans "مؤرشف" %}</span>';
+                        }
+
+                        if (data.is_featured) {
+                            statusBadge += ' <span class="badge bg-warning text-dark"><i class="fa fa-star"></i></span>';
+                        }
+
+                        if (!data.is_active) {
+                            statusBadge += ' <span class="badge bg-danger"><i class="fa fa-ban"></i></span>';
+                        }
+
+                        return statusBadge;
+                    }
+                },
+                {
+                    data: null,
+                    render: function(data) {
+                        let dates = '<div class="small text-muted">' + data.created_at + '</div>';
+                        if (data.published_at) {
+                            dates += '<div class="small text-muted">' + data.published_at + '</div>';
+                        }
+                        return dates;
+                    }
+                },
+                {
+                    data: null,
+                    orderable: false,
+                    searchable: false,
+                    render: function(data) {
+                        return '<div class="product-actions">' +
+                            '<a href="{% url "dashboard:dashboard_products" %}' + data.id + '/" class="btn btn-sm btn-outline-primary" title="{% trans "عرض التفاصيل" %}"><i class="fa fa-eye"></i></a>' +
+                            '{% if perms.products.change_product %}' +
+                            '<a href="{% url "dashboard:dashboard_products" %}' + data.id + '/edit/" class="btn btn-sm btn-outline-secondary" title="{% trans "تعديل" %}"><i class="fa fa-edit"></i></a>' +
+                            '{% endif %}' +
+                            '{% if perms.products.delete_product %}' +
+                            '<a href="{% url "dashboard:dashboard_products" %}' + data.id + '/delete/" class="btn btn-sm btn-outline-danger delete-product-btn" title="{% trans "حذف" %}" data-product-id="' + data.id + '" data-product-name="' + data.name + '"><i class="fa fa-trash"></i></a>' +
+                            '{% endif %}' +
+                            '</div>';
+                    }
+                }
+            ],
+            order: [[7, 'desc']], // ترتيب حسب التاريخ (تنازلي)
+            pageLength: 25,
+            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "{% trans 'الكل' %}"]],
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.10.25/i18n/Arabic.json",
+                paginate: {
+                    first: '<i class="fa fa-angle-double-left"></i>',
+                    previous: '<i class="fa fa-angle-left"></i>',
+                    next: '<i class="fa fa-angle-right"></i>',
+                    last: '<i class="fa fa-angle-double-right"></i>'
+                },
+                buttons: {
+                    copyTitle: '{% trans "نسخ إلى الحافظة" %}',
+                    copySuccess: {
+                        _: '{% trans "تم نسخ %d سطر" %}',
+                        1: '{% trans "تم نسخ سطر واحد" %}'
+                    }
+                }
+            },
+            dom: '<"row"<"col-sm-12 col-md-6"B><"col-sm-12 col-md-6">>rtip',
+            buttons: [
+    {
+        extend: 'collection',
+        text: '<i class="fa fa-download me-1"></i> {% trans "تصدير" %}',
+        className: 'btn btn-primary',  // تغيير من btn-outline-primary إلى btn btn-primary للحصول على خلفية ملونة واضحة
+        autoClose: true,
+        fade: 0,  // إلغاء تأثير التلاشي للحصول على تجربة أفضل
+        buttons: [
+            {
+                extend: 'excel',
+                text: '<i class="fa fa-file-excel me-1"></i> {% trans "Excel" %}',
+                className: 'btn btn-sm btn-light text-primary border',  // تحسين تنسيق الزر الفرعي
+                exportOptions: {
+                    columns: [1, 2, 3, 4, 5, 6, 7]
+                },
+                title: '{% trans "قائمة المنتجات" %} - {{ "now"|date:"Y-m-d" }}'
+            },
+            {
+                extend: 'csv',
+                text: '<i class="fa fa-file-csv me-1"></i> {% trans "CSV" %}',
+                className: 'btn btn-sm btn-light text-primary border',
+                exportOptions: {
+                    columns: [1, 2, 3, 4, 5, 6, 7]
+                }
+            },
+            {
+                extend: 'pdf',
+                text: '<i class="fa fa-file-pdf me-1"></i> {% trans "PDF" %}',
+                className: 'btn btn-sm btn-light text-danger border',
+                exportOptions: {
+                    columns: [1, 2, 3, 4, 5, 6, 7]
+                },
+                title: '{% trans "قائمة المنتجات" %} - {{ "now"|date:"Y-m-d" }}',
+                customize: function(doc) {
+                    doc.defaultStyle.font = 'Cairo';
+                    doc.defaultStyle.alignment = 'right';
+                    doc.styles.tableHeader.alignment = 'right';
+                }
+            },
+            {
+                extend: 'print',
+                text: '<i class="fa fa-print me-1"></i> {% trans "طباعة" %}',
+                className: 'btn btn-sm btn-light text-dark border',
+                exportOptions: {
+                    columns: [1, 2, 3, 4, 5, 6, 7]
+                },
+                title: '{% trans "قائمة المنتجات" %} - {{ "now"|date:"Y-m-d" }}'
             }
-
-            // إضافة تصفية العلامة التجارية
-            let brand = $('#brand_filter').val();
-            if (brand) {
-                url.searchParams.set('brand', brand);
-            } else {
-                url.searchParams.delete('brand');
-            }
-
-            // إضافة تصفية الحالة
-            let status = $('#status_filter').val();
-            if (status) {
-                url.searchParams.set('status', status);
-            } else {
-                url.searchParams.delete('status');
-            }
-
-            // إعادة تعيين رقم الصفحة
-            url.searchParams.delete('page');
-
-            // الانتقال للصفحة المحدثة
-            window.location.href = url.toString();
+        ]
+    },
+    {
+        text: '<i class="fa fa-sync-alt me-1"></i> {% trans "تحديث" %}',
+        className: 'btn btn-secondary',  // تغيير من btn-outline-secondary إلى btn btn-secondary لمزيد من الوضوح
+        action: function (e, dt, node, config) {
+            dt.ajax.reload();
         }
+    }
+],
+            drawCallback: function() {
+                // إعادة تفعيل أحداث الحذف والتحديد بعد تحديث الجدول
+                bindEvents();
+            },
+            initComplete: function() {
+                // إضافة البحث في العمود
+                this.api().columns().every(function(index) {
+                    if (index !== 0 && index !== 8) { // تجاهل أعمدة التحديد والإجراءات
+                        var column = this;
+                        var title = $(column.header()).text().trim();
+
+                        // إضافة مربع بحث أسفل كل عمود
+                        var $headerDiv = $('<div class="header-filter mt-2"></div>')
+                            .appendTo($(column.header()));
+
+                        var $input = $('<input type="text" class="form-control form-control-sm column-search" placeholder="' + title + '" />')
+                            .appendTo($headerDiv)
+                            .on('keyup change', function() {
+                                column
+                                    .search($(this).val())
+                                    .draw();
+                            });
+
+                        // إخفاء مربعات البحث افتراضيًا
+                        $headerDiv.hide();
+                    }
+                });
+            }
+        });
+
+        // تطبيق الفلاتر
+        $('#apply-filters').click(function() {
+            productsTable.ajax.reload();
+        });
+
+        // إعادة تعيين جميع الفلاتر
+        $('#reset-all-filters').click(function() {
+            $('#category_filter, #brand_filter, #status_filter, #stock_filter').val('').trigger('change');
+            $('#price_min, #price_max, #date_from, #date_to').val('');
+            productsTable.ajax.reload();
+        });
+
+        // إعادة تعيين فلاتر فردية
+        $('#reset-category').click(function() { $('#category_filter').val('').trigger('change'); });
+        $('#reset-brand').click(function() { $('#brand_filter').val('').trigger('change'); });
+        $('#reset-status').click(function() { $('#status_filter').val('').trigger('change'); });
+        $('#reset-price').click(function() { $('#price_min, #price_max').val(''); });
+
+        $('#reset-stock').click(function () {
+            $('#stock_filter').val('').trigger('change');
+            productsTable.ajax.reload();
+        });
+
+        $('#reset-date').click(function () {
+            $('#date_from, #date_to').val('');
+            productsTable.ajax.reload();
+        });
 
         // تحديد المنتجات بالجملة
         $('#select-all').change(function() {
@@ -465,19 +858,19 @@
         });
 
         // تحديث إجراءات الجملة عند تغيير التحديد
-        $('.product-checkbox').change(function() {
+        $(document).on('change', '.product-checkbox', function() {
             updateBulkActions();
         });
 
         // تحديث حالة إجراءات الجملة
         function updateBulkActions() {
             let selectedCount = $('.product-checkbox:checked').length;
-            $('.selected-count').text(selectedCount);
+            $('#selected-count').text(selectedCount);
 
             if (selectedCount > 0) {
-                $('.bulk-actions').show();
+                $('.bulk-actions-container').fadeIn(300);
             } else {
-                $('.bulk-actions').hide();
+                $('.bulk-actions-container').fadeOut(300);
             }
 
             // تحديث حالة تحديد الكل
@@ -489,13 +882,87 @@
         }
 
         // إلغاء التحديد
-        $('.cancel-selection').click(function() {
+        $('#cancel-selection').click(function() {
             $('.product-checkbox, #select-all').prop('checked', false);
             updateBulkActions();
         });
 
+        // تطبيق الإجراءات الجماعية
+        $('#apply-bulk-action').click(function() {
+            const action = $('#bulk-action').val();
+            if (!action) {
+                alert('{% trans "الرجاء اختيار إجراء" %}');
+                return;
+            }
+
+            // تخصيص رسالة التأكيد حسب الإجراء
+            let actionMessage = '';
+            switch(action) {
+                case 'activate':
+                    actionMessage = '{% trans "هل أنت متأكد من تفعيل المنتجات المحددة؟" %}';
+                    break;
+                case 'deactivate':
+                    actionMessage = '{% trans "هل أنت متأكد من إلغاء تفعيل المنتجات المحددة؟" %}';
+                    break;
+                case 'publish':
+                    actionMessage = '{% trans "هل أنت متأكد من نشر المنتجات المحددة؟" %}';
+                    break;
+                case 'draft':
+                    actionMessage = '{% trans "هل أنت متأكد من تحويل المنتجات المحددة إلى مسودة؟" %}';
+                    break;
+                case 'delete':
+                    actionMessage = '{% trans "هل أنت متأكد من حذف المنتجات المحددة؟ هذا الإجراء لا يمكن التراجع عنه." %}';
+                    break;
+                case 'update_stock':
+                    actionMessage = '{% trans "سيتم تحويلك إلى صفحة تحديث المخزون للمنتجات المحددة. هل تريد المتابعة؟" %}';
+                    break;
+                default:
+                    actionMessage = '{% trans "هل أنت متأكد من تنفيذ هذا الإجراء على المنتجات المحددة؟" %}';
+            }
+
+            $('#bulk-action-message').text(actionMessage);
+            $('#bulkActionModal').modal('show');
+        });
+
+        // تأكيد الإجراءات الجماعية
+        $('#confirm-bulk-action').click(function() {
+            $('#bulkActionModal').modal('hide');
+
+            const action = $('#bulk-action').val();
+            const selectedProducts = [];
+            $('.product-checkbox:checked').each(function() {
+                selectedProducts.push($(this).val());
+            });
+
+            // إرسال الطلب للخادم
+            $.ajax({
+                url: "{% url 'dashboard:dashboard_product_bulk_actions' %}",
+                type: "POST",
+                data: {
+                    action: action,
+                    selected_products: selectedProducts,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    // إظهار رسالة نجاح
+                    alert(response.message || '{% trans "تم تنفيذ الإجراء بنجاح" %}');
+
+                    // تحديث الجدول
+                    productsTable.ajax.reload();
+
+                    // إعادة تعيين التحديد
+                    $('#select-all').prop('checked', false);
+                    updateBulkActions();
+                },
+                error: function(xhr) {
+                    // إظهار رسالة خطأ
+                    alert(xhr.responseJSON?.message || '{% trans "حدث خطأ أثناء تنفيذ الإجراء" %}');
+                }
+            });
+        });
+
         // تأكيد حذف المنتج
-        $('.delete-product-btn').click(function(e) {
+        $(document).on('click', '.delete-product-btn', function(e) {
             e.preventDefault();
             let productId = $(this).data('product-id');
             let productName = $(this).data('product-name');
@@ -506,56 +973,14 @@
             $('#deleteProductModal').modal('show');
         });
 
-        // AJAX لتحميل المنتجات عند تغيير الصفحة
-        $(document).on('click', '.page-link', function(e) {
-            let isAjaxEnabled = true; // تعطيل/تفعيل التحميل الجزئي
-
-            if (!isAjaxEnabled) return true;
-
-            e.preventDefault();
-            let url = $(this).attr('href');
-
-            if (!url || url === '#') return;
-
-            $.ajax({
-                url: url,
-                type: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                success: function(response) {
-                    $('#products-table-container').html(response.html);
-
-                    // تحديث عنوان URL
-                    history.pushState(null, '', url);
-
-                    // تحديث معلومات الترقيم
-                    updatePaginationInfo(response);
-
-                    // إعادة ربط الأحداث
-                    bindEvents();
-                }
-            });
-        });
-
-        // تحديث معلومات الترقيم
-        function updatePaginationInfo(response) {
-            let start = (response.page - 1) * 20 + 1;
-            let end = Math.min(start + 19, response.total);
-            $('.pagination-info').text(
-                '{% trans "عرض" %} ' + start + ' {% trans "إلى" %} ' + end + ' {% trans "من" %} ' + response.total + ' {% trans "منتج" %}'
-            );
-        }
-
         // ربط الأحداث بعد تحديث المحتوى
         function bindEvents() {
-            // إعادة ربط أحداث التحديد
-            $('.product-checkbox').change(function() {
+            // الأحداث التي يجب إعادة ربطها بعد تحديث البيانات
+            $('.product-checkbox').on('change', function() {
                 updateBulkActions();
             });
 
-            // إعادة ربط أحداث الحذف
-            $('.delete-product-btn').click(function(e) {
+            $('.delete-product-btn').on('click', function(e) {
                 e.preventDefault();
                 let productId = $(this).data('product-id');
                 let productName = $(this).data('product-name');

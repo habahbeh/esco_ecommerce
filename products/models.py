@@ -664,8 +664,8 @@ class Product(TimeStampedModel, SEOModel):
     STOCK_STATUS_CHOICES = [
         ('in_stock', _('متوفر')),
         ('out_of_stock', _('غير متوفر')),
-        ('pre_order', _('طلب مسبق')),
-        ('discontinued', _('متوقف')),
+        # ('pre_order', _('طلب مسبق')),
+        # ('discontinued', _('متوقف')),
     ]
 
     CONDITION_CHOICES = [
@@ -807,6 +807,7 @@ class Product(TimeStampedModel, SEOModel):
         max_digits=5,
         decimal_places=2,
         default=16,
+        blank=True,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         help_text=_("نسبة الضريبة المضافة")
     )
@@ -1010,6 +1011,7 @@ class Product(TimeStampedModel, SEOModel):
     def __str__(self):
         return self.name
 
+
     def clean(self):
         """Enhanced validation"""
         # Validate discount logic
@@ -1046,7 +1048,7 @@ class Product(TimeStampedModel, SEOModel):
             self.track_inventory = False
 
     def save(self, *args, **kwargs):
-        self.full_clean()
+
 
         # Generate slug if not exists
         if not self.slug:
@@ -1060,6 +1062,8 @@ class Product(TimeStampedModel, SEOModel):
         # Generate SKU if not exists
         if not self.sku:
             self.sku = self.generate_sku()
+
+        self.full_clean()
 
         # Set published date
         if self.status == 'published' and not self.published_at:
