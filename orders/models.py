@@ -11,13 +11,12 @@ class Order(models.Model):
     نموذج الطلب - يمثل طلب الشراء
     Order model - represents a purchase order
     """
+
     STATUS_CHOICES = [
         ('pending', _('قيد الانتظار')),
-        ('processing', _('قيد المعالجة')),
-        ('shipped', _('تم الشحن')),
-        ('delivered', _('تم التسليم')),
+        ('confirmed', _('تأكيد الطلب')),
+        ('closed', _('إغلاق الطلب')),
         ('cancelled', _('ملغي')),
-        ('refunded', _('مسترجع')),
     ]
 
     PAYMENT_STATUS_CHOICES = [

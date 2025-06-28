@@ -15,11 +15,12 @@ import json
 import csv
 from decimal import Decimal
 from datetime import datetime, timedelta
-
 from orders.models import Order, OrderItem
 from accounts.models import User, UserAddress
 from products.models import Product, ProductVariant
 from .dashboard import DashboardAccessMixin
+from django.core.mail import send_mail
+from django.conf import settings
 
 
 # ========================= قائمة الطلبات =========================
@@ -212,7 +213,7 @@ class OrderUpdateStatusView(DashboardAccessMixin, View):
         new_status = request.POST.get('status')
         if not new_status or new_status not in dict(Order.STATUS_CHOICES):
             messages.error(request, 'الرجاء تحديد حالة صحيحة')
-            return redirect('dashboard_order_detail', order_id=order.id)
+            return redirect('dashboard:dashboard_order_detail', order_id=order.id)
 
         # تحديث الحالة
         old_status = order.status
@@ -226,42 +227,95 @@ class OrderUpdateStatusView(DashboardAccessMixin, View):
         # تحديث تاريخ التحديث
         order.updated_at = timezone.now()
 
-        # حفظ التغييرات
-        order.save()
+        # إجراءات إضافية حسب نوع التغيير
+        if new_status == 'confirmed' and old_status == 'pending':
+            # تأكيد الطلب بعد التحقق من وصل الدفع
+            # تحديث حالة الدفع أيضاً
+            order.payment_status = 'paid'
 
-        # تحديث المخزون حسب الحالة الجديدة
-        if new_status == 'delivered' and old_status != 'delivered':
-            # تقليل المخزون وزيادة المبيعات
-            for item in order.items.all():
-                if hasattr(item, 'product') and item.product:
-                    product = item.product
-                    product.reduce_stock(item.quantity)
+            # إرسال إشعار للعميل
+            notify_customer = request.POST.get('notify_customer') == 'on'
+            if notify_customer:
+                self.send_order_status_email(order, 'confirmed')
 
-                    # إذا كان هناك متغير
-                    if hasattr(item, 'variant') and item.variant:
-                        variant = item.variant
-                        variant.stock_quantity = max(0, variant.stock_quantity - item.quantity)
-                        variant.save()
+        elif new_status == 'closed' and old_status == 'confirmed':
+            # إغلاق الطلب للتوصيل - الدفع يبقى كما هو
+            pass
 
-        # إلغاء الطلب وإعادة المخزون
-        elif new_status == 'cancelled' and old_status not in ['cancelled', 'refunded']:
-            for item in order.items.all():
-                if hasattr(item, 'product') and item.product:
-                    product = item.product
-                    if product.track_inventory:
+        elif new_status == 'cancelled':
+            # إذا كان الإلغاء بسبب مشكلة في الدفع، نحدث حالة الدفع
+            payment_issue = request.POST.get('payment_issue') == 'on'
+            if payment_issue:
+                order.payment_status = 'failed'
+
+            # إلغاء الطلب وإعادة المخزون إذا لزم الأمر
+            if old_status in ['confirmed', 'closed']:
+                # إعادة المخزون فقط إذا كان الطلب مؤكداً سابقاً
+                for item in order.items.all():
+                    if hasattr(item, 'product') and item.product and item.product.track_inventory:
+                        product = item.product
                         product.stock_quantity += item.quantity
                         product.save()
 
-                    # إذا كان هناك متغير
-                    if hasattr(item, 'variant') and item.variant:
-                        variant = item.variant
-                        if variant.track_inventory:
+                        # إذا كان هناك متغير
+                        if hasattr(item, 'variant') and item.variant and item.variant.track_inventory:
+                            variant = item.variant
                             variant.stock_quantity += item.quantity
                             variant.save()
 
-        messages.success(request, f'تم تحديث حالة الطلب إلى {dict(Order.STATUS_CHOICES)[new_status]}')
-        return redirect('dashboard_order_detail', order_id=order.id)
+            # إرسال إشعار بالإلغاء إذا كان الخيار مفعلاً
+            notify_customer = request.POST.get('notify_customer') == 'on'
+            if notify_customer:
+                self.send_order_status_email(order, 'cancelled')
 
+        # حفظ التغييرات
+        order.save()
+
+        messages.success(request, f'تم تحديث حالة الطلب إلى {dict(Order.STATUS_CHOICES)[new_status]}')
+        return redirect('dashboard:dashboard_order_detail', order_id=order.id)
+
+    def send_order_status_email(self, order, status):
+        """إرسال بريد إلكتروني للعميل عند تغيير حالة الطلب"""
+        subject = f'تحديث حالة الطلب #{order.order_number}'
+
+        # تحديد الرسالة حسب الحالة
+        if status == 'confirmed':
+            message_title = 'تم تأكيد طلبك'
+            message_content = 'نود إعلامك أن طلبك قد تم تأكيده بعد التحقق من الدفع. سنقوم بالتواصل معك قريباً لإكمال عملية التوصيل.'
+        elif status == 'closed':
+            message_title = 'طلبك جاهز للتوصيل'
+            message_content = 'نود إعلامك أن طلبك جاهز للتوصيل وسيتم تسليمه قريباً.'
+        elif status == 'cancelled':
+            message_title = 'تم إلغاء طلبك'
+            message_content = 'نأسف لإعلامك أنه تم إلغاء طلبك. يرجى التواصل مع خدمة العملاء للمزيد من المعلومات.'
+        else:
+            # لا نرسل بريداً لحالات أخرى
+            return
+
+        # إعداد رسالة البريد
+        plain_message = f"""
+        {message_title}
+
+        {message_content}
+
+        رقم الطلب: {order.order_number}
+        الإجمالي: {order.grand_total} د.أ
+
+        شكراً لثقتكم بنا.
+        فريق خدمة العملاء
+        """
+
+        # استخدام قيمة افتراضية إذا لم يكن الإعداد موجوداً
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@example.com')
+
+        # إرسال البريد
+        send_mail(
+            subject=subject,
+            message=plain_message,
+            from_email=from_email,
+            recipient_list=[order.email],
+            fail_silently=True
+        )
 
 # ========================= تحديث حالة الدفع =========================
 
@@ -345,10 +399,16 @@ class OrderCancelView(DashboardAccessMixin, View):
 # ========================= طباعة الطلب =========================
 
 class OrderPrintView(DashboardAccessMixin, View):
-    """طباعة تفاصيل الطلب"""
+    """طباعة تفاصيل الطلب وتحديث الحالة إلى 'إغلاق الطلب'"""
 
     def get(self, request, order_id):
         order = get_object_or_404(Order, id=order_id)
+
+        # تحديث حالة الطلب إلى "مغلق" إذا كان مؤكداً
+        if order.status == 'confirmed':
+            order.status = 'closed'
+            order.notes = f"{order.notes}\n[{timezone.now().strftime('%Y-%m-%d %H:%M')}] تم إغلاق الطلب للتوصيل"
+            order.save()
 
         # جلب عناصر الطلب
         order_items = order.items.all().select_related('product', 'variant')
@@ -369,7 +429,6 @@ class OrderPrintView(DashboardAccessMixin, View):
         }
 
         return render(request, 'dashboard/orders/order_print.html', context)
-
 
 # ========================= إنشاء طلب جديد =========================
 
@@ -875,3 +934,64 @@ class OrderDashboardView(DashboardAccessMixin, View):
         }
 
         return render(request, 'dashboard/orders/order_dashboard.html', context)
+
+
+class DeliveryOrdersReportView(DashboardAccessMixin, View):
+    """عرض تقرير الطلبات المؤكدة المنتظرة التوصيل"""
+
+    def get(self, request):
+        # جلب الطلبات المؤكدة التي لم يتم إغلاقها بعد
+        confirmed_orders = Order.objects.filter(
+            status='confirmed',  # فقط الطلبات المؤكدة
+            payment_status='paid'  # والمدفوعة
+        ).order_by('-created_at')
+
+        # البحث والتصفية
+        query = request.GET.get('q', '')
+        date_from = request.GET.get('date_from', '')
+        date_to = request.GET.get('date_to', '')
+
+        # تطبيق البحث
+        if query:
+            confirmed_orders = confirmed_orders.filter(
+                Q(order_number__icontains=query) |
+                Q(full_name__icontains=query) |
+                Q(email__icontains=query) |
+                Q(phone__icontains=query)
+            )
+
+        # تطبيق التصفية حسب التاريخ
+        if date_from:
+            try:
+                date_from = datetime.strptime(date_from, '%Y-%m-%d').date()
+                confirmed_orders = confirmed_orders.filter(created_at__date__gte=date_from)
+            except ValueError:
+                pass
+
+        if date_to:
+            try:
+                date_to = datetime.strptime(date_to, '%Y-%m-%d').date()
+                confirmed_orders = confirmed_orders.filter(created_at__date__lte=date_to)
+            except ValueError:
+                pass
+
+        # التصفح الجزئي
+        paginator = Paginator(confirmed_orders, 20)  # 20 طلب في كل صفحة
+        page = request.GET.get('page', 1)
+        orders_page = paginator.get_page(page)
+
+        # إحصائيات
+        stats = {
+            'total_orders': confirmed_orders.count(),
+            'total_value': confirmed_orders.aggregate(total=Sum('grand_total'))['total'] or 0,
+        }
+
+        context = {
+            'orders': orders_page,
+            'query': query,
+            'date_from': date_from,
+            'date_to': date_to,
+            'stats': stats,
+        }
+
+        return render(request, 'dashboard/orders/delivery_orders_report.html', context)

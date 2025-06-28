@@ -206,15 +206,13 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 # إعدادات البريد الإلكتروني - Email settings
-# استخدام "console" للتطوير و"smtp" للإنتاج
-# Use "console" for development and "smtp" for production
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-# EMAIL_HOST = 'smtp.example.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'your-email@example.com'
-# EMAIL_HOST_PASSWORD = 'your-password'
-# DEFAULT_FROM_EMAIL = 'ESCO <no-reply@esco.jo>'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'habahbeh1000@gmail.com'
+EMAIL_HOST_PASSWORD = 'tpdt tivg jxie slpe'
+DEFAULT_FROM_EMAIL = 'habahbeh1000@gmail.com'
 
 # إعدادات الجلسة - Session settings
 SESSION_COOKIE_AGE = 60 * 60 * 24 * 30  # 30 days
