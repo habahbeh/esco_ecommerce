@@ -117,6 +117,9 @@ urlpatterns = [
     path('orders/reports/', views.OrderReportsView.as_view(), name='dashboard_order_reports'),
     path('orders/export/', views.OrderExportView.as_view(), name='dashboard_order_export'),
 
+    path('orders/delivery-report/', views.DeliveryOrdersReportView.as_view(), name='dashboard_delivery_orders_report'),
+
+
     # ========================= إدارة عمليات الدفع =========================
     # إدارة جلسات الدفع
     path('checkout/sessions/', views.CheckoutSessionListView.as_view(), name='dashboard_checkout_sessions'),

@@ -126,7 +126,8 @@ urlpatterns = [
     path('offers/', SpecialOffersView.as_view(), name='special_offers'),
 
     # المنتجات حسب العلامة التجارية والوسوم
-    path('brand/<slug:brand_slug>/', BrandProductsView.as_view(), name='brand_products'),
+    # path('brand/<slug:brand_slug>/', BrandProductsView.as_view(), name='brand_products'),
+    re_path(r'brand/(?P<brand_slug>[-\w\u0600-\u06FF]+)/', BrandProductsView.as_view(), name='brand_products'),
     path('tag/<slug:tag_slug>/', TagProductsView.as_view(), name='tag_products'),
 
     # تفاصيل المنتج

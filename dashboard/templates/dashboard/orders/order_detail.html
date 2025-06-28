@@ -1,0 +1,362 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load i18n %}
+{% load dashboard_tags %}
+
+{% block title %}تفاصيل الطلب #{{ order.order_number }}{% endblock %}
+{% block page_title %}تفاصيل الطلب #{{ order.order_number }}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_orders' %}">إدارة الطلبات</a></li>
+{% endblock %}
+
+{% block current_page %}تفاصيل الطلب #{{ order.order_number }}{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">معلومات الطلب</h5>
+        <div>
+            <span class="badge bg-{{ order.status|status_badge }} me-2">{{ order.get_status_display }}</span>
+            <span class="badge bg-{{ order.payment_status|status_badge }}">{{ order.get_payment_status_display }}</span>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-borderless">
+                    <tr>
+                        <th style="width: 35%">رقم الطلب:</th>
+                        <td>{{ order.order_number }}</td>
+                    </tr>
+                    <tr>
+                        <th>تاريخ الطلب:</th>
+                        <td>{{ order.created_at|date:"Y-m-d H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <th>حالة الطلب:</th>
+                        <td>
+                            <span class="badge bg-{{ order.status|status_badge }}">{{ order.get_status_display }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>حالة الدفع:</th>
+                        <td>
+                            <span class="badge bg-{{ order.payment_status|status_badge }}">{{ order.get_payment_status_display }}</span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <table class="table table-borderless">
+                    <tr>
+                        <th style="width: 35%">طريقة الدفع:</th>
+                        <td>{{ order.payment_method }}</td>
+                    </tr>
+                    <tr>
+                        <th>المبلغ الإجمالي:</th>
+                        <td>{{ order.grand_total|currency }}</td>
+                    </tr>
+                    <tr>
+                        <th>آخر تحديث:</th>
+                        <td>{{ order.updated_at|date:"Y-m-d H:i" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- معلومات العميل -->
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">معلومات العميل</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th style="width: 35%">الاسم الكامل:</th>
+                        <td>{{ order.full_name }}</td>
+                    </tr>
+                    <tr>
+                        <th>البريد الإلكتروني:</th>
+                        <td>{{ order.email }}</td>
+                    </tr>
+                    <tr>
+                        <th>رقم الهاتف:</th>
+                        <td>{{ order.phone }}</td>
+                    </tr>
+                    {% if user_info %}
+                    <tr>
+                        <th>عدد الطلبات:</th>
+                        <td>{{ user_info.orders_count }}</td>
+                    </tr>
+                    <tr>
+                        <th>الإنفاق الإجمالي:</th>
+                        <td>{{ user_info.total_spent|currency }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+                {% if order.user %}
+                <a href="{% url 'dashboard:dashboard_user_detail' user_id=order.user.id %}" class="btn btn-sm btn-outline-primary">
+                    عرض ملف العميل
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">عنوان الشحن</h5>
+            </div>
+            <div class="card-body">
+                <address>
+                    {{ order.shipping_address }}<br>
+                    {{ order.shipping_city }}، {{ order.shipping_state }}<br>
+                    {{ order.shipping_country }} {{ order.shipping_postal_code }}<br>
+                </address>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- وصل الدفع - إذا كان موجوداً -->
+{% if payment_info %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">معلومات الدفع</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-borderless">
+                    <tr>
+                        <th style="width: 35%">طريقة الدفع:</th>
+                        <td>{{ payment_info.method }}</td>
+                    </tr>
+                    <tr>
+                        <th>حالة الدفع:</th>
+                        <td>
+                            <span class="badge bg-{{ payment_info.status|status_badge }}">{{ order.get_payment_status_display }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>رقم المعاملة:</th>
+                        <td>{{ payment_info.id|default:"--" }}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <!-- صورة وصل الدفع إذا كان موجوداً -->
+            {% if payments and payments.0.transaction and payments.0.transaction.metadata.receipt_path %}
+            <div class="col-md-6">
+                <h6>وصل الدفع:</h6>
+                <a href="{{ MEDIA_URL }}{{ payments.0.transaction.metadata.receipt_path }}" target="_blank" class="d-block">
+                    <img src="{{ MEDIA_URL }}{{ payments.0.transaction.metadata.receipt_path }}" alt="وصل الدفع" class="img-thumbnail" style="max-height: 200px;">
+                </a>
+                <div class="mt-2">
+                    <a href="{{ MEDIA_URL }}{{ payments.0.transaction.metadata.receipt_path }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                        عرض وصل الدفع بالحجم الكامل
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- منتجات الطلب -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">منتجات الطلب</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>المنتج</th>
+                        <th>السعر</th>
+                        <th>الكمية</th>
+                        <th>الإجمالي</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order_items %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            {{ item.product_name }}
+                            {% if item.variant_name %}
+                            <small class="text-muted d-block">{{ item.variant_name }}</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ item.unit_price|currency }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.total_price|currency }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="4" class="text-end">المجموع الفرعي:</th>
+                        <td>{{ order.total_price|currency }}</td>
+                    </tr>
+                    <tr>
+                        <th colspan="4" class="text-end">تكلفة الشحن:</th>
+                        <td>{{ order.shipping_cost|currency }}</td>
+                    </tr>
+                    <tr>
+                        <th colspan="4" class="text-end">الضريبة:</th>
+                        <td>{{ order.tax_amount|currency }}</td>
+                    </tr>
+                    {% if order.discount_amount > 0 %}
+                    <tr>
+                        <th colspan="4" class="text-end">الخصم:</th>
+                        <td>- {{ order.discount_amount|currency }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr class="table-primary">
+                        <th colspan="4" class="text-end">المجموع الكلي:</th>
+                        <td><strong>{{ order.grand_total|currency }}</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- تحديث حالة الطلب -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">تحديث حالة الطلب</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'dashboard:dashboard_order_update_status' order_id=order.id %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="status" class="form-label">حالة الطلب</label>
+                        <select name="status" id="status" class="form-select">
+                            <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>قيد الانتظار
+                            </option>
+                            <option value="confirmed" {% if order.status == 'confirmed' %}selected{% endif %}>تأكيد
+                                الطلب
+                            </option>
+                            <option value="closed" {% if order.status == 'closed' %}selected{% endif %}>إغلاق الطلب
+                            </option>
+                            <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>ملغي
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="status_notes" class="form-label">ملاحظات</label>
+                        <textarea name="status_notes" id="status_notes" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="notify_customer" name="notify_customer" checked>
+                        <label class="form-check-label" for="notify_customer">إخطار العميل</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">تحديث الحالة</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">تحديث حالة الدفع</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'dashboard:dashboard_order_update_payment_status' order_id=order.id %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="payment_status" class="form-label">حالة الدفع</label>
+                        <select name="payment_status" id="payment_status" class="form-select">
+                            {% for status_value, status_name in payment_status_choices %}
+                            <option value="{{ status_value }}" {% if order.payment_status == status_value %}selected{% endif %}>
+                                {{ status_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="payment_notes" class="form-label">ملاحظات</label>
+                        <textarea name="payment_notes" id="payment_notes" class="form-control" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">تحديث حالة الدفع</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ملاحظات الطلب -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">ملاحظات الطلب</h5>
+    </div>
+    <div class="card-body">
+        <div class="mb-3">
+            <label class="form-label">ملاحظات العميل:</label>
+            <div class="p-3 bg-light rounded">
+                {{ order.notes|default:"لا توجد ملاحظات"|linebreaks }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- الإجراءات -->
+<div class="d-flex justify-content-between mb-4">
+    <div>
+        <a href="{% url 'dashboard:dashboard_orders' %}" class="btn btn-secondary me-2">
+            <i class="fas fa-arrow-right"></i> العودة للقائمة
+        </a>
+        <a href="{% url 'dashboard:dashboard_order_print' order_id=order.id %}" class="btn btn-outline-dark me-2" target="_blank">
+            <i class="fas fa-print"></i> طباعة الطلب
+        </a>
+    </div>
+    <div>
+        {% if order.status != 'cancelled' and order.status != 'refunded' %}
+        <form method="post" action="{% url 'dashboard:dashboard_order_cancel' order_id=order.id %}" class="d-inline" 
+              onsubmit="return confirm('هل أنت متأكد من إلغاء هذا الطلب؟');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-ban"></i> إلغاء الطلب
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // للعناصر ذات الصلة بتحديث الطلب
+    var statusSelect = document.getElementById('status');
+    var notifyCheckbox = document.getElementById('notify_customer');
+    
+    // تفعيل/تعطيل خيار الإخطار حسب الحالة المختارة
+    statusSelect.addEventListener('change', function() {
+        var selectedStatus = this.value;
+        if (selectedStatus === 'processing' || selectedStatus === 'shipped' || selectedStatus === 'delivered') {
+            notifyCheckbox.disabled = false;
+            notifyCheckbox.checked = true;
+        } else {
+            notifyCheckbox.disabled = false;
+        }
+    });
+});
+</script>
+{% endblock %}
