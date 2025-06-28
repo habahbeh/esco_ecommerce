@@ -291,3 +291,270 @@
     min-width: 30px;
 }
 
+
+
+/* إضافة هذا إلى ملف CSS الخاص بلوحة التحكم */
+.select2-container--default .select2-results__option {
+    padding: 6px 12px;
+}
+
+.select2-container--default .select2-selection--single {
+    height: 38px;
+    padding: 5px 10px;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 36px;
+}
+
+/* تحسين مظهر البحث في حقل الفئة */
+.select2-search--dropdown .select2-search__field {
+    padding: 8px;
+    border-radius: 4px;
+}
+
+/* تحسين مظهر القائمة المنسدلة */
+.select2-dropdown {
+    border-radius: 6px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    border: 1px solid #ddd;
+}
+
+/* تحسين تباعد القائمة المنسدلة */
+.select2-results__option {
+    margin-bottom: 2px;
+}
+
+/* تحسين زر مسح الاختيار */
+.select2-container--default .select2-selection--single .select2-selection__clear {
+    margin-right: 10px;
+    margin-left: 10px;
+    color: #888;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__clear:hover {
+    color: #dc3545;
+}
+
+
+/* تحسين مفاتيح التبديل (switches) */
+.feature-switch {
+    position: relative;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    padding: 10px 15px 10px 50px;
+    transition: all 0.3s ease;
+}
+
+/* جعل الأيقونة على اليمين في وضع RTL */
+[dir="rtl"] .feature-switch {
+    padding: 10px 50px 10px 15px;
+}
+
+.feature-switch .form-check-input {
+    width: 2.5em;
+    height: 1.25em;
+    margin-top: 0.35em;
+    margin-right: 10px;
+    position: absolute;
+    right: auto;
+    left: 10px;
+}
+
+[dir="rtl"] .feature-switch .form-check-input {
+    right: 10px;
+    left: auto;
+}
+
+.feature-switch .feature-icon {
+    margin-left: 5px;
+    margin-right: 8px;
+    font-size: 1rem;
+    opacity: 0.7;
+    transition: all 0.3s ease;
+}
+
+/* تغيير ألوان الأيقونات */
+.feature-switch:has(.form-check-input[id$="is_featured"]) .feature-icon {
+    color: #ffc107; /* لون نجمة المميز */
+}
+
+.feature-switch:has(.form-check-input[id$="is_new"]) .feature-icon {
+    color: #0d6efd; /* لون شارة جديد */
+}
+
+.feature-switch:has(.form-check-input[id$="is_best_seller"]) .feature-icon {
+    color: #dc3545; /* لون شعلة الأكثر مبيعًا */
+}
+
+.feature-switch:has(.form-check-input[id$="show_price"]) .feature-icon {
+    color: #198754; /* لون علامة السعر */
+}
+
+/* حالة النشاط */
+.feature-switch:has(.form-check-input:checked) {
+    background-color: #f0f7ff;
+    border-color: #cfe2ff;
+    box-shadow: 0 0 5px rgba(13, 110, 253, 0.1);
+}
+
+.feature-switch:has(.form-check-input:checked) .feature-icon {
+    opacity: 1;
+}
+
+.feature-switch:has(.form-check-input:checked) .feature-text {
+    font-weight: 600;
+}
+
+/* حالة التحويم */
+.feature-switch:hover {
+    border-color: #dee2e6;
+    background-color: #f1f3f5;
+    cursor: pointer;
+}
+
+/* تنسيق المفتاح نفسه */
+.form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+/* تحسين العنوان */
+.feature-section-title {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+/* تحسين قسم الصور */
+.image-preview-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.image-preview-item {
+    width: 150px;
+    height: 190px;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid #dee2e6;
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.image-preview-inner {
+    width: 100%;
+    height: 150px;
+    position: relative;
+    overflow: hidden;
+}
+
+.image-preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.image-preview-item:hover img {
+    transform: scale(1.05);
+}
+
+.image-preview-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.image-preview-item:hover .image-preview-overlay {
+    opacity: 1;
+}
+
+.image-preview-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.image-preview-actions button {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: all 0.2s ease;
+}
+
+.image-preview-actions button:hover {
+    transform: scale(1.1);
+}
+
+.image-preview-badge {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: #28a745;
+    color: white;
+    font-size: 0.7rem;
+    padding: 3px 8px;
+    border-radius: 12px;
+}
+
+[dir="rtl"] .image-preview-badge {
+    right: auto;
+    left: 8px;
+}
+
+.image-meta {
+    text-align: center;
+    padding: 2px 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.image-preview-item.is-primary {
+    border-color: #28a745;
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.3);
+}
+
+/* منطقة السحب والإفلات */
+.images-dropzone {
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.images-dropzone:hover, .images-dropzone.dragover {
+    border-color: #0d6efd;
+    background-color: #e8f0fe;
+}
+
+.dropzone-message {
+    color: #6c757d;
+}
+
+.temp-image {
+    border-style: dashed;
+    background-color: #e8f0fe;
+}
+
+
+

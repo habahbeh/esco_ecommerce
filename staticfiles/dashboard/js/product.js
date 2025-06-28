@@ -39,6 +39,50 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // تهيئة محرر الخصائص الإضافية
     initAttributesEditor();
+
+    // الحصول على حقول الخصم
+    var discountPercentage = document.getElementById('id_discount_percentage');
+    var discountAmount = document.getElementById('id_discount_amount');
+
+    // التأكد من أن القيم الأولية صحيحة
+    if (!discountPercentage.value || discountPercentage.value === '') {
+        discountPercentage.value = '0';
+    }
+
+    if (!discountAmount.value || discountAmount.value === '') {
+        discountAmount.value = '0';
+    }
+
+    // إضافة مستمعين للأحداث
+    [discountPercentage, discountAmount].forEach(function(field) {
+        // عند تغيير القيمة
+        field.addEventListener('change', function() {
+            if (this.value === '' || isNaN(parseFloat(this.value))) {
+                this.value = '0';
+            } else if (parseFloat(this.value) < 0) {
+                this.value = '0';
+            }
+        });
+
+        // عند فقدان التركيز
+        field.addEventListener('blur', function() {
+            if (this.value === '' || isNaN(parseFloat(this.value))) {
+                this.value = '0';
+            }
+        });
+    });
+
+
+    setupAttributeDeleteButtons();
+
+    // إعادة تهيئة أزرار الحذف بعد إضافة خاصية جديدة
+    const addAttrBtn = document.getElementById('add-attr-btn');
+    if (addAttrBtn) {
+        addAttrBtn.addEventListener('click', function() {
+            setTimeout(setupAttributeDeleteButtons, 100);
+        });
+    }
+
 });
 
 // وظيفة للتحقق من صحة النموذج
@@ -397,14 +441,66 @@ function initFeaturesEditor() {
 }
 
 // تهيئة Select2
+// تهيئة Select2
 function setupSelect2() {
     if (window.jQuery && jQuery.fn.select2) {
+        // التهيئة العامة
         jQuery('.select2').select2({
             dir: document.documentElement.getAttribute('dir'),
             placeholder: "اختر...",
             allowClear: true,
             width: '100%'
         });
+
+        // تهيئة خاصة لحقل الفئة
+        jQuery('#id_category').select2({
+            dir: document.documentElement.getAttribute('dir'),
+            placeholder: "اختر الفئة...",
+            allowClear: true,
+            width: '100%',
+            templateResult: formatCategoryOption,
+            templateSelection: formatCategorySelection,
+            language: {
+                noResults: function() {
+                    return "لا توجد نتائج";
+                },
+                searching: function() {
+                    return "جاري البحث...";
+                }
+            }
+        });
+
+        // تهيئة خاصة لحقل العلامة التجارية
+        jQuery('#id_brand').select2({
+            dir: document.documentElement.getAttribute('dir'),
+            placeholder: "اختر العلامة التجارية...",
+            allowClear: true,
+            width: '100%',
+            language: {
+                noResults: function() {
+                    return "لا توجد نتائج";
+                },
+                searching: function() {
+                    return "جاري البحث...";
+                }
+            }
+        });
+
+        jQuery('#id_status').select2({
+            dir: document.documentElement.getAttribute('dir'),
+            width: '100%',
+            minimumResultsForSearch: Infinity, // إخفاء البحث لأن الخيارات قليلة
+            templateResult: formatStatusOption,
+            templateSelection: formatStatusSelection
+        });
+
+        jQuery('.select2-stock-status').select2({
+    dir: document.documentElement.getAttribute('dir'),
+    width: '100%',
+    minimumResultsForSearch: Infinity, // إخفاء البحث لأن الخيارات قليلة
+    templateResult: formatStockStatusOption,
+    templateSelection: formatStockStatusSelection
+});
 
         // البحث عن المنتجات ذات الصلة
         jQuery('#id_related_products, #id_cross_sell_products, #id_upsell_products').select2({
@@ -436,6 +532,162 @@ function setupSelect2() {
             minimumInputLength: 2
         });
     }
+
+    function formatStatusOption(status) {
+        if (!status.id) {
+            return status.text;
+        }
+
+        var statusIcon = '';
+        var statusClass = '';
+
+        switch(status.id) {
+            case 'published':
+                statusIcon = '<i class="fa fa-check-circle text-success me-1"></i>';
+                statusClass = 'text-success';
+                break;
+            case 'draft':
+                statusIcon = '<i class="fa fa-edit text-secondary me-1"></i>';
+                statusClass = 'text-secondary';
+                break;
+            case 'pending_review':
+                statusIcon = '<i class="fa fa-clock text-warning me-1"></i>';
+                statusClass = 'text-warning';
+                break;
+            case 'archived':
+                statusIcon = '<i class="fa fa-archive text-danger me-1"></i>';
+                statusClass = 'text-danger';
+                break;
+        }
+
+        return $(
+            '<span>' + statusIcon + '<span class="' + statusClass + '">' + status.text + '</span></span>'
+        );
+    }
+
+    // دالة تنسيق الحالة المختارة
+    function formatStatusSelection(status) {
+        if (!status.id) {
+            return status.text;
+        }
+
+        var statusIcon = '';
+
+        switch(status.id) {
+            case 'published':
+                statusIcon = '<i class="fa fa-check-circle text-success me-1"></i>';
+                break;
+            case 'draft':
+                statusIcon = '<i class="fa fa-edit text-secondary me-1"></i>';
+                break;
+            case 'pending_review':
+                statusIcon = '<i class="fa fa-clock text-warning me-1"></i>';
+                break;
+            case 'archived':
+                statusIcon = '<i class="fa fa-archive text-danger me-1"></i>';
+                break;
+        }
+
+        return $(
+            '<span>' + statusIcon + status.text + '</span>'
+        );
+    }
+
+
+
+
+    // دالة تنسيق خيارات حالة المخزون
+function formatStockStatusOption(state) {
+    if (!state.id) {
+        return state.text;
+    }
+
+    var icon = jQuery(state.element).data('icon');
+    var statusClass = '';
+
+    switch(state.id) {
+        case 'in_stock':
+            statusClass = 'text-success';
+            break;
+        case 'out_of_stock':
+            statusClass = 'text-danger';
+            break;
+        case 'pre_order':
+            statusClass = 'text-warning';
+            break;
+        default:
+            statusClass = 'text-secondary';
+    }
+
+    return jQuery(
+        '<span><i class="fas ' + icon + ' ' + statusClass + ' me-2"></i><span>' + state.text + '</span></span>'
+    );
+}
+
+// دالة تنسيق حالة المخزون المختارة
+function formatStockStatusSelection(state) {
+    if (!state.id) {
+        return state.text;
+    }
+
+    var icon = jQuery(state.element).data('icon');
+    var statusClass = '';
+
+    switch(state.id) {
+        case 'in_stock':
+            statusClass = 'text-success';
+            break;
+        case 'out_of_stock':
+            statusClass = 'text-danger';
+            break;
+        case 'pre_order':
+            statusClass = 'text-warning';
+            break;
+        default:
+            statusClass = 'text-secondary';
+    }
+
+    return jQuery(
+        '<span><i class="fas ' + icon + ' ' + statusClass + ' me-2"></i><span>' + state.text + '</span></span>'
+    );
+}
+
+    // تنسيق خيارات الفئات للعرض بالتسلسل الهرمي
+    function formatCategoryOption(category) {
+        if (!category.id) {
+            return category.text;
+        }
+
+        // التعامل مع المسافات البادئة للفئات الفرعية
+        var $option = $(category.element);
+        var level = ($option.text().match(/^\s+/) || [''])[0].length / 4;
+
+        var $container = $('<span>');
+
+        // إضافة مسافات للفئات الفرعية
+        if (level > 0) {
+            var $indent = $('<span>').html('&nbsp;'.repeat(level * 4));
+            $container.append($indent);
+
+            // إضافة أيقونة للفئات الفرعية
+            var $icon = $('<i class="fa fa-level-up-alt fa-rotate-90 me-1 text-muted"></i>');
+            $container.append($icon);
+        }
+
+        // إضافة نص الفئة
+        var $text = $('<span>').text(category.text.trim());
+        $container.append($text);
+
+        return $container;
+    }
+
+    // تنسيق الفئة المختارة
+    function formatCategorySelection(category) {
+        if (!category.id) {
+            return category.text;
+        }
+        return category.text.trim();
+    }
 }
 
 // تهيئة Summernote
@@ -463,52 +715,136 @@ function setupImageButtons() {
     // إضافة صور جديدة
     const addImageBtn = document.getElementById('add-image-btn');
     const productImagesInput = document.getElementById('product_images');
+    const imagePreviews = document.getElementById('image-previews');
+    const imagesDropzone = document.querySelector('.images-dropzone');
 
     if (addImageBtn && productImagesInput) {
         addImageBtn.addEventListener('click', function() {
             productImagesInput.click();
         });
 
+        // تفعيل السحب والإفلات
+        if (imagesDropzone) {
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                imagesDropzone.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                imagesDropzone.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                imagesDropzone.addEventListener(eventName, unhighlight, false);
+            });
+
+            function highlight() {
+                imagesDropzone.classList.add('dragover');
+            }
+
+            function unhighlight() {
+                imagesDropzone.classList.remove('dragover');
+            }
+
+            imagesDropzone.addEventListener('drop', handleDrop, false);
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+
+                handleFiles(files);
+            }
+        }
+
         productImagesInput.addEventListener('change', function() {
-            if (this.files.length > 0) {
-                for (let i = 0; i < this.files.length; i++) {
-                    let file = this.files[i];
+            handleFiles(this.files);
+        });
+
+        function handleFiles(files) {
+            if (files.length > 0) {
+                // إخفاء رسالة السحب والإفلات بعد إضافة صور
+                const dropzoneMessage = document.querySelector('.dropzone-message');
+                if (dropzoneMessage) {
+                    dropzoneMessage.style.display = 'none';
+                }
+
+                for (let i = 0; i < files.length; i++) {
+                    let file = files[i];
                     let reader = new FileReader();
 
                     reader.onload = function(e) {
+                        const uniqueId = 'temp-' + Date.now() + '-' + i;
                         const imagePreview = document.createElement('div');
                         imagePreview.className = 'image-preview-item temp-image';
+                        imagePreview.dataset.tempId = uniqueId;
+
                         imagePreview.innerHTML = `
-                            <img src="${e.target.result}" alt="معاينة الصورة">
-                            <div class="image-preview-actions">
-                                <button type="button" class="btn-remove-temp-image" title="حذف">
-                                    <i class="fa fa-trash text-danger"></i>
-                                </button>
+                            <div class="image-preview-inner">
+                                <img src="${e.target.result}" alt="معاينة الصورة">
+                                <div class="image-preview-overlay">
+                                    <div class="image-preview-actions">
+                                        <button type="button" class="btn btn-light btn-sm rounded-circle btn-remove-temp-image" title="حذف">
+                                            <i class="fa fa-trash text-danger"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="image-meta mt-1 small">
+                                <span class="text-muted">${file.name.length > 20 ? file.name.substring(0, 17) + '...' : file.name}</span>
                             </div>
                         `;
 
-                        // إضافة الصورة قبل زر الإضافة
-                        addImageBtn.parentNode.insertBefore(imagePreview, addImageBtn);
+                        // إضافة الصورة
+                        imagePreviews.appendChild(imagePreview);
 
                         // إضافة حدث لحذف الصورة المؤقتة
                         imagePreview.querySelector('.btn-remove-temp-image').addEventListener('click', function() {
                             imagePreview.remove();
+
+                            // إظهار رسالة السحب والإفلات إذا لم تعد هناك صور
+                            if (document.querySelectorAll('.image-preview-item').length === 0) {
+                                if (dropzoneMessage) {
+                                    dropzoneMessage.style.display = 'block';
+                                }
+                            }
                         });
                     };
 
                     reader.readAsDataURL(file);
                 }
             }
-        });
+        }
     }
 
-    // حذف الصور الحالية
+    // حذف الصور الحالية وجعل الصورة رئيسية
+    // (نفس الكود السابق مع تحديثات بسيطة)
     document.querySelectorAll('.btn-remove-image').forEach(button => {
         button.addEventListener('click', function() {
             if (confirm("هل أنت متأكد من حذف هذه الصورة؟")) {
                 const imageId = this.getAttribute('data-image-id');
-                // هنا يمكن إضافة طلب AJAX لحذف الصورة
-                this.closest('.image-preview-item').remove();
+                const imageItem = this.closest('.image-preview-item');
+
+                // إضافة حقل مخفي لتتبع الصور المحذوفة
+                const deletedImageInput = document.createElement('input');
+                deletedImageInput.type = 'hidden';
+                deletedImageInput.name = 'deleted_images[]';
+                deletedImageInput.value = imageId;
+                document.getElementById('product-form').appendChild(deletedImageInput);
+
+                // إزالة الصورة من العرض
+                imageItem.remove();
+
+                // إظهار رسالة السحب والإفلات إذا لم تعد هناك صور
+                if (document.querySelectorAll('.image-preview-item').length === 0) {
+                    const dropzoneMessage = document.querySelector('.dropzone-message');
+                    if (dropzoneMessage) {
+                        dropzoneMessage.style.display = 'block';
+                    }
+                }
             }
         });
     });
@@ -526,11 +862,16 @@ function setupImageButtons() {
                 if (badge) badge.remove();
             });
 
-            this.closest('.image-preview-item').classList.add('is-primary');
-            const badge = document.createElement('div');
-            badge.className = 'image-preview-badge';
-            badge.textContent = 'الصورة الرئيسية';
-            this.closest('.image-preview-item').appendChild(badge);
+            const imageItem = this.closest('.image-preview-item');
+            imageItem.classList.add('is-primary');
+
+            // إضافة شارة الصورة الرئيسية
+            if (!imageItem.querySelector('.image-preview-badge')) {
+                const badge = document.createElement('div');
+                badge.className = 'image-preview-badge';
+                badge.innerHTML = '<i class="fa fa-check-circle me-1"></i>رئيسية';
+                imageItem.querySelector('.image-preview-inner').appendChild(badge);
+            }
 
             // تحديث أيقونة النجمة
             document.querySelectorAll('.btn-make-primary i').forEach(icon => {
@@ -543,6 +884,36 @@ function setupImageButtons() {
         });
     });
 }
+
+document.querySelectorAll('.feature-switch').forEach(function(switchElem) {
+    // جعل النقر على الحاوية بأكملها يبدل حالة الاختيار
+    switchElem.addEventListener('click', function(e) {
+        // منع التكرار إذا تم النقر على المفتاح نفسه
+        if (e.target.tagName !== 'INPUT') {
+            const checkbox = this.querySelector('input[type="checkbox"]');
+            checkbox.checked = !checkbox.checked;
+
+            // إطلاق حدث تغيير لتنفيذ أي منطق مرتبط
+            const event = new Event('change', { bubbles: true });
+            checkbox.dispatchEvent(event);
+        }
+    });
+
+    // تحديث مظهر المفتاح عند تغيير حالة الاختيار
+    const checkbox = switchElem.querySelector('input[type="checkbox"]');
+    checkbox.addEventListener('change', function() {
+        if (this.checked) {
+            switchElem.classList.add('active');
+        } else {
+            switchElem.classList.remove('active');
+        }
+    });
+
+    // تهيئة الحالة الأولية
+    if (checkbox.checked) {
+        switchElem.classList.add('active');
+    }
+});
 
 // تهيئة أزرار الحالة
 function setupStatusButtons() {
@@ -804,6 +1175,80 @@ function initProductVariantsEditor() {
     // رقم سالب للمتغيرات الجديدة (المؤقتة)
     let tempVariantId = -1;
 
+    // دالة إنشاء نافذة حذف المتغيرات
+    function setupVariantDeleteModal() {
+        // التحقق من وجود النافذة المنبثقة
+        if (!document.getElementById('deleteVariantModal')) {
+            // إنشاء عناصر Modal
+            const deleteModal = document.createElement('div');
+            deleteModal.className = 'modal fade';
+            deleteModal.id = 'deleteVariantModal';
+            deleteModal.tabIndex = '-1';
+            deleteModal.setAttribute('aria-labelledby', 'deleteVariantModalLabel');
+            deleteModal.setAttribute('aria-hidden', 'true');
+
+            deleteModal.innerHTML = `
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header text-secondary">
+                            <h5 class="modal-title" id="deleteVariantModalLabel">حذف متغير المنتج</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" id="delete-variant-index" value="">
+                            <p>سيتم حذف المتغير <strong id="variant-name-to-delete"></strong>.</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                            <button type="button" class="btn btn-danger" id="confirm-delete-variant">حذف</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // إضافة Modal إلى الصفحة
+            document.body.appendChild(deleteModal);
+        }
+
+        // تهيئة معالج حدث تأكيد الحذف
+        document.getElementById('confirm-delete-variant').addEventListener('click', function() {
+            const indexToDelete = parseInt(document.getElementById('delete-variant-index').value);
+
+            if (!isNaN(indexToDelete) && indexToDelete >= 0 && indexToDelete < variants.length) {
+                const variant = variants[indexToDelete];
+
+                // إذا كان المتغير مخزناً في قاعدة البيانات، أضفه إلى قائمة المحذوفات
+                if (variant.id > 0) {
+                    deletedVariants.push(variant.id);
+                    deletedVariantsInput.value = JSON.stringify(deletedVariants);
+                }
+
+                // إزالة المتغير من القائمة
+                variants.splice(indexToDelete, 1);
+                updateVariantsJson();
+
+                // إعادة عرض المتغيرات مع تأثير بصري
+                const variantsTableRows = document.querySelectorAll('#variants-table-body tr');
+                if (indexToDelete < variantsTableRows.length) {
+                    const rowToDelete = variantsTableRows[indexToDelete];
+                    rowToDelete.style.transition = 'all 0.3s';
+                    rowToDelete.style.opacity = '0';
+                    rowToDelete.style.transform = 'translateX(20px)';
+
+                    setTimeout(() => {
+                        renderVariants();
+                    }, 300);
+                } else {
+                    renderVariants();
+                }
+
+                // إغلاق النافذة المنبثقة
+                const modalInstance = bootstrap.Modal.getInstance(document.getElementById('deleteVariantModal'));
+                modalInstance.hide();
+            }
+        });
+    }
+
     // عرض المتغيرات
     function renderVariants() {
         variantsTableBody.innerHTML = '';
@@ -904,6 +1349,23 @@ function initProductVariantsEditor() {
         return attributeItems.join(' ');
     }
 
+    // حذف متغير - يجب تعريفها قبل استخدامها
+    function deleteVariant(variant, index) {
+        // تهيئة نافذة حذف المتغير إذا لم تكن موجودة
+        if (!document.getElementById('deleteVariantModal')) {
+            setupVariantDeleteModal();
+        }
+
+        // تعيين المؤشر واسم المتغير في النافذة المنبثقة
+        document.getElementById('delete-variant-index').value = index;
+        document.getElementById('variant-name-to-delete').textContent = variant.name;
+
+        // عرض النافذة المنبثقة
+        const deleteModal = document.getElementById('deleteVariantModal');
+        const modalInstance = bootstrap.Modal.getInstance(deleteModal) || new bootstrap.Modal(deleteModal);
+        modalInstance.show();
+    }
+
     // إضافة متغير جديد
     function addVariant() {
         // فتح مربع حوار إضافة متغير
@@ -925,21 +1387,6 @@ function initProductVariantsEditor() {
         openVariantModal(variant, index);
     }
 
-    // حذف متغير
-    function deleteVariant(variant, index) {
-        if (confirm('هل أنت متأكد من حذف هذا المتغير؟')) {
-            // إذا كان المتغير مخزناً في قاعدة البيانات، أضفه إلى قائمة المحذوفات
-            if (variant.id > 0) {
-                deletedVariants.push(variant.id);
-                deletedVariantsInput.value = JSON.stringify(deletedVariants);
-            }
-
-            // إزالة المتغير من القائمة
-            variants.splice(index, 1);
-            updateVariantsJson();
-            renderVariants();
-        }
-    }
 
     // فتح مربع حوار المتغير
     function openVariantModal(variant, index) {
@@ -1305,18 +1752,114 @@ function initAttributesEditor() {
         });
     }
 
-    // إضافة أحداث للأزرار الموجودة مسبقًا
-    document.querySelectorAll('.delete-attr-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const attrId = this.getAttribute('data-attr-id');
-            const row = this.closest('tr');
+    // // إضافة أحداث للأزرار الموجودة مسبقًا
+    // document.querySelectorAll('.delete-attr-btn').forEach(button => {
+    //     button.addEventListener('click', function() {
+    //         const attrId = this.getAttribute('data-attr-id');
+    //         const row = this.closest('tr');
+    //
+    //         if (confirm('هل أنت متأكد من حذف هذه الخاصية؟')) {
+    //             // إضافة معرف الخاصية لقائمة المحذوفة
+    //             deletedAttributeIds.push(attrId);
+    //             deletedAttributes.value = JSON.stringify(deletedAttributeIds);
+    //
+    //             // حذف الصف من الجدول
+    //             row.remove();
+    //
+    //             // إعادة عرض رسالة "لا توجد خصائص" إذا لم تعد هناك خصائص
+    //             if (attributesTableBody.children.length === 0) {
+    //                 const emptyRow = document.createElement('tr');
+    //                 emptyRow.id = 'no-attributes-row';
+    //                 emptyRow.innerHTML = `
+    //                     <td colspan="4" class="text-center text-muted py-3">
+    //                         <i class="fa fa-info-circle me-1"></i> لا توجد خصائص إضافية للمنتج. أضف خصائص باستخدام النموذج أعلاه.
+    //                     </td>
+    //                 `;
+    //                 attributesTableBody.appendChild(emptyRow);
+    //             }
+    //         }
+    //     });
+    // });
+}
 
-            if (confirm('هل أنت متأكد من حذف هذه الخاصية؟')) {
-                // إضافة معرف الخاصية لقائمة المحذوفة
+function ensureMinimumZero(input) {
+    // إذا كانت القيمة فارغة أو أقل من صفر، نعيدها إلى صفر
+    if (input.value === '' || parseFloat(input.value) < 0) {
+        input.value = '0';
+    }
+}
+
+
+// إضافة أحداث للأزرار الموجودة مسبقًا
+function setupAttributeDeleteButtons() {
+    // متغيرات عامة
+    const attributesTableBody = document.getElementById('attributes-table-body');
+    const deletedAttributes = document.getElementById('deleted-attributes');
+    let deletedAttributeIds = [];
+
+    // تهيئة قائمة الخصائص المحذوفة
+    if (deletedAttributes && deletedAttributes.value) {
+        try {
+            deletedAttributeIds = JSON.parse(deletedAttributes.value);
+        } catch(e) {
+            deletedAttributeIds = [];
+        }
+    }
+
+    // إنشاء Modal ديناميكياً إذا لم يكن موجوداً
+    let deleteModal = document.getElementById('deleteAttributeModal');
+
+    if (!deleteModal) {
+        // إنشاء عناصر Modal
+        deleteModal = document.createElement('div');
+        deleteModal.className = 'modal fade';
+        deleteModal.id = 'deleteAttributeModal';
+        deleteModal.tabIndex = '-1';
+        deleteModal.setAttribute('aria-labelledby', 'deleteAttributeModalLabel');
+        deleteModal.setAttribute('aria-hidden', 'true');
+
+        deleteModal.innerHTML = `
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header  text-secondary">
+                        <h5 class="modal-title" id="deleteAttributeModalLabel">حذف الخاصية</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="delete-attr-id" value="">
+                        <p>سيتم حذف الخاصية.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="button" class="btn btn-danger" id="confirm-delete-attr">حذف</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // إضافة Modal إلى الصفحة
+        document.body.appendChild(deleteModal);
+
+        // تهيئة كائن Modal من Bootstrap
+        const modalInstance = new bootstrap.Modal(deleteModal);
+
+        // إضافة حدث لزر التأكيد
+        document.getElementById('confirm-delete-attr').addEventListener('click', function() {
+            const attrId = document.getElementById('delete-attr-id').value;
+            const row = document.querySelector(`tr[data-attr-id="${attrId}"]`);
+
+            // إضافة معرف الخاصية لقائمة المحذوفة إذا لم تكن خاصية جديدة
+            if (!attrId.startsWith('new_')) {
                 deletedAttributeIds.push(attrId);
                 deletedAttributes.value = JSON.stringify(deletedAttributeIds);
+            }
 
-                // حذف الصف من الجدول
+            // تطبيق تأثير بصري ثم حذف الصف
+            row.style.transition = 'all 0.3s';
+            row.style.opacity = '0';
+            row.style.transform = 'translateX(20px)';
+
+            setTimeout(() => {
                 row.remove();
 
                 // إعادة عرض رسالة "لا توجد خصائص" إذا لم تعد هناك خصائص
@@ -1330,7 +1873,31 @@ function initAttributesEditor() {
                     `;
                     attributesTableBody.appendChild(emptyRow);
                 }
-            }
+
+                // إغلاق النافذة المنبثقة
+                modalInstance.hide();
+            }, 300);
+        });
+    }
+
+    // إضافة المعالج لجميع أزرار الحذف
+    document.querySelectorAll('.delete-attr-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const attrId = this.getAttribute('data-attr-id');
+            const attrName = this.closest('tr').querySelector('td:first-child').textContent;
+
+            // تعيين المعرف في النموذج المخفي
+            document.getElementById('delete-attr-id').value = attrId;
+
+            // تعديل رسالة النافذة المنبثقة
+            const modalBody = document.querySelector('#deleteAttributeModal .modal-body p');
+            modalBody.innerHTML = `سيتم حذف الخاصية <strong>${attrName}</strong>`;
+
+            // عرض النافذة المنبثقة
+            const modalInstance = bootstrap.Modal.getInstance(deleteModal) || new bootstrap.Modal(deleteModal);
+            modalInstance.show();
         });
     });
 }
+
+

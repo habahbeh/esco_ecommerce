@@ -1,17 +1,10 @@
 /**
  * ملف JavaScript الشامل لصفحة تفاصيل المنتج
  * يتضمن جميع وظائف صفحة المنتج مع نظام التكبير الاحترافي
- * تمت معالجة مشكلة تكرار حقل variant_id وخطأ الاتصال بالخادم
  */
 
 // استدعاء الوظائف عند تحميل الصفحة
 document.addEventListener('DOMContentLoaded', function() {
-    // التحقق من عدم وجود نماذج متكررة (حل مشكلة تكرار variant_id)
-    const addToCartForms = document.querySelectorAll('#addToCartForm');
-    if (addToCartForms.length > 1) {
-        console.error('تحذير: تم العثور على أكثر من نموذج بنفس المعرف addToCartForm. قد يسبب هذا مشاكل في الإرسال.');
-    }
-
     // تفعيل شجرة الفئات
     initCategoryTree();
 
@@ -23,9 +16,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // تفعيل وظيفة التكبير
     initProductZoom();
-
-    // تفعيل اختيار متغيرات المنتج
-    initVariantSelection();
 });
 
 /**
@@ -172,7 +162,7 @@ function initProductGallery() {
             this.classList.add('active');
 
             // تحديث الصورة الرئيسية
-            const mainImage = document.querySelector('.main-image-container img');
+            const mainImage = document.getElementById('mainProductImage');
             const thumbImage = this.querySelector('img');
             if (mainImage && thumbImage) {
                 mainImage.src = thumbImage.src;
@@ -186,6 +176,10 @@ function initProductGallery() {
  */
 
 // تهيئة نظام تكبير صور المنتج
+/**
+ * وظيفة تكبير محسنة - تركز بالضبط على مكان المؤشر
+ * تهيئة نظام تكبير صور المنتج المحسن
+ */
 function initProductZoom() {
     console.log("تهيئة وظيفة التكبير..."); // للتأكد من تنفيذ الدالة
 
@@ -339,108 +333,12 @@ function initProductZoom() {
 }
 
 /**
- * ========= وظائف متغيرات المنتج =========
- */
-
-// تهيئة اختيار متغيرات المنتج وتحديث حقل variant_id
-function initVariantSelection() {
-    // الحصول على جميع أزرار اختيار المتغيرات
-    const variantOptions = document.querySelectorAll('.variant-option');
-
-    // الحصول على حقل variant_id الخفي
-    const selectedVariantIdField = document.getElementById('selectedVariantId');
-
-    if (!variantOptions.length || !selectedVariantIdField) return;
-
-    // إضافة مستمع حدث لكل خيار متغير
-    variantOptions.forEach(option => {
-        option.addEventListener('click', function() {
-            // تجاهل العناصر غير المتوفرة
-            if (this.classList.contains('out-of-stock')) return;
-
-            // إزالة الفئة النشطة من جميع الخيارات في نفس المجموعة
-            const group = this.closest('.variant-group');
-            if (group) {
-                group.querySelectorAll('.variant-option').forEach(opt => {
-                    opt.classList.remove('active');
-                });
-            }
-
-            // إضافة الفئة النشطة للخيار المحدد
-            this.classList.add('active');
-
-            // الحصول على معرف المتغير المحدد
-            const variantId = this.getAttribute('data-variant-id');
-
-            // تحديث الحقل الخفي
-            if (variantId && selectedVariantIdField) {
-                console.log("تم تحديد المتغير:", variantId);
-                selectedVariantIdField.value = variantId;
-            }
-
-            // تحديث السعر إذا كان متاحاً
-            updatePriceForVariant(variantId);
-        });
-    });
-
-    // صفوف الجدول للمتغيرات (إذا كانت موجودة)
-    const variantRows = document.querySelectorAll('.variant-row');
-    if (variantRows.length) {
-        variantRows.forEach(row => {
-            row.addEventListener('click', function() {
-                // تجاهل الصفوف غير المتوفرة
-                if (this.classList.contains('out-of-stock')) return;
-
-                // إزالة الفئة المحددة من جميع الصفوف
-                variantRows.forEach(r => r.classList.remove('selected'));
-
-                // إضافة الفئة المحددة للصف المحدد
-                this.classList.add('selected');
-
-                // الحصول على معرف المتغير المحدد
-                const variantId = this.getAttribute('data-variant-id');
-
-                // تحديث الحقل الخفي
-                if (variantId && selectedVariantIdField) {
-                    console.log("تم تحديد المتغير من الجدول:", variantId);
-                    selectedVariantIdField.value = variantId;
-                }
-
-                // تحديث السعر إذا كان متاحاً
-                updatePriceForVariant(variantId);
-            });
-        });
-    }
-}
-
-// تحديث السعر بناءً على المتغير المحدد
-function updatePriceForVariant(variantId) {
-    if (!variantId) return;
-
-    // البحث عن معلومات المتغير (يعتمد على هيكل الصفحة)
-    const variantElement = document.querySelector(`.variant-option[data-variant-id="${variantId}"], .variant-row[data-variant-id="${variantId}"]`);
-
-    if (variantElement) {
-        const price = variantElement.getAttribute('data-price');
-        if (price) {
-            // تحديث عرض السعر
-            const priceDisplay = document.querySelector('.current-price');
-            if (priceDisplay) {
-                priceDisplay.textContent = price + ' د.أ';
-            }
-        }
-    }
-}
-
-/**
  * ========= وظائف إضافية =========
  */
 
 // التحكم بالكمية مع مراعاة المتغير المحدد
 function changeQuantity(change) {
     const input = document.getElementById('quantity');
-    if (!input) return;
-
     const currentValue = parseInt(input.value) || 1;
     const newValue = currentValue + change;
 
@@ -448,14 +346,12 @@ function changeQuantity(change) {
     let max = parseInt(input.getAttribute('max')) || 999;
 
     // إذا كان هناك متغير محدد، استخدم كمية المخزون الخاصة به
-    const selectedVariantId = document.getElementById('selectedVariantId');
-    if (selectedVariantId && selectedVariantId.value) {
-        const variantRow = document.querySelector(`.variant-row[data-variant-id="${selectedVariantId.value}"]`);
-        if (variantRow) {
-            const variantStock = parseInt(variantRow.dataset.stock) || 0;
-            if (variantStock > 0) {
-                max = variantStock;
-            }
+    const selectedVariant = document.querySelector('.variant-selector:checked');
+    if (selectedVariant) {
+        const variantRow = selectedVariant.closest('.variant-row');
+        const variantStock = parseInt(variantRow.dataset.stock) || 0;
+        if (variantStock > 0) {
+            max = variantStock;
         }
     }
 
@@ -529,7 +425,6 @@ function showNotification(type, message) {
 }
 
 // تحديث عدد العناصر في السلة
-<<<<<<< HEAD
 // function updateCartCount() {
 //     // تحديث عدد العناصر في السلة في الهيدر
 //     const cartBadge = document.querySelector('.cart-count');
@@ -551,30 +446,15 @@ function updateCartCount(count) {
     const cartCountElements = document.querySelectorAll('.cart-count');
     cartCountElements.forEach(element => {
         element.textContent = count;
-=======
-function updateCartCount(count) {
-    // تحديث عدد العناصر في السلة في الهيدر
-    const cartBadges = document.querySelectorAll('.cart-badge');
-    cartBadges.forEach(badge => {
-        if (count > 0) {
-            badge.textContent = count;
-            badge.style.display = 'block';
-        } else {
-            badge.style.display = 'none';
-        }
->>>>>>> main
     });
 }
 
 // نموذج إضافة المنتج للسلة (يتم تنفيذه بعد تحميل الصفحة)
 document.addEventListener('DOMContentLoaded', function() {
     const addToCartForm = document.getElementById('addToCartForm');
-
+    initProductZoom();
     if (addToCartForm) {
-
-
         addToCartForm.addEventListener('submit', function(e) {
-<<<<<<< HEAD
             e.preventDefault();
 
             const btn = this.querySelector('button[type="submit"]');
@@ -584,46 +464,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const variantsContainer = document.querySelector('.product-variants');
             const selectedVariantId = document.getElementById('selectedVariantId');
 
-=======
-            // منع السلوك الافتراضي للنموذج
-            e.preventDefault();
-
-            // الحصول على معرف المنتج من الصفحة
-            let productId;
-
-            // محاولة الحصول على معرف المنتج من عنوان الصفحة
-            const urlParts = window.location.pathname.split('/');
-            const slugIndex = urlParts.indexOf('products') + 1;
-            if (slugIndex > 0 && slugIndex < urlParts.length) {
-                // الحصول على معرف المنتج من data-attribute
-                const productElement = document.querySelector('[data-product-id]');
-                if (productElement) {
-                    productId = productElement.getAttribute('data-product-id');
-                    console.log("تم العثور على معرف المنتج من العنصر:", productId);
-                }
-            }
-
-            // إذا لم نجد معرف المنتج، نستخدم قيمة افتراضية
-            if (!productId) {
-                productId = "11"; // معرف المنتج الافتراضي - قم بتغييره حسب منتجك
-                console.log("استخدام معرف المنتج الافتراضي:", productId);
-            }
-
-            // بناء المسار الصحيح يدوياً
-            const correctUrl = `/cart/add/${productId}/`;
-            console.log("المسار الصحيح للإرسال:", correctUrl);
-
-            // باقي الكود كما هو...
-            const btn = e.submitter || this.querySelector('button[type="submit"]');
-            if (!btn) return;
-
-            const originalContent = btn.innerHTML;
-
-            // التحقق من اختيار متغير المنتج إذا كان مطلوباً
-            const variantsContainer = document.querySelector('.variants-section');
-            const selectedVariantId = document.getElementById('selectedVariantId');
-
->>>>>>> main
             if (variantsContainer && !selectedVariantId.value) {
                 showNotification('error', 'الرجاء اختيار متغير المنتج أولاً');
                 return false;
@@ -631,7 +471,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // إظهار حالة التحميل
             btn.disabled = true;
-<<<<<<< HEAD
             btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري الإضافة...';
 
             // إرسال النموذج باستخدام AJAX
@@ -684,76 +523,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     // في حالة الخطأ
                     btn.disabled = false;
                     btn.innerHTML = originalText;
-=======
-            if (btn.querySelector('.btn-text') && btn.querySelector('.btn-loading')) {
-                btn.querySelector('.btn-text').style.display = 'none';
-                btn.querySelector('.btn-loading').style.display = 'inline';
-            } else {
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري الإضافة...';
-            }
-
-            // جمع بيانات النموذج
-            const formData = new FormData(this);
-
-            // طباعة البيانات للتشخيص
-            console.log("بيانات النموذج:");
-            for (let pair of formData.entries()) {
-                console.log(pair[0] + ': ' + pair[1]);
-            }
-
-            // إرسال الطلب للمسار الصحيح
-            fetch(correctUrl, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                }
-            })
-            .then(response => {
-                console.log("استجابة الخادم:", response.status, response.statusText);
-
-                if (!response.ok) {
-                    console.error("خطأ في الاستجابة:", response.status);
-                    return response.text().then(text => {
-                        console.error("محتوى الخطأ:", text);
-                        throw new Error(`فشل في الاتصال بالخادم (${response.status})`);
-                    });
-                }
-
-                return response.json();
-            })
-            .then(data => {
-                console.log("بيانات الاستجابة:", data);
-
-                if (data.success) {
-                    showNotification('success', data.message || 'تمت إضافة المنتج إلى السلة');
-                    updateCartCount(data.cart_count);
-                } else {
->>>>>>> main
                     showNotification('error', data.message || 'حدث خطأ أثناء إضافة المنتج للسلة');
                 }
             })
             .catch(error => {
-<<<<<<< HEAD
                 // في حالة خطأ في الاتصال
                 btn.disabled = false;
                 btn.innerHTML = originalText;
                 showNotification('error', 'حدث خطأ في الاتصال، يرجى المحاولة مرة أخرى');
                 console.error('Error:', error);
-=======
-                console.error("خطأ:", error);
-                showNotification('error', 'حدث خطأ أثناء إضافة المنتج للسلة. يرجى المحاولة مرة أخرى.');
-            })
-            .finally(() => {
-                // إعادة الزر إلى حالته الأصلية
-                btn.disabled = false;
-                if (btn.querySelector('.btn-text') && btn.querySelector('.btn-loading')) {
-                    btn.querySelector('.btn-text').style.display = 'inline';
-                    btn.querySelector('.btn-loading').style.display = 'none';
-                } else {
-                    btn.innerHTML = originalContent;
-                }
->>>>>>> main
             });
         });
     }
