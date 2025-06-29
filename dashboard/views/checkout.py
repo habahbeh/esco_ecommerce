@@ -267,7 +267,7 @@ class ShippingMethodFormView(DashboardAccessMixin, View):
                 shipping_method.icon = icon
                 shipping_method.save()
 
-            return redirect('dashboard_shipping_methods')
+            return redirect('dashboard:dashboard_shipping_methods')
 
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء حفظ طريقة الشحن: {str(e)}')
@@ -284,7 +284,7 @@ class ShippingMethodDeleteView(DashboardAccessMixin, View):
         checkout_count = CheckoutSession.objects.filter(shipping_method=shipping_method).count()
         if checkout_count > 0:
             messages.error(request, f'لا يمكن حذف طريقة الشحن لأنها مستخدمة في {checkout_count} جلسة دفع')
-            return redirect('dashboard_shipping_methods')
+            return redirect('dashboard:dashboard_shipping_methods')
 
         try:
             method_name = shipping_method.name
@@ -293,7 +293,7 @@ class ShippingMethodDeleteView(DashboardAccessMixin, View):
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء حذف طريقة الشحن: {str(e)}')
 
-        return redirect('dashboard_shipping_methods')
+        return redirect('dashboard:dashboard_shipping_methods')
 
 
 # ========================= طرق الدفع =========================
@@ -429,7 +429,7 @@ class PaymentMethodFormView(DashboardAccessMixin, View):
                 payment_method.icon = icon
                 payment_method.save()
 
-            return redirect('dashboard_payment_methods')
+            return redirect('dashboard:dashboard_payment_methods')
 
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء حفظ طريقة الدفع: {str(e)}')
@@ -446,7 +446,7 @@ class PaymentMethodDeleteView(DashboardAccessMixin, View):
         checkout_count = CheckoutSession.objects.filter(payment_method=payment_method).count()
         if checkout_count > 0:
             messages.error(request, f'لا يمكن حذف طريقة الدفع لأنها مستخدمة في {checkout_count} جلسة دفع')
-            return redirect('dashboard_payment_methods')
+            return redirect('dashboard:dashboard_payment_methods')
 
         try:
             method_name = payment_method.name
@@ -455,7 +455,7 @@ class PaymentMethodDeleteView(DashboardAccessMixin, View):
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء حذف طريقة الدفع: {str(e)}')
 
-        return redirect('dashboard_payment_methods')
+        return redirect('dashboard:dashboard_payment_methods')
 
 
 # ========================= كوبونات الخصم =========================
@@ -625,7 +625,7 @@ class CouponFormView(DashboardAccessMixin, View):
                 )
                 messages.success(request, 'تم إنشاء كوبون الخصم بنجاح')
 
-            return redirect('dashboard_coupons')
+            return redirect('dashboard:dashboard_coupons')
 
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء حفظ كوبون الخصم: {str(e)}')
@@ -650,7 +650,7 @@ class CouponDeleteView(DashboardAccessMixin, View):
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء حذف كوبون الخصم: {str(e)}')
 
-        return redirect('dashboard_coupons')
+        return redirect('dashboard:dashboard_coupons')
 
 
 # ========================= تقارير عملية الدفع =========================

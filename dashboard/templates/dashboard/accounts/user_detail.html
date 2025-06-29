@@ -704,7 +704,9 @@
                             <tr>
                                 <td><strong>#{{ order.order_number }}</strong></td>
                                 <td>{{ order.created_at|date:"Y/m/d" }}</td>
-                                <td>{{ order.status|status_badge }}</td>
+                                <td>
+                                     <span class="badge bg-{{ order.status|status_badge }}">{{ order.get_status_display }}</span>
+                                </td>
                                 <td>{{ order.payment_method }}</td>
                                 <td><strong>{{ order.grand_total|floatformat:2 }} د.ا</strong></td>
                                 <td>

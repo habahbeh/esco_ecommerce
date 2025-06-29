@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.contrib import messages
-from django.db.models import Q, Sum, Count, F
+from django.db.models import Q, Sum, Count, F, Avg
 from django.core.paginator import Paginator
 from django.http import JsonResponse, HttpResponse
 from django.template.loader import render_to_string
@@ -21,7 +21,6 @@ from products.models import Product, ProductVariant
 from .dashboard import DashboardAccessMixin
 from django.core.mail import send_mail
 from django.conf import settings
-
 
 # ========================= قائمة الطلبات =========================
 
@@ -79,13 +78,13 @@ class OrderListView(DashboardAccessMixin, View):
         # الإحصائيات
         total_orders = Order.objects.count()
         pending_orders = Order.objects.filter(status='pending').count()
-        processing_orders = Order.objects.filter(status='processing').count()
-        shipped_orders = Order.objects.filter(status='shipped').count()
-        delivered_orders = Order.objects.filter(status='delivered').count()
+        confirmed_orders = Order.objects.filter(status='confirmed').count()
+        closed_orders = Order.objects.filter(status='closed').count()
+        cancelled_orders = Order.objects.filter(status='cancelled').count()
 
-        # إجمالي المبيعات
+        # إجمالي المبيعات (فقط للطلبات المؤكدة والمغلقة)
         total_sales = Order.objects.filter(
-            status__in=['delivered', 'shipped', 'processing']
+            status__in=['confirmed', 'closed']
         ).aggregate(total=Sum('grand_total'))['total'] or 0
 
         # مبيعات اليوم
@@ -97,9 +96,9 @@ class OrderListView(DashboardAccessMixin, View):
         stats = {
             'total_orders': total_orders,
             'pending_orders': pending_orders,
-            'processing_orders': processing_orders,
-            'shipped_orders': shipped_orders,
-            'delivered_orders': delivered_orders,
+            'confirmed_orders': confirmed_orders,
+            'closed_orders': closed_orders,
+            'cancelled_orders': cancelled_orders,
             'total_sales': total_sales,
             'today_sales': today_sales
         }
@@ -197,6 +196,7 @@ class OrderDetailView(DashboardAccessMixin, View):
             'order_log': order_log,
             'status_choices': Order.STATUS_CHOICES,
             'payment_status_choices': Order.PAYMENT_STATUS_CHOICES,
+            'MEDIA_URL': settings.MEDIA_URL,
         }
 
         return render(request, 'dashboard/orders/order_detail.html', context)
@@ -328,7 +328,7 @@ class OrderUpdatePaymentStatusView(DashboardAccessMixin, View):
         new_payment_status = request.POST.get('payment_status')
         if not new_payment_status or new_payment_status not in dict(Order.PAYMENT_STATUS_CHOICES):
             messages.error(request, 'الرجاء تحديد حالة دفع صحيحة')
-            return redirect('dashboard_order_detail', order_id=order.id)
+            return redirect('dashboard:dashboard_order_detail', order_id=order.id)
 
         # تحديث حالة الدفع
         old_payment_status = order.payment_status
@@ -346,7 +346,7 @@ class OrderUpdatePaymentStatusView(DashboardAccessMixin, View):
         order.save()
 
         messages.success(request, f'تم تحديث حالة الدفع إلى {dict(Order.PAYMENT_STATUS_CHOICES)[new_payment_status]}')
-        return redirect('dashboard_order_detail', order_id=order.id)
+        return redirect('dashboard:dashboard_order_detail', order_id=order.id)
 
 
 # ========================= إلغاء الطلب =========================
@@ -412,6 +412,7 @@ class OrderPrintView(DashboardAccessMixin, View):
 
         # جلب عناصر الطلب
         order_items = order.items.all().select_related('product', 'variant')
+
 
         # تحويل العناوين إلى تنسيق قابل للقراءة
         shipping_address = {

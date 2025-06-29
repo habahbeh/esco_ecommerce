@@ -1,0 +1,247 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans 'طرق الدفع' %}{% endblock %}
+{% block page_title %}{% trans 'طرق الدفع' %}{% endblock %}
+
+{% block breadcrumbs %}
+{% endblock %}
+
+{% block current_page %}{% trans 'طرق الدفع' %}{% endblock %}
+
+{% block content %}
+<!-- إحصائيات سريعة -->
+<div class="row mb-4">
+    <!-- إجمالي طرق الدفع -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">{% trans 'إجمالي طرق الدفع' %}</h6>
+                        <h3 class="mb-0">{{ payment_methods|length }}</h3>
+                    </div>
+                    <div class="stat-icon text-primary">
+                        <i class="fas fa-credit-card"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- طرق الدفع النشطة -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">{% trans 'طرق الدفع النشطة' %}</h6>
+                        <h3 class="mb-0" id="active-count">0</h3>
+                    </div>
+                    <div class="stat-icon text-success">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- طرق الدفع غير النشطة -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">{% trans 'طرق الدفع غير النشطة' %}</h6>
+                        <h3 class="mb-0" id="inactive-count">0</h3>
+                    </div>
+                    <div class="stat-icon text-danger">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- طريقة الدفع الافتراضية -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">{% trans 'طريقة الدفع الافتراضية' %}</h6>
+                        <h3 class="mb-0">
+                            {% for method in payment_methods %}
+                                {% if method.is_default %}
+                                    {{ method.name }}
+                                {% endif %}
+                            {% endfor %}
+                        </h3>
+                    </div>
+                    <div class="stat-icon text-warning">
+                        <i class="fas fa-star"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- قائمة طرق الدفع -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">{% trans 'طرق الدفع' %}</h5>
+        <div>
+            {% if perms.checkout.add_paymentmethod %}
+            <a href="{% url 'dashboard:dashboard_payment_method_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-2"></i> {% trans 'إضافة طريقة دفع' %}
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th scope="col" width="60">#</th>
+                        <th scope="col" width="60">{% trans 'الأيقونة' %}</th>
+                        <th scope="col">{% trans 'الاسم' %}</th>
+                        <th scope="col">{% trans 'الرمز' %}</th>
+                        <th scope="col">{% trans 'النوع' %}</th>
+
+                        <th scope="col">{% trans 'الحالة' %}</th>
+                        <th scope="col">{% trans 'افتراضي' %}</th>
+                        <th scope="col" width="150">{% trans 'الإجراءات' %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for method in payment_methods %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            {% if method.icon %}
+                            <img src="{{ method.icon.url }}" alt="{{ method.name }}" class="img-thumbnail" width="40">
+                            {% else %}
+                            <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width:40px;height:40px">
+                                <i class="fas fa-credit-card text-secondary"></i>
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="fw-medium">{{ method.name }}</div>
+                            {% if method.description %}
+                            <div class="small text-muted">{{ method.description|truncatechars:60 }}</div>
+                            {% endif %}
+                        </td>
+                        <td><code>{{ method.code }}</code></td>
+                        <td>
+                            {% for code, name in method.PAYMENT_TYPE_CHOICES %}
+                                {% if code == method.payment_type %}
+                                    {{ name }}
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+
+                        <td>
+                            {% if method.is_active %}
+                            <span class="badge bg-success-subtle text-success">{% trans 'نشط' %}</span>
+                            {% else %}
+                            <span class="badge bg-danger-subtle text-danger">{% trans 'غير نشط' %}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if method.is_default %}
+                            <span class="badge bg-warning-subtle text-warning"><i class="fas fa-star"></i> {% trans 'افتراضي' %}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                {% if perms.checkout.change_paymentmethod %}
+                                <a href="{% url 'dashboard:dashboard_payment_method_edit' method_id=method.id %}" class="btn btn-sm btn-outline-primary" title="{% trans 'تعديل' %}">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% endif %}
+
+                                {% if perms.checkout.delete_paymentmethod %}
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ method.id }}" title="{% trans 'حذف' %}">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+
+                            <!-- نموذج حذف طريقة الدفع -->
+                            <div class="modal fade" id="deleteModal{{ method.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ method.id }}" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="deleteModalLabel{{ method.id }}">{% trans 'تأكيد الحذف' %}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>{% trans 'هل أنت متأكد من حذف طريقة الدفع ' %} <strong>{{ method.name }}</strong>؟</p>
+                                            <p class="text-danger">{% trans 'هذا الإجراء لا يمكن التراجع عنه.' %}</p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans 'إلغاء' %}</button>
+                                            <form action="{% url 'dashboard:dashboard_payment_method_delete' method_id=method.id %}" method="post">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-danger">{% trans 'حذف' %}</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-4">
+                            <div class="empty-state">
+                                <i class="fas fa-credit-card fa-3x text-muted mb-3"></i>
+                                <h5>{% trans 'لا توجد طرق دفع' %}</h5>
+                                <p>{% trans 'لم يتم إضافة أي طرق دفع بعد.' %}</p>
+                                {% if perms.checkout.add_paymentmethod %}
+                                <a href="{% url 'dashboard:dashboard_payment_method_create' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus-circle me-2"></i> {% trans 'إضافة طريقة دفع' %}
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // يمكن إضافة أي كود جافاسكريبت خاص بالصفحة هنا
+    $(document).ready(function() {
+        // مثال: تفعيل tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // حساب عدد طرق الدفع النشطة وغير النشطة
+        var activeCount = 0;
+        var inactiveCount = 0;
+        {% for method in payment_methods %}
+            {% if method.is_active %}
+                activeCount++;
+            {% else %}
+                inactiveCount++;
+            {% endif %}
+        {% endfor %}
+
+        // تحديث العداد في الواجهة
+        $('#active-count').text(activeCount);
+        $('#inactive-count').text(inactiveCount);
+    });
+</script>
+{% endblock %}

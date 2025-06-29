@@ -1,0 +1,307 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    {% if payment_method %}
+        {% trans 'تعديل طريقة الدفع' %}
+    {% else %}
+        {% trans 'إضافة طريقة دفع جديدة' %}
+    {% endif %}
+{% endblock %}
+
+{% block page_title %}
+    {% if payment_method %}
+        {% trans 'تعديل طريقة الدفع' %}: {{ payment_method.name }}
+    {% else %}
+        {% trans 'إضافة طريقة دفع جديدة' %}
+    {% endif %}
+{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_checkout_sessions' %}">{% trans 'عمليات الدفع' %}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_payment_methods' %}">{% trans 'طرق الدفع' %}</a></li>
+{% endblock %}
+
+{% block current_page %}
+    {% if payment_method %}
+        {% trans 'تعديل طريقة الدفع' %}
+    {% else %}
+        {% trans 'إضافة طريقة دفع جديدة' %}
+    {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* تنسيقات إضافية للنموذج */
+    .required-field label::after {
+        content: ' *';
+        color: red;
+    }
+    
+    .json-editor {
+        font-family: monospace;
+        direction: ltr;
+    }
+    
+    .form-check-input {
+        float: none;
+        margin-left: 0;
+    }
+    
+    /* تنسيق أيقونة المعاينة */
+    .image-preview {
+        max-width: 150px;
+        max-height: 150px;
+        margin-top: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 5px;
+    }
+    
+    /* تنسيق tabs */
+    .nav-tabs .nav-link {
+        color: #6c757d;
+    }
+    
+    .nav-tabs .nav-link.active {
+        color: #2196f3;
+        font-weight: 600;
+    }
+    
+    .tab-content {
+        padding: 20px;
+        border: 1px solid #dee2e6;
+        border-top: 0;
+        border-radius: 0 0 0.25rem 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            {% if payment_method %}
+                {% trans 'تعديل طريقة الدفع' %}: {{ payment_method.name }}
+            {% else %}
+                {% trans 'إضافة طريقة دفع جديدة' %}
+            {% endif %}
+        </h5>
+        <div>
+            <a href="{% url 'dashboard:dashboard_payment_methods' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-right me-2"></i> {% trans 'العودة لقائمة طرق الدفع' %}
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if form.errors %}
+        <div class="alert alert-danger">
+            <h5 class="alert-heading">{% trans 'يرجى تصحيح الأخطاء التالية:' %}</h5>
+            {{ form.errors }}
+        </div>
+        {% endif %}
+        
+        <form method="post" enctype="multipart/form-data" novalidate id="payment-method-form">
+            {% csrf_token %}
+
+            <ul class="nav nav-tabs mb-3" id="paymentMethodTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab" aria-controls="basic" aria-selected="true">
+                        <i class="fas fa-info-circle me-2"></i> {% trans 'المعلومات الأساسية' %}
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab" aria-controls="settings" aria-selected="false">
+                        <i class="fas fa-cog me-2"></i> {% trans 'الإعدادات' %}
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="paymentMethodTabsContent">
+                <!-- المعلومات الأساسية -->
+                <div class="tab-pane fade show active" id="basic" role="tabpanel" aria-labelledby="basic-tab">
+                    <div class="row">
+                        <div class="col-md-6 required-field">
+                            <div class="mb-3">
+                                <label for="id_name" class="form-label">{% trans 'اسم طريقة الدفع' %}</label>
+                                <input type="text" name="name" id="id_name" class="form-control{% if form.name.errors %} is-invalid{% endif %}" value="{% if payment_method %}{{ payment_method.name }}{% else %}{{ form.name.value|default:'' }}{% endif %}" required>
+                                {% if form.name.errors %}
+                                <div class="invalid-feedback">{{ form.name.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">{% trans 'اسم طريقة الدفع المعروض للمستخدم' %}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6 required-field">
+                            <div class="mb-3">
+                                <label for="id_code" class="form-label">{% trans 'رمز طريقة الدفع' %}</label>
+                                <input type="text" name="code" id="id_code" class="form-control{% if form.code.errors %} is-invalid{% endif %}" value="{% if payment_method %}{{ payment_method.code }}{% else %}{{ form.code.value|default:'' }}{% endif %}" dir="ltr" required>
+                                {% if form.code.errors %}
+                                <div class="invalid-feedback">{{ form.code.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">{% trans 'رمز فريد لطريقة الدفع (للاستخدام التقني)' %}</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 required-field">
+                        <label for="id_payment_type" class="form-label">{% trans 'نوع الدفع' %}</label>
+                        <select name="payment_type" id="id_payment_type" class="form-select{% if form.payment_type.errors %} is-invalid{% endif %}" required>
+                            <option value="">{% trans 'اختر نوع الدفع' %}</option>
+                            {% for value, text in payment_types %}
+                            <option value="{{ value }}" {% if payment_method and payment_method.payment_type == value %}selected{% elif form.payment_type.value == value %}selected{% endif %}>{{ text }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if form.payment_type.errors %}
+                        <div class="invalid-feedback">{{ form.payment_type.errors.0 }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">{% trans 'نوع طريقة الدفع' %}</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_description" class="form-label">{% trans 'الوصف' %}</label>
+                        <textarea name="description" id="id_description" class="form-control{% if form.description.errors %} is-invalid{% endif %}" rows="3">{% if payment_method %}{{ payment_method.description }}{% else %}{{ form.description.value|default:'' }}{% endif %}</textarea>
+                        {% if form.description.errors %}
+                        <div class="invalid-feedback">{{ form.description.errors.0 }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">{% trans 'وصف طريقة الدفع المعروض للمستخدم' %}</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_instructions" class="form-label">{% trans 'تعليمات' %}</label>
+                        <textarea name="instructions" id="id_instructions" class="form-control{% if form.instructions.errors %} is-invalid{% endif %}" rows="3">{% if payment_method %}{{ payment_method.instructions }}{% else %}{{ form.instructions.value|default:'' }}{% endif %}</textarea>
+                        {% if form.instructions.errors %}
+                        <div class="invalid-feedback">{{ form.instructions.errors.0 }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">{% trans 'تعليمات خاصة بطريقة الدفع تظهر للمستخدم عند اختيارها' %}</small>
+                    </div>
+
+                    <!-- حقول الرسوم المطلوبة بالنموذج ولكن مخفية -->
+                    <input type="hidden" name="fee_fixed" id="id_fee_fixed" value="{% if payment_method %}{{ payment_method.fee_fixed }}{% else %}{{ form.fee_fixed.value|default:'0' }}{% endif %}">
+                    <input type="hidden" name="fee_percentage" id="id_fee_percentage" value="{% if payment_method %}{{ payment_method.fee_percentage }}{% else %}{{ form.fee_percentage.value|default:'0' }}{% endif %}">
+                    <input type="hidden" name="min_amount" id="id_min_amount" value="{% if payment_method %}{{ payment_method.min_amount }}{% else %}{{ form.min_amount.value|default:'0' }}{% endif %}">
+                    <input type="hidden" name="max_amount" id="id_max_amount" value="{% if payment_method %}{{ payment_method.max_amount }}{% else %}{{ form.max_amount.value|default:'0' }}{% endif %}">
+
+                    <!-- حقل API credentials مخفي -->
+                    <input type="hidden" name="api_credentials" id="id_api_credentials_hidden" value="{% if payment_method %}{{ payment_method.api_credentials|default:"{}"|stringformat:'s' }}{% else %}{{ form.api_credentials.value|default:'{}' }}{% endif %}">
+                </div>
+
+                <!-- الإعدادات -->
+                <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" name="is_active" id="id_is_active" class="form-check-input" {% if payment_method and payment_method.is_active %}checked{% elif form.is_active.value %}checked{% endif %}>
+                                <label for="id_is_active" class="form-check-label">{% trans 'نشط' %}</label>
+                                <div class="form-text text-muted">{% trans 'هل طريقة الدفع متاحة للاستخدام' %}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" name="is_default" id="id_is_default" class="form-check-input" {% if payment_method and payment_method.is_default %}checked{% elif form.is_default.value %}checked{% endif %}>
+                                <label for="id_is_default" class="form-check-label">{% trans 'افتراضي' %}</label>
+                                <div class="form-text text-muted">{% trans 'هل هي طريقة الدفع الافتراضية' %}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_sort_order" class="form-label">{% trans 'ترتيب العرض' %}</label>
+                        <input type="number" name="sort_order" id="id_sort_order" class="form-control{% if form.sort_order.errors %} is-invalid{% endif %}" value="{% if payment_method %}{{ payment_method.sort_order }}{% else %}{{ form.sort_order.value|default:'0' }}{% endif %}" min="0" step="1">
+                        {% if form.sort_order.errors %}
+                        <div class="invalid-feedback">{{ form.sort_order.errors.0 }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">{% trans 'ترتيب عرض طريقة الدفع (الأصغر أولاً)' %}</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_icon" class="form-label">{% trans 'أيقونة' %}</label>
+                        <input type="file" name="icon" id="id_icon" class="form-control{% if form.icon.errors %} is-invalid{% endif %}" accept="image/*">
+                        {% if form.icon.errors %}
+                        <div class="invalid-feedback">{{ form.icon.errors.0 }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">{% trans 'أيقونة تمثل طريقة الدفع' %}</small>
+
+                        {% if payment_method and payment_method.icon %}
+                        <div class="mt-2">
+                            <img src="{{ payment_method.icon.url }}" alt="{{ payment_method.name }}" class="image-preview">
+                            <div class="form-check mt-2">
+                                <input type="checkbox" name="delete_icon" id="id_delete_icon" class="form-check-input">
+                                <label for="id_delete_icon" class="form-check-label">{% trans 'حذف الأيقونة الحالية' %}</label>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'dashboard:dashboard_payment_methods' %}" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i> {% trans 'إلغاء' %}
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>
+                    {% if payment_method %}
+                        {% trans 'حفظ التغييرات' %}
+                    {% else %}
+                        {% trans 'إضافة طريقة الدفع' %}
+                    {% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // معاينة الصورة
+        $('#id_icon').change(function() {
+            if (this.files && this.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    $('.image-preview').attr('src', e.target.result);
+                    if ($('.image-preview').is(':hidden')) {
+                        $('.image-preview').show();
+                    }
+                }
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        // تفعيل البطاقات في النموذج
+        $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+            localStorage.setItem('activePaymentMethodTab', $(e.target).attr('id'));
+        });
+
+        // استرجاع البطاقة الأخيرة المفعلة
+        var activeTab = localStorage.getItem('activePaymentMethodTab');
+        if (activeTab) {
+            $('#' + activeTab).tab('show');
+        }
+
+        // إصلاح مشكلة الفاصلة العشرية قبل إرسال النموذج
+        $('form').on('submit', function() {
+            // تحويل الفاصلة إلى نقطة في حقول الأرقام العشرية
+            $('input[type="number"]').each(function() {
+                var value = $(this).val();
+                if (value && value.includes(',')) {
+                    $(this).val(value.replace(',', '.'));
+                }
+            });
+
+            // حل مشكلة الأرقام العشرية في الحقول المخفية أيضاً
+            $('#id_fee_fixed').val($('#id_fee_fixed').val().replace(',', '.'));
+            $('#id_fee_percentage').val($('#id_fee_percentage').val().replace(',', '.'));
+            $('#id_min_amount').val($('#id_min_amount').val().replace(',', '.'));
+            $('#id_max_amount').val($('#id_max_amount').val().replace(',', '.'));
+
+            return true;
+        });
+    });
+</script>
+{% endblock %}

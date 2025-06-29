@@ -144,7 +144,7 @@
                             <label for="max_discount_amount" class="form-label">{% trans "الحد الأقصى للخصم" %}</label>
                             <div class="input-group">
                                 <input type="number" class="form-control" id="max_discount_amount" name="max_discount_amount" value="{{ discount.max_discount_amount|default:'' }}" step="0.01" min="0">
-                                <span class="input-group-text">ر.س</span>
+                                <span class="input-group-text">د.ا</span>
                             </div>
                             <div class="form-text">{% trans "الحد الأقصى لمبلغ الخصم (للنسب المئوية)" %}</div>
                         </div>
@@ -218,7 +218,7 @@
                             <label for="min_purchase_amount" class="form-label">{% trans "الحد الأدنى للشراء" %}</label>
                             <div class="input-group">
                                 <input type="number" class="form-control" id="min_purchase_amount" name="min_purchase_amount" value="{{ discount.min_purchase_amount|default:'' }}" step="0.01" min="0">
-                                <span class="input-group-text">ر.س</span>
+                                <span class="input-group-text">د.ا</span>
                             </div>
                             <div class="form-text">{% trans "الحد الأدنى لمبلغ الشراء لتطبيق الخصم" %}</div>
                         </div>
@@ -434,15 +434,15 @@
                 $('.max-discount-field').show();
                 $('.discount-value-help').text("{% trans 'نسبة الخصم (من 0 إلى 100%)' %}");
             } else if (discountType === 'fixed_amount') {
-                $('.discount-unit').text('ر.س');
+                $('.discount-unit').text('د.ا');
                 $('.max-discount-field').hide();
                 $('.discount-value-help').text("{% trans 'قيمة الخصم بالريال السعودي' %}");
             } else if (discountType === 'buy_x_get_y') {
-                $('.discount-unit').text('ر.س');
+                $('.discount-unit').text('د.ا');
                 $('.max-discount-field').hide();
                 $('.discount-value-help').text("{% trans 'قيمة الخصم على المنتج (تحدد بنسبة الخصم في تاب اشتري X واحصل على Y)' %}");
             } else if (discountType === 'free_shipping') {
-                $('.discount-unit').text('ر.س');
+                $('.discount-unit').text('د.ا');
                 $('.max-discount-field').hide();
                 $('.discount-value-help').text("{% trans 'الحد الأدنى للطلب للحصول على الشحن المجاني (0 = لا يوجد حد أدنى)' %}");
             }

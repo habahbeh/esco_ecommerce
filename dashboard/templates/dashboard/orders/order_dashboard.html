@@ -1,0 +1,234 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load i18n %}
+{% load dashboard_tags %}
+
+{% block title %}لوحة معلومات الطلبات{% endblock %}
+{% block page_title %}لوحة معلومات الطلبات{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_orders' %}">إدارة الطلبات</a></li>
+{% endblock %}
+
+{% block current_page %}لوحة معلومات الطلبات{% endblock %}
+
+{% block content %}
+<!-- ملخص الإحصائيات -->
+<div class="row mb-4">
+    <div class="col-lg-6 col-xl-3 mb-4">
+        <div class="card stat-card bg-primary text-white h-100">
+            <div class="card-body">
+                <h5 class="card-title mb-4">
+                    <i class="fas fa-shopping-cart me-2"></i> مبيعات اليوم
+                </h5>
+                <h3 class="mb-2">{{ today_stats.revenue|default:0|currency }}</h3>
+                <p class="card-text">{{ today_stats.count|default:0 }} طلب</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 col-xl-3 mb-4">
+        <div class="card stat-card bg-info text-white h-100">
+            <div class="card-body">
+                <h5 class="card-title mb-4">
+                    <i class="fas fa-shopping-cart me-2"></i> مبيعات الأمس
+                </h5>
+                <h3 class="mb-2">{{ yesterday_stats.revenue|default:0|currency }}</h3>
+                <p class="card-text">{{ yesterday_stats.count|default:0 }} طلب</p>
+                <small class="text-white">
+                    {% if revenue_change_daily > 0 %}
+                    <i class="fas fa-arrow-up"></i> {{ revenue_change_daily|floatformat:1 }}%
+                    {% elif revenue_change_daily < 0 %}
+                    <i class="fas fa-arrow-down"></i> {{ revenue_change_daily|floatformat:1 }}%
+                    {% else %}
+                    <i class="fas fa-equals"></i> 0%
+                    {% endif %}
+                </small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 col-xl-3 mb-4">
+        <div class="card stat-card bg-success text-white h-100">
+            <div class="card-body">
+                <h5 class="card-title mb-4">
+                    <i class="fas fa-calendar-alt me-2"></i> مبيعات الشهر الحالي
+                </h5>
+                <h3 class="mb-2">{{ this_month_stats.revenue|default:0|currency }}</h3>
+                <p class="card-text">{{ this_month_stats.count|default:0 }} طلب</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 col-xl-3 mb-4">
+        <div class="card stat-card bg-secondary text-white h-100">
+            <div class="card-body">
+                <h5 class="card-title mb-4">
+                    <i class="fas fa-calendar-check me-2"></i> مبيعات الشهر الماضي
+                </h5>
+                <h3 class="mb-2">{{ last_month_stats.revenue|default:0|currency }}</h3>
+                <p class="card-text">{{ last_month_stats.count|default:0 }} طلب</p>
+                <small class="text-white">
+                    {% if revenue_change_monthly > 0 %}
+                    <i class="fas fa-arrow-up"></i> {{ revenue_change_monthly|floatformat:1 }}%
+                    {% elif revenue_change_monthly < 0 %}
+                    <i class="fas fa-arrow-down"></i> {{ revenue_change_monthly|floatformat:1 }}%
+                    {% else %}
+                    <i class="fas fa-equals"></i> 0%
+                    {% endif %}
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مخطط المبيعات -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">مبيعات آخر 7 أيام</h5>
+    </div>
+    <div class="card-body">
+        <div class="chart-container" style="position: relative; height:300px;">
+            <canvas id="salesChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- أحدث الطلبات -->
+    <div class="col-lg-8 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">أحدث الطلبات</h5>
+                <a href="{% url 'dashboard:dashboard_orders' %}" class="btn btn-sm btn-primary">عرض الكل</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>رقم الطلب</th>
+                                <th>التاريخ</th>
+                                <th>العميل</th>
+                                <th>المبلغ</th>
+                                <th>الحالة</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in latest_orders %}
+                            <tr>
+                                <td>{{ order.order_number }}</td>
+                                <td>{{ order.created_at|date:"Y-m-d" }}</td>
+                                <td>{{ order.full_name }}</td>
+                                <td>{{ order.grand_total|currency }}</td>
+                                <td>
+                                    <span class="badge bg-{{ order.status|status_badge }}">{{ order.get_status_display }}</span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'dashboard:dashboard_order_detail' order_id=order.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center">لا توجد طلبات حديثة</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- أكثر المنتجات مبيعاً -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">أكثر المنتجات مبيعاً (هذا الشهر)</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% for product in top_products %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">{{ product.product_name }}</h6>
+                            <small class="text-muted">{{ product.quantity }} وحدة</small>
+                        </div>
+                        <span class="badge bg-primary rounded-pill">{{ product.revenue|currency }}</span>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-center">لا توجد بيانات</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // بيانات المبيعات
+        var salesData = {{ last_7_days|safe }};
+        
+        // تحضير البيانات للرسم البياني
+        var labels = salesData.map(function(item) { return item.day; });
+        var revenues = salesData.map(function(item) { return item.revenue; });
+        var counts = salesData.map(function(item) { return item.count; });
+        
+        // إنشاء الرسم البياني
+        var ctx = document.getElementById('salesChart').getContext('2d');
+        var salesChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'المبيعات',
+                        data: revenues,
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'عدد الطلبات',
+                        data: counts,
+                        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1,
+                        type: 'line',
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'المبيعات'
+                        }
+                    },
+                    y1: {
+                        beginAtZero: true,
+                        position: 'right',
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                        title: {
+                            display: true,
+                            text: 'عدد الطلبات'
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

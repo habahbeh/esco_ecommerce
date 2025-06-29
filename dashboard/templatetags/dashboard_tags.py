@@ -24,7 +24,7 @@ def abs(value):
 
 
 @register.filter
-def currency(value, currency_symbol='ر.س'):
+def currency(value, currency_symbol='د.ا'):
     """
     تنسيق المبالغ مع رمز العملة
     مثال: {{ product.price|currency:'$' }}
@@ -85,20 +85,60 @@ def change_indicator(value, include_value=True):
         return value
 
 
+# @register.filter
+# def status_badge(status, status_dict=None):
+#     """
+#     عرض شارة حالة الطلب أو المنتج بتنسيق Bootstrap
+#     مثال: {{ order.status|status_badge }}
+#     """
+#     default_status_classes = {
+#         'pending': 'secondary',
+#         'processing': 'info',
+#         'on_hold': 'warning',
+#         'completed': 'success',
+#         'shipped': 'primary',
+#         'delivered': 'success',
+#         'cancelled': 'danger',
+#         'refunded': 'dark',
+#         'failed': 'danger',
+#         'draft': 'secondary',
+#         'published': 'success',
+#         'out_of_stock': 'danger',
+#         'in_stock': 'success',
+#         'low_stock': 'warning',
+#     }
+#
+#     # استخدام قاموس مخصص إذا تم تمريره
+#     status_classes = status_dict or default_status_classes
+#
+#     # تحديد فئة الشارة
+#     status_class = status_classes.get(status, 'secondary')
+#
+#     # تنسيق النص (تحويل under_score إلى Title Case)
+#     if isinstance(status, str):
+#         status_text = status.replace('_', ' ').title()
+#     else:
+#         status_text = str(status)
+#
+#     return mark_safe(f'<span class="badge bg-{status_class}">{status_text}</span>')
+
+
 @register.filter
-def status_badge(status, status_dict=None):
+def status_badge(status):
     """
-    عرض شارة حالة الطلب أو المنتج بتنسيق Bootstrap
+    إرجاع فئة Bootstrap للون حسب حالة الطلب
     مثال: {{ order.status|status_badge }}
     """
-    default_status_classes = {
-        'pending': 'secondary',
+    status_classes = {
+        'pending': 'warning',
+        'confirmed': 'info',
+        'closed': 'success',
+        'cancelled': 'danger',
         'processing': 'info',
         'on_hold': 'warning',
         'completed': 'success',
         'shipped': 'primary',
         'delivered': 'success',
-        'cancelled': 'danger',
         'refunded': 'dark',
         'failed': 'danger',
         'draft': 'secondary',
@@ -106,22 +146,30 @@ def status_badge(status, status_dict=None):
         'out_of_stock': 'danger',
         'in_stock': 'success',
         'low_stock': 'warning',
+        # حالات الدفع
+        'paid': 'success',
     }
 
-    # استخدام قاموس مخصص إذا تم تمريره
-    status_classes = status_dict or default_status_classes
+    # إرجاع فئة اللون فقط
+    return status_classes.get(status, 'secondary')
 
-    # تحديد فئة الشارة
-    status_class = status_classes.get(status, 'secondary')
+
+@register.filter
+def status_badge_html(status, text=None):
+    """
+    عرض شارة حالة الطلب أو المنتج بتنسيق Bootstrap كاملة
+    مثال: {{ order.status|status_badge_html }}
+    """
+    status_class = status_badge(status)
 
     # تنسيق النص (تحويل under_score إلى Title Case)
-    if isinstance(status, str):
-        status_text = status.replace('_', ' ').title()
-    else:
-        status_text = str(status)
+    if text is None:
+        if isinstance(status, str):
+            text = status.replace('_', ' ').title()
+        else:
+            text = str(status)
 
-    return mark_safe(f'<span class="badge bg-{status_class}">{status_text}</span>')
-
+    return mark_safe(f'<span class="badge bg-{status_class}">{text}</span>')
 
 @register.filter
 def pretty_json(value):

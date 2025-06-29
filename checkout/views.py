@@ -191,7 +191,7 @@ class PaymentConfirmationView(LoginRequiredMixin, View):
             })
 
         # إضافة تكاليف الشحن والضريبة
-        shipping_cost = Decimal('5.00')  # تكلفة افتراضية، يمكن جلبها من طريقة الشحن
+        shipping_cost = Decimal('0.00')  # تكلفة افتراضية، يمكن جلبها من طريقة الشحن
         tax_amount = total * Decimal('0.16')  # 16% ضريبة القيمة المضافة
         grand_total = total + shipping_cost + tax_amount
 
@@ -268,7 +268,7 @@ class PaymentConfirmationView(LoginRequiredMixin, View):
             shipping_country=checkout_data.get('country', 'الأردن'),
             shipping_postal_code=checkout_data.get('postal_code', ''),
             total_price=Decimal('0.00'),  # سيتم تحديثه لاحقًا
-            shipping_cost=Decimal('5.00'),  # تكلفة افتراضية
+            shipping_cost=Decimal('0.00'),  # تكلفة افتراضية
             tax_amount=Decimal('0.00'),  # سيتم حسابه
             grand_total=Decimal('0.00'),  # سيتم حسابه
             payment_method=payment_method.name,
@@ -319,7 +319,7 @@ class PaymentConfirmationView(LoginRequiredMixin, View):
                 continue
 
         # تحديث مبالغ الطلب
-        shipping_cost = Decimal('5.00')  # تكلفة افتراضية
+        shipping_cost = Decimal('0.00')  # تكلفة افتراضية
         tax_amount = total * Decimal('0.16')  # 16% ضريبة القيمة المضافة
         grand_total = total + shipping_cost + tax_amount
 
