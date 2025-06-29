@@ -1,0 +1,276 @@
+{% load static %}
+{% load i18n %}
+{% load dashboard_tags %}
+
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}" dir="{{ LANGUAGE_BIDI|yesno:'rtl,ltr' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>طباعة الطلب #{{ order.order_number }}</title>
+
+    <!-- خط Cairo من Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        @media print {
+            @page {
+                size: A4;
+                margin: 1cm;
+            }
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            padding: 20px;
+            direction: rtl;
+        }
+
+        .print-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .invoice-header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 15px;
+        }
+
+        .invoice-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .company-info {
+            margin-bottom: 10px;
+        }
+
+        .logo {
+            max-width: 180px;
+            margin-bottom: 10px;
+        }
+
+        .order-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .order-details, .customer-details {
+            width: 48%;
+        }
+
+        .info-block {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-block h3 {
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: right;
+        }
+
+        th {
+            background-color: #f5f5f5;
+        }
+
+        .total-row {
+            font-weight: bold;
+            background-color: #f9f9f9;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .print-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        @media print {
+            .print-button {
+                display: none;
+            }
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .status-confirmed {
+            background-color: #28a745;
+        }
+
+        .status-pending {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .status-closed {
+            background-color: #6c757d;
+        }
+
+        .status-cancelled {
+            background-color: #dc3545;
+        }
+
+        .qr-code {
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="print-container">
+        <button class="print-button" onclick="window.print();">طباعة الفاتورة</button>
+
+        <div class="invoice-header">
+            <img src="{% static 'images/logo.png' %}" alt="شعار الشركة" class="logo">
+            <div class="invoice-title">فاتورة طلب</div>
+            <div class="company-info">
+                <p>{{ site_settings.site_name|default:"متجر الإلكتروني" }}</p>
+                <p>{{ site_settings.address|default:"عنوان الشركة" }}</p>
+                <p>هاتف: {{ site_settings.phone|default:"000-000-0000" }} | البريد الإلكتروني: {{ site_settings.email|default:"info@example.com" }}</p>
+            </div>
+        </div>
+
+        <div class="order-info">
+            <div class="order-details info-block">
+                <h3>معلومات الطلب</h3>
+                <p><strong>رقم الطلب:</strong> {{ order.order_number }}</p>
+                <p><strong>تاريخ الطلب:</strong> {{ order.created_at|date:"Y-m-d H:i" }}</p>
+                <p>
+                    <strong>حالة الطلب:</strong>
+                    <span class="status-badge status-{{ order.status }}">{{ order.get_status_display }}</span>
+                </p>
+                <p>
+                    <strong>حالة الدفع:</strong>
+                    <span class="status-badge status-{{ order.payment_status }}">{{ order.get_payment_status_display }}</span>
+                </p>
+                <p><strong>طريقة الدفع:</strong> {{ order.payment_method }}</p>
+            </div>
+
+            <div class="customer-details info-block">
+                <h3>معلومات العميل</h3>
+                <p><strong>الاسم:</strong> {{ order.full_name }}</p>
+                <p><strong>البريد الإلكتروني:</strong> {{ order.email }}</p>
+                <p><strong>رقم الهاتف:</strong> {{ order.phone }}</p>
+                <p><strong>العنوان:</strong> {{ shipping_address.address }}, {{ shipping_address.city }}, {{ shipping_address.state }}, {{ shipping_address.country }} {{ shipping_address.postal_code }}</p>
+            </div>
+        </div>
+
+        <div class="info-block">
+            <h3>منتجات الطلب</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>المنتج</th>
+                        <th>السعر</th>
+                        <th>الكمية</th>
+                        <th>الإجمالي</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order_items %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            {{ item.product_name }}
+                            {% if item.variant_name %}
+                            <br><small>{{ item.variant_name }}</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ item.unit_price|currency }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.total_price|currency }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" style="text-align: left;"><strong>المجموع الفرعي:</strong></td>
+                        <td>{{ order.total_price|currency }}</td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="4" style="text-align: left;"><strong>الضريبة:</strong></td>
+                        <td>{{ order.tax_amount|currency }}</td>
+                    </tr>
+                    {% if order.discount_amount > 0 %}
+                    <tr>
+                        <td colspan="4" style="text-align: left;"><strong>الخصم:</strong></td>
+                        <td>- {{ order.discount_amount|currency }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr class="total-row">
+                        <td colspan="4" style="text-align: left;"><strong>المجموع الكلي:</strong></td>
+                        <td>{{ order.grand_total|currency }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        {% if order.notes %}
+        <div class="info-block">
+            <h3>ملاحظات</h3>
+            <p>{{ order.notes|linebreaks }}</p>
+        </div>
+        {% endif %}
+
+        <div class="footer">
+            <p>نشكرك على طلبك! يرجى الاحتفاظ بهذه الفاتورة كمرجع.</p>
+            <p>© {{ site_settings.current_year|default:2025 }} {{ site_settings.site_name|default:"متجر الإلكتروني" }}. جميع الحقوق محفوظة.</p>
+        </div>
+    </div>
+
+    <script>
+        // تلقائياً عند تحميل الصفحة
+        window.onload = function() {
+            // الطباعة تلقائياً بعد 1 ثانية من التحميل
+            setTimeout(function() {
+                window.print();
+            }, 1000);
+        };
+    </script>
+</body>
+</html>

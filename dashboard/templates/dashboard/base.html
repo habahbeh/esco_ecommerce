@@ -126,10 +126,10 @@
                             </a>
                             <ul class="submenu">
                                 <li><a href="{% url 'dashboard:dashboard_orders' %}">قائمة الطلبات</a></li>
-                                {% if perms.orders.add_order %}
-                                <li><a href="{% url 'dashboard:dashboard_order_create' %}">إضافة طلب جديد</a></li>
-                                {% endif %}
-                                <li><a href="{% url 'dashboard:dashboard_order_dashboard' %}">إحصائيات الطلبات</a></li>
+{#                                {% if perms.orders.add_order %}#}
+{#                                <li><a href="{% url 'dashboard:dashboard_order_create' %}">إضافة طلب جديد</a></li>#}
+{#                                {% endif %}#}
+{#                                <li><a href="{% url 'dashboard:dashboard_order_dashboard' %}">إحصائيات الطلبات</a></li>#}
 
                                 <li><a href="{% url 'dashboard:dashboard_delivery_orders_report' %}">الطلبات المنتظرة التوصيل</a></li>
 
@@ -149,27 +149,27 @@
                                 <span>عمليات الدفع</span>
                             </a>
                             <ul class="submenu">
-                                <li><a href="{% url 'dashboard:dashboard_checkout_sessions' %}">جلسات الدفع</a></li>
-                                <li><a href="{% url 'dashboard:dashboard_shipping_methods' %}">طرق الشحن</a></li>
+{#                                <li><a href="{% url 'dashboard:dashboard_checkout_sessions' %}">جلسات الدفع</a></li>#}
+{#                                <li><a href="{% url 'dashboard:dashboard_shipping_methods' %}">طرق الشحن</a></li>#}
                                 <li><a href="{% url 'dashboard:dashboard_payment_methods' %}">طرق الدفع</a></li>
-                                <li><a href="{% url 'dashboard:dashboard_coupons' %}">كوبونات الخصم</a></li>
+{#                                <li><a href="{% url 'dashboard:dashboard_coupons' %}">كوبونات الخصم</a></li>#}
                             </ul>
                         </li>
                         {% endif %}
 
-                        {% if perms.payment.view_payment %}
-                        <li class="menu-item {% if 'payment' in request.path %}active{% endif %}">
-                            <a href="{% url 'dashboard:dashboard_payment_list' %}">
-                                <i class="fa fa-money-bill"></i>
-                                <span>المعاملات المالية</span>
-                            </a>
-                            <ul class="submenu">
-                                <li><a href="{% url 'dashboard:dashboard_payment_list' %}">المدفوعات</a></li>
-                                <li><a href="{% url 'dashboard:dashboard_refund_list' %}">المبالغ المستردة</a></li>
-                                <li><a href="{% url 'dashboard:dashboard_transaction_list' %}">سجل المعاملات</a></li>
-                            </ul>
-                        </li>
-                        {% endif %}
+{#                        {% if perms.payment.view_payment %}#}
+{#                        <li class="menu-item {% if 'payment' in request.path %}active{% endif %}">#}
+{#                            <a href="{% url 'dashboard:dashboard_payment_list' %}">#}
+{#                                <i class="fa fa-money-bill"></i>#}
+{#                                <span>المعاملات المالية</span>#}
+{#                            </a>#}
+{#                            <ul class="submenu">#}
+{#                                <li><a href="{% url 'dashboard:dashboard_payment_list' %}">المدفوعات</a></li>#}
+{#                                <li><a href="{% url 'dashboard:dashboard_refund_list' %}">المبالغ المستردة</a></li>#}
+{#                                <li><a href="{% url 'dashboard:dashboard_transaction_list' %}">سجل المعاملات</a></li>#}
+{#                 fالتقارير           </ul>#}
+{#                        </li>#}
+{#                        {% endif %}#}
                         {% endif %}
 
                         <!-- Users Section -->
@@ -196,10 +196,10 @@
 
                         <!-- Reports Section -->
                         {% if perms.dashboard.view_reports %}
-                        <li class="menu-item-section">
+                        <li class="menu-item-section" hidden>
                             <span>التقارير</span>
                         </li>
-                        <li class="menu-item {% if 'reports' in request.path %}active{% endif %}">
+                        <li class="menu-item {% if 'reports' in request.path %}active{% endif %}" hidden>
                             <a href="{% url 'dashboard:dashboard_reports' %}">
                                 <i class="fa fa-chart-bar"></i>
                                 <span>التقارير والإحصائيات</span>
@@ -229,18 +229,18 @@
                             <ul class="submenu">
                                 {% if request.user.is_superuser %}
                                 <li><a href="{% url 'dashboard:dashboard_site_settings' %}">إعدادات الموقع</a></li>
-                                <li><a href="{% url 'dashboard:dashboard_email_settings' %}">إعدادات البريد الإلكتروني</a></li>
-                                <li><a href="{% url 'dashboard:dashboard_payment_gateway_settings' %}">بوابات الدفع</a></li>
-                                <li><a href="{% url 'dashboard:dashboard_shipping_settings' %}">إعدادات الشحن</a></li>
-                                <li><a href="{% url 'dashboard:dashboard_tax_settings' %}">إعدادات الضرائب</a></li>
-                                <li><a href="{% url 'dashboard:dashboard_currency_settings' %}">العملات</a></li>
-                                <li><a href="{% url 'dashboard:dashboard_language_settings' %}">اللغات</a></li>
-                                <li><a href="{% url 'dashboard:dashboard_cache_management' %}">إدارة التخزين المؤقت</a></li>
-                                <li><a href="{% url 'dashboard:dashboard_backup_settings' %}">النسخ الاحتياطي</a></li>
-                                <li><a href="{% url 'dashboard:dashboard_maintenance_mode' %}">وضع الصيانة</a></li>
+{#                                <li><a href="{% url 'dashboard:dashboard_email_settings' %}">إعدادات البريد الإلكتروني</a></li>#}
+{#                                <li><a href="{% url 'dashboard:dashboard_payment_gateway_settings' %}">بوابات الدفع</a></li>#}
+{#                                <li><a href="{% url 'dashboard:dashboard_shipping_settings' %}">إعدادات الشحن</a></li>#}
+{#                                <li><a href="{% url 'dashboard:dashboard_tax_settings' %}">إعدادات الضرائب</a></li>#}
+{#                                <li><a href="{% url 'dashboard:dashboard_currency_settings' %}">العملات</a></li>#}
+{#                                <li><a href="{% url 'dashboard:dashboard_language_settings' %}">اللغات</a></li>#}
+{#                                <li><a href="{% url 'dashboard:dashboard_cache_management' %}">إدارة التخزين المؤقت</a></li>#}
+{#                                <li><a href="{% url 'dashboard:dashboard_backup_settings' %}">النسخ الاحتياطي</a></li>#}
+{#                                <li><a href="{% url 'dashboard:dashboard_maintenance_mode' %}">وضع الصيانة</a></li>#}
                                 {% endif %}
-                                <li><a href="{% url 'dashboard:dashboard_dashboard_settings' %}">إعدادات لوحة التحكم</a></li>
-                                <li><a href="{% url 'dashboard:dashboard_widget_settings' %}">إعدادات الودجات</a></li>
+{#                                <li><a href="{% url 'dashboard:dashboard_dashboard_settings' %}">إعدادات لوحة التحكم</a></li>#}
+{#                                <li><a href="{% url 'dashboard:dashboard_widget_settings' %}">إعدادات الودجات</a></li>#}
                             </ul>
                         </li>
                         {% endif %}

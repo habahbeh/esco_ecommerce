@@ -104,20 +104,20 @@ urlpatterns = [
 
     # ========================= إدارة الطلبات =========================
     path('orders/', views.OrderListView.as_view(), name='dashboard_orders'),
-    path('orders/<str:order_id>/', views.OrderDetailView.as_view(), name='dashboard_order_detail'),
     path('orders/create/', views.OrderCreateView.as_view(), name='dashboard_order_create'),
+    path('orders/search/', views.order_search, name='dashboard_order_search'),
+    path('orders/dashboard/', views.OrderDashboardView.as_view(), name='dashboard_order_dashboard'),
+    path('orders/reports/', views.OrderReportsView.as_view(), name='dashboard_order_reports'),
+    path('orders/export/', views.OrderExportView.as_view(), name='dashboard_order_export'),
+    path('orders/delivery-report/', views.DeliveryOrdersReportView.as_view(), name='dashboard_delivery_orders_report'),
+    path('orders/<str:order_id>/', views.OrderDetailView.as_view(), name='dashboard_order_detail'),
     path('orders/<str:order_id>/update-status/', views.OrderUpdateStatusView.as_view(),
          name='dashboard_order_update_status'),
     path('orders/<str:order_id>/update-payment-status/', views.OrderUpdatePaymentStatusView.as_view(),
          name='dashboard_order_update_payment_status'),
     path('orders/<str:order_id>/cancel/', views.OrderCancelView.as_view(), name='dashboard_order_cancel'),
     path('orders/<str:order_id>/print/', views.OrderPrintView.as_view(), name='dashboard_order_print'),
-    path('orders/search/', views.order_search, name='dashboard_order_search'),
-    path('orders/dashboard/', views.OrderDashboardView.as_view(), name='dashboard_order_dashboard'),
-    path('orders/reports/', views.OrderReportsView.as_view(), name='dashboard_order_reports'),
-    path('orders/export/', views.OrderExportView.as_view(), name='dashboard_order_export'),
 
-    path('orders/delivery-report/', views.DeliveryOrdersReportView.as_view(), name='dashboard_delivery_orders_report'),
 
 
     # ========================= إدارة عمليات الدفع =========================

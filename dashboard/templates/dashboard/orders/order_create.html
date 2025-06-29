@@ -1,0 +1,365 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load i18n %}
+{% load dashboard_tags %}
+
+{% block title %}إنشاء طلب جديد{% endblock %}
+{% block page_title %}إنشاء طلب جديد{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_orders' %}">إدارة الطلبات</a></li>
+{% endblock %}
+
+{% block current_page %}إنشاء طلب جديد{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .select2-container--default .select2-selection--single {
+        height: 38px;
+        border: 1px solid #ced4da;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 38px;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 38px;
+    }
+    .product-item {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        position: relative;
+    }
+    .remove-product {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        color: #dc3545;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">إنشاء طلب جديد</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" id="createOrderForm">
+            {% csrf_token %}
+
+            <!-- بيانات العميل -->
+            <div class="mb-4">
+                <h5 class="border-bottom pb-2">معلومات العميل</h5>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="user_id" class="form-label">حساب المستخدم (اختياري)</label>
+                        <select name="user_id" id="user_id" class="form-select select2">
+                            <option value="">اختر المستخدم أو اترك فارغاً لعميل جديد</option>
+                            {% for user in users %}
+                            <option value="{{ user.id }}">{{ user.get_full_name|default:user.username }} ({{ user.email }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="full_name" class="form-label">الاسم الكامل <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="full_name" name="full_name" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="email" class="form-label">البريد الإلكتروني <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="phone" class="form-label">رقم الهاتف <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="phone" name="phone" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- عنوان الشحن -->
+            <div class="mb-4">
+                <h5 class="border-bottom pb-2">عنوان الشحن</h5>
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label for="shipping_address" class="form-label">العنوان <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="shipping_address" name="shipping_address" rows="3" required></textarea>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="shipping_city" class="form-label">المدينة <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="shipping_city" name="shipping_city" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="shipping_state" class="form-label">المحافظة/الولاية <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="shipping_state" name="shipping_state" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="shipping_country" class="form-label">الدولة <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="shipping_country" name="shipping_country" value="الأردن" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="shipping_postal_code" class="form-label">الرمز البريدي</label>
+                        <input type="text" class="form-control" id="shipping_postal_code" name="shipping_postal_code">
+                    </div>
+                </div>
+            </div>
+
+            <!-- المنتجات -->
+            <div class="mb-4">
+                <h5 class="border-bottom pb-2">المنتجات</h5>
+                <div id="products-container">
+                    <!-- ستتم إضافة عناصر المنتج هنا بواسطة JavaScript -->
+                </div>
+                <button type="button" class="btn btn-outline-primary" id="add-product">
+                    <i class="fas fa-plus-circle"></i> إضافة منتج
+                </button>
+            </div>
+
+            <!-- التكاليف -->
+            <div class="mb-4">
+                <h5 class="border-bottom pb-2">التكاليف والمبالغ</h5>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="shipping_cost" class="form-label">تكلفة الشحن</label>
+                        <input type="number" step="0.01" min="0" class="form-control" id="shipping_cost" name="shipping_cost" value="0.00">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="tax_amount" class="form-label">مبلغ الضريبة</label>
+                        <input type="number" step="0.01" min="0" class="form-control" id="tax_amount" name="tax_amount" value="0.00">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="discount_amount" class="form-label">مبلغ الخصم</label>
+                        <input type="number" step="0.01" min="0" class="form-control" id="discount_amount" name="discount_amount" value="0.00">
+                    </div>
+                </div>
+            </div>
+
+            <!-- معلومات الطلب -->
+            <div class="mb-4">
+                <h5 class="border-bottom pb-2">معلومات الطلب</h5>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="status" class="form-label">حالة الطلب</label>
+                        <select name="status" id="status" class="form-select">
+                            {% for status_value, status_name in status_choices %}
+                            <option value="{{ status_value }}" {% if status_value == 'pending' %}selected{% endif %}>
+                                {{ status_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="payment_status" class="form-label">حالة الدفع</label>
+                        <select name="payment_status" id="payment_status" class="form-select">
+                            {% for status_value, status_name in payment_status_choices %}
+                            <option value="{{ status_value }}" {% if status_value == 'pending' %}selected{% endif %}>
+                                {{ status_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="payment_method" class="form-label">طريقة الدفع</label>
+                        <input type="text" class="form-control" id="payment_method" name="payment_method" value="الدفع عند الاستلام">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="notes" class="form-label">ملاحظات</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                </div>
+            </div>
+
+            <!-- أزرار الإجراءات -->
+            <div class="d-flex justify-content-between">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> إنشاء الطلب
+                </button>
+                <a href="{% url 'dashboard:dashboard_orders' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> إلغاء
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // تفعيل Select2 للاختيارات
+        $('.select2').select2({
+            dir: "rtl",
+            language: "ar"
+        });
+
+        // جلب بيانات المستخدم عند اختياره
+        $('#user_id').on('change', function() {
+            const userId = $(this).val();
+            if (userId) {
+                // يمكن إضافة AJAX لجلب بيانات المستخدم وعناوينه
+                // في هذا المثال، نفترض أنك ستنفذ هذه الوظيفة لاحقاً
+            }
+        });
+
+        // إضافة منتج جديد
+        let productCounter = 0;
+        
+        $('#add-product').on('click', function() {
+            addProductRow();
+        });
+
+        // إضافة منتج واحد افتراضي عند تحميل الصفحة
+        addProductRow();
+
+        function addProductRow() {
+            const productHtml = `
+                <div class="product-item" id="product-${productCounter}">
+                    <span class="remove-product" data-product-id="${productCounter}">
+                        <i class="fas fa-times-circle"></i>
+                    </span>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="product_id_${productCounter}" class="form-label">المنتج <span class="text-danger">*</span></label>
+                            <select name="product_id[]" id="product_id_${productCounter}" class="form-select product-select" data-product-id="${productCounter}" required>
+                                <option value="">اختر المنتج</option>
+                                {% for product in products %}
+                                <option value="{{ product.id }}">{{ product.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="variant_id_${productCounter}" class="form-label">المتغير (اختياري)</label>
+                            <select name="variant_id[]" id="variant_id_${productCounter}" class="form-select variant-select">
+                                <option value="">اختر المتغير</option>
+                                <!-- سيتم تحميل المتغيرات عند اختيار المنتج -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="quantity_${productCounter}" class="form-label">الكمية <span class="text-danger">*</span></label>
+                            <input type="number" min="1" class="form-control quantity-input" id="quantity_${productCounter}" name="quantity[]" value="1" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="unit_price_${productCounter}" class="form-label">سعر الوحدة</label>
+                            <input type="number" step="0.01" min="0" class="form-control price-input" id="unit_price_${productCounter}" name="unit_price[]" readonly>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            $('#products-container').append(productHtml);
+            
+            // تفعيل الأحداث للمنتج الجديد
+            $(`#product_id_${productCounter}`).on('change', function() {
+                const productId = $(this).val();
+                const rowId = $(this).data('product-id');
+                
+                if (productId) {
+                    // AJAX لجلب متغيرات المنتج وسعره
+                    // في هذا المثال نفترض أنك ستنفذ هذه الوظيفة لاحقاً
+                    // يمكن استخدام نقطة نهاية API مثل:
+                    $.ajax({
+                        url: `/dashboard/api/products/${productId}/variants/`,
+                        type: 'GET',
+                        success: function(data) {
+                            // تحديث قائمة المتغيرات
+                            const variantSelect = $(`#variant_id_${rowId}`);
+                            variantSelect.empty();
+                            variantSelect.append('<option value="">اختر المتغير</option>');
+                            
+                            if (data.variants && data.variants.length > 0) {
+                                data.variants.forEach(variant => {
+                                    variantSelect.append(`<option value="${variant.id}" data-price="${variant.price}">${variant.name}</option>`);
+                                });
+                                variantSelect.prop('disabled', false);
+                            } else {
+                                variantSelect.prop('disabled', true);
+                            }
+                            
+                            // تعيين السعر الافتراضي (سعر المنتج)
+                            if (data.price) {
+                                $(`#unit_price_${rowId}`).val(data.price);
+                            }
+                        },
+                        error: function() {
+                            alert('حدث خطأ أثناء تحميل متغيرات المنتج');
+                        }
+                    });
+                } else {
+                    // إفراغ قائمة المتغيرات إذا لم يتم اختيار منتج
+                    $(`#variant_id_${rowId}`).empty().append('<option value="">اختر المتغير</option>').prop('disabled', true);
+                    $(`#unit_price_${rowId}`).val('');
+                }
+            });
+            
+            // تحديث السعر عند اختيار متغير
+            $(`#variant_id_${productCounter}`).on('change', function() {
+                const selectedOption = $(this).find('option:selected');
+                const price = selectedOption.data('price');
+                
+                if (price) {
+                    $(`#unit_price_${productCounter}`).val(price);
+                }
+            });
+            
+            // زيادة العداد للمنتج التالي
+            productCounter++;
+            
+            // تفعيل أحداث إزالة المنتج
+            $('.remove-product').off('click').on('click', function() {
+                const productId = $(this).data('product-id');
+                if ($('.product-item').length > 1) {
+                    $(`#product-${productId}`).remove();
+                } else {
+                    alert('يجب أن يحتوي الطلب على منتج واحد على الأقل');
+                }
+            });
+        }
+
+        // التحقق من النموذج قبل الإرسال
+        $('#createOrderForm').on('submit', function(e) {
+            // تأكد من إضافة منتج واحد على الأقل
+            if ($('.product-item').length === 0) {
+                e.preventDefault();
+                alert('يجب إضافة منتج واحد على الأقل للطلب');
+                return false;
+            }
+            
+            // تأكد من اختيار منتج لكل صف
+            let valid = true;
+            $('.product-select').each(function() {
+                if (!$(this).val()) {
+                    valid = false;
+                    alert('يرجى اختيار منتج لكل صف');
+                    return false;
+                }
+            });
+            
+            if (!valid) {
+                e.preventDefault();
+                return false;
+            }
+            
+            // تأكد من ملء معلومات العميل
+            const fullName = $('#full_name').val();
+            const email = $('#email').val();
+            
+            if (!fullName || !email) {
+                e.preventDefault();
+                alert('يرجى ملء جميع معلومات العميل المطلوبة');
+                return false;
+            }
+            
+            return true;
+        });
+    });
+</script>
+{% endblock %}

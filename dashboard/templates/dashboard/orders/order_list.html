@@ -14,6 +14,7 @@
 
 {% block content %}
 <!-- ملخص الإحصائيات -->
+<!-- ملخص الإحصائيات -->
 <div class="row mb-4">
     <div class="col-md-4 col-xl-2 mb-4">
         <div class="card stat-card bg-primary text-white h-100">
@@ -41,20 +42,9 @@
         <div class="card stat-card bg-info text-white h-100">
             <div class="card-body">
                 <h5 class="card-title mb-4">
-                    <i class="fas fa-spinner me-2"></i> قيد المعالجة
+                    <i class="fas fa-check me-2"></i> تأكيد الطلب
                 </h5>
-                <h3 class="mb-2">{{ stats.processing_orders }}</h3>
-                <p class="card-text">طلب</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 col-xl-2 mb-4">
-        <div class="card stat-card bg-secondary text-white h-100">
-            <div class="card-body">
-                <h5 class="card-title mb-4">
-                    <i class="fas fa-truck me-2"></i> تم الشحن
-                </h5>
-                <h3 class="mb-2">{{ stats.shipped_orders }}</h3>
+                <h3 class="mb-2">{{ stats.confirmed_orders }}</h3>
                 <p class="card-text">طلب</p>
             </div>
         </div>
@@ -63,15 +53,26 @@
         <div class="card stat-card bg-success text-white h-100">
             <div class="card-body">
                 <h5 class="card-title mb-4">
-                    <i class="fas fa-check-circle me-2"></i> تم التسليم
+                    <i class="fas fa-truck me-2"></i> إغلاق الطلب
                 </h5>
-                <h3 class="mb-2">{{ stats.delivered_orders }}</h3>
+                <h3 class="mb-2">{{ stats.closed_orders }}</h3>
                 <p class="card-text">طلب</p>
             </div>
         </div>
     </div>
     <div class="col-md-4 col-xl-2 mb-4">
         <div class="card stat-card bg-danger text-white h-100">
+            <div class="card-body">
+                <h5 class="card-title mb-4">
+                    <i class="fas fa-ban me-2"></i> ملغي
+                </h5>
+                <h3 class="mb-2">{{ stats.cancelled_orders }}</h3>
+                <p class="card-text">طلب</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-xl-2 mb-4">
+        <div class="card stat-card bg-secondary text-white h-100">
             <div class="card-body">
                 <h5 class="card-title mb-4">
                     <i class="fas fa-money-bill-wave me-2"></i> المبيعات
@@ -85,7 +86,7 @@
 
 <!-- أزرار الإجراءات -->
 <div class="d-flex justify-content-between mb-4">
-    <div>
+    <div hidden>
         <a href="{% url 'dashboard:dashboard_order_create' %}" class="btn btn-primary">
             <i class="fas fa-plus-circle me-1"></i> إضافة طلب جديد
         </a>
@@ -100,7 +101,7 @@
         <a href="{% url 'dashboard:dashboard_order_export' %}" class="btn btn-outline-success">
             <i class="fas fa-file-export me-1"></i> تصدير
         </a>
-        <button type="button" class="btn btn-outline-secondary" id="printBtn">
+        <button type="button" class="btn btn-outline-secondary" id="printBtn" hidden>
             <i class="fas fa-print me-1"></i> طباعة
         </button>
     </div>
@@ -340,7 +341,7 @@
         cancelBtns.forEach(btn => {
             btn.addEventListener('click', function() {
                 const orderId = this.getAttribute('data-order-id');
-                cancelForm.action = `/dashboard/orders/${orderId}/cancel/`;
+                cancelForm.action = "{% url 'dashboard:dashboard_order_cancel' order_id=0 %}".replace('0', orderId);
                 cancelModal.show();
             });
         });
@@ -398,7 +399,7 @@
             document.querySelectorAll('.cancel-order-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const orderId = this.getAttribute('data-order-id');
-                    cancelForm.action = `/dashboard/orders/${orderId}/cancel/`;
+                    cancelForm.action = "{% url 'dashboard:dashboard_order_cancel' order_id=0 %}".replace('0', orderId);
                     cancelModal.show();
                 });
             });
