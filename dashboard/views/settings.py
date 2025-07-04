@@ -34,7 +34,9 @@ class SiteSettingsView( SuperuserRequiredMixin, UpdateView):
     model = SiteSettings
     form_class = SiteSettingsForm
     template_name = 'dashboard/settings/site_settings.html'
-    success_url = reverse_lazy('dashboard:site_settings')
+    # success_url = reverse_lazy('dashboard:site_settings')
+    success_url = reverse_lazy('dashboard:dashboard_site_settings')  # تصحيح المسار
+
 
     def get_object(self, queryset=None):
         """الحصول على كائن الإعدادات الحالي أو إنشاء واحد جديد إذا لم يكن موجوداً"""
