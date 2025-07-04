@@ -1,0 +1,960 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block title %}إعدادات الموقع{% endblock %}
+
+{% block page_title %}إعدادات الموقع{% endblock %}
+
+{% block current_page %}إعدادات الموقع{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* تحسينات المظهر العام */
+    .settings-card {
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    .settings-card:hover {
+        box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    }
+    .settings-card .card-header {
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        background-color: #f8f9fa;
+        padding: 1rem 1.25rem;
+    }
+    .settings-card .card-title {
+        margin-bottom: 0;
+        font-weight: 600;
+        color: #344767;
+    }
+
+    /* تحسينات معاينة الصور */
+    .img-preview-container {
+        position: relative;
+        margin-bottom: 1rem;
+    }
+    .img-preview {
+        width: 100%;
+        height: 160px;
+        border: 2px dashed #dee2e6;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-size: contain;
+        background-position: center;
+        background-repeat: no-repeat;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        overflow: hidden;
+    }
+    .img-preview:hover {
+        border-color: var(--bs-primary);
+        background-color: #f8f9fa;
+    }
+    .img-preview-label {
+        display: block;
+        text-align: center;
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    /* تأثيرات تفاعلية */
+    .upload-icon {
+        font-size: 2.5rem;
+        color: #cfd8dc;
+        transition: all 0.2s ease;
+    }
+    .img-preview:hover .upload-icon {
+        color: var(--bs-primary);
+        transform: scale(1.1);
+    }
+
+    /* معاينة الألوان */
+    .color-preview {
+        height: 120px;
+        border-radius: 10px;
+        color: white;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-shadow: 0 0 3px rgba(0,0,0,0.5);
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        overflow: hidden;
+        position: relative;
+    }
+    .color-preview::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 60%);
+    }
+
+    /* تحسينات وسائل التواصل الاجتماعي */
+    .social-link-item {
+        padding: 10px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        margin-bottom: 10px;
+    }
+    .social-link-item:hover {
+        background-color: #f8f9fa;
+    }
+    .social-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        margin-right: 10px;
+        flex-shrink: 0;
+    }
+    .social-facebook { background-color: #eaecfb; color: #3b5998; }
+    .social-twitter { background-color: #e8f4fd; color: #1da1f2; }
+    .social-instagram { background-color: #fee5e1; color: #e1306c; }
+    .social-linkedin { background-color: #e4f0f8; color: #0077b5; }
+
+    /* تحسينات الجداول */
+    .info-table th {
+        width: 40%;
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+
+    /* تحسينات الأزرار */
+    .btn-floating {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 100;
+        transition: all 0.3s ease;
+    }
+    .btn-floating:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+    }
+
+    /* نمط الوضع الداكن */
+    .dark-mode-preview {
+        background-color: #1e2130;
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    /* إضافات توجيهية */
+    .tooltip-icon {
+        font-size: 14px;
+        color: #6c757d;
+        cursor: help;
+        margin-right: 5px;
+    }
+
+    /* تحسينات المرئيات */
+    .preview-section {
+        position: relative;
+        padding: 1.5rem;
+        background-color: #fff;
+        border-radius: 10px;
+        border: 1px solid #eaecef;
+        margin: 1rem 0;
+    }
+    .preview-section-title {
+        position: absolute;
+        top: -10px;
+        right: 20px;
+        background-color: #fff;
+        padding: 0 10px;
+        font-size: 0.75rem;
+        color: #6c757d;
+        font-weight: 600;
+    }
+
+    /* تحسينات الأيقونات */
+    .section-icon {
+        margin-left: 10px;
+        color: var(--bs-primary);
+    }
+
+    /* تحسينات المعاينة المباشرة */
+    .live-preview {
+        border: 1px solid #eaecef;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-top: 1.5rem;
+    }
+    .live-preview-header {
+        padding: 0.75rem 1rem;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #eaecef;
+        display: flex;
+        align-items: center;
+    }
+    .live-preview-body {
+        padding: 1.5rem;
+    }
+    .browser-dots {
+        display: flex;
+        margin-left: 0.5rem;
+    }
+    .browser-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-left: 5px;
+    }
+    .dot-red { background-color: #ff5f57; }
+    .dot-yellow { background-color: #febc2e; }
+    .dot-green { background-color: #28c840; }
+
+    /* تأثيرات التحميل */
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    .uploading {
+        animation: pulse 1.5s infinite;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- بطاقة الإعدادات الرئيسية -->
+        <div class="card settings-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title"><i class="fa fa-cog section-icon"></i>إعدادات الموقع العامة</h5>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="togglePreview">
+                    <i class="fa fa-eye"></i> معاينة مباشرة
+                </button>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="settingsForm">
+                    {% csrf_token %}
+
+                    <!-- تبويبات الإعدادات -->
+                    <ul class="nav nav-tabs mb-4" id="settingsTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="basic-tab" data-bs-toggle="tab" href="#basic" role="tab">
+                                <i class="fa fa-info-circle"></i> معلومات أساسية
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="appearance-tab" data-bs-toggle="tab" href="#appearance" role="tab">
+                                <i class="fa fa-palette"></i> المظهر والألوان
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="contact-tab" data-bs-toggle="tab" href="#contact" role="tab">
+                                <i class="fa fa-address-book"></i> معلومات الاتصال
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="social-tab" data-bs-toggle="tab" href="#social" role="tab">
+                                <i class="fa fa-share-alt"></i> التواصل الاجتماعي
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="settingsTabContent">
+                        <!-- معلومات أساسية -->
+                        <div class="tab-pane fade show active" id="basic" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="id_site_name" class="form-label">اسم الموقع</label>
+                                        <input type="text" name="site_name" id="id_site_name" class="form-control" value="{{ object.site_name }}" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="id_site_description" class="form-label">وصف الموقع</label>
+                                        <textarea name="site_description" id="id_site_description" class="form-control" rows="1">{{ object.site_description }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="img-preview-container">
+                                        <label class="form-label">شعار الموقع</label>
+                                        <div class="img-preview" id="logo-preview" onclick="document.getElementById('id_logo').click();">
+                                            {% if object.logo %}
+                                            <!-- سيتم تعبئته بواسطة JavaScript -->
+                                            {% else %}
+                                            <div class="text-center">
+                                                <i class="fa fa-cloud-upload-alt upload-icon"></i>
+                                                <p class="mt-2 mb-0">انقر لتحميل الشعار</p>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <input type="file" name="logo" id="id_logo" class="form-control d-none" accept="image/*">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="img-preview-container">
+                                        <label class="form-label">أيقونة الموقع (Favicon)</label>
+                                        <div class="img-preview" id="favicon-preview" onclick="document.getElementById('id_favicon').click();">
+                                            {% if object.favicon %}
+                                            <!-- سيتم تعبئته بواسطة JavaScript -->
+                                            {% else %}
+                                            <div class="text-center">
+                                                <i class="fa fa-cloud-upload-alt upload-icon"></i>
+                                                <p class="mt-2 mb-0">انقر لتحميل الأيقونة</p>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <input type="file" name="favicon" id="id_favicon" class="form-control d-none" accept="image/*">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- المظهر والألوان -->
+                        <div class="tab-pane fade" id="appearance" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="id_primary_color" class="form-label">اللون الرئيسي</label>
+                                        <select name="primary_color" id="id_primary_color" class="form-select">
+                                            {% for value, name in object.PRIMARY_COLOR_CHOICES %}
+                                            <option value="{{ value }}" {% if object.primary_color == value %}selected{% endif %} style="background-color: {{ value }}; color: {% if value == '#1e88e5' or value == '#e53935' or value == '#0357b5' or value == '#6d4c41' %}white{% else %}black{% endif %};">{{ name }}</option>
+                                            {% endfor %}
+                                        </select>
+
+                                        <div class="color-preview" id="color-preview" style="background-color: {{ object.primary_color }};">
+                                            <span>معاينة اللون الرئيسي</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">إعدادات الوضع الداكن</label>
+                                        <div class="form-check form-switch mb-2">
+                                            <input class="form-check-input" type="checkbox" name="enable_dark_mode" id="id_enable_dark_mode" {% if object.enable_dark_mode %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_enable_dark_mode">تفعيل الوضع الداكن</label>
+                                        </div>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" name="default_dark_mode" id="id_default_dark_mode" {% if object.default_dark_mode %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_default_dark_mode">الوضع الداكن افتراضيًا</label>
+                                        </div>
+
+                                        <div id="dark-mode-preview" class="dark-mode-preview" style="display: {% if object.enable_dark_mode %}block{% else %}none{% endif %};">
+                                            <h6>معاينة الوضع الداكن</h6>
+                                            <p class="mb-0">هكذا سيظهر الموقع في الوضع الداكن</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- معلومات الاتصال -->
+                        <div class="tab-pane fade" id="contact" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="id_email" class="form-label">البريد الإلكتروني</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fa fa-envelope"></i></span>
+                                            <input type="email" name="email" id="id_email" class="form-control" value="{{ object.email }}" dir="ltr">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="id_phone" class="form-label">رقم الهاتف</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fa fa-phone"></i></span>
+                                            <input type="text" name="phone" id="id_phone" class="form-control" value="{{ object.phone }}" dir="ltr">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="id_address" class="form-label">العنوان</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fa fa-map-marker-alt"></i></span>
+                                    <textarea name="address" id="id_address" class="form-control" rows="2">{{ object.address }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- التواصل الاجتماعي -->
+                        <div class="tab-pane fade" id="social" role="tabpanel">
+                            <div class="mb-3">
+                                <label for="id_facebook" class="form-label">فيسبوك</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fab fa-facebook-f text-primary"></i></span>
+                                    <input type="url" name="facebook" id="id_facebook" class="form-control" value="{{ object.facebook }}" dir="ltr" placeholder="https://facebook.com/username">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="id_twitter" class="form-label">تويتر</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fab fa-twitter text-info"></i></span>
+                                    <input type="url" name="twitter" id="id_twitter" class="form-control" value="{{ object.twitter }}" dir="ltr" placeholder="https://twitter.com/username">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="id_instagram" class="form-label">انستغرام</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fab fa-instagram text-danger"></i></span>
+                                    <input type="url" name="instagram" id="id_instagram" class="form-control" value="{{ object.instagram }}" dir="ltr" placeholder="https://instagram.com/username">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="id_linkedin" class="form-label">لينكد إن</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fab fa-linkedin-in text-primary"></i></span>
+                                    <input type="url" name="linkedin" id="id_linkedin" class="form-control" value="{{ object.linkedin }}" dir="ltr" placeholder="https://linkedin.com/in/username">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" class="btn btn-outline-secondary" onclick="window.location.reload();">
+                            <i class="fa fa-undo"></i> إلغاء التغييرات
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa fa-save"></i> حفظ الإعدادات
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- معاينة المباشرة (تظهر عند الضغط على زر المعاينة) -->
+        <div class="card settings-card" id="livePreviewCard" style="display: none;">
+            <div class="card-header">
+                <h5 class="card-title"><i class="fa fa-eye section-icon"></i>معاينة مباشرة للإعدادات</h5>
+            </div>
+            <div class="card-body">
+                <div class="live-preview">
+                    <div class="live-preview-header">
+                        <div class="browser-dots">
+                            <span class="browser-dot dot-red"></span>
+                            <span class="browser-dot dot-yellow"></span>
+                            <span class="browser-dot dot-green"></span>
+                        </div>
+                        <div class="flex-grow-1 text-center" id="preview-site-name">{{ object.site_name }}</div>
+                    </div>
+                    <div class="live-preview-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="text-center">
+                                    <div id="preview-logo-container">
+                                        {% if object.logo %}
+                                        <img src="{{ object.logo.url }}" alt="Logo" class="img-fluid" style="max-height: 80px;">
+                                        {% else %}
+                                        <div class="alert alert-light border">
+                                            <i class="fa fa-image fa-2x mb-2"></i><br>
+                                            <span>لم يتم تحميل شعار</span>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div style="border-radius: 8px; padding: 10px; border: 1px solid #eaecef;" id="preview-color-panel">
+                                    <p class="mb-1" id="preview-description">{{ object.site_description }}</p>
+                                    <div class="d-flex justify-content-between">
+                                        <span><i class="fa fa-envelope"></i> <span id="preview-email">{{ object.email|default:"info@example.com" }}</span></span>
+                                        <span><i class="fa fa-phone"></i> <span id="preview-phone">{{ object.phone|default:"غير محدد" }}</span></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="preview-section">
+                            <span class="preview-section-title">وسائل التواصل</span>
+                            <div class="d-flex flex-wrap justify-content-center">
+                                <div id="preview-socials" class="d-flex gap-3">
+                                    {% if object.facebook or object.twitter or object.instagram or object.linkedin %}
+                                    {% if object.facebook %}
+                                    <a href="#" class="btn btn-sm btn-outline-primary"><i class="fab fa-facebook-f"></i></a>
+                                    {% endif %}
+                                    {% if object.twitter %}
+                                    <a href="#" class="btn btn-sm btn-outline-info"><i class="fab fa-twitter"></i></a>
+                                    {% endif %}
+                                    {% if object.instagram %}
+                                    <a href="#" class="btn btn-sm btn-outline-danger"><i class="fab fa-instagram"></i></a>
+                                    {% endif %}
+                                    {% if object.linkedin %}
+                                    <a href="#" class="btn btn-sm btn-outline-primary"><i class="fab fa-linkedin-in"></i></a>
+                                    {% endif %}
+                                    {% else %}
+                                    <div class="text-muted">لم يتم إضافة وسائل تواصل اجتماعي</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- بطاقة المعلومات -->
+        <div class="card settings-card">
+            <div class="card-header">
+                <h5 class="card-title"><i class="fa fa-info-circle section-icon"></i>ملخص الإعدادات</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-light border-primary border-start border-4">
+                    <i class="fa fa-lightbulb text-warning"></i>
+                    تُستخدم هذه الإعدادات في تخصيص مظهر وسلوك الموقع. قم بحفظ التغييرات لتطبيقها على الموقع.
+                </div>
+
+                <div class="table-responsive mt-3">
+                    <table class="table table-bordered info-table">
+                        <tr>
+                            <th>اسم الموقع</th>
+                            <td id="info-site-name">{{ object.site_name }}</td>
+                        </tr>
+                        <tr>
+                            <th>البريد الإلكتروني</th>
+                            <td id="info-email">{{ object.email|default:"غير محدد" }}</td>
+                        </tr>
+                        <tr>
+                            <th>رقم الهاتف</th>
+                            <td id="info-phone">{{ object.phone|default:"غير محدد" }}</td>
+                        </tr>
+                        <tr>
+                            <th>اللون الرئيسي</th>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <span class="d-inline-block rounded-circle me-2" style="width: 20px; height: 20px; background-color: {{ object.primary_color }};"></span>
+                                    <span id="info-color-name">{{ object.get_primary_color_display }}</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>الوضع الداكن</th>
+                            <td id="info-dark-mode">
+                                {% if object.enable_dark_mode %}
+                                <span class="badge bg-success">مفعل</span>
+                                {% else %}
+                                <span class="badge bg-secondary">غير مفعل</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- بطاقة وسائل التواصل -->
+        <div class="card settings-card">
+            <div class="card-header">
+                <h5 class="card-title"><i class="fa fa-share-alt section-icon"></i>وسائل التواصل الاجتماعي</h5>
+            </div>
+            <div class="card-body">
+                <div id="social-links-container">
+                    {% if object.facebook or object.twitter or object.instagram or object.linkedin %}
+                    {% if object.facebook %}
+                    <div class="social-link-item d-flex align-items-center">
+                        <div class="social-icon social-facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </div>
+                        <div class="text-truncate">
+                            <a href="{{ object.facebook }}" target="_blank" class="text-dark">{{ object.facebook }}</a>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if object.twitter %}
+                    <div class="social-link-item d-flex align-items-center">
+                        <div class="social-icon social-twitter">
+                            <i class="fab fa-twitter"></i>
+                        </div>
+                        <div class="text-truncate">
+                            <a href="{{ object.twitter }}" target="_blank" class="text-dark">{{ object.twitter }}</a>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if object.instagram %}
+                    <div class="social-link-item d-flex align-items-center">
+                        <div class="social-icon social-instagram">
+                            <i class="fab fa-instagram"></i>
+                        </div>
+                        <div class="text-truncate">
+                            <a href="{{ object.instagram }}" target="_blank" class="text-dark">{{ object.instagram }}</a>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if object.linkedin %}
+                    <div class="social-link-item d-flex align-items-center">
+                        <div class="social-icon social-linkedin">
+                            <i class="fab fa-linkedin-in"></i>
+                        </div>
+                        <div class="text-truncate">
+                            <a href="{{ object.linkedin }}" target="_blank" class="text-dark">{{ object.linkedin }}</a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="alert alert-light text-center border">
+                        <i class="fa fa-share-alt fa-2x mb-2"></i>
+                        <p class="mb-0">لم يتم إضافة أي روابط لوسائل التواصل الاجتماعي بعد.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- بطاقة نصائح -->
+        <div class="card settings-card">
+            <div class="card-header">
+                <h5 class="card-title"><i class="fa fa-lightbulb section-icon"></i>نصائح مفيدة</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    <li class="list-group-item">
+                        <i class="fa fa-check-circle text-success me-2"></i>
+                        الشعار المثالي بأبعاد 300×100 بكسل.
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fa fa-check-circle text-success me-2"></i>
+                        أيقونة الموقع (Favicon) يجب أن تكون بأبعاد 32×32 بكسل.
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fa fa-check-circle text-success me-2"></i>
+                        اختر لون رئيسي يعكس هوية موقعك.
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fa fa-check-circle text-success me-2"></i>
+                        تأكد من إضافة معلومات الاتصال الصحيحة.
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- زر حفظ عائم -->
+<button type="button" class="btn btn-primary btn-floating" id="scrollToTop" title="العودة لأعلى الصفحة">
+    <i class="fa fa-arrow-up"></i>
+</button>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // عرض الصور الحالية في المعاينة
+        {% if object.logo %}
+        $('#logo-preview').css('background-image', 'url({{ object.logo.url }})');
+        {% endif %}
+
+        {% if object.favicon %}
+        $('#favicon-preview').css('background-image', 'url({{ object.favicon.url }})');
+        {% endif %}
+
+        // تفعيل tooltip
+        $('[data-bs-toggle="tooltip"]').tooltip();
+
+        // زر التمرير لأعلى
+        $('#scrollToTop').click(function() {
+            $('html, body').animate({ scrollTop: 0 }, 'slow');
+        });
+
+        // إظهار/إخفاء زر التمرير لأعلى حسب موضع التمرير
+        $(window).scroll(function() {
+            if ($(this).scrollTop() > 200) {
+                $('#scrollToTop').fadeIn();
+            } else {
+                $('#scrollToTop').fadeOut();
+            }
+        });
+
+        // تبديل عرض المعاينة المباشرة
+        $('#togglePreview').click(function() {
+            $('#livePreviewCard').slideToggle();
+            $(this).find('i').toggleClass('fa-eye fa-eye-slash');
+        });
+
+        // تحديث معاينة الصور عند اختيار ملفات جديدة
+        $('#id_logo').on('change', function() {
+            if (this.files && this.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#logo-preview').css('background-image', 'url(' + e.target.result + ')');
+                    $('#logo-preview').html('');
+                    $('#logo-preview').addClass('uploading');
+                    setTimeout(function() {
+                        $('#logo-preview').removeClass('uploading');
+                    }, 1500);
+
+                    // تحديث المعاينة المباشرة
+                    $('#preview-logo-container').html('<img src="' + e.target.result + '" alt="Logo" class="img-fluid" style="max-height: 80px;">');
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        $('#id_favicon').on('change', function() {
+            if (this.files && this.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#favicon-preview').css('background-image', 'url(' + e.target.result + ')');
+                    $('#favicon-preview').html('');
+                    $('#favicon-preview').addClass('uploading');
+                    setTimeout(function() {
+                        $('#favicon-preview').removeClass('uploading');
+                    }, 1500);
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        // تحديث معاينة اللون عند تغييره
+        $('#id_primary_color').on('change', function() {
+            var selectedColor = $(this).val();
+            var colorName = $(this).find('option:selected').text();
+
+            $('.color-preview').css('background-color', selectedColor);
+            $('#info-color-name').text(colorName);
+
+            // تحديث المعاينة المباشرة
+            $('#preview-color-panel').css('border-color', selectedColor);
+        });
+
+        // تفعيل/تعطيل معاينة الوضع الداكن
+        $('#id_enable_dark_mode').on('change', function() {
+            if ($(this).is(':checked')) {
+                $('#dark-mode-preview').slideDown();
+                $('#id_default_dark_mode').prop('disabled', false);
+                $('#info-dark-mode').html('<span class="badge bg-success">مفعل</span>');
+            } else {
+                $('#dark-mode-preview').slideUp();
+                $('#id_default_dark_mode').prop('checked', false).prop('disabled', true);
+                $('#info-dark-mode').html('<span class="badge bg-secondary">غير مفعل</span>');
+            }
+        });
+
+        // تحديث المعلومات في الوقت الحقيقي
+        $('#id_site_name').on('input', function() {
+            var value = $(this).val() || "اسم الموقع";
+            $('#info-site-name').text(value);
+            $('#preview-site-name').text(value);
+        });
+
+        $('#id_site_description').on('input', function() {
+            var value = $(this).val() || "وصف الموقع";
+            $('#preview-description').text(value);
+        });
+
+        $('#id_email').on('input', function() {
+            var value = $(this).val() || "غير محدد";
+            $('#info-email').text(value);
+            $('#preview-email').text(value);
+        });
+
+        $('#id_phone').on('input', function() {
+            var value = $(this).val() || "غير محدد";
+            $('#info-phone').text(value);
+            $('#preview-phone').text(value);
+        });
+
+        // تحديث روابط التواصل الاجتماعي في المعاينة المباشرة
+        function updateSocialPreview() {
+            var facebook = $('#id_facebook').val();
+            var twitter = $('#id_twitter').val();
+            var instagram = $('#id_instagram').val();
+            var linkedin = $('#id_linkedin').val();
+
+            var html = '';
+
+            if (facebook || twitter || instagram || linkedin) {
+                if (facebook) {
+                    html += '<a href="#" class="btn btn-sm btn-outline-primary"><i class="fab fa-facebook-f"></i></a>';
+                }
+                if (twitter) {
+                    html += '<a href="#" class="btn btn-sm btn-outline-info"><i class="fab fa-twitter"></i></a>';
+                }
+                if (instagram) {
+                    html += '<a href="#" class="btn btn-sm btn-outline-danger"><i class="fab fa-instagram"></i></a>';
+                }
+                if (linkedin) {
+                    html += '<a href="#" class="btn btn-sm btn-outline-primary"><i class="fab fa-linkedin-in"></i></a>';
+                }
+            } else {
+                html = '<div class="text-muted">لم يتم إضافة وسائل تواصل اجتماعي</div>';
+            }
+
+            $('#preview-socials').html(html);
+        }
+
+        $('#id_facebook, #id_twitter, #id_instagram, #id_linkedin').on('input', function() {
+            updateSocialPreview();
+        });
+
+        // تحديث السوشيال ميديا كونتينر
+        function updateSocialLinksContainer() {
+            var facebook = $('#id_facebook').val();
+            var twitter = $('#id_twitter').val();
+            var instagram = $('#id_instagram').val();
+            var linkedin = $('#id_linkedin').val();
+
+            var html = '';
+
+            if (facebook || twitter || instagram || linkedin) {
+                if (facebook) {
+                    html += `
+                    <div class="social-link-item d-flex align-items-center">
+                        <div class="social-icon social-facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </div>
+                        <div class="text-truncate">
+                            <a href="${facebook}" target="_blank" class="text-dark">${facebook}</a>
+                        </div>
+                    </div>`;
+                }
+
+                if (twitter) {
+                    html += `
+                    <div class="social-link-item d-flex align-items-center">
+                        <div class="social-icon social-twitter">
+                            <i class="fab fa-twitter"></i>
+                        </div>
+                        <div class="text-truncate">
+                            <a href="${twitter}" target="_blank" class="text-dark">${twitter}</a>
+                        </div>
+                    </div>`;
+                }
+
+                if (instagram) {
+                    html += `
+                    <div class="social-link-item d-flex align-items-center">
+                        <div class="social-icon social-instagram">
+                            <i class="fab fa-instagram"></i>
+                        </div>
+                        <div class="text-truncate">
+                            <a href="${instagram}" target="_blank" class="text-dark">${instagram}</a>
+                        </div>
+                    </div>`;
+                }
+
+                if (linkedin) {
+                    html += `
+                    <div class="social-link-item d-flex align-items-center">
+                        <div class="social-icon social-linkedin">
+                            <i class="fab fa-linkedin-in"></i>
+                        </div>
+                        <div class="text-truncate">
+                            <a href="${linkedin}" target="_blank" class="text-dark">${linkedin}</a>
+                        </div>
+                    </div>`;
+                }
+            } else {
+                html = `
+                <div class="alert alert-light text-center border">
+                    <i class="fa fa-share-alt fa-2x mb-2"></i>
+                    <p class="mb-0">لم يتم إضافة أي روابط لوسائل التواصل الاجتماعي بعد.</p>
+                </div>`;
+            }
+
+            $('#social-links-container').html(html);
+        }
+
+        $('#id_facebook, #id_twitter, #id_instagram, #id_linkedin').on('input', function() {
+            updateSocialLinksContainer();
+        });
+
+        // دعم السحب والإفلات للصور
+        function setupDragAndDrop(previewElement, inputElement) {
+            previewElement.on('dragover', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).addClass('border-primary');
+            });
+
+            previewElement.on('dragleave', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).removeClass('border-primary');
+            });
+
+            previewElement.on('drop', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).removeClass('border-primary');
+
+                if (e.originalEvent.dataTransfer && e.originalEvent.dataTransfer.files.length) {
+                    inputElement[0].files = e.originalEvent.dataTransfer.files;
+                    inputElement.trigger('change');
+                }
+            });
+        }
+
+        // تفعيل السحب والإفلات
+        setupDragAndDrop($('#logo-preview'), $('#id_logo'));
+        setupDragAndDrop($('#favicon-preview'), $('#id_favicon'));
+
+        // إرسال النموذج بواسطة AJAX (اختياري)
+        $('#settingsForm').on('submit', function(e) {
+            // إذا كنت تريد تفعيل إرسال النموذج بـ AJAX، يمكنك إلغاء التعليق عن الكود التالي
+            /*
+            e.preventDefault();
+
+            var formData = new FormData(this);
+
+            $.ajax({
+                url: window.location.href,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                beforeSend: function() {
+                    // إظهار مؤشر التحميل
+                    $('button[type="submit"]').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> جاري الحفظ...');
+                },
+                success: function(response) {
+                    // إظهار رسالة نجاح
+                    toastr.success('تم حفظ الإعدادات بنجاح');
+                    $('button[type="submit"]').prop('disabled', false).html('<i class="fa fa-save"></i> حفظ الإعدادات');
+                },
+                error: function(xhr, status, error) {
+                    // إظهار رسالة خطأ
+                    toastr.error('حدث خطأ أثناء حفظ الإعدادات');
+                    $('button[type="submit"]').prop('disabled', false).html('<i class="fa fa-save"></i> حفظ الإعدادات');
+                }
+            });
+            */
+        });
+    });
+</script>
+{% endblock %}
