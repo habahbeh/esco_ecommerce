@@ -19,6 +19,7 @@ from dashboard.forms.products import ProductForm
 from django.utils.translation import gettext as _
 from datetime import datetime
 import re
+import os
 
 from decimal import Decimal, InvalidOperation
 
@@ -29,6 +30,579 @@ from products.models import (
     ProductReview, ProductDiscount
 )
 from .dashboard import DashboardAccessMixin
+
+import pandas as pd
+from dashboard.forms.import_export import ProductImportForm
+import numpy as np  # أضف هذا السطر
+from django.core.cache import cache  # أضف هذا السطر
+
+
+@login_required
+def product_import_direct(request, import_id):
+    """وظيفة مباشرة للاستيراد (للاختبار)"""
+    view = ProductImportView()
+    view.execute_import(import_id, request)
+    messages.success(request, "تم بدء عملية الاستيراد بنجاح")
+    return redirect('dashboard:dashboard_products')
+
+
+class ProductImportView(DashboardAccessMixin, View):
+    """استيراد المنتجات من ملف Excel"""
+
+    def get(self, request):
+        """عرض نموذج استيراد المنتجات"""
+        form = ProductImportForm()
+
+        context = {
+            'form': form,
+            'form_title': 'استيراد المنتجات من Excel',
+        }
+
+        return render(request, 'dashboard/products/product_import.html', context)
+
+    def post(self, request):
+        """معالجة عملية استيراد المنتجات"""
+
+        # معالجة AJAX للمعاينة أو الاستيراد النهائي
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            action = request.POST.get('action', '')
+
+            if action == 'import':
+                # تنفيذ عملية الاستيراد
+                preview_id = request.POST.get('preview_id')
+                if not preview_id:
+                    return JsonResponse({'success': False, 'error': 'معرف المعاينة مفقود'})
+                return self.execute_import(preview_id, request)
+
+        form = ProductImportForm(request.POST, request.FILES)
+
+        if not form.is_valid():
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{form[field].label}: {error}")
+            return redirect('dashboard:product_import')
+
+        # استرجاع بيانات النموذج
+        excel_file = request.FILES['file']
+        update_existing = form.cleaned_data.get('update_existing', True)
+        default_category = form.cleaned_data.get('category')
+
+        # التحقق من امتداد الملف
+        file_name = excel_file.name
+        if not (file_name.endswith('.xlsx') or file_name.endswith('.xls')):
+            messages.error(request, "الملف المرفوع ليس بصيغة Excel المدعومة (.xlsx, .xls)")
+            return redirect('dashboard:product_import')
+
+        # قراءة ملف Excel للمعاينة
+        try:
+            df = pd.read_excel(excel_file, sheet_name=0)
+
+            # التحقق من وجود البيانات
+            if df.empty:
+                messages.error(request, "ملف Excel فارغ - لا توجد بيانات للاستيراد")
+                return redirect('dashboard:product_import')
+
+            # التحقق من وجود الأعمدة المطلوبة
+            required_columns = ['name']
+            missing_columns = [col for col in required_columns if col not in df.columns]
+
+            if missing_columns:
+                messages.error(request, f"الأعمدة التالية مفقودة في الملف: {', '.join(missing_columns)}")
+                return redirect('dashboard:product_import')
+
+            # تحضير البيانات للمعاينة
+            preview_data = []
+            validation_errors = []
+
+            # حل بسيط لتحويل DataFrame إلى قاموس وتعامل مع القيم الفارغة
+            df_records = []
+            for index, row in df.iterrows():
+                record = {}
+                for column in df.columns:
+                    value = row[column]
+                    if pd.isna(value):
+                        record[column] = ""
+                    else:
+                        record[column] = value
+                df_records.append(record)
+
+            # عملية المعاينة
+            for index, row in enumerate(df_records):
+                try:
+                    # استخراج البيانات الأساسية
+                    row_number = index + 2
+                    name = row.get('name', '')
+                    if not isinstance(name, str):
+                        name = f"{name}"
+                    name = name.strip()
+
+                    sku = row.get('sku', '')
+                    if not isinstance(sku, str):
+                        sku = f"{sku}"
+                    sku = sku.strip() or f"SKU-{uuid.uuid4().hex[:8].upper()}"
+
+                    # فحص البيانات الإلزامية
+                    if not name:
+                        raise ValueError(f"اسم المنتج مطلوب في الصف {row_number}")
+
+                    # التحقق من وجود المنتج بواسطة SKU
+                    existing_product = None
+                    if sku and not sku.startswith("SKU-"):
+                        try:
+                            existing_product = Product.objects.get(sku=sku)
+                        except Product.DoesNotExist:
+                            pass
+
+                    # استخراج السعر
+                    price = 0
+                    price_value = row.get('base_price', 0)
+                    if price_value is not None and price_value != "":
+                        try:
+                            price = float(price_value)
+                        except (ValueError, TypeError):
+                            price = 0
+
+                    # إضافة الصف للمعاينة
+                    preview_data.append({
+                        'row': row_number,
+                        'name': name,
+                        'sku': sku,
+                        'price': price,
+                        'exists': existing_product is not None,
+                        'status': _('موجود') if existing_product else _('جديد')
+                    })
+
+                except Exception as e:
+                    error_msg = f"{e}"
+                    validation_errors.append({
+                        'row': index + 2,
+                        'name': row.get('name', ''),
+                        'sku': row.get('sku', ''),
+                        'error': error_msg
+                    })
+
+            # حفظ البيانات للاستخدام لاحقًا
+            import_id = uuid.uuid4().hex
+
+            # تخزين البيانات
+            cache_data = {
+                'df': df_records,
+                'update_existing': update_existing,
+                'default_category_id': default_category.id if default_category else None,
+                'validation_errors': validation_errors
+            }
+
+            # تخزين في cache لمدة ساعة
+            cache.set(f'import_data_{import_id}', json.dumps(cache_data, default=str), 3600)
+
+            # تخزين حالة التقدم الأولية
+            progress_data = {
+                'total': len(df),
+                'processed': 0,
+                'success': 0,
+                'updated': 0,
+                'errors': 0,
+                'status': 'pending',
+                'error_details': []
+            }
+            cache.set(f'import_progress_{import_id}', json.dumps(progress_data), 3600)
+
+            # عرض صفحة المعاينة
+            return render(request, 'dashboard/products/product_preview.html', {
+                'import_id': import_id,
+                'preview_data': preview_data[:20],  # عرض أول 20 صف فقط
+                'validation_errors': validation_errors[:10],  # عرض أول 10 أخطاء فقط
+                'total_rows': len(df),
+                'error_count': len(validation_errors),
+                'form_data': {
+                    'update_existing': update_existing,
+                    'default_category': default_category.name if default_category else _("لا يوجد")
+                }
+            })
+
+        except Exception as e:
+            error_msg = f"{e}"
+            messages.error(request, f"حدث خطأ أثناء معالجة ملف Excel: {error_msg}")
+            return redirect('dashboard:product_import')
+
+    def execute_import(self, import_id, request):
+        """تنفيذ عملية استيراد المنتجات بناءً على بيانات المعاينة"""
+        try:
+            # استرجاع البيانات من cache
+            import_data_json = cache.get(f'import_data_{import_id}')
+
+            if not import_data_json:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'انتهت صلاحية بيانات الاستيراد. يرجى إعادة تحميل الملف'
+                })
+
+            # تحميل البيانات
+            import_data = json.loads(import_data_json)
+            df_dict = import_data['df']
+            update_existing = import_data['update_existing']
+            default_category_id = import_data['default_category_id']
+
+            # الحصول على الفئة الافتراضية إذا كانت موجودة
+            default_category = None
+            if default_category_id:
+                try:
+                    default_category = Category.objects.get(id=default_category_id)
+                except Category.DoesNotExist:
+                    pass
+
+            # تحديث حالة التقدم
+            progress_data = {
+                'total': len(df_dict),
+                'processed': 0,
+                'success': 0,
+                'updated': 0,
+                'errors': 0,
+                'status': 'processing',
+                'error_details': []
+            }
+            cache.set(f'import_progress_{import_id}', json.dumps(progress_data), 3600)
+
+            # بدء عملية الاستيراد في خلفية منفصلة
+            import threading
+            thread = threading.Thread(
+                target=self._import_products,
+                args=(import_id, df_dict, update_existing, default_category, request.user)
+            )
+            thread.daemon = True
+            thread.start()
+
+            # إرجاع معرف الاستيراد للمتابعة
+            return JsonResponse({
+                'success': True,
+                'import_id': import_id,
+                'total_rows': len(df_dict)
+            })
+
+        except Exception as e:
+            import traceback
+            print(f"Error in execute_import: {e}")
+            print(traceback.format_exc())
+            return JsonResponse({
+                'success': False,
+                'error': f"حدث خطأ أثناء بدء الاستيراد: {e}"
+            })
+
+    def _import_products(self, import_id, df_dict, update_existing, default_category, user):
+        """استيراد المنتجات في الخلفية"""
+        # استرجاع حالة التقدم
+        progress_json = cache.get(f'import_progress_{import_id}')
+        progress_data = json.loads(progress_json) if progress_json else {
+            'total': len(df_dict),
+            'processed': 0,
+            'success': 0,
+            'updated': 0,
+            'errors': 0,
+            'status': 'processing',
+            'error_details': []
+        }
+
+        try:
+            # معالجة كل صف
+            for index, row in enumerate(df_dict):
+                try:
+                    row_number = index + 2  # +2 لأن الصف الأول هو العناوين والفهرس يبدأ من 0
+
+                    with transaction.atomic():
+                        # استخراج البيانات الأساسية
+                        name_value = row.get('name', '')
+                        name = f"{name_value}".strip() if name_value is not None else ""
+
+                        sku_value = row.get('sku', '')
+                        sku = f"{sku_value}".strip() if sku_value is not None else ""
+
+                        # فحص البيانات الإلزامية
+                        if not name:
+                            raise ValueError(f"الصف {row_number}: اسم المنتج مطلوب")
+
+                        if not sku:
+                            # إنشاء SKU إذا لم يكن موجودًا
+                            sku = f"SKU-{uuid.uuid4().hex[:8].upper()}"
+
+                        # البحث عن المنتج الموجود بواسطة SKU
+                        existing_product = None
+                        if update_existing:
+                            try:
+                                existing_product = Product.objects.get(sku=sku)
+                            except Product.DoesNotExist:
+                                pass
+
+                        # تحديد ما إذا كنا سنقوم بالتحديث أو الإنشاء
+                        if existing_product and update_existing:
+                            product = existing_product
+                            action = "update"
+                        else:
+                            product = Product()
+                            action = "create"
+
+                        # تعيين البيانات الأساسية
+                        product.name = name
+                        product.sku = sku
+
+                        # البيانات الاختيارية
+                        if 'barcode' in row and row['barcode'] is not None:
+                            product.barcode = f"{row['barcode']}"
+
+                        if 'name_en' in row and row['name_en'] is not None:
+                            product.name_en = f"{row['name_en']}"
+
+                        if 'description' in row and row['description'] is not None:
+                            product.description = f"{row['description']}"
+
+                        if 'short_description' in row and row['short_description'] is not None:
+                            product.short_description = f"{row['short_description']}"
+
+                        # معالجة الأسعار
+                        if 'base_price' in row and row['base_price'] is not None:
+                            try:
+                                product.base_price = float(row['base_price'])
+                            except (ValueError, TypeError):
+                                raise ValueError(f"الصف {row_number}: قيمة السعر الأساسي غير صالحة")
+
+                        if 'compare_price' in row and row['compare_price'] is not None:
+                            try:
+                                product.compare_price = float(row['compare_price'])
+                            except (ValueError, TypeError):
+                                raise ValueError(f"الصف {row_number}: قيمة سعر المقارنة غير صالحة")
+
+                        if 'cost' in row and row['cost'] is not None:
+                            try:
+                                product.cost = float(row['cost'])
+                            except (ValueError, TypeError):
+                                raise ValueError(f"الصف {row_number}: قيمة التكلفة غير صالحة")
+
+                        # معالجة المخزون
+                        if 'stock_quantity' in row and row['stock_quantity'] is not None:
+                            try:
+                                product.stock_quantity = int(float(row['stock_quantity']))
+                            except (ValueError, TypeError):
+                                raise ValueError(f"الصف {row_number}: قيمة كمية المخزون غير صالحة")
+
+                        # معالجة الفئة
+                        if 'category' in row and row['category'] is not None:
+                            category_value = row['category']
+                            category_name = f"{category_value}".strip() if category_value is not None else ""
+                            if category_name:
+                                try:
+                                    category = Category.objects.get(name=category_name)
+                                    product.category = category
+                                except Category.DoesNotExist:
+                                    # محاولة البحث عن الفئة بالاسم الإنجليزي
+                                    try:
+                                        category = Category.objects.get(name_en=category_name)
+                                        product.category = category
+                                    except Category.DoesNotExist:
+                                        if default_category:
+                                            product.category = default_category
+                                        else:
+                                            # إنشاء فئة جديدة
+                                            slug = slugify(category_name, allow_unicode=True)
+                                            if Category.objects.filter(slug=slug).exists():
+                                                slug = f"{slug}-{uuid.uuid4().hex[:6]}"
+
+                                            new_category = Category.objects.create(
+                                                name=category_name,
+                                                slug=slug,
+                                                is_active=True,
+                                                created_by=user
+                                            )
+                                            product.category = new_category
+                            elif default_category:
+                                product.category = default_category
+                        elif default_category:
+                            product.category = default_category
+
+                        # معالجة العلامة التجارية
+                        if 'brand' in row and row['brand'] is not None:
+                            brand_value = row['brand']
+                            brand_name = f"{brand_value}".strip() if brand_value is not None else ""
+                            if brand_name:
+                                try:
+                                    brand = Brand.objects.get(name=brand_name)
+                                    product.brand = brand
+                                except Brand.DoesNotExist:
+                                    # محاولة البحث عن العلامة التجارية بالاسم الإنجليزي
+                                    try:
+                                        brand = Brand.objects.get(name_en=brand_name)
+                                        product.brand = brand
+                                    except Brand.DoesNotExist:
+                                        # إنشاء علامة تجارية جديدة
+                                        slug = slugify(brand_name, allow_unicode=True)
+                                        if Brand.objects.filter(slug=slug).exists():
+                                            slug = f"{slug}-{uuid.uuid4().hex[:6]}"
+
+                                        new_brand = Brand.objects.create(
+                                            name=brand_name,
+                                            slug=slug,
+                                            is_active=True,
+                                            created_by=user
+                                        )
+                                        product.brand = new_brand
+
+                        # معالجة حالة المنتج
+                        if 'status' in row and row['status'] is not None:
+                            status_value = row['status']
+                            status = f"{status_value}".strip().lower() if status_value is not None else ""
+                            if status in dict(Product.STATUS_CHOICES).keys():
+                                product.status = status
+                            else:
+                                product.status = 'draft'
+
+                        # معالجة حالة المخزون
+                        if 'stock_status' in row and row['stock_status'] is not None:
+                            stock_status_value = row['stock_status']
+                            stock_status = f"{stock_status_value}".strip().lower() if stock_status_value is not None else ""
+                            if stock_status in dict(Product.STOCK_STATUS_CHOICES).keys():
+                                product.stock_status = stock_status
+                            elif product.stock_quantity > 0:
+                                product.stock_status = 'in_stock'
+                            else:
+                                product.stock_status = 'out_of_stock'
+                        elif product.stock_quantity > 0:
+                            product.stock_status = 'in_stock'
+                        else:
+                            product.stock_status = 'out_of_stock'
+
+                        # معالجة الحقول البوليانية
+                        for bool_field in ['is_active', 'is_featured', 'is_new', 'is_best_seller']:
+                            if bool_field in row and row[bool_field] is not None:
+                                value = row[bool_field]
+                                if isinstance(value, bool):
+                                    setattr(product, bool_field, value)
+                                elif isinstance(value, str):
+                                    value_lower = f"{value}".lower()
+                                    setattr(product, bool_field, value_lower in ['yes', 'نعم', 'true', '1', 'y', 't'])
+
+                        # إنشاء سلج للمنتجات الجديدة
+                        if action == "create":
+                            product.slug = slugify(name, allow_unicode=True)
+                            if Product.objects.filter(slug=product.slug).exists():
+                                product.slug = f"{product.slug}-{uuid.uuid4().hex[:6]}"
+
+                            product.created_by = user
+
+                        # حفظ المنتج
+                        product.save()
+
+                        # معالجة الوسوم (tags)
+                        if 'tags' in row and row['tags'] is not None:
+                            tags_value = row['tags']
+                            tags_str = f"{tags_value}".strip() if tags_value is not None else ""
+                            if tags_str:
+                                # تقسيم الوسوم باستخدام الفواصل أو الفواصل المنقوطة
+                                import re
+                                tags_list = [tag.strip() for tag in re.split(r'[,;|]', tags_str) if tag.strip()]
+
+                                for tag_name in tags_list:
+                                    try:
+                                        # البحث عن الوسم أو إنشائه
+                                        tag, created = Tag.objects.get_or_create(
+                                            name=tag_name,
+                                            defaults={
+                                                'slug': slugify(tag_name, allow_unicode=True),
+                                                'is_active': True
+                                            }
+                                        )
+                                        product.tags.add(tag)
+                                    except Exception as tag_error:
+                                        print(f"خطأ في إضافة الوسم {tag_name} للمنتج {name}: {tag_error}")
+
+                        # تحديث الإحصائيات
+                        if action == "create":
+                            progress_data['success'] += 1
+                        else:
+                            progress_data['updated'] += 1
+
+                except Exception as e:
+                    # تسجيل الخطأ مع تفاصيل كاملة
+                    error_message = f"{e}"
+
+                    # طباعة معلومات الخطأ في السجل للتشخيص
+                    print(f"خطأ في استيراد الصف {row_number}: {error_message}")
+                    if 'name' in row:
+                        print(f"اسم المنتج: {row['name']}")
+                    if 'sku' in row:
+                        print(f"SKU: {row['sku']}")
+
+                    progress_data['errors'] += 1
+                    progress_data['error_details'].append({
+                        'row': row_number,
+                        'name': f"{row.get('name', '')}" if row.get('name') is not None else "غير معروف",
+                        'sku': f"{row.get('sku', '')}" if row.get('sku') is not None else "غير معروف",
+                        'error': error_message
+                    })
+
+                # تحديث التقدم
+                progress_data['processed'] += 1
+
+                # تحديث حالة التقدم في cache كل 5 صفوف أو عند الانتهاء
+                if index % 5 == 0 or index == len(df_dict) - 1:
+                    cache.set(f'import_progress_{import_id}', json.dumps(progress_data), 3600)
+
+            # تحديث الحالة إلى مكتملة
+            progress_data['status'] = 'completed'
+            cache.set(f'import_progress_{import_id}', json.dumps(progress_data), 3600)
+
+        except Exception as e:
+            # تحديث الحالة إلى خطأ
+            error_message = f"{e}"
+            print(f"خطأ عام في عملية الاستيراد: {error_message}")
+
+            progress_data['status'] = 'error'
+            progress_data['error_message'] = error_message
+            cache.set(f'import_progress_{import_id}', json.dumps(progress_data), 3600)
+
+
+@method_decorator(login_required, name='dispatch')
+class ProductImportProgressView(View):
+    """التحقق من حالة تقدم استيراد المنتجات"""
+
+    def get(self, request):
+        import_id = request.GET.get('import_id')
+
+        if not import_id:
+            return JsonResponse({'success': False, 'error': 'معرف الاستيراد مفقود'})
+
+        # استرجاع حالة التقدم من cache
+        progress_json = cache.get(f'import_progress_{import_id}')
+
+        if not progress_json:
+            return JsonResponse({'success': False, 'error': 'معرف الاستيراد غير صالح أو منتهي الصلاحية'})
+
+        progress_data = json.loads(progress_json)
+        return JsonResponse({
+            'success': True,
+            'progress': progress_data
+        })
+
+
+@method_decorator(login_required, name='dispatch')
+class ProductImportProgressView(View):
+    """التحقق من حالة تقدم استيراد المنتجات"""
+
+    def get(self, request):
+        import_id = request.GET.get('import_id')
+
+        if not import_id:
+            return JsonResponse({'success': False, 'error': 'معرف الاستيراد مفقود'})
+
+        # استرجاع حالة التقدم من cache
+        progress_json = cache.get(f'import_progress_{import_id}')
+
+        if not progress_json:
+            return JsonResponse({'success': False, 'error': 'معرف الاستيراد غير صالح أو منتهي الصلاحية'})
+
+        progress_data = json.loads(progress_json)
+        return JsonResponse({
+            'success': True,
+            'progress': progress_data
+        })
+
 
 
 # ========================= إدارة المنتجات =========================

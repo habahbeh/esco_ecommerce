@@ -284,6 +284,12 @@ SHIPPING_WEIGHT_RATE = Decimal('0.00')
 FREE_SHIPPING_THRESHOLD = Decimal('0.00')
 MAX_CART_QUANTITY_PER_ITEM = 10
 
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
+}
 # CACHES = {
 #     'default': {
 #         'BACKEND': 'django.core.cache.backends.dummy.DummyCache',

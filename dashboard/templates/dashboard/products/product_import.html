@@ -1,0 +1,163 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+{% load dashboard_tags %}
+
+{% block title %}{% trans 'استيراد المنتجات' %}{% endblock %}
+{% block page_title %}{% trans 'استيراد المنتجات من Excel' %}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_products' %}">{% trans 'المنتجات' %}</a></li>
+{% endblock %}
+
+{% block current_page %}{% trans 'استيراد المنتجات' %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .import-steps {
+        margin-bottom: 2rem;
+    }
+    .import-steps .step {
+        display: flex;
+        margin-bottom: 1rem;
+    }
+    .import-steps .step-number {
+        width: 30px;
+        height: 30px;
+        background-color: var(--bs-primary);
+        color: #fff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 1rem;
+        flex-shrink: 0;
+    }
+    .import-steps .step-content {
+        flex: 1;
+    }
+    .import-steps .step-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    .import-tips {
+        background-color: #f8f9fa;
+        border-right: 4px solid var(--bs-primary);
+        padding: 1rem;
+        border-radius: 0.25rem;
+    }
+    .file-upload-wrapper {
+        position: relative;
+        margin-bottom: 1rem;
+    }
+    .sample-file-link {
+        margin-top: 0.5rem;
+        display: inline-block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0">
+                <h5 class="mb-0">{% trans 'استيراد المنتجات من ملف Excel' %}</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <div class="file-upload-wrapper">
+                        <label for="{{ form.file.id_for_label }}" class="form-label">{{ form.file.label }}</label>
+                        {{ form.file }}
+                        <div class="form-text">{{ form.file.help_text }}</div>
+                        {% if form.file.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.file.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        <a href="#" class="sample-file-link">{% trans 'تحميل نموذج الملف' %}</a>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.category.id_for_label }}" class="form-label">{{ form.category.label }}</label>
+                            {{ form.category }}
+                            <div class="form-text">{{ form.category.help_text }}</div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                {{ form.update_existing }}
+                                <label class="form-check-label" for="{{ form.update_existing.id_for_label }}">
+                                    {{ form.update_existing.label }}
+                                </label>
+                                <div class="form-text">{{ form.update_existing.help_text }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">{% trans 'معاينة المنتجات' %}</button>
+                        <a href="{% url 'dashboard:dashboard_products' %}" class="btn btn-secondary">{% trans 'إلغاء' %}</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-0">
+                <h5 class="mb-0">{% trans 'تعليمات الاستيراد' %}</h5>
+            </div>
+            <div class="card-body">
+                <div class="import-steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <div class="step-title">{% trans 'تحميل نموذج ملف الاستيراد' %}</div>
+                            <p>{% trans 'قم بتحميل نموذج ملف Excel الذي يحتوي على العناوين المطلوبة للاستيراد.' %}</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <div class="step-title">{% trans 'إعداد بيانات المنتجات' %}</div>
+                            <p>{% trans 'قم بتعبئة بيانات المنتجات في الملف وفقًا للنموذج. تأكد من ملء العناوين الإلزامية.' %}</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <div class="step-title">{% trans 'معاينة البيانات' %}</div>
+                            <p>{% trans 'اضغط على زر "معاينة المنتجات" لمراجعة البيانات قبل الاستيراد النهائي.' %}</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <div class="step-title">{% trans 'استيراد البيانات' %}</div>
+                            <p>{% trans 'بعد المعاينة، اضغط على زر "بدء استيراد المنتجات" للبدء في عملية الاستيراد.' %}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="import-tips">
+                    <h6>{% trans 'نصائح للاستيراد الناجح:' %}</h6>
+                    <ul>
+                        <li>{% trans 'تأكد من ملء الحقول الإلزامية (الاسم).' %}</li>
+                        <li>{% trans 'يمكنك ترك حقل SKU فارغًا وسيتم إنشاؤه تلقائيًا.' %}</li>
+                        <li>{% trans 'يمكن للنظام إنشاء فئات وعلامات تجارية جديدة تلقائيًا.' %}</li>
+                        <li>{% trans 'الحد الأقصى لحجم الملف هو 10 ميجابايت.' %}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

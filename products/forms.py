@@ -1,4 +1,4 @@
-# File: products/forms.py
+# File: products/import_export.py
 """
 نماذج تطبيق المنتجات - النسخة النهائية المصححة
 تتوافق مع نموذج ProductReview الصحيح
