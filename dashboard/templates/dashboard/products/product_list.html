@@ -295,11 +295,23 @@
 
                     <!-- زر إضافة منتج -->
                     {% if perms.products.add_product %}
-                    <div>
-                        <a href="{% url 'dashboard:dashboard_product_create' %}" class="btn btn-primary">
-                            <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة منتج' %}
-                        </a>
-                    </div>
+                        <div>
+                            <a href="{% url 'dashboard:dashboard_product_create' %}" class="btn btn-primary">
+                                <i class="fa fa-plus-circle me-1"></i> {% trans 'إضافة منتج' %}
+                            </a>
+                            <!-- أضف هذا بجوار زر إضافة منتج جديد -->
+                            <a href="{% url 'dashboard:product_import' %}" class="btn btn-success">
+                                <i class="fas fa-file-import"></i> استيراد منتجات
+                            </a>
+
+                        {{ import_id }}
+                            {% if import_id %}
+                                <a href="{% url 'dashboard:product_import_direct' import_id=import_id %}"
+                                   class="btn btn-secondary">
+                                    استيراد مباشر (للاختبار)
+                                </a>
+                            {% endif %}
+                        </div>
                     {% endif %}
                 </div>
 

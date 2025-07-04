@@ -19,6 +19,7 @@ from orders.models import Order, OrderItem
 from accounts.models import User
 from .models import DashboardNotification, ProductReviewAssignment
 
+
 class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     """
     مزيج للتحقق من أن المستخدم موظف - Mixin to check that the user is staff

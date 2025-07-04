@@ -33,5 +33,5 @@ __all__ = [
     'PaymentMethodForm', 'ShippingMethodForm',
     'PaymentRefundForm',
     'DashboardWidgetForm', 'DashboardUserSettingsForm',
-    'SiteSettingsForm'
+    'SiteSettingsForm','ProductImportForm'
 ]

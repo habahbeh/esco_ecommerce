@@ -5,6 +5,13 @@ from . import views
 from dashboard.views.accounts import UserAddressSaveView, UserAddressGetView, UserAddressDeleteView, \
     UserAddressListPartialView
 
+# from dashboard.views.import_export import ProductImportView
+from dashboard.views.products import ProductImportView, ProductImportProgressView, product_import_direct
+
+
+
+
+
 app_name = 'dashboard'
 
 urlpatterns = [
@@ -63,6 +70,14 @@ urlpatterns = [
     path('products/<str:product_id>/duplicate/',
      views.products.duplicate_product,
      name='dashboard_product_duplicate'),
+
+    path('products/import/', ProductImportView.as_view(), name='product_import'),
+    path('products/import/progress/', ProductImportProgressView.as_view(), name='product_import_progress'),
+    path('products/import/direct/<str:import_id>/', product_import_direct, name='product_import_direct'),
+
+
+
+
 
     # إدارة الفئات
     path('products/categories/', views.CategoryListView.as_view(), name='dashboard_categories'),
