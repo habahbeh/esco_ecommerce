@@ -3,14 +3,13 @@ from django import forms
 from django.utils.translation import gettext_lazy as _
 from products.models import Category
 
-
 class ProductImportForm(forms.Form):
-    """نموذج استيراد المنتجات من ملف Excel"""
+    """نموذج استيراد المنتجات من ملف CSV فقط - مبسط"""
 
     file = forms.FileField(
-        label=_("ملف Excel"),
-        help_text=_("يرجى اختيار ملف Excel (.xlsx) يحتوي على بيانات المنتجات"),
-        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': '.xlsx'})
+        label=_("ملف CSV"),
+        help_text=_("يرجى اختيار ملف CSV (.csv) يحتوي على بيانات المنتجات. يجب أن يحتوي على الحقول الأساسية: الاسم، الاسم الإنجليزي، السعر، الفئة، الوصف."),
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': '.csv'})
     )
 
     category = forms.ModelChoiceField(
