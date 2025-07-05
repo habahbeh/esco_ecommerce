@@ -6,7 +6,9 @@ from dashboard.views.accounts import UserAddressSaveView, UserAddressGetView, Us
     UserAddressListPartialView
 
 # from dashboard.views.import_export import ProductImportView
-from dashboard.views.products import ProductImportView, ProductImportProgressView, product_import_direct
+from dashboard.views.products import ProductImportView, ProductImportProgressView, product_import_direct, export_import_errors
+
+from dashboard.views import import_export
 
 
 
@@ -71,12 +73,23 @@ urlpatterns = [
      views.products.duplicate_product,
      name='dashboard_product_duplicate'),
 
-    path('products/import/', ProductImportView.as_view(), name='product_import'),
+    # path('products/import/', ProductImportView.as_view(), name='product_import'),
     path('products/import/progress/', ProductImportProgressView.as_view(), name='product_import_progress'),
     path('products/import/direct/<str:import_id>/', product_import_direct, name='product_import_direct'),
 
 
 
+
+    # path('products/import/', views.direct_import_view, name='product_import'),  # تغيير الاسم لتجنب الالتباس
+    # path('products/import/template/', views.generate_excel_template, name='excel_template'),
+    # path('products/import/results/<str:import_id>/', views.import_results, name='import_results'),
+    # path('products/import/export-errors/', views.export_import_errors, name='export_import_errors'),
+
+    path('products/import/', import_export.product_import_view, name='product_import'),
+    path('products/import/template/', import_export.generate_excel_template, name='excel_template'),
+    path('products/import/results/<str:import_id>/', import_export.import_results_view, name='import_results'),
+    path('products/import/progress/', import_export.import_progress_view, name='import_progress'),
+    path('products/import/export-errors/', import_export.export_errors_view, name='export_import_errors'),
 
 
     # إدارة الفئات

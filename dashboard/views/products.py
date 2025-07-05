@@ -36,6 +36,493 @@ from dashboard.forms.import_export import ProductImportForm
 import numpy as np  # أضف هذا السطر
 from django.core.cache import cache  # أضف هذا السطر
 
+from django.http import HttpResponse
+from io import BytesIO
+from datetime import datetime
+import pandas as pd
+import xlsxwriter
+
+
+def generate_excel_template(request):
+    """
+    توليد قالب Excel فارغ للاستيراد
+    """
+    # إنشاء ملف Excel جديد في الذاكرة
+    output = BytesIO()
+    workbook = xlsxwriter.Workbook(output)
+    worksheet = workbook.add_worksheet('منتجات')
+
+    # تنسيق للعناوين
+    header_format = workbook.add_format({
+        'bold': True,
+        'bg_color': '#D7E4BC',
+        'border': 1,
+        'align': 'center',
+        'valign': 'vcenter',
+        'text_wrap': True
+    })
+
+    # تنسيق للأعمدة الإلزامية
+    required_format = workbook.add_format({
+        'bold': True,
+        'bg_color': '#FFC7CE',
+        'border': 1,
+        'align': 'center',
+        'valign': 'vcenter',
+        'text_wrap': True
+    })
+
+    # تنسيق للتوضيح
+    info_format = workbook.add_format({
+        'font_color': '#666666',
+        'italic': True,
+        'font_size': 9,
+        'align': 'center',
+    })
+
+    # قائمة بالأعمدة المطلوبة - مع الاحتفاظ بالعنوان الإنجليزي كما هو للاستيراد
+    columns = [
+        {'name': 'name', 'title': 'الاسم *', 'width': 30, 'required': True, 'example': 'جوال سامسونج S21'},
+        {'name': 'sku', 'title': 'SKU', 'width': 15, 'required': False, 'example': 'SM-G991B'},
+        {'name': 'name_en', 'title': 'الاسم بالإنجليزية', 'width': 30, 'required': False,
+         'example': 'Samsung Galaxy S21'},
+        {'name': 'base_price', 'title': 'السعر الأساسي', 'width': 15, 'required': False, 'example': '3499.99'},
+        {'name': 'compare_price', 'title': 'سعر المقارنة', 'width': 15, 'required': False, 'example': '3999.99'},
+        {'name': 'cost', 'title': 'التكلفة', 'width': 15, 'required': False, 'example': '2800'},
+        {'name': 'stock_quantity', 'title': 'كمية المخزون', 'width': 15, 'required': False, 'example': '50'},
+        {'name': 'category', 'title': 'الفئة', 'width': 20, 'required': False, 'example': 'الأجهزة الذكية'},
+        {'name': 'brand', 'title': 'العلامة التجارية', 'width': 20, 'required': False, 'example': 'سامسونج'},
+        {'name': 'barcode', 'title': 'الباركود', 'width': 20, 'required': False, 'example': '8806090742286'},
+        {'name': 'status', 'title': 'الحالة', 'width': 15, 'required': False, 'example': 'published'},
+        {'name': 'stock_status', 'title': 'حالة المخزون', 'width': 15, 'required': False, 'example': 'in_stock'},
+        {'name': 'is_active', 'title': 'نشط', 'width': 10, 'required': False, 'example': 'Yes'},
+        {'name': 'is_featured', 'title': 'مميز', 'width': 10, 'required': False, 'example': 'No'},
+        {'name': 'is_new', 'title': 'جديد', 'width': 10, 'required': False, 'example': 'Yes'},
+        {'name': 'is_best_seller', 'title': 'الأكثر مبيعاً', 'width': 10, 'required': False, 'example': 'No'},
+        {'name': 'short_description', 'title': 'وصف مختصر', 'width': 40, 'required': False,
+         'example': 'هاتف ذكي من سلسلة جالاكسي S21 بشاشة 6.2 إنش'},
+        {'name': 'description', 'title': 'الوصف', 'width': 50, 'required': False, 'example': 'وصف كامل للمنتج...'},
+        {'name': 'tags', 'title': 'الوسوم', 'width': 20, 'required': False, 'example': 'هواتف ذكية,سامسونج,5G'},
+    ]
+
+    # كتابة صف العنوان الإنجليزي (سيتم استخدامه للاستيراد)
+    for col, column in enumerate(columns):
+        worksheet.write(0, col, column['name'], header_format)
+
+    # كتابة صف العنوان العربي (للتوضيح فقط)
+    for col, column in enumerate(columns):
+        format_to_use = required_format if column['required'] else header_format
+        worksheet.write(1, col, column['title'], format_to_use)
+
+    # كتابة تنبيه صغير حول أهمية صف العناوين الإنجليزية
+    worksheet.merge_range(2, 0, 2, len(columns) - 1,
+                          "هام: لا تقم بتعديل أو حذف الصف الأول (العناوين الإنجليزية) لأنه ضروري لعملية الاستيراد",
+                          info_format)
+
+    # كتابة صف مثال
+    example_format = workbook.add_format({
+        'italic': True,
+        'bg_color': '#E6F4EA',
+        'border': 1
+    })
+
+    for col, column in enumerate(columns):
+        worksheet.write(3, col, column['example'], example_format)
+
+    # تعيين عرض الأعمدة
+    for col, column in enumerate(columns):
+        worksheet.set_column(col, col, column['width'])
+
+    # تجميد الأعمدة
+    worksheet.freeze_panes(4, 0)  # تجميد 3 صفوف علوية
+
+    # كتابة ملاحظات استخدام القالب
+    notes_row = 5
+    note_format = workbook.add_format({
+        'bold': True,
+        'text_wrap': True,
+        'valign': 'top'
+    })
+
+    notes = [
+        'الحقول المميزة باللون الأحمر إلزامية (*)',
+        'SKU: إذا تُرك فارغاً سيتم إنشاؤه تلقائياً',
+        'الفئة: إذا لم تكن موجودة، سيتم إنشاؤها تلقائياً أو استخدام الفئة الافتراضية',
+        'العلامة التجارية: إذا لم تكن موجودة، سيتم إنشاؤها تلقائياً',
+        'الحالة: يمكن أن تكون published, draft, pending_review, archived',
+        'حالة المخزون: يمكن أن تكون in_stock, out_of_stock, pre_order, discontinued',
+        'الحقول البوليانية (نشط، مميز، الخ): يمكن استخدام Yes/No، نعم/لا، True/False، 1/0',
+        'الوسوم: يمكن فصلها بفواصل مثل "وسم1,وسم2,وسم3"'
+    ]
+
+    for i, note in enumerate(notes):
+        worksheet.merge_range(notes_row + i, 0, notes_row + i, 6, note, note_format)
+
+    # إغلاق الملف
+    workbook.close()
+
+    # إرجاع الملف للتنزيل
+    output.seek(0)
+    response = HttpResponse(
+        output.read(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename=product_import_template.xlsx'
+
+    return response
+
+
+def direct_import_view(request):
+    """
+    استيراد المنتجات - صفحة تحميل الملف والاستيراد المباشر
+    """
+    if request.method == 'POST':
+        form = ProductImportForm(request.POST, request.FILES)
+
+        if not form.is_valid():
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{form[field].label}: {error}")
+            return redirect('dashboard:product_import')
+
+        # استرجاع بيانات النموذج
+        excel_file = request.FILES['file']
+        update_existing = form.cleaned_data.get('update_existing', True)
+        default_category = form.cleaned_data.get('category')
+
+        # التحقق من امتداد الملف
+        file_name = excel_file.name
+        if not (file_name.endswith('.xlsx') or file_name.endswith('.xls')):
+            messages.error(request, "الملف المرفوع ليس بصيغة Excel المدعومة (.xlsx, .xls)")
+            return redirect('dashboard:product_import')
+
+        try:
+            # قراءة ملف Excel
+            df = pd.read_excel(excel_file, sheet_name=0)
+
+            # التحقق من وجود البيانات
+            if df.empty:
+                messages.error(request, "ملف Excel فارغ - لا توجد بيانات للاستيراد")
+                return redirect('dashboard:product_import')
+
+            # التحقق من وجود الأعمدة المطلوبة
+            required_columns = ['name']
+            missing_columns = [col for col in required_columns if col not in df.columns]
+
+            if missing_columns:
+                messages.error(request, f"الأعمدة التالية مفقودة في الملف: {', '.join(missing_columns)}")
+                return redirect('dashboard:product_import')
+
+            # حفظ الملف الأصلي للاستخدام لاحقاً إذا لزم الأمر
+            import_id = uuid.uuid4().hex
+            temp_dir = os.path.join('media', 'temp', 'imports')
+            os.makedirs(temp_dir, exist_ok=True)
+            original_file_path = os.path.join(temp_dir, f"{import_id}_{file_name}")
+
+            with open(original_file_path, 'wb+') as destination:
+                for chunk in excel_file.chunks():
+                    destination.write(chunk)
+
+            # تحويل DataFrame إلى قائمة قواميس
+            df_records = []
+            for index, row in df.iterrows():
+                record = {}
+                for column in df.columns:
+                    value = row[column]
+                    if pd.isna(value):
+                        record[column] = ""
+                    else:
+                        record[column] = value
+                df_records.append(record)
+
+            # تخزين البيانات في cache
+            cache_data = {
+                'df': df_records,
+                'update_existing': update_existing,
+                'default_category_id': default_category.id if default_category else None,
+                'original_file_path': original_file_path
+            }
+
+            # تخزين في cache لمدة ساعة
+            cache.set(f'import_data_{import_id}', json.dumps(cache_data, default=str), 3600)
+
+            # تخزين حالة التقدم الأولية
+            progress_data = {
+                'total': len(df),
+                'processed': 0,
+                'success': 0,
+                'updated': 0,
+                'errors': 0,
+                'status': 'pending',
+                'error_details': []
+            }
+            cache.set(f'import_progress_{import_id}', json.dumps(progress_data), 3600)
+
+            # بدء عملية الاستيراد مباشرة
+            import threading
+            thread = threading.Thread(
+                target=_import_products,
+                args=(import_id, df_records, update_existing, default_category, request.user)
+            )
+            thread.daemon = True
+            thread.start()
+
+            # توجيه المستخدم إلى صفحة عرض النتائج
+            messages.success(request, f"تم بدء استيراد {len(df)} منتج. يرجى الانتظار حتى اكتمال العملية.")
+            return redirect('dashboard:import_results', import_id=import_id)
+
+        except Exception as e:
+            error_msg = f"{e}"
+            messages.error(request, f"حدث خطأ أثناء معالجة ملف Excel: {error_msg}")
+            return redirect('dashboard:product_import')
+    else:
+        # عرض نموذج الاستيراد
+        form = ProductImportForm()
+
+        context = {
+            'form': form,
+            'form_title': 'استيراد المنتجات من Excel',
+        }
+
+        return render(request, 'dashboard/products/product_import.html', context)
+
+def direct_import_products(request):
+    """
+    استيراد المنتجات مباشرة دون معاينة
+    """
+    if request.method != 'POST':
+        messages.error(request, "طريقة الطلب غير صحيحة")
+        return redirect('dashboard:product_import')
+
+    form = ProductImportForm(request.POST, request.FILES)
+
+    if not form.is_valid():
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(request, f"{form[field].label}: {error}")
+        return redirect('dashboard:product_import')
+
+    # استرجاع بيانات النموذج
+    excel_file = request.FILES['file']
+    update_existing = form.cleaned_data.get('update_existing', True)
+    default_category = form.cleaned_data.get('category')
+
+    # التحقق من امتداد الملف
+    file_name = excel_file.name
+    if not (file_name.endswith('.xlsx') or file_name.endswith('.xls')):
+        messages.error(request, "الملف المرفوع ليس بصيغة Excel المدعومة (.xlsx, .xls)")
+        return redirect('dashboard:product_import')
+
+    try:
+        # قراءة ملف Excel
+        df = pd.read_excel(excel_file, sheet_name=0)
+
+        # التحقق من وجود البيانات
+        if df.empty:
+            messages.error(request, "ملف Excel فارغ - لا توجد بيانات للاستيراد")
+            return redirect('dashboard:product_import')
+
+        # التحقق من وجود الأعمدة المطلوبة
+        required_columns = ['name']
+        missing_columns = [col for col in required_columns if col not in df.columns]
+
+        if missing_columns:
+            messages.error(request, f"الأعمدة التالية مفقودة في الملف: {', '.join(missing_columns)}")
+            return redirect('dashboard:product_import')
+
+        # حفظ الملف الأصلي للاستخدام لاحقاً إذا لزم الأمر
+        import_id = uuid.uuid4().hex
+        temp_dir = os.path.join('media', 'temp', 'imports')
+        os.makedirs(temp_dir, exist_ok=True)
+        original_file_path = os.path.join(temp_dir, f"{import_id}_{file_name}")
+
+        with open(original_file_path, 'wb+') as destination:
+            for chunk in excel_file.chunks():
+                destination.write(chunk)
+
+        # تحويل DataFrame إلى قائمة قواميس
+        df_records = []
+        for index, row in df.iterrows():
+            record = {}
+            for column in df.columns:
+                value = row[column]
+                if pd.isna(value):
+                    record[column] = ""
+                else:
+                    record[column] = value
+            df_records.append(record)
+
+        # تخزين البيانات في cache
+        cache_data = {
+            'df': df_records,
+            'update_existing': update_existing,
+            'default_category_id': default_category.id if default_category else None,
+            'original_file_path': original_file_path
+        }
+
+        # تخزين في cache لمدة ساعة
+        cache.set(f'import_data_{import_id}', json.dumps(cache_data, default=str), 3600)
+
+        # تخزين حالة التقدم الأولية
+        progress_data = {
+            'total': len(df),
+            'processed': 0,
+            'success': 0,
+            'updated': 0,
+            'errors': 0,
+            'status': 'pending',
+            'error_details': []
+        }
+        cache.set(f'import_progress_{import_id}', json.dumps(progress_data), 3600)
+
+        # بدء عملية الاستيراد مباشرة
+        import threading
+        thread = threading.Thread(
+            target=_import_products,
+            args=(import_id, df_records, update_existing, default_category, request.user)
+        )
+        thread.daemon = True
+        thread.start()
+
+        # توجيه المستخدم إلى صفحة عرض النتائج
+        messages.success(request, f"تم بدء استيراد {len(df)} منتج. يرجى الانتظار حتى اكتمال العملية.")
+        return redirect('dashboard:import_results', import_id=import_id)
+
+    except Exception as e:
+        error_msg = f"{e}"
+        messages.error(request, f"حدث خطأ أثناء معالجة ملف Excel: {error_msg}")
+        return redirect('dashboard:product_import')
+
+
+def import_results(request, import_id):
+    """
+    عرض نتائج الاستيراد وتتبع التقدم
+    """
+    # استرجاع بيانات التقدم من cache
+    progress_json = cache.get(f'import_progress_{import_id}')
+    if not progress_json:
+        messages.error(request, "انتهت صلاحية بيانات الاستيراد أو أن معرف الاستيراد غير صحيح")
+        return redirect('dashboard:product_import')
+
+    progress_data = json.loads(progress_json)
+
+    # استرجاع بيانات الاستيراد
+    import_data_json = cache.get(f'import_data_{import_id}')
+    import_data = json.loads(import_data_json) if import_data_json else {}
+
+    context = {
+        'import_id': import_id,
+        'progress': progress_data,
+        'total_rows': progress_data.get('total', 0),
+        'is_completed': progress_data.get('status') == 'completed',
+        'has_errors': progress_data.get('errors', 0) > 0,
+        'error_details': progress_data.get('error_details', [])[:50],  # عرض أول 50 خطأ فقط
+        'error_count': len(progress_data.get('error_details', [])),
+        'update_existing': import_data.get('update_existing', False),
+        'default_category_id': import_data.get('default_category_id', None)
+    }
+
+    return render(request, 'dashboard/products/import_results.html', context)
+
+
+def export_import_errors(request):
+    """
+    تصدير المنتجات التي فشل استيرادها إلى ملف Excel
+    """
+    import_id = request.GET.get('import_id')
+
+    if not import_id:
+        messages.error(request, 'معرف الاستيراد مفقود')
+        return redirect('dashboard:product_import')
+
+    # استرجاع بيانات التقدم من cache
+    progress_json = cache.get(f'import_progress_{import_id}')
+    if not progress_json:
+        messages.error(request, 'انتهت صلاحية بيانات الاستيراد')
+        return redirect('dashboard:product_import')
+
+    progress_data = json.loads(progress_json)
+    error_details = progress_data.get('error_details', [])
+
+    if not error_details:
+        messages.warning(request, 'لا توجد أخطاء للتصدير')
+        return redirect('dashboard:import_results', import_id=import_id)
+
+    # إنشاء DataFrame من بيانات الأخطاء
+    error_rows = []
+    for error in error_details:
+        row_data = {
+            'رقم_الصف': error.get('row', 0),
+            'الاسم': error.get('name', 'غير معروف'),
+            'SKU': error.get('sku', 'غير معروف'),
+            'رسالة_الخطأ': error.get('error', 'خطأ غير معروف')
+        }
+
+        # إضافة بيانات الصف الأصلية إذا كانت متاحة
+        if 'data' in error:
+            for key, value in error.get('data', {}).items():
+                if key not in row_data and key not in ['row', 'name', 'sku', 'error']:
+                    row_data[key] = value
+
+        error_rows.append(row_data)
+
+    # إنشاء DataFrame
+    df = pd.DataFrame(error_rows)
+
+    # ترتيب الأعمدة
+    columns = ['رقم_الصف', 'الاسم', 'SKU', 'رسالة_الخطأ']
+    other_columns = [col for col in df.columns if col not in columns]
+    df = df[columns + other_columns]
+
+    # إنشاء ملف Excel
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, sheet_name='أخطاء الاستيراد', index=False)
+
+        # تنسيق الملف
+        workbook = writer.book
+        worksheet = writer.sheets['أخطاء الاستيراد']
+
+        # تنسيق العناوين
+        header_format = workbook.add_format({
+            'bold': True, 'bg_color': '#D7E4BC', 'border': 1, 'align': 'center'
+        })
+
+        # تنسيق خلايا الأخطاء
+        error_format = workbook.add_format({
+            'bg_color': '#FFC7CE', 'text_wrap': True
+        })
+
+        # تطبيق التنسيق
+        for idx, col in enumerate(df.columns):
+            worksheet.write(0, idx, col, header_format)
+
+        # تمييز عمود رسالة الخطأ
+        error_col_idx = 3  # عمود رسالة الخطأ هو الرابع
+        worksheet.set_column(error_col_idx, error_col_idx, 40)
+        worksheet.conditional_format(1, error_col_idx, len(df) + 1, error_col_idx,
+                                     {'type': 'no_blanks', 'format': error_format})
+
+        # تعيين عرض الأعمدة
+        column_widths = [10, 30, 15, 40]
+        for i, width in enumerate(column_widths):
+            if i < len(df.columns):
+                worksheet.set_column(i, i, width)
+
+    # إنشاء استجابة للتنزيل
+    output.seek(0)
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    response = HttpResponse(
+        output.read(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename=import_errors_{timestamp}.xlsx'
+
+    return response
+
+
+
+
 
 @login_required
 def product_import_direct(request, import_id):
@@ -46,8 +533,104 @@ def product_import_direct(request, import_id):
     return redirect('dashboard:dashboard_products')
 
 
+# def export_import_errors(request):
+#     """تصدير المنتجات التي فشل استيرادها إلى ملف Excel"""
+#     import_id = request.GET.get('import_id')
+#
+#     if not import_id:
+#         messages.error(request, 'معرف الاستيراد مفقود')
+#         return redirect('dashboard:product_import')
+#
+#     # استرجاع بيانات التقدم من cache
+#     progress_json = cache.get(f'import_progress_{import_id}')
+#     if not progress_json:
+#         messages.error(request, 'انتهت صلاحية بيانات الاستيراد')
+#         return redirect('dashboard:product_import')
+#
+#     progress_data = json.loads(progress_json)
+#     error_details = progress_data.get('error_details', [])
+#
+#     if not error_details:
+#         messages.warning(request, 'لا توجد أخطاء للتصدير')
+#         return redirect('dashboard:product_import')
+#
+#     # إنشاء DataFrame من بيانات الأخطاء
+#     error_rows = []
+#     for error in error_details:
+#         row_data = {
+#             'رقم_الصف': error.get('row', 0),
+#             'الاسم': error.get('name', 'غير معروف'),
+#             'SKU': error.get('sku', 'غير معروف'),
+#             'رسالة_الخطأ': error.get('error', 'خطأ غير معروف')
+#         }
+#
+#         # إضافة بيانات الصف الأصلية إذا كانت متاحة
+#         if 'data' in error:
+#             for key, value in error.get('data', {}).items():
+#                 if key not in row_data and key not in ['row', 'name', 'sku', 'error']:
+#                     row_data[key] = value
+#
+#         error_rows.append(row_data)
+#
+#     # إنشاء DataFrame
+#     import pandas as pd
+#     df = pd.DataFrame(error_rows)
+#
+#     # ترتيب الأعمدة
+#     columns = ['رقم_الصف', 'الاسم', 'SKU', 'رسالة_الخطأ']
+#     other_columns = [col for col in df.columns if col not in columns]
+#     df = df[columns + other_columns]
+#
+#     # إنشاء ملف Excel
+#     output = BytesIO()
+#     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+#         df.to_excel(writer, sheet_name='أخطاء الاستيراد', index=False)
+#
+#         # تنسيق الملف
+#         workbook = writer.book
+#         worksheet = writer.sheets['أخطاء الاستيراد']
+#
+#         # تنسيق العناوين
+#         header_format = workbook.add_format({
+#             'bold': True, 'bg_color': '#D7E4BC', 'border': 1, 'align': 'center'
+#         })
+#
+#         # تنسيق خلايا الأخطاء
+#         error_format = workbook.add_format({
+#             'bg_color': '#FFC7CE', 'text_wrap': True
+#         })
+#
+#         # تطبيق التنسيق
+#         for idx, col in enumerate(df.columns):
+#             worksheet.write(0, idx, col, header_format)
+#
+#         # تمييز عمود رسالة الخطأ
+#         error_col_idx = 3  # عمود رسالة الخطأ هو الرابع
+#         worksheet.set_column(error_col_idx, error_col_idx, 40)
+#         worksheet.conditional_format(1, error_col_idx, len(df) + 1, error_col_idx,
+#                                      {'type': 'no_blanks', 'format': error_format})
+#
+#         # تعيين عرض الأعمدة
+#         column_widths = [10, 30, 15, 40]
+#         for i, width in enumerate(column_widths):
+#             if i < len(df.columns):
+#                 worksheet.set_column(i, i, width)
+#
+#     # إنشاء استجابة للتنزيل
+#     output.seek(0)
+#     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+#     response = HttpResponse(
+#         output.read(),
+#         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#     )
+#     response['Content-Disposition'] = f'attachment; filename=import_errors_{timestamp}.xlsx'
+#
+#     return response
+
+
+
 class ProductImportView(DashboardAccessMixin, View):
-    """استيراد المنتجات من ملف Excel"""
+    """استيراد المنتجات من ملف Excel مع إمكانية تصدير الأخطاء"""
 
     def get(self, request):
         """عرض نموذج استيراد المنتجات"""
@@ -73,6 +656,13 @@ class ProductImportView(DashboardAccessMixin, View):
                 if not preview_id:
                     return JsonResponse({'success': False, 'error': 'معرف المعاينة مفقود'})
                 return self.execute_import(preview_id, request)
+
+            elif action == 'export_errors':
+                # تصدير الأخطاء إلى ملف Excel
+                preview_id = request.POST.get('preview_id')
+                if not preview_id:
+                    return JsonResponse({'success': False, 'error': 'معرف المعاينة مفقود'})
+                return self.export_errors(preview_id, request)
 
         form = ProductImportForm(request.POST, request.FILES)
 
@@ -109,6 +699,16 @@ class ProductImportView(DashboardAccessMixin, View):
             if missing_columns:
                 messages.error(request, f"الأعمدة التالية مفقودة في الملف: {', '.join(missing_columns)}")
                 return redirect('dashboard:product_import')
+
+            # حفظ الملف الأصلي للاستخدام لاحقاً إذا لزم الأمر
+            import_id = uuid.uuid4().hex
+            temp_dir = os.path.join('media', 'temp', 'imports')
+            os.makedirs(temp_dir, exist_ok=True)
+            original_file_path = os.path.join(temp_dir, f"{import_id}_{file_name}")
+
+            with open(original_file_path, 'wb+') as destination:
+                for chunk in excel_file.chunks():
+                    destination.write(chunk)
 
             # تحضير البيانات للمعاينة
             preview_data = []
@@ -182,14 +782,13 @@ class ProductImportView(DashboardAccessMixin, View):
                     })
 
             # حفظ البيانات للاستخدام لاحقًا
-            import_id = uuid.uuid4().hex
-
             # تخزين البيانات
             cache_data = {
                 'df': df_records,
                 'update_existing': update_existing,
                 'default_category_id': default_category.id if default_category else None,
-                'validation_errors': validation_errors
+                'validation_errors': validation_errors,
+                'original_file_path': original_file_path  # حفظ مسار الملف الأصلي
             }
 
             # تخزين في cache لمدة ساعة
@@ -288,8 +887,10 @@ class ProductImportView(DashboardAccessMixin, View):
                 'error': f"حدث خطأ أثناء بدء الاستيراد: {e}"
             })
 
-    def _import_products(self, import_id, df_dict, update_existing, default_category, user):
+    def _import_products(import_id, df_dict, update_existing, default_category, user):
         """استيراد المنتجات في الخلفية"""
+        from django.db import transaction  # إضافة هذا السطر لاستيراد transaction
+
         # استرجاع حالة التقدم
         progress_json = cache.get(f'import_progress_{import_id}')
         progress_data = json.loads(progress_json) if progress_json else {
@@ -534,7 +1135,8 @@ class ProductImportView(DashboardAccessMixin, View):
                         'row': row_number,
                         'name': f"{row.get('name', '')}" if row.get('name') is not None else "غير معروف",
                         'sku': f"{row.get('sku', '')}" if row.get('sku') is not None else "غير معروف",
-                        'error': error_message
+                        'error': error_message,
+                        'data': row  # حفظ كل بيانات الصف لاستخدامها في التصدير لاحقاً
                     })
 
                 # تحديث التقدم
@@ -557,6 +1159,97 @@ class ProductImportView(DashboardAccessMixin, View):
             progress_data['error_message'] = error_message
             cache.set(f'import_progress_{import_id}', json.dumps(progress_data), 3600)
 
+    def export_errors(self, import_id, request):
+        """تصدير المنتجات التي تحتوي على أخطاء إلى ملف Excel"""
+        try:
+            # استرجاع بيانات التقدم من cache
+            progress_json = cache.get(f'import_progress_{import_id}')
+            if not progress_json:
+                return JsonResponse({'success': False, 'error': 'انتهت صلاحية بيانات الاستيراد'})
+
+            progress_data = json.loads(progress_json)
+            error_details = progress_data.get('error_details', [])
+
+            if not error_details:
+                return JsonResponse({'success': False, 'error': 'لا توجد أخطاء للتصدير'})
+
+            # إنشاء DataFrame لتصدير البيانات
+            error_rows = []
+            for error in error_details:
+                row_data = error.get('data', {})
+                row_data['error_message'] = error.get('error', 'خطأ غير معروف')
+                row_data['row_number'] = error.get('row', 0)
+                error_rows.append(row_data)
+
+            # إنشاء DataFrame من قائمة الأخطاء
+            df = pd.DataFrame(error_rows)
+
+            # ترتيب الأعمدة بشكل منطقي
+            # وضع رقم الصف ورسالة الخطأ في البداية
+            columns = ['row_number', 'error_message']
+            other_columns = [col for col in df.columns if col not in columns]
+            df = df[columns + other_columns]
+
+            # إنشاء ملف Excel في الذاكرة
+            from io import BytesIO
+            output = BytesIO()
+
+            # استخدام ExcelWriter للحصول على مزيد من التحكم في التنسيق
+            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                df.to_excel(writer, sheet_name='أخطاء الاستيراد', index=False)
+
+                # الحصول على ورقة العمل وضبط التنسيق
+                worksheet = writer.sheets['أخطاء الاستيراد']
+
+                # تنسيق العناوين
+                header_format = writer.book.add_format({
+                    'bold': True,
+                    'text_wrap': True,
+                    'valign': 'top',
+                    'bg_color': '#D7E4BC',
+                    'border': 1,
+                    'align': 'center'
+                })
+
+                # تنسيق خلايا الأخطاء
+                error_format = writer.book.add_format({
+                    'bg_color': '#FFC7CE',
+                    'text_wrap': True
+                })
+
+                # تطبيق التنسيق على عمود رسالة الخطأ
+                worksheet.set_column('B:B', 40)  # تعيين عرض عمود رسالة الخطأ
+
+                # تطبيق التنسيق على الخلايا
+                for idx, col in enumerate(df.columns):
+                    worksheet.write(0, idx, col, header_format)
+
+                # تمييز عمود رسالة الخطأ
+                error_col_idx = df.columns.get_loc('error_message')
+                worksheet.conditional_format(1, error_col_idx, len(df) + 1, error_col_idx,
+                                             {'type': 'no_blanks', 'format': error_format})
+
+                # تنسيق إضافي لتحسين قراءة الملف
+                for i, width in enumerate([10, 40]):  # عرض مخصص للأعمدة الأولى
+                    worksheet.set_column(i, i, width)
+
+            # استعادة الملف من الذاكرة
+            output.seek(0)
+
+            # إنشاء استجابة للتنزيل
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            response = HttpResponse(
+                output.read(),
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            response['Content-Disposition'] = f'attachment; filename=import_errors_{timestamp}.xlsx'
+
+            return response
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return JsonResponse({'success': False, 'error': f'خطأ في تصدير الأخطاء: {str(e)}'})
 
 @method_decorator(login_required, name='dispatch')
 class ProductImportProgressView(View):

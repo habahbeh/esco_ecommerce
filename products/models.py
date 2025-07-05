@@ -755,31 +755,35 @@ class Product(TimeStampedModel, SEOModel):
         blank=True
     )
 
-    # Pricing
-    base_price = models.DecimalField(
-        _("السعر الأساسي"),
-        max_digits=10,
-        decimal_places=2,
-        validators=[MinValueValidator(Decimal('0.01'))],
-        help_text=_("السعر الأساسي قبل الخصم")
-    )
-    compare_price = models.DecimalField(
-        _("سعر المقارنة"),
-        max_digits=10,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        help_text=_("السعر للمقارنة (قبل الخصم)")
-    )
-    cost = models.DecimalField(
-        _("التكلفة"),
-        max_digits=10,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        validators=[MinValueValidator(Decimal('0.01'))],
-        help_text=_("تكلفة المنتج (اختياري)")
-    )
+    # # Pricing
+    # base_price = models.DecimalField(
+    #     _("السعر الأساسي"),
+    #     max_digits=10,
+    #     decimal_places=2,
+    #     validators=[MinValueValidator(Decimal('0.01'))],
+    #     help_text=_("السعر الأساسي قبل الخصم")
+    # )
+    # compare_price = models.DecimalField(
+    #     _("سعر المقارنة"),
+    #     max_digits=10,
+    #     decimal_places=2,
+    #     null=True,
+    #     blank=True,
+    #     help_text=_("السعر للمقارنة (قبل الخصم)")
+    # )
+    # cost = models.DecimalField(
+    #     _("التكلفة"),
+    #     max_digits=10,
+    #     decimal_places=2,
+    #     null=True,
+    #     blank=True,
+    #     validators=[MinValueValidator(Decimal('0.01'))],
+    #     help_text=_("تكلفة المنتج (اختياري)")
+    # )
+
+    base_price = models.DecimalField(_('السعر الأساسي'), max_digits=10, decimal_places=4, default=0)
+    compare_price = models.DecimalField(_('سعر المقارنة'), max_digits=10, decimal_places=4, null=True, blank=True)
+    cost = models.DecimalField(_('تكلفة المنتج'), max_digits=10, decimal_places=4, null=True, blank=True)
 
     # Discounts
     discount_percentage = models.DecimalField(

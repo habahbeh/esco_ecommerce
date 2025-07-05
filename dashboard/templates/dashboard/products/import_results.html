@@ -1,0 +1,295 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+{% load dashboard_tags %}
+
+{% block title %}{% trans 'نتائج استيراد المنتجات' %}{% endblock %}
+{% block page_title %}{% trans 'نتائج استيراد المنتجات' %}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_products' %}">{% trans 'المنتجات' %}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:product_import' %}">{% trans 'استيراد المنتجات' %}</a></li>
+{% endblock %}
+
+{% block current_page %}{% trans 'نتائج الاستيراد' %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .progress {
+        height: 25px;
+    }
+    .progress-bar {
+        transition: width 0.3s ease;
+    }
+    .progress-info {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .error-details {
+        max-height: 400px;
+        overflow-y: auto;
+        margin-top: 20px;
+    }
+    .table-error-details {
+        margin-top: 10px;
+        border: 1px solid #f5c6cb;
+    }
+    .table-error-details th {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    .table-error-details td, .table-error-details th {
+        padding: 8px 12px;
+        vertical-align: middle;
+    }
+    .error-row {
+        background-color: #ffeeee;
+    }
+    
+    .status-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+    }
+    
+    .status-indicator.success {
+        background-color: #28a745;
+    }
+    
+    .status-indicator.warning {
+        background-color: #ffc107;
+    }
+    
+    .status-indicator.error {
+        background-color: #dc3545;
+    }
+    
+    .results-card {
+        border-right: 4px solid transparent;
+        transition: all 0.3s ease;
+    }
+    
+    .results-card.success {
+        border-right-color: #28a745;
+    }
+    
+    .results-card.warning {
+        border-right-color: #ffc107;
+    }
+    
+    .results-card.error {
+        border-right-color: #dc3545;
+    }
+    
+    [dir="rtl"] .results-card {
+        border-right: none;
+        border-left: 4px solid transparent;
+    }
+    
+    [dir="rtl"] .results-card.success {
+        border-left-color: #28a745;
+    }
+    
+    [dir="rtl"] .results-card.warning {
+        border-left-color: #ffc107;
+    }
+    
+    [dir="rtl"] .results-card.error {
+        border-left-color: #dc3545;
+    }
+    
+    .btn-with-icon {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">{% trans 'نتائج استيراد المنتجات' %}</h5>
+    </div>
+    <div class="card-body">
+        <div id="alerts-container"></div>
+        
+        {% if not is_completed %}
+        <!-- شريط التقدم -->
+        <div id="import-progress" class="mt-4">
+            <h6 class="mb-2">{% trans 'تقدم الاستيراد' %}</h6>
+            <div class="progress">
+                <div class="progress-bar" role="progressbar" style="width: {{ progress.processed|default:'0' }}%;" 
+                     aria-valuenow="{{ progress.processed|default:'0' }}" aria-valuemin="0" aria-valuemax="100">
+                    {{ progress.processed|default:'0' }}%
+                </div>
+            </div>
+            <div class="progress-info">
+                <span id="progress-text">{% trans 'جاري معالجة المنتجات...' %}</span>
+                <span id="progress-counter">{{ progress.processed|default:'0' }} / {{ total_rows }}</span>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if is_completed %}
+        <!-- ملخص النتائج -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card shadow-sm mb-4 results-card {% if has_errors %}warning{% else %}success{% endif %}">
+                    <div class="card-body">
+                        <h6 class="mb-3">
+                            <span class="status-indicator {% if has_errors %}warning{% else %}success{% endif %}"></span>
+                            {% trans 'ملخص نتائج الاستيراد' %}
+                        </h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <strong>{% trans 'إجمالي المنتجات:' %}</strong> 
+                                <span class="badge bg-secondary">{{ total_rows }}</span>
+                            </li>
+                            <li class="mb-2">
+                                <strong>{% trans 'المنتجات المضافة بنجاح:' %}</strong> 
+                                <span class="badge bg-success">{{ progress.success|default:'0' }}</span>
+                            </li>
+                            <li class="mb-2">
+                                <strong>{% trans 'المنتجات المحدثة:' %}</strong> 
+                                <span class="badge bg-primary">{{ progress.updated|default:'0' }}</span>
+                            </li>
+                            <li class="mb-2">
+                                <strong>{% trans 'المنتجات التي فشل استيرادها:' %}</strong> 
+                                <span class="badge bg-danger">{{ error_count }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            {% if has_errors %}
+            <div class="col-md-6">
+                <div class="card shadow-sm mb-4 results-card error">
+                    <div class="card-body">
+                        <h6 class="mb-3">
+                            <span class="status-indicator error"></span>
+                            {% trans 'تصدير الأخطاء' %}
+                        </h6>
+                        <p>{% trans 'وُجدت أخطاء أثناء عملية الاستيراد. يمكنك تصدير المنتجات التي فشل استيرادها إلى ملف Excel لتصحيحها وإعادة المحاولة.' %}</p>
+                        <a href="{% url 'dashboard:export_import_errors' %}?import_id={{ import_id }}" class="btn btn-danger btn-with-icon">
+                            <i class="fas fa-file-export"></i> {% trans 'تصدير المنتجات الخاطئة' %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if has_errors %}
+        <!-- تفاصيل الأخطاء -->
+        <div class="error-details">
+            <h6 class="mb-3">{% trans 'تفاصيل الأخطاء' %} ({% trans 'عرض أول 50 خطأ' %})</h6>
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered table-error-details">
+                    <thead class="table-light">
+                        <tr>
+                            <th>{% trans 'الصف' %}</th>
+                            <th>{% trans 'الاسم' %}</th>
+                            <th>{% trans 'SKU' %}</th>
+                            <th>{% trans 'الخطأ' %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for error in error_details %}
+                        <tr class="error-row">
+                            <td>{{ error.row }}</td>
+                            <td>{{ error.name }}</td>
+                            <td>{{ error.sku }}</td>
+                            <td>{{ error.error }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if error_count > 50 %}
+            <p class="small text-muted mt-2">{% trans 'تم عرض 50 خطأ فقط من أصل' %} {{ error_count }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <!-- الإجراءات -->
+        <div class="mt-4">
+            <a href="{% url 'dashboard:dashboard_products' %}" class="btn btn-primary btn-with-icon">
+                <i class="fas fa-list"></i> {% trans 'العودة إلى قائمة المنتجات' %}
+            </a>
+            <a href="{% url 'dashboard:product_import' %}" class="btn btn-success btn-with-icon">
+                <i class="fas fa-file-import"></i> {% trans 'استيراد ملف آخر' %}
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    {% if not is_completed %}
+    // متابعة تقدم الاستيراد
+    var importId = '{{ import_id }}';
+    var checkProgressInterval = setInterval(checkProgress, 2000);
+    
+    function checkProgress() {
+        $.ajax({
+            url: '{% url "dashboard:product_import_progress" %}',
+            type: 'GET',
+            data: { import_id: importId },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    updateProgressUI(response.progress);
+                    
+                    // إذا اكتملت العملية، توقف عن التحقق وأعد تحميل الصفحة
+                    if (response.progress.status === 'completed' || response.progress.status === 'error') {
+                        clearInterval(checkProgressInterval);
+                        location.reload();
+                    }
+                } else {
+                    // عرض الخطأ في تنبيه ثابت
+                    showPermanentAlert('danger', 'خطأ: ' + response.error);
+                    clearInterval(checkProgressInterval);
+                }
+            },
+            error: function() {
+                console.log('خطأ في الاتصال أثناء التحقق من التقدم');
+            }
+        });
+    }
+    
+    // تحديث واجهة المستخدم لعرض التقدم
+    function updateProgressUI(progress) {
+        if (progress.status === 'error') {
+            // عرض الخطأ
+            $('#progress-text').text('حدث خطأ: ' + (progress.error_message || 'خطأ غير معروف'));
+            $('.progress-bar').addClass('bg-danger');
+            return;
+        }
+        
+        var percent = Math.round((progress.processed / {{ total_rows }}) * 100);
+        
+        // تحديث شريط التقدم
+        $('.progress-bar').css('width', percent + '%').attr('aria-valuenow', percent).text(percent + '%');
+        
+        // تحديث نص التقدم
+        $('#progress-counter').text(progress.processed + ' / ' + {{ total_rows }});
+    }
+    {% endif %}
+    
+    // دالة لعرض تنبيه ثابت
+    function showPermanentAlert(type, message) {
+        var alertHtml = '<div class="alert alert-' + type + '">' + message + '</div>';
+        $('#alerts-container').html(alertHtml);
+    }
+});
+</script>
+{% endblock %}
