@@ -76,6 +76,50 @@
         font-size: 12px;
         font-weight: bold;
     }
+
+    /* تحسينات جديدة */
+    .btn-with-icon {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .status-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+    }
+
+    .status-indicator.success {
+        background-color: #28a745;
+    }
+
+    .status-indicator.warning {
+        background-color: #ffc107;
+    }
+
+    .status-indicator.error {
+        background-color: #dc3545;
+    }
+
+    .export-errors-btn {
+        margin-top: 10px;
+    }
+
+    .validation-alerts {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .import-results-card {
+        border-right: 4px solid #28a745;
+    }
+
+    .import-errors-card {
+        border-right: 4px solid #dc3545;
+    }
 </style>
 {% endblock %}
 
@@ -93,13 +137,19 @@
                 <li>{% trans 'تحديث المنتجات الموجودة:' %} <strong>{% if form_data.update_existing %}نعم{% else %}لا{% endif %}</strong></li>
                 <li>{% trans 'الفئة الافتراضية:' %} <strong>{{ form_data.default_category }}</strong></li>
                 {% if error_count > 0 %}
-                <li class="text-danger">{% trans 'أخطاء التحقق:' %} <strong>{{ error_count }}</strong></li>
+                <li class="text-danger">{% trans 'أخطاء التحقق:' %} <strong>{{ error_count }}</strong>
+                    {% if error_count > 0 %}
+                    <button type="button" class="btn btn-sm btn-outline-danger export-validation-errors-btn ms-2 btn-with-icon">
+                        <i class="fas fa-file-export"></i> {% trans 'تصدير الأخطاء' %}
+                    </button>
+                    {% endif %}
+                </li>
                 {% endif %}
             </ul>
         </div>
 
         {% if validation_errors %}
-        <div class="alert alert-warning">
+        <div class="alert alert-warning validation-alerts">
             <h6>{% trans 'أخطاء التحقق' %}</h6>
             <p>{% trans 'تم العثور على أخطاء في البيانات التالية:' %}</p>
             <div class="table-responsive">
@@ -160,10 +210,10 @@
 
         <div class="import-options mt-4">
             <h6 class="mb-3">{% trans 'تنفيذ الاستيراد' %}</h6>
-            <button id="btn-start-import" class="btn btn-primary">
+            <button id="btn-start-import" class="btn btn-primary btn-with-icon">
                 <i class="fas fa-file-import"></i> {% trans 'بدء استيراد المنتجات' %}
             </button>
-            <a href="{% url 'dashboard:product_import' %}" class="btn btn-secondary">
+            <a href="{% url 'dashboard:product_import' %}" class="btn btn-secondary btn-with-icon">
                 <i class="fas fa-times"></i> {% trans 'إلغاء وإعادة المحاولة' %}
             </a>
         </div>
@@ -180,18 +230,35 @@
         </div>
 
         <div id="import-summary" class="import-summary">
-            <div id="import-alert" class="alert alert-success">
-                <h6>{% trans 'تم اكتمال الاستيراد بنجاح!' %}</h6>
-                <ul class="mb-0">
-                    <li>{% trans 'إجمالي المنتجات المعالجة:' %} <strong id="summary-total">0</strong></li>
-                    <li>{% trans 'المنتجات المضافة بنجاح:' %} <strong id="summary-success">0</strong></li>
-                    <li>{% trans 'المنتجات المحدثة:' %} <strong id="summary-updated">0</strong></li>
-                    <li>{% trans 'المنتجات التي فشل استيرادها:' %} <strong id="summary-errors">0</strong></li>
-                </ul>
+            <div class="row">
+                <div class="col-md-6">
+                    <div id="import-alert" class="alert alert-success import-results-card">
+                        <h6><i class="fas fa-check-circle me-2"></i>{% trans 'نتائج الاستيراد' %}</h6>
+                        <ul class="mb-0">
+                            <li>{% trans 'إجمالي المنتجات المعالجة:' %} <strong id="summary-total">0</strong></li>
+                            <li>{% trans 'المنتجات المضافة بنجاح:' %} <strong id="summary-success">0</strong></li>
+                            <li>{% trans 'المنتجات المحدثة:' %} <strong id="summary-updated">0</strong></li>
+                            <li>{% trans 'المنتجات التي فشل استيرادها:' %} <strong id="summary-errors">0</strong></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="col-md-6" id="error-summary-section" style="display: none;">
+                    <div class="alert alert-danger import-errors-card">
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>{% trans 'ملخص الأخطاء' %}</h6>
+                        <p>{% trans 'وُجِدت أخطاء أثناء عملية الاستيراد.' %}</p>
+                        <button id="export-errors-btn" class="btn btn-sm btn-outline-danger btn-with-icon">
+                            <i class="fas fa-file-export"></i> {% trans 'تصدير المنتجات الخاطئة' %}
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div id="error-details-container" class="error-details" style="display: none;">
                 <h6 class="mb-3">{% trans 'تفاصيل الأخطاء' %}</h6>
+                <button id="export-errors-btn" class="btn btn-danger mb-3">
+                    <i class="fas fa-file-export me-1"></i> {% trans 'تصدير المنتجات الخاطئة' %}
+                </button>
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered table-error-details">
                         <thead class="table-light">
@@ -210,10 +277,10 @@
             </div>
 
             <div class="mt-4">
-                <a href="{% url 'dashboard:dashboard_products' %}" class="btn btn-primary">
+                <a href="{% url 'dashboard:dashboard_products' %}" class="btn btn-primary btn-with-icon">
                     <i class="fas fa-list"></i> {% trans 'العودة إلى قائمة المنتجات' %}
                 </a>
-                <a href="{% url 'dashboard:product_import' %}" class="btn btn-success">
+                <a href="{% url 'dashboard:product_import' %}" class="btn btn-success btn-with-icon">
                     <i class="fas fa-file-import"></i> {% trans 'استيراد ملف آخر' %}
                 </a>
             </div>
@@ -272,7 +339,7 @@ $(document).ready(function() {
                     checkProgressInterval = setInterval(checkProgress, 1000);
                 } else {
                     // عرض الخطأ
-                    alert('خطأ: ' + response.error);
+                    showPermanentAlert('danger', 'خطأ: ' + response.error);
                     $('#import-progress').hide();
                     $('.import-options').show();
                 }
@@ -281,11 +348,28 @@ $(document).ready(function() {
                 // تسجيل تفاصيل الخطأ للتشخيص
                 console.error("AJAX Error: " + status + " - " + error);
                 console.error("Response: " + xhr.responseText);
-                alert('حدث خطأ أثناء الاتصال بالخادم: ' + error);
+                showPermanentAlert('danger', 'حدث خطأ أثناء الاتصال بالخادم: ' + error);
                 $('#import-progress').hide();
                 $('.import-options').show();
             }
         });
+    });
+
+    // تصدير أخطاء التحقق (قبل الاستيراد)
+    $('.export-validation-errors-btn').click(function() {
+        // يمكن إضافة وظيفة لتصدير أخطاء التحقق هنا إذا لزم الأمر
+        showPermanentAlert('info', 'جاري تصدير أخطاء التحقق...');
+
+        // استخدام تقنية مشابهة لتصدير الأخطاء
+        window.location.href = '{% url "dashboard:product_import" %}?action=export_validation_errors&preview_id=' + importId;
+    });
+
+    // تصدير أخطاء الاستيراد
+    $('#export-errors-btn').click(function() {
+        showPermanentAlert('info', 'جاري تصدير المنتجات التي تحتوي على أخطاء...');
+
+        // تحويل الطلب إلى المسار الصحيح مع العلامات المطلوبة
+        window.location.href = '{% url "dashboard:product_import" %}?action=export_errors&preview_id=' + importId;
     });
 
     // دالة لعرض تنبيه ثابت (لا يختفي)
@@ -355,7 +439,7 @@ $(document).ready(function() {
             // تغيير نوع التنبيه بناءً على وجود أخطاء
             if (progress.errors > 0) {
                 $('#import-alert').removeClass('alert-success').addClass('alert-warning');
-                $('#import-alert h6').text('تم اكتمال الاستيراد مع وجود بعض الأخطاء');
+                $('#error-summary-section').show();
             }
 
             // عرض تفاصيل الأخطاء إذا وجدت
@@ -377,6 +461,12 @@ $(document).ready(function() {
             }
         }
     }
+
+    // تصدير الأخطاء
+    $('#export-errors-btn').click(function () {
+        const importId = $('#import-id').val();
+        window.location.href = "{% url 'dashboard:export_import_errors' %}?import_id=" + importId;
+    });
 });
 </script>
 {% endblock %}

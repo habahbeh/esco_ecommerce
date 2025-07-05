@@ -53,6 +53,18 @@
         margin-top: 0.5rem;
         display: inline-block;
     }
+
+    .btn-with-icon {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .alert-info-custom {
+        background-color: #e1f5fe;
+        border-color: #b3e5fc;
+        color: #0288d1;
+    }
 </style>
 {% endblock %}
 
@@ -64,7 +76,13 @@
                 <h5 class="mb-0">{% trans 'استيراد المنتجات من ملف Excel' %}</h5>
             </div>
             <div class="card-body">
-                <form method="post" enctype="multipart/form-data">
+                <!-- تنبيه حول قالب Excel -->
+                <div class="alert alert-info-custom mb-4">
+                    <h6><i class="fas fa-info-circle me-2"></i>{% trans 'هام: تنسيق ملف الاستيراد' %}</h6>
+                    <p class="mb-0">{% trans 'تأكد من استخدام نموذج الملف المقدم أدناه. لا تقم بتعديل أو حذف صف العناوين الإنجليزية (الصف الأول) لأنه ضروري لعملية الاستيراد.' %}</p>
+                </div>
+
+                <form method="post" enctype="multipart/form-data" action="{% url 'dashboard:product_import' %}">
                     {% csrf_token %}
 
                     <div class="file-upload-wrapper">
@@ -78,7 +96,9 @@
                             {% endfor %}
                         </div>
                         {% endif %}
-                        <a href="#" class="sample-file-link">{% trans 'تحميل نموذج الملف' %}</a>
+                        <a href="{% url 'dashboard:excel_template' %}" class="sample-file-link btn-with-icon">
+                            <i class="fas fa-download"></i> {% trans 'تحميل نموذج الملف' %}
+                        </a>
                     </div>
 
                     <div class="row mb-3">
@@ -102,8 +122,12 @@
                     </div>
 
                     <div class="mt-4">
-                        <button type="submit" class="btn btn-primary">{% trans 'معاينة المنتجات' %}</button>
-                        <a href="{% url 'dashboard:dashboard_products' %}" class="btn btn-secondary">{% trans 'إلغاء' %}</a>
+                        <button type="submit" class="btn btn-primary btn-with-icon">
+                            <i class="fas fa-file-import"></i> {% trans 'استيراد المنتجات' %}
+                        </button>
+                        <a href="{% url 'dashboard:dashboard_products' %}" class="btn btn-secondary btn-with-icon">
+                            <i class="fas fa-times"></i> {% trans 'إلغاء' %}
+                        </a>
                     </div>
                 </form>
             </div>
@@ -128,21 +152,21 @@
                         <div class="step-number">2</div>
                         <div class="step-content">
                             <div class="step-title">{% trans 'إعداد بيانات المنتجات' %}</div>
-                            <p>{% trans 'قم بتعبئة بيانات المنتجات في الملف وفقًا للنموذج. تأكد من ملء العناوين الإلزامية.' %}</p>
+                            <p>{% trans 'قم بتعبئة بيانات المنتجات في الملف. لا تقم بتعديل صف العناوين الإنجليزية.' %}</p>
                         </div>
                     </div>
                     <div class="step">
                         <div class="step-number">3</div>
                         <div class="step-content">
-                            <div class="step-title">{% trans 'معاينة البيانات' %}</div>
-                            <p>{% trans 'اضغط على زر "معاينة المنتجات" لمراجعة البيانات قبل الاستيراد النهائي.' %}</p>
+                            <div class="step-title">{% trans 'استيراد المنتجات' %}</div>
+                            <p>{% trans 'قم بتحميل الملف واضغط على زر "استيراد المنتجات" لبدء عملية الاستيراد.' %}</p>
                         </div>
                     </div>
                     <div class="step">
                         <div class="step-number">4</div>
                         <div class="step-content">
-                            <div class="step-title">{% trans 'استيراد البيانات' %}</div>
-                            <p>{% trans 'بعد المعاينة، اضغط على زر "بدء استيراد المنتجات" للبدء في عملية الاستيراد.' %}</p>
+                            <div class="step-title">{% trans 'مراجعة النتائج وتصحيح الأخطاء' %}</div>
+                            <p>{% trans 'بعد الاستيراد، ستظهر النتائج. في حالة وجود أخطاء، يمكنك تصدير المنتجات الخاطئة وتصحيحها.' %}</p>
                         </div>
                     </div>
                 </div>
@@ -154,6 +178,7 @@
                         <li>{% trans 'يمكنك ترك حقل SKU فارغًا وسيتم إنشاؤه تلقائيًا.' %}</li>
                         <li>{% trans 'يمكن للنظام إنشاء فئات وعلامات تجارية جديدة تلقائيًا.' %}</li>
                         <li>{% trans 'الحد الأقصى لحجم الملف هو 10 ميجابايت.' %}</li>
+                        <li>{% trans 'حافظ على الصف الأول من نموذج الملف كما هو.' %}</li>
                     </ul>
                 </div>
             </div>
