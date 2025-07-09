@@ -90,6 +90,8 @@ urlpatterns = [
     path('products/import/results/<str:import_id>/', import_export.import_results_view, name='import_results'),
     path('products/import/progress/', import_export.import_progress_view, name='import_progress'),
     path('products/import/export-errors/', import_export.export_errors_view, name='export_import_errors'),
+    # path('products/import/export-errors/', views.export_errors_view, name='export_import_errors'),
+
 
 
     # إدارة الفئات

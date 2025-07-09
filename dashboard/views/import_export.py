@@ -133,11 +133,15 @@ def generate_excel_template(request):
 
 class ImportManager:
     """
-    مدير عمليات استيراد المنتجات
+    مدير عمليات استيراد المنتجات باستخدام نظام الكاش
     """
 
     def __init__(self, import_id=None):
         """تهيئة مدير الاستيراد"""
+        from django.core.cache import cache
+        import json
+
+        self.cache = cache
         self.import_id = import_id or uuid.uuid4().hex
         self.progress_data = {
             'total': 0,
@@ -149,10 +153,6 @@ class ImportManager:
             'error_details': []
         }
         self.import_data = {}
-
-        # إنشاء مجلد مؤقت للاستيراد إذا لم يكن موجوداً
-        self.temp_dir = os.path.join('media', 'temp', 'imports')
-        os.makedirs(self.temp_dir, exist_ok=True)
 
     def read_csv(self, file_path=None):
         """قراءة ملف CSV"""
@@ -187,7 +187,11 @@ class ImportManager:
 
     def save_file(self, file_obj):
         """حفظ الملف المرفوع"""
-        file_path = os.path.join(self.temp_dir, f"{self.import_id}_{file_obj.name}")
+        # إنشاء مجلد مؤقت للاستيراد إذا لم يكن موجوداً
+        temp_dir = os.path.join('media', 'temp', 'imports')
+        os.makedirs(temp_dir, exist_ok=True)
+
+        file_path = os.path.join(temp_dir, f"{self.import_id}_{file_obj.name}")
 
         with open(file_path, 'wb+') as destination:
             for chunk in file_obj.chunks():
@@ -248,13 +252,25 @@ class ImportManager:
             raise ValueError(f"خطأ في قراءة الملف: {str(e)}")
 
     def save_progress(self):
-        """حفظ بيانات التقدم"""
-        progress_path = os.path.join(self.temp_dir, f"{self.import_id}_progress.json")
-        with open(progress_path, 'w', encoding='utf-8') as f:
-            json.dump(self.progress_data, f, ensure_ascii=False)
+        """حفظ بيانات التقدم في ملف بدلاً من الكاش"""
+        import json
+        import os
+
+        # التأكد من وجود المجلد
+        temp_dir = os.path.join('media', 'temp', 'imports')
+        os.makedirs(temp_dir, exist_ok=True)
+
+        # الكتابة إلى ملف
+        file_path = os.path.join(temp_dir, f'progress_{self.import_id}.json')
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(self.progress_data, f)
 
     def save_import_data(self):
-        """حفظ بيانات الاستيراد"""
+        """حفظ بيانات الاستيراد في ملف"""
+        import json
+        import os
+        import pandas as pd
+
         # استبدال DataFrame بقائمة للتخزين
         if 'df' in self.import_data:
             df = self.import_data['df']
@@ -271,31 +287,57 @@ class ImportManager:
             self.import_data['records'] = records
             del self.import_data['df']
 
-        # حفظ البيانات
-        data_path = os.path.join(self.temp_dir, f"{self.import_id}_data.json")
-        with open(data_path, 'w', encoding='utf-8') as f:
-            json.dump(self.import_data, f, ensure_ascii=False)
+        # التأكد من وجود المجلد
+        temp_dir = os.path.join('media', 'temp', 'imports')
+        os.makedirs(temp_dir, exist_ok=True)
+
+        # الكتابة إلى ملف
+        file_path = os.path.join(temp_dir, f'data_{self.import_id}.json')
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(self.import_data, f, default=str)
 
     def load_progress(self):
-        """تحميل بيانات التقدم"""
-        progress_path = os.path.join(self.temp_dir, f"{self.import_id}_progress.json")
-        if os.path.exists(progress_path):
-            with open(progress_path, 'r', encoding='utf-8') as f:
+        """تحميل بيانات التقدم من ملف"""
+        import json
+        import os
+
+        temp_dir = os.path.join('media', 'temp', 'imports')
+        file_path = os.path.join(temp_dir, f'progress_{self.import_id}.json')
+
+        if not os.path.exists(file_path):
+            return None
+
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
                 self.progress_data = json.load(f)
                 return self.progress_data
-        return None
+        except Exception:
+            return None
 
     def load_import_data(self):
-        """تحميل بيانات الاستيراد"""
-        data_path = os.path.join(self.temp_dir, f"{self.import_id}_data.json")
-        if os.path.exists(data_path):
-            with open(data_path, 'r', encoding='utf-8') as f:
+        """تحميل بيانات الاستيراد من ملف"""
+        import json
+        import os
+
+        temp_dir = os.path.join('media', 'temp', 'imports')
+        file_path = os.path.join(temp_dir, f'data_{self.import_id}.json')
+
+        if not os.path.exists(file_path):
+            return None
+
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
                 self.import_data = json.load(f)
                 return self.import_data
-        return None
+        except Exception:
+            return None
 
     def export_errors(self):
         """تصدير الأخطاء إلى ملف Excel"""
+        import xlsxwriter
+        import io
+        from datetime import datetime
+
         if not self.progress_data.get('error_details'):
             return None
 
@@ -361,6 +403,58 @@ class ImportManager:
         return {
             'data': output.getvalue(),
             'filename': f"import_errors_{timestamp}.xlsx"
+        }
+
+    def export_errors_to_csv(self):
+        """تصدير الأخطاء إلى ملف CSV"""
+        import csv
+        import io
+        from datetime import datetime
+
+        if not self.progress_data.get('error_details'):
+            return None
+
+        # إنشاء ملف CSV في الذاكرة
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        # كتابة العناوين
+        headers = ['رقم_الصف', 'الاسم', 'SKU', 'رسالة_الخطأ', 'name', 'name_en', 'base_price', 'category', 'brand',
+                   'stock_quantity']
+        writer.writerow(headers)
+
+        # كتابة بيانات الأخطاء
+        for error in self.progress_data['error_details']:
+            row = [
+                error.get('row', ''),
+                error.get('name', ''),
+                error.get('sku', ''),
+                error.get('error', '')
+            ]
+
+            # إضافة بيانات المنتج إذا كانت متاحة
+            if 'data' in error:
+                data = error['data']
+                row.extend([
+                    data.get('name', ''),
+                    data.get('name_en', ''),
+                    data.get('base_price', ''),
+                    data.get('category', ''),
+                    data.get('brand', ''),
+                    data.get('stock_quantity', '')
+                ])
+            else:
+                row.extend(['', '', '', '', '', ''])
+
+            writer.writerow(row)
+
+        # إعداد البيانات للتنزيل
+        output.seek(0)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+
+        return {
+            'data': output.getvalue(),
+            'filename': f"import_errors_{timestamp}.csv"
         }
 
 
@@ -453,7 +547,7 @@ def product_import_view(request):
 
 def import_results_view(request, import_id):
     """
-    عرض نتائج الاستيراد
+    عرض نتائج الاستيراد باستخدام الكاش
     """
     # استرجاع مدير الاستيراد
     import_manager = ImportManager(import_id)
@@ -482,9 +576,10 @@ def import_results_view(request, import_id):
 
 def export_errors_view(request):
     """
-    تصدير المنتجات التي فشل استيرادها إلى ملف Excel
+    تصدير المنتجات التي فشل استيرادها إلى ملف Excel أو CSV
     """
     import_id = request.GET.get('import_id')
+    export_format = request.GET.get('format', 'excel')  # القيمة الافتراضية هي Excel
 
     if not import_id:
         messages.error(request, "معرف الاستيراد مفقود")
@@ -502,26 +597,28 @@ def export_errors_view(request):
         messages.warning(request, "لا توجد أخطاء للتصدير")
         return redirect('dashboard:import_results', import_id=import_id)
 
-    # تصدير الأخطاء
-    excel_data = import_manager.export_errors()
+    # تصدير الأخطاء حسب الصيغة المطلوبة
+    if export_format.lower() == 'csv':
+        export_data = import_manager.export_errors_to_csv()
+        content_type = 'text/csv; charset=utf-8'
+    else:
+        export_data = import_manager.export_errors()
+        content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
-    if not excel_data:
-        messages.error(request, "حدث خطأ أثناء تصدير الأخطاء")
+    if not export_data:
+        messages.error(request, f"حدث خطأ أثناء تصدير الأخطاء بصيغة {export_format}")
         return redirect('dashboard:import_results', import_id=import_id)
 
     # إرجاع الملف للتنزيل
-    response = HttpResponse(
-        excel_data['data'],
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )
-    response['Content-Disposition'] = f'attachment; filename={excel_data["filename"]}'
+    response = HttpResponse(export_data['data'], content_type=content_type)
+    response['Content-Disposition'] = f'attachment; filename={export_data["filename"]}'
 
     return response
 
 
 def import_progress_view(request):
     """
-    الحصول على تقدم الاستيراد عبر AJAX
+    الحصول على تقدم الاستيراد عبر AJAX - باستخدام الكاش
     """
     import_id = request.GET.get('import_id')
 
@@ -543,7 +640,7 @@ def import_progress_view(request):
 
 def process_import(import_id, user_id):
     """
-    معالجة الاستيراد في الخلفية - حل مشكلة UUID
+    معالجة الاستيراد في الخلفية باستخدام نظام الكاش
     """
     from django.contrib.auth import get_user_model
     from decimal import Decimal
@@ -650,7 +747,8 @@ def process_import(import_id, user_id):
                 elif len(description) < 20:
                     # إطالة الوصف ليصل إلى 20 حرف
                     additional_text = " " + "هذا وصف تم تمديده تلقائياً."
-                    description = description + additional_text
+                    # description = description + additional_text
+                    description = descriptions
 
                 # البيانات الاختيارية
                 cost_str = str(row_data.get('cost', '')).strip()
@@ -754,7 +852,7 @@ def process_import(import_id, user_id):
                         category=category
                     ).first()
 
-                # الحل النهائي: استخدام طريقة ORM مع منع التحقق
+                # الحل: استخدام طريقة ORM بدون وسيط validate=False
                 with transaction.atomic():
                     if existing_product and update_existing:
                         # تحديث المنتج الموجود
@@ -773,8 +871,8 @@ def process_import(import_id, user_id):
                         if brand:
                             existing_product.brand = brand
 
-                        # حفظ المنتج مع منع التحقق
-                        existing_product.save(validate=False)
+                        # حفظ المنتج
+                        existing_product.save()
 
                         # تحديث الإحصائيات
                         import_manager.progress_data['updated'] += 1
@@ -801,8 +899,8 @@ def process_import(import_id, user_id):
                         if cost is not None:
                             new_product.cost = cost
 
-                        # حفظ المنتج مع منع التحقق
-                        new_product.save(validate=False)
+                        # حفظ المنتج
+                        new_product.save()
 
                         # تحديث الإحصائيات
                         import_manager.progress_data['success'] += 1

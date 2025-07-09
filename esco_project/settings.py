@@ -285,6 +285,17 @@ FREE_SHIPPING_THRESHOLD = Decimal('0.00')
 MAX_CART_QUANTITY_PER_ITEM = 10
 
 
+
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+#         'LOCATION': os.path.join(BASE_DIR, 'django_cache'),
+#         'TIMEOUT': 3600,  # ساعة واحدة
+#         'OPTIONS': {
+#             'MAX_ENTRIES': 1000
+#         }
+#     }
+# }
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
