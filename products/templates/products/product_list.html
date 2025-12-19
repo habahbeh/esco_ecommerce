@@ -4,7 +4,11 @@
 
 {% block title %}
     {% if category %}
-        {{ category.name }} - {% trans "المنتجات" %}
+        {% if LANGUAGE_CODE == 'en' %}
+            {{ category.name_en }}
+        {% else %}
+            {{ category.name }}
+        {% endif %} - {% trans "المنتجات" %}
     {% else %}
         {% trans "جميع المنتجات" %}
     {% endif %}
@@ -304,7 +308,11 @@
                     <a href="{% url 'products:product_list' %}">{% trans "المنتجات" %}</a>
                 </li>
                 <li class="breadcrumb-item active" aria-current="page">
-                    {{ category.name }}
+                    {% if LANGUAGE_CODE == 'en' %}
+                        {{ category.name_en }}
+                    {% else %}
+                        {{ category.name }}
+                    {% endif %}
                 </li>
             {% else %}
                 <li class="breadcrumb-item active" aria-current="page">
@@ -323,16 +331,30 @@
                 <div>
                     <h1 class="page-title-compact">
                         {% if category %}
-                            {{ category.name }}
+                            {% if LANGUAGE_CODE == 'en' %}
+                                {{ category.name_en }}
+                            {% else %}
+                                {{ category.name }}
+                            {% endif %}
                         {% else %}
                             {% trans "منتجاتنا" %}
                         {% endif %}
                     </h1>
                     <p class="page-subtitle-compact mb-0">
                         {% if category %}
-                            {{ category.description|truncatechars:100|default:"تصفح المنتجات في هذه الفئة" }}
+                            {% if LANGUAGE_CODE == 'en' %}
+{#                                {{ category.description_en|truncatechars:100|default:"Browse products in this category" }}#}
+                                {{ category.description_en|default:"Browse products in this category" }}
+                            {% else %}
+{#                                {{ category.description|truncatechars:100|default:"تصفح المنتجات في هذه الفئة" }}#}
+                                {{ category.description|default:"تصفح المنتجات في هذه الفئة" }}
+                            {% endif %}
                         {% else %}
-                            {% trans "تصفح تشكيلتنا من المنتجات المميزة" %}
+                            {% if LANGUAGE_CODE == 'en' %}
+                                {% trans "Browse our collection of distinguished products" %}
+                            {% else %}
+                                {% trans "تصفح تشكيلتنا من المنتجات المميزة" %}
+                            {% endif %}
                         {% endif %}
                     </p>
                 </div>
@@ -360,10 +382,14 @@
 
                 <!-- شريط الفئات -->
                 {% include 'products/partials/category_sidebar.html' with show_related_products=False %}
+
+                <div class="filters-sidebar-sticky">
+                    {% include 'products/partials/advanced_filters.html' %}
+                </div>
             </div>
 
             <!-- العمود الأوسط: قائمة المنتجات -->
-            <div class="col-lg-6">
+            <div class="col-lg-9">
                 <!-- رأس قائمة المنتجات -->
                 <div class="products-header">
                     <div class="products-count">
@@ -453,7 +479,7 @@
                 <section class="products-section">
                     <div class="row g-4">
                         {% for product in products %}
-                            <div class="col-md-6" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
+                            <div class="col-md-4" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
                                 {% include 'products/base/_product_card.html' with product=product %}
                             </div>
                         {% empty %}
@@ -518,11 +544,11 @@
             </div>
 
             <!-- العمود الأيسر: الفلاتر المتطورة -->
-            <div class="col-lg-3 d-none d-lg-block">
-                <div class="filters-sidebar-sticky">
-                    {% include 'products/partials/advanced_filters.html' %}
-                </div>
-            </div>
+{#            <div class="col-lg-3 d-none d-lg-block">#}
+{#                <div class="filters-sidebar-sticky">#}
+{#                    {% include 'products/partials/advanced_filters.html' %}#}
+{#                </div>#}
+{#            </div>#}
         </div>
     </div>
 </div>

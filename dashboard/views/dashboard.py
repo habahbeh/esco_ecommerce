@@ -26,15 +26,47 @@ def has_dashboard_access(user):
 
 
 # Mixin للتحقق من صلاحيات الوصول للوحة التحكم
+# class DashboardAccessMixin:
+#     """Mixin للتحقق من صلاحيات الوصول للوحة التحكم"""
+#
+#     @method_decorator(login_required)
+#     def dispatch(self, request, *args, **kwargs):
+#         if not has_dashboard_access(request.user):
+#             return redirect('dashboard:dashboard_access_denied')
+#         return super().dispatch(request, *args, **kwargs)
+
 class DashboardAccessMixin:
     """Mixin للتحقق من صلاحيات الوصول للوحة التحكم"""
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        if not has_dashboard_access(request.user):
-            return redirect('dashboard:dashboard_access_denied')
-        return super().dispatch(request, *args, **kwargs)
+        # التحقق من الصلاحيات
+        if request.user.is_superuser or request.user.is_staff:
+            return super().dispatch(request, *args, **kwargs)
 
+        # التحقق من وجود أي صلاحية على الأقل للدخول للوحة التحكم
+        dashboard_permissions = [
+            # صلاحيات المنتجات
+            'products.view_product', 'products.add_product', 'products.change_product', 'products.delete_product',
+            'products.view_category', 'products.view_brand',
+
+            # صلاحيات الطلبات
+            'orders.view_order',
+
+            # صلاحيات المستخدمين
+            'accounts.view_user',
+
+            # صلاحيات الإعدادات
+            'dashboard.view_settings',
+        ]
+
+        # إذا كان لدى المستخدم أي من هذه الصلاحيات، اسمح له بالدخول
+        for perm in dashboard_permissions:
+            if request.user.has_perm(perm):
+                return super().dispatch(request, *args, **kwargs)
+
+        # إذا لم يكن لديه أي صلاحية، حوّله لصفحة رفض الوصول
+        return redirect('dashboard:dashboard_access_denied')
 
 # الصفحة الرئيسية للوحة التحكم
 class DashboardHomeView(DashboardAccessMixin, View):

@@ -5,7 +5,14 @@
     {% else %}
         {% for item in cart_items %}
             <div class="mini-cart-item">
-                <span>{{ item.product.name|truncatechars:20 }}</span>
+                <span>
+{#                    {{ item.product.name|truncatechars:20 }}#}
+                    {% if LANGUAGE_CODE == 'en' %}
+                        {{ item.product.name_en }}
+                    {% else %}
+                        {{ item.product.name }}
+                    {% endif %}
+                </span>
                 <span>{{ item.quantity }} × {{ item.price|floatformat:2 }}</span>
             </div>
         {% endfor %}

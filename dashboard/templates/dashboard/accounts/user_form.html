@@ -312,7 +312,7 @@
                         </div>
                     </div>
 
-                    <div class="form-section">
+                    <div class="form-section" hidden>
                         <h5 class="form-section-title">{% trans 'تفضيلات الإشعارات' %}</h5>
                         <div class="row">
                             <div class="col-md-6 mb-3">
@@ -380,15 +380,15 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if user_obj.is_active|default:True %}checked{% endif %}>
+                                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if user_obj.is_active %}checked{% endif %}>
                                     <label class="form-check-label" for="is_active">
                                         {% trans 'حساب نشط' %}
                                     </label>
                                 </div>
                             </div>
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-6 mb-3" hidden>
                                 <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="is_verified" name="is_verified" {% if user_obj.is_verified %}checked{% endif %}>
+                                    <input class="form-check-input" type="checkbox" id="is_verified" name="is_verified" {% if user_obj.is_verified|default:True %}checked{% endif %}>
                                     <label class="form-check-label" for="is_verified">
                                         {% trans 'حساب موثق' %}
                                     </label>
@@ -428,7 +428,7 @@
                                     </label>
                                 </div>
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3" hidden>
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" id="is_product_reviewer" name="is_product_reviewer" {% if user_obj.is_product_reviewer %}checked{% endif %}>
                                     <label class="form-check-label" for="is_product_reviewer">

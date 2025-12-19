@@ -7,7 +7,13 @@
         <h2 class="accordion-header" id="category-heading-{{ category.id }}">
             <button class="accordion-button collapsed d-flex align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#category-collapse-{{ category.id }}" aria-expanded="false" aria-controls="category-collapse-{{ category.id }}">
                 <a href="{% url 'products:category_products' category.slug %}" class="category-link-btn" onclick="event.stopPropagation();">
-                    <span class="category-name">{{ category.name }}</span>
+                    <span class="category-name">
+                    {% if LANGUAGE_CODE == 'en' %}
+                        {{ category.name_en }}
+                    {% else %}
+                        {{ category.name }}
+                    {% endif %}
+                    </span>
                 </a>
                 <span class="badge rounded-pill ms-auto {% if category.products_count > 0 %}badge-has-products{% else %}badge-empty{% endif %} text-black">
                     {{ category.products_count }}
@@ -24,7 +30,13 @@
         {% else %}
         <div class="accordion-item-simple">
             <a href="{% url 'products:category_products' category.slug %}" class="category-link">
-                <span class="category-name">{{ category.name }}</span>
+                <span class="category-name">
+                {% if LANGUAGE_CODE == 'en' %}
+                        {{ category.name_en }}
+                    {% else %}
+                        {{ category.name }}
+                    {% endif %}
+                </span>
                 <span class="badge rounded-pill ms-auto {% if category.products_count > 0 %}badge-has-products{% else %}badge-empty{% endif %} text-black">
                     {{ category.products_count }}
                 </span>

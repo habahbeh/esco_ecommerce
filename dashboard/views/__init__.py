@@ -10,3 +10,6 @@ from .payment import *
 from .reports import *
 from .settings import *
 from .api import *
+from .sliders import *
+from .events import *
+from .newsletters import *

@@ -8,10 +8,12 @@ AOS.init({
 // Page Loader
 window.addEventListener('load', function() {
     const loader = document.getElementById('pageLoader');
-    loader.classList.add('fade-out');
-    setTimeout(() => {
-        loader.style.display = 'none';
-    }, 300);
+    if (loader) {
+        loader.classList.add('fade-out');
+        setTimeout(() => {
+            loader.style.display = 'none';
+        }, 300);
+    }
 });
 
 // Header scroll effect

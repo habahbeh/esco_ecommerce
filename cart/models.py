@@ -23,6 +23,7 @@ class Cart(models.Model):
     updated_at = models.DateTimeField(_("تاريخ التحديث"), auto_now=True)
 
     class Meta:
+        app_label = 'cart'
         verbose_name = _("سلة التسوق")
         verbose_name_plural = _("سلات التسوق")
 
@@ -126,6 +127,7 @@ class CartItem(models.Model):
                                          verbose_name=_("الخصم المطبق"))
 
     class Meta:
+        app_label = 'cart'
         verbose_name = _("عنصر السلة")
         verbose_name_plural = _("عناصر السلة")
         unique_together = ('cart', 'product', 'variant')

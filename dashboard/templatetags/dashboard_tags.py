@@ -531,3 +531,7 @@ def get_field(form, field_name):
 def get_item(dictionary, key):
     """استخراج قيمة من قاموس باستخدام مفتاح"""
     return dictionary.get(key, '')
+
+@register.filter
+def get(dictionary, key):
+    return dictionary.get(key, key)

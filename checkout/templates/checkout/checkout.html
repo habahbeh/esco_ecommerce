@@ -1,6 +1,7 @@
 {% extends 'core/base.html' %}
 {% load static %}
 {% load i18n %}
+{% load custom_filters %}
 
 {% block title %}{% trans "إتمام الطلب" %} | ESCO{% endblock %}
 
@@ -109,10 +110,39 @@
                             {% for item in cart_items %}
                                 <div class="d-flex justify-content-between mb-2">
                                     <div>
-                                        <span>{{ item.product.name }}</span>
-                                        <small class="text-muted d-block">{{ item.quantity }} × {{ item.price|floatformat:2 }}</small>
+                                        <span>{% if LANGUAGE_CODE == 'en' %}
+                                            {{ item.product.name_en }}
+                                        {% else %}
+                                            {{ item.product.name }}
+                                        {% endif %}</span>
+                                        <div>
+                                            {% if item.variant %}
+                                                <small class="text-muted">
+                                                    {% if item.variant.attributes %}
+                                                        {% for key, value in item.variant.attributes.items %}
+                                                            <span>{{ key }}: {{ value }}</span>{% if not forloop.last %}
+                                                            | {% endif %}
+                                                        {% endfor %}
+                                                    {% elif item.variant.variant_details %}
+                                                        {{ item.variant.variant_details }}
+                                                    {% elif item.variant.options.all %}
+                                                        {% for option in item.variant.options.all %}
+                                                            <span>{{ option.option_group.name }}: {{ option.name }}</span>
+                                                            {% if not forloop.last %} | {% endif %}
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        {% for attr_value in item.variant.attribute_values.all %}
+                                                            <span>{{ attr_value.attribute.name }}: {{ attr_value.value }}</span>
+                                                            {% if not forloop.last %} | {% endif %}
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                </small>
+                                            {% endif %}
+                                        </div>
+                                        <small class="text-muted d-block">{{ item.quantity }}
+                                            × {{ item.price|without_tax|floatformat:2 }}</small>
                                     </div>
-                                    <span>{{ item.subtotal|floatformat:2 }} {% trans "د.أ" %}</span>
+<span>{{ item.subtotal|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
                                 </div>
                             {% endfor %}
                         </div>
@@ -121,7 +151,7 @@
                         
                         <div class="d-flex justify-content-between mb-2">
                             <span>{% trans "المجموع الفرعي" %}</span>
-                            <span>{{ cart_subtotal|floatformat:2 }} {% trans "د.أ" %}</span>
+                            <span>{{ cart_subtotal|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
                         </div>
 {#                        <div class="d-flex justify-content-between mb-2">#}
 {#                            <span>{% trans "الشحن" %}</span>#}
@@ -129,14 +159,14 @@
 {#                        </div>#}
                         <div class="d-flex justify-content-between mb-2">
                             <span>{% trans "الضريبة" %}</span>
-                            <span>{{ cart_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                            <span>{{ cart_tax|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
                         </div>
                         
                         <hr>
                         
                         <div class="d-flex justify-content-between mb-2">
                             <strong>{% trans "المجموع" %}</strong>
-                            <strong>{{ cart_total|floatformat:2 }} {% trans "د.أ" %}</strong>
+                            <strong>{{ cart_total|without_tax|floatformat:2 }} {% trans "د.أ" %}</strong>
                         </div>
                     {% else %}
                         <div class="text-center py-3">

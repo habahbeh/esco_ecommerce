@@ -102,10 +102,8 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.i18n',  # لدعم الترجمة - For translation support
                 'core.context_processors.site_settings',  # معالج إعدادات الموقع - Site settings processor
-                # Cart context processors
                 'cart.context_processors.cart_context',  # Full cart context
                 'cart.context_processors.cart_preview_context',  # Lightweight preview
-                # 'cart.context_processors.static_content',
             ],
             'loaders': [
                 'django.template.loaders.filesystem.Loader',
@@ -120,15 +118,33 @@ WSGI_APPLICATION = 'esco_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
+
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'escojo',
+        'USER': 'root',
+        'PASSWORD': '',  # فارغة
+        'HOST': 'localhost',  # استخدم IP بدلاً من localhost
+        'PORT': '3306',
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            'autocommit': True,
+        }
     }
 }
 
-# Password validation
-# https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
+
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -206,19 +222,33 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 # إعدادات البريد الإلكتروني - Email settings
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'habahbeh1000@gmail.com'
+# EMAIL_HOST_PASSWORD = 'tpdt tivg jxie slpe'
+# DEFAULT_FROM_EMAIL = 'habahbeh1000@gmail.com'
+
+
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.office365.com'
+# EMAIL_HOST = 'smtp.wixmail.com'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'habahbeh1000@gmail.com'
-EMAIL_HOST_PASSWORD = 'tpdt tivg jxie slpe'
-DEFAULT_FROM_EMAIL = 'habahbeh1000@gmail.com'
+EMAIL_HOST_USER = 'contact@esco.jo'
+EMAIL_HOST_PASSWORD = 'khaled1212'
+DEFAULT_FROM_EMAIL = 'contact@esco.jo'
+
+
 
 # إعدادات الجلسة - Session settings
 SESSION_COOKIE_AGE = 60 * 60 * 24 * 30  # 30 days
 
 AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
+    'django.contrib.auth.backends.ModelBackend', # النظام الافتراضي
+    'accounts.backends.RolePermissionBackend',  # النظام المخصص للأدوار
 ]
 
 # حجم أقصى للصور
@@ -285,6 +315,17 @@ FREE_SHIPPING_THRESHOLD = Decimal('0.00')
 MAX_CART_QUANTITY_PER_ITEM = 10
 
 
+
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+#         'LOCATION': os.path.join(BASE_DIR, 'django_cache'),
+#         'TIMEOUT': 3600,  # ساعة واحدة
+#         'OPTIONS': {
+#             'MAX_ENTRIES': 1000
+#         }
+#     }
+# }
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',

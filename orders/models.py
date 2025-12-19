@@ -72,6 +72,7 @@ class Order(models.Model):
     updated_at = models.DateTimeField(_("تاريخ التحديث"), auto_now=True)
 
     class Meta:
+        app_label = 'orders'
         verbose_name = _("طلب")
         verbose_name_plural = _("الطلبات")
         ordering = ['-created_at']
@@ -85,9 +86,11 @@ class Order(models.Model):
             self.order_number = self._generate_order_number()
 
         # حساب المجموع الكلي - Calculate grand total
-        self.grand_total = self.total_price + self.shipping_cost + self.tax_amount
+        # self.grand_total = self.total_price + self.shipping_cost + self.tax_amount
+        self.grand_total = self.total_price + self.shipping_cost
 
-        self.grand_total = self.total_price + self.shipping_cost + self.tax_amount - self.discount_amount
+        # self.grand_total = self.total_price + self.shipping_cost + self.tax_amount - self.discount_amount
+        self.grand_total = self.total_price + self.shipping_cost  - self.discount_amount
 
         super().save(*args, **kwargs)
 
@@ -214,6 +217,7 @@ class OrderItem(models.Model):
     discount_amount = models.DecimalField(_("مبلغ الخصم"), max_digits=10, decimal_places=2, default=0)
 
     class Meta:
+        app_label = 'orders'
         verbose_name = _("عنصر الطلب")
         verbose_name_plural = _("عناصر الطلب")
 

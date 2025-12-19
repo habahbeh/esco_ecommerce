@@ -1,0 +1,404 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_events' %}">إدارة الفعاليات</a></li>
+{% endblock %}
+{% block current_page %}{{ current_page }}{% endblock %}
+
+{% block extra_css %}
+<!-- محرر نصوص متقدم -->
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">
+<style>
+    /* تنسيق الحقول المطلوبة */
+    .form-label.required:after {
+        content: " *";
+        color: #dc3545;
+    }
+
+    /* إظهار علامة النجمة للحقول المطلوبة */
+    input:required, textarea:required, select:required {
+        border-color: #ced4da;
+        background-image: none;
+    }
+
+    input:required:focus, textarea:required:focus, select:required:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    input:required:invalid, textarea:required:invalid, select:required:invalid {
+        border-color: #dc3545;
+    }
+
+    /* تنسيق لسانات المحتوى */
+    .content-tabs .nav-link {
+        border: 1px solid #dee2e6;
+        border-bottom: none;
+        margin-right: 5px;
+    }
+
+    .content-tabs .nav-link.active {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #f8f9fa;
+    }
+
+    .tab-content {
+        border: 1px solid #dee2e6;
+        border-top: none;
+        padding: 20px;
+        background-color: #f8f9fa;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">{{ page_title }}</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <!-- المعلومات الأساسية -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">المعلومات الأساسية</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.slug.id_for_label }}" class="form-label">{{ form.slug.label }}</label>
+                                {{ form.slug }}
+                                {% if form.slug.errors %}
+                                <div class="invalid-feedback d-block">{{ form.slug.errors }}</div>
+                                {% endif %}
+                                <small class="text-muted">اتركه فارغاً لإنشاء معرف تلقائي</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.order.id_for_label }}" class="form-label">{{ form.order.label }}</label>
+                                {{ form.order }}
+                                {% if form.order.errors %}
+                                <div class="invalid-feedback d-block">{{ form.order.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.start_date.id_for_label }}" class="form-label required">{{ form.start_date.label }}</label>
+                                {{ form.start_date }}
+                                {% if form.start_date.errors %}
+                                <div class="invalid-feedback d-block">{{ form.start_date.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.end_date.id_for_label }}" class="form-label required">{{ form.end_date.label }}</label>
+                                {{ form.end_date }}
+                                {% if form.end_date.errors %}
+                                <div class="invalid-feedback d-block">{{ form.end_date.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.registration_url.id_for_label }}" class="form-label">{{ form.registration_url.label }}</label>
+                                {{ form.registration_url }}
+                                {% if form.registration_url.errors %}
+                                <div class="invalid-feedback d-block">{{ form.registration_url.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.display_in.id_for_label }}" class="form-label required">{{ form.display_in.label }}</label>
+                                {{ form.display_in }}
+                                {% if form.display_in.errors %}
+                                <div class="invalid-feedback d-block">{{ form.display_in.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-check mt-4">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    {{ form.is_active.label }}
+                                </label>
+                                {% if form.is_active.errors %}
+                                <div class="invalid-feedback d-block">{{ form.is_active.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- المحتوى بالعربية والإنجليزية -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">المحتوى</h5>
+                </div>
+                <div class="card-body">
+                    <!-- لسانات اللغة -->
+                    <ul class="nav nav-tabs content-tabs mb-3" id="contentTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="arabic-tab" data-bs-toggle="tab" data-bs-target="#arabic-content" type="button" role="tab" aria-controls="arabic-content" aria-selected="true">المحتوى العربي</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="english-tab" data-bs-toggle="tab" data-bs-target="#english-content" type="button" role="tab" aria-controls="english-content" aria-selected="false">المحتوى الإنجليزي</button>
+                        </li>
+                    </ul>
+
+                    <!-- محتوى اللسانات -->
+                    <div class="tab-content" id="contentTabsContent">
+                        <!-- المحتوى العربي -->
+                        <div class="tab-pane fade show active" id="arabic-content" role="tabpanel" aria-labelledby="arabic-tab">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.title.id_for_label }}" class="form-label required">{{ form.title.label }}</label>
+                                {{ form.title }}
+                                {% if form.title.errors %}
+                                <div class="invalid-feedback d-block">{{ form.title.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="{{ form.short_description.id_for_label }}" class="form-label required">{{ form.short_description.label }}</label>
+                                {{ form.short_description }}
+                                {% if form.short_description.errors %}
+                                <div class="invalid-feedback d-block">{{ form.short_description.errors }}</div>
+                                {% endif %}
+                                <small class="text-muted">{{ form.short_description.help_text }}</small>
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="{{ form.description.id_for_label }}" class="form-label required">{{ form.description.label }}</label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">{{ form.description.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="{{ form.location.id_for_label }}" class="form-label required">{{ form.location.label }}</label>
+                                {{ form.location }}
+                                {% if form.location.errors %}
+                                <div class="invalid-feedback d-block">{{ form.location.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="{{ form.button_text.id_for_label }}" class="form-label required">{{ form.button_text.label }}</label>
+                                {{ form.button_text }}
+                                {% if form.button_text.errors %}
+                                <div class="invalid-feedback d-block">{{ form.button_text.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- المحتوى الإنجليزي -->
+                        <div class="tab-pane fade" id="english-content" role="tabpanel" aria-labelledby="english-tab">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.title_en.id_for_label }}" class="form-label">{{ form.title_en.label }}</label>
+                                {{ form.title_en }}
+                                {% if form.title_en.errors %}
+                                <div class="invalid-feedback d-block">{{ form.title_en.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="{{ form.short_description_en.id_for_label }}" class="form-label">{{ form.short_description_en.label }}</label>
+                                {{ form.short_description_en }}
+                                {% if form.short_description_en.errors %}
+                                <div class="invalid-feedback d-block">{{ form.short_description_en.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="{{ form.description_en.id_for_label }}" class="form-label">{{ form.description_en.label }}</label>
+                                {{ form.description_en }}
+                                {% if form.description_en.errors %}
+                                <div class="invalid-feedback d-block">{{ form.description_en.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="{{ form.location_en.id_for_label }}" class="form-label">{{ form.location_en.label }}</label>
+                                {{ form.location_en }}
+                                {% if form.location_en.errors %}
+                                <div class="invalid-feedback d-block">{{ form.location_en.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="{{ form.button_text_en.id_for_label }}" class="form-label">{{ form.button_text_en.label }}</label>
+                                {{ form.button_text_en }}
+                                {% if form.button_text_en.errors %}
+                                <div class="invalid-feedback d-block">{{ form.button_text_en.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- الصور -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">الصور</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.banner_image.id_for_label }}" class="form-label required">{{ form.banner_image.label }}</label>
+                                {{ form.banner_image }}
+                                {% if form.banner_image.errors %}
+                                <div class="invalid-feedback d-block">{{ form.banner_image.errors }}</div>
+                                {% endif %}
+                                <small class="text-muted">{{ form.banner_image.help_text }}</small>
+                                {% if event and event.banner_image %}
+                                <div class="mt-2">
+                                    <img src="{{ event.banner_image.url }}" alt="{{ event.title }}" class="img-thumbnail" style="max-width: 200px;">
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.cover_image.id_for_label }}" class="form-label required">{{ form.cover_image.label }}</label>
+                                {{ form.cover_image }}
+                                {% if form.cover_image.errors %}
+                                <div class="invalid-feedback d-block">{{ form.cover_image.errors }}</div>
+                                {% endif %}
+                                <small class="text-muted">{{ form.cover_image.help_text }}</small>
+                                {% if event and event.cover_image %}
+                                <div class="mt-2">
+                                    <img src="{{ event.cover_image.url }}" alt="{{ event.title }}" class="img-thumbnail" style="max-width: 200px;">
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group text-end">
+                <a href="{% url 'dashboard:dashboard_events' %}" class="btn btn-secondary">إلغاء</a>
+                <button type="submit" class="btn btn-primary">حفظ</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- محرر نصوص متقدم -->
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // تفعيل محرر النصوص المتقدم للوصف بالعربية
+        $('#{{ form.description.id_for_label }}').summernote({
+            height: 200,
+            toolbar: [
+                ['style', ['style']],
+                ['font', ['bold', 'underline', 'clear']],
+                ['color', ['color']],
+                ['para', ['ul', 'ol', 'paragraph']],
+                ['table', ['table']],
+                ['insert', ['link']],
+                ['view', ['fullscreen', 'codeview', 'help']]
+            ],
+            lang: 'ar-AR'
+        });
+
+        // تفعيل محرر النصوص المتقدم للوصف بالإنجليزية
+        $('#{{ form.description_en.id_for_label }}').summernote({
+            height: 200,
+            toolbar: [
+                ['style', ['style']],
+                ['font', ['bold', 'underline', 'clear']],
+                ['color', ['color']],
+                ['para', ['ul', 'ol', 'paragraph']],
+                ['table', ['table']],
+                ['insert', ['link']],
+                ['view', ['fullscreen', 'codeview', 'help']]
+            ],
+            lang: 'en-US'
+        });
+
+        // توليد slug تلقائياً عند كتابة العنوان بالعربية
+        $('#{{ form.title.id_for_label }}').on('keyup', function() {
+            if (!$('#{{ form.slug.id_for_label }}').val()) {
+                let slug = $(this).val()
+                    .toLowerCase()
+                    .replace(/\s+/g, '-')
+                    .replace(/[^\u0621-\u064A\u0660-\u0669a-z0-9-]/g, '');
+                $('#{{ form.slug.id_for_label }}').val(slug);
+            }
+        });
+
+        // توليد slug تلقائياً عند كتابة العنوان بالإنجليزية (في حالة عدم وجود عنوان عربي)
+        $('#{{ form.title_en.id_for_label }}').on('keyup', function() {
+            if (!$('#{{ form.slug.id_for_label }}').val() && !$('#{{ form.title.id_for_label }}').val()) {
+                let slug = $(this).val()
+                    .toLowerCase()
+                    .replace(/\s+/g, '-')
+                    .replace(/[^a-z0-9-]/g, '');
+                $('#{{ form.slug.id_for_label }}').val(slug);
+            }
+        });
+
+        // التحقق من صحة النموذج قبل الإرسال
+        $('form').on('submit', function(e) {
+            // إضافة فئة was-validated للعرض البصري للتحقق
+            $(this).addClass('was-validated');
+
+            // تحقق من أن جميع الحقول المطلوبة معبأة
+            let isValid = true;
+
+            $(this).find('[required]').each(function() {
+                if ($(this).val() === '') {
+                    isValid = false;
+                    // إضافة رسالة خطأ
+                    if ($(this).next('.invalid-feedback').length === 0) {
+                        $(this).after('<div class="invalid-feedback d-block">هذا الحقل مطلوب</div>');
+                    }
+                }
+            });
+
+            // إذا كان النموذج غير صالح، أوقف الإرسال
+            if (!isValid) {
+                e.preventDefault();
+
+                // التمرير إلى أول حقل به خطأ
+                $('html, body').animate({
+                    scrollTop: $('[required]:invalid').first().offset().top - 100
+                }, 500);
+            }
+        });
+
+        // تمييز الحقول المطلوبة بصرياً
+        $('[required]').each(function() {
+            const label = $('label[for="' + $(this).attr('id') + '"]');
+            if (label.length) {
+                label.addClass('required');
+            }
+        });
+    });
+</script>
+{% endblock %}

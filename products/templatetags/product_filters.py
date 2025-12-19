@@ -25,3 +25,4 @@ def percent(value, total):
         return int((float(value) / float(total)) * 100) if float(total) != 0 else 0
     except (ValueError, TypeError):
         return 0
+

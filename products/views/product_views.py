@@ -32,18 +32,50 @@ class CategoryListView(ListView):
 
     def get_queryset(self):
         """الحصول على الفئات الرئيسية مع عدد المنتجات"""
-        return Category.objects.filter(
+        categories = Category.objects.filter(
             parent=None,
             is_active=True
-        ).annotate(
-            total_products=Count(
-                'products',
-                filter=Q(products__is_active=True, products__status='published')
-            ) + Count(
-                'children__products',
-                filter=Q(children__products__is_active=True, children__products__status='published')
-            )
+        ).prefetch_related(
+            'children__children',
+            'products',
+            'children__products',
+            'children__children__products'
         ).order_by('sort_order', 'name')
+
+        # حساب العدد لكل فئة
+        for category in categories:
+            # جمع كل المنتجات
+            total = category.products.filter(is_active=True, status='published').count()
+
+            # إضافة منتجات الأطفال
+            for child in category.children.filter(is_active=True):
+                # حساب منتجات الطفل مع أطفاله
+                child_total = child.products.filter(is_active=True, status='published').count()
+
+                # إضافة منتجات الأحفاد
+                for grandchild in child.children.filter(is_active=True):
+                    grandchild_count = grandchild.products.filter(is_active=True, status='published').count()
+                    child_total += grandchild_count
+
+                # حفظ العدد الإجمالي للطفل
+                child.products_count = child_total
+                total += child_total
+
+            category.products_total = total
+
+        return categories
+        # return Category.objects.filter(
+        #     parent=None,
+        #     is_active=True
+        # ).annotate(
+        #     total_products=Count(
+        #         'products',
+        #         filter=Q(products__is_active=True, products__status='published')
+        #     ) + Count(
+        #         'children__products',
+        #         filter=Q(children__products__is_active=True, children__products__status='published')
+        #     )
+        # ).order_by('sort_order', 'name')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -100,15 +132,17 @@ class CategoryListView(ListView):
                 # حساب إجمالي المنتجات = المنتجات المباشرة + منتجات الفئات الفرعية
                 total_category_products = category.direct_products_count + children_products_count
 
+
                 # إضافة عدد منتجات هذه الفئة إلى المجموع الكلي للشجرة الفرعية
                 total_products_in_subtree += total_category_products
 
                 result.append({
                     'id': category.id,
                     'name': category.name,
+                    'name_en': category.name_en,
                     'slug': category.slug,
                     'children': children,
-                    'products_count': total_category_products,  # العدد الإجمالي للمنتجات
+                    'c': total_category_products,  # العدد الإجمالي للمنتجات
                     'has_children': bool(children)
                 })
 
@@ -119,6 +153,73 @@ class CategoryListView(ListView):
 
         return tree
 
+class SubCategoryListView(ListView):
+    """
+    عرض قائمة التصنيفات الفرعية لتصنيف معين
+    """
+    model = Category
+    template_name = 'products/subcategory_list.html'
+    context_object_name = 'subcategories'
+
+    def get_queryset(self):
+        """الحصول على التصنيفات الفرعية للتصنيف المحدد"""
+        parent_slug = self.kwargs.get('parent_slug')
+        try:
+            self.parent_category = Category.objects.get(slug=parent_slug, is_active=True)
+            return Category.objects.filter(
+                parent=self.parent_category,
+                is_active=True
+            ).annotate(
+                total_products=Count(
+                    'products',
+                    filter=Q(products__is_active=True, products__status='published')
+                ) + Count(
+                    'children__products',
+                    filter=Q(children__products__is_active=True, children__products__status='published')
+                )
+            ).order_by('sort_order', 'name')
+        except Category.DoesNotExist:
+            raise Http404(_("التصنيف غير موجود"))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['parent_category'] = self.parent_category
+        context['title'] = _("التصنيفات الفرعية: {}").format(self.parent_category.name)
+        return context
+
+# =============================================
+# ============ عروض العلامات التجارية ===============
+# =============================================
+class BrandListView(ListView):
+    """
+    عرض قائمة العلامات التجارية
+    """
+    model = Brand
+    template_name = 'products/brand_list.html'
+    context_object_name = 'brands'
+
+    def get_queryset(self):
+        """الحصول على العلامات التجارية النشطة"""
+        return Brand.objects.filter(
+            is_active=True
+        ).annotate(
+            total_products=Count(
+                'products',
+                filter=Q(products__is_active=True, products__status='published')
+            )
+        ).order_by('sort_order', 'name')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = _('جميع العلامات التجارية')
+
+        # الماركات المميزة
+        context['featured_brands'] = Brand.objects.filter(
+            is_featured=True,
+            is_active=True
+        ).order_by('sort_order')[:6]
+
+        return context
 
 # =============================================
 # ============= عروض المنتجات ===============

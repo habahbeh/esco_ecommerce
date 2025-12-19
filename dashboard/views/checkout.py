@@ -16,6 +16,8 @@ from datetime import datetime, timedelta
 from checkout.models import CheckoutSession, ShippingMethod, PaymentMethod, Coupon, CouponUsage
 from orders.models import Order
 from .dashboard import DashboardAccessMixin
+from django.utils.decorators import method_decorator
+from dashboard.decorators import permission_required
 
 
 # ========================= جلسات الدفع =========================
@@ -298,6 +300,7 @@ class ShippingMethodDeleteView(DashboardAccessMixin, View):
 
 # ========================= طرق الدفع =========================
 
+@method_decorator(permission_required('checkout.view_paymentmethod'), name='dispatch')
 class PaymentMethodListView(DashboardAccessMixin, View):
     """عرض قائمة طرق الدفع"""
 
@@ -312,6 +315,7 @@ class PaymentMethodListView(DashboardAccessMixin, View):
         return render(request, 'dashboard/checkout/payment_method_list.html', context)
 
 
+@method_decorator(permission_required('checkout.add_paymentmethod'), name='dispatch')
 class PaymentMethodFormView(DashboardAccessMixin, View):
     """عرض إنشاء وتحديث طريقة الدفع"""
 
@@ -334,10 +338,13 @@ class PaymentMethodFormView(DashboardAccessMixin, View):
     def post(self, request, method_id=None):
         # جمع البيانات من النموذج
         name = request.POST.get('name')
+        name_en = request.POST.get('name_en')  # الحقل الجديد باللغة الإنجليزية
         code = request.POST.get('code')
         payment_type = request.POST.get('payment_type')
         description = request.POST.get('description', '')
+        description_en = request.POST.get('description_en', '')  # الحقل الجديد باللغة الإنجليزية
         instructions = request.POST.get('instructions', '')
+        instructions_en = request.POST.get('instructions_en', '')  # الحقل الجديد باللغة الإنجليزية
         fee_fixed = request.POST.get('fee_fixed', 0)
         fee_percentage = request.POST.get('fee_percentage', 0)
         is_active = request.POST.get('is_active') == 'on'
@@ -346,25 +353,17 @@ class PaymentMethodFormView(DashboardAccessMixin, View):
         max_amount = request.POST.get('max_amount', 0)
         sort_order = request.POST.get('sort_order', 0)
 
-        # بيانات API (إذا كانت متوفرة)
-        api_data = {}
-        api_key = request.POST.get('api_key', '')
-        api_secret = request.POST.get('api_secret', '')
-        api_endpoint = request.POST.get('api_endpoint', '')
-        api_mode = request.POST.get('api_mode', 'sandbox')
-
-        if api_key:
-            api_data['api_key'] = api_key
-        if api_secret:
-            api_data['api_secret'] = api_secret
-        if api_endpoint:
-            api_data['api_endpoint'] = api_endpoint
-        if api_mode:
-            api_data['mode'] = api_mode
+        # بيانات API (استخدام الحقل المخفي الذي يتم تخزين القيم فيه)
+        api_credentials_str = request.POST.get('api_credentials_hidden', '{}')
+        try:
+            import json
+            api_data = json.loads(api_credentials_str)
+        except:
+            api_data = {}
 
         # التحقق من البيانات المطلوبة
-        if not name or not code or not payment_type:
-            messages.error(request, 'اسم ورمز ونوع طريقة الدفع مطلوبة')
+        if not name or not name_en or not code or not payment_type:
+            messages.error(request, 'اسم ورمز ونوع طريقة الدفع مطلوبة باللغتين العربية والإنجليزية')
             return redirect(request.path)
 
         # التحقق من عدم تكرار الرمز
@@ -384,10 +383,13 @@ class PaymentMethodFormView(DashboardAccessMixin, View):
 
                 # تحديث البيانات
                 payment_method.name = name
+                payment_method.name_en = name_en  # تحديث الحقل الإنجليزي
                 payment_method.code = code
                 payment_method.payment_type = payment_type
                 payment_method.description = description
+                payment_method.description_en = description_en  # تحديث الحقل الإنجليزي
                 payment_method.instructions = instructions
+                payment_method.instructions_en = instructions_en  # تحديث الحقل الإنجليزي
                 payment_method.fee_fixed = fee_fixed
                 payment_method.fee_percentage = fee_percentage
                 payment_method.is_active = is_active
@@ -398,9 +400,7 @@ class PaymentMethodFormView(DashboardAccessMixin, View):
 
                 # تحديث بيانات API
                 if api_data:
-                    current_api_credentials = payment_method.api_credentials
-                    current_api_credentials.update(api_data)
-                    payment_method.api_credentials = current_api_credentials
+                    payment_method.api_credentials = api_data
 
                 payment_method.save()
                 messages.success(request, 'تم تحديث طريقة الدفع بنجاح')
@@ -408,10 +408,13 @@ class PaymentMethodFormView(DashboardAccessMixin, View):
                 # إنشاء طريقة دفع جديدة
                 payment_method = PaymentMethod.objects.create(
                     name=name,
+                    name_en=name_en,  # إضافة الحقل الإنجليزي
                     code=code,
                     payment_type=payment_type,
                     description=description,
+                    description_en=description_en,  # إضافة الحقل الإنجليزي
                     instructions=instructions,
+                    instructions_en=instructions_en,  # إضافة الحقل الإنجليزي
                     fee_fixed=fee_fixed,
                     fee_percentage=fee_percentage,
                     is_active=is_active,
@@ -429,13 +432,20 @@ class PaymentMethodFormView(DashboardAccessMixin, View):
                 payment_method.icon = icon
                 payment_method.save()
 
+            # معالجة حذف الأيقونة إذا تم تحديد ذلك
+            delete_icon = request.POST.get('delete_icon') == 'on'
+            if delete_icon and payment_method.icon:
+                payment_method.icon.delete()
+                payment_method.icon = None
+                payment_method.save()
+
             return redirect('dashboard:dashboard_payment_methods')
 
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء حفظ طريقة الدفع: {str(e)}')
             return redirect(request.path)
 
-
+@method_decorator(permission_required('checkout.delete_paymentmethod'), name='dispatch')
 class PaymentMethodDeleteView(DashboardAccessMixin, View):
     """حذف طريقة الدفع"""
 

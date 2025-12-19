@@ -21,9 +21,12 @@ from products.models import Product, ProductVariant
 from .dashboard import DashboardAccessMixin
 from django.core.mail import send_mail
 from django.conf import settings
+from django.utils.decorators import method_decorator
+from dashboard.decorators import permission_required
 
 # ========================= قائمة الطلبات =========================
 
+@method_decorator(permission_required('orders.view_order'), name='dispatch')
 class OrderListView(DashboardAccessMixin, View):
     """عرض قائمة الطلبات مع البحث والتصفية"""
 
@@ -131,7 +134,7 @@ class OrderListView(DashboardAccessMixin, View):
 
 
 # ========================= تفاصيل الطلب =========================
-
+@method_decorator(permission_required('orders.view_order'), name='dispatch')
 class OrderDetailView(DashboardAccessMixin, View):
     """عرض تفاصيل الطلب"""
 
@@ -204,6 +207,7 @@ class OrderDetailView(DashboardAccessMixin, View):
 
 # ========================= تحديث حالة الطلب =========================
 
+@method_decorator(permission_required('orders.change_order'), name='dispatch')
 class OrderUpdateStatusView(DashboardAccessMixin, View):
     """تحديث حالة الطلب"""
 
@@ -319,6 +323,7 @@ class OrderUpdateStatusView(DashboardAccessMixin, View):
 
 # ========================= تحديث حالة الدفع =========================
 
+@method_decorator(permission_required('orders.change_order'), name='dispatch')
 class OrderUpdatePaymentStatusView(DashboardAccessMixin, View):
     """تحديث حالة دفع الطلب"""
 
@@ -351,6 +356,7 @@ class OrderUpdatePaymentStatusView(DashboardAccessMixin, View):
 
 # ========================= إلغاء الطلب =========================
 
+@method_decorator(permission_required('orders.change_order'), name='dispatch')
 class OrderCancelView(DashboardAccessMixin, View):
     """إلغاء الطلب"""
 
@@ -360,7 +366,7 @@ class OrderCancelView(DashboardAccessMixin, View):
         # التحقق من إمكانية إلغاء الطلب
         if order.status in ['delivered', 'refunded', 'cancelled']:
             messages.error(request, 'لا يمكن إلغاء هذا الطلب في حالته الحالية')
-            return redirect('dashboard_order_detail', order_id=order.id)
+            return redirect('dashboard:dashboard_order_detail', order_id=order.id)
 
         # إلغاء الطلب
         old_status = order.status
@@ -393,11 +399,12 @@ class OrderCancelView(DashboardAccessMixin, View):
                         variant.save()
 
         messages.success(request, 'تم إلغاء الطلب بنجاح')
-        return redirect('dashboard_order_detail', order_id=order.id)
+        return redirect('dashboard:dashboard_order_detail', order_id=order.id)
 
 
 # ========================= طباعة الطلب =========================
 
+@method_decorator(permission_required('orders.view_order'), name='dispatch')
 class OrderPrintView(DashboardAccessMixin, View):
     """طباعة تفاصيل الطلب وتحديث الحالة إلى 'إغلاق الطلب'"""
 
@@ -433,6 +440,7 @@ class OrderPrintView(DashboardAccessMixin, View):
 
 # ========================= إنشاء طلب جديد =========================
 
+@method_decorator(permission_required('orders.add_order'), name='dispatch')
 class OrderCreateView(DashboardAccessMixin, View):
     """إنشاء طلب جديد من لوحة التحكم"""
 
@@ -579,15 +587,16 @@ class OrderCreateView(DashboardAccessMixin, View):
             order.save()
 
             messages.success(request, f'تم إنشاء الطلب بنجاح برقم {order.order_number}')
-            return redirect('dashboard_order_detail', order_id=order.id)
+            return redirect('dashboard:dashboard_order_detail', order_id=order.id)
 
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء إنشاء الطلب: {str(e)}')
-            return redirect('dashboard_order_create')
+            return redirect('dashboard:dashboard_order_create')
 
 
 # ========================= إحصائيات وتقارير الطلبات =========================
 
+@method_decorator(permission_required('orders.view_order'), name='dispatch')
 class OrderReportsView(DashboardAccessMixin, View):
     """عرض تقارير وإحصائيات الطلبات"""
 
@@ -719,6 +728,7 @@ class OrderReportsView(DashboardAccessMixin, View):
 
 # ========================= تصدير الطلبات =========================
 
+@method_decorator(permission_required('orders.view_order'), name='dispatch')
 class OrderExportView(DashboardAccessMixin, View):
     """تصدير الطلبات إلى ملفات CSV"""
 
@@ -800,6 +810,7 @@ class OrderExportView(DashboardAccessMixin, View):
 
 # ========================= البحث عن الطلبات =========================
 
+@method_decorator(permission_required('orders.view_order'), name='dispatch')
 def order_search(request):
     """بحث سريع عن الطلبات (للاستخدام مع AJAX)"""
 
@@ -835,6 +846,7 @@ def order_search(request):
 
 # ========================= لوحة معلومات الطلبات =========================
 
+@method_decorator(permission_required('orders.view_order'), name='dispatch')
 class OrderDashboardView(DashboardAccessMixin, View):
     """لوحة معلومات الطلبات"""
 
@@ -937,6 +949,7 @@ class OrderDashboardView(DashboardAccessMixin, View):
         return render(request, 'dashboard/orders/order_dashboard.html', context)
 
 
+@method_decorator(permission_required('orders.view_order'), name='dispatch')
 class DeliveryOrdersReportView(DashboardAccessMixin, View):
     """عرض تقرير الطلبات المؤكدة المنتظرة التوصيل"""
 

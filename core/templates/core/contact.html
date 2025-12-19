@@ -45,15 +45,27 @@
                         <i class="fas fa-phone-alt fa-3x text-primary"></i>
                     </div>
                     <h4>{% trans "الهاتف" %}</h4>
-                    <p class="mt-3">{% trans "الهاتف الرئيسي" %}: 064027888</p>
-                    <p>{% trans "واتساب" %}: 0775599466</p>
+                    {% if site_settings.phone %}
+                    <p class="mt-3">{% trans "الهاتف الرئيسي" %}: {{ site_settings.phone }}</p>
+                    {% endif %}
+                    {% if site_settings.phone_whatsapp %}
+                    <p>{% trans "واتساب" %}: {{ site_settings.phone_whatsapp }}</p>
+                    {% endif %}
                     <div class="mt-3">
-                        <a href="tel:+96264027888" class="btn btn-outline-primary rounded-pill">
+                        {% if site_settings.phone %}
+                        <a href="tel:{{ site_settings.phone }}" class="btn btn-outline-primary rounded-pill">
                             <i class="fas fa-phone-alt me-2"></i> {% trans "اتصل بنا" %}
                         </a>
-                        <a href="https://wa.me/962775599466" class="btn btn-outline-success rounded-pill mt-2">
+                        {% endif %}
+                        {% if site_settings.whatsapp %}
+                        <a href="{{ site_settings.whatsapp }}" class="btn btn-outline-success rounded-pill mt-2" target="_blank">
                             <i class="fab fa-whatsapp me-2"></i> {% trans "واتساب" %}
                         </a>
+                        {% elif site_settings.phone_whatsapp %}
+                        <a href="https://wa.me/{{ site_settings.phone_whatsapp|cut:' '|cut:'-'|cut:'+' }}" class="btn btn-outline-success rounded-pill mt-2" target="_blank">
+                            <i class="fab fa-whatsapp me-2"></i> {% trans "واتساب" %}
+                        </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -296,15 +308,25 @@
                 <h2 class="fw-bold">{% trans "هل لديك استفسارات أخرى؟" %}</h2>
                 <p class="lead">{% trans "فريقنا جاهز للإجابة على جميع أسئلتك واستفساراتك" %}</p>
                 <div class="mt-4">
-                    <a href="tel:+96264027888" class="btn btn-light btn-lg me-2 mb-2">
+                    {% if site_settings.phone %}
+                    <a href="tel:{{ site_settings.phone }}" class="btn btn-light btn-lg me-2 mb-2">
                         <i class="fas fa-phone-alt me-2"></i> {% trans "اتصل بنا" %}
                     </a>
-                    <a href="mailto:contact@esco.jo" class="btn btn-outline-light btn-lg mb-2">
+                    {% endif %}
+                    {% if site_settings.email %}
+                    <a href="mailto:{{ site_settings.email }}" class="btn btn-outline-light btn-lg mb-2">
                         <i class="fas fa-envelope me-2"></i> {% trans "راسلنا" %}
                     </a>
-                    <a href="https://wa.me/962775599466" class="btn btn-success btn-lg mb-2">
+                    {% endif %}
+                    {% if site_settings.whatsapp %}
+                    <a href="{{ site_settings.whatsapp }}" class="btn btn-success btn-lg mb-2" target="_blank">
                         <i class="fab fa-whatsapp me-2"></i> {% trans "واتساب" %}
                     </a>
+                    {% elif site_settings.phone_whatsapp %}
+                    <a href="https://wa.me/{{ site_settings.phone_whatsapp|cut:' '|cut:'-'|cut:'+' }}" class="btn btn-success btn-lg mb-2" target="_blank">
+                        <i class="fab fa-whatsapp me-2"></i> {% trans "واتساب" %}
+                    </a>
+                    {% endif %}
                 </div>
             </div>
         </div>

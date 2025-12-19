@@ -183,7 +183,7 @@ class UserForm(forms.ModelForm):
 
 
 class RoleForm(forms.ModelForm):
-    """نموذج إدارة الأدوار"""
+    """نموذج إدارة الأدوار """
     permissions = forms.ModelMultipleChoiceField(
         queryset=None,
         widget=forms.CheckboxSelectMultiple(),

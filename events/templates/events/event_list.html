@@ -36,9 +36,17 @@
                 <div class="col-md-6" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
                     <div class="card event-card h-100">
                         <div class="event-badge-ongoing">{% trans "جارية" %}</div>
-                        <img src="{{ event.cover_image.url }}" class="card-img-top" alt="{{ event.title }}">
+                        {% if event.cover_image %}
+                            <img src="{{ event.cover_image.url }}" class="card-img-top" alt="{% if LANGUAGE_CODE == 'en' and event.title_en %}{{ event.title_en }}{% else %}{{ event.title }}{% endif %}">
+                        {% endif %}
                         <div class="card-body">
-                            <h3 class="card-title">{{ event.title }}</h3>
+                            <h3 class="card-title">
+                                {% if LANGUAGE_CODE == 'en' and event.title_en %}
+                                    {{ event.title_en }}
+                                {% else %}
+                                    {{ event.title }}
+                                {% endif %}
+                            </h3>
                             <div class="event-details">
                                 <div class="event-info">
                                     <i class="fas fa-calendar-alt"></i>
@@ -46,10 +54,22 @@
                                 </div>
                                 <div class="event-info">
                                     <i class="fas fa-map-marker-alt"></i>
-                                    <span>{{ event.location }}</span>
+                                    <span>
+                                        {% if LANGUAGE_CODE == 'en' and event.location_en %}
+                                            {{ event.location_en }}
+                                        {% else %}
+                                            {{ event.location }}
+                                        {% endif %}
+                                    </span>
                                 </div>
                             </div>
-                            <p class="card-text">{{ event.short_description }}</p>
+                            <p class="card-text">
+                                {% if LANGUAGE_CODE == 'en' and event.short_description_en %}
+                                    {{ event.short_description_en }}
+                                {% else %}
+                                    {{ event.short_description }}
+                                {% endif %}
+                            </p>
                             <a href="{{ event.get_absolute_url }}" class="btn btn-primary">{% trans "عرض التفاصيل" %}</a>
                         </div>
                     </div>
@@ -68,15 +88,23 @@
             <h2>{% trans "الفعاليات القادمة" %}</h2>
             <p class="lead text-muted">{% trans "تعرف على فعالياتنا القادمة وكن أول الحاضرين" %}</p>
         </div>
-        
+
         <div class="row g-4">
             {% for event in upcoming_events %}
                 <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
                     <div class="card event-card h-100">
                         <div class="event-badge-upcoming">{% trans "قادمة" %}</div>
-                        <img src="{{ event.cover_image.url }}" class="card-img-top" alt="{{ event.title }}">
+                        {% if event.cover_image %}
+                            <img src="{{ event.cover_image.url }}" class="card-img-top" alt="{% if LANGUAGE_CODE == 'en' and event.title_en %}{{ event.title_en }}{% else %}{{ event.title }}{% endif %}">
+                        {% endif %}
                         <div class="card-body">
-                            <h4 class="card-title">{{ event.title }}</h4>
+                            <h4 class="card-title">
+                                {% if LANGUAGE_CODE == 'en' and event.title_en %}
+                                    {{ event.title_en }}
+                                {% else %}
+                                    {{ event.title }}
+                                {% endif %}
+                            </h4>
                             <div class="event-details">
                                 <div class="event-info">
                                     <i class="fas fa-calendar-alt"></i>
@@ -84,10 +112,22 @@
                                 </div>
                                 <div class="event-info">
                                     <i class="fas fa-map-marker-alt"></i>
-                                    <span>{{ event.location }}</span>
+                                    <span>
+                                        {% if LANGUAGE_CODE == 'en' and event.location_en %}
+                                            {{ event.location_en }}
+                                        {% else %}
+                                            {{ event.location }}
+                                        {% endif %}
+                                    </span>
                                 </div>
                             </div>
-                            <p class="card-text">{{ event.short_description }}</p>
+                            <p class="card-text">
+                                {% if LANGUAGE_CODE == 'en' and event.short_description_en %}
+                                    {{ event.short_description_en }}
+                                {% else %}
+                                    {{ event.short_description }}
+                                {% endif %}
+                            </p>
                             <a href="{{ event.get_absolute_url }}" class="btn btn-outline-primary">{% trans "عرض التفاصيل" %}</a>
                         </div>
                     </div>
@@ -106,20 +146,40 @@
             <h2>{% trans "الفعاليات السابقة" %}</h2>
             <p class="lead text-muted">{% trans "ألقِ نظرة على فعالياتنا السابقة" %}</p>
         </div>
-        
+
         <div class="row g-4">
             {% for event in past_events %}
                 <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
                     <div class="card event-card h-100">
                         <div class="event-badge-past">{% trans "منتهية" %}</div>
-                        <img src="{{ event.cover_image.url }}" class="card-img-top" alt="{{ event.title }}">
+                        {% if event.cover_image %}
+                            <img src="{{ event.cover_image.url }}" class="card-img-top" alt="{% if LANGUAGE_CODE == 'en' and event.title_en %}{{ event.title_en }}{% else %}{{ event.title }}{% endif %}">
+                        {% endif %}
                         <div class="card-body">
-                            <h5 class="card-title">{{ event.title }}</h5>
+                            <h5 class="card-title">
+                                {% if LANGUAGE_CODE == 'en' and event.title_en %}
+                                    {{ event.title_en }}
+                                {% else %}
+                                    {{ event.title }}
+                                {% endif %}
+                            </h5>
                             <div class="event-details">
                                 <div class="event-info">
                                     <i class="fas fa-calendar-alt"></i>
                                     <span>{{ event.start_date|date:"j F Y" }}</span>
                                 </div>
+                                {% if event.location or event.location_en %}
+                                <div class="event-info">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>
+                                        {% if LANGUAGE_CODE == 'en' and event.location_en %}
+                                            {{ event.location_en }}
+                                        {% else %}
+                                            {{ event.location }}
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                {% endif %}
                             </div>
                             <a href="{{ event.get_absolute_url }}" class="btn btn-sm btn-outline-secondary">{% trans "عرض التفاصيل" %}</a>
                         </div>
@@ -155,17 +215,17 @@
         transition: all 0.3s ease;
         position: relative;
     }
-    
+
     .event-card:hover {
         transform: translateY(-10px);
         box-shadow: 0 15px 30px rgba(0,0,0,0.2);
     }
-    
+
     .event-card .card-img-top {
         height: 220px;
         object-fit: cover;
     }
-    
+
     .event-badge-ongoing,
     .event-badge-upcoming,
     .event-badge-past {
@@ -177,6 +237,13 @@
         font-size: 12px;
         font-weight: bold;
         z-index: 1;
+    }
+
+    html[dir="rtl"] .event-badge-ongoing,
+    html[dir="rtl"] .event-badge-upcoming,
+    html[dir="rtl"] .event-badge-past {
+        right: auto;
+        left: 15px;
     }
     
     .event-badge-ongoing {

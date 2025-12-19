@@ -559,6 +559,13 @@ def search_suggestions(request):
         return JsonResponse({'suggestions': []})
 
     try:
+        # الحصول على اللغة من الصفحة التي جاء منها الطلب
+        current_lang = 'ar'
+        referer = request.META.get('HTTP_REFERER', '')
+        if '/en/' in referer:
+            current_lang = 'en'
+        lang_prefix = '/en' if current_lang == 'en' else ''
+
         # البحث في المنتجات
         products = Product.objects.filter(
             Q(name__icontains=query) | Q(name_en__icontains=query),
@@ -597,20 +604,29 @@ def search_suggestions(request):
             elif hasattr(product, 'base_price'):
                 current_price = product.base_price
 
+            # إضافة language prefix للـ URL
+            product_url = product.get_absolute_url() if hasattr(product, 'get_absolute_url') else '#'
+            if product_url != '#' and not product_url.startswith(('/en/', '/ar/')):
+                product_url = lang_prefix + product_url
+
             suggestions.append({
                 'type': 'product',
                 'title': product.name,
-                'url': product.get_absolute_url() if hasattr(product, 'get_absolute_url') else '#',
+                'url': product_url,
                 'image': main_image_url,
                 'price': str(current_price),
             })
 
         # إضافة الفئات
         for category in categories:
+            category_url = category.get_absolute_url() if hasattr(category, 'get_absolute_url') else '#'
+            if category_url != '#' and not category_url.startswith(('/en/', '/ar/')):
+                category_url = lang_prefix + category_url
+
             suggestions.append({
                 'type': 'category',
                 'title': category.name,
-                'url': category.get_absolute_url() if hasattr(category, 'get_absolute_url') else '#',
+                'url': category_url,
                 'count': category.products.filter(
                     is_active=True,
                     status='published'
@@ -624,6 +640,9 @@ def search_suggestions(request):
                 brand_url = brand.get_absolute_url()
             elif hasattr(brand, 'slug'):
                 brand_url = f'/products/brand/{brand.slug}/'
+
+            if brand_url != '#' and not brand_url.startswith(('/en/', '/ar/')):
+                brand_url = lang_prefix + brand_url
 
             suggestions.append({
                 'type': 'brand',

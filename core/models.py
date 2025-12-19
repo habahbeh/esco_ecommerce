@@ -14,11 +14,14 @@ class SiteSettings(models.Model):
     favicon = models.ImageField(_("أيقونة الموقع"), upload_to='site/', null=True, blank=True)
     email = models.EmailField(_("البريد الإلكتروني"), blank=True)
     phone = models.CharField(_("رقم الهاتف"), max_length=20, blank=True)
+    phone_whatsapp = models.CharField(_("رقم الهاتف واتساب"), max_length=20, blank=True)
     address = models.TextField(_("العنوان"), blank=True)
     facebook = models.URLField(_("فيسبوك"), blank=True)
     twitter = models.URLField(_("تويتر"), blank=True)
     instagram = models.URLField(_("انستغرام"), blank=True)
     linkedin = models.URLField(_("لينكد إن"), blank=True)
+    whatsapp = models.URLField(_("واتساب"), blank=True)
+
 
     # إعدادات المظهر - Appearance settings
     PRIMARY_COLOR_CHOICES = [
@@ -50,6 +53,7 @@ class SiteSettings(models.Model):
     default_dark_mode = models.BooleanField(_("الوضع الداكن افتراضيًا"), default=False)
 
     class Meta:
+        app_label = 'core'
         verbose_name = _("إعدادات الموقع")
         verbose_name_plural = _("إعدادات الموقع")
 
@@ -99,6 +103,7 @@ class Newsletter(models.Model):
     created_at = models.DateTimeField(_("تاريخ الاشتراك"), auto_now_add=True)
 
     class Meta:
+        app_label = 'core'
         verbose_name = _("اشتراك في النشرة البريدية")
         verbose_name_plural = _("اشتراكات النشرة البريدية")
 
@@ -129,6 +134,7 @@ class SliderItem(models.Model):
     is_active = models.BooleanField(_("نشط"), default=True)
 
     class Meta:
+        app_label = 'core'
         verbose_name = _("عنصر السلايدر")
         verbose_name_plural = _("عناصر السلايدر")
         ordering = ['order']  # ترتيب العناصر حسب الحقل order
@@ -148,6 +154,7 @@ class StaticContent(models.Model):
     last_updated = models.DateTimeField(_("آخر تحديث"), auto_now=True)
 
     class Meta:
+        app_label = 'core'
         verbose_name = _("محتوى ثابت")
         verbose_name_plural = _("محتويات ثابتة")
 

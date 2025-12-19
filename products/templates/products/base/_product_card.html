@@ -19,16 +19,22 @@
         <div class="product-badge-sale">-{{ product.discount_percentage }}%</div>
     {% endif %}
 
-    {% if product.default_image %}
-        <img src="{{ product.default_image.image.url }}" class="card-img-top" alt="{{ product.name }}">
-    {% else %}
-        <div class="no-image card-img-top d-flex align-items-center justify-content-center">
+    <div class="product-image-container">
+        {% if product.default_image %}
+            <img src="{{ product.default_image.image.url }}" alt="{{ product.name }}">
+        {% else %}
             <i class="far fa-image fa-3x text-muted"></i>
-        </div>
-    {% endif %}
+        {% endif %}
+    </div>
 
     <div class="card-body">
-        <h3 class="card-title">{{ product.name }}</h3>
+        <h3 class="card-title">
+            {% if LANGUAGE_CODE == 'en' %}
+                {{ product.name_en }}
+            {% else %}
+                {{ product.name }}
+            {% endif %}
+        </h3>
         <div class="product-details">
             <div class="product-info">
                 <i class="fas fa-tag"></i>
@@ -36,7 +42,12 @@
             </div>
             <div class="product-info">
                 <i class="fas fa-layer-group"></i>
-                <span>{{ product.category.name }}</span>
+                {% if LANGUAGE_CODE == 'en' %}
+                    {{ product.category.name_en }}
+                {% else %}
+                    {{ product.category.name }}
+                {% endif %}
+                </span>
             </div>
 
 {#            {% if product.rating %}#}
@@ -47,7 +58,8 @@
 {#            {% endif %}#}
         </div>
         <div class="product-actions">
-            <a href="{% url 'products:product_detail' product.slug %}" class="btn btn-primary">{% trans "عرض التفاصيل" %}</a>
+            {% get_current_language as CURRENT_LANGUAGE %}
+            <a href="{% if CURRENT_LANGUAGE == 'en' %}/en{% endif %}{% url 'products:product_detail' product.slug %}" class="btn btn-primary">{% trans "عرض التفاصيل" %}</a>
 {#            {% if product.in_stock %}#}
 {#            <form action="{% url 'cart:add_to_cart' product.id %}" method="post" class="d-inline add-to-cart-form1">#}
 {#                {% csrf_token %}#}

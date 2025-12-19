@@ -1,6 +1,7 @@
 {% extends 'dashboard/base.html' %}
 {% load i18n %}
 {% load static %}
+{% load permission_filters %}
 
 {% block title %}{{ form_title }}{% endblock %}
 {% block page_title %}{{ form_title }}{% endblock %}
@@ -183,52 +184,97 @@
                         <span class="search-icon"><i class="fas fa-search"></i></span>
                     </div>
 
+{#                    <div class="permissions-container">#}
+{#                        {% regroup permissions by content_type.app_label as app_list %}#}
+{##}
+{#                        {% for app in app_list %}#}
+{#                        <div class="app-permissions" data-app="{{ app.grouper }}">#}
+{#                            <div class="app-header">#}
+{#                                <div class="app-title">#}
+{#                                    <span>{{ app.grouper|title }}</span>#}
+{#                                    <span class="permission-count">#}
+{#                                        <span class="app-selected-count">0</span> / {{ app.list|length }}#}
+{#                                    </span>#}
+{#                                </div>#}
+{#                            </div>#}
+{##}
+{#                            <div class="app-permissions-list">#}
+{#                                {% regroup app.list by content_type.model as model_list %}#}
+{##}
+{#                                {% for model in model_list %}#}
+{#                                <div class="model-permissions" data-model="{{ model.grouper }}">#}
+{#                                    <div class="model-title">#}
+{#                                        {{ model.grouper|title }}#}
+{#                                    </div>#}
+{##}
+{#                                    <div class="permission-group">#}
+{#                                        {% for permission in model.list %}#}
+{#                                        <div class="permission-row">#}
+{#                                            <div class="form-check">#}
+{#                                                <input class="form-check-input permission-checkbox" type="checkbox"#}
+{#                                                       id="permission_{{ permission.id }}"#}
+{#                                                       name="permissions"#}
+{#                                                       value="{{ permission.id }}"#}
+{#                                                       data-app="{{ app.grouper }}"#}
+{#                                                       {% if role and permission in role.permissions.all %}checked{% endif %}>#}
+{#                                            </div>#}
+{#                                            <label class="permission-name" for="permission_{{ permission.id }}">#}
+{#                                                {{ permission.name }}#}
+{#                                            </label>#}
+{#                                        </div>#}
+{#                                        {% endfor %}#}
+{#                                    </div>#}
+{#                                </div>#}
+{#                                {% endfor %}#}
+{#                            </div>#}
+{#                        </div>#}
+{#                        {% endfor %}#}
+{#                    </div>#}
+
                     <div class="permissions-container">
-                        {% regroup permissions by content_type.app_label as app_list %}
+    {% for app_label, models in permissions_by_app.items %}
+        <div class="app-permissions" data-app="{{ app_label }}">
+            <div class="app-header">
+                <div class="app-title">
+    <span>{{ app_label|get_app_display_name }}</span>
+    <span class="permission-count">
+        <span class="app-selected-count">0</span> /
+        <span class="app-total-count">0</span>
+    </span>
+</div>
+            </div>
 
-                        {% for app in app_list %}
-                        <div class="app-permissions" data-app="{{ app.grouper }}">
-                            <div class="app-header">
-                                <div class="app-title">
-                                    <span>{{ app.grouper|title }}</span>
-                                    <span class="permission-count">
-                                        <span class="app-selected-count">0</span> / {{ app.list|length }}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div class="app-permissions-list">
-                                {% regroup app.list by content_type.model as model_list %}
-
-                                {% for model in model_list %}
-                                <div class="model-permissions" data-model="{{ model.grouper }}">
-                                    <div class="model-title">
-                                        {{ model.grouper|title }}
-                                    </div>
-
-                                    <div class="permission-group">
-                                        {% for permission in model.list %}
-                                        <div class="permission-row">
-                                            <div class="form-check">
-                                                <input class="form-check-input permission-checkbox" type="checkbox"
-                                                       id="permission_{{ permission.id }}"
-                                                       name="permissions"
-                                                       value="{{ permission.id }}"
-                                                       data-app="{{ app.grouper }}"
-                                                       {% if role and permission in role.permissions.all %}checked{% endif %}>
-                                            </div>
-                                            <label class="permission-name" for="permission_{{ permission.id }}">
-                                                {{ permission.name }}
-                                            </label>
-                                        </div>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
+            <div class="app-permissions-list">
+                {% for model_name, model_permissions in models.items %}
+                    <div class="model-permissions" data-model="{{ model_name }}">
+                        <div class="model-title">
+                            {{ model_name|get_model_display_name }}
                         </div>
-                        {% endfor %}
+
+                        <div class="permission-group">
+                            {% for permission in model_permissions %}
+                                <div class="permission-row">
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox" type="checkbox"
+                                               id="permission_{{ permission.id }}"
+                                               name="permissions"
+                                               value="{{ permission.id }}"
+                                               data-app="{{ app_label }}"
+                                               data-model="{{ model_name }}"
+                                               {% if role and permission in role.permissions.all %}checked{% endif %}>
+                                    </div>
+                                    <label class="permission-name" for="permission_{{ permission.id }}">
+                                        {{ permission.name|translate_permission }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
                     </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+</div>
                 </div>
             </div>
 
@@ -244,6 +290,10 @@
 {% block extra_js %}
 <script>
     $(document).ready(function() {
+        // إضافة مؤشرات التوسيع/الطي بشكل صحيح
+        $('.app-header .app-title').append('<span class="toggle-indicator"><i class="fas fa-chevron-down"></i></span>');
+        $('.model-title').append('<span class="toggle-indicator"><i class="fas fa-chevron-down"></i></span>');
+
         // تحديث عدد الصلاحيات المحددة
         function updateSelectedCount() {
             var totalChecked = $('.permission-checkbox:checked').length;
@@ -253,17 +303,45 @@
             $('#selectedPermissionsCount').text(totalChecked);
             $('#permissionsProgressBar').css('width', percentage + '%').text(percentage + '%').attr('aria-valuenow', percentage);
 
-            // تحديث عدد الصلاحيات المحددة لكل تطبيق
+            // تحديث عدد الصلاحيات المحددة والإجمالي لكل تطبيق
             $('.app-permissions').each(function() {
                 var app = $(this).data('app');
-                var appChecked = $('.permission-checkbox[data-app="' + app + '"]:checked').length;
-                var appTotal = $('.permission-checkbox[data-app="' + app + '"]').length;
+                var appCheckboxes = $('.permission-checkbox[data-app="' + app + '"]');
+                var appChecked = appCheckboxes.filter(':checked').length;
+                var appTotal = appCheckboxes.length;
+
                 $(this).find('.app-selected-count').text(appChecked);
+                $(this).find('.app-total-count').text(appTotal);
+            });
+
+            // تحديث عدد الصلاحيات المحددة والإجمالي لكل نموذج
+            $('.model-permissions').each(function() {
+                var model = $(this).data('model');
+                var app = $(this).closest('.app-permissions').data('app');
+                var modelCheckboxes = $('.permission-checkbox[data-app="' + app + '"][data-model="' + model + '"]');
+                var modelChecked = modelCheckboxes.filter(':checked').length;
+                var modelTotal = modelCheckboxes.length;
+
+                // إضافة عداد للنموذج إذا لم يكن موجوداً
+                if ($(this).find('.model-count').length === 0) {
+                    $(this).find('.model-title').append(
+                        '<span class="model-count permission-count">' +
+                        '<span class="model-selected-count">' + modelChecked + '</span> / ' +
+                        '<span class="model-total-count">' + modelTotal + '</span>' +
+                        '</span>'
+                    );
+                } else {
+                    $(this).find('.model-selected-count').text(modelChecked);
+                    $(this).find('.model-total-count').text(modelTotal);
+                }
             });
         }
 
-        // تحديث عند تحميل الصفحة
+        // التأكد من عرض عدد الصلاحيات عند تحميل الصفحة
         updateSelectedCount();
+
+        // إعادة حساب العدد بعد 300 ملي ثانية لضمان تحميل جميع العناصر
+        setTimeout(updateSelectedCount, 300);
 
         // تحديث عند تغيير حالة الاختيار
         $('.permission-checkbox').on('change', function() {
@@ -271,15 +349,62 @@
         });
 
         // تحديد الكل
-        $('#selectAll').on('click', function() {
+        $('#selectAll').on('click', function(e) {
+            e.preventDefault();
             $('.permission-checkbox').prop('checked', true);
             updateSelectedCount();
         });
 
         // إلغاء تحديد الكل
-        $('#deselectAll').on('click', function() {
+        $('#deselectAll').on('click', function(e) {
+            e.preventDefault();
             $('.permission-checkbox').prop('checked', false);
             updateSelectedCount();
+        });
+
+        // إضافة أزرار تحديد/إلغاء تحديد للتطبيقات
+        $('.app-permissions').each(function() {
+            var $app = $(this);
+            var appName = $app.data('app');
+            var $appHeader = $app.find('.app-header');
+            var $toggleBtn = $('<button type="button" class="btn btn-sm btn-outline-secondary app-toggle-btn">تحديد/إلغاء</button>');
+
+            $appHeader.find('.app-title').prepend($toggleBtn);
+
+            $toggleBtn.on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                var $checkboxes = $('.permission-checkbox[data-app="' + appName + '"]');
+                var allChecked = $checkboxes.length === $checkboxes.filter(':checked').length;
+
+                // تبديل الحالة
+                $checkboxes.prop('checked', !allChecked);
+                updateSelectedCount();
+            });
+        });
+
+        // إضافة أزرار تحديد/إلغاء تحديد للنماذج
+        $('.model-permissions').each(function() {
+            var $model = $(this);
+            var modelName = $model.data('model');
+            var appName = $model.closest('.app-permissions').data('app');
+            var $modelTitle = $model.find('.model-title');
+            var $toggleBtn = $('<button type="button" class="btn btn-sm btn-outline-secondary model-toggle-btn">تحديد/إلغاء</button>');
+
+            $modelTitle.prepend($toggleBtn);
+
+            $toggleBtn.on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                var $checkboxes = $('.permission-checkbox[data-app="' + appName + '"][data-model="' + modelName + '"]');
+                var allChecked = $checkboxes.length === $checkboxes.filter(':checked').length;
+
+                // تبديل الحالة
+                $checkboxes.prop('checked', !allChecked);
+                updateSelectedCount();
+            });
         });
 
         // البحث في الصلاحيات
@@ -311,6 +436,83 @@
                 $('.app-permissions, .model-permissions, .permission-row').show();
             }
         });
+
+        // توسيع/طي قسم التطبيق
+        $('.app-header').on('click', function(e) {
+            if (!$(e.target).hasClass('app-toggle-btn') && !$(e.target).closest('.app-toggle-btn').length) {
+                var $appList = $(this).siblings('.app-permissions-list');
+                $appList.slideToggle(200);
+                $(this).toggleClass('collapsed');
+            }
+        });
+
+        // توسيع/طي قسم النموذج
+        $('.model-title').on('click', function(e) {
+            if (!$(e.target).hasClass('model-toggle-btn') && !$(e.target).closest('.model-toggle-btn').length) {
+                var $permGroup = $(this).siblings('.permission-group');
+                $permGroup.slideToggle(200);
+                $(this).toggleClass('collapsed');
+            }
+        });
+
+        // تحديث التصميم CSS
+        $('<style>')
+            .prop('type', 'text/css')
+            .html(`
+                .app-header, .model-title {
+                    cursor: pointer;
+                    position: relative;
+                }
+                .toggle-indicator {
+                    position: absolute;
+                    right: 15px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                }
+                [dir="rtl"] .toggle-indicator {
+                    right: auto;
+                    left: 15px;
+                }
+                .app-header.collapsed .toggle-indicator i,
+                .model-title.collapsed .toggle-indicator i {
+                    transform: rotate(-90deg);
+                }
+                .toggle-indicator i {
+                    transition: transform 0.2s ease;
+                }
+                .app-toggle-btn, .model-toggle-btn {
+                    margin-right: 8px;
+                    padding: 0.1rem 0.5rem;
+                    font-size: 0.75rem;
+                }
+                [dir="rtl"] .app-toggle-btn, [dir="rtl"] .model-toggle-btn {
+                    margin-right: 0;
+                    margin-left: 8px;
+                }
+                .model-count {
+                    margin-right: 30px;
+                }
+                [dir="rtl"] .model-count {
+                    margin-right: 0;
+                    margin-left: 30px;
+                }
+                .app-title {
+                    display: flex;
+                    align-items: center;
+                }
+                .model-title {
+                    display: flex;
+                    align-items: center;
+                }
+                .permission-count {
+                    margin-left: auto;
+                }
+                [dir="rtl"] .permission-count {
+
+                    margin-right: auto;
+                }
+            `)
+            .appendTo('head');
     });
 </script>
 {% endblock %}

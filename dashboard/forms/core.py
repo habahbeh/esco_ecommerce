@@ -24,7 +24,7 @@ class SiteSettingsForm(forms.ModelForm):
         fields = [
             'site_name', 'site_description', 'logo', 'favicon',
             'email', 'phone', 'address',
-            'facebook', 'twitter', 'instagram', 'linkedin',
+            'facebook', 'twitter', 'instagram', 'linkedin','whatsapp',
             'primary_color', 'enable_dark_mode', 'default_dark_mode'
         ]
         widgets = {
@@ -37,6 +37,7 @@ class SiteSettingsForm(forms.ModelForm):
             'twitter': forms.URLInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
             'instagram': forms.URLInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
             'linkedin': forms.URLInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
+            'whatsapp': forms.URLInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
             'primary_color': forms.Select(attrs={'class': 'form-select color-picker'}),
         }
 
@@ -70,6 +71,7 @@ class SiteSettingsForm(forms.ModelForm):
                 'twitter',
                 'instagram',
                 'linkedin',
+                'whatsapp',
             ),
             Fieldset(
                 _('إعدادات المظهر'),

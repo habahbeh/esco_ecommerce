@@ -26,10 +26,16 @@ class Event(models.Model):
     ]
 
     title = models.CharField(_("عنوان الفعالية"), max_length=200)
+    title_en = models.CharField(_("عنوان الفعالية بالإنجليزية"), max_length=200, blank=True)
+
     slug = models.SlugField(_("معرف URL"), max_length=250, unique=True, allow_unicode=True)
     description = models.TextField(_("وصف الفعالية"))
+    description_en = models.TextField(_("وصف الفعالية بالإنجليزية"), blank=True)
+
     short_description = models.CharField(_("وصف مختصر"), max_length=255, blank=True,
                                          help_text=_("وصف مختصر للعرض في الشريط العلوي"))
+    short_description_en = models.CharField(_("وصف مختصر بالإنجليزية"), max_length=255, blank=True)
+
 
     # التواريخ
     start_date = models.DateTimeField(_("تاريخ البدء"))
@@ -37,6 +43,8 @@ class Event(models.Model):
 
     # الموقع
     location = models.CharField(_("الموقع"), max_length=200, blank=True)
+    location_en = models.CharField(_("الموقع بالإنجليزية"), max_length=200, blank=True)
+
 
     # الصور
     banner_image = models.ImageField(_("صورة الشريط العلوي"), upload_to=upload_event_image,
@@ -52,12 +60,15 @@ class Event(models.Model):
     # معلومات إضافية
     registration_url = models.URLField(_("رابط التسجيل"), blank=True)
     button_text = models.CharField(_("نص الزر"), max_length=50, default=_("اعرف المزيد"))
+    button_text_en = models.CharField(_("نص الزر بالإنجليزية"), max_length=50, blank=True)
+
 
     # التوقيتات
     created_at = models.DateTimeField(_("تاريخ الإنشاء"), auto_now_add=True)
     updated_at = models.DateTimeField(_("تاريخ التحديث"), auto_now=True)
 
     class Meta:
+        app_label = 'events'
         verbose_name = _("فعالية")
         verbose_name_plural = _("الفعاليات")
         ordering = ['order', '-start_date']
@@ -126,9 +137,12 @@ class EventImage(models.Model):
 
     image = models.ImageField(_("الصورة"), upload_to=upload_event_image)
     caption = models.CharField(_("وصف الصورة"), max_length=200, blank=True)
+    caption_en = models.CharField(_("وصف الصورة بالإنجليزية"), max_length=200, blank=True)
+
     order = models.PositiveIntegerField(_("الترتيب"), default=0)
 
     class Meta:
+        app_label = 'events'
         verbose_name = _("صورة الفعالية")
         verbose_name_plural = _("صور الفعاليات")
         ordering = ['order']

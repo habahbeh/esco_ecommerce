@@ -1,13 +1,14 @@
 {% extends 'core/base.html' %}
 {% load static %}
 {% load i18n %}
+{% load custom_filters %}
 
 {% block title %}{% trans "اختيار طريقة الدفع" %} | ESCO{% endblock %}
 
 {% block content %}
 <div class="container py-5">
     <h1 class="mb-4">{% trans "اختيار طريقة الدفع" %}</h1>
-    
+
     <!-- خطوات الدفع -->
     <div class="checkout-steps mb-5">
         <div class="row">
@@ -31,7 +32,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="row">
         <div class="col-lg-8">
             <div class="card">
@@ -41,98 +42,47 @@
                 <div class="card-body">
                     <form method="post" action="{% url 'checkout:payment_method' %}">
                         {% csrf_token %}
-                        
+
                         <div class="payment-methods">
                             {% for method in payment_methods %}
-                                <div class="payment-method mb-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="payment_method" 
-                                               id="payment_method_{{ method.id }}" value="{{ method.id }}" 
-                                               {% if method.is_default %}checked{% endif %}>
-                                        <label class="form-check-label" for="payment_method_{{ method.id }}">
-                                            <div class="d-flex align-items-center">
-                                                {% if method.icon %}
-                                                    <img src="{{ method.icon.url }}" alt="{{ method.name }}" class="payment-icon me-2" width="40">
-                                                {% endif %}
-                                                <div>
-                                                    <span class="fw-bold">{{ method.name }}</span>
-                                                    {% if method.description %}
-                                                        <small class="text-muted d-block">{{ method.description }}</small>
-                                                    {% endif %}
-                                                </div>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="payment-instructions mt-2 ps-4 collapse" id="instructions_{{ method.id }}">
-                                        <div class="card card-body bg-light">
-                                            {{ method.instructions|linebreaks }}
-                                        </div>
-                                    </div>
-                                </div>
-                            {% empty %}
-                                <!-- طرق الدفع الافتراضية في حالة عدم وجود طرق مضافة في قاعدة البيانات -->
-                                <div class="payment-method mb-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="payment_method" 
-                                               id="payment_method_1" value="1" checked>
-                                        <label class="form-check-label" for="payment_method_1">
-                                            <div class="d-flex align-items-center">
-                                                <i class="fas fa-university me-2 fa-fw"></i>
-                                                <div>
-                                                    <span class="fw-bold">{% trans "تحويل بنكي" %}</span>
-                                                    <small class="text-muted d-block">{% trans "قم بالتحويل إلى حسابنا البنكي وأرفق إيصال الدفع" %}</small>
-                                                </div>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="payment-instructions mt-2 ps-4">
-                                        <div class="card card-body bg-light">
-                                            <p class="mb-1"><strong>{% trans "اسم البنك:" %}</strong> بنك الأردن</p>
-                                            <p class="mb-1"><strong>{% trans "اسم الحساب:" %}</strong> شركة ESCO للتجارة الإلكترونية</p>
-                                            <p class="mb-1"><strong>{% trans "رقم الحساب:" %}</strong> 1234567890</p>
-                                            <p class="mb-1"><strong>{% trans "IBAN:" %}</strong> JO123456789012345678901234567</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="payment-method mb-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="payment_method" 
-                                               id="payment_method_2" value="2">
-                                        <label class="form-check-label" for="payment_method_2">
-                                            <div class="d-flex align-items-center">
-                                                <i class="fas fa-wallet me-2 fa-fw"></i>
-                                                <div>
-                                                    <span class="fw-bold">{% trans "كليك" %}</span>
-                                                    <small class="text-muted d-block">{% trans "الدفع باستخدام تطبيق كليك للهواتف الذكية" %}</small>
-                                                </div>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="payment-instructions mt-2 ps-4 collapse" id="instructions_2">
-                                        <div class="card card-body bg-light">
-                                            <p>{% trans "قم بالدفع على رقم الهاتف: 0790123456" %}</p>
-                                            <p>{% trans "اسم المستفيد: ESCO للتجارة الإلكترونية" %}</p>
-                                            <p>{% trans "بعد إتمام عملية الدفع، يرجى إرفاق صورة من الإيصال" %}</p>
-                                        </div>
-                                    </div>
+                                <div class="payment-method-item">
+                                    <input type="radio" name="payment_method" id="payment_method_{{ method.id }}"
+                                           value="{{ method.id }}" {% if forloop.first %}checked{% endif %}>
+                                    <label for="payment_method_{{ method.id }}">
+                                        {% if method.icon %}<img src="{{ method.icon.url }}" alt="{{ method.name }}"
+                                                                 class="payment-icon">{% endif %}
+                                        <span class="payment-name">
+            {% if LANGUAGE_CODE == 'en' %}{{ method.name_en }}{% else %}{{ method.name }}{% endif %}
+        </span>
+                                    </label>
+                                    {% if LANGUAGE_CODE == 'en' and method.description_en %}
+                                        <div class="payment-description">{{ method.description_en }}</div>
+                                    {% elif method.description %}
+                                        <div class="payment-description">{{ method.description }}</div>
+                                    {% endif %}
+
+                                    {% if LANGUAGE_CODE == 'en' and method.instructions_en %}
+                                        <div class="payment-instructions">{{ method.instructions_en }}</div>
+                                    {% elif method.instructions %}
+                                        <div class="payment-instructions">{{ method.instructions }}</div>
+                                    {% endif %}
                                 </div>
                             {% endfor %}
                         </div>
-                        
+
                         <div class="d-flex justify-content-between mt-4">
                             <a href="{% url 'checkout:checkout' %}" class="btn btn-outline-primary">
-                                <i class="fas fa-arrow-right me-2"></i>{% trans "الرجوع" %}
+                                <i class="fas"></i>{% trans "الرجوع" %}
                             </a>
                             <button type="submit" class="btn btn-primary">
-                                {% trans "متابعة" %} <i class="fas fa-arrow-left ms-2"></i>
+                                {% trans "متابعة" %} <i class="fas "></i>
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-        
+
         <div class="col-lg-4">
             <div class="card">
                 <div class="card-header bg-primary text-white">
@@ -144,19 +94,47 @@
                             {% for item in cart_items %}
                                 <div class="d-flex justify-content-between mb-2">
                                     <div>
-                                        <span>{{ item.product.name }}</span>
-                                        <small class="text-muted d-block">{{ item.quantity }} × {{ item.price|floatformat:2 }}</small>
+                                        <span>{% if LANGUAGE_CODE == 'en' %}
+    {{ item.product.name_en }}
+{% else %}
+    {{ item.product.name }}
+{% endif %}</span>
+                                    <div>
+                                            {% if item.variant %}
+                                                <small class="text-muted">
+                                                    {% if item.variant.attributes %}
+                                                        {% for key, value in item.variant.attributes.items %}
+                                                            <span>{{ key }}: {{ value }}</span>{% if not forloop.last %}
+                                                            | {% endif %}
+                                                        {% endfor %}
+                                                    {% elif item.variant.variant_details %}
+                                                        {{ item.variant.variant_details }}
+                                                    {% elif item.variant.options.all %}
+                                                        {% for option in item.variant.options.all %}
+                                                            <span>{{ option.option_group.name }}: {{ option.name }}</span>
+                                                            {% if not forloop.last %} | {% endif %}
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        {% for attr_value in item.variant.attribute_values.all %}
+                                                            <span>{{ attr_value.attribute.name }}: {{ attr_value.value }}</span>
+                                                            {% if not forloop.last %} | {% endif %}
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                </small>
+                                            {% endif %}
+                                        </div>
+                                        <small class="text-muted d-block">{{ item.quantity }} × {{ item.price|without_tax|floatformat:2 }}</small>
                                     </div>
-                                    <span>{{ item.subtotal|floatformat:2 }} {% trans "د.أ" %}</span>
+                                    <span>{{ item.subtotal|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
                                 </div>
                             {% endfor %}
                         </div>
-                        
+
                         <hr>
-                        
+
                         <div class="d-flex justify-content-between mb-2">
                             <span>{% trans "المجموع الفرعي" %}</span>
-                            <span>{{ cart_subtotal|floatformat:2 }} {% trans "د.أ" %}</span>
+                            <span>{{ cart_subtotal|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
                         </div>
 {#                        <div class="d-flex justify-content-between mb-2">#}
 {#                            <span>{% trans "الشحن" %}</span>#}
@@ -164,14 +142,14 @@
 {#                        </div>#}
                         <div class="d-flex justify-content-between mb-2">
                             <span>{% trans "الضريبة" %}</span>
-                            <span>{{ cart_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                            <span>{{ cart_tax|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
                         </div>
-                        
+
                         <hr>
-                        
+
                         <div class="d-flex justify-content-between mb-2">
                             <strong>{% trans "المجموع" %}</strong>
-                            <strong>{{ cart_total|floatformat:2 }} {% trans "د.أ" %}</strong>
+                            <strong>{{ cart_total|without_tax|floatformat:2 }} {% trans "د.أ" %}</strong>
                         </div>
                     {% else %}
                         <div class="text-center py-3">
@@ -194,7 +172,7 @@ $(document).ready(function() {
         var methodId = $(this).val();
         $('#instructions_' + methodId).collapse('show');
     });
-    
+
     // عرض تعليمات طريقة الدفع المختارة
     var selectedMethod = $('input[name="payment_method"]:checked').val();
     if (selectedMethod) {

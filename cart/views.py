@@ -81,7 +81,7 @@ class CartDetailView(CartMixin, TemplateView):
                 continue
 
         context['cart_items'] = cart_items
-        context['cart_total'] = self.get_cart_total(self.request)
+        # context['cart_total'] = self.get_cart_total(self.request)
         context['cart_count'] = self.get_cart_items_count(self.request)
 
         # إضافة معلومات عما إذا كان المستخدم مسجل دخول أم لا
@@ -170,39 +170,183 @@ class AddToCartView(CartMixin, View):
             return redirect(request.META.get('HTTP_REFERER', 'products:product_list'))
 
 
+# class UpdateCartItemView(CartMixin, View):
+#     """
+#     Update cart item quantity
+#     """
+#     def post(self, request, item_id):
+#         cart = self.get_cart(request)
+#         quantity = int(request.POST.get('quantity', 1))
+#
+#         if str(item_id) in cart:
+#             if quantity > 0:
+#                 # Check stock
+#                 product_id = cart[str(item_id)]['product_id']
+#                 product = get_object_or_404(Product, id=product_id)
+#
+#                 if product.track_inventory and quantity > product.available_quantity:
+#                     messages.error(request, _('الكمية المطلوبة غير متوفرة'))
+#                 else:
+#                     cart[str(item_id)]['quantity'] = quantity
+#                     messages.success(request, _('تم تحديث الكمية'))
+#             else:
+#                 del cart[str(item_id)]
+#                 messages.success(request, _('تم إزالة المنتج من السلة'))
+#
+#             self.save_cart(request, cart)
+#
+#         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+#             return JsonResponse({
+#                 'success': True,
+#                 'cart_count': self.get_cart_items_count(request),
+#                 'cart_total': str(self.get_cart_total(request))
+#             })
+#
+#         return redirect('cart:cart_detail')
+
 class UpdateCartItemView(CartMixin, View):
     """
-    Update cart item quantity
+    طريقة عرض لتحديث كمية عنصر في سلة التسوق
+    تدعم طلبات AJAX وطلبات HTTP العادية
     """
+
     def post(self, request, item_id):
+        """
+        معالجة طلب POST لتحديث كمية عنصر
+
+        Args:
+            request: طلب HTTP
+            item_id: معرف عنصر السلة
+
+        Returns:
+            JsonResponse للطلبات من نوع AJAX
+            HTTP redirect للطلبات العادية
+        """
         cart = self.get_cart(request)
+        item_key = str(item_id)  # تحويل المعرف إلى نص
         quantity = int(request.POST.get('quantity', 1))
-        
-        if str(item_id) in cart:
-            if quantity > 0:
-                # Check stock
-                product_id = cart[str(item_id)]['product_id']
-                product = get_object_or_404(Product, id=product_id)
-                
-                if product.track_inventory and quantity > product.available_quantity:
-                    messages.error(request, _('الكمية المطلوبة غير متوفرة'))
+
+        # تهيئة بيانات الاستجابة
+        response_data = {
+            'success': False,
+            'message': '',
+            'item_id': item_key,
+            'item_quantity': quantity,
+            'item_subtotal': '0.00',  # قيمة افتراضية
+            'cart_count': 0,
+            'cart_subtotal': '0.00',
+            'cart_tax': '0.00',
+            'cart_total': '0.00',
+        }
+
+        # التحقق من وجود العنصر في السلة
+        if item_key in cart:
+            try:
+                if quantity > 0:
+                    # الحصول على بيانات المنتج
+                    product_id = cart[item_key]['product_id']
+                    product = get_object_or_404(Product, id=product_id)
+
+                    # الحصول على المتغير إن وجد
+                    variant = None
+                    variant_id = cart[item_key].get('variant_id')
+                    if variant_id:
+                        try:
+                            variant = ProductVariant.objects.get(
+                                id=variant_id,
+                                product=product,
+                                is_active=True
+                            )
+                        except ProductVariant.DoesNotExist:
+                            pass
+
+                    # التحقق من الكمية المتاحة
+                    if variant and variant.track_inventory:
+                        available_quantity = variant.stock_quantity - variant.reserved_quantity
+                        track_inventory = True
+                    else:
+                        available_quantity = product.stock_quantity - product.reserved_quantity
+                        track_inventory = product.track_inventory
+
+                    # التحقق من توفر المخزون
+                    if track_inventory and quantity > available_quantity:
+                        response_data['message'] = _('الكمية المطلوبة غير متوفرة! المتاح حاليا: {}'.format(available_quantity))
+                        messages.error(request, response_data['message'])
+                    else:
+                        # تحديث الكمية في السلة
+                        cart[item_key]['quantity'] = quantity
+                        response_data['message'] = _('تم تحديث الكمية بنجاح')
+                        response_data['success'] = True
+                        messages.success(request, response_data['message'])
                 else:
-                    cart[str(item_id)]['quantity'] = quantity
-                    messages.success(request, _('تم تحديث الكمية'))
-            else:
-                del cart[str(item_id)]
-                messages.success(request, _('تم إزالة المنتج من السلة'))
-            
-            self.save_cart(request, cart)
-        
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({
-                'success': True,
-                'cart_count': self.get_cart_items_count(request),
-                'cart_total': str(self.get_cart_total(request))
+                    # إذا كانت الكمية 0 أو أقل، قم بإزالة العنصر
+                    del cart[item_key]
+                    response_data['message'] = _('تم إزالة المنتج من السلة')
+                    response_data['success'] = True
+                    messages.success(request, response_data['message'])
+
+                # حفظ التغييرات في السلة
+                self.save_cart(request, cart)
+
+                # الحصول على بيانات السلة المحدثة
+                cart_context = self.get_cart_context(request)
+
+                # تحديث بيانات الاستجابة بالقيم الجديدة
+                response_data.update({
+                    'cart_count': cart_context['cart_count'],
+                    'cart_subtotal': str(round(cart_context['cart_subtotal']/ Decimal('1.16'),2)),
+                    'cart_tax': str(round(cart_context['cart_tax'],2)),
+                    'cart_total': str(round(cart_context['cart_total']/ Decimal('1.16'),2)),
+                })
+
+                # البحث عن معلومات العنصر المحدث
+                if quantity > 0:  # فقط إذا لم تتم إزالة العنصر
+                    for item in cart_context['cart_items']:
+                        if item['id'] == item_key:
+                            response_data['item_subtotal'] = str(round(item['subtotal'] / Decimal('1.16'),2))
+                            break
+
+            except Exception as e:
+                # معالجة أي استثناءات
+                response_data['message'] = str(e)
+                response_data['success'] = False
+                messages.error(request, _('حدث خطأ أثناء تحديث السلة'))
+
+        else:
+            # العنصر غير موجود في السلة
+            response_data['message'] = _('العنصر غير موجود في السلة')
+            messages.warning(request, response_data['message'])
+
+            # الحصول على بيانات السلة الحالية
+            cart_context = self.get_cart_context(request)
+
+            # تحديث بيانات الاستجابة بالقيم الحالية
+            response_data.update({
+                'cart_count': cart_context['cart_count'],
+                'cart_subtotal': str(round(cart_context['cart_subtotal'] / Decimal('1.16'),2)),
+                'cart_tax': str(round(cart_context['cart_tax'],2)),
+                'cart_total': str(round(cart_context['cart_total'] / Decimal('1.16'),2)),
             })
-        
+
+        # للطلبات من نوع AJAX
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse(response_data)
+
+        # للطلبات العادية، إعادة توجيه إلى صفحة السلة
         return redirect('cart:cart_detail')
+
+    def get_cart_context(self, request):
+        """
+        الحصول على بيانات السلة من context processor
+
+        Args:
+            request: طلب HTTP
+
+        Returns:
+            dict: بيانات السلة
+        """
+        from .context_processors import cart_context
+        return cart_context(request)
 
 
 class RemoveFromCartView(CartMixin, View):
@@ -274,3 +418,4 @@ class RemoveCouponView(CartMixin, View):
             messages.success(request, _('تم إزالة كود الخصم'))
         
         return redirect('cart:cart_detail')
+

@@ -41,7 +41,8 @@ from io import BytesIO
 from datetime import datetime
 import pandas as pd
 import xlsxwriter
-
+from django.utils.decorators import method_decorator
+from dashboard.decorators import permission_required
 
 def generate_excel_template(request):
     """
@@ -1274,32 +1275,11 @@ class ProductImportProgressView(View):
         })
 
 
-@method_decorator(login_required, name='dispatch')
-class ProductImportProgressView(View):
-    """التحقق من حالة تقدم استيراد المنتجات"""
-
-    def get(self, request):
-        import_id = request.GET.get('import_id')
-
-        if not import_id:
-            return JsonResponse({'success': False, 'error': 'معرف الاستيراد مفقود'})
-
-        # استرجاع حالة التقدم من cache
-        progress_json = cache.get(f'import_progress_{import_id}')
-
-        if not progress_json:
-            return JsonResponse({'success': False, 'error': 'معرف الاستيراد غير صالح أو منتهي الصلاحية'})
-
-        progress_data = json.loads(progress_json)
-        return JsonResponse({
-            'success': True,
-            'progress': progress_data
-        })
 
 
 
 # ========================= إدارة المنتجات =========================
-
+@method_decorator(permission_required('products.view_product'), name='dispatch')
 class ProductDataTableView(DashboardAccessMixin, View):
     """واجهة برمجية لجدول المنتجات بالتحميل الجزئي"""
 
@@ -1447,6 +1427,7 @@ class ProductDataTableView(DashboardAccessMixin, View):
             'data': data
         })
 
+@method_decorator(permission_required('products.view_product'), name='dispatch')
 class ProductListView(DashboardAccessMixin, View):
     """عرض قائمة المنتجات مع البحث والتصفية"""
 
@@ -1526,7 +1507,7 @@ class ProductListView(DashboardAccessMixin, View):
 
         return render(request, 'dashboard/products/product_list.html', context)
 
-
+@method_decorator(permission_required('products.view_product'), name='dispatch')
 class ProductDetailView(DashboardAccessMixin, View):
     """عرض تفاصيل المنتج"""
 
@@ -1572,7 +1553,7 @@ class ProductDetailView(DashboardAccessMixin, View):
 
         return render(request, 'dashboard/products/product_detail.html', context)
 
-
+@method_decorator(permission_required('products.add_product'), name='dispatch')
 class ProductFormView(DashboardAccessMixin, View):
     """عرض إنشاء وتحديث المنتج باستخدام نموذج Django"""
 
@@ -2012,7 +1993,7 @@ class ProductBulkActionsView(DashboardAccessMixin, View):
 
         if not product_ids:
             messages.error(request, 'لم يتم تحديد أي منتجات')
-            return redirect('dashboard_products')
+            return redirect('dashboard:dashboard_products')
 
         products = Product.objects.filter(id__in=product_ids)
         count = products.count()
@@ -2045,11 +2026,12 @@ class ProductBulkActionsView(DashboardAccessMixin, View):
             product_ids_str = ','.join(product_ids)
             return redirect(f'dashboard_update_stock?products={product_ids_str}')
 
-        return redirect('dashboard_products')
+        return redirect('dashboard:dashboard_products')
 
 
 # ========================= إدارة الفئات =========================
 
+@method_decorator(permission_required('products.view_category'), name='dispatch')
 class CategoryListView(DashboardAccessMixin, View):
     """عرض قائمة الفئات"""
 
@@ -2121,6 +2103,7 @@ class CategoryListView(DashboardAccessMixin, View):
         return render(request, 'dashboard/products/category_list.html', context)
 
 
+@method_decorator(permission_required('products.add_category'), name='dispatch')
 class CategoryFormView(DashboardAccessMixin, View):
     """عرض إنشاء وتحديث الفئة"""
 
@@ -2174,12 +2157,12 @@ class CategoryFormView(DashboardAccessMixin, View):
 
         # التحقق من الوصف إذا تم إدخاله
         description = form_data.get('description', '').strip()
-        if description and len(description) < 10:
-            errors.append("الوصف يجب أن يكون على الأقل 10 أحرف أو تركه فارغًا")
+        # if description and len(description) < 10:
+        #     errors.append("الوصف يجب أن يكون على الأقل 10 أحرف أو تركه فارغًا")
 
         description_en = form_data.get('description_en', '').strip()
-        if description_en and len(description_en) < 10:
-            errors.append("الوصف الإنجليزي يجب أن يكون على الأقل 10 أحرف أو تركه فارغًا")
+        # if description_en and len(description_en) < 10:
+        #     errors.append("الوصف الإنجليزي يجب أن يكون على الأقل 10 أحرف أو تركه فارغًا")
 
         # التحقق من تنسيق اللون إذا تم إدخاله
         color = form_data.get('color', '').strip()
@@ -2350,6 +2333,7 @@ class CategoryFormView(DashboardAccessMixin, View):
             return render(request, 'dashboard/products/category_form.html', context)
 
 
+@method_decorator(permission_required('products.delete_category'), name='dispatch')
 class CategoryDeleteView(DashboardAccessMixin, View):
     """حذف الفئة"""
 
@@ -2379,6 +2363,7 @@ class CategoryDeleteView(DashboardAccessMixin, View):
 
 # ========================= إدارة العلامات التجارية =========================
 
+@method_decorator(permission_required('products.view_brand'), name='dispatch')
 class BrandListView(DashboardAccessMixin, View):
     """عرض قائمة العلامات التجارية"""
 
@@ -2430,6 +2415,7 @@ class BrandListView(DashboardAccessMixin, View):
         return render(request, 'dashboard/products/brand_list.html', context)
 
 
+@method_decorator(permission_required('products.add_brand'), name='dispatch')
 class BrandFormView(DashboardAccessMixin, View):
     """عرض إنشاء وتحديث العلامة التجارية"""
 
@@ -2555,13 +2541,14 @@ class BrandFormView(DashboardAccessMixin, View):
             if logo or banner_image:
                 brand.save()
 
-            return redirect('dashboard_brands')
+            return redirect('dashboard:dashboard_brands')
 
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء حفظ العلامة التجارية: {str(e)}')
             return redirect(request.path)
 
 
+@method_decorator(permission_required('products.delete_brand'), name='dispatch')
 class BrandDeleteView(DashboardAccessMixin, View):
     """حذف العلامة التجارية"""
 
@@ -2572,7 +2559,7 @@ class BrandDeleteView(DashboardAccessMixin, View):
         products_count = brand.products.count()
         if products_count > 0:
             messages.error(request, f'لا يمكن حذف العلامة التجارية لأنها مرتبطة بـ {products_count} منتج')
-            return redirect('dashboard_brands')
+            return redirect('dashboard:dashboard_brands')
 
         try:
             brand_name = brand.name
@@ -2581,7 +2568,7 @@ class BrandDeleteView(DashboardAccessMixin, View):
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء حذف العلامة التجارية: {str(e)}')
 
-        return redirect('dashboard_brands')
+        return redirect('dashboard:dashboard_brands')
 
 
 # ========================= إدارة الخصومات =========================
@@ -2794,7 +2781,7 @@ class DiscountFormView(DashboardAccessMixin, View):
             else:
                 discount.products.clear()
 
-            return redirect('dashboard_discounts')
+            return redirect('dashboard:dashboard_discounts')
 
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء حفظ الخصم: {str(e)}')
@@ -2814,7 +2801,7 @@ class DiscountDeleteView(DashboardAccessMixin, View):
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء حذف الخصم: {str(e)}')
 
-        return redirect('dashboard_discounts')
+        return redirect('dashboard:dashboard_discounts')
 
 
 # ========================= إدارة التقييمات =========================
@@ -3051,7 +3038,7 @@ class TagFormView(DashboardAccessMixin, View):
                 )
                 messages.success(request, 'تم إنشاء الوسم بنجاح')
 
-            return redirect('dashboard_tags')
+            return redirect('dashboard:dashboard_tags')
 
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء حفظ الوسم: {str(e)}')
@@ -3068,7 +3055,7 @@ class TagDeleteView(DashboardAccessMixin, View):
         products_count = tag.products.count()
         if products_count > 0:
             messages.error(request, f'لا يمكن حذف الوسم لأنه مرتبط بـ {products_count} منتج')
-            return redirect('dashboard_tags')
+            return redirect('dashboard:dashboard_tags')
 
         try:
             tag_name = tag.name
@@ -3077,7 +3064,7 @@ class TagDeleteView(DashboardAccessMixin, View):
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء حذف الوسم: {str(e)}')
 
-        return redirect('dashboard_tags')
+        return redirect('dashboard:dashboard_tags')
 
 
 #======================
@@ -3333,3 +3320,42 @@ def duplicate_product(request, product_id):
     return render(request, 'dashboard/products/product_duplicate_confirm.html', {
         'product': original_product
     })
+
+
+@login_required
+@permission_required('products.change_product')
+def product_delete_attachment(request, product_id):
+    """حذف الملف المرفق من المنتج"""
+    product = get_object_or_404(Product, id=product_id)
+
+    if product.attachment:
+        # حذف الملف الفعلي من التخزين
+        product.attachment.delete()
+
+        # إعادة تعيين حقول المرفق
+        product.attachment = None
+        product.attachment_name = ''
+        product.attachment_name_en = ''
+        product.attachment_description = ''
+        product.attachment_description_en = ''
+        product.save()
+
+        messages.success(request, _('تم حذف الملف المرفق بنجاح'))
+    else:
+        messages.warning(request, _('لا يوجد ملف مرفق للحذف'))
+
+    return redirect('dashboard:dashboard_product_edit', product_id=product.id)
+
+
+class ProductImageDeleteView(DashboardAccessMixin, View):
+    def post(self, request, image_id):
+        image = get_object_or_404(ProductImage, id=image_id)
+
+        # حذف الملف الفعلي
+        if image.image:
+            image.image.delete(save=False)
+
+        # حذف السجل
+        image.delete()
+
+        return JsonResponse({'success': True})

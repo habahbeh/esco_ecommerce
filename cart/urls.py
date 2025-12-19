@@ -23,5 +23,5 @@ urlpatterns = [
     # Coupon views
     path('apply-coupon/', ApplyCouponView.as_view(), name='apply_coupon'),
     path('remove-coupon/', RemoveCouponView.as_view(), name='remove_coupon'),
-    path('', CartDetailView.as_view(), name='cart_detail'),
+
 ]

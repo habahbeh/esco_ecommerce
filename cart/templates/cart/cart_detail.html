@@ -1,21 +1,65 @@
 {% extends 'core/base.html' %}
 {% load static %}
 {% load i18n %}
+{% load custom_filters %}
 
 {% block title %}{% trans "سلة التسوق" %} | ESCO{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <h1 class="mb-4">{% trans "سلة التسوق" %}</h1>
-    
-    {% if cart_items %}
-        <div class="row">
-            <div class="col-lg-8">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
+    <style>
+.quantity-selector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 120px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 0 auto;
+}
+
+.quantity-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bs-primary);
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.quantity-btn:hover {
+    background-color: var(--bs-primary-dark, #0056b3);
+}
+
+.quantity-input {
+    width: 50px;
+    height: 36px;
+    text-align: center;
+    font-weight: bold;
+    border: 1px solid #ced4da;
+    border-left: 0;
+    border-right: 0;
+}
+
+.quantity-input::-webkit-inner-spin-button,
+.quantity-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+    </style>
+    <div class="container py-5">
+        <h1 class="mb-4">{% trans "سلة التسوق" %}</h1>
+
+        {% if cart_items %}
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
                                     <tr>
                                         <th>{% trans "المنتج" %}</th>
                                         <th>{% trans "السعر" %}</th>
@@ -23,150 +67,303 @@
                                         <th>{% trans "المجموع" %}</th>
                                         <th></th>
                                     </tr>
-                                </thead>
-                                <tbody>
+                                    </thead>
+                                    <tbody>
                                     {% for item in cart_items %}
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                {% if item.product.default_image %}
-                                                    <img src="{{ item.product.default_image.image.url }}" 
-                                                         alt="{{ item.product.name }}"
-                                                         class="me-3"
-                                                         style="width: 60px; height: 60px; object-fit: cover;">
-                                                {% endif %}
-                                                <div>
-                                                    <h6 class="mb-0">{{ item.product.name }}</h6>
-                                                    {% if item.variant %}
-                                                        <small class="text-muted">{{ item.variant.name }}</small>
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    {% if item.product.default_image %}
+                                                        <img src="{{ item.product.default_image.image.url }}"
+                                                             alt="{% if LANGUAGE_CODE == 'en' %}
+                                                                       {{ item.product.name_en }}
+                                                                    {% else %}
+                                                                        {{ item.product.name }}
+                                                                    {% endif %}"
+                                                             class="me-3"
+                                                             style="width: 60px; height: 60px; object-fit: cover;">
                                                     {% endif %}
+                                                    <div>
+                                                        <h6 class="mb-0">{% if LANGUAGE_CODE == 'en' %}
+                                                            {{ item.product.name_en }}
+                                                        {% else %}
+                                                            {{ item.product.name }}
+                                                        {% endif %}</h6>
+                                                        {% if item.variant %}
+                <small class="text-muted">
+                    {% if item.variant.attributes %}
+                        {% for key, value in item.variant.attributes.items %}
+                            <span>{{ key }}: {{ value }}</span>{% if not forloop.last %} | {% endif %}
+                        {% endfor %}
+                    {% elif item.variant.variant_details %}
+                        {{ item.variant.variant_details }}
+                    {% elif item.variant.options.all %}
+                        {% for option in item.variant.options.all %}
+                            <span>{{ option.option_group.name }}: {{ option.name }}</span>{% if not forloop.last %} | {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        {% for attr_value in item.variant.attribute_values.all %}
+                            <span>{{ attr_value.attribute.name }}: {{ attr_value.value }}</span>{% if not forloop.last %} | {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </small>
+            {% endif %}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td>{{ item.price|floatformat:2 }} {% trans "د.أ" %}</td>
-                                        <td>
-                                            <form action="{% url 'cart:update_cart_item' item.id %}" method="post" class="update-cart-form">
-                                                {% csrf_token %}
-                                                <div class="input-group" style="width: 120px;">
-                                                    <button type="button" class="btn btn-sm btn-outline-secondary dec-qty">-</button>
-                                                    <input type="number" name="quantity" value="{{ item.quantity }}" 
-                                                           min="1" max="{{ item.product.stock_quantity }}"
-                                                           class="form-control form-control-sm text-center">
-                                                    <button type="button" class="btn btn-sm btn-outline-secondary inc-qty">+</button>
-                                                </div>
-                                            </form>
-                                        </td>
-                                        <td>{{ item.subtotal|floatformat:2 }} {% trans "د.أ" %}</td>
-                                        <td>
-                                            <form action="{% url 'cart:remove_from_cart' item.id %}" method="post" class="d-inline">
-                                                {% csrf_token %}
-                                                <button type="submit" class="btn btn-sm btn-link text-danger">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
+                                            </td>
+                                            <td>{{ item.price|without_tax|floatformat:2 }} {% trans "د.أ" %}</td>
+                                          <td>
+    <div class="quantity-selector" data-item-id="{{ item.id }}">
+        <button type="button" class="quantity-btn minus-btn">
+            <i class="fas fa-minus"></i>
+        </button>
+        <input type="number"
+               class="quantity-input"
+               name="quantity"
+               value="{{ item.quantity }}"
+               min="1"
+               max="{{ item.stock_quantity }}"
+               data-csrf="{{ csrf_token }}">
+        <button type="button" class="quantity-btn plus-btn">
+            <i class="fas fa-plus"></i>
+        </button>
+    </div>
+</td>
+                                            <td>{{ item.subtotal|without_tax|floatformat:2 }} {% trans "د.أ" %}</td>
+                                            <td>
+                                                <form action="{% url 'cart:remove_from_cart' item.id %}" method="post"
+                                                      class="d-inline">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-link text-danger">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
                                     {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        
-                        <div class="d-flex justify-content-between mt-4">
-                            <a href="{% url 'products:product_list' %}" class="btn btn-outline-primary">
-                                <i class="fas fa-arrow-left me-2"></i>{% trans "متابعة التسوق" %}
-                            </a>
-                            <form action="{% url 'cart:clear_cart' %}" method="post" class="d-inline">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-outline-danger" 
-                                        onclick="return confirm('{% trans "هل أنت متأكد من إفراغ السلة؟" %}')">
-                                    <i class="fas fa-trash me-2"></i>{% trans "إفراغ السلة" %}
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-lg-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">{% trans "ملخص الطلب" %}</h5>
-                        
-                        <div class="d-flex justify-content-between mb-3">
-                            <span>{% trans "المجموع الفرعي" %}</span>
-                            <span>{{ cart_total|floatformat:2 }} {% trans "د.أ" %}</span>
-                        </div>
-                        
-                        <hr>
-                        
-                        <div class="d-flex justify-content-between mb-4">
-                            <strong>{% trans "المجموع" %}</strong>
-                            <strong>{{ cart_total|floatformat:2 }} {% trans "د.أ" %}</strong>
-                        </div>
-                        
-{#                        <a href="{% url 'checkout:checkout' %}" class="btn btn-primary w-100">#}
-{#                            {% trans "إتمام الطلب" %}#}
-{#                        </a>#}
-
-                        {% if is_authenticated %}
-                            <a href="{% url 'checkout:checkout' %}" class="btn btn-primary w-100">
-                                {% trans "إتمام الطلب" %}
-                            </a>
-                        {% else %}
-                            <div class="alert alert-warning mb-3">
-                                <i class="fas fa-info-circle me-2"></i> {% trans "يجب تسجيل الدخول لإتمام عملية الشراء" %}
+                                    </tbody>
+                                </table>
                             </div>
-                            <a href="{{ login_url }}" class="btn btn-primary w-100">
-                                <i class="fas fa-sign-in-alt me-2"></i> {% trans "تسجيل الدخول للشراء" %}
-                            </a>
-                        {% endif %}
 
+                            <div class="d-flex justify-content-between mt-4">
+                                <a href="{% url 'products:product_list' %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>{% trans "متابعة التسوق" %}
+                                </a>
+                                <form action="{% url 'cart:clear_cart' %}" method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-danger"
+                                            onclick="return confirm('{% trans "هل أنت متأكد من إفراغ السلة؟" %}')">
+                                        <i class="fas fa-trash me-2"></i>{% trans "إفراغ السلة" %}
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <div class="col-lg-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">{% trans "ملخص الطلب" %}</h5>
+        </div>
+        <div class="card-body">
+            {% if cart_items %}
+                <div class="mb-4" id="cart-summary-items">
+                    {% for item in cart_items %}
+                        <div class="d-flex justify-content-between mb-2 cart-summary-item"
+                             id="summary-item-{{ item.id }}" data-item-id="{{ item.id }}">
+                            <div>
+                                <span>{% if LANGUAGE_CODE == 'en' %}
+                                    {{ item.product.name_en }}
+                                {% else %}
+                                    {{ item.product.name }}
+                                {% endif %}</span>
+                                <div>
+                                    {% if item.variant %}
+                                                <small class="text-muted">
+                                                    {% if item.variant.attributes %}
+                                                        {% for key, value in item.variant.attributes.items %}
+                                                            <span>{{ key }}: {{ value }}</span>{% if not forloop.last %}
+                                                            | {% endif %}
+                                                        {% endfor %}
+                                                    {% elif item.variant.variant_details %}
+                                                        {{ item.variant.variant_details }}
+                                                    {% elif item.variant.options.all %}
+                                                        {% for option in item.variant.options.all %}
+                                                            <span>{{ option.option_group.name }}: {{ option.name }}</span>
+                                                            {% if not forloop.last %} | {% endif %}
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        {% for attr_value in item.variant.attribute_values.all %}
+                                                            <span>{{ attr_value.attribute.name }}: {{ attr_value.value }}</span>
+                                                            {% if not forloop.last %} | {% endif %}
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                </small>
+                                            {% endif %}
+                                </div>
+                                <small class="text-muted d-block">
+                                    <span class="item-quantity">{{ item.quantity }}</span>
+                                    × <span class="item-price">{{ item.price|without_tax|floatformat:2 }}</span>
+                                </small>
+                            </div>
+                            <span class="item-subtotal">{{ item.subtotal|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <hr>
+            {% endif %}
+
+            <div class="d-flex justify-content-between mb-3">
+                <span>{% trans "المجموع الفرعي" %}</span>
+                <span class="cart-subtotal">{{ cart_subtotal|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
             </div>
+
+            <div class="d-flex justify-content-between mb-2">
+                <span>{% trans "الضريبة" %}</span>
+                <span class="cart-tax">{{ cart_tax|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+            </div>
+
+            <hr>
+
+            <div class="d-flex justify-content-between mb-4">
+                <strong>{% trans "المجموع" %}</strong>
+                <strong class="cart-total">{{ cart_total|without_tax|floatformat:2 }} {% trans "د.أ" %}</strong>
+            </div>
+
+           <a href="/checkout/" class="btn btn-primary w-100">
+               {% trans "إتمام الطلب" %}
+           </a>
         </div>
-    {% else %}
-        <div class="text-center py-5">
-            <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
-            <h3>{% trans "السلة فارغة" %}</h3>
-            <p class="text-muted">{% trans "لم تقم بإضافة أي منتجات إلى السلة بعد" %}</p>
-            <a href="{% url 'products:product_list' %}" class="btn btn-primary mt-3">
-                {% trans "تسوق الآن" %}
-            </a>
-        </div>
-    {% endif %}
+    </div>
 </div>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                <h3>{% trans "السلة فارغة" %}</h3>
+                <p class="text-muted">{% trans "لم تقم بإضافة أي منتجات إلى السلة بعد" %}</p>
+                <a href="{% url 'products:product_list' %}" class="btn btn-primary mt-3">
+                    {% trans "تسوق الآن" %}
+                </a>
+            </div>
+        {% endif %}
+    </div>
 {% endblock %}
 
 {% block extra_js %}
-<script>
-$(document).ready(function() {
-    // Quantity increment/decrement
-    $('.inc-qty').click(function() {
-        var input = $(this).siblings('input[name="quantity"]');
-        var currentVal = parseInt(input.val());
-        var maxVal = parseInt(input.attr('max'));
-        
+    <script>
+       $(document).ready(function () {
+    // زر زيادة الكمية
+    $('.quantity-selector .plus-btn').click(function() {
+        var container = $(this).closest('.quantity-selector');
+        var input = container.find('.quantity-input');
+        var itemId = container.data('item-id');
+        var currentVal = parseInt(input.val()) || 1;
+        var maxVal = parseInt(input.attr('max')) || 999;
+
         if (currentVal < maxVal) {
-            input.val(currentVal + 1);
-            $(this).closest('form').submit();
+            updateQuantity(itemId, currentVal + 1, input);
         }
     });
-    
-    $('.dec-qty').click(function() {
-        var input = $(this).siblings('input[name="quantity"]');
-        var currentVal = parseInt(input.val());
-        
+
+    // زر إنقاص الكمية
+    $('.quantity-selector .minus-btn').click(function() {
+        var container = $(this).closest('.quantity-selector');
+        var input = container.find('.quantity-input');
+        var itemId = container.data('item-id');
+        var currentVal = parseInt(input.val()) || 1;
+
         if (currentVal > 1) {
-            input.val(currentVal - 1);
-            $(this).closest('form').submit();
+            updateQuantity(itemId, currentVal - 1, input);
         }
     });
-    
-    // Submit form on quantity change
-    $('input[name="quantity"]').change(function() {
-        $(this).closest('form').submit();
+
+    // تغيير القيمة يدويًا
+    $('.quantity-input').change(function() {
+        var container = $(this).closest('.quantity-selector');
+        var itemId = container.data('item-id');
+        var newValue = parseInt($(this).val()) || 1;
+
+        updateQuantity(itemId, newValue, $(this));
     });
+
+    // دالة تحديث الكمية
+    function updateQuantity(itemId, newQuantity, inputElement) {
+        // تحديث حقل الإدخال مباشرة
+        inputElement.val(newQuantity);
+
+        // إرسال طلب AJAX
+        $.ajax({
+            url: '/cart/update/' + itemId + '/',
+            type: 'POST',
+            data: {
+                'quantity': newQuantity,
+                'csrfmiddlewaretoken': inputElement.data('csrf')
+            },
+            success: function(response) {
+                if (response.success) {
+                    // تحديث المبالغ في الصفحة
+                    updateCartDisplay(response);
+                } else {
+                    // إظهار رسالة خطأ
+                    alert(response.message || 'حدث خطأ أثناء تحديث السلة');
+                }
+            },
+            error: function(xhr) {
+                alert('حدث خطأ في الاتصال بالخادم');
+                console.error('AJAX Error:', xhr.responseText);
+                // إرجاع القيمة السابقة
+                location.reload();
+            }
+        });
+    }
+
+    // تحديث عرض السلة بالقيم الجديدة
+   function updateCartDisplay(data) {
+    // تحديث كمية وإجمالي العنصر في الجدول الرئيسي
+    var itemRow = $('.quantity-selector[data-item-id="' + data.item_id + '"]').closest('tr');
+    itemRow.find('td:eq(3)').text(data.item_subtotal + ' د.أ');
+
+    // تحديث العنصر في ملخص الطلب
+    var summaryItem = $('#summary-item-' + data.item_id);
+    if (summaryItem.length) {
+        // تحديث الكمية
+        summaryItem.find('.item-quantity').text(data.item_quantity);
+
+        // تحديث المجموع الفرعي للعنصر
+        summaryItem.find('.item-subtotal').text(data.item_subtotal + ' د.أ');
+    }
+
+    // تحديث إجماليات السلة
+    $('.cart-subtotal').text(data.cart_subtotal + ' د.أ');
+    $('.cart-tax').text(data.cart_tax + ' د.أ');
+    $('.cart-total').text(data.cart_total + ' د.أ');
+
+    // تحديث عدد العناصر في السلة (إذا كان موجودًا في الصفحة)
+    $('.cart-count').text(data.cart_count);
+
+    // إضافة رسالة نجاح
+    var messageContainer = $('#cart-messages');
+    if (messageContainer.length === 0) {
+        // إنشاء حاوية للرسائل إذا لم تكن موجودة
+        messageContainer = $('<div id="cart-messages" class="mb-3"></div>');
+        $('.container h1').after(messageContainer);
+    }
+
+    var message = $('<div class="alert alert-success alert-dismissible fade show" role="alert">' +
+                  'تم تحديث السلة بنجاح' +
+                  '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
+                  '</div>');
+
+    messageContainer.html(message);
+
+    // إزالة الرسالة بعد 3 ثواني
+    setTimeout(function() {
+        message.alert('close');
+    }, 3000);
+}
 });
-</script>
+    </script>
 {% endblock %}

@@ -689,6 +689,7 @@ class SocialMediaSettingsView( SuperuserRequiredMixin, TemplateView):
         context['twitter'] = site_settings.twitter
         context['instagram'] = site_settings.instagram
         context['linkedin'] = site_settings.linkedin
+        context['whatsapp'] = site_settings.whatsapp
 
         # إعدادات مشاركة المحتوى
         context['enable_sharing'] = getattr(django_settings, 'ENABLE_SOCIAL_SHARING', True)
@@ -705,6 +706,7 @@ class SocialMediaSettingsView( SuperuserRequiredMixin, TemplateView):
         site_settings.twitter = request.POST.get('twitter', '')
         site_settings.instagram = request.POST.get('instagram', '')
         site_settings.linkedin = request.POST.get('linkedin', '')
+        site_settings.whatsapp = request.POST.get('whatsapp', '')
 
         site_settings.save()
 

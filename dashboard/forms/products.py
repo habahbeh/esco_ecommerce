@@ -155,7 +155,7 @@ class ProductForm(forms.ModelForm):
     show_price = forms.BooleanField(
         label=_("عرض السعر"),
         required=False,
-        initial=True
+        initial=False
     )
 
     # منتجات متعلقة إضافية
@@ -187,6 +187,44 @@ class ProductForm(forms.ModelForm):
         widget=forms.HiddenInput()
     )
 
+    # إضافة حقول الملف المرفق
+    attachment = forms.FileField(
+        label=_("الملف المرفق"),
+        required=False,
+        widget=forms.FileInput(attrs={'class': 'form-control'}),
+        help_text=_("مرفق المنتج بمساحة لا تتجاوز 25m")
+    )
+
+    attachment_name = forms.CharField(
+        label=_("اسم الملف المرفق"),
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+        help_text=_("اسم وصفي للملف المرفق بالعربية")
+    )
+
+    attachment_name_en = forms.CharField(
+        label=_("Attachment Name"),
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
+        help_text=_("Descriptive name for the attachment in English")
+    )
+
+    attachment_description = forms.CharField(
+        label=_("وصف الملف المرفق"),
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        help_text=_("وصف قصير للملف المرفق بالعربية")
+    )
+
+    attachment_description_en = forms.CharField(
+        label=_("Attachment Description"),
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'dir': 'ltr'}),
+        help_text=_("Short description for the attachment in English")
+    )
+
     class Meta:
         model = Product
         fields = [
@@ -197,6 +235,8 @@ class ProductForm(forms.ModelForm):
             'status',  'is_featured', 'is_new', 'is_best_seller',
               'is_active','show_price',
             'meta_title', 'meta_description', 'meta_keywords', 'search_keywords',
+            'attachment', 'attachment_name', 'attachment_name_en',
+            'attachment_description', 'attachment_description_en',
             # إضافة الحقول الجديدة لتضمينها في النموذج
             'discount_percentage', 'discount_amount', 'discount_start', 'discount_end',
             'reserved_quantity', 'max_order_quantity', 'track_inventory',
@@ -317,6 +357,17 @@ class ProductForm(forms.ModelForm):
 
         if 'features_json' in self.cleaned_data and self.cleaned_data['features_json'].strip():
             instance.features = json.loads(self.cleaned_data['features_json'])
+
+        # معالجة الملف المرفق
+        attachment = self.cleaned_data.get('attachment')
+        if attachment:
+            instance.attachment = attachment
+
+        # تعيين بيانات الملف المرفق
+        instance.attachment_name = self.cleaned_data.get('attachment_name', '')
+        instance.attachment_name_en = self.cleaned_data.get('attachment_name_en', '')
+        instance.attachment_description = self.cleaned_data.get('attachment_description', '')
+        instance.attachment_description_en = self.cleaned_data.get('attachment_description_en', '')
 
         if commit:
             instance.save()

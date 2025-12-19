@@ -78,7 +78,7 @@ class User(AbstractUser):
     gender_choices = [
         ('M', _('ذكر')),
         ('F', _('أنثى')),
-        ('O', _('آخر')),
+        # ('O', _('آخر')),
     ]
 
     gender = models.CharField(
@@ -97,7 +97,7 @@ class User(AbstractUser):
     # Email verification
     is_verified = models.BooleanField(
         _("موثق"),
-        default=False,
+        default=True,
         help_text=_("هل تم تأكيد البريد الإلكتروني؟")
     )
 
@@ -219,7 +219,7 @@ class User(AbstractUser):
         orders = Order.objects.filter(user=self, status='completed')
         self.total_orders = orders.count()
         self.total_spent = orders.aggregate(
-            total=models.Sum('total_amount')
+            total=models.Sum('total_price')
         )['total'] or 0
         self.save(update_fields=['total_orders', 'total_spent'])
 

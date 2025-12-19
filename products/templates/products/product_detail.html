@@ -2,7 +2,36 @@
 {% load static %}
 {% load i18n %}
 
-{% block title %}{{ product.name }} | {{ site_settings.site_name|default:"ESCO" }}{% endblock %}
+{% block title %}{% if LANGUAGE_CODE == 'en' %}{{ product.name_en }}{% else %}{{ product.name }}{% endif %} | {{ site_settings.site_name|default:"ESCO" }}{% endblock %}
+
+{% block extra_meta %}
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="product">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:title" content="{% if LANGUAGE_CODE == 'en' %}{{ product.name_en }}{% else %}{{ product.name }}{% endif %}">
+    <meta property="og:description" content="{% if LANGUAGE_CODE == 'en' %}{{ product.description_en|striptags|truncatewords:30 }}{% else %}{{ product.description|striptags|truncatewords:30 }}{% endif %}">
+    {% if product.default_image %}
+    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.default_image.image.url }}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="{% if LANGUAGE_CODE == 'en' %}{{ product.name_en }}{% else %}{{ product.name }}{% endif %}">
+    {% endif %}
+    <meta property="og:site_name" content="{{ site_settings.site_name|default:'ESCO' }}">
+    <meta property="product:price:amount" content="{{ product.current_price }}">
+    <meta property="product:price:currency" content="JOD">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ request.build_absolute_uri }}">
+    <meta name="twitter:title" content="{% if LANGUAGE_CODE == 'en' %}{{ product.name_en }}{% else %}{{ product.name }}{% endif %}">
+    <meta name="twitter:description" content="{% if LANGUAGE_CODE == 'en' %}{{ product.description_en|striptags|truncatewords:30 }}{% else %}{{ product.description|striptags|truncatewords:30 }}{% endif %}">
+    {% if product.default_image %}
+    <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.default_image.image.url }}">
+    {% endif %}
+
+    <!-- WhatsApp (uses Open Graph) -->
+    <meta property="og:locale" content="{% if LANGUAGE_CODE == 'en' %}en_US{% else %}ar_AR{% endif %}">
+{% endblock %}
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'products/css/category_tree.css' %}">
@@ -27,9 +56,23 @@
                 <ol class="breadcrumb mb-0">
                     <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "الرئيسية" %}</a></li>
                     {% if product.category %}
-                        <li class="breadcrumb-item"><a href="{{ product.category.get_absolute_url }}">{{ product.category.name }}</a></li>
+                        <li class="breadcrumb-item">
+                            <a href="{{ product.category.get_absolute_url }}">
+                                {% if LANGUAGE_CODE == 'en' %}
+                                    {{ product.category.name_en }}
+                                {% else %}
+                                    {{ product.category.name }}
+                                {% endif %}
+
+                            </a></li>
                     {% endif %}
-                    <li class="breadcrumb-item active">{{ product.name }}</li>
+                    <li class="breadcrumb-item active">
+                        {% if LANGUAGE_CODE == 'en' %}
+                            {{ product.name_en }}
+                        {% else %}
+                            {{ product.name }}
+                        {% endif %}
+                    </li>
                 </ol>
             </div>
         </nav>
@@ -61,16 +104,28 @@
                             {% if product.images.all %}
                                 {% for image in product.images.all %}
                                     <div class="thumbnail-item {% if forloop.first %}active{% endif %}" data-image-id="{{ image.id }}">
-                                        <img src="{{ image.image.url }}" alt="{{ product.name }} - {% trans 'صورة' %} {{ forloop.counter }}">
+                                        <img src="{{ image.image.url }}" alt="{% if LANGUAGE_CODE == 'en' %}
+                            {{ product.name_en }}
+                        {% else %}
+                            {{ product.name }}
+                        {% endif %} - {% trans 'صورة' %} {{ forloop.counter }}">
                                     </div>
                                 {% endfor %}
                             {% elif product.default_image %}
                                 <div class="thumbnail-item active">
-                                    <img src="{{ product.default_image.image.url }}" alt="{{ product.name }}">
+                                    <img src="{{ product.default_image.image.url }}" alt="{% if LANGUAGE_CODE == 'en' %}
+                            {{ product.name_en }}
+                        {% else %}
+                            {{ product.name }}
+                        {% endif %}">
                                 </div>
                             {% else %}
                                 <div class="thumbnail-item active">
-                                    <img src="{% static 'products/images/no-image.png' %}" alt="{{ product.name }}">
+                                    <img src="{% static 'products/images/no-image.png' %}" alt="{% if LANGUAGE_CODE == 'en' %}
+                            {{ product.name_en }}
+                        {% else %}
+                            {{ product.name }}
+                        {% endif %}">
                                 </div>
                             {% endif %}
                         </div>
@@ -78,11 +133,23 @@
                         <!-- صورة العرض الرئيسية -->
                         <div class="main-image-container" style="position: relative; overflow: hidden; height: 500px; border: 1px solid #eee; border-radius: 8px;">
     {% if product.images.all %}
-        <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" style="width: 100%; height: 100%; object-fit: contain;">
+        <img src="{{ product.images.first.image.url }}" alt="{% if LANGUAGE_CODE == 'en' %}
+                            {{ product.name_en }}
+                        {% else %}
+                            {{ product.name }}
+                        {% endif %}" style="width: 100%; height: 100%; object-fit: contain;">
     {% elif product.default_image %}
-        <img src="{{ product.default_image.image.url }}" alt="{{ product.name }}" style="width: 100%; height: 100%; object-fit: contain;">
+        <img src="{{ product.default_image.image.url }}" alt="{% if LANGUAGE_CODE == 'en' %}
+                            {{ product.name_en }}
+                        {% else %}
+                            {{ product.name }}
+                        {% endif %}" style="width: 100%; height: 100%; object-fit: contain;">
     {% else %}
-        <img src="{% static 'products/images/no-image.png' %}" alt="{{ product.name }}" style="width: 100%; height: 100%; object-fit: contain;">
+        <img src="{% static 'products/images/no-image.png' %}" alt="{% if LANGUAGE_CODE == 'en' %}
+                            {{ product.name_en }}
+                        {% else %}
+                            {{ product.name }}
+                        {% endif %}" style="width: 100%; height: 100%; object-fit: contain;">
     {% endif %}
 </div>
                     </div>
@@ -90,13 +157,27 @@
 
                 <!-- معلومات المنتج الأساسية -->
                 <div class="product-info-card">
-                    <h1 class="product-title">{{ product.name }}</h1>
+                    <h1 class="product-title">{% if LANGUAGE_CODE == 'en' %}
+                            {{ product.name_en }}
+                        {% else %}
+                            {{ product.name }}
+                        {% endif %}</h1>
 
                     <div class="product-meta">
                         {% if product.brand %}
                         <div class="item">
                             <i class="fas fa-tag"></i>
-                            <span>{% trans "الماركة" %}: <a href="{% url 'products:brand_products' brand_slug=product.brand.slug %}">{{ product.brand.name }}</a></span>
+                            <span>{% trans "الماركة" %}: <a href="{% url 'products:brand_products' brand_slug=product.brand.slug %}">
+
+
+                                {% if LANGUAGE_CODE == 'en' %}
+                            {{ product.brand.name_en }}
+                        {% else %}
+                            {{ product.brand.name }}
+                        {% endif %}
+
+
+                            </a></span>
                         </div>
                         {% endif %}
 
@@ -109,26 +190,34 @@
                     </div>
 
                     <!-- وصف مختصر للمنتج -->
-                    <div class="short-description">
-                        {% if product.short_description %}
-                            <p>{{ product.short_description }}</p>
-                        {% endif %}
-                    </div>
+{#                    <div class="short-description">#}
+{#                        {% if LANGUAGE_CODE == 'en' and product.short_description_en %}#}
+{#                            <p>{{ product.short_description_en }}</p>#}
+{#                        {% elif product.short_description %}#}
+{#                            <p>{{ product.short_description }}</p>#}
+{#                        {% endif %}#}
+{#                    </div>#}
+{#                    <div class="short-description">#}
+{#                        {% if product.short_description %}#}
+{#                            <p>{{ product.short_description }}</p>#}
+{#                        {% endif %}#}
+{#                    </div>#}
                 </div>
 
                 <!-- قسم السعر -->
                 <div class="price-section">
                     <div class="price-tag">
-                        {% if product.show_price and product.category.show_prices %}
+{#                        {% if product.show_price and product.category.show_prices %}#}
+                        {% if product.show_price  %}
                             <div class="d-flex align-items-center flex-wrap">
-                                <span class="current-price">
-                                    {{ product.current_price|floatformat:2 }} {% trans "د.أ" %}
+                                <span class="current-price" id="productCurrentPrice">
+{#                                    {{ product.current_price|floatformat:2 }} {% trans "د.أ" %}#}
                                 </span>
                                 {% if product.has_discount %}
-                                    <span class="original-price">
+                                    <span class="original-price" id="productOriginalPrice">
                                         {{ product.base_price|floatformat:2 }}
                                     </span>
-                                    <span class="discount-badge-large">
+                                    <span class="discount-badge-large" id="productDiscountBadge">
                                         <i class="fas fa-percentage"></i>
                                         {{ product.discount_percentage }}% {% trans "خصم" %}
                                     </span>
@@ -294,6 +383,11 @@
                                     <i class="fas fa-photo-video me-2"></i>{% trans "الوسائط" %}
                                 </div>
                             {% endif %}
+                            {% if product.attachment %}
+                                <div class="amazon-tab" data-tab="file">
+                                    <i class="fas fa-photo-video me-2"></i>{% trans "المرفقات" %}
+                                </div>
+                            {% endif %}
                             <div class="amazon-tab" data-tab="shipping">
                                 <i class="fas fa-truck me-2"></i>{% trans "الشحن والإرجاع" %}
                             </div>
@@ -348,7 +442,11 @@
                                                 </h5>
                                                 <div class="manual-download-card">
                                                     <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
-                                                    <h6>{% trans "دليل استخدام" %} {{ product.name }}</h6>
+                                                    <h6>{% trans "دليل استخدام" %} {% if LANGUAGE_CODE == 'en' %}
+                            {{ product.name_en }}
+                        {% else %}
+                            {{ product.name }}
+                        {% endif %}}</h6>
                                                     <p class="text-muted">{% trans "حجم الملف" %}: 2.5 MB</p>
                                                     <a href="{{ product.manual_file.url }}"
                                                        class="btn btn-primary"
@@ -361,6 +459,50 @@
                                     </div>
                                 </div>
                             {% endif %}
+
+
+                        {% if product.attachment %}
+                             <div class="tab-content-wrapper" id="file-content" style="display: none;">
+<div class="col-md-6 mb-4">
+    <h5 class="mb-3">
+        <i class="fas fa-file-download me-2"></i>{% if LANGUAGE_CODE == 'en' %}
+            {{ product.attachment_name_en|default:"Attachment" }}
+        {% else %}
+            {{ product.attachment_name|default:"الملف المرفق" }}
+        {% endif %}
+    </h5>
+    <div class="manual-download-card">
+        <i class="fas fa-file fa-3x text-primary mb-3"></i>
+        <h6>{% if LANGUAGE_CODE == 'en' %}
+                {{ product.attachment_name_en|default:"Product Attachment" }}
+            {% else %}
+                {{ product.attachment_name|default:"ملف المنتج المرفق" }}
+            {% endif %}
+        </h6>
+        <p class="text-muted">
+            {% if LANGUAGE_CODE == 'en' %}
+                {{ product.attachment_description_en }}
+            {% else %}
+                {{ product.attachment_description }}
+            {% endif %}
+        </p>
+        <p class="text-muted">{% trans "حجم الملف" %}: {{ product.get_attachment_size }}</p>
+        <a href="{{ product.attachment.url }}" class="btn btn-primary" download>
+            <i class="fas fa-download me-2"></i>
+
+
+
+            {% if LANGUAGE_CODE == 'en' %}
+                 {% trans "download" %}
+            {% else %}
+                 {% trans "تحميل الملف" %}
+            {% endif %}
+
+        </a>
+    </div>
+</div>
+                             </div>
+{% endif %}
 
                             <!-- محتوى تبويب الشحن والإرجاع -->
                             <div class="tab-content-wrapper" id="shipping-content" style="display: none;">
@@ -464,19 +606,31 @@
                         <i class="fab fa-facebook-f"></i>
                         <span>Facebook</span>
                     </a>
-                    <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri }}&text={{ product.name }}"
+                    <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri }}&text={% if LANGUAGE_CODE == 'en' %}
+                            {{ product.name_en }}
+                        {% else %}
+                            {{ product.name }}
+                        {% endif %}"
                        target="_blank"
                        class="share-button twitter">
                         <i class="fab fa-twitter"></i>
                         <span>Twitter</span>
                     </a>
-                    <a href="https://wa.me/?text={{ product.name }} {{ request.build_absolute_uri }}"
+                    <a href="https://wa.me/?text={% if LANGUAGE_CODE == 'en' %}
+                            {{ product.name_en }}
+                        {% else %}
+                            {{ product.name }}
+                        {% endif %} {{ request.build_absolute_uri }}"
                        target="_blank"
                        class="share-button whatsapp">
                         <i class="fab fa-whatsapp"></i>
                         <span>WhatsApp</span>
                     </a>
-                    <a href="mailto:?subject={{ product.name }}&body={{ request.build_absolute_uri }}"
+                    <a href="mailto:?subject={% if LANGUAGE_CODE == 'en' %}
+                            {{ product.name_en }}
+                        {% else %}
+                            {{ product.name }}
+                        {% endif %}&body={{ request.build_absolute_uri }}"
                        class="share-button email">
                         <i class="fas fa-envelope"></i>
                         <span>Email</span>
@@ -516,6 +670,9 @@
 <!-- تعريف متغير مسار الفئة الحالية -->
 <script>
     var currentCategoryPath = {{ current_category_path|default:"[]"|safe }};
+    var currentLanguage = "{{ LANGUAGE_CODE }}";
+    var currencySymbol = {% if LANGUAGE_CODE == 'en' %}"JOD"{% else %}"د.أ"{% endif %};
+
 </script>
 
 

@@ -1,0 +1,43 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}حذف صورة{% endblock %}
+{% block page_title %}حذف صورة{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_events' %}">إدارة الفعاليات</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_event_detail' event.id %}">{{ event.title }}</a></li>
+{% endblock %}
+{% block current_page %}حذف صورة{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-danger text-white">
+        <h5 class="card-title mb-0">تأكيد الحذف</h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-warning">
+            <h5>هل أنت متأكد من حذف هذه الصورة؟</h5>
+            <p>هذا الإجراء لا يمكن التراجع عنه!</p>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-md-4 mx-auto">
+                <img src="{{ image.image.url }}" alt="{{ image.caption }}" class="img-fluid img-thumbnail">
+                {% if image.caption %}
+                <p class="text-center mt-2">{{ image.caption }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group text-end">
+                <a href="{% url 'dashboard:dashboard_event_detail' event.id %}" class="btn btn-secondary">إلغاء</a>
+                <button type="submit" class="btn btn-danger">تأكيد الحذف</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

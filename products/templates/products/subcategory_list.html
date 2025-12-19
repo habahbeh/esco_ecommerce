@@ -1,0 +1,172 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "التصنيفات الفرعية" %}: {{ parent_category.name }} | {{ site_settings.site_name|default:"ESCO" }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="section-header mb-5">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "الرئيسية" %}</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'products:category_list' %}">{% trans "التصنيفات" %}</a></li>
+                <li class="breadcrumb-item active">
+                    {% if LANGUAGE_CODE == 'en' and parent_category.name_en %}
+                        {{ parent_category.name_en }}
+                    {% else %}
+                        {{ parent_category.name }}
+                    {% endif %}
+                </li>
+            </ol>
+        </nav>
+        
+        <h1 class="h3 fw-bold mt-4">
+            {% trans "التصنيفات الفرعية ل" %}
+            {% if LANGUAGE_CODE == 'en' and parent_category.name_en %}
+                {{ parent_category.name_en }}
+            {% else %}
+                {{ parent_category.name }}
+            {% endif %}
+        </h1>
+    </div>
+
+    <!-- التصنيفات الفرعية -->
+    <div class="subcategories">
+        <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-4">
+            {% for category in subcategories %}
+            <div class="col">
+                <div class="card h-100 category-card shadow-sm">
+                    <a href="{% url 'products:category_products' category_slug=category.slug %}" class="text-decoration-none category-link">
+                        <div class="category-image-container">
+                            {% if category.image %}
+                            <img src="{{ category.image.url }}" alt="{{ category.name }}" class="category-image img-fluid">
+                            {% else %}
+                            <div class="category-placeholder w-100 text-center">
+                                <i class="fas fa-th-large fa-3x text-muted"></i>
+                            </div>
+                            {% endif %}
+                            
+                            {% if category.children.exists %}
+                            <div class="subcategory-indicator">
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="card-body text-center">
+                            <h3 class="h5 card-title mb-2">
+                                {% if LANGUAGE_CODE == 'en' and category.name_en %}
+                                    {{ category.name_en }}
+                                {% else %}
+                                    {{ category.name }}
+                                {% endif %}
+                            </h3>
+                            <span class="badge bg-primary rounded-pill mb-2">
+                                {{ category.total_products }} {% trans "منتج" %}
+                            </span>
+                            
+                            {% if category.children.exists %}
+                            <div class="mt-2">
+                                <a href="{% url 'products:subcategories' parent_slug=category.slug %}" class="btn btn-sm btn-outline-primary w-100">
+                                    {% trans "التصنيفات الفرعية" %}
+                                    {% if LANGUAGE_CODE == 'en' %}
+                                        <i class="fas fa-chevron-right me-1"></i>
+                                    {% else %}
+                                        <i class="fas fa-chevron-left ms-1"></i>
+                                    {% endif %}
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center py-5">
+                <div class="empty-state">
+                    <i class="fas fa-info-circle fa-3x text-muted mb-3"></i>
+                    <h3 class="h5">{% trans "لا توجد تصنيفات فرعية" %}</h3>
+                    <p class="text-muted">{% trans "لا توجد تصنيفات فرعية لهذا التصنيف" %}</p>
+                    <a href="{% url 'products:category_products' category_slug=parent_category.slug %}" class="btn btn-primary mt-3">
+                        {% trans "عرض منتجات" %} {{ parent_category.name }}
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+    /* نفس أنماط CSS من قالب التصنيفات الرئيسية */
+    .category-card {
+        transition: all 0.3s ease;
+        border: 1px solid rgba(0,0,0,0.1);
+        overflow: hidden;
+        height: 100%;
+    }
+    
+    .category-card:hover {
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        border-color: var(--bs-primary);
+    }
+    
+    .category-image-container {
+        height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        background-color: #f8f9fa;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .category-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    
+    .category-link:hover .category-image {
+        transform: scale(1.1);
+    }
+    
+    .category-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(0,0,0,0.03);
+    }
+    
+    .subcategory-indicator {
+        position: absolute;
+        left: 10px;
+        bottom: 10px;
+        background-color: rgba(var(--bs-primary-rgb), 0.8);
+        color: white;
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+    }
+    
+    html[dir="rtl"] .subcategory-indicator {
+        left: auto;
+        right: 10px;
+    }
+    
+    /* توافق مع الموبايل */
+    @media (max-width: 768px) {
+        .category-image-container {
+            height: 120px;
+        }
+    }
+</style>
+{% endblock %}

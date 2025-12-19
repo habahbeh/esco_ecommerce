@@ -47,21 +47,73 @@
 
     <!-- Additional CSS -->
     {% block extra_css %}{% endblock %}
+
+    <!-- إضافة نمط CSS للقائمة الجانبية في الموبايل -->
+    <style>
+        /* أنماط القائمة الجانبية للموبايل */
+        @media (max-width: 767.98px) {
+            /* تحديد موضع القائمة في الموبايل */
+            #sidebar {
+                position: fixed;
+                right: -280px; /* للواجهة العربية RTL */
+                top: 0;
+                width: 280px;
+                height: 100vh;
+                z-index: 1050;
+                transition: all 0.3s ease;
+                overflow-y: auto;
+                box-shadow: none;
+            }
+
+            /* فئة تفعيل القائمة عند النقر على الزر */
+            #sidebar.mobile-open {
+                right: 0;
+                box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            }
+
+            /* طبقة تعتيم خلف القائمة */
+            .sidebar-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.4);
+                z-index: 1049;
+                display: none;
+            }
+
+            /* عرض طبقة التعتيم عندما تكون القائمة مفتوحة */
+            .sidebar-overlay.show {
+                display: block;
+            }
+
+            /* المحتوى الرئيسي */
+            .main-content-wrapper {
+                margin-right: 0 !important;
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body class="{% block body_class %}{% endblock %}">
+    <!-- طبقة التعتيم للموبايل - تظهر خلف القائمة -->
+    <div class="sidebar-overlay"></div>
+
     <!-- Page Wrapper -->
     <div class="dashboard-wrapper">
 
         <!-- Sidebar -->
-        <nav id="sidebar" class="sidebar-wrapper">
+        <nav id="sidebar" class="sidebar-wrapper" >
             <div class="sidebar-content">
                 <!-- Sidebar Header -->
                 <div class="sidebar-header">
                     <div class="logo-container">
                         <img src="{% static 'images/logo.png' %}" alt="{{ site_settings.site_name }}" class="logo">
                     </div>
-                    <button type="button" id="sidebarCollapse" class="btn btn-link text-light d-md-none">
-                        <i class="fa fa-bars"></i>
+                    <!-- تعديل زر الإغلاق في الموبايل -->
+                    <button type="button" id="close-sidebar-mobile" class="btn btn-link text-light d-md-none">
+                        <i class="fa fa-times"></i>
                     </button>
                 </div>
 
@@ -94,7 +146,7 @@
                         </li>
 
                         <!-- Products Section -->
-                        {% if perms.products.view_product %}
+                        {% if perms.products.view_product or perms.products.add_product or perms.products.view_category or perms.products.view_brand %}
                         <li class="menu-item-section">
                             <span>المنتجات</span>
                         </li>
@@ -104,12 +156,21 @@
                                 <span>إدارة المنتجات</span>
                             </a>
                             <ul class="submenu">
+                                {% if perms.products.view_product %}
                                 <li><a href="{% url 'dashboard:dashboard_products' %}">قائمة المنتجات</a></li>
+                                {% endif %}
+
                                 {% if perms.products.add_product %}
                                 <li><a href="{% url 'dashboard:dashboard_product_create' %}">إضافة منتج جديد</a></li>
                                 {% endif %}
+
+                                {% if perms.products.view_category %}
                                 <li><a href="{% url 'dashboard:dashboard_categories' %}">الفئات</a></li>
+                                {% endif %}
+
+                                {% if perms.products.view_brand %}
                                 <li><a href="{% url 'dashboard:dashboard_brands' %}">العلامات التجارية</a></li>
+                                {% endif %}
                             </ul>
                         </li>
                         {% endif %}
@@ -125,51 +186,59 @@
                                 <span>إدارة الطلبات</span>
                             </a>
                             <ul class="submenu">
+                                {% if perms.orders.view_order %}
                                 <li><a href="{% url 'dashboard:dashboard_orders' %}">قائمة الطلبات</a></li>
-{#                                {% if perms.orders.add_order %}#}
-{#                                <li><a href="{% url 'dashboard:dashboard_order_create' %}">إضافة طلب جديد</a></li>#}
-{#                                {% endif %}#}
-{#                                <li><a href="{% url 'dashboard:dashboard_order_dashboard' %}">إحصائيات الطلبات</a></li>#}
+                                {% endif %}
 
+                                {% if perms.orders.view_order %}
                                 <li><a href="{% url 'dashboard:dashboard_delivery_orders_report' %}">الطلبات المنتظرة التوصيل</a></li>
-
+                                {% endif %}
                             </ul>
                         </li>
                         {% endif %}
 
+
+                        <!-- قسم الفعاليات والمعارض -->
+                        {% if perms.events.view_event or request.user.is_superuser %}
+                            <li class="menu-item-section">
+                                <span>الفعاليات</span>
+                            </li>
+                            <li class="menu-item {% if 'events' in request.path %}active{% endif %}">
+                                <a href="{% url 'dashboard:dashboard_events' %}">
+                                    <i class="fa fa-calendar-alt"></i>
+                                    <span>إدارة الفعاليات</span>
+                                </a>
+                                <ul class="submenu">
+                                    {% if perms.events.view_event %}
+                                        <li><a href="{% url 'dashboard:dashboard_events' %}">قائمة الفعاليات</a></li>
+                                    {% endif %}
+
+                                    {% if perms.events.add_event %}
+                                        <li><a href="{% url 'dashboard:dashboard_event_create' %}">إضافة فعالية جديدة</a></li>
+                                    {% endif %}
+                                </ul>
+                            </li>
+                        {% endif %}
+
                         <!-- Checkout & Payments Section -->
-                        {% if perms.checkout.view_checkoutsession or perms.payment.view_payment %}
+                        {% if perms.checkout.view_paymentmethod %}
                         <li class="menu-item-section">
                             <span>المدفوعات</span>
                         </li>
-                        {% if perms.checkout.view_checkoutsession %}
+
+                        {% if perms.checkout.view_paymentmethod %}
                         <li class="menu-item {% if 'checkout' in request.path %}active{% endif %}">
                             <a href="{% url 'dashboard:dashboard_checkout_sessions' %}">
                                 <i class="fa fa-credit-card"></i>
                                 <span>عمليات الدفع</span>
                             </a>
                             <ul class="submenu">
-{#                                <li><a href="{% url 'dashboard:dashboard_checkout_sessions' %}">جلسات الدفع</a></li>#}
-{#                                <li><a href="{% url 'dashboard:dashboard_shipping_methods' %}">طرق الشحن</a></li>#}
+                                {% if perms.checkout.view_paymentmethod %}
                                 <li><a href="{% url 'dashboard:dashboard_payment_methods' %}">طرق الدفع</a></li>
-{#                                <li><a href="{% url 'dashboard:dashboard_coupons' %}">كوبونات الخصم</a></li>#}
+                                {% endif %}
                             </ul>
                         </li>
                         {% endif %}
-
-{#                        {% if perms.payment.view_payment %}#}
-{#                        <li class="menu-item {% if 'payment' in request.path %}active{% endif %}">#}
-{#                            <a href="{% url 'dashboard:dashboard_payment_list' %}">#}
-{#                                <i class="fa fa-money-bill"></i>#}
-{#                                <span>المعاملات المالية</span>#}
-{#                            </a>#}
-{#                            <ul class="submenu">#}
-{#                                <li><a href="{% url 'dashboard:dashboard_payment_list' %}">المدفوعات</a></li>#}
-{#                                <li><a href="{% url 'dashboard:dashboard_refund_list' %}">المبالغ المستردة</a></li>#}
-{#                                <li><a href="{% url 'dashboard:dashboard_transaction_list' %}">سجل المعاملات</a></li>#}
-{#                 fالتقارير           </ul>#}
-{#                        </li>#}
-{#                        {% endif %}#}
                         {% endif %}
 
                         <!-- Users Section -->
@@ -183,10 +252,14 @@
                                 <span>إدارة المستخدمين</span>
                             </a>
                             <ul class="submenu">
+                                {% if perms.accounts.view_user %}
                                 <li><a href="{% url 'dashboard:dashboard_users' %}">قائمة المستخدمين</a></li>
+                                {% endif %}
+
                                 {% if perms.accounts.add_user %}
                                 <li><a href="{% url 'dashboard:dashboard_user_create' %}">إضافة مستخدم جديد</a></li>
                                 {% endif %}
+
                                 {% if perms.accounts.view_role %}
                                 <li><a href="{% url 'dashboard:dashboard_roles' %}">الأدوار والصلاحيات</a></li>
                                 {% endif %}
@@ -194,7 +267,7 @@
                         </li>
                         {% endif %}
 
-                        <!-- Reports Section -->
+                        <!-- Reports Section - مخفي حاليًا -->
                         {% if perms.dashboard.view_reports %}
                         <li class="menu-item-section" hidden>
                             <span>التقارير</span>
@@ -205,6 +278,7 @@
                                 <span>التقارير والإحصائيات</span>
                             </a>
                             <ul class="submenu">
+                                {% if perms.dashboard.view_reports %}
                                 <li><a href="{% url 'dashboard:dashboard_sales_report' %}">تقارير المبيعات</a></li>
                                 <li><a href="{% url 'dashboard:dashboard_product_report' %}">تقارير المنتجات</a></li>
                                 <li><a href="{% url 'dashboard:dashboard_customer_report' %}">تقارير العملاء</a></li>
@@ -212,12 +286,13 @@
                                 <li><a href="{% url 'dashboard:dashboard_revenue_report' %}">تقارير الإيرادات</a></li>
                                 <li><a href="{% url 'dashboard:dashboard_tax_report' %}">تقارير الضرائب</a></li>
                                 <li><a href="{% url 'dashboard:dashboard_export_report' %}">تصدير التقارير</a></li>
+                                {% endif %}
                             </ul>
                         </li>
                         {% endif %}
 
                         <!-- Settings Section -->
-                        {% if perms.dashboard.view_settings or request.user.is_superuser %}
+                        {% if perms.core.view_sitesettings or request.user.is_superuser %}
                         <li class="menu-item-section">
                             <span>الإعدادات</span>
                         </li>
@@ -227,20 +302,18 @@
                                 <span>إعدادات النظام</span>
                             </a>
                             <ul class="submenu">
-                                {% if request.user.is_superuser %}
-                                <li><a href="{% url 'dashboard:dashboard_site_settings' %}">إعدادات الموقع</a></li>
-{#                                <li><a href="{% url 'dashboard:dashboard_email_settings' %}">إعدادات البريد الإلكتروني</a></li>#}
-{#                                <li><a href="{% url 'dashboard:dashboard_payment_gateway_settings' %}">بوابات الدفع</a></li>#}
-{#                                <li><a href="{% url 'dashboard:dashboard_shipping_settings' %}">إعدادات الشحن</a></li>#}
-{#                                <li><a href="{% url 'dashboard:dashboard_tax_settings' %}">إعدادات الضرائب</a></li>#}
-{#                                <li><a href="{% url 'dashboard:dashboard_currency_settings' %}">العملات</a></li>#}
-{#                                <li><a href="{% url 'dashboard:dashboard_language_settings' %}">اللغات</a></li>#}
-{#                                <li><a href="{% url 'dashboard:dashboard_cache_management' %}">إدارة التخزين المؤقت</a></li>#}
-{#                                <li><a href="{% url 'dashboard:dashboard_backup_settings' %}">النسخ الاحتياطي</a></li>#}
-{#                                <li><a href="{% url 'dashboard:dashboard_maintenance_mode' %}">وضع الصيانة</a></li>#}
+                                {% if perms.core.view_sitesettings or request.user.is_superuser %}
+                                    <li><a href="{% url 'dashboard:dashboard_site_settings' %}">إعدادات الموقع</a></li>
                                 {% endif %}
-{#                                <li><a href="{% url 'dashboard:dashboard_dashboard_settings' %}">إعدادات لوحة التحكم</a></li>#}
-{#                                <li><a href="{% url 'dashboard:dashboard_widget_settings' %}">إعدادات الودجات</a></li>#}
+
+                                {% if perms.core.view_slideritem or request.user.is_superuser %}
+                                    <li><a href="{% url 'dashboard:dashboard_sliders' %}">إدارة السلايدر</a></li>
+                                {% endif %}
+
+                                <!-- إضافة رابط النشرة البريدية هنا -->
+                                {% if perms.core.view_newsletter or request.user.is_superuser %}
+                                    <li><a href="{% url 'dashboard:dashboard_newsletters' %}">اشتراكات النشرة البريدية</a></li>
+                                {% endif %}
                             </ul>
                         </li>
                         {% endif %}
@@ -251,7 +324,7 @@
             <!-- Sidebar Footer -->
             <div class="sidebar-footer">
                 <div class="sidebar-footer-item">
-                    <a href="{% url 'dashboard:dashboard_dashboard_settings' %}" title="إعدادات لوحة التحكم">
+                    <a href="{% url 'dashboard:dashboard_site_settings' %}" title="إعدادات لوحة التحكم">
                         <i class="fa fa-cog"></i>
                     </a>
                 </div>
@@ -273,8 +346,14 @@
             <!-- Navbar -->
             <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
                 <div class="container-fluid">
-                    <!-- Sidebar Toggle Button -->
-                    <button type="button" id="sidebarCollapseDesktop" class="btn btn-link">
+                    <!-- تعديل زر القائمة في الشريط العلوي -->
+                    <!-- زر الموبايل - يظهر فقط في الشاشات الصغيرة -->
+                    <button type="button" id="open-sidebar-mobile" class="btn btn-link d-md-none">
+                        <i class="fa fa-bars"></i>
+                    </button>
+
+                    <!-- زر سطح المكتب - يظهر فقط في الشاشات الكبيرة -->
+                    <button type="button" id="sidebarCollapseDesktop" class="btn btn-link d-none d-md-block">
                         <i class="fa fa-bars"></i>
                     </button>
 
@@ -286,7 +365,7 @@
                     <!-- Right Navbar Items -->
                     <ul class="navbar-nav ms-auto">
                         <!-- Notifications -->
-                        <li class="nav-item dropdown">
+                        <li class="nav-item dropdown" hidden>
                             <a class="nav-link dropdown-toggle position-relative" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fa fa-bell"></i>
                                 {% if unread_notifications_count > 0 %}
@@ -327,7 +406,7 @@
                         </li>
 
                         <!-- Language Switcher -->
-                        <li class="nav-item dropdown">
+                        <li class="nav-item dropdown" hidden>
                             <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button"
                                data-bs-toggle="dropdown" aria-expanded="false">
                                 {% if LANGUAGE_CODE == 'ar' %}
@@ -374,7 +453,7 @@
                                 <a class="dropdown-item" href="{% url 'dashboard:dashboard_user_detail' request.user.id %}">
                                     <i class="fa fa-user me-2"></i> الملف الشخصي
                                 </a>
-                                <a class="dropdown-item" href="{% url 'dashboard:dashboard_dashboard_settings' %}">
+                                <a class="dropdown-item" href="{% url 'dashboard:dashboard_site_settings' %}">
                                     <i class="fa fa-cog me-2"></i> الإعدادات
                                 </a>
                                 <div class="dropdown-divider"></div>
@@ -455,6 +534,59 @@
         $.ajaxSetup({
             headers: {
                 'X-CSRFToken': "{{ csrf_token }}"
+            }
+        });
+    </script>
+
+    <!-- كود جافاسكريبت للتحكم في القائمة الجانبية في الموبايل -->
+    <script>
+        // كود التحكم في القائمة الجانبية
+        document.addEventListener('DOMContentLoaded', function() {
+            // ١. زر فتح القائمة في الموبايل
+            const openSidebarMobile = document.getElementById('open-sidebar-mobile');
+            if (openSidebarMobile) {
+                openSidebarMobile.addEventListener('click', function() {
+                    const sidebar = document.getElementById('sidebar');
+                    const overlay = document.querySelector('.sidebar-overlay');
+
+                    sidebar.classList.add('mobile-open');
+                    overlay.classList.add('show');
+                });
+            }
+
+            // ٢. زر إغلاق القائمة في الموبايل
+            const closeSidebarMobile = document.getElementById('close-sidebar-mobile');
+            if (closeSidebarMobile) {
+                closeSidebarMobile.addEventListener('click', function() {
+                    const sidebar = document.getElementById('sidebar');
+                    const overlay = document.querySelector('.sidebar-overlay');
+
+                    sidebar.classList.remove('mobile-open');
+                    overlay.classList.remove('show');
+                });
+            }
+
+            // ٣. طبقة التعتيم - عند النقر عليها تغلق القائمة
+            const overlay = document.querySelector('.sidebar-overlay');
+            if (overlay) {
+                overlay.addEventListener('click', function() {
+                    const sidebar = document.getElementById('sidebar');
+
+                    sidebar.classList.remove('mobile-open');
+                    this.classList.remove('show');
+                });
+            }
+
+            // ٤. زر تبديل القائمة في سطح المكتب
+            const sidebarCollapseDesktop = document.getElementById('sidebarCollapseDesktop');
+            if (sidebarCollapseDesktop) {
+                sidebarCollapseDesktop.addEventListener('click', function() {
+                    const sidebar = document.getElementById('sidebar');
+                    const mainContent = document.querySelector('.main-content-wrapper');
+
+                    sidebar.classList.toggle('collapsed');
+                    mainContent.classList.toggle('expanded');
+                });
             }
         });
     </script>

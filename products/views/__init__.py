@@ -31,6 +31,8 @@ from .base_views import (
     AdminRequiredMixin,
 )
 
+from .chat_view import *
+
 from .product_views import (
     # عروض التصنيفات (كانت سابقاً في category_views.py)
     CategoryListView,

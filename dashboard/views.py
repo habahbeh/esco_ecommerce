@@ -11,14 +11,16 @@ from django.http import JsonResponse, HttpResponse
 from django.db.models import Count, Sum, Q, F, Avg
 import csv, json
 from datetime import datetime, timedelta
-
+from django.utils.decorators import method_decorator
+from dashboard.decorators import permission_required, handle_no_permission
 # تأكد من استيراد جميع النماذج المطلوبة - Import all required models
 from products.models import Product, Category, ProductVariant, ProductImage, ProductDiscount
 
 from orders.models import Order, OrderItem
 from accounts.models import User
 from .models import DashboardNotification, ProductReviewAssignment
-
+from core.models import SliderItem
+from .forms.slider_forms import SliderItemForm
 
 class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     """
@@ -79,8 +81,9 @@ class DashboardView(StaffRequiredMixin, TemplateView):
 
 # ===== إدارة المنتجات ===== #
 # ===== Product Management ===== #
-
+@method_decorator(permission_required('products.view_product'), name='dispatch')
 class ProductListView(StaffRequiredMixin, ListView):
+    permission_required = 'products.view_product'
     """
     عرض قائمة المنتجات - يعرض قائمة المنتجات في لوحة التحكم
     Product list view - displays a list of products in the dashboard
@@ -1021,3 +1024,4 @@ class ImportProductsView(StaffRequiredMixin, TemplateView):
             messages.error(request, _('حدث خطأ أثناء استيراد المنتجات: {}').format(str(e)))
 
         return redirect('dashboard:product_list')
+

@@ -80,7 +80,7 @@ class SEOModel(models.Model):
     )
     meta_keywords = models.CharField(
         _("كلمات مفتاحية SEO"),
-        max_length=500,
+        max_length=200,
         blank=True,
         validators=[MinLengthValidator(5)],
         help_text=_("كلمات مفتاحية مفصولة بفواصل")
@@ -98,20 +98,20 @@ class Category(MPTTModel, TimeStampedModel, SEOModel):
     # Basic Information
     name = models.CharField(
         _("اسم الفئة"),
-        max_length=200,
+        max_length=50,
         validators=[MinLengthValidator(2)],
         help_text=_("اسم الفئة - على الأقل حرفين")
     )
     name_en = models.CharField(
         _("Category Name (English)"),
-        max_length=200,
+        max_length=100,
         validators=[MinLengthValidator(2)],
         blank=True,
         help_text=_("English category name (optional)")
     )
     slug = models.SlugField(
         _("معرف URL"),
-        max_length=200,
+        max_length=100,
         unique=True,
         allow_unicode=True,
         help_text=_("معرف فريد للرابط")
@@ -119,13 +119,13 @@ class Category(MPTTModel, TimeStampedModel, SEOModel):
     description = models.TextField(
         _("الوصف"),
         blank=True,
-        validators=[MinLengthValidator(10)],
+        # validators=[MinLengthValidator(10)],
         help_text=_("وصف الفئة")
     )
     description_en = models.TextField(
         _("Description (English)"),
         blank=True,
-        validators=[MinLengthValidator(10)],
+        # validators=[MinLengthValidator(10)],
         help_text=_("English description (optional)")
     )
 
@@ -240,14 +240,15 @@ class Category(MPTTModel, TimeStampedModel, SEOModel):
     )
 
     class Meta:
+        app_label = 'products'
         verbose_name = _("فئة")
         verbose_name_plural = _("الفئات")
         ordering = ['sort_order', 'name']
         unique_together = [['parent', 'name']]
         indexes = [
             models.Index(fields=['slug']),
-            models.Index(fields=['parent', 'is_active']),
-            models.Index(fields=['is_active', 'is_featured']),
+            # models.Index(fields=['parent', 'is_active']),
+            # models.Index(fields=['is_active', 'is_featured']),
             models.Index(fields=['level']),
             models.Index(fields=['sort_order']),
             models.Index(fields=['created_at']),
@@ -473,9 +474,9 @@ class Brand(TimeStampedModel, SEOModel):
     نموذج العلامات التجارية المحسن
     Enhanced Brand model
     """
-    name = models.CharField(_("اسم العلامة التجارية"), max_length=200)
-    name_en = models.CharField(_("Brand Name"), max_length=200, blank=True)
-    slug = models.SlugField(_("معرف URL"), max_length=200, unique=True, allow_unicode=True)
+    name = models.CharField(_("اسم العلامة التجارية"), max_length=100)
+    name_en = models.CharField(_("Brand Name"), max_length=100, blank=True)
+    slug = models.SlugField(_("معرف URL"), max_length=100, unique=True, allow_unicode=True)
 
     logo = models.ImageField(
         _("الشعار"),
@@ -538,7 +539,7 @@ class Brand(TimeStampedModel, SEOModel):
         ordering = ['sort_order', 'name']
         indexes = [
             models.Index(fields=['slug']),
-            models.Index(fields=['is_active', 'is_featured']),
+        #     models.Index(fields=['is_active', 'is_featured']),
             models.Index(fields=['country']),
             models.Index(fields=['rating']),
         ]
@@ -625,7 +626,7 @@ class Tag(TimeStampedModel):
         ordering = ['-usage_count', 'name']
         indexes = [
             models.Index(fields=['slug']),
-            models.Index(fields=['is_active', 'is_featured']),
+        #     models.Index(fields=['is_active', 'is_featured']),
             models.Index(fields=['usage_count']),
         ]
 
@@ -677,20 +678,20 @@ class Product(TimeStampedModel, SEOModel):
     # Basic Information
     name = models.CharField(
         _("اسم المنتج"),
-        max_length=500,
+        max_length=150,
         validators=[MinLengthValidator(2)],
         help_text=_("يجب أن يكون اسم المنتج على الأقل حرفين")
     )
     name_en = models.CharField(
         _("Product Name"),
-        max_length=500,
+        max_length=150,
         validators=[MinLengthValidator(2)],
         blank=True,
         help_text=_("English product name (optional)")
     )
     slug = models.SlugField(
         _("معرف URL"),
-        max_length=500,
+        max_length=191,
         unique=True,
         allow_unicode=True
     )
@@ -704,9 +705,9 @@ class Product(TimeStampedModel, SEOModel):
     barcode = models.CharField(
         _("الباركود"),
         max_length=100,
-        validators=[MinLengthValidator(8)],
+        # validators=[MinLengthValidator(8)],
         blank=True,
-        help_text=_("الباركود - على الأقل 8 أرقام")
+        # help_text=_("الباركود - على الأقل 8 أرقام")
     )
 
     # Categorization
@@ -734,15 +735,15 @@ class Product(TimeStampedModel, SEOModel):
     # Description
     short_description = models.TextField(
         _("وصف مختصر"),
-        max_length=500,
-        validators=[MinLengthValidator(10)],
+        max_length=200,
+        # validators=[MinLengthValidator(10)],
         blank=True,
-        help_text=_("وصف مختصر للمنتج - على الأقل 10 أحرف")
+        # help_text=_("وصف مختصر للمنتج - على الأقل 10 أحرف")
     )
     description = models.TextField(
         _("الوصف الكامل"),
-        validators=[MinLengthValidator(20)],
-        help_text=_("وصف مفصل للمنتج - على الأقل 20 حرف")
+        # validators=[MinLengthValidator(20)],
+        # help_text=_("وصف مفصل للمنتج - على الأقل 20 حرف")
     )
     specifications = models.JSONField(
         _("المواصفات"),
@@ -936,7 +937,7 @@ class Product(TimeStampedModel, SEOModel):
         default='draft'
     )
     is_active = models.BooleanField(_("نشط"), default=True)
-    show_price = models.BooleanField(_("عرض السعر"), default=True)
+    show_price = models.BooleanField(_("عرض السعر"), default=False)
     allow_reviews = models.BooleanField(_("السماح بالتقييمات"), default=True)
 
     # Related products
@@ -973,6 +974,37 @@ class Product(TimeStampedModel, SEOModel):
     # Search and SEO
     search_keywords = models.TextField(_("كلمات البحث"), blank=True)
 
+    # Attachment / الملف المرفق
+    attachment = models.FileField(
+        _("الملف المرفق"),
+        upload_to='products/attachments/%Y/%m/',
+        blank=True,
+        null=True,
+        help_text=_("ملف مرفق للمنتج مثل كتالوج أو دليل استخدام (PDF، DOC)")
+    )
+    attachment_name = models.CharField(
+        _("اسم الملف المرفق"),
+        max_length=100,
+        blank=True,
+        help_text=_("اسم وصفي للملف المرفق بالعربية")
+    )
+    attachment_name_en = models.CharField(
+        _("Attachment Name"),
+        max_length=100,
+        blank=True,
+        help_text=_("Descriptive name for the attachment in English")
+    )
+    attachment_description = models.TextField(
+        _("وصف الملف المرفق"),
+        blank=True,
+        help_text=_("وصف قصير للملف المرفق بالعربية")
+    )
+    attachment_description_en = models.TextField(
+        _("Attachment Description"),
+        blank=True,
+        help_text=_("Short description for the attachment in English")
+    )
+
     created_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -988,20 +1020,20 @@ class Product(TimeStampedModel, SEOModel):
         indexes = [
             models.Index(fields=['slug']),
             models.Index(fields=['sku']),
-            models.Index(fields=['status', 'is_active']),
-            models.Index(fields=['category', 'brand']),
+            # models.Index(fields=['status', 'is_active']),
+            # models.Index(fields=['category', 'brand']),
             models.Index(fields=['-sales_count']),
             models.Index(fields=['-views_count']),
             models.Index(fields=['barcode']),
             models.Index(fields=['created_at']),
-            models.Index(fields=['is_featured', 'featured_until']),
+            # models.Index(fields=['is_featured', 'featured_until']),
             models.Index(fields=['stock_status']),
         ]
         constraints = [
-            models.CheckConstraint(
-                check=Q(base_price__gt=0),
-                name='positive_base_price'
-            ),
+            # models.CheckConstraint(
+            #     check=Q(base_price__gt=0),
+            #     name='positive_base_price'
+            # ),
             models.CheckConstraint(
                 check=Q(stock_quantity__gte=0),
                 name='non_negative_stock'
@@ -1444,6 +1476,66 @@ class Product(TimeStampedModel, SEOModel):
 
         return queryset.distinct()
 
+    @property
+    def has_attachment(self):
+        """التحقق من وجود ملف مرفق"""
+        if not self.attachment:
+            return False
+        try:
+            # التحقق من وجود الملف فعلياً على القرص
+            if hasattr(self.attachment, 'path'):
+                import os
+                return os.path.exists(self.attachment.path)
+            return True
+        except (ValueError, FileNotFoundError, OSError):
+            return False
+
+    def get_attachment_url(self):
+        """الحصول على رابط الملف المرفق"""
+        if self.attachment:
+            try:
+                # التحقق من وجود الملف قبل إرجاع الرابط
+                if hasattr(self.attachment, 'path'):
+                    import os
+                    if os.path.exists(self.attachment.path):
+                        return self.attachment.url
+                else:
+                    return self.attachment.url
+            except (ValueError, FileNotFoundError, OSError):
+                # الملف غير موجود، نتجاهل الخطأ
+                pass
+        return None
+
+    def get_attachment_size(self):
+        """الحصول على حجم الملف المرفق بصيغة مناسبة"""
+        if not self.attachment:
+            return None
+
+        try:
+            size_bytes = self.attachment.size
+
+            if size_bytes < 1024:
+                return f"{size_bytes} بايت"
+            elif size_bytes < 1024 * 1024:
+                return f"{size_bytes / 1024:.1f} كيلوبايت"
+            else:
+                return f"{size_bytes / (1024 * 1024):.2f} ميجابايت"
+        except (ValueError, FileNotFoundError, OSError):
+            # الملف غير موجود، نتجاهل الخطأ
+            return None
+
+    def get_attachment_name(self, language='ar'):
+        """الحصول على اسم الملف المرفق باللغة المطلوبة"""
+        if language == 'en' and self.attachment_name_en:
+            return self.attachment_name_en
+        return self.attachment_name
+
+    def get_attachment_description(self, language='ar'):
+        """الحصول على وصف الملف المرفق باللغة المطلوبة"""
+        if language == 'en' and self.attachment_description_en:
+            return self.attachment_description_en
+        return self.attachment_description
+
     def __repr__(self):
         return f"<Product: {self.name} ({self.sku})>"
 
@@ -1498,7 +1590,7 @@ class ProductImage(TimeStampedModel):
         verbose_name_plural = _("صور المنتجات")
         ordering = ['sort_order', '-is_primary']
         indexes = [
-            models.Index(fields=['product', 'is_primary']),
+        #     models.Index(fields=['product', 'is_primary']),
             models.Index(fields=['variant']),
             models.Index(fields=['sort_order']),
         ]
@@ -1635,7 +1727,7 @@ class ProductVariant(TimeStampedModel):
     # Variant identification
     name = models.CharField(
         _("اسم المتغير"),
-        max_length=200,
+        max_length=100,
         help_text=_("مثل: أحمر، كبير، 64 جيجا")
     )
     sku = models.CharField(
@@ -1698,7 +1790,7 @@ class ProductVariant(TimeStampedModel):
         ordering = ['sort_order', 'name']
         unique_together = [['product', 'name']]
         indexes = [
-            models.Index(fields=['product', 'is_active']),
+        #     models.Index(fields=['product', 'is_active']),
             models.Index(fields=['sku']),
         ]
 
@@ -1775,7 +1867,7 @@ class Wishlist(TimeStampedModel):
         unique_together = [['user', 'product']]
         ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['user', 'created_at']),
+        #     models.Index(fields=['user', 'created_at']),
             models.Index(fields=['product']),
         ]
 
@@ -1864,8 +1956,8 @@ class ProductViewHistory(TimeStampedModel):
         verbose_name_plural = _("تاريخ المشاهدات")
         ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['user', 'created_at']),
-            models.Index(fields=['session_key', 'created_at']),
+        #     models.Index(fields=['user', 'created_at']),
+        #     models.Index(fields=['session_key', 'created_at']),
             models.Index(fields=['product']),
         ]
 
@@ -1965,10 +2057,10 @@ class ProductAttributeValue(TimeStampedModel):
         verbose_name = _("قيمة خاصية منتج")
         verbose_name_plural = _("قيم خصائص المنتجات")
         unique_together = [['product', 'attribute']]
-        indexes = [
-            models.Index(fields=['product', 'attribute']),
-            models.Index(fields=['attribute', 'value']),
-        ]
+        # indexes = [
+        #     models.Index(fields=['product', 'attribute']),
+        #     models.Index(fields=['attribute', 'value']),
+        # ]
 
     def __str__(self):
         return f"{self.product.name} - {self.attribute.name}: {self.value}"
@@ -2025,7 +2117,7 @@ class ProductQuestion(TimeStampedModel):
         verbose_name_plural = _("أسئلة المنتجات")
         ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['product', 'is_public']),
+        #     models.Index(fields=['product', 'is_public']),
             models.Index(fields=['user']),
             models.Index(fields=['is_answered']),
         ]
@@ -2089,10 +2181,10 @@ class ProductSubscription(TimeStampedModel):
         verbose_name_plural = _("اشتراكات المنتجات")
         unique_together = [['user', 'product', 'subscription_type']]
         ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['user', 'is_active']),
-            models.Index(fields=['product', 'subscription_type']),
-        ]
+        # indexes = [
+        #     models.Index(fields=['user', 'is_active']),
+        #     models.Index(fields=['product', 'subscription_type']),
+        # ]
 
     def __str__(self):
         return f"{self.user.username} - {self.product.name} ({self.get_subscription_type_display()})"
@@ -2166,7 +2258,7 @@ class ProductReview(TimeStampedModel):
 
     # معلومات إضافية
     ip_address = models.GenericIPAddressField(_("عنوان IP"), blank=True, null=True)
-    user_agent = models.CharField(_("معرف المتصفح"), max_length=500, blank=True)
+    user_agent = models.CharField(_("معرف المتصفح"), max_length=200, blank=True)
 
     # تقييم فرعي (إضافي)
     quality_rating = models.PositiveSmallIntegerField(
@@ -2211,10 +2303,10 @@ class ProductReview(TimeStampedModel):
         ordering = ['-created_at']
         unique_together = [['product', 'user']]  # مراجعة واحدة لكل مستخدم لكل منتج
         indexes = [
-            models.Index(fields=['product', 'is_approved']),
+        #     models.Index(fields=['product', 'is_approved']),
             models.Index(fields=['user']),
             models.Index(fields=['rating']),
-            models.Index(fields=['is_approved', 'created_at']),
+        #     models.Index(fields=['is_approved', 'created_at']),
             models.Index(fields=['helpful_votes']),
         ]
 
@@ -2517,7 +2609,7 @@ class ProductDiscount(TimeStampedModel):
         ordering = ['-priority', '-start_date']
         indexes = [
             models.Index(fields=['code']),
-            models.Index(fields=['start_date', 'end_date']),
+        #     models.Index(fields=['start_date', 'end_date']),
             models.Index(fields=['is_active']),
             models.Index(fields=['application_type']),
             models.Index(fields=['priority']),
@@ -2746,7 +2838,7 @@ class DiscountUsage(TimeStampedModel):
         verbose_name_plural = _("استخدامات الخصومات")
         ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['discount', 'user']),
+        #     models.Index(fields=['discount', 'user']),
             models.Index(fields=['session_key']),
             models.Index(fields=['created_at']),
         ]

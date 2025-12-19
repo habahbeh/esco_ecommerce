@@ -19,6 +19,8 @@ from .views.product_views import (
     FeaturedProductsView,
     BestSellersView,
     ProductVariantDetailView,
+    BrandListView,
+    SubCategoryListView,
 )
 
 from .views.review_views import (
@@ -30,6 +32,13 @@ from .views.review_views import (
     EditReviewView,
     DeleteReviewView,
 )
+
+
+#  imports api
+from .api.chat_views import ProductChatView, ProductWebhookView
+
+from .views.chat_view import ProductChatPageView
+
 
 # Import search views
 try:
@@ -116,7 +125,11 @@ urlpatterns = [
     path('', ProductListView.as_view(), name='product_list'),
 
     # قوائم المنتجات الخاصة
-    # path('categories/', CategoryListView.as_view(), name='category_list'),  # تم تحديثها لاستخدام CategoryListView من product_views.py
+    path('categories/', CategoryListView.as_view(), name='category_list'),  # تم تحديثها لاستخدام CategoryListView من product_views.py
+    # path('category/<slug:parent_slug>/subcategories/', SubCategoryListView.as_view(), name='subcategories'),
+    re_path(r'category/(?P<parent_slug>[-\w\u0600-\u06FF]+)/subcategories/', SubCategoryListView.as_view(), name='subcategories'),
+    path('brands/', BrandListView.as_view(), name='brand_list'),
+
     # path('category/<slug:category_slug>/', ProductListView.as_view(), name='category_products'),
     re_path(r'category/(?P<category_slug>[-\w\u0600-\u06FF]+)/', ProductListView.as_view(), name='category_products'),
 
@@ -144,6 +157,13 @@ urlpatterns = [
     path('review/<int:review_id>/edit/', EditReviewView.as_view(), name='edit_review'),
     path('review/<int:review_id>/delete/', DeleteReviewView.as_view(), name='delete_review'),
     path('my-reviews/', UserReviewsView.as_view(), name='user_reviews'),
+
+
+    path('chat/', ProductChatPageView.as_view(), name='product_chat_page'),
+
+    # API endpoints
+    path('api/chat/', ProductChatView.as_view(), name='product_chat'),
+    path('api/webhook/', ProductWebhookView.as_view(), name='product_webhook'),
 ]
 
 

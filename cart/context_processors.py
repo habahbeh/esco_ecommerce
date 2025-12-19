@@ -47,7 +47,8 @@ def cart_context(request):
     has_physical = False
 
     # Process cart items
-    for item_id, item_data in cart.items():
+    #for item_id, item_data in cart.items():
+    for item_id, item_data in list(cart.items()):
         try:
             # Get product
             product_id = item_data.get('product_id')
@@ -155,6 +156,9 @@ def cart_context(request):
     tax_rate = Decimal(getattr(settings, 'DEFAULT_TAX_RATE', '0.16'))  # 16% default
     if cart_subtotal > 0 and not has_digital:  # No tax on digital products
         cart_tax = cart_subtotal * tax_rate
+
+    # تعريف القيمة الافتراضية قبل الشرط
+    free_shipping_threshold = Decimal(getattr(settings, 'FREE_SHIPPING_THRESHOLD', '0.00'))
 
     # Calculate shipping
     if has_physical and cart_subtotal > 0:

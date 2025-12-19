@@ -1,0 +1,105 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "العلامات التجارية" %} | {{ site_settings.site_name|default:"ESCO" }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="section-header text-center mb-5">
+        <h1 class="display-5 fw-bold">{% trans "العلامات التجارية" %}</h1>
+        <p class="text-muted">{% trans "تصفح منتجاتنا حسب العلامة التجارية" %}</p>
+    </div>
+
+    <!-- جميع العلامات التجارية -->
+    <div class="all-brands">
+        <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-4">
+            {% for brand in brands %}
+            <div class="col">
+                <a href="{% url 'products:brand_products' brand_slug=brand.slug %}" class="text-decoration-none">
+                    <div class="card h-100 brand-card shadow-sm">
+                        <div class="brand-image-container">
+                            {% if brand.logo %}
+                            <img src="{{ brand.logo.url }}" alt="{{ brand.name }}" class="brand-logo img-fluid">
+                            {% else %}
+                            <div class="brand-placeholder w-100 text-center">
+                                <i class="fas fa-trademark fa-3x text-muted"></i>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="card-body text-center">
+                            <h3 class="h5 card-title mb-2">{{ brand.name }}</h3>
+                            <span class="badge bg-primary rounded-pill">
+                                {{ brand.total_products }} {% trans "منتج" %}
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center py-5">
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-circle fa-3x text-muted mb-3"></i>
+                    <h3 class="h5">{% trans "لا توجد علامات تجارية متاحة حاليًا" %}</h3>
+                    <p class="text-muted">{% trans "سيتم إضافة علامات تجارية قريبًا" %}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .brand-card {
+        transition: all 0.3s ease;
+        border: 1px solid rgba(0,0,0,0.1);
+        overflow: hidden;
+        height: 100%;
+    }
+
+    .brand-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        border-color: var(--bs-primary);
+    }
+
+    .brand-image-container {
+        height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0; /* تم إزالة الـ padding */
+        background-color: #f8f9fa;
+        overflow: hidden;
+        position: relative; /* إضافة */
+    }
+
+    .brand-logo {
+        width: 100%; /* تملأ العرض بالكامل */
+        height: 100%; /* تملأ الارتفاع بالكامل */
+        object-fit: cover; /* لملء الصورة بشكل كامل */
+        transition: transform 0.3s ease;
+    }
+
+    .brand-card:hover .brand-logo {
+        transform: scale(1.1);
+    }
+
+    .brand-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(0,0,0,0.03);
+    }
+
+    /* توافق مع الموبايل */
+    @media (max-width: 768px) {
+        .brand-image-container {
+            height: 120px;
+            padding: 0; /* تم إزالة الـ padding */
+        }
+    }
+</style>
+{% endblock %}

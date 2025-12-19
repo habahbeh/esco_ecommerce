@@ -39,17 +39,17 @@
         content: ' *';
         color: red;
     }
-    
+
     .json-editor {
         font-family: monospace;
         direction: ltr;
     }
-    
+
     .form-check-input {
         float: none;
         margin-left: 0;
     }
-    
+
     /* تنسيق أيقونة المعاينة */
     .image-preview {
         max-width: 150px;
@@ -59,17 +59,17 @@
         border-radius: 4px;
         padding: 5px;
     }
-    
+
     /* تنسيق tabs */
     .nav-tabs .nav-link {
         color: #6c757d;
     }
-    
+
     .nav-tabs .nav-link.active {
         color: #2196f3;
         font-weight: 600;
     }
-    
+
     .tab-content {
         padding: 20px;
         border: 1px solid #dee2e6;
@@ -102,7 +102,7 @@
             {{ form.errors }}
         </div>
         {% endif %}
-        
+
         <form method="post" enctype="multipart/form-data" novalidate id="payment-method-form">
             {% csrf_token %}
 
@@ -133,6 +133,18 @@
                                 <small class="form-text text-muted">{% trans 'اسم طريقة الدفع المعروض للمستخدم' %}</small>
                             </div>
                         </div>
+
+                    <div class="col-md-6 required-field">
+    <div class="mb-3">
+        <label for="id_name_en" class="form-label">{% trans 'اسم طريقة الدفع (بالإنجليزية)' %}</label>
+        <input type="text" name="name_en" id="id_name_en" class="form-control{% if form.name_en.errors %} is-invalid{% endif %}" value="{% if payment_method %}{{ payment_method.name_en }}{% else %}{{ form.name_en.value|default:'' }}{% endif %}" required dir="ltr">
+        {% if form.name_en.errors %}
+        <div class="invalid-feedback">{{ form.name_en.errors.0 }}</div>
+        {% endif %}
+        <small class="form-text text-muted">{% trans 'اسم طريقة الدفع المعروض للمستخدم باللغة الإنجليزية' %}</small>
+    </div>
+</div>
+
                         <div class="col-md-6 required-field">
                             <div class="mb-3">
                                 <label for="id_code" class="form-label">{% trans 'رمز طريقة الدفع' %}</label>
@@ -168,6 +180,15 @@
                         <small class="form-text text-muted">{% trans 'وصف طريقة الدفع المعروض للمستخدم' %}</small>
                     </div>
 
+                <div class="mb-3">
+    <label for="id_description_en" class="form-label">{% trans 'الوصف (بالإنجليزية)' %}</label>
+    <textarea name="description_en" id="id_description_en" class="form-control{% if form.description_en.errors %} is-invalid{% endif %}" rows="3" dir="ltr">{% if payment_method %}{{ payment_method.description_en }}{% else %}{{ form.description_en.value|default:'' }}{% endif %}</textarea>
+    {% if form.description_en.errors %}
+    <div class="invalid-feedback">{{ form.description_en.errors.0 }}</div>
+    {% endif %}
+    <small class="form-text text-muted">{% trans 'وصف طريقة الدفع المعروض للمستخدم باللغة الإنجليزية' %}</small>
+</div>
+
                     <div class="mb-3">
                         <label for="id_instructions" class="form-label">{% trans 'تعليمات' %}</label>
                         <textarea name="instructions" id="id_instructions" class="form-control{% if form.instructions.errors %} is-invalid{% endif %}" rows="3">{% if payment_method %}{{ payment_method.instructions }}{% else %}{{ form.instructions.value|default:'' }}{% endif %}</textarea>
@@ -176,6 +197,15 @@
                         {% endif %}
                         <small class="form-text text-muted">{% trans 'تعليمات خاصة بطريقة الدفع تظهر للمستخدم عند اختيارها' %}</small>
                     </div>
+
+                <div class="mb-3">
+    <label for="id_instructions_en" class="form-label">{% trans 'تعليمات (بالإنجليزية)' %}</label>
+    <textarea name="instructions_en" id="id_instructions_en" class="form-control{% if form.instructions_en.errors %} is-invalid{% endif %}" rows="3" dir="ltr">{% if payment_method %}{{ payment_method.instructions_en }}{% else %}{{ form.instructions_en.value|default:'' }}{% endif %}</textarea>
+    {% if form.instructions_en.errors %}
+    <div class="invalid-feedback">{{ form.instructions_en.errors.0 }}</div>
+    {% endif %}
+    <small class="form-text text-muted">{% trans 'تعليمات خاصة بطريقة الدفع تظهر للمستخدم عند اختيارها باللغة الإنجليزية' %}</small>
+</div>
 
                     <!-- حقول الرسوم المطلوبة بالنموذج ولكن مخفية -->
                     <input type="hidden" name="fee_fixed" id="id_fee_fixed" value="{% if payment_method %}{{ payment_method.fee_fixed }}{% else %}{{ form.fee_fixed.value|default:'0' }}{% endif %}">

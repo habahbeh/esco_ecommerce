@@ -822,32 +822,65 @@ function setupImageButtons() {
 
     // حذف الصور الحالية وجعل الصورة رئيسية
     // (نفس الكود السابق مع تحديثات بسيطة)
+    // document.querySelectorAll('.btn-remove-image').forEach(button => {
+    //     button.addEventListener('click', function() {
+    //         if (confirm("هل أنت متأكد من حذف هذه الصورة؟")) {
+    //             const imageId = this.getAttribute('data-image-id');
+    //             const imageItem = this.closest('.image-preview-item');
+    //
+    //             // إضافة حقل مخفي لتتبع الصور المحذوفة
+    //             const deletedImageInput = document.createElement('input');
+    //             deletedImageInput.type = 'hidden';
+    //             deletedImageInput.name = 'deleted_images[]';
+    //             deletedImageInput.value = imageId;
+    //             document.getElementById('product-form').appendChild(deletedImageInput);
+    //
+    //             // إزالة الصورة من العرض
+    //             imageItem.remove();
+    //
+    //             // إظهار رسالة السحب والإفلات إذا لم تعد هناك صور
+    //             if (document.querySelectorAll('.image-preview-item').length === 0) {
+    //                 const dropzoneMessage = document.querySelector('.dropzone-message');
+    //                 if (dropzoneMessage) {
+    //                     dropzoneMessage.style.display = 'block';
+    //                 }
+    //             }
+    //         }
+    //     });
+    // });
+
     document.querySelectorAll('.btn-remove-image').forEach(button => {
-        button.addEventListener('click', function() {
-            if (confirm("هل أنت متأكد من حذف هذه الصورة؟")) {
-                const imageId = this.getAttribute('data-image-id');
-                const imageItem = this.closest('.image-preview-item');
+    button.addEventListener('click', function() {
+        if (confirm("هل أنت متأكد من حذف هذه الصورة؟")) {
+            const imageId = this.getAttribute('data-image-id');
+            const imageItem = this.closest('.image-preview-item');
 
-                // إضافة حقل مخفي لتتبع الصور المحذوفة
-                const deletedImageInput = document.createElement('input');
-                deletedImageInput.type = 'hidden';
-                deletedImageInput.name = 'deleted_images[]';
-                deletedImageInput.value = imageId;
-                document.getElementById('product-form').appendChild(deletedImageInput);
-
-                // إزالة الصورة من العرض
-                imageItem.remove();
-
-                // إظهار رسالة السحب والإفلات إذا لم تعد هناك صور
-                if (document.querySelectorAll('.image-preview-item').length === 0) {
-                    const dropzoneMessage = document.querySelector('.dropzone-message');
-                    if (dropzoneMessage) {
-                        dropzoneMessage.style.display = 'block';
-                    }
+            // طلب AJAX لحذف الصورة من الخادم
+            fetch(`/dashboard/products/image/${imageId}/delete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
-            }
-        });
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // إزالة الصورة من العرض
+                    imageItem.remove();
+
+                    // إظهار رسالة نجاح
+                    alert('تم حذف الصورة بنجاح');
+                } else {
+                    alert('حدث خطأ أثناء حذف الصورة');
+                }
+            })
+            .catch(error => {
+                alert('حدث خطأ في الاتصال');
+            });
+        }
     });
+});
 
     // جعل الصورة رئيسية
     document.querySelectorAll('.btn-make-primary').forEach(button => {

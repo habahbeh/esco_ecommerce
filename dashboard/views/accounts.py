@@ -18,7 +18,12 @@ from django import forms
 from django.utils.translation import gettext_lazy as _
 from dashboard.forms.accounts import UserForm, RoleForm, UserProfileForm, UserAddressForm
 
+from django.utils.decorators import method_decorator
+from dashboard.decorators import permission_required
+
+
 # قائمة المستخدمين
+@method_decorator(permission_required('accounts.view_user'), name='dispatch')
 class UserListView(DashboardAccessMixin, View):
     """عرض قائمة المستخدمين"""
 
@@ -89,6 +94,7 @@ class UserListView(DashboardAccessMixin, View):
 
 
 # عرض تفاصيل المستخدم
+@method_decorator(permission_required('accounts.view_user'), name='dispatch')
 class UserDetailView(DashboardAccessMixin, View):
     """عرض تفاصيل المستخدم"""
 
@@ -124,6 +130,7 @@ class UserDetailView(DashboardAccessMixin, View):
 
 
 # إنشاء وتحديث المستخدم
+@method_decorator(permission_required('accounts.add_user'), name='dispatch')
 class UserFormView(DashboardAccessMixin, View):
     """عرض إنشاء وتحديث المستخدم"""
 
@@ -131,7 +138,7 @@ class UserFormView(DashboardAccessMixin, View):
         # التحقق من صلاحية الوصول (فقط للمشرف)
         if not request.user.is_superuser:
             messages.error(request, 'ليس لديك صلاحية الوصول لهذه الصفحة')
-            return redirect('dashboard_users')
+            return redirect('dashboard:dashboard_users')
 
         if user_id:
             # تحديث مستخدم موجود
@@ -163,7 +170,7 @@ class UserFormView(DashboardAccessMixin, View):
         # التحقق من صلاحية الوصول (فقط للمشرف)
         if not request.user.is_superuser:
             messages.error(request, 'ليس لديك صلاحية الوصول لهذه الصفحة')
-            return redirect('dashboard_users')
+            return redirect('dashboard:dashboard_users')
 
         # جمع البيانات من النموذج
         username = request.POST.get('username')
@@ -171,6 +178,9 @@ class UserFormView(DashboardAccessMixin, View):
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
         password = request.POST.get('password')
+        phone_number = request.POST.get('phone_number', '')
+        birth_date = request.POST.get('birth_date', None)
+        gender = request.POST.get('gender', '')
         is_active = request.POST.get('is_active') == 'on'
         is_staff = request.POST.get('is_staff') == 'on'
         is_superuser = request.POST.get('is_superuser') == 'on'
@@ -190,6 +200,10 @@ class UserFormView(DashboardAccessMixin, View):
             user.email = email
             user.first_name = first_name
             user.last_name = last_name
+            user.phone_number = phone_number
+            user.gender = gender if gender else None
+            if birth_date:
+                user.birth_date = birth_date
             user.is_active = is_active
             user.is_staff = is_staff
             user.is_superuser = is_superuser
@@ -214,6 +228,9 @@ class UserFormView(DashboardAccessMixin, View):
                     password=password,
                     first_name=first_name,
                     last_name=last_name,
+                    phone_number=phone_number,
+                    gender=gender if gender else None,
+                    birth_date=birth_date if birth_date else None,
                     is_active=is_active,
                     is_staff=is_staff,
                     is_superuser=is_superuser
@@ -272,14 +289,14 @@ class UserDeleteView(DashboardAccessMixin, View):
         # التحقق من صلاحية الوصول (فقط للمشرف)
         if not request.user.is_superuser:
             messages.error(request, 'ليس لديك صلاحية الوصول لهذه الصفحة')
-            return redirect('dashboard_users')
+            return redirect('dashboard:dashboard_users')
 
         user = get_object_or_404(User, id=user_id)
 
         # لا يمكن حذف المستخدم الحالي
         if user == request.user:
             messages.error(request, 'لا يمكن حذف حسابك الحالي')
-            return redirect('dashboard_users')
+            return redirect('dashboard:dashboard_users')
 
         # حذف المستخدم
         try:
@@ -288,10 +305,11 @@ class UserDeleteView(DashboardAccessMixin, View):
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء حذف المستخدم: {str(e)}')
 
-        return redirect('dashboard_users')
+        return redirect('dashboard:dashboard_users')
 
 
 # إدارة الأدوار
+@method_decorator(permission_required('accounts.view_role'), name='dispatch')
 class RoleListView(DashboardAccessMixin, View):
     """عرض قائمة الأدوار"""
 
@@ -313,7 +331,7 @@ class RoleFormView(DashboardAccessMixin, View):
         # التحقق من صلاحية الوصول (فقط للمشرف)
         if not request.user.is_superuser:
             messages.error(request, 'ليس لديك صلاحية الوصول لهذه الصفحة')
-            return redirect('dashboard_roles')
+            return redirect('dashboard:dashboard_roles')
 
         if role_id:
             # تحديث دور موجود
@@ -326,11 +344,72 @@ class RoleFormView(DashboardAccessMixin, View):
 
         # جلب الصلاحيات المتاحة
         from django.contrib.auth.models import Permission
-        permissions = Permission.objects.all().order_by('content_type__app_label', 'content_type__model')
+        from django.contrib.contenttypes.models import ContentType
+
+        # جلب صلاحيات المنتج والمستخدمين فقط
+        permissions = []
+
+        # قائمة النماذج التي نريد عرضها
+        models_to_display = [
+            # مجموعة المنتجات
+            {'app_label': 'products', 'model': 'product'},
+            {'app_label': 'products', 'model': 'category'},
+            {'app_label': 'products', 'model': 'brand'},
+
+            # مجموعة المستخدمين
+            {'app_label': 'accounts', 'model': 'user'},
+            {'app_label': 'accounts', 'model': 'role'},
+
+            # مجموعة الطلبات
+            {'app_label': 'orders', 'model': 'order'},
+            # {'app_label': 'orders', 'model': 'orderitem'},
+
+            # مجموعة الدفع
+            {'app_label': 'checkout', 'model': 'paymentmethod'},
+
+            # مجموعة النظام
+            {'app_label': 'core', 'model': 'sitesettings'},
+            {'app_label': 'core', 'model': 'newsletter'},
+            {'app_label': 'core', 'model': 'slideritem'},
+
+            # مجموعة الفعاليات
+            {'app_label': 'events', 'model': 'event'},
+            {'app_label': 'events', 'model': 'eventimage'},
+        ]
+
+
+
+        # جلب الصلاحيات للنماذج المحددة
+        for model_info in models_to_display:
+            try:
+                content_type = ContentType.objects.get(
+                    app_label=model_info['app_label'],
+                    model=model_info['model']
+                )
+                model_permissions = Permission.objects.filter(content_type=content_type).order_by('codename')
+                permissions.extend(model_permissions)
+            except ContentType.DoesNotExist:
+                # تجاهل الخطأ إذا لم يوجد النموذج
+                pass
+
+        # تجميع الصلاحيات حسب التطبيق والنموذج
+        permissions_by_app = {}
+        for perm in permissions:
+            app_label = perm.content_type.app_label
+            model = perm.content_type.model
+
+            if app_label not in permissions_by_app:
+                permissions_by_app[app_label] = {}
+
+            if model not in permissions_by_app[app_label]:
+                permissions_by_app[app_label][model] = []
+
+            permissions_by_app[app_label][model].append(perm)
 
         context = {
             'role': role,
             'permissions': permissions,
+            'permissions_by_app': permissions_by_app,
             'form_title': form_title
         }
 
@@ -340,7 +419,7 @@ class RoleFormView(DashboardAccessMixin, View):
         # التحقق من صلاحية الوصول (فقط للمشرف)
         if not request.user.is_superuser:
             messages.error(request, 'ليس لديك صلاحية الوصول لهذه الصفحة')
-            return redirect('dashboard_roles')
+            return redirect('dashboard:dashboard_roles')
 
         # جمع البيانات من النموذج
         name = request.POST.get('name')
@@ -376,7 +455,7 @@ class RoleFormView(DashboardAccessMixin, View):
         permissions = Permission.objects.filter(id__in=permission_ids)
         role.permissions.set(permissions)
 
-        return redirect('dashboard_roles')
+        return redirect('dashboard:dashboard_roles')
 
 
 # حذف الدور

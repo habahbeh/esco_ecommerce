@@ -14,6 +14,8 @@ from dashboard.views import import_export
 
 
 
+
+
 app_name = 'dashboard'
 
 urlpatterns = [
@@ -68,14 +70,16 @@ urlpatterns = [
     path('products/create/', views.ProductFormView.as_view(), name='dashboard_product_create'),
     path('products/bulk-actions/', views.ProductBulkActionsView.as_view(), name='dashboard_product_bulk_actions'),
     path('products/api/', views.ProductDataTableView.as_view(), name='dashboard_products_api'),
+    path('products/<str:product_id>/delete-attachment/', views.product_delete_attachment, name='product_delete_attachment'),
+
 
     path('products/<str:product_id>/duplicate/',
      views.products.duplicate_product,
      name='dashboard_product_duplicate'),
 
     # path('products/import/', ProductImportView.as_view(), name='product_import'),
-    path('products/import/progress/', ProductImportProgressView.as_view(), name='product_import_progress'),
-    path('products/import/direct/<str:import_id>/', product_import_direct, name='product_import_direct'),
+    # path('products/import/progress/', ProductImportProgressView.as_view(), name='product_import_progress'),
+    # path('products/import/direct/<str:import_id>/', product_import_direct, name='product_import_direct'),
 
 
 
@@ -86,10 +90,13 @@ urlpatterns = [
     # path('products/import/export-errors/', views.export_import_errors, name='export_import_errors'),
 
     path('products/import/', import_export.product_import_view, name='product_import'),
-    path('products/import/template/', import_export.generate_excel_template, name='excel_template'),
+    path('products/import/template/', import_export.generate_csv_template, name='excel_template'),
     path('products/import/results/<str:import_id>/', import_export.import_results_view, name='import_results'),
     path('products/import/progress/', import_export.import_progress_view, name='import_progress'),
     path('products/import/export-errors/', import_export.export_errors_view, name='export_import_errors'),
+    # path('products/import/export-errors/', views.export_errors_view, name='export_import_errors'),
+
+    path('products/image/<int:image_id>/delete/', views.ProductImageDeleteView.as_view(), name='dashboard_product_image_delete'),
 
 
     # إدارة الفئات
@@ -242,6 +249,30 @@ urlpatterns = [
     # إعدادات لوحة التحكم
     path('settings/dashboard/', views.DashboardSettingsView.as_view(), name='dashboard_dashboard_settings'),
     path('settings/widgets/', views.WidgetSettingsView.as_view(), name='dashboard_widget_settings'),
+
+
+    # ========================= مسارات إدارة الفعاليات =========================
+    path('events/', views.dashboard_events, name='dashboard_events'),
+    path('events/create/', views.dashboard_event_create, name='dashboard_event_create'),
+    path('events/<int:pk>/', views.dashboard_event_detail, name='dashboard_event_detail'),
+    path('events/<int:pk>/edit/', views.dashboard_event_edit, name='dashboard_event_edit'),
+    path('events/<int:pk>/delete/', views.dashboard_event_delete, name='dashboard_event_delete'),
+    path('events/<int:event_pk>/images/<int:image_pk>/edit/', views.dashboard_event_image_edit, name='dashboard_event_image_edit'),
+    path('events/<int:event_pk>/images/<int:image_pk>/delete/', views.dashboard_event_image_delete, name='dashboard_event_image_delete'),
+
+    # ========================= مسارات إدارة السلايدر =========================
+    path('settings/sliders/', views.dashboard_sliders, name='dashboard_sliders'),
+    path('settings/sliders/create/', views.dashboard_slider_create, name='dashboard_slider_create'),
+    path('settings/sliders/<int:pk>/edit/', views.dashboard_slider_edit, name='dashboard_slider_edit'),
+    path('settings/sliders/<int:pk>/delete/', views.dashboard_slider_delete, name='dashboard_slider_delete'),
+
+
+
+    # ========================= مسارات إدارة النشرة البريدية =========================
+    path('settings/newsletters/', views.dashboard_newsletters, name='dashboard_newsletters'),
+    path('settings/newsletters/create/', views.dashboard_newsletter_create, name='dashboard_newsletter_create'),
+    path('settings/newsletters/<int:pk>/edit/', views.dashboard_newsletter_edit, name='dashboard_newsletter_edit'),
+    path('settings/newsletters/<int:pk>/delete/', views.dashboard_newsletter_delete, name='dashboard_newsletter_delete'),
 
     # ========================= واجهات برمجة التطبيقات API =========================
     path('api/stats/', views.DashboardStatsAPIView.as_view(), name='dashboard_stats_api'),

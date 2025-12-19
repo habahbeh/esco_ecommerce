@@ -20,12 +20,12 @@ class DashboardAccessMixin(LoginRequiredMixin):
         # التحقق من صلاحية الوصول للوحة التحكم
         if not self.has_dashboard_access(request.user):
             messages.error(request, _('ليس لديك صلاحية الوصول للوحة التحكم'))
-            return redirect('dashboard_access_denied')
+            return redirect('dashboard:dashboard_access_denied')
 
         # التحقق من الصلاحيات المطلوبة إذا تم تحديدها
         if self.permission_required and not self.has_permission():
             messages.error(request, _('ليس لديك الصلاحيات المطلوبة للوصول لهذه الصفحة'))
-            return redirect('dashboard_home')
+            return redirect('dashboard:dashboard_home')
 
         return super().dispatch(request, *args, **kwargs)
 
@@ -99,6 +99,6 @@ class SuperuserRequiredMixin(LoginRequiredMixin):
 
         if not request.user.is_superuser:
             messages.error(request, _('هذه الصفحة متاحة فقط للمشرف الرئيسي'))
-            return redirect('dashboard_home')
+            return redirect('dashboard:dashboard_home')
 
         return super().dispatch(request, *args, **kwargs)

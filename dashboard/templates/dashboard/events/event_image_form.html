@@ -1,0 +1,198 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}تعديل صورة{% endblock %}
+{% block page_title %}تعديل صورة{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_events' %}">إدارة الفعاليات</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_event_detail' event.id %}">{{ event.title }}</a></li>
+{% endblock %}
+{% block current_page %}تعديل صورة{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* تنسيق الحقول المطلوبة */
+    .form-label.required:after {
+        content: " *";
+        color: #dc3545;
+    }
+
+    /* إظهار علامة النجمة للحقول المطلوبة */
+    input:required, textarea:required, select:required {
+        border-color: #ced4da;
+        background-image: none;
+    }
+
+    input:required:focus, textarea:required:focus, select:required:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    input:required:invalid, textarea:required:invalid, select:required:invalid {
+        border-color: #dc3545;
+    }
+
+    /* تنسيق لسانات اللغة */
+    .lang-tabs .nav-link {
+        border: 1px solid #dee2e6;
+        border-bottom: none;
+        margin-right: 5px;
+    }
+
+    .lang-tabs .nav-link.active {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #f8f9fa;
+    }
+
+    .tab-content {
+        border: 1px solid #dee2e6;
+        border-top: none;
+        padding: 20px;
+        background-color: #f8f9fa;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">تعديل صورة</h5>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-4">
+{#                <img src="{{ image.image.url }}" alt="{{ image.caption }}" class="img-fluid img-thumbnail">#}
+                {% if image.image %}
+                    <img src="{{ image.image.url }}" alt="{{ image.caption }}" class="img-fluid img-thumbnail">
+                {% else %}
+                    <div class="text-center py-4 bg-light rounded">
+                        <i class="fa fa-image fa-3x text-muted"></i>
+                        <p class="text-muted mt-2">لا توجد صورة</p>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="col-md-8">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <div class="form-group mb-3">
+                        <label for="{{ form.image.id_for_label }}" class="form-label">{{ form.image.label }}</label>
+                        <div class="mb-2">
+                            {% if image.image %}
+                                <img src="{{ image.image.url }}" alt="{{ image.caption }}" class="img-thumbnail"
+                                     style="max-width: 150px;">
+                            {% else %}
+                                <div class="text-center py-3 bg-light rounded" style="max-width: 150px;">
+                                    <i class="fa fa-image fa-2x text-muted"></i>
+                                    <p class="text-muted mt-2 small">لا توجد صورة</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="input-group">
+                            {{ form.image }}
+                            <small class="form-text text-muted d-block w-100">اترك هذا الحقل فارغاً إذا كنت لا تريد
+                                تغيير الصورة الحالية.</small>
+                        </div>
+                        {% if form.image.errors %}
+                            <div class="invalid-feedback d-block">{{ form.image.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="{{ form.order.id_for_label }}" class="form-label">{{ form.order.label }}</label>
+                        {{ form.order }}
+                        {% if form.order.errors %}
+                        <div class="invalid-feedback d-block">{{ form.order.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- لسانات اللغة -->
+                    <ul class="nav nav-tabs lang-tabs mb-3" id="langTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="arabic-tab" data-bs-toggle="tab" data-bs-target="#arabic-content" type="button" role="tab" aria-controls="arabic-content" aria-selected="true">المحتوى العربي</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="english-tab" data-bs-toggle="tab" data-bs-target="#english-content" type="button" role="tab" aria-controls="english-content" aria-selected="false">المحتوى الإنجليزي</button>
+                        </li>
+                    </ul>
+
+                    <!-- محتوى اللسانات -->
+                    <div class="tab-content" id="langTabsContent">
+                        <!-- المحتوى العربي -->
+                        <div class="tab-pane fade show active" id="arabic-content" role="tabpanel" aria-labelledby="arabic-tab">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.caption.id_for_label }}" class="form-label">{{ form.caption.label }}</label>
+                                {{ form.caption }}
+                                {% if form.caption.errors %}
+                                <div class="invalid-feedback d-block">{{ form.caption.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- المحتوى الإنجليزي -->
+                        <div class="tab-pane fade" id="english-content" role="tabpanel" aria-labelledby="english-tab">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.caption_en.id_for_label }}" class="form-label">{{ form.caption_en.label }}</label>
+                                {{ form.caption_en }}
+                                {% if form.caption_en.errors %}
+                                <div class="invalid-feedback d-block">{{ form.caption_en.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group text-end mt-4">
+                        <a href="{% url 'dashboard:dashboard_event_detail' event.id %}" class="btn btn-secondary">إلغاء</a>
+                        <button type="submit" class="btn btn-primary">حفظ</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // التحقق من صحة النموذج قبل الإرسال
+        $('form').on('submit', function(e) {
+            // إضافة فئة was-validated للعرض البصري للتحقق
+            $(this).addClass('was-validated');
+
+            // تحقق من أن جميع الحقول المطلوبة معبأة
+            let isValid = true;
+
+            $(this).find('[required]').each(function() {
+                if ($(this).val() === '') {
+                    isValid = false;
+                    // إضافة رسالة خطأ
+                    if ($(this).next('.invalid-feedback').length === 0) {
+                        $(this).after('<div class="invalid-feedback d-block">هذا الحقل مطلوب</div>');
+                    }
+                }
+            });
+
+            // إذا كان النموذج غير صالح، أوقف الإرسال
+            if (!isValid) {
+                e.preventDefault();
+
+                // التمرير إلى أول حقل به خطأ
+                $('html, body').animate({
+                    scrollTop: $('[required]:invalid').first().offset().top - 100
+                }, 500);
+            }
+        });
+
+        // تمييز الحقول المطلوبة بصرياً
+        $('[required]').each(function() {
+            const label = $('label[for="' + $(this).attr('id') + '"]');
+            if (label.length) {
+                label.addClass('required');
+            }
+        });
+    });
+</script>
+{% endblock %}

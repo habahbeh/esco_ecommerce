@@ -15,6 +15,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
+    <!-- Extra Meta Tags (Open Graph, Twitter Cards, etc.) -->
+    {% block extra_meta %}{% endblock %}
+
     <title>{% block title %}{% if site_settings.site_name %}{{ site_settings.site_name }}{% else %}ESCO{% endif %}{% endblock %}</title>
 
     <!-- Favicon -->
@@ -201,9 +204,9 @@
 <body>
     {% include 'core/includes/event_banner.html' %}
     <!-- Page Loader -->
-    <div class="page-loader" id="pageLoader">
-        <div class="loader-spinner"></div>
-    </div>
+{#    <div class="page-loader" id="pageLoader">#}
+{#        <div class="loader-spinner"></div>#}
+{#    </div>#}
 
     <!-- Accessibility Skip Link -->
     <a href="#main-content" class="skip-link">{% trans "تخطي إلى المحتوى الرئيسي" %}</a>

@@ -437,6 +437,14 @@
                                     <input type="url" name="linkedin" id="id_linkedin" class="form-control" value="{{ object.linkedin }}" dir="ltr" placeholder="https://linkedin.com/in/username">
                                 </div>
                             </div>
+
+                            <div class="mb-3">
+                                <label for="id_whatsapp" class="form-label">واتساب</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fab fa-whatsapp-in text-primary"></i></span>
+                                    <input type="url" name="whatsapp" id="id_whatsapp" class="form-control" value="{{ object.whatsapp }}" dir="ltr" placeholder="https://whatsapp.com/">
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -512,6 +520,9 @@
                                     {% endif %}
                                     {% if object.linkedin %}
                                     <a href="#" class="btn btn-sm btn-outline-primary"><i class="fab fa-linkedin-in"></i></a>
+                                    {% endif %}
+                                    {% if object.whatsapp %}
+                                    <a href="#" class="btn btn-sm btn-outline-primary"><i class="fab fa-whatsapp-in"></i></a>
                                     {% endif %}
                                     {% else %}
                                     <div class="text-muted">لم يتم إضافة وسائل تواصل اجتماعي</div>
@@ -623,6 +634,16 @@
                         </div>
                         <div class="text-truncate">
                             <a href="{{ object.linkedin }}" target="_blank" class="text-dark">{{ object.linkedin }}</a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if object.whatsapp %}
+                    <div class="social-link-item d-flex align-items-center">
+                        <div class="social-icon social-whatsapp">
+                            <i class="fab fa-whatsapp-in"></i>
+                        </div>
+                        <div class="text-truncate">
+                            <a href="{{ object.whatsapp }}" target="_blank" class="text-dark">{{ object.whatsapp }}</a>
                         </div>
                     </div>
                     {% endif %}

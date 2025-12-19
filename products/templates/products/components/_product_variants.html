@@ -21,6 +21,11 @@
                 <tr class="variant-row text-center {% if not variant.is_in_stock %}out-of-stock{% endif %}"
                     data-variant-id="{{ variant.id }}"
                     data-price="{{ variant.current_price }}"
+
+{#                    data-base-price="{{ variant.base_price|default:variant.current_price }}"#}
+{#                    data-has-discount="{{ variant.has_discount|yesno:'true,false' }}"#}
+{#                    data-discount-percentage="{{ variant.discount_percentage|default:0 }}"#}
+
                     data-stock="{{ variant.stock_quantity }}"
                     data-sku="{{ variant.sku }}">
                     <td>
@@ -50,7 +55,16 @@
                                                         {% endif %}
                                                     </div>
                     </td>
-                    <td class="fw-bold">{{ variant.current_price }} {% trans "د.أ" %}</td>
+                    <td class="fw-bold">
+
+                        {% if product.show_price  %}
+                            {{ variant.current_price }} {% trans "د.أ" %}
+                        {% else %}
+                            <a href="tel:{{ site_settings.phone }}" class="btn btn-primary">
+                                    <i class="fas fa-phone me-2"></i>{% trans "اتصل الآن" %}
+                                </a>
+                        {% endif %}
+                    </td>
                     <td>
                         {% if variant.is_in_stock %}
                         <span class="badge bg-success">{% trans "متوفر" %}</span>
@@ -294,40 +308,84 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // تحديث معلومات المتغير المحدد
     function updateSelectedVariantInfo(variantRow) {
-        const variantId = variantRow.dataset.variantId;
-        const price = variantRow.dataset.price;
-        const stock = variantRow.dataset.stock;
-        const sku = variantRow.dataset.sku;
+    // استخراج البيانات من المتغير المحدد
+    const variantId = variantRow.dataset.variantId;
+    const price = variantRow.dataset.price;
+    const basePrice = variantRow.dataset.basePrice;
+    const hasDiscount = variantRow.dataset.hasDiscount === 'true';
+    const discountPercentage = variantRow.dataset.discountPercentage;
+    const stock = variantRow.dataset.stock;
+    const sku = variantRow.dataset.sku;
 
-        // تحديث الحقل المخفي
-        if (selectedVariantIdField) {
-            selectedVariantIdField.value = variantId;
-        }
-
-        // تحديث معلومات العرض
-        if (selectedVariantSku) selectedVariantSku.textContent = sku || '-';
-        if (selectedVariantPrice) selectedVariantPrice.textContent = `${price} د.أ`;
-
-        if (selectedVariantStock) {
-            const stockNum = parseInt(stock);
-            if (stockNum > 10) {
-                selectedVariantStock.textContent = 'متوفر';
-                selectedVariantStock.className = 'fw-bold text-success';
-            } else if (stockNum > 0) {
-                selectedVariantStock.textContent = `${stockNum} قطعة فقط`;
-                selectedVariantStock.className = 'fw-bold text-warning';
-            } else {
-                selectedVariantStock.textContent = 'نفذ من المخزون';
-                selectedVariantStock.className = 'fw-bold text-danger';
-            }
-        }
-
-        // إزالة الفئة selected من جميع الصفوف
-        variantRows.forEach(row => row.classList.remove('selected'));
-
-        // إضافة الفئة selected إلى الصف المحدد
-        variantRow.classList.add('selected');
+    // تحديث الحقل المخفي
+    if (selectedVariantIdField) {
+        selectedVariantIdField.value = variantId;
     }
+
+    // صياغة عرض السعر حسب اللغة
+    const formattedPrice = currentLanguage === 'en'
+        ? `${parseFloat(price).toFixed(2)} JDs`
+        : price + ' د.أ' ;
+    // تحديث معلومات العرض في قسم التفاصيل
+    if (selectedVariantSku) selectedVariantSku.textContent = sku || '-';
+    if (selectedVariantPrice) selectedVariantPrice.textContent = formattedPrice;
+
+    // تحديث السعر في قسم السعر الرئيسي
+    const mainPriceElement = document.getElementById('productCurrentPrice');
+    if (mainPriceElement && price) {
+        mainPriceElement.textContent = formattedPrice;
+    }
+
+    // تحديث معلومات الخصم
+    const originalPriceElement = document.getElementById('productOriginalPrice');
+    const discountBadgeElement = document.getElementById('productDiscountBadge');
+
+    if (hasDiscount) {
+        // إظهار وتحديث عناصر الخصم
+        if (originalPriceElement) {
+            originalPriceElement.style.display = '';
+            originalPriceElement.textContent = `${parseFloat(basePrice).toFixed(2)}`;
+        }
+        if (discountBadgeElement) {
+            discountBadgeElement.style.display = '';
+            // تحديث نص الخصم مع الحفاظ على أيقونة النسبة المئوية
+            const iconHtml = discountBadgeElement.innerHTML.split('</i>')[0] + '</i> ';
+            const discountText = currentLanguage === 'en' ? 'discount' : 'خصم';
+            discountBadgeElement.innerHTML = `${iconHtml}${discountPercentage}% ${discountText}`;
+        }
+    } else {
+        // إخفاء عناصر الخصم إذا لم يكن هناك خصم
+        if (originalPriceElement) originalPriceElement.style.display = 'none';
+        if (discountBadgeElement) discountBadgeElement.style.display = 'none';
+    }
+
+    // تحديث معلومات المخزون
+    if (selectedVariantStock) {
+        const stockNum = parseInt(stock);
+        if (stockNum > 10) {
+            const availableText = currentLanguage === 'en' ? 'Available' : 'متوفر';
+            selectedVariantStock.textContent = availableText;
+            selectedVariantStock.className = 'fw-bold text-success';
+        } else if (stockNum > 0) {
+            const piecesText = currentLanguage === 'en' ? 'pieces only' : 'قطعة فقط';
+            selectedVariantStock.textContent = `${stockNum} ${piecesText}`;
+            selectedVariantStock.className = 'fw-bold text-warning';
+        } else {
+            const outOfStockText = currentLanguage === 'en' ? 'Out of stock' : 'نفذ من المخزون';
+            selectedVariantStock.textContent = outOfStockText;
+            selectedVariantStock.className = 'fw-bold text-danger';
+        }
+    }
+
+    // إزالة الفئة selected من جميع الصفوف
+    variantRows.forEach(row => row.classList.remove('selected'));
+
+    // إضافة الفئة selected إلى الصف المحدد
+    variantRow.classList.add('selected');
+
+    // تحديث حالة زر "إضافة إلى السلة"
+   // updateAddToCartButton();
+}
 
     // تحديث حالة الزر "إضافة إلى السلة" بناء على توفر المتغير
     function updateAddToCartButton() {

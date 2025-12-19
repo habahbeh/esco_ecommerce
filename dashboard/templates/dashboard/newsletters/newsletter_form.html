@@ -1,0 +1,66 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_site_settings' %}">الإعدادات</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_newsletters' %}">اشتراكات النشرة البريدية</a></li>
+{% endblock %}
+{% block current_page %}{{ current_page }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">{{ page_title }}</h5>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.email.id_for_label }}" class="form-label required">{{ form.email.label }}</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                        <div class="invalid-feedback d-block">{{ form.email.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check mt-4">
+                        {{ form.is_active }}
+                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                            {{ form.is_active.label }}
+                        </label>
+                        {% if form.is_active.errors %}
+                        <div class="invalid-feedback d-block">{{ form.is_active.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group text-end mt-3">
+                <a href="{% url 'dashboard:dashboard_newsletters' %}" class="btn btn-secondary">إلغاء</a>
+                <button type="submit" class="btn btn-primary">حفظ</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // تمييز الحقول المطلوبة بصرياً
+        $('[required]').each(function() {
+            const label = $('label[for="' + $(this).attr('id') + '"]');
+            if (label.length) {
+                label.addClass('required');
+            }
+        });
+    });
+</script>
+{% endblock %}

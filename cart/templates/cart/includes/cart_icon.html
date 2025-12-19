@@ -14,175 +14,186 @@
 
     <!-- Optional: Cart dropdown preview -->
     {% if cart_items and cart_count > 0 %}
-    <div class="cart-dropdown">
-        <div class="cart-dropdown-header">
-            <h6>{% trans "السلة" %} ({{ cart_count }})</h6>
-        </div>
+        <div class="cart-dropdown">
+            <div class="cart-dropdown-header">
+                <h6>{% trans "السلة" %} ({{ cart_count }})</h6>
+            </div>
 
-        <div class="cart-dropdown-items">
-            {% for item in cart_items|slice:":3" %}
-            <div class="cart-dropdown-item">
-                {% if item.product.default_image %}
-                    <img src="{{ item.product.default_image.image.url }}" alt="{{ item.product.name }}">
+            <div class="cart-dropdown-items">
+                {% for item in cart_items|slice:":3" %}
+                    <div class="cart-dropdown-item">
+                        {% if item.product.default_image %}
+                            <img src="{{ item.product.default_image.image.url }}" alt="{% if LANGUAGE_CODE == 'en' %}
+    {{ item.product.name_en }}
+{% else %}
+    {{ item.product.name }}
+{% endif %}">
+                        {% endif %}
+                        <div class="item-details">
+                            <h6>
+                                {#                        {{ item.product.name|truncatechars:30 }}#}
+                                {% if LANGUAGE_CODE == 'en' %}
+                                    {{ item.product.name_en }}
+                                {% else %}
+                                    {{ item.product.name }}
+                                {% endif %}
+                            </h6>
+                            <small>{{ item.quantity }} × {{ item.price|floatformat:2 }} {% trans "د.أ" %}</small>
+                        </div>
+                    </div>
+                {% endfor %}
+
+                {% if cart_count > 3 %}
+                    <div class="text-center text-muted small">
+                        {% trans "و" %} {{ cart_count|add:"-3" }} {% trans "منتجات أخرى" %}
+                    </div>
                 {% endif %}
-                <div class="item-details">
-                    <h6>{{ item.product.name|truncatechars:30 }}</h6>
-                    <small>{{ item.quantity }} × {{ item.price|floatformat:2 }} {% trans "د.أ" %}</small>
+            </div>
+
+            <div class="cart-dropdown-footer">
+                <div class="d-flex justify-content-between mb-2">
+                    <strong>{% trans "المجموع:" %}</strong>
+                    <strong>{{ cart_total|floatformat:2 }} {% trans "د.أ" %}</strong>
                 </div>
+                <a href="{% url 'cart:cart_detail' %}" class="btn btn-primary btn-sm w-100">
+                    {% trans "عرض السلة" %}
+                </a>
             </div>
-            {% endfor %}
-
-            {% if cart_count > 3 %}
-            <div class="text-center text-muted small">
-                {% trans "و" %} {{ cart_count|add:"-3" }} {% trans "منتجات أخرى" %}
-            </div>
-            {% endif %}
         </div>
-
-        <div class="cart-dropdown-footer">
-            <div class="d-flex justify-content-between mb-2">
-                <strong>{% trans "المجموع:" %}</strong>
-                <strong>{{ cart_total|floatformat:2 }} {% trans "د.أ" %}</strong>
-            </div>
-            <a href="{% url 'cart:cart_detail' %}" class="btn btn-primary btn-sm w-100">
-                {% trans "عرض السلة" %}
-            </a>
-        </div>
-    </div>
     {% endif %}
 </div>
 
 <style>
-.cart-widget {
-    position: relative;
-    margin: 0 15px;
-}
+    .cart-widget {
+        position: relative;
+        margin: 0 15px;
+    }
 
-.cart-link {
-    color: inherit;
-    text-decoration: none;
-    font-size: 1.5rem;
-}
+    .cart-link {
+        color: inherit;
+        text-decoration: none;
+        font-size: 1.5rem;
+    }
 
-.cart-icon {
-    transition: transform 0.3s ease;
-}
+    .cart-icon {
+        transition: transform 0.3s ease;
+    }
 
-.cart-link:hover .cart-icon {
-    transform: scale(1.1);
-}
+    .cart-link:hover .cart-icon {
+        transform: scale(1.1);
+    }
 
-.cart-badge {
-    font-size: 0.75rem;
-    min-width: 20px;
-}
+    .cart-badge {
+        font-size: 0.75rem;
+        min-width: 20px;
+    }
 
-/* Cart Dropdown */
-.cart-dropdown {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    width: 320px;
-    background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
-    display: none;
-    z-index: 1000;
-    margin-top: 10px;
-}
+    /* Cart Dropdown */
+    .cart-dropdown {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        width: 320px;
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+        display: none;
+        z-index: 1000;
+        margin-top: 10px;
+    }
 
-.cart-widget:hover .cart-dropdown {
-    display: block;
-}
+    .cart-widget:hover .cart-dropdown {
+        display: block;
+    }
 
-.cart-dropdown::before {
-    content: '';
-    position: absolute;
-    top: -10px;
-    right: 20px;
-    width: 0;
-    height: 0;
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-bottom: 10px solid white;
-}
+    .cart-dropdown::before {
+        content: '';
+        position: absolute;
+        top: -10px;
+        right: 20px;
+        width: 0;
+        height: 0;
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+        border-bottom: 10px solid white;
+    }
 
-.cart-dropdown-header {
-    padding: 15px;
-    border-bottom: 1px solid #f0f0f0;
-}
+    .cart-dropdown-header {
+        padding: 15px;
+        border-bottom: 1px solid #f0f0f0;
+    }
 
-.cart-dropdown-header h6 {
-    margin: 0;
-}
+    .cart-dropdown-header h6 {
+        margin: 0;
+    }
 
-.cart-dropdown-items {
-    max-height: 300px;
-    overflow-y: auto;
-}
+    .cart-dropdown-items {
+        max-height: 300px;
+        overflow-y: auto;
+    }
 
-.cart-dropdown-item {
-    display: flex;
-    padding: 15px;
-    border-bottom: 1px solid #f0f0f0;
-    transition: background 0.3s ease;
-}
+    .cart-dropdown-item {
+        display: flex;
+        padding: 15px;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background 0.3s ease;
+    }
 
-.cart-dropdown-item:hover {
-    background: #f8f9fa;
-}
+    .cart-dropdown-item:hover {
+        background: #f8f9fa;
+    }
 
-.cart-dropdown-item img {
-    width: 50px;
-    height: 50px;
-    object-fit: cover;
-    border-radius: 4px;
-    margin-right: 15px;
-}
+    .cart-dropdown-item img {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 4px;
+        margin-right: 15px;
+    }
 
-.item-details {
-    flex: 1;
-}
+    .item-details {
+        flex: 1;
+    }
 
-.item-details h6 {
-    margin: 0 0 5px;
-    font-size: 0.9rem;
-}
+    .item-details h6 {
+        margin: 0 0 5px;
+        font-size: 0.9rem;
+    }
 
-.cart-dropdown-footer {
-    padding: 15px;
-    background: #f8f9fa;
-    border-radius: 0 0 8px 8px;
-}
+    .cart-dropdown-footer {
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 0 0 8px 8px;
+    }
 
-/* Dark mode support */
-[data-bs-theme="dark"] .cart-dropdown {
-    background: #2b2b2b;
-    border-color: #404040;
-}
+    /* Dark mode support */
+    [data-bs-theme="dark"] .cart-dropdown {
+        background: #2b2b2b;
+        border-color: #404040;
+    }
 
-[data-bs-theme="dark"] .cart-dropdown-item:hover {
-    background: #333;
-}
+    [data-bs-theme="dark"] .cart-dropdown-item:hover {
+        background: #333;
+    }
 
-[data-bs-theme="dark"] .cart-dropdown-footer {
-    background: #333;
-}
+    [data-bs-theme="dark"] .cart-dropdown-footer {
+        background: #333;
+    }
 
-/* RTL Support */
-html[dir="rtl"] .cart-dropdown {
-    right: auto;
-    left: 0;
-}
+    /* RTL Support */
+    html[dir="rtl"] .cart-dropdown {
+        right: auto;
+        left: 0;
+    }
 
-html[dir="rtl"] .cart-dropdown::before {
-    right: auto;
-    left: 20px;
-}
+    html[dir="rtl"] .cart-dropdown::before {
+        right: auto;
+        left: 20px;
+    }
 
-html[dir="rtl"] .cart-dropdown-item img {
-    margin-right: 0;
-    margin-left: 15px;
-}
+    html[dir="rtl"] .cart-dropdown-item img {
+        margin-right: 0;
+        margin-left: 15px;
+    }
 </style>

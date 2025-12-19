@@ -83,7 +83,7 @@
         {% endif %}
     </form>
 
-    <div class="auth-social">
+    <div class="auth-social" hidden>
         <div class="auth-social-divider">
             <span>{% trans "أو" %}</span>
         </div>
@@ -101,7 +101,7 @@
     </div>
 
     <div class="auth-footer">
-        {% trans "ليس لديك حساب؟" %} <a href="{% url 'accounts:register' %}">{% trans "إنشاء حساب جديد" %}</a>
+        {% trans "ليس لديك حساب؟" %} <a href="{% url 'accounts:register' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}">{% trans "إنشاء حساب جديد" %}</a>
     </div>
 
     <div class="auth-help">

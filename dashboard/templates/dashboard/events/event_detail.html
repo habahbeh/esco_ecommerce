@@ -1,0 +1,262 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}تفاصيل الفعالية{% endblock %}
+{% block page_title %}تفاصيل الفعالية{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_events' %}">إدارة الفعاليات</a></li>
+{% endblock %}
+{% block current_page %}{{ event.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* تنسيق لسانات اللغة */
+    .lang-tabs .nav-link {
+        border: 1px solid #dee2e6;
+        border-bottom: none;
+        margin-right: 5px;
+    }
+
+    .lang-tabs .nav-link.active {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #f8f9fa;
+    }
+
+    .tab-content {
+        border: 1px solid #dee2e6;
+        border-top: none;
+        padding: 20px;
+        background-color: #f8f9fa;
+    }
+
+    .form-label.required:after {
+        content: " *";
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- معلومات الفعالية -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">معلومات الفعالية</h5>
+                <div>
+                    <a href="{% url 'dashboard:dashboard_event_edit' event.id %}" class="btn btn-primary btn-sm">
+                        <i class="fa fa-edit"></i> تعديل
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <img src="{{ event.cover_image.url }}" alt="{{ event.title }}" class="img-fluid img-thumbnail mb-3">
+                    </div>
+                    <div class="col-md-6">
+                        <h4>{{ event.title }}</h4>
+                        {% if event.title_en %}
+                        <h6 class="text-muted">{{ event.title_en }}</h6>
+                        {% endif %}
+                        <p class="text-muted">{{ event.slug }}</p>
+
+                        <div class="mb-3">
+                            <span class="badge {% if event.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                {% if event.is_active %}نشط{% else %}غير نشط{% endif %}
+                            </span>
+                            <span class="badge
+                                {% if event.is_upcoming %}bg-primary{% elif event.is_ongoing %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                {{ event.status_text }}
+                            </span>
+                        </div>
+
+                        <p><strong>تاريخ البدء:</strong> {{ event.start_date|date:"Y/m/d - H:i" }}</p>
+                        <p><strong>تاريخ الانتهاء:</strong> {{ event.end_date|date:"Y/m/d - H:i" }}</p>
+                        <p><strong>الموقع:</strong> {{ event.location }}</p>
+                        {% if event.location_en %}
+                        <p><strong>الموقع (EN):</strong> {{ event.location_en }}</p>
+                        {% endif %}
+                        <p><strong>يعرض في:</strong>
+                            {% if event.display_in == 'banner' %}
+                            شريط علوي
+                            {% elif event.display_in == 'slider' %}
+                            معرض شرائح
+                            {% elif event.display_in == 'both' %}
+                            كلاهما
+                            {% endif %}
+                        </p>
+                        <p><strong>الترتيب:</strong> {{ event.order }}</p>
+
+                        {% if event.registration_url %}
+                        <p><strong>رابط التسجيل:</strong> <a href="{{ event.registration_url }}" target="_blank">{{ event.registration_url }}</a></p>
+                        <p><strong>نص الزر:</strong> {{ event.button_text }}</p>
+                        {% if event.button_text_en %}
+                        <p><strong>نص الزر (EN):</strong> {{ event.button_text_en }}</p>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- لسانات اللغة للمحتوى -->
+                <div class="mt-3">
+                    <ul class="nav nav-tabs lang-tabs mb-3" id="contentTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="arabic-content-tab" data-bs-toggle="tab" data-bs-target="#arabic-content" type="button" role="tab" aria-controls="arabic-content" aria-selected="true">المحتوى العربي</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="english-content-tab" data-bs-toggle="tab" data-bs-target="#english-content" type="button" role="tab" aria-controls="english-content" aria-selected="false">المحتوى الإنجليزي</button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="contentTabsContent">
+                        <!-- المحتوى العربي -->
+                        <div class="tab-pane fade show active" id="arabic-content" role="tabpanel" aria-labelledby="arabic-content-tab">
+                            <h5>الوصف المختصر</h5>
+                            <p>{{ event.short_description }}</p>
+
+                            <h5>الوصف الكامل</h5>
+                            <div>{{ event.description|safe }}</div>
+                        </div>
+
+                        <!-- المحتوى الإنجليزي -->
+                        <div class="tab-pane fade" id="english-content" role="tabpanel" aria-labelledby="english-content-tab">
+                            <h5>الوصف المختصر</h5>
+                            <p>{{ event.short_description_en|default:"لا يوجد وصف مختصر بالإنجليزية" }}</p>
+
+                            <h5>الوصف الكامل</h5>
+                            <div>{{ event.description_en|safe|default:"لا يوجد وصف بالإنجليزية" }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- معرض الصور -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">معرض الصور</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" class="mb-4">
+                    {% csrf_token %}
+                    <div class="form-group mb-2">
+                        <label for="{{ image_form.image.id_for_label }}" class="form-label required">إضافة صورة جديدة</label>
+                        {{ image_form.image }}
+                    </div>
+
+                    <!-- لسانات اللغة للصورة الجديدة -->
+                    <ul class="nav nav-tabs lang-tabs mb-2" id="newImageTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="new-arabic-tab" data-bs-toggle="tab" data-bs-target="#new-arabic-content" type="button" role="tab" aria-controls="new-arabic-content" aria-selected="true">عربي</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="new-english-tab" data-bs-toggle="tab" data-bs-target="#new-english-content" type="button" role="tab" aria-controls="new-english-content" aria-selected="false">إنجليزي</button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="newImageTabsContent">
+                        <!-- وصف الصورة بالعربية -->
+                        <div class="tab-pane fade show active" id="new-arabic-content" role="tabpanel" aria-labelledby="new-arabic-tab">
+                            <div class="form-group mb-2">
+                                <label for="{{ image_form.caption.id_for_label }}" class="form-label">{{ image_form.caption.label }}</label>
+                                {{ image_form.caption }}
+                            </div>
+                        </div>
+
+                        <!-- وصف الصورة بالإنجليزية -->
+                        <div class="tab-pane fade" id="new-english-content" role="tabpanel" aria-labelledby="new-english-tab">
+                            <div class="form-group mb-2">
+                                <label for="{{ image_form.caption_en.id_for_label }}" class="form-label">{{ image_form.caption_en.label }}</label>
+                                {{ image_form.caption_en }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label for="{{ image_form.order.id_for_label }}" class="form-label">{{ image_form.order.label }}</label>
+                        {{ image_form.order }}
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-2">إضافة صورة</button>
+                </form>
+
+                <hr>
+
+                {% if event_images %}
+                <div class="event-images">
+                    <div class="row">
+                        {% for image in event_images %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+{#                                <img src="{{ image.image.url }}" class="card-img-top" alt="{{ image.caption }}">#}
+                                {% if image.image %}
+                                    <img src="{{ image.image.url }}" class="card-img-top" alt="{{ image.caption }}">
+                                {% else %}
+                                    <div class="text-center py-4 bg-light">
+                                        <i class="fa fa-image fa-3x text-muted"></i>
+                                        <p class="text-muted mt-2">لا توجد صورة</p>
+                                    </div>
+                                {% endif %}
+                                <div class="card-body p-2">
+                                    {% if image.caption or image.caption_en %}
+                                    <ul class="nav nav-tabs lang-tabs mb-2 small" id="imageTabs{{ image.id }}" role="tablist">
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link active py-1 px-2" id="ar-tab{{ image.id }}" data-bs-toggle="tab" data-bs-target="#ar-content{{ image.id }}" type="button" role="tab" aria-controls="ar-content{{ image.id }}" aria-selected="true">عربي</button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link py-1 px-2" id="en-tab{{ image.id }}" data-bs-toggle="tab" data-bs-target="#en-content{{ image.id }}" type="button" role="tab" aria-controls="en-content{{ image.id }}" aria-selected="false">إنجليزي</button>
+                                        </li>
+                                    </ul>
+
+                                    <div class="tab-content small" id="imageTabsContent{{ image.id }}">
+                                        <div class="tab-pane fade show active" id="ar-content{{ image.id }}" role="tabpanel" aria-labelledby="ar-tab{{ image.id }}">
+                                            <p class="card-text small mb-1">{{ image.caption|default:"لا يوجد وصف" }}</p>
+                                        </div>
+                                        <div class="tab-pane fade" id="en-content{{ image.id }}" role="tabpanel" aria-labelledby="en-tab{{ image.id }}">
+                                            <p class="card-text small mb-1">{{ image.caption_en|default:"لا يوجد وصف" }}</p>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    <p class="card-text small text-muted">الترتيب: {{ image.order }}</p>
+                                    <div class="btn-group btn-group-sm w-100">
+                                        <a href="{% url 'dashboard:dashboard_event_image_edit' event.id image.id %}" class="btn btn-info">
+                                            <i class="fa fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'dashboard:dashboard_event_image_delete' event.id image.id %}" class="btn btn-danger">
+                                            <i class="fa fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    لا توجد صور في معرض هذه الفعالية.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // تمييز الحقول المطلوبة بصرياً
+        $('[required]').each(function() {
+            const label = $('label[for="' + $(this).attr('id') + '"]');
+            if (label.length) {
+                label.addClass('required');
+            }
+        });
+    });
+</script>
+{% endblock %}

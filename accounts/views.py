@@ -93,6 +93,12 @@ class RegisterView(CreateView):
         # حفظ المستخدم بشكل آمن
         user = form.save()
 
+        # تفعيل المستخدم تلقائياً
+        user.is_verified = True
+        user.verification_token = None
+        user.verification_token_expires = None
+        user.save(update_fields=['is_verified', 'verification_token', 'verification_token_expires'])
+
         # إنشاء سجل نشاط
         UserActivity.objects.create(
             user=user,
@@ -101,10 +107,14 @@ class RegisterView(CreateView):
             ip_address=self.request.META.get('REMOTE_ADDR')
         )
 
-        # إرسال بريد التحقق
-        self.send_verification_email(user)
+        # تسجيل دخول المستخدم تلقائياً
+        login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
 
-        return super().form_valid(form)
+        # العودة للصفحة السابقة أو الصفحة الرئيسية
+        next_url = self.request.GET.get('next')
+        if next_url:
+            return redirect(next_url)
+        return redirect('core:home')
 
     def send_verification_email(self, user):
         """إرسال بريد إلكتروني للتحقق"""

@@ -170,6 +170,7 @@ class Transaction(models.Model):
     )
 
     class Meta:
+        app_label = 'payment'
         verbose_name = _("معاملة مالية")
         verbose_name_plural = _("معاملات مالية")
         ordering = ['-created_at']
@@ -382,6 +383,7 @@ class Payment(models.Model):
     )
 
     class Meta:
+        app_label = 'payment'
         verbose_name = _("عملية دفع")
         verbose_name_plural = _("عمليات الدفع")
         ordering = ['-created_at']
@@ -606,6 +608,7 @@ class Refund(models.Model):
     )
 
     class Meta:
+        app_label = 'payment'
         verbose_name = _("عملية استرداد")
         verbose_name_plural = _("عمليات الاسترداد")
         ordering = ['-created_at']

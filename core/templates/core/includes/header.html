@@ -25,11 +25,13 @@
 
                 <!-- Desktop Search -->
                 <div class="search-container d-none d-lg-block">
-                    <form action="{% url 'products:product_search' %}" method="GET" role="search" class="search-form">
-                        <input type="search" name="q" class="search-input" placeholder="{% trans 'ابحث عن المنتجات...' %}" aria-label="{% trans 'بحث' %}" value="{{ request.GET.q|default:'' }}">
+                    {% get_current_language as CURRENT_LANGUAGE %}
+                    <form action="{% if CURRENT_LANGUAGE == 'en' %}/en{% endif %}/products/search/" method="GET" role="search" class="search-form" id="desktopSearchForm">
+                        <input type="search" name="q" class="search-input" id="desktopSearchInput" placeholder="{% trans 'ابحث عن المنتجات...' %}" aria-label="{% trans 'بحث' %}" value="{{ request.GET.q|default:'' }}" autocomplete="off">
                         <button type="submit" class="search-btn" aria-label="{% trans 'بحث' %}">
                             <i class="fas fa-search"></i>
                         </button>
+                        <div class="search-suggestions" id="desktopSearchSuggestions"></div>
                     </form>
                 </div>
 
@@ -117,17 +119,32 @@
 
                     <!-- Language Switcher -->
                     <div class="dropdown">
-                        <button class="action-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            {% get_current_language as CURRENT_LANGUAGE %}
-                            {% if CURRENT_LANGUAGE == 'ar' %}
-                                <span class="fi fi-jo fis"></span>
-                            {% else %}
-                                <span class="fi fi-us fis"></span>
-                            {% endif %}
-                            <span class="d-none d-md-inline ms-2">
-                                {% if CURRENT_LANGUAGE == 'ar' %}العربية{% else %}English{% endif %}
-                            </span>
-                        </button>
+{#                        <button class="action-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">#}
+{#                            {% get_current_language as CURRENT_LANGUAGE %}#}
+{#                            {% if CURRENT_LANGUAGE == 'ar' %}#}
+{#                                <span class="fi fi-jo fis"></span>#}
+{#                            {% else %}#}
+{#                                <span class="fi fi-us fis"></span>#}
+{#                            {% endif %}#}
+{#                            <span class="d-none d-md-inline ms-2">#}
+{#                                {% if CURRENT_LANGUAGE == 'ar' %}العربية{% else %}English{% endif %}#}
+{#                            </span>#}
+{#                        </button>#}
+                    <button class="action-btn lang-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+    <span class="language-icon">
+        {% get_current_language as CURRENT_LANGUAGE %}
+        {% if CURRENT_LANGUAGE == 'ar' %}
+            <span class="fi fi-jo fis"></span>
+        {% else %}
+            <span class="fi fi-us fis"></span>
+        {% endif %}
+    </span>
+    <span class="d-none d-md-inline ms-2">
+        {% if CURRENT_LANGUAGE == 'ar' %}العربية{% else %}English{% endif %}
+    </span>
+    <!-- أيقونة سهم للإشارة إلى القائمة المنسدلة - تظهر فقط في الموبايل -->
+    <i class="fas fa-globe d-inline d-md-none ms-1"></i>
+</button>
                         <ul class="dropdown-menu dropdown-menu-end">
                             {% get_current_language as CURRENT_LANGUAGE %}
                             {% get_available_languages as AVAILABLE_LANGUAGES %}
@@ -190,7 +207,9 @@
             <div class="container">
                 <ul class="nav-menu">
                     <li><a href="{% url 'core:home' %}" class="{% if request.path == '/' %}active{% endif %}"><i class="fas fa-home me-2"></i>{% trans "الرئيسية" %}</a></li>
-                    <li><a href="{% url 'products:product_list' %}" class="{% if '/products/' in request.path %}active{% endif %}"><i class="fas fa-th-large me-2"></i>{% trans "المنتجات" %}</a></li>
+                    <li><a href="{% url 'products:category_list' %}" class="{% if '/categories/' in request.path %}active{% endif %}"><i class="fas fa-th-large me-2"></i>{% trans "التصنيفات" %}</a></li>
+                    <li><a href="{% url 'products:brand_list' %}" class="{% if '/brands/' in request.path %}active{% endif %}"><i class="fas fa-trademark me-2"></i>{% trans "العلامات التجارية" %}</a></li>
+                    <li><a href="{% url 'products:product_list' %}" class="{% if request.path == '/products/' or request.path == '/products' %}active{% endif %}"><i class="fas fa-th-large me-2"></i>{% trans "المنتجات" %}</a></li>
                     <li><a href="{% url 'products:special_offers' %}" class="{% if '/products/offers/' in request.path %}active{% endif %}"><i class="fas fa-tags me-2"></i>{% trans "العروض الخاصة" %}</a></li>
                     <li><a href="{% url 'events:event_list' %}" class="{% if '/events/' in request.path %}active{% endif %}"><i class="fas fa-calendar-alt me-2"></i>{% trans "الفعاليات" %}</a></li>
                     <li>
@@ -224,17 +243,24 @@
     </div>
 
     <div class="mobile-search">
-        <form action="{% url 'products:product_search' %}" method="GET" role="search" class="search-form">
-            <input type="search" name="q" class="search-input" placeholder="{% trans 'ابحث عن المنتجات...' %}" aria-label="{% trans 'بحث' %}" value="{{ request.GET.q|default:'' }}">
+        {% get_current_language as CURRENT_LANGUAGE %}
+        <form action="{% if CURRENT_LANGUAGE == 'en' %}/en{% endif %}/products/search/" method="GET" role="search" class="search-form" id="mobileSearchForm">
+            <input type="search" name="q" class="search-input" id="mobileSearchInput" placeholder="{% trans 'ابحث عن المنتجات...' %}" aria-label="{% trans 'بحث' %}" value="{{ request.GET.q|default:'' }}" autocomplete="off">
             <button type="submit" class="search-btn" aria-label="{% trans 'بحث' %}">
                 <i class="fas fa-search"></i>
             </button>
+            <div class="search-suggestions" id="mobileSearchSuggestions"></div>
         </form>
     </div>
 
     <ul class="mobile-nav-list">
         <li><a href="{% url 'core:home' %}"><i class="fas fa-home"></i>{% trans "الرئيسية" %}</a></li>
-        <li><a href="{% url 'products:product_list' %}"><i class="fas fa-th-large"></i>{% trans "المنتجات" %}</a></li>
+{#        <li><a href="{% url 'products:product_list' %}"><i class="fas fa-th-large"></i>{% trans "المنتجات" %}</a></li>#}
+    <li><a href="{% url 'products:category_list' %}" class="{% if '/categories/' in request.path %}active{% endif %}"><i class="fas fa-th-large me-2"></i>{% trans "التصنيفات" %}</a></li>
+    <li><a href="{% url 'products:brand_list' %}" class="{% if '/brands/' in request.path %}active{% endif %}"><i class="fas fa-trademark me-2"></i>{% trans "العلامات التجارية" %}</a></li>
+
+                    <li><a href="{% url 'products:product_list' %}" class="{% if request.path == '/products/' or request.path == '/products' %}active{% endif %}"><i class="fas fa-th-large me-2"></i>{% trans "المنتجات" %}</a></li>
+
         <li><a href="{% url 'products:special_offers' %}"><i class="fas fa-tags"></i>{% trans "العروض الخاصة" %}</a>
         </li>
         <li><a href="{% url 'events:event_list' %}"><i class="fas fa-calendar-alt"></i>{% trans "الفعاليات" %}</a></li>
@@ -246,7 +272,7 @@
         </li>
         <li><a href="{% url 'core:about' %}"><i class="fas fa-info-circle"></i>{% trans "من نحن" %}</a></li>
         <li><a href="{% url 'core:contact' %}"><i class="fas fa-envelope"></i>{% trans "اتصل بنا" %}</a></li>
-        <li><a href="{% url 'orders:track_order' %}"><i class="fas fa-truck"></i>{% trans "تتبع الطلب" %}</a></li>
+{#        <li><a href="{% url 'orders:track_order' %}"><i class="fas fa-truck"></i>{% trans "تتبع الطلب" %}</a></li>#}
     </ul>
 
     {% if user.is_authenticated %}
@@ -642,4 +668,388 @@ html[dir="rtl"] .ms-auto {
     margin-right: auto;
 }
 
+
+    @media (max-width: 360px) {
+    .action-btn {
+        padding: 0.5rem 0.75rem;
+    }
+
+    .action-btn .ms-2 {
+        font-size: 0.9rem;
+    }
+}
+@media (max-width: 767.98px) {
+    /* تنسيق زر اللغة في الموبايل */
+    .lang-btn {
+        padding: 0.6rem !important;
+        min-width: 40px;
+        min-height: 40px;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    /* تنسيق أيقونة العلم */
+    .lang-btn .language-icon {
+        display: flex;
+        align-items: center;
+    }
+
+    /* تكبير الأعلام في الموبايل */
+    .lang-btn .fis {
+        width: 1.5em !important;
+        height: 1.2em !important;
+    }
+
+    /* تنسيق أيقونة العالم */
+    .lang-btn .fa-globe {
+        font-size: 0.85em;
+        color: var(--bs-primary);
+    }
+
+    /* تحسين مظهر القائمة المنسدلة */
+    .language-dropdown-menu {
+        min-width: 180px !important;
+        margin-top: 8px !important;
+    }
+}
+
+/* Search Suggestions Styles */
+.search-form {
+    position: relative;
+}
+
+.search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 1050;
+    display: none;
+    margin-top: 2px;
+}
+
+.search-suggestions.show {
+    display: block;
+}
+
+.suggestion-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    text-decoration: none;
+    color: inherit;
+    transition: background-color 0.2s ease;
+    gap: 12px;
+}
+
+.suggestion-item:hover {
+    background-color: #f8f9fa;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-image {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+    background: #f0f0f0;
+}
+
+.suggestion-image.no-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+}
+
+.suggestion-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.suggestion-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    margin: 0 0 4px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.suggestion-price {
+    font-size: 13px;
+    color: var(--bs-primary, #007bff);
+    font-weight: 600;
+}
+
+.suggestion-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.badge-category {
+    background-color: #e7f3ff;
+    color: #0066cc;
+}
+
+.badge-brand {
+    background-color: #fff3e0;
+    color: #f57c00;
+}
+
+.suggestion-loading {
+    padding: 20px;
+    text-align: center;
+    color: #999;
+}
+
+.suggestion-empty {
+    padding: 20px;
+    text-align: center;
+    color: #999;
+    font-size: 14px;
+}
+
+/* Dark mode */
+[data-bs-theme="dark"] .search-suggestions {
+    background: #2a2a2a;
+    border-color: #404040;
+}
+
+[data-bs-theme="dark"] .suggestion-item {
+    border-bottom-color: #404040;
+}
+
+[data-bs-theme="dark"] .suggestion-item:hover {
+    background-color: #333;
+}
+
+[data-bs-theme="dark"] .suggestion-title {
+    color: #e0e0e0;
+}
+
+[data-bs-theme="dark"] .suggestion-image.no-image {
+    background: #404040;
+    color: #666;
+}
+
+/* Mobile adjustments */
+@media (max-width: 991.98px) {
+    .search-suggestions {
+        max-height: 300px;
+    }
+
+    .suggestion-item {
+        padding: 10px 12px;
+        gap: 10px;
+    }
+
+    .suggestion-image {
+        width: 40px;
+        height: 40px;
+    }
+
+    .suggestion-title {
+        font-size: 13px;
+    }
+
+    .suggestion-price {
+        font-size: 12px;
+    }
+}
+
+/* RTL Support */
+html[dir="rtl"] .search-suggestions {
+    left: auto;
+    right: 0;
+}
+
 </style>
+
+<script>
+// Search Suggestions Script
+(function() {
+    let searchTimeout;
+    const DEBOUNCE_TIME = 300;
+
+    // Initialize search for both desktop and mobile
+    function initializeSearch(inputId, suggestionsId) {
+        const searchInput = document.getElementById(inputId);
+        const suggestionsContainer = document.getElementById(suggestionsId);
+
+        if (!searchInput || !suggestionsContainer) return;
+
+        // Handle input event
+        searchInput.addEventListener('input', function(e) {
+            const query = e.target.value.trim();
+
+            clearTimeout(searchTimeout);
+
+            if (query.length < 2) {
+                hideSuggestions(suggestionsContainer);
+                return;
+            }
+
+            searchTimeout = setTimeout(() => {
+                fetchSuggestions(query, suggestionsContainer);
+            }, DEBOUNCE_TIME);
+        });
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+                hideSuggestions(suggestionsContainer);
+            }
+        });
+
+        // Show suggestions on focus if there's text
+        searchInput.addEventListener('focus', function(e) {
+            if (e.target.value.trim().length >= 2) {
+                fetchSuggestions(e.target.value.trim(), suggestionsContainer);
+            }
+        });
+    }
+
+    // Fetch suggestions from API
+    function fetchSuggestions(query, container) {
+        showLoading(container);
+
+        // محاولة الـ API بدون prefix أولاً (للسيرفر)، ثم مع prefix (للمحلي)
+        const apiUrl = `/products/api/search/suggestions/?q=${encodeURIComponent(query)}`;
+
+        fetch(apiUrl)
+            .then(response => {
+                if (!response.ok) {
+                    // إذا فشل، جرب مع language prefix
+                    const currentLang = document.documentElement.lang || 'ar';
+                    const langPrefix = currentLang === 'en' ? '/en' : '/ar';
+                    return fetch(`${langPrefix}/products/api/search/suggestions/?q=${encodeURIComponent(query)}`);
+                }
+                return response;
+            })
+            .then(response => response.json())
+            .then(data => {
+                displaySuggestions(data.suggestions || [], container, query);
+            })
+            .catch(error => {
+                console.error('Error fetching suggestions:', error);
+                hideSuggestions(container);
+            });
+    }
+
+    // Display suggestions
+    function displaySuggestions(suggestions, container, query) {
+        if (suggestions.length === 0) {
+            showEmpty(container);
+            return;
+        }
+
+        let html = '';
+
+        suggestions.forEach(item => {
+            if (item.type === 'product') {
+                html += createProductSuggestion(item);
+            } else if (item.type === 'category') {
+                html += createCategorySuggestion(item);
+            } else if (item.type === 'brand') {
+                html += createBrandSuggestion(item);
+            }
+        });
+
+        container.innerHTML = html;
+        container.classList.add('show');
+    }
+
+    // Create product suggestion HTML
+    function createProductSuggestion(item) {
+        const imageHtml = item.image
+            ? `<img src="${item.image}" alt="${item.title}" class="suggestion-image">`
+            : `<div class="suggestion-image no-image"><i class="fas fa-box"></i></div>`;
+
+        const priceHtml = item.price && parseFloat(item.price) > 0
+            ? `<div class="suggestion-price">${item.price} {% trans "د.أ" %}</div>`
+            : '';
+
+        return `
+            <a href="${item.url}" class="suggestion-item">
+                ${imageHtml}
+                <div class="suggestion-content">
+                    <div class="suggestion-title">${item.title}</div>
+                    ${priceHtml}
+                </div>
+            </a>
+        `;
+    }
+
+    // Create category suggestion HTML
+    function createCategorySuggestion(item) {
+        return `
+            <a href="${item.url}" class="suggestion-item">
+                <div class="suggestion-image no-image">
+                    <i class="fas fa-th-large"></i>
+                </div>
+                <div class="suggestion-content">
+                    <div class="suggestion-title">${item.title}</div>
+                </div>
+                <span class="suggestion-badge badge-category">{% trans "فئة" %}</span>
+            </a>
+        `;
+    }
+
+    // Create brand suggestion HTML
+    function createBrandSuggestion(item) {
+        return `
+            <a href="${item.url}" class="suggestion-item">
+                <div class="suggestion-image no-image">
+                    <i class="fas fa-tag"></i>
+                </div>
+                <div class="suggestion-content">
+                    <div class="suggestion-title">${item.title}</div>
+                </div>
+                <span class="suggestion-badge badge-brand">{% trans "علامة" %}</span>
+            </a>
+        `;
+    }
+
+    // Show loading state
+    function showLoading(container) {
+        container.innerHTML = '<div class="suggestion-loading"><i class="fas fa-spinner fa-spin"></i> {% trans "جاري البحث..." %}</div>';
+        container.classList.add('show');
+    }
+
+    // Show empty state
+    function showEmpty(container) {
+        container.innerHTML = '<div class="suggestion-empty">{% trans "لا توجد نتائج" %}</div>';
+        container.classList.add('show');
+    }
+
+    // Hide suggestions
+    function hideSuggestions(container) {
+        container.classList.remove('show');
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeSearch('desktopSearchInput', 'desktopSearchSuggestions');
+        initializeSearch('mobileSearchInput', 'mobileSearchSuggestions');
+
+        // Form action is already set in HTML template, no need for JavaScript
+    });
+})();
+</script>

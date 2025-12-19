@@ -181,6 +181,7 @@ class CheckoutSession(models.Model):
     )
 
     class Meta:
+        app_label = 'checkout'
         verbose_name = _("جلسة دفع")
         verbose_name_plural = _("جلسات الدفع")
         ordering = ['-created_at']
@@ -323,6 +324,11 @@ class PaymentMethod(models.Model):
         max_length=100,
         help_text=_("اسم طريقة الدفع المعروض للمستخدم")
     )
+    name_en = models.CharField(
+        _("اسم طريقة الدفع"),
+        max_length=100,
+        help_text=_("اسم طريقة الدفع المعروض للمستخدم")
+    )
     code = models.CharField(
         _("رمز طريقة الدفع"),
         max_length=50,
@@ -341,6 +347,11 @@ class PaymentMethod(models.Model):
         blank=True,
         help_text=_("وصف طريقة الدفع المعروض للمستخدم")
     )
+    description_en = models.TextField(
+        _("الوصف"),
+        blank=True,
+        help_text=_("وصف طريقة الدفع المعروض للمستخدم")
+    )
     icon = models.ImageField(
         _("أيقونة"),
         upload_to='payment_methods/',
@@ -349,6 +360,11 @@ class PaymentMethod(models.Model):
         help_text=_("أيقونة تمثل طريقة الدفع")
     )
     instructions = models.TextField(
+        _("تعليمات"),
+        blank=True,
+        help_text=_("تعليمات خاصة بطريقة الدفع")
+    )
+    instructions_en = models.TextField(
         _("تعليمات"),
         blank=True,
         help_text=_("تعليمات خاصة بطريقة الدفع")
@@ -415,6 +431,7 @@ class PaymentMethod(models.Model):
     updated_at = models.DateTimeField(_("تاريخ التحديث"), auto_now=True)
 
     class Meta:
+        app_label = 'checkout'
         verbose_name = _("طريقة دفع")
         verbose_name_plural = _("طرق الدفع")
         ordering = ['sort_order', 'name']
@@ -543,6 +560,7 @@ class ShippingMethod(models.Model):
     updated_at = models.DateTimeField(_("تاريخ التحديث"), auto_now=True)
 
     class Meta:
+        app_label = 'checkout'
         verbose_name = _("طريقة شحن")
         verbose_name_plural = _("طرق الشحن")
         ordering = ['sort_order', 'name']
@@ -707,6 +725,7 @@ class PaymentTransaction(models.Model):
     )
 
     class Meta:
+        app_label = 'checkout'
         verbose_name = _("معاملة دفع")
         verbose_name_plural = _("معاملات الدفع")
         ordering = ['-created_at']
@@ -845,6 +864,7 @@ class Coupon(models.Model):
     updated_at = models.DateTimeField(_("تاريخ التحديث"), auto_now=True)
 
     class Meta:
+        app_label = 'checkout'
         verbose_name = _("كوبون خصم")
         verbose_name_plural = _("كوبونات الخصم")
         ordering = ['-created_at']
@@ -946,6 +966,7 @@ class CouponUsage(models.Model):
     used_at = models.DateTimeField(_("تاريخ الاستخدام"), auto_now_add=True)
 
     class Meta:
+        app_label = 'checkout'
         verbose_name = _("استخدام كوبون")
         verbose_name_plural = _("استخدامات الكوبونات")
         ordering = ['-used_at']

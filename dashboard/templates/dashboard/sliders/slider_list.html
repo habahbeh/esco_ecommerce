@@ -1,0 +1,72 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}إدارة السلايدر{% endblock %}
+{% block page_title %}إدارة السلايدر{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_site_settings' %}">الإعدادات</a></li>
+{% endblock %}
+{% block current_page %}إدارة السلايدر{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">عناصر السلايدر</h5>
+        <a href="{% url 'dashboard:dashboard_slider_create' %}" class="btn btn-primary btn-sm">
+            <i class="fa fa-plus"></i> إضافة عنصر جديد
+        </a>
+    </div>
+    <div class="card-body">
+        {% if sliders %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>الصورة</th>
+                        <th>العنوان</th>
+                        <th>العنوان الفرعي</th>
+                        <th>الترتيب</th>
+                        <th>الحالة</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for slider in sliders %}
+                    <tr>
+                        <td>
+                            <img src="{{ slider.image.url }}" alt="{{ slider.title }}" class="img-thumbnail" style="width: 100px;">
+                        </td>
+                        <td>{{ slider.title }}</td>
+                        <td>{{ slider.subtitle }}</td>
+                        <td>{{ slider.order }}</td>
+                        <td>
+                            {% if slider.is_active %}
+                            <span class="badge bg-success">نشط</span>
+                            {% else %}
+                            <span class="badge bg-secondary">غير نشط</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{% url 'dashboard:dashboard_slider_edit' slider.id %}" class="btn btn-sm btn-info">
+                                    <i class="fa fa-edit"></i>
+                                </a>
+                                <a href="{% url 'dashboard:dashboard_slider_delete' slider.id %}" class="btn btn-sm btn-danger">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            لا توجد عناصر سلايدر حالياً. <a href="{% url 'dashboard:dashboard_slider_create' %}">إضافة عنصر جديد</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

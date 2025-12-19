@@ -1,6 +1,7 @@
 {% extends 'core/base.html' %}
 {% load static %}
 {% load i18n %}
+{% load custom_filters %}
 
 {% block title %}{% trans "تأكيد الدفع" %} | ESCO{% endblock %}
 
@@ -39,8 +40,12 @@
                     <h5 class="mb-0">{% trans "تأكيد الدفع" %}</h5>
                 </div>
                 <div class="card-body">
-                    <div class="alert alert-info mb-4">
-                        <h5 class="alert-heading">{% trans "طريقة الدفع المختارة" %}: {{ payment_method.name }}</h5>
+                    <div class="alert alert-info mb-4" hidden>
+                        <h5 class="alert-heading">{% trans "طريقة الدفع المختارة" %}: {% if LANGUAGE_CODE == 'en' %}
+    {{ payment_method.name_en }}
+{% else %}
+    {{ payment_method.name }}
+{% endif %}</h5>
                         {% if payment_method.instructions %}
                             <p class="mb-0">{{ payment_method.instructions|linebreaks }}</p>
                         {% elif payment_method.payment_type == 'bank_transfer' %}
@@ -71,10 +76,10 @@
                         
                         <div class="d-flex justify-content-between mt-4">
                             <a href="{% url 'checkout:payment_method' %}" class="btn btn-outline-primary">
-                                <i class="fas fa-arrow-right me-2"></i>{% trans "الرجوع" %}
+                                <i class="fas "></i>{% trans "الرجوع" %}
                             </a>
                             <button type="submit" class="btn btn-success">
-                                <i class="fas fa-check me-2"></i>{% trans "تأكيد الطلب والدفع" %}
+                                <i class="fas"></i>{% trans "تأكيد الطلب والدفع" %}
                             </button>
                         </div>
                     </form>
@@ -92,10 +97,14 @@
                         {% for item in cart_items %}
                             <div class="d-flex justify-content-between mb-2">
                                 <div>
-                                    <span>{{ item.name }}</span>
-                                    <small class="text-muted d-block">{{ item.quantity }} × {{ item.price|floatformat:2 }}</small>
+                                    <span>{% if LANGUAGE_CODE == 'en' %}
+    {{ item.name_en }}
+{% else %}
+    {{ item.name }}
+{% endif %}</span>
+                                    <small class="text-muted d-block">{{ item.quantity }} × {{ item.price|without_tax|floatformat:2 }}</small>
                                 </div>
-                                <span>{{ item.total|floatformat:2 }} {% trans "د.أ" %}</span>
+                                <span>{{ item.total|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
                             </div>
                         {% endfor %}
                     </div>
@@ -104,7 +113,7 @@
                     
                     <div class="d-flex justify-content-between mb-2">
                         <span>{% trans "المجموع الفرعي" %}</span>
-                        <span>{{ total|floatformat:2 }} {% trans "د.أ" %}</span>
+                        <span>{{ total|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
                     </div>
 {#                    <div class="d-flex justify-content-between mb-2">#}
 {#                        <span>{% trans "الشحن" %}</span>#}
@@ -112,14 +121,14 @@
 {#                    </div>#}
                     <div class="d-flex justify-content-between mb-2">
                         <span>{% trans "الضريبة" %}</span>
-                        <span>{{ tax_amount|floatformat:2 }} {% trans "د.أ" %}</span>
+                        <span>{{ tax_amount|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
                     </div>
                     
                     <hr>
                     
                     <div class="d-flex justify-content-between mb-2">
                         <strong>{% trans "المجموع" %}</strong>
-                        <strong>{{ grand_total|floatformat:2 }} {% trans "د.أ" %}</strong>
+                        <strong>{{ grand_total|without_tax|floatformat:2 }} {% trans "د.أ" %}</strong>
                     </div>
                 </div>
             </div>

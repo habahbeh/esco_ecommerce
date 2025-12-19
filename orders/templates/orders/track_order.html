@@ -1,0 +1,322 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "تتبع الطلب" %} | ESCO{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-shipping-fast me-2"></i>
+                        {% trans "تتبع طلبك" %}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if not order %}
+                        <!-- نموذج البحث عن الطلب -->
+                        <p class="text-muted mb-4">
+                            {% trans "أدخل رقم الطلب والبريد الإلكتروني لتتبع حالة طلبك" %}
+                        </p>
+
+                        <form method="post" action="{% url 'orders:track_order' %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="order_number" class="form-label">
+                                    {% trans "رقم الطلب" %}
+                                </label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="order_number"
+                                    name="order_number"
+                                    placeholder="{% trans 'مثال: ORD-20250001' %}"
+                                    required
+                                >
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="email" class="form-label">
+                                    {% trans "البريد الإلكتروني" %}
+                                </label>
+                                <input
+                                    type="email"
+                                    class="form-control"
+                                    id="email"
+                                    name="email"
+                                    placeholder="{% trans 'example@email.com' %}"
+                                    required
+                                >
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search me-2"></i>
+                                {% trans "تتبع الطلب" %}
+                            </button>
+                        </form>
+                    {% else %}
+                        <!-- تفاصيل الطلب -->
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            {% trans "تم العثور على طلبك!" %}
+                        </div>
+
+                        <div class="order-tracking mb-4">
+                            <h5 class="mb-3">{% trans "رقم الطلب:" %} {{ order.order_number }}</h5>
+
+                            <!-- شريط تقدم الطلب -->
+                            <div class="order-progress mb-4">
+                                <div class="progress-steps">
+                                    <div class="step {% if order.status == 'pending' or order.status == 'processing' or order.status == 'shipped' or order.status == 'delivered' %}active{% endif %}">
+                                        <div class="step-icon">
+                                            <i class="fas fa-shopping-cart"></i>
+                                        </div>
+                                        <div class="step-label">{% trans "تم الطلب" %}</div>
+                                    </div>
+
+                                    <div class="step {% if order.status == 'processing' or order.status == 'shipped' or order.status == 'delivered' %}active{% endif %}">
+                                        <div class="step-icon">
+                                            <i class="fas fa-box"></i>
+                                        </div>
+                                        <div class="step-label">{% trans "قيد المعالجة" %}</div>
+                                    </div>
+
+                                    <div class="step {% if order.status == 'shipped' or order.status == 'delivered' %}active{% endif %}">
+                                        <div class="step-icon">
+                                            <i class="fas fa-truck"></i>
+                                        </div>
+                                        <div class="step-label">{% trans "تم الشحن" %}</div>
+                                    </div>
+
+                                    <div class="step {% if order.status == 'delivered' %}active{% endif %}">
+                                        <div class="step-icon">
+                                            <i class="fas fa-check"></i>
+                                        </div>
+                                        <div class="step-label">{% trans "تم التوصيل" %}</div>
+                                    </div>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill" style="width:
+                                        {% if order.status == 'pending' %}25%
+                                        {% elif order.status == 'processing' %}50%
+                                        {% elif order.status == 'shipped' %}75%
+                                        {% elif order.status == 'delivered' %}100%
+                                        {% else %}0%
+                                        {% endif %}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- حالة الطلب الحالية -->
+                            <div class="alert
+                                {% if order.status == 'pending' %}alert-warning
+                                {% elif order.status == 'processing' %}alert-info
+                                {% elif order.status == 'shipped' %}alert-primary
+                                {% elif order.status == 'delivered' %}alert-success
+                                {% elif order.status == 'cancelled' %}alert-danger
+                                {% else %}alert-secondary
+                                {% endif %}">
+                                <strong>{% trans "الحالة:" %}</strong> {{ order.get_status_display }}
+                            </div>
+
+                            <!-- تفاصيل الطلب -->
+                            <div class="order-details mt-4">
+                                <h5 class="mb-3">{% trans "تفاصيل الطلب" %}</h5>
+                                <hr>
+
+                                <div class="row mb-2">
+                                    <div class="col-md-4 fw-bold">{% trans "تاريخ الطلب:" %}</div>
+                                    <div class="col-md-8">{{ order.created_at|date:"Y/m/d - H:i" }}</div>
+                                </div>
+
+                                <div class="row mb-2">
+                                    <div class="col-md-4 fw-bold">{% trans "الاسم:" %}</div>
+                                    <div class="col-md-8">{{ order.full_name }}</div>
+                                </div>
+
+                                <div class="row mb-2">
+                                    <div class="col-md-4 fw-bold">{% trans "البريد الإلكتروني:" %}</div>
+                                    <div class="col-md-8">{{ order.email }}</div>
+                                </div>
+
+                                <div class="row mb-2">
+                                    <div class="col-md-4 fw-bold">{% trans "الهاتف:" %}</div>
+                                    <div class="col-md-8" dir="ltr">{{ order.phone }}</div>
+                                </div>
+
+                                <div class="row mb-2">
+                                    <div class="col-md-4 fw-bold">{% trans "عنوان الشحن:" %}</div>
+                                    <div class="col-md-8">
+                                        {{ order.shipping_address }}
+                                        {% if order.shipping_city %}, {{ order.shipping_city }}{% endif %}
+                                        {% if order.shipping_state %}, {{ order.shipping_state }}{% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="row mb-2">
+                                    <div class="col-md-4 fw-bold">{% trans "طريقة الدفع:" %}</div>
+                                    <div class="col-md-8">
+                                        {% if order.payment_method %}
+                                            {{ order.payment_method.name }}
+                                        {% else %}
+                                            {{ order.payment_method_display }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="row mb-2">
+                                    <div class="col-md-4 fw-bold">{% trans "المجموع الكلي:" %}</div>
+                                    <div class="col-md-8">
+                                        <strong class="text-primary">{{ order.grand_total|floatformat:2 }} {% trans "د.أ" %}</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- عناصر الطلب -->
+                            {% if order.items.all %}
+                            <div class="order-items mt-4">
+                                <h5 class="mb-3">{% trans "المنتجات" %}</h5>
+                                <hr>
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>{% trans "المنتج" %}</th>
+                                                <th>{% trans "الكمية" %}</th>
+                                                <th>{% trans "السعر" %}</th>
+                                                <th>{% trans "المجموع" %}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in order.items.all %}
+                                            <tr>
+                                                <td>
+                                                    {% if LANGUAGE_CODE == 'en' %}
+                                                        {{ item.product.name_en }}
+                                                    {% else %}
+                                                        {{ item.product.name }}
+                                                    {% endif %}
+                                                    {% if item.variant %}
+                                                        <br><small class="text-muted">
+                                                            {% if LANGUAGE_CODE == 'en' %}
+                                                                {{ item.variant.name_en }}
+                                                            {% else %}
+                                                                {{ item.variant.name }}
+                                                            {% endif %}
+                                                        </small>
+                                                    {% endif %}
+                                                </td>
+                                                <td>{{ item.quantity }}</td>
+                                                <td>{{ item.price|floatformat:2 }} {% trans "د.أ" %}</td>
+                                                <td>{{ item.get_total|floatformat:2 }} {% trans "د.أ" %}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- زر البحث عن طلب آخر -->
+                        <div class="mt-4">
+                            <a href="{% url 'orders:track_order' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-search me-2"></i>
+                                {% trans "تتبع طلب آخر" %}
+                            </a>
+                            <a href="{% url 'core:home' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-home me-2"></i>
+                                {% trans "العودة للرئيسية" %}
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* تصميم شريط التقدم */
+.order-progress {
+    margin: 2rem 0;
+}
+
+.progress-steps {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.step {
+    flex: 1;
+    text-align: center;
+    position: relative;
+}
+
+.step-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #e9ecef;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.5rem;
+    font-size: 1.25rem;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 2;
+}
+
+.step.active .step-icon {
+    background: var(--bs-primary);
+    color: white;
+}
+
+.step-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.step.active .step-label {
+    color: var(--bs-primary);
+    font-weight: 600;
+}
+
+.progress-bar-container {
+    position: relative;
+    height: 4px;
+    background: #e9ecef;
+    margin-top: -27px;
+    margin-bottom: 27px;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: var(--bs-primary);
+    transition: width 0.5s ease;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .progress-steps {
+        flex-wrap: wrap;
+    }
+
+    .step {
+        flex-basis: 50%;
+        margin-bottom: 2rem;
+    }
+
+    .progress-bar-container {
+        display: none;
+    }
+}
+</style>
+{% endblock %}

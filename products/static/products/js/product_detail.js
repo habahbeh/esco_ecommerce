@@ -212,7 +212,8 @@ function initProductZoom() {
     // إضافة عنصر إرشادات التكبير
     const instructions = document.createElement('div');
     instructions.classList.add('zoom-instructions');
-    instructions.innerHTML = '<i class="fas fa-search-plus"></i> حرك المؤشر لتكبير الصورة';
+    //instructions.innerHTML = '<i class="fas fa-search-plus"></i> حرك المؤشر لتكبير الصورة';
+    instructions.innerHTML = '<i class="fas fa-search-plus"></i>';
     container.appendChild(instructions);
 
     // نسبة التكبير
@@ -435,14 +436,30 @@ function showNotification(type, message) {
 // }
 
 function updateCartCount(count) {
-    // 1. تحديث جميع علامات السلة في الصفحة
-    const cartBadges = document.querySelectorAll('.cart-badge');
-    cartBadges.forEach(badge => {
-        badge.textContent = count;
-        badge.style.display = count > 0 ? 'block' : 'none';
-    });
+    count = parseInt(count) || 0;
 
-    // 2. تحديث أي عناصر أخرى تعرض عدد العناصر
+    // تحديث جميع شارات السلة
+    const cartBadges = document.querySelectorAll('.cart-badge');
+
+    if (cartBadges.length > 0) {
+        // إذا كانت الشارات موجودة، قم بتحديثها
+        cartBadges.forEach(badge => {
+            badge.textContent = count;
+            badge.style.display = count > 0 ? 'block' : 'none';
+        });
+    } else {
+        // إذا كانت الشارات غير موجودة، قم بإنشائها في كل زر سلة
+        const cartButtons = document.querySelectorAll('.cart-btn');
+        cartButtons.forEach(btn => {
+            const newBadge = document.createElement('span');
+            newBadge.className = 'cart-badge';
+            newBadge.textContent = count;
+            newBadge.style.display = count > 0 ? 'block' : 'none';
+            btn.appendChild(newBadge);
+        });
+    }
+
+    // تحديث عناصر العداد الأخرى
     const cartCountElements = document.querySelectorAll('.cart-count');
     cartCountElements.forEach(element => {
         element.textContent = count;
@@ -489,11 +506,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     btn.innerHTML = '<i class="fas fa-check me-2"></i>تمت الإضافة بنجاح';
 
                     // تحديث عدد العناصر في السلة
-                    const cartBadge = document.querySelector('.cart-count');
-                    if (cartBadge) {
-                        cartBadge.textContent = data.cart_count;
-                    }
-
+                    // const cartBadge = document.querySelector('.cart-count');
+                    // if (cartBadge) {
+                    //     cartBadge.textContent = data.cart_count;
+                    // }
+                    // alert('data.cart_count '+ data.cart_count)
                     updateCartCount(data.cart_count);
 
                     // إظهار إشعار النجاح

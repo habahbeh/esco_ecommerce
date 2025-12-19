@@ -832,181 +832,90 @@
         from { transform: rotate(0deg); }
         to { transform: rotate(360deg); }
     }
+
+
+/* تنسيق السلايدر */
+.carousel-item {
+    height: 500px;
+}
+
+.carousel-item img {
+    object-fit: cover;
+    height: 100%;
+}
+
+.carousel-caption {
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 20px;
+    border-radius: 5px;
+    bottom: 20%;
+}
+
+.slider-buttons {
+    margin-top: 20px;
+}
+
+.slider-buttons .btn {
+    margin: 0 5px;
+}
 </style>
 {% endblock %}
 
 {% block content %}
 <!-- Hero Section -->
 <section class="hero-carousel">
-    <div id="heroCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5000">
-        <div class="carousel-inner">
 
-            <!-- الفعاليات النشطة -->
-{#            {% for event in slider_events %}#}
-{#            <div class="carousel-item {% if forloop.first %}active{% endif %}">#}
-{#                <div class="hero-slide">#}
-{#                    <img src="{{ event.cover_image.url }}" class="hero-bg" alt="{{ event.title }}">#}
-{#                    <div class="container">#}
-{#                        <div class="hero-content">#}
-{#                            <p class="hero-subtitle">{{ event.status_text }}</p>#}
-{#                            <h1 class="hero-title">{{ event.title }}</h1>#}
-{#                            <p class="hero-description">{{ event.short_description }}</p>#}
-{#                            <div class="hero-buttons">#}
-{#                                <a href="{{ event.get_absolute_url }}" class="btn hero-btn hero-btn-primary">#}
-{#                                    {{ event.button_text }}#}
-{#                                </a>#}
-{#                                {% if event.registration_url %}#}
-{#                                <a href="{{ event.registration_url }}" class="btn hero-btn hero-btn-outline">#}
-{#                                    {% trans "التسجيل الآن" %}#}
-{#                                </a>#}
-{#                                {% endif %}#}
-{#                            </div>#}
-{#                        </div>#}
-{#                    </div>#}
-{#                </div>#}
-{#            </div>#}
-{#            {% endfor %}#}
-
-            <div class="carousel-item active">
-                <div class="hero-slide">
-                    <img src="{% static 'images/1.jpeg' %}" class="hero-bg" alt="Industrial Equipment">
-                    <div class="container">
-                        <div class="hero-content">
-                            <p class="hero-subtitle">{% trans "الجودة التي تثق بها" %}</p>
-                            <h1 class="hero-title">{% trans "معدات صناعية متطورة" %}</h1>
-                            <p class="hero-description">{% trans "نوفر أفضل الحلول الصناعية من أرقى العلامات التجارية العالمية" %}</p>
-                            <div class="hero-buttons">
-                                <a href="{% url 'products:product_list' %}" class="btn hero-btn hero-btn-primary">
-                                    {% trans "تسوق الآن" %}
-                                </a>
-                                <a href="{% url 'core:contact' %}" class="btn hero-btn hero-btn-outline">
-                                    {% trans "احصل على عرض سعر" %}
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="carousel-item">
-                <div class="hero-slide">
-                    <img src="{% static 'images/2.jpeg' %}" class="hero-bg" alt="Power Generators">
-                    <div class="container">
-                        <div class="hero-content">
-                            <p class="hero-subtitle">{% trans "حلول طاقة موثوقة" %}</p>
-                            <h1 class="hero-title">{% trans "مولدات كهربائية عالية الأداء" %}</h1>
-                            <p class="hero-description">{% trans "ضمان استمرارية الطاقة لأعمالك مع أحدث تقنيات المولدات" %}</p>
-                            <div class="hero-buttons">
-                                <a href="{% url 'products:special_offers' %}" class="btn hero-btn hero-btn-primary">
-                                    {% trans "عروض خاصة" %}
-                                </a>
-                                <a href="{% url 'core:about' %}" class="btn hero-btn hero-btn-outline">
-                                    {% trans "تعرف علينا" %}
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="carousel-item">
-                <div class="hero-slide">
-                    <img src="{% static 'images/3.jpeg' %}" class="hero-bg" alt="Technical Support">
-                    <div class="container">
-                        <div class="hero-content">
-                            <p class="hero-subtitle">{% trans "دعم فني متخصص" %}</p>
-                            <h1 class="hero-title">{% trans "خبراء في خدمتك دائماً" %}</h1>
-                            <p class="hero-description">{% trans "فريق من المهندسين المتخصصين لتقديم أفضل الحلول والدعم الفني" %}</p>
-                            <div class="hero-buttons">
-                                <a href="{% url 'core:contact' %}" class="btn hero-btn hero-btn-primary">
-                                    {% trans "تواصل معنا" %}
-                                </a>
-                                <a href="#" class="btn hero-btn hero-btn-outline">
-                                    {% trans "طلب استشارة" %}
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="carousel-item">
-                <div class="hero-slide">
-                    <img src="{% static 'images/4.jpeg' %}" class="hero-bg" alt="Technical Support">
-                    <div class="container">
-                        <div class="hero-content">
-                            <p class="hero-subtitle">{% trans "اسعار تنافسية" %}</p>
-                            <h1 class="hero-title">{% trans "خبراء في خدمتك دائماً" %}</h1>
-                            <p class="hero-description">{% trans "فريق من المهندسين المتخصصين لتقديم أفضل الحلول والدعم الفني" %}</p>
-                            <div class="hero-buttons">
-                                <a href="{% url 'core:contact' %}" class="btn hero-btn hero-btn-primary">
-                                    {% trans "تواصل معنا" %}
-                                </a>
-                                <a href="#" class="btn hero-btn hero-btn-outline">
-                                    {% trans "طلب استشارة" %}
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="carousel-item">
-                <div class="hero-slide">
-                    <img src="{% static 'images/5.jpeg' %}" class="hero-bg" alt="Technical Support">
-                    <div class="container">
-                        <div class="hero-content">
-                            <p class="hero-subtitle">{% trans "توصيل سريع" %}</p>
-                            <h1 class="hero-title">{% trans "خبراء في خدمتك دائماً" %}</h1>
-                            <p class="hero-description">{% trans "فريق من المهندسين المتخصصين لتقديم أفضل الحلول والدعم الفني" %}</p>
-                            <div class="hero-buttons">
-                                <a href="{% url 'core:contact' %}" class="btn hero-btn hero-btn-primary">
-                                    {% trans "تواصل معنا" %}
-                                </a>
-                                <a href="#" class="btn hero-btn hero-btn-outline">
-                                    {% trans "طلب استشارة" %}
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="carousel-item">
-                <div class="hero-slide">
-                    <img src="{% static 'images/6.jpeg' %}" class="hero-bg" alt="Technical Support">
-                    <div class="container">
-                        <div class="hero-content">
-                            <p class="hero-subtitle">{% trans "جودة مضمونة" %}</p>
-                            <h1 class="hero-title">{% trans "خبراء في خدمتك دائماً" %}</h1>
-                            <p class="hero-description">{% trans "فريق من المهندسين المتخصصين لتقديم أفضل الحلول والدعم الفني" %}</p>
-                            <div class="hero-buttons">
-                                <a href="{% url 'core:contact' %}" class="btn hero-btn hero-btn-primary">
-                                    {% trans "تواصل معنا" %}
-                                </a>
-                                <a href="#" class="btn hero-btn hero-btn-outline">
-                                    {% trans "طلب استشارة" %}
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
-            <i class="fas fa-chevron-left"></i>
-        </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
-            <i class="fas fa-chevron-right"></i>
-        </button>
-
-        <div class="carousel-indicators">
-            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active"></button>
-            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
-            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
-        </div>
+<!-- السلايدر الرئيسي -->
+<div id="mainSlider" class="carousel slide" data-bs-ride="carousel">
+    <!-- مؤشرات السلايدر -->
+    <div class="carousel-indicators">
+        {% for item in slider_items %}
+        <button type="button" data-bs-target="#mainSlider" data-bs-slide-to="{{ forloop.counter0 }}"
+                {% if forloop.first %}class="active"{% endif %} aria-current="true"
+                aria-label="{{ item.title }}"></button>
+        {% endfor %}
     </div>
+
+    <!-- عناصر السلايدر -->
+    <div class="carousel-inner" >
+        {% for item in slider_items %}
+        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+            <img src="{{ item.image.url }}" class="d-block w-100" alt="{{ item.title }}">
+            <div class="carousel-caption">
+                <h2>{{ item.title }}</h2>
+                <h5>{{ item.subtitle }}</h5>
+                <p>{{ item.description }}</p>
+                <div class="slider-buttons">
+                    <a href="{{ item.primary_button_url }}" class="btn btn-primary">{{ item.primary_button_text }}</a>
+                    {% if item.secondary_button_text %}
+                    <a href="{{ item.secondary_button_url }}" class="btn btn-outline-light">{{ item.secondary_button_text }}</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <!-- في حالة عدم وجود عناصر سلايدر -->
+{#        <div class="carousel-item active">#}
+{#            <img src="{% static 'images/default-slider.jpg' %}" class="d-block w-100" alt="افتراضي">#}
+{#            <div class="carousel-caption">#}
+{#                <h2>مرحباً بكم في متجرنا</h2>#}
+{#                <h5>تسوق أفضل المنتجات بأسعار تنافسية</h5>#}
+{#            </div>#}
+{#        </div>#}
+        {% endfor %}
+    </div>
+
+    <!-- أزرار التنقل بين عناصر السلايدر -->
+    <button class="carousel-control-prev" type="button" data-bs-target="#mainSlider" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">السابق</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#mainSlider" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">التالي</span>
+    </button>
+</div>
+
 </section>
 
 <!-- Features Section -->
@@ -1025,9 +934,9 @@
                     </div>
                     <h3 class="feature-title">{% trans "جودة مضمونة" %}</h3>
                     <p class="feature-description">{% trans "منتجات أصلية 100% من أفضل العلامات التجارية العالمية مع ضمان شامل" %}</p>
-                    <a href="#" class="feature-link">
-                        {% trans "اعرف المزيد" %} <i class="fas fa-arrow-right"></i>
-                    </a>
+{#                    <a href="#" class="feature-link">#}
+{#                        {% trans "اعرف المزيد" %} <i class="fas fa-arrow-right"></i>#}
+{#                    </a>#}
                 </div>
             </div>
 
@@ -1038,9 +947,9 @@
                     </div>
                     <h3 class="feature-title">{% trans "توصيل سريع" %}</h3>
                     <p class="feature-description">{% trans "خدمة توصيل احترافية وسريعة لجميع أنحاء المملكة مع تتبع الشحنة" %}</p>
-                    <a href="#" class="feature-link">
-                        {% trans "سياسة الشحن" %} <i class="fas fa-arrow-right"></i>
-                    </a>
+{#                    <a href="#" class="feature-link">#}
+{#                        {% trans "سياسة الشحن" %} <i class="fas fa-arrow-right"></i>#}
+{#                    </a>#}
                 </div>
             </div>
 
@@ -1051,9 +960,9 @@
                     </div>
                     <h3 class="feature-title">{% trans "دعم فني متميز" %}</h3>
                     <p class="feature-description">{% trans "فريق من المهندسين المتخصصين لتقديم الدعم الفني والصيانة" %}</p>
-                    <a href="#" class="feature-link">
-                        {% trans "خدماتنا" %} <i class="fas fa-arrow-right"></i>
-                    </a>
+{#                    <a href="#" class="feature-link">#}
+{#                        {% trans "خدماتنا" %} <i class="fas fa-arrow-right"></i>#}
+{#                    </a>#}
                 </div>
             </div>
 
@@ -1064,9 +973,9 @@
                     </div>
                     <h3 class="feature-title">{% trans "أسعار تنافسية" %}</h3>
                     <p class="feature-description">{% trans "أفضل الأسعار في السوق مع عروض وخصومات حصرية للعملاء المميزين" %}</p>
-                    <a href="#" class="feature-link">
-                        {% trans "العروض الحالية" %} <i class="fas fa-arrow-right"></i>
-                    </a>
+{#                    <a href="#" class="feature-link">#}
+{#                        {% trans "العروض الحالية" %} <i class="fas fa-arrow-right"></i>#}
+{#                    </a>#}
                 </div>
             </div>
         </div>
@@ -1110,7 +1019,7 @@
                     {% if category.image %}
                         <img src="{{ category.image.url }}" class="category-image" alt="{{ category.name }}">
                     {% else %}
-                        <img src="{% static 'images/category-default.jpg' %}" class="category-image" alt="{{ category.name }}">
+{#                        <img src="{% static 'images/category-default.jpg' %}" class="category-image" alt="{{ category.name }}">#}
                     {% endif %}
                     <div class="category-overlay">
                         <h3 class="category-name">{{ category.name }}</h3>
@@ -1268,83 +1177,6 @@
 
 
 
-<!-- Testimonials Section -->
-<section class="testimonials-section" hidden>
-    <div class="container">
-        <div class="section-title text-center mb-5" data-aos="fade-up">
-            <h2 class="display-4 fw-bold mb-3">{% trans "آراء عملائنا" %}</h2>
-            <p class="lead text-muted">{% trans "ماذا يقول عملاؤنا عن تجربتهم معنا" %}</p>
-        </div>
-
-        <div class="row g-4">
-            <div class="col-lg-4" data-aos="fade-up" data-aos-delay="100">
-                <div class="testimonial-card">
-                    <i class="fas fa-quote-left testimonial-quote"></i>
-                    <p class="testimonial-text">
-                        {% trans "خدمة ممتازة ومنتجات عالية الجودة. تعاملت مع ESCO في توريد معدات لمشروعنا الجديد وكانت التجربة رائعة من جميع النواحي." %}
-                    </p>
-                    <div class="testimonial-author">
-                        <img src="{% static 'images/avatar.png' %}" alt="Author" class="author-avatar">
-                        <div class="author-info">
-                            <h5 class="author-name">{% trans "أحمد السعيد" %}</h5>
-                            <p class="author-position">{% trans "مدير مشروع - شركة البناء الحديث" %}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-4" data-aos="fade-up" data-aos-delay="200">
-                <div class="testimonial-card">
-                    <i class="fas fa-quote-left testimonial-quote"></i>
-                    <p class="testimonial-text">
-                        {% trans "الدعم الفني المقدم من ESCO لا مثيل له. ساعدونا في اختيار المعدات المناسبة وقدموا لنا التدريب اللازم. شركاء حقيقيون في النجاح." %}
-                    </p>
-                    <div class="testimonial-author">
-                        <img src="{% static 'images/avatar.png' %}" alt="Author" class="author-avatar">
-                        <div class="author-info">
-                            <h5 class="author-name">{% trans "سارة الخالدي" %}</h5>
-                            <p class="author-position">{% trans "مديرة العمليات - مصنع النور" %}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-4" data-aos="fade-up" data-aos-delay="300">
-                <div class="testimonial-card">
-                    <i class="fas fa-quote-left testimonial-quote"></i>
-                    <p class="testimonial-text">
-                        {% trans "أسعار منافسة وجودة لا تضاهى. ESCO هي خيارنا الأول دائماً عندما نحتاج لأي معدات صناعية. أنصح بهم بشدة." %}
-                    </p>
-                    <div class="testimonial-author">
-                        <img src="{% static 'images/avatar.png' %}" alt="Author" class="author-avatar">
-                        <div class="author-info">
-                            <h5 class="author-name">{% trans "محمد العمري" %}</h5>
-                            <p class="author-position">{% trans "المدير الفني - مجموعة الأمل" %}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Partners Section -->
-<section class="partners-section" hidden>
-    <div class="container">
-        <div class="section-title text-center mb-4" data-aos="fade-up">
-            <h3 class="fw-bold">{% trans "شركاؤنا في النجاح" %}</h3>
-        </div>
-
-        <div class="partners-slider" data-aos="fade-up">
-            <img src="{% static 'images/partner-1.png' %}" alt="Partner" class="partner-logo">
-            <img src="{% static 'images/partner-2.png' %}" alt="Partner" class="partner-logo">
-            <img src="{% static 'images/partner-3.png' %}" alt="Partner" class="partner-logo">
-            <img src="{% static 'images/partner-4.png' %}" alt="Partner" class="partner-logo">
-            <img src="{% static 'images/partner-5.png' %}" alt="Partner" class="partner-logo">
-            <img src="{% static 'images/partner-6.png' %}" alt="Partner" class="partner-logo">
-        </div>
-    </div>
-</section>
 {% endblock %}
 
 {% block extra_js %}

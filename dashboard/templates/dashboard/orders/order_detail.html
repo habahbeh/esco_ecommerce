@@ -193,25 +193,46 @@
                         <td>{{ forloop.counter }}</td>
                         <td>
                             {{ item.product_name }}
-                            {% if item.variant_name %}
-                            <small class="text-muted d-block">{{ item.variant_name }}</small>
-                            {% endif %}
+                             <div>
+                                    {% if item.variant %}
+                                                <small class="text-muted">
+                                                    {% if item.variant.attributes %}
+                                                        {% for key, value in item.variant.attributes.items %}
+                                                            <span>{{ key }}: {{ value }}</span>{% if not forloop.last %}
+                                                            | {% endif %}
+                                                        {% endfor %}
+                                                    {% elif item.variant.variant_details %}
+                                                        {{ item.variant.variant_details }}
+                                                    {% elif item.variant.options.all %}
+                                                        {% for option in item.variant.options.all %}
+                                                            <span>{{ option.option_group.name }}: {{ option.name }}</span>
+                                                            {% if not forloop.last %} | {% endif %}
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        {% for attr_value in item.variant.attribute_values.all %}
+                                                            <span>{{ attr_value.attribute.name }}: {{ attr_value.value }}</span>
+                                                            {% if not forloop.last %} | {% endif %}
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                </small>
+                                            {% endif %}
+                                </div>
                         </td>
-                        <td>{{ item.unit_price|currency }}</td>
+                        <td>{{ item.unit_price|divide:1.16|currency }}</td>
                         <td>{{ item.quantity }}</td>
-                        <td>{{ item.total_price|currency }}</td>
+                        <td>{{ item.total_price|divide:1.16|currency }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
                 <tfoot>
                     <tr>
                         <th colspan="4" class="text-end">المجموع الفرعي:</th>
-                        <td>{{ order.total_price|currency }}</td>
+                        <td>{{ order.total_price|divide:1.16|currency }}</td>
                     </tr>
 
                     <tr>
                         <th colspan="4" class="text-end">الضريبة:</th>
-                        <td>{{ order.tax_amount|currency }}</td>
+                        <td>{{ order.tax_amount|divide:1.16|currency }}</td>
                     </tr>
                     {% if order.discount_amount > 0 %}
                     <tr>
@@ -269,7 +290,7 @@
     </div>
 
     <div class="col-md-6">
-        <div class="card mb-4">
+        <div class="card mb-4" hidden>
             <div class="card-header">
                 <h5 class="mb-0">تحديث حالة الدفع</h5>
             </div>

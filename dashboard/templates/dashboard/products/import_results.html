@@ -168,21 +168,26 @@
             </div>
             
             {% if has_errors %}
-            <div class="col-md-6">
-                <div class="card shadow-sm mb-4 results-card error">
-                    <div class="card-body">
-                        <h6 class="mb-3">
-                            <span class="status-indicator error"></span>
-                            {% trans 'تصدير الأخطاء' %}
-                        </h6>
-                        <p>{% trans 'وُجدت أخطاء أثناء عملية الاستيراد. يمكنك تصدير المنتجات التي فشل استيرادها إلى ملف Excel لتصحيحها وإعادة المحاولة.' %}</p>
-                        <a href="{% url 'dashboard:export_import_errors' %}?import_id={{ import_id }}" class="btn btn-danger btn-with-icon">
-                            <i class="fas fa-file-export"></i> {% trans 'تصدير المنتجات الخاطئة' %}
-                        </a>
-                    </div>
-                </div>
+<div class="col-md-6">
+    <div class="card shadow-sm mb-4 results-card error">
+        <div class="card-body">
+            <h6 class="mb-3">
+                <span class="status-indicator error"></span>
+                {% trans 'تصدير الأخطاء' %}
+            </h6>
+            <p>{% trans 'وُجدت أخطاء أثناء عملية الاستيراد. يمكنك تصدير المنتجات التي فشل استيرادها لتصحيحها وإعادة المحاولة.' %}</p>
+            <div class="btn-group">
+                <a href="{% url 'dashboard:export_import_errors' %}?import_id={{ import_id }}&format=excel" class="btn btn-danger btn-with-icon">
+                    <i class="fas fa-file-excel"></i> {% trans 'تصدير بصيغة Excel' %}
+                </a>
+                <a href="{% url 'dashboard:export_import_errors' %}?import_id={{ import_id }}&format=csv" class="btn btn-info btn-with-icon">
+                    <i class="fas fa-file-csv"></i> {% trans 'تصدير بصيغة CSV' %}
+                </a>
             </div>
-            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
         </div>
         
         {% if has_errors %}
@@ -241,7 +246,7 @@ $(document).ready(function() {
     
     function checkProgress() {
         $.ajax({
-            url: '{% url "dashboard:product_import_progress" %}',
+            url: '{% url "dashboard:import_progress" %}',
             type: 'GET',
             data: { import_id: importId },
             dataType: 'json',
