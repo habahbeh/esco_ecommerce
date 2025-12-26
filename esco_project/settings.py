@@ -22,13 +22,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-_2o5n-i9%w^&i%)!#+awz3gq1ud@ij#1tz#n4)e2)*(2qkfc1s'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ['*']
+# =============================================================================
+# SENSITIVE SETTINGS - Imported from settings_local.py (not in git)
+# الإعدادات الحساسة - مستوردة من settings_local.py (ليست في git)
+# =============================================================================
+try:
+    from .settings_local import SECRET_KEY, DEBUG, ALLOWED_HOSTS
+except ImportError:
+    # Fallback defaults for development if settings_local.py doesn't exist
+    # قيم افتراضية للتطوير إذا لم يكن settings_local.py موجوداً
+    SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'fallback-insecure-key-for-dev-only')
+    DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() == 'true'
+    ALLOWED_HOSTS = ['*']
 
 # Application definition
 INSTALLED_APPS = [
@@ -118,30 +123,21 @@ WSGI_APPLICATION = 'esco_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
-
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'escojo',
-        'USER': 'root',
-        'PASSWORD': '',  # فارغة
-        'HOST': 'localhost',  # استخدم IP بدلاً من localhost
-        'PORT': '3306',
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            'autocommit': True,
+# =============================================================================
+# DATABASE - Imported from settings_local.py (not in git)
+# قاعدة البيانات - مستوردة من settings_local.py (ليست في git)
+# =============================================================================
+try:
+    from .settings_local import DATABASES
+except ImportError:
+    # Fallback to SQLite for development if settings_local.py doesn't exist
+    # الرجوع إلى SQLite للتطوير إذا لم يكن settings_local.py موجوداً
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-}
 
 
 
@@ -221,17 +217,23 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-# إعدادات البريد الإلكتروني - Email settings
-# يتم إرسال البريد الإلكتروني الفعلي في جميع البيئات (التطوير والإنتاج)
-# Real emails are sent in all environments (development and production)
-
+# =============================================================================
+# EMAIL SETTINGS - Imported from settings_local.py (not in git)
+# إعدادات البريد الإلكتروني - مستوردة من settings_local.py (ليست في git)
+# =============================================================================
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
-EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() == 'true'
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'contact@esco.jo')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'mhqs zkdm gmsb xuzx')
-DEFAULT_FROM_EMAIL = 'ESCO <contact@esco.jo>'
+try:
+    from .settings_local import EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD, DEFAULT_FROM_EMAIL
+except ImportError:
+    # Fallback to console email for development if settings_local.py doesn't exist
+    # الرجوع إلى إيميل الكونسول للتطوير إذا لم يكن settings_local.py موجوداً
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    EMAIL_HOST = 'smtp.gmail.com'
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = ''
+    EMAIL_HOST_PASSWORD = ''
+    DEFAULT_FROM_EMAIL = 'noreply@example.com'
 
 
 
