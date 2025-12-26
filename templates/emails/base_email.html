@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ESCO{% endblock %}</title>
+    <style>
+        /* Reset */
+        body, table, td, p, a, li, blockquote {
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+        table, td {
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+        }
+        img {
+            -ms-interpolation-mode: bicubic;
+            border: 0;
+            height: auto;
+            line-height: 100%;
+            outline: none;
+            text-decoration: none;
+        }
+
+        /* Base Styles */
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f4f4f4;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            direction: rtl;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+
+        /* Content */
+        .email-content {
+            padding: 30px 25px;
+        }
+
+        .greeting {
+            font-size: 18px;
+            color: #333333;
+            margin-bottom: 20px;
+        }
+
+        .content-text {
+            font-size: 15px;
+            line-height: 1.8;
+            color: #555555;
+            margin-bottom: 20px;
+        }
+
+        /* Info Box */
+        .info-box {
+            background-color: #e3f2fd;
+            border-right: 4px solid #1e88e5;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .info-box p {
+            margin: 0;
+            color: #1565c0;
+            font-size: 14px;
+        }
+
+        /* Divider */
+        .divider {
+            height: 1px;
+            background-color: #eeeeee;
+            margin: 25px 0;
+        }
+
+        /* Section Title */
+        .section-title {
+            text-align: center;
+            color: #333333;
+            font-size: 20px;
+            font-weight: bold;
+            margin: 25px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #1e88e5;
+        }
+
+        /* Button Container */
+        .btn-container {
+            text-align: center;
+            margin: 25px 0;
+        }
+
+        /* Primary Button */
+        .btn-primary {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        /* Products Grid */
+        .products-grid {
+            margin: 20px 0;
+        }
+
+        /* Responsive */
+        @media screen and (max-width: 600px) {
+            .email-container {
+                width: 100% !important;
+            }
+            .email-content {
+                padding: 20px 15px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f4f4f4;">
+        <tr>
+            <td align="center" style="padding: 20px 10px;">
+                <table role="presentation" class="email-container" width="600" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+
+                    <!-- Header with Logo -->
+                    <tr>
+                        <td style="background-color: #ffffff; padding: 25px 20px; text-align: center; border-bottom: 3px solid #0077c8;">
+                            <a href="https://esco.jo" style="text-decoration: none;">
+                                <img src="https://esco.jo/static/images/logo.png" alt="ESCO - شركة المخازن الهندسية" style="max-width: 200px; height: auto;">
+                            </a>
+                        </td>
+                    </tr>
+
+                    <!-- Blue Banner -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #0077c8 0%, #005a9e 100%); padding: 15px 20px; text-align: center;">
+                            <p style="color: #ffffff; font-size: 14px; margin: 0; font-weight: 500;">
+                                {% block header_text %}مرحباً بك في عائلة ESCO{% endblock %}
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Content -->
+                    <tr>
+                        <td class="email-content" style="padding: 30px 25px;">
+                            {% block content %}{% endblock %}
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #1a2634; padding: 0;">
+
+                            <!-- Logo Section -->
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                <tr>
+                                    <td style="padding: 30px 25px 20px; text-align: center; background-color: #1a2634;">
+                                        <a href="https://esco.jo" style="text-decoration: none;">
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
+                                                <tr>
+                                                    <td style="text-align: center;">
+                                                        <div style="font-size: 32px; font-weight: bold; letter-spacing: 2px;">
+                                                            <span style="color: #e31e24;">E</span><span style="color: #ffffff;">SCO</span>
+                                                        </div>
+                                                        <div style="font-size: 10px; color: rgba(255,255,255,0.7); letter-spacing: 1px; margin-top: 5px;">
+                                                            ENGINEERING STORES COMPANY
+                                                        </div>
+                                                        <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 3px;">
+                                                            شركة المخازن الهندسية
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Quick Links -->
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                <tr>
+                                    <td style="padding: 15px 25px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                        <a href="https://esco.jo" style="color: #ffffff; text-decoration: none; font-size: 13px; margin: 0 12px; font-weight: 500;">الرئيسية</a>
+                                        <span style="color: rgba(255,255,255,0.3);">|</span>
+                                        <a href="https://esco.jo/products/" style="color: #ffffff; text-decoration: none; font-size: 13px; margin: 0 12px; font-weight: 500;">المنتجات</a>
+                                        <span style="color: rgba(255,255,255,0.3);">|</span>
+                                        <a href="https://esco.jo/products/brands/" style="color: #ffffff; text-decoration: none; font-size: 13px; margin: 0 12px; font-weight: 500;">العلامات التجارية</a>
+                                        <span style="color: rgba(255,255,255,0.3);">|</span>
+                                        <a href="https://esco.jo/contact/" style="color: #ffffff; text-decoration: none; font-size: 13px; margin: 0 12px; font-weight: 500;">تواصل معنا</a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Contact Info -->
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                <tr>
+                                    <td style="padding: 25px;">
+                                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                            <tr>
+                                                <!-- Phone -->
+                                                <td style="width: 50%; text-align: center; padding: 10px; vertical-align: top;">
+                                                    <div style="background-color: rgba(255,255,255,0.05); border-radius: 10px; padding: 20px;">
+                                                        <div style="font-size: 24px; margin-bottom: 10px;">📞</div>
+                                                        <div style="color: #ffffff; font-size: 13px; font-weight: bold; margin-bottom: 8px;">اتصل بنا</div>
+                                                        <a href="tel:+962799998185" style="color: #4fc3f7; text-decoration: none; font-size: 16px; font-weight: bold; display: block;">0799998185</a>
+                                                    </div>
+                                                </td>
+                                                <!-- WhatsApp -->
+                                                <td style="width: 50%; text-align: center; padding: 10px; vertical-align: top;">
+                                                    <div style="background-color: rgba(255,255,255,0.05); border-radius: 10px; padding: 20px;">
+                                                        <a href="https://wa.me/962799998185" style="text-decoration: none;">
+                                                            <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" style="width: 28px; height: 28px; margin-bottom: 8px;">
+                                                            <div style="color: #ffffff; font-size: 13px; font-weight: bold; margin-bottom: 8px;">واتساب</div>
+                                                            <span style="color: #25d366; font-size: 16px; font-weight: bold;">0799998185</span>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Branches -->
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                <tr>
+                                    <td style="padding: 0 25px 25px;">
+                                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: rgba(0,119,200,0.15); border-radius: 10px; border: 1px solid rgba(0,119,200,0.3);">
+                                            <tr>
+                                                <td style="padding: 20px;">
+                                                    <p style="color: #4fc3f7; font-size: 15px; font-weight: bold; margin: 0 0 15px 0; text-align: center;">
+                                                        📍 فروعنا في الأردن
+                                                    </p>
+                                                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                                        <!-- الفرع الرئيسي -->
+                                                        <tr>
+                                                            <td style="padding: 12px; vertical-align: top; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                                                <div style="color: #4fc3f7; font-size: 13px; font-weight: bold; margin-bottom: 6px;">🏢 الفرع الرئيسي</div>
+                                                                <div style="color: rgba(255,255,255,0.8); font-size: 12px; line-height: 1.6;">
+                                                                    عمان - سحاب - مقابل مدينة الملك عبدالله الثاني الصناعية<br>
+                                                                    بجانب الملعب البلدي
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                        <!-- الفرع الثاني -->
+                                                        <tr>
+                                                            <td style="padding: 12px; vertical-align: top; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                                                <div style="color: #4fc3f7; font-size: 13px; font-weight: bold; margin-bottom: 6px;">🏪 الفرع الثاني - أبو علندا</div>
+                                                                <div style="color: rgba(255,255,255,0.8); font-size: 12px; line-height: 1.6;">
+                                                                    عمان - أبو علندا - شارع عبد الكريم الحديدي<br>
+                                                                    مجمع الجعبري - عمارة رقم 69
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                        <!-- الفرع الثالث -->
+                                                        <tr>
+                                                            <td style="padding: 12px; vertical-align: top;">
+                                                                <div style="color: #4fc3f7; font-size: 13px; font-weight: bold; margin-bottom: 6px;">🏪 الفرع الثالث - القسطل</div>
+                                                                <div style="color: rgba(255,255,255,0.8); font-size: 12px; line-height: 1.6;">
+                                                                    عمان - القسطل - شارع الشحن الجوي<br>
+                                                                    مجمع الجعبري 3
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Unsubscribe & Copyright -->
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                <tr>
+                                    <td style="padding: 20px 25px; background-color: #111920; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+                                        <p style="color: rgba(255,255,255,0.5); font-size: 11px; margin: 0 0 10px 0; line-height: 1.6;">
+                                            تلقيت هذه الرسالة لأنك مشترك في النشرة البريدية لـ ESCO
+                                        </p>
+                                        {% if unsubscribe_url %}
+                                        <p style="margin: 0 0 15px 0;">
+                                            <a href="{{ unsubscribe_url }}" style="color: rgba(255,255,255,0.4); text-decoration: underline; font-size: 11px;">إلغاء الاشتراك من النشرة البريدية</a>
+                                        </p>
+                                        {% endif %}
+                                        <p style="color: rgba(255,255,255,0.4); font-size: 11px; margin: 0;">
+                                            &copy; {{ year|default:"2025" }} ESCO - شركة المخازن الهندسية. جميع الحقوق محفوظة.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
