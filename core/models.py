@@ -52,6 +52,34 @@ class SiteSettings(models.Model):
     enable_dark_mode = models.BooleanField(_("تفعيل الوضع الداكن"), default=True)
     default_dark_mode = models.BooleanField(_("الوضع الداكن افتراضيًا"), default=False)
 
+    # إعدادات الشحن - Shipping Settings
+    shipping_fee_amman = models.DecimalField(
+        _("أجور النقل - عمان"),
+        max_digits=10,
+        decimal_places=2,
+        default=2.00,
+        help_text=_("أجور التوصيل داخل عمان")
+    )
+    shipping_fee_other = models.DecimalField(
+        _("أجور النقل - باقي المحافظات"),
+        max_digits=10,
+        decimal_places=2,
+        default=3.00,
+        help_text=_("أجور التوصيل لباقي محافظات الأردن")
+    )
+    free_shipping_threshold = models.DecimalField(
+        _("حد الشحن المجاني"),
+        max_digits=10,
+        decimal_places=2,
+        default=0.00,
+        help_text=_("الحد الأدنى للطلب للحصول على شحن مجاني (0 = لا يوجد شحن مجاني)")
+    )
+    shipping_enabled = models.BooleanField(
+        _("تفعيل أجور الشحن"),
+        default=True,
+        help_text=_("تفعيل أو إلغاء تفعيل أجور الشحن")
+    )
+
     class Meta:
         app_label = 'core'
         verbose_name = _("إعدادات الموقع")
@@ -97,10 +125,20 @@ class SiteSettings(models.Model):
 
 
 class Newsletter(models.Model):
-    """نموذج لتخزين معلومات المشتركين في النشرة البريدية"""
+    """نموذج لتخزين معلومات المشتركين في النشرة البريدية مع التحقق من البريد"""
     email = models.EmailField(_("البريد الإلكتروني"), unique=True)
+    name = models.CharField(_("الاسم"), max_length=100, blank=True)
     is_active = models.BooleanField(_("نشط"), default=True)
+    is_verified = models.BooleanField(_("تم التحقق"), default=False)
+    verification_token = models.CharField(_("رمز التحقق"), max_length=64, blank=True, null=True)
+    verification_sent_at = models.DateTimeField(_("تاريخ إرسال التحقق"), blank=True, null=True)
+    verified_at = models.DateTimeField(_("تاريخ التحقق"), blank=True, null=True)
     created_at = models.DateTimeField(_("تاريخ الاشتراك"), auto_now_add=True)
+    unsubscribe_token = models.CharField(_("رمز إلغاء الاشتراك"), max_length=64, blank=True, null=True)
+
+    # إحصائيات
+    emails_received = models.PositiveIntegerField(_("عدد الرسائل المستلمة"), default=0)
+    last_email_sent = models.DateTimeField(_("آخر رسالة مرسلة"), blank=True, null=True)
 
     class Meta:
         app_label = 'core'
@@ -109,6 +147,18 @@ class Newsletter(models.Model):
 
     def __str__(self):
         return self.email
+
+    def generate_verification_token(self):
+        """إنشاء رمز تحقق فريد"""
+        import secrets
+        self.verification_token = secrets.token_urlsafe(32)
+        return self.verification_token
+
+    def generate_unsubscribe_token(self):
+        """إنشاء رمز إلغاء اشتراك فريد"""
+        import secrets
+        self.unsubscribe_token = secrets.token_urlsafe(32)
+        return self.unsubscribe_token
 
 
 class SliderItem(models.Model):
