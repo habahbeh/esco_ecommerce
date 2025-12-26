@@ -20,5 +20,7 @@ urlpatterns = [
     path('preview-color/', views.preview_color, name='preview_color'),
 
     path('newsletter/subscribe/', views.newsletter_subscribe, name='newsletter_subscribe'),
+    path('newsletter/verify/<str:token>/', views.newsletter_verify, name='newsletter_verify'),
+    path('newsletter/unsubscribe/<str:token>/', views.newsletter_unsubscribe, name='newsletter_unsubscribe'),
 
 ]

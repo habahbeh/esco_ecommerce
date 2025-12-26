@@ -1,0 +1,200 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "إعدادات الشحن" %}{% endblock %}
+
+{% block page_title %}{% trans "إعدادات الشحن" %}{% endblock %}
+
+{% block current_page %}{% trans "إعدادات الشحن" %}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_home' %}">{% trans "الرئيسية" %}</a></li>
+<li class="breadcrumb-item active">{% trans "إعدادات الشحن" %}</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-truck fa-fw me-2"></i>{% trans "إعدادات أجور النقل" %}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="shipping-settings-form">
+                        {% csrf_token %}
+
+                        <!-- تفعيل الشحن -->
+                        <div class="mb-4">
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="fw-bold mb-0" for="shipping_enabled">
+                                    {% trans "تفعيل أجور الشحن" %}
+                                </label>
+                                <div class="form-check form-switch mb-0" style="padding-right: 2.5em; padding-left: 0;">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="shipping_enabled" name="shipping_enabled" {% if site_settings.shipping_enabled %}checked{% endif %} style="float: right; margin-right: -2.5em; margin-left: 0;">
+                                </div>
+                            </div>
+                            <small class="text-muted d-block mt-1">{% trans "عند إلغاء التفعيل، لن يتم احتساب أجور شحن للطلبات" %}</small>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- أجور النقل -->
+                        <h6 class="fw-bold mb-3">
+                            <i class="fas fa-money-bill-wave me-2 text-success"></i>{% trans "أجور النقل حسب المنطقة" %}
+                        </h6>
+
+                        <div class="row g-3">
+                            <!-- أجور النقل - عمان -->
+                            <div class="col-md-6">
+                                <div class="card bg-light border-0 h-100">
+                                    <div class="card-body">
+                                        <label for="shipping_fee_amman" class="form-label fw-bold">
+                                            <i class="fas fa-city me-1 text-primary"></i>{% trans "عمان" %}
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control form-control-lg" id="shipping_fee_amman" name="shipping_fee_amman" value="{{ site_settings.shipping_fee_amman|default:'2.00' }}" step="0.01" min="0">
+                                            <span class="input-group-text">{% trans "د.أ" %}</span>
+                                        </div>
+                                        <small class="text-muted">{% trans "أجور التوصيل داخل محافظة عمان" %}</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- أجور النقل - باقي المحافظات -->
+                            <div class="col-md-6">
+                                <div class="card bg-light border-0 h-100">
+                                    <div class="card-body">
+                                        <label for="shipping_fee_other" class="form-label fw-bold">
+                                            <i class="fas fa-map-marked-alt me-1 text-warning"></i>{% trans "باقي المحافظات" %}
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control form-control-lg" id="shipping_fee_other" name="shipping_fee_other" value="{{ site_settings.shipping_fee_other|default:'3.00' }}" step="0.01" min="0">
+                                            <span class="input-group-text">{% trans "د.أ" %}</span>
+                                        </div>
+                                        <small class="text-muted">{% trans "أجور التوصيل لباقي محافظات الأردن" %}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- حد الشحن المجاني -->
+                        <h6 class="fw-bold mb-3">
+                            <i class="fas fa-gift me-2 text-danger"></i>{% trans "الشحن المجاني" %}
+                        </h6>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="free_shipping_threshold" class="form-label">{% trans "الحد الأدنى للشحن المجاني" %}</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="free_shipping_threshold" name="free_shipping_threshold" value="{{ site_settings.free_shipping_threshold|default:'0.00' }}" step="0.01" min="0">
+                                    <span class="input-group-text">{% trans "د.أ" %}</span>
+                                </div>
+                                <small class="text-muted">{% trans "أدخل 0 لإلغاء الشحن المجاني. عند تحديد مبلغ، سيحصل العميل على شحن مجاني عند الوصول لهذا المبلغ" %}</small>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- أزرار الحفظ -->
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>{% trans "حفظ الإعدادات" %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- الشريط الجانبي -->
+        <div class="col-lg-4">
+            <!-- معاينة الأسعار -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h6 class="m-0 font-weight-bold text-info">
+                        <i class="fas fa-eye fa-fw me-2"></i>{% trans "معاينة الأسعار" %}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>{% trans "عمان" %}:</span>
+                        <strong class="text-success" id="preview-amman">{{ site_settings.shipping_fee_amman|default:'2.00' }} {% trans "د.أ" %}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>{% trans "باقي المحافظات" %}:</span>
+                        <strong class="text-warning" id="preview-other">{{ site_settings.shipping_fee_other|default:'3.00' }} {% trans "د.أ" %}</strong>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <span>{% trans "شحن مجاني فوق" %}:</span>
+                        <strong class="text-danger" id="preview-free">
+                            {% if site_settings.free_shipping_threshold and site_settings.free_shipping_threshold > 0 %}
+                                {{ site_settings.free_shipping_threshold }} {% trans "د.أ" %}
+                            {% else %}
+                                {% trans "غير مفعل" %}
+                            {% endif %}
+                        </strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ملاحظات -->
+            <div class="card shadow-sm border-info">
+                <div class="card-header bg-info text-white py-3">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-info-circle fa-fw me-2"></i>{% trans "ملاحظات" %}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            {% trans "أجور الشحن تضاف تلقائياً على الطلبات" %}
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            {% trans "يمكن للعميل اختيار المنطقة عند الدفع" %}
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            {% trans "الشحن المجاني يُطبق تلقائياً عند تجاوز الحد" %}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // تحديث المعاينة عند تغيير القيم
+    $('#shipping_fee_amman').on('input', function() {
+        var value = parseFloat($(this).val()) || 0;
+        $('#preview-amman').text(value.toFixed(2) + ' {% trans "د.أ" %}');
+    });
+
+    $('#shipping_fee_other').on('input', function() {
+        var value = parseFloat($(this).val()) || 0;
+        $('#preview-other').text(value.toFixed(2) + ' {% trans "د.أ" %}');
+    });
+
+    $('#free_shipping_threshold').on('input', function() {
+        var value = parseFloat($(this).val()) || 0;
+        if (value > 0) {
+            $('#preview-free').text(value.toFixed(2) + ' {% trans "د.أ" %}');
+        } else {
+            $('#preview-free').text('{% trans "غير مفعل" %}');
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,272 @@
+{% extends "emails/base_email.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "تأكيد الطلب" %} - Order Confirmation{% endblock %}
+
+{% block header_text %}{% trans "شكراً لطلبك من ESCO!" %} | Thank you for your order!{% endblock %}
+
+{% block content %}
+<!-- Arabic Section -->
+<div style="margin-bottom: 30px; padding-bottom: 30px; border-bottom: 2px solid #e0e0e0;">
+    <h2 style="color: #0077c8; font-size: 22px; margin: 0 0 20px 0; text-align: center;">
+        🎉 تم استلام طلبك بنجاح!
+    </h2>
+
+    <p style="font-size: 16px; color: #333; line-height: 1.8; margin-bottom: 15px;">
+        عزيزي/عزيزتي <strong>{{ order.full_name }}</strong>،
+    </p>
+
+    <p style="font-size: 15px; color: #555; line-height: 1.8; margin-bottom: 20px;">
+        شكراً لتسوقك من <strong style="color: #0077c8;">ESCO</strong>. نحن سعداء بإبلاغك أن طلبك قد تم استلامه وهو الآن <strong style="color: #ff9800;">قيد المعالجة</strong>.
+    </p>
+
+    <!-- Order Status Badge -->
+    <div style="text-align: center; margin: 25px 0;">
+        <span style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: #fff; padding: 12px 30px; border-radius: 25px; font-size: 16px; font-weight: bold; display: inline-block; box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);">
+            ⏳ قيد المعالجة
+        </span>
+    </div>
+
+    <!-- Order Details Box -->
+    <div style="background-color: #f8f9fa; border-radius: 12px; padding: 25px; margin: 20px 0; border: 1px solid #e9ecef;">
+        <h3 style="color: #0077c8; font-size: 18px; margin: 0 0 20px 0; border-bottom: 2px solid #0077c8; padding-bottom: 10px;">
+            📋 تفاصيل الطلب
+        </h3>
+
+        <table style="width: 100%; font-size: 14px; color: #444;">
+            <tr>
+                <td style="padding: 10px 0; font-weight: bold; width: 40%;">رقم الطلب:</td>
+                <td style="padding: 10px 0; color: #0077c8; font-weight: bold; font-size: 16px;">{{ order.order_number }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 0; font-weight: bold;">تاريخ الطلب:</td>
+                <td style="padding: 10px 0;">{{ order.created_at|date:"Y/m/d - H:i" }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 0; font-weight: bold;">طريقة الدفع:</td>
+                <td style="padding: 10px 0;">{{ order.payment_method|default:"الدفع عند الاستلام" }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Order Items -->
+    <div style="background-color: #fff; border-radius: 12px; padding: 20px; margin: 20px 0; border: 1px solid #e9ecef;">
+        <h3 style="color: #333; font-size: 16px; margin: 0 0 15px 0;">
+            🛒 المنتجات المطلوبة
+        </h3>
+
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+            <thead>
+                <tr style="background-color: #f8f9fa;">
+                    <th style="padding: 12px 10px; text-align: right; border-bottom: 2px solid #dee2e6; color: #555;">المنتج</th>
+                    <th style="padding: 12px 10px; text-align: center; border-bottom: 2px solid #dee2e6; color: #555;">الكمية</th>
+                    <th style="padding: 12px 10px; text-align: left; border-bottom: 2px solid #dee2e6; color: #555;">السعر</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order.items.all %}
+                <tr>
+                    <td style="padding: 12px 10px; border-bottom: 1px solid #eee;">
+                        <strong>{{ item.product_name }}</strong>
+                        {% if item.variant_name %}<br><small style="color: #888;">{{ item.variant_name }}</small>{% endif %}
+                    </td>
+                    <td style="padding: 12px 10px; text-align: center; border-bottom: 1px solid #eee;">{{ item.quantity }}</td>
+                    <td style="padding: 12px 10px; text-align: left; border-bottom: 1px solid #eee; direction: ltr;">{{ item.total_price }} د.أ</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Totals -->
+        <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid #e9ecef;">
+            <table style="width: 100%; font-size: 14px;">
+                <tr>
+                    <td style="padding: 8px 0; color: #666;">المجموع الفرعي:</td>
+                    <td style="padding: 8px 0; text-align: left; direction: ltr;">{{ order.total_price }} د.أ</td>
+                </tr>
+                {% if order.discount_amount > 0 %}
+                <tr>
+                    <td style="padding: 8px 0; color: #28a745;">الخصم:</td>
+                    <td style="padding: 8px 0; text-align: left; color: #28a745; direction: ltr;">- {{ order.discount_amount }} د.أ</td>
+                </tr>
+                {% endif %}
+                <tr>
+                    <td style="padding: 8px 0; color: #666;">تكلفة الشحن:</td>
+                    <td style="padding: 8px 0; text-align: left; direction: ltr;">{% if order.shipping_cost > 0 %}{{ order.shipping_cost }} د.أ{% else %}مجاني{% endif %}</td>
+                </tr>
+                <tr style="font-size: 18px; font-weight: bold;">
+                    <td style="padding: 15px 0; color: #0077c8; border-top: 2px solid #0077c8;">المجموع الكلي:</td>
+                    <td style="padding: 15px 0; text-align: left; color: #0077c8; border-top: 2px solid #0077c8; direction: ltr;">{{ order.grand_total }} د.أ</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Shipping Address -->
+    <div style="background-color: #e3f2fd; border-radius: 12px; padding: 20px; margin: 20px 0; border-right: 4px solid #0077c8;">
+        <h3 style="color: #0077c8; font-size: 16px; margin: 0 0 12px 0;">
+            📍 عنوان الشحن
+        </h3>
+        <p style="margin: 0; color: #444; line-height: 1.8; font-size: 14px;">
+            {{ order.shipping_address }}<br>
+            {{ order.shipping_city }}{% if order.shipping_state %}, {{ order.shipping_state }}{% endif %}<br>
+            {{ order.shipping_country }}
+            {% if order.shipping_postal_code %}<br>الرمز البريدي: {{ order.shipping_postal_code }}{% endif %}
+        </p>
+    </div>
+
+    <!-- Track Order Link -->
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 30px 0;">
+        <tr>
+            <td align="center">
+                <!--[if mso]>
+                <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ site_url }}/orders/track/?order_number={{ order.order_number }}" style="height:50px;v-text-anchor:middle;width:250px;" arcsize="16%" strokecolor="#0077c8" fillcolor="#0077c8">
+                <w:anchorlock/>
+                <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;">تتبع طلبك | Track Order</center>
+                </v:roundrect>
+                <![endif]-->
+                <!--[if !mso]><!-->
+                <a href="{{ site_url }}/orders/track/?order_number={{ order.order_number }}" target="_blank" style="background-color:#0077c8; border:1px solid #0077c8; border-radius:8px; color:#ffffff; display:inline-block; font-family:Arial,sans-serif; font-size:16px; font-weight:bold; line-height:50px; text-align:center; text-decoration:none; width:250px; -webkit-text-size-adjust:none;">تتبع طلبك | Track Order</a>
+                <!--<![endif]-->
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!-- English Section -->
+<div style="direction: ltr; text-align: left;">
+    <h2 style="color: #0077c8; font-size: 22px; margin: 0 0 20px 0; text-align: center;">
+        🎉 Your Order Has Been Received!
+    </h2>
+
+    <p style="font-size: 16px; color: #333; line-height: 1.8; margin-bottom: 15px;">
+        Dear <strong>{{ order.full_name }}</strong>,
+    </p>
+
+    <p style="font-size: 15px; color: #555; line-height: 1.8; margin-bottom: 20px;">
+        Thank you for shopping with <strong style="color: #0077c8;">ESCO</strong>. We're pleased to inform you that your order has been received and is now <strong style="color: #ff9800;">being processed</strong>.
+    </p>
+
+    <!-- Order Status Badge -->
+    <div style="text-align: center; margin: 25px 0;">
+        <span style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: #fff; padding: 12px 30px; border-radius: 25px; font-size: 16px; font-weight: bold; display: inline-block; box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);">
+            ⏳ Processing
+        </span>
+    </div>
+
+    <!-- Order Details Box -->
+    <div style="background-color: #f8f9fa; border-radius: 12px; padding: 25px; margin: 20px 0; border: 1px solid #e9ecef;">
+        <h3 style="color: #0077c8; font-size: 18px; margin: 0 0 20px 0; border-bottom: 2px solid #0077c8; padding-bottom: 10px;">
+            📋 Order Details
+        </h3>
+
+        <table style="width: 100%; font-size: 14px; color: #444;">
+            <tr>
+                <td style="padding: 10px 0; font-weight: bold; width: 40%;">Order Number:</td>
+                <td style="padding: 10px 0; color: #0077c8; font-weight: bold; font-size: 16px;">{{ order.order_number }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 0; font-weight: bold;">Order Date:</td>
+                <td style="padding: 10px 0;">{{ order.created_at|date:"Y/m/d - H:i" }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 0; font-weight: bold;">Payment Method:</td>
+                <td style="padding: 10px 0;">{{ order.payment_method|default:"Cash on Delivery" }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Order Items -->
+    <div style="background-color: #fff; border-radius: 12px; padding: 20px; margin: 20px 0; border: 1px solid #e9ecef;">
+        <h3 style="color: #333; font-size: 16px; margin: 0 0 15px 0;">
+            🛒 Ordered Products
+        </h3>
+
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+            <thead>
+                <tr style="background-color: #f8f9fa;">
+                    <th style="padding: 12px 10px; text-align: left; border-bottom: 2px solid #dee2e6; color: #555;">Product</th>
+                    <th style="padding: 12px 10px; text-align: center; border-bottom: 2px solid #dee2e6; color: #555;">Qty</th>
+                    <th style="padding: 12px 10px; text-align: right; border-bottom: 2px solid #dee2e6; color: #555;">Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order.items.all %}
+                <tr>
+                    <td style="padding: 12px 10px; border-bottom: 1px solid #eee;">
+                        <strong>{{ item.product_name }}</strong>
+                        {% if item.variant_name %}<br><small style="color: #888;">{{ item.variant_name }}</small>{% endif %}
+                    </td>
+                    <td style="padding: 12px 10px; text-align: center; border-bottom: 1px solid #eee;">{{ item.quantity }}</td>
+                    <td style="padding: 12px 10px; text-align: right; border-bottom: 1px solid #eee;">{{ item.total_price }} JOD</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Totals -->
+        <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid #e9ecef;">
+            <table style="width: 100%; font-size: 14px;">
+                <tr>
+                    <td style="padding: 8px 0; color: #666;">Subtotal:</td>
+                    <td style="padding: 8px 0; text-align: right;">{{ order.total_price }} JOD</td>
+                </tr>
+                {% if order.discount_amount > 0 %}
+                <tr>
+                    <td style="padding: 8px 0; color: #28a745;">Discount:</td>
+                    <td style="padding: 8px 0; text-align: right; color: #28a745;">- {{ order.discount_amount }} JOD</td>
+                </tr>
+                {% endif %}
+                <tr>
+                    <td style="padding: 8px 0; color: #666;">Shipping:</td>
+                    <td style="padding: 8px 0; text-align: right;">{% if order.shipping_cost > 0 %}{{ order.shipping_cost }} JOD{% else %}Free{% endif %}</td>
+                </tr>
+                <tr style="font-size: 18px; font-weight: bold;">
+                    <td style="padding: 15px 0; color: #0077c8; border-top: 2px solid #0077c8;">Total:</td>
+                    <td style="padding: 15px 0; text-align: right; color: #0077c8; border-top: 2px solid #0077c8;">{{ order.grand_total }} JOD</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Shipping Address -->
+    <div style="background-color: #e3f2fd; border-radius: 12px; padding: 20px; margin: 20px 0; border-left: 4px solid #0077c8;">
+        <h3 style="color: #0077c8; font-size: 16px; margin: 0 0 12px 0;">
+            📍 Shipping Address
+        </h3>
+        <p style="margin: 0; color: #444; line-height: 1.8; font-size: 14px;">
+            {{ order.shipping_address }}<br>
+            {{ order.shipping_city }}{% if order.shipping_state %}, {{ order.shipping_state }}{% endif %}<br>
+            {{ order.shipping_country }}
+            {% if order.shipping_postal_code %}<br>Postal Code: {{ order.shipping_postal_code }}{% endif %}
+        </p>
+    </div>
+
+    <!-- Track Order Button -->
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 30px 0;">
+        <tr>
+            <td align="center">
+                <!--[if mso]>
+                <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ site_url }}/orders/track/?order_number={{ order.order_number }}" style="height:50px;v-text-anchor:middle;width:250px;" arcsize="16%" strokecolor="#0077c8" fillcolor="#0077c8">
+                <w:anchorlock/>
+                <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;">Track Your Order</center>
+                </v:roundrect>
+                <![endif]-->
+                <!--[if !mso]><!-->
+                <a href="{{ site_url }}/orders/track/?order_number={{ order.order_number }}" target="_blank" style="background-color:#0077c8; border:1px solid #0077c8; border-radius:8px; color:#ffffff; display:inline-block; font-family:Arial,sans-serif; font-size:16px; font-weight:bold; line-height:50px; text-align:center; text-decoration:none; width:250px; -webkit-text-size-adjust:none;">Track Your Order</a>
+                <!--<![endif]-->
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!-- Footer Note -->
+<div style="text-align: center; margin-top: 30px; padding: 20px; background-color: #fff8e1; border-radius: 12px; border: 1px solid #ffe082;">
+    <p style="color: #f57c00; font-size: 14px; margin: 0 0 10px 0;">
+        <strong>ملاحظة:</strong> سنقوم بإعلامك عند شحن طلبك.
+    </p>
+    <p style="color: #f57c00; font-size: 14px; margin: 0;">
+        <strong>Note:</strong> We will notify you when your order is shipped.
+    </p>
+</div>
+{% endblock %}

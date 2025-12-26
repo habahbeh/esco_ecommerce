@@ -231,18 +231,16 @@ class OrderUpdateStatusView(DashboardAccessMixin, View):
         # تحديث تاريخ التحديث
         order.updated_at = timezone.now()
 
+        # التحقق من خيار إخطار العميل
+        notify_customer = request.POST.get('notify_customer') == 'on'
+
         # إجراءات إضافية حسب نوع التغيير
-        if new_status == 'confirmed' and old_status == 'pending':
+        if new_status == 'confirmed' and old_status in ['pending', 'processing']:
             # تأكيد الطلب بعد التحقق من وصل الدفع
             # تحديث حالة الدفع أيضاً
             order.payment_status = 'paid'
 
-            # إرسال إشعار للعميل
-            notify_customer = request.POST.get('notify_customer') == 'on'
-            if notify_customer:
-                self.send_order_status_email(order, 'confirmed')
-
-        elif new_status == 'closed' and old_status == 'confirmed':
+        elif new_status == 'closed' and old_status in ['confirmed', 'processing']:
             # إغلاق الطلب للتوصيل - الدفع يبقى كما هو
             pass
 
@@ -267,59 +265,32 @@ class OrderUpdateStatusView(DashboardAccessMixin, View):
                             variant.stock_quantity += item.quantity
                             variant.save()
 
-            # إرسال إشعار بالإلغاء إذا كان الخيار مفعلاً
-            notify_customer = request.POST.get('notify_customer') == 'on'
-            if notify_customer:
-                self.send_order_status_email(order, 'cancelled')
-
         # حفظ التغييرات
         order.save()
 
-        messages.success(request, f'تم تحديث حالة الطلب إلى {dict(Order.STATUS_CHOICES)[new_status]}')
+        # إرسال إشعار للعميل إذا تم تفعيل الخيار وتغيرت الحالة
+        if notify_customer and old_status != new_status:
+            email_sent = self.send_order_status_email(order, new_status)
+            if email_sent:
+                messages.success(request, f'تم تحديث حالة الطلب إلى {dict(Order.STATUS_CHOICES)[new_status]} وتم إرسال إشعار للعميل')
+            else:
+                messages.warning(request, f'تم تحديث حالة الطلب إلى {dict(Order.STATUS_CHOICES)[new_status]} ولكن فشل إرسال الإشعار للعميل')
+        else:
+            messages.success(request, f'تم تحديث حالة الطلب إلى {dict(Order.STATUS_CHOICES)[new_status]}')
+
         return redirect('dashboard:dashboard_order_detail', order_id=order.id)
 
     def send_order_status_email(self, order, status):
         """إرسال بريد إلكتروني للعميل عند تغيير حالة الطلب"""
-        subject = f'تحديث حالة الطلب #{order.order_number}'
+        from orders.utils import send_order_status_update_email
 
-        # تحديد الرسالة حسب الحالة
-        if status == 'confirmed':
-            message_title = 'تم تأكيد طلبك'
-            message_content = 'نود إعلامك أن طلبك قد تم تأكيده بعد التحقق من الدفع. سنقوم بالتواصل معك قريباً لإكمال عملية التوصيل.'
-        elif status == 'closed':
-            message_title = 'طلبك جاهز للتوصيل'
-            message_content = 'نود إعلامك أن طلبك جاهز للتوصيل وسيتم تسليمه قريباً.'
-        elif status == 'cancelled':
-            message_title = 'تم إلغاء طلبك'
-            message_content = 'نأسف لإعلامك أنه تم إلغاء طلبك. يرجى التواصل مع خدمة العملاء للمزيد من المعلومات.'
-        else:
-            # لا نرسل بريداً لحالات أخرى
-            return
-
-        # إعداد رسالة البريد
-        plain_message = f"""
-        {message_title}
-
-        {message_content}
-
-        رقم الطلب: {order.order_number}
-        الإجمالي: {order.grand_total} د.أ
-
-        شكراً لثقتكم بنا.
-        فريق خدمة العملاء
-        """
-
-        # استخدام قيمة افتراضية إذا لم يكن الإعداد موجوداً
-        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@example.com')
-
-        # إرسال البريد
-        send_mail(
-            subject=subject,
-            message=plain_message,
-            from_email=from_email,
-            recipient_list=[order.email],
-            fail_silently=True
-        )
+        try:
+            return send_order_status_update_email(order, old_status=None)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f'Failed to send order status email for order #{order.order_number}: {str(e)}')
+            return False
 
 # ========================= تحديث حالة الدفع =========================
 
@@ -351,6 +322,95 @@ class OrderUpdatePaymentStatusView(DashboardAccessMixin, View):
         order.save()
 
         messages.success(request, f'تم تحديث حالة الدفع إلى {dict(Order.PAYMENT_STATUS_CHOICES)[new_payment_status]}')
+        return redirect('dashboard:dashboard_order_detail', order_id=order.id)
+
+
+# ========================= تحديث حالة الطلب والدفع معاً =========================
+
+@method_decorator(permission_required('orders.change_order'), name='dispatch')
+class OrderUpdateBothView(DashboardAccessMixin, View):
+    """تحديث حالة الطلب وحالة الدفع معاً"""
+
+    def post(self, request, order_id):
+        order = get_object_or_404(Order, id=order_id)
+
+        new_status = request.POST.get('status')
+        new_payment_status = request.POST.get('payment_status')
+
+        # التحقق من صحة حالة الطلب
+        if not new_status or new_status not in dict(Order.STATUS_CHOICES):
+            messages.error(request, 'الرجاء تحديد حالة طلب صحيحة')
+            return redirect('dashboard:dashboard_order_detail', order_id=order.id)
+
+        # التحقق من صحة حالة الدفع
+        if not new_payment_status or new_payment_status not in dict(Order.PAYMENT_STATUS_CHOICES):
+            messages.error(request, 'الرجاء تحديد حالة دفع صحيحة')
+            return redirect('dashboard:dashboard_order_detail', order_id=order.id)
+
+        # حفظ القيم القديمة
+        old_status = order.status
+        old_payment_status = order.payment_status
+
+        # تحديث حالة الطلب
+        order.status = new_status
+        order.payment_status = new_payment_status
+
+        # إضافة ملاحظات
+        notes_added = []
+        if old_status != new_status:
+            notes_added.append(f'تغيير حالة الطلب من {dict(Order.STATUS_CHOICES)[old_status]} إلى {dict(Order.STATUS_CHOICES)[new_status]}')
+        if old_payment_status != new_payment_status:
+            notes_added.append(f'تغيير حالة الدفع من {dict(Order.PAYMENT_STATUS_CHOICES)[old_payment_status]} إلى {dict(Order.PAYMENT_STATUS_CHOICES)[new_payment_status]}')
+
+        if notes_added:
+            order.notes = f"{order.notes or ''}\n[{timezone.now().strftime('%Y-%m-%d %H:%M')}] {' | '.join(notes_added)}"
+
+        # تحديث تاريخ التحديث
+        order.updated_at = timezone.now()
+
+        # إجراءات إضافية عند الإلغاء
+        if new_status == 'cancelled' and old_status in ['confirmed', 'closed']:
+            # إعادة المخزون
+            for item in order.items.all():
+                if hasattr(item, 'product') and item.product and item.product.track_inventory:
+                    product = item.product
+                    product.stock_quantity += item.quantity
+                    product.save()
+
+                    if hasattr(item, 'variant') and item.variant and item.variant.track_inventory:
+                        variant = item.variant
+                        variant.stock_quantity += item.quantity
+                        variant.save()
+
+        # حفظ التغييرات
+        order.save()
+
+        # إرسال إشعار للعميل إذا تم تفعيل الخيار وتغيرت حالة الطلب أو حالة الدفع
+        notify_customer = request.POST.get('notify_customer') == 'on'
+        status_changed = old_status != new_status
+        payment_changed = old_payment_status != new_payment_status
+
+        if notify_customer and (status_changed or payment_changed):
+            from orders.utils import send_order_status_update_email
+            try:
+                send_order_status_update_email(order)
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f'Failed to send order status email: {str(e)}')
+
+        # رسالة النجاح
+        success_parts = []
+        if old_status != new_status:
+            success_parts.append(f'حالة الطلب: {dict(Order.STATUS_CHOICES)[new_status]}')
+        if old_payment_status != new_payment_status:
+            success_parts.append(f'حالة الدفع: {dict(Order.PAYMENT_STATUS_CHOICES)[new_payment_status]}')
+
+        if success_parts:
+            messages.success(request, f'تم تحديث {" و ".join(success_parts)}')
+        else:
+            messages.info(request, 'لم يتم إجراء أي تغييرات')
+
         return redirect('dashboard:dashboard_order_detail', order_id=order.id)
 
 

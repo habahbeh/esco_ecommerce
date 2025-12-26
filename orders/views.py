@@ -85,12 +85,19 @@ class TrackOrderView(TemplateView):
 
         order = None
 
-        if order_number and email:
+        if order_number:
             # البحث عن الطلب - Search for the order
             try:
-                order = Order.objects.get(order_number=order_number, email=email)
+                # إذا تم توفير البريد الإلكتروني، تحقق منه أيضًا
+                # If email is provided, verify it as well
+                if email:
+                    order = Order.objects.get(order_number=order_number, email=email)
+                else:
+                    # السماح بالبحث برقم الطلب فقط (للروابط من الإيميل)
+                    # Allow search by order number only (for links from email)
+                    order = Order.objects.get(order_number=order_number)
             except Order.DoesNotExist:
-                messages.error(request, _('لم يتم العثور على الطلب. يرجى التحقق من رقم الطلب والبريد الإلكتروني.'))
+                messages.error(request, _('لم يتم العثور على الطلب. يرجى التحقق من رقم الطلب.'))
 
         return render(request, self.template_name, {'order': order})
 
@@ -99,18 +106,23 @@ class TrackOrderView(TemplateView):
         order_number = request.POST.get('order_number')
         email = request.POST.get('email')
 
-        if not order_number or not email:
-            messages.error(request, _('يرجى إدخال رقم الطلب والبريد الإلكتروني.'))
+        if not order_number:
+            messages.error(request, _('يرجى إدخال رقم الطلب.'))
             return render(request, self.template_name)
 
         # البحث عن الطلب - Search for the order
         try:
-            order = Order.objects.get(order_number=order_number, email=email)
+            # إذا تم توفير البريد الإلكتروني، تحقق منه أيضًا
+            # If email is provided, verify it as well
+            if email:
+                order = Order.objects.get(order_number=order_number, email=email)
+            else:
+                order = Order.objects.get(order_number=order_number)
 
             # إرجاع النموذج مع معلومات الطلب - Return template with order info
             return render(request, self.template_name, {'order': order})
         except Order.DoesNotExist:
-            messages.error(request, _('لم يتم العثور على الطلب. يرجى التحقق من رقم الطلب والبريد الإلكتروني.'))
+            messages.error(request, _('لم يتم العثور على الطلب. يرجى التحقق من رقم الطلب.'))
             return render(request, self.template_name)
 
 @login_required

@@ -1,0 +1,234 @@
+{% extends "emails/base_email.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "تحديث حالة الطلب" %} - Order Status Update{% endblock %}
+
+{% block header_text %}تحديث حالة طلبك | Order Status Update{% endblock %}
+
+{% block content %}
+<!-- Arabic Section -->
+<div style="margin-bottom: 30px; padding-bottom: 30px; border-bottom: 2px solid #e0e0e0;">
+    <h2 style="color: {{ status_info.color }}; font-size: 22px; margin: 0 0 20px 0; text-align: center;">
+        {{ status_info.icon }} {{ status_info.ar }}
+    </h2>
+
+    <p style="font-size: 16px; color: #333; line-height: 1.8; margin-bottom: 15px;">
+        عزيزي/عزيزتي <strong>{{ order.full_name }}</strong>،
+    </p>
+
+    <p style="font-size: 15px; color: #555; line-height: 1.8; margin-bottom: 20px;">
+        نود إعلامك بأن حالة طلبك رقم <strong style="color: #0077c8;">{{ order.order_number }}</strong> قد تم تحديثها.
+    </p>
+
+    <!-- Order Status Badge -->
+    <div style="text-align: center; margin: 25px 0;">
+        <span style="background-color: {{ status_info.color }}; color: #fff; padding: 12px 30px; border-radius: 25px; font-size: 16px; font-weight: bold; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            {{ status_info.icon }} {{ order.get_status_display }}
+        </span>
+    </div>
+
+    <!-- Order Summary Box -->
+    <div style="background-color: #f8f9fa; border-radius: 12px; padding: 25px; margin: 20px 0; border: 1px solid #e9ecef;">
+        <h3 style="color: #0077c8; font-size: 18px; margin: 0 0 20px 0; border-bottom: 2px solid #0077c8; padding-bottom: 10px;">
+            📋 ملخص الطلب
+        </h3>
+
+        <table style="width: 100%; font-size: 14px; color: #444;">
+            <tr>
+                <td style="padding: 10px 0; font-weight: bold; width: 40%;">رقم الطلب:</td>
+                <td style="padding: 10px 0; color: #0077c8; font-weight: bold;">{{ order.order_number }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 0; font-weight: bold;">تاريخ الطلب:</td>
+                <td style="padding: 10px 0;">{{ order.created_at|date:"Y/m/d" }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 0; font-weight: bold;">حالة الطلب:</td>
+                <td style="padding: 10px 0;">
+                    <span style="background-color: {{ status_info.color }}; color: #fff; padding: 4px 12px; border-radius: 12px; font-size: 12px;">{{ order.get_status_display }}</span>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 0; font-weight: bold;">حالة الدفع:</td>
+                <td style="padding: 10px 0;">
+                    <span style="background-color: {{ payment_info.color }}; color: #fff; padding: 4px 12px; border-radius: 12px; font-size: 12px;">{{ order.get_payment_status_display }}</span>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 0; font-weight: bold;">عدد المنتجات:</td>
+                <td style="padding: 10px 0;">{{ order.items.count }} منتج</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 0; font-weight: bold;">المجموع الكلي:</td>
+                <td style="padding: 10px 0; color: #0077c8; font-weight: bold; font-size: 16px; direction: ltr;">{{ order.grand_total }} د.أ</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Status Specific Messages -->
+    {% if order.status == 'processing' %}
+    <div style="background-color: #d1ecf1; border-radius: 12px; padding: 20px; margin: 20px 0; border-right: 4px solid #17a2b8;">
+        <p style="margin: 0; color: #0c5460; font-size: 14px; line-height: 1.8;">
+            ⏳ <strong>طلبك قيد المعالجة!</strong><br>
+            نعمل على تجهيز طلبك وسنقوم بإعلامك عند التأكيد.
+        </p>
+    </div>
+    {% elif order.status == 'confirmed' %}
+    <div style="background-color: #d4edda; border-radius: 12px; padding: 20px; margin: 20px 0; border-right: 4px solid #28a745;">
+        <p style="margin: 0; color: #155724; font-size: 14px; line-height: 1.8;">
+            ✅ <strong>تم تأكيد طلبك!</strong><br>
+            تم تأكيد طلبك بنجاح وسيتم إغلاقه قريباً.
+        </p>
+    </div>
+    {% elif order.status == 'closed' %}
+    <div style="background-color: #d4edda; border-radius: 12px; padding: 20px; margin: 20px 0; border-right: 4px solid #28a745;">
+        <p style="margin: 0; color: #155724; font-size: 14px; line-height: 1.8;">
+            ✔️ <strong>تم إغلاق طلبك بنجاح!</strong><br>
+            نأمل أن تكون راضياً عن منتجاتنا وخدماتنا. شكراً لتسوقك من ESCO!
+        </p>
+    </div>
+    {% elif order.status == 'cancelled' %}
+    <div style="background-color: #f8d7da; border-radius: 12px; padding: 20px; margin: 20px 0; border-right: 4px solid #dc3545;">
+        <p style="margin: 0; color: #721c24; font-size: 14px; line-height: 1.8;">
+            ❌ <strong>تم إلغاء طلبك</strong><br>
+            إذا كان لديك أي استفسار، يرجى التواصل معنا.
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Track Order Button -->
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 30px 0;">
+        <tr>
+            <td align="center">
+                <!--[if mso]>
+                <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ site_url }}/orders/track/?order_number={{ order.order_number }}" style="height:50px;v-text-anchor:middle;width:250px;" arcsize="16%" strokecolor="#0077c8" fillcolor="#0077c8">
+                <w:anchorlock/>
+                <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;">تتبع طلبك | Track Order</center>
+                </v:roundrect>
+                <![endif]-->
+                <!--[if !mso]><!-->
+                <a href="{{ site_url }}/orders/track/?order_number={{ order.order_number }}" target="_blank" style="background-color:#0077c8; border:1px solid #0077c8; border-radius:8px; color:#ffffff; display:inline-block; font-family:Arial,sans-serif; font-size:16px; font-weight:bold; line-height:50px; text-align:center; text-decoration:none; width:250px; -webkit-text-size-adjust:none;">تتبع طلبك | Track Order</a>
+                <!--<![endif]-->
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!-- English Section -->
+<div style="direction: ltr; text-align: left;">
+    <h2 style="color: {{ status_info.color }}; font-size: 22px; margin: 0 0 20px 0; text-align: center;">
+        {{ status_info.icon }} {{ status_info.en }}
+    </h2>
+
+    <p style="font-size: 16px; color: #333; line-height: 1.8; margin-bottom: 15px;">
+        Dear <strong>{{ order.full_name }}</strong>,
+    </p>
+
+    <p style="font-size: 15px; color: #555; line-height: 1.8; margin-bottom: 20px;">
+        We would like to inform you that your order <strong style="color: #0077c8;">#{{ order.order_number }}</strong> status has been updated.
+    </p>
+
+    <!-- Order Status Badge -->
+    <div style="text-align: center; margin: 25px 0;">
+        <span style="background-color: {{ status_info.color }}; color: #fff; padding: 12px 30px; border-radius: 25px; font-size: 16px; font-weight: bold; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            {{ status_info.icon }} {{ status_info.en|title }}
+        </span>
+    </div>
+
+    <!-- Order Summary Box -->
+    <div style="background-color: #f8f9fa; border-radius: 12px; padding: 25px; margin: 20px 0; border: 1px solid #e9ecef;">
+        <h3 style="color: #0077c8; font-size: 18px; margin: 0 0 20px 0; border-bottom: 2px solid #0077c8; padding-bottom: 10px;">
+            📋 Order Summary
+        </h3>
+
+        <table style="width: 100%; font-size: 14px; color: #444;">
+            <tr>
+                <td style="padding: 10px 0; font-weight: bold; width: 40%;">Order Number:</td>
+                <td style="padding: 10px 0; color: #0077c8; font-weight: bold;">{{ order.order_number }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 0; font-weight: bold;">Order Date:</td>
+                <td style="padding: 10px 0;">{{ order.created_at|date:"Y/m/d" }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 0; font-weight: bold;">Order Status:</td>
+                <td style="padding: 10px 0;">
+                    <span style="background-color: {{ status_info.color }}; color: #fff; padding: 4px 12px; border-radius: 12px; font-size: 12px;">{{ status_info.en }}</span>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 0; font-weight: bold;">Payment Status:</td>
+                <td style="padding: 10px 0;">
+                    <span style="background-color: {{ payment_info.color }}; color: #fff; padding: 4px 12px; border-radius: 12px; font-size: 12px;">{{ payment_info.en }}</span>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 0; font-weight: bold;">Items Count:</td>
+                <td style="padding: 10px 0;">{{ order.items.count }} item(s)</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 0; font-weight: bold;">Total:</td>
+                <td style="padding: 10px 0; color: #0077c8; font-weight: bold; font-size: 16px;">{{ order.grand_total }} JOD</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Status Specific Messages -->
+    {% if order.status == 'processing' %}
+    <div style="background-color: #d1ecf1; border-radius: 12px; padding: 20px; margin: 20px 0; border-left: 4px solid #17a2b8;">
+        <p style="margin: 0; color: #0c5460; font-size: 14px; line-height: 1.8;">
+            ⏳ <strong>Your order is being processed!</strong><br>
+            We are preparing your order and will notify you once it's confirmed.
+        </p>
+    </div>
+    {% elif order.status == 'confirmed' %}
+    <div style="background-color: #d4edda; border-radius: 12px; padding: 20px; margin: 20px 0; border-left: 4px solid #28a745;">
+        <p style="margin: 0; color: #155724; font-size: 14px; line-height: 1.8;">
+            ✅ <strong>Your order has been confirmed!</strong><br>
+            Your order has been confirmed successfully and will be closed soon.
+        </p>
+    </div>
+    {% elif order.status == 'closed' %}
+    <div style="background-color: #d4edda; border-radius: 12px; padding: 20px; margin: 20px 0; border-left: 4px solid #28a745;">
+        <p style="margin: 0; color: #155724; font-size: 14px; line-height: 1.8;">
+            ✔️ <strong>Your order has been successfully completed!</strong><br>
+            We hope you're satisfied with our products and services. Thank you for shopping with ESCO!
+        </p>
+    </div>
+    {% elif order.status == 'cancelled' %}
+    <div style="background-color: #f8d7da; border-radius: 12px; padding: 20px; margin: 20px 0; border-left: 4px solid #dc3545;">
+        <p style="margin: 0; color: #721c24; font-size: 14px; line-height: 1.8;">
+            ❌ <strong>Your order has been cancelled</strong><br>
+            If you have any questions, please contact us.
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Track Order Button -->
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 30px 0;">
+        <tr>
+            <td align="center">
+                <!--[if mso]>
+                <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ site_url }}/orders/track/?order_number={{ order.order_number }}" style="height:50px;v-text-anchor:middle;width:250px;" arcsize="16%" strokecolor="#0077c8" fillcolor="#0077c8">
+                <w:anchorlock/>
+                <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;">Track Your Order</center>
+                </v:roundrect>
+                <![endif]-->
+                <!--[if !mso]><!-->
+                <a href="{{ site_url }}/orders/track/?order_number={{ order.order_number }}" target="_blank" style="background-color:#0077c8; border:1px solid #0077c8; border-radius:8px; color:#ffffff; display:inline-block; font-family:Arial,sans-serif; font-size:16px; font-weight:bold; line-height:50px; text-align:center; text-decoration:none; width:250px; -webkit-text-size-adjust:none;">Track Your Order</a>
+                <!--<![endif]-->
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!-- Contact Footer -->
+<div style="text-align: center; margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 12px;">
+    <p style="color: #666; font-size: 14px; margin: 0 0 10px 0;">
+        لأي استفسارات، تواصل معنا على: <a href="mailto:contact@esco.jo" style="color: #0077c8;">contact@esco.jo</a>
+    </p>
+    <p style="color: #666; font-size: 14px; margin: 0;">
+        For inquiries, contact us at: <a href="mailto:contact@esco.jo" style="color: #0077c8;">contact@esco.jo</a>
+    </p>
+</div>
+{% endblock %}

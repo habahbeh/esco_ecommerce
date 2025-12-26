@@ -21,11 +21,9 @@
                 <tr class="variant-row text-center {% if not variant.is_in_stock %}out-of-stock{% endif %}"
                     data-variant-id="{{ variant.id }}"
                     data-price="{{ variant.current_price }}"
-
-{#                    data-base-price="{{ variant.base_price|default:variant.current_price }}"#}
-{#                    data-has-discount="{{ variant.has_discount|yesno:'true,false' }}"#}
-{#                    data-discount-percentage="{{ variant.discount_percentage|default:0 }}"#}
-
+                    data-base-price="{{ variant.variant_base_price|default:variant.current_price }}"
+                    data-has-discount="{{ variant.has_discount|yesno:'true,false' }}"
+                    data-discount-percentage="{{ variant.savings_percentage|default:0 }}"
                     data-stock="{{ variant.stock_quantity }}"
                     data-sku="{{ variant.sku }}">
                     <td>
@@ -56,13 +54,18 @@
                                                     </div>
                     </td>
                     <td class="fw-bold">
-
-                        {% if product.show_price  %}
-                            {{ variant.current_price }} {% trans "د.أ" %}
+                        {% if product.show_price %}
+                            {% if variant.has_discount %}
+                                <div class="text-decoration-line-through text-muted" style="font-size: 0.8rem;">{{ variant.variant_base_price|floatformat:2 }} {% trans "د.أ" %}</div>
+                                <div class="text-danger fw-bold">{{ variant.current_price|floatformat:2 }} {% trans "د.أ" %}</div>
+                                <span class="variant-discount-badge">{{ variant.savings_percentage }}% {% trans "خصم" %}</span>
+                            {% else %}
+                                {{ variant.current_price|floatformat:2 }} {% trans "د.أ" %}
+                            {% endif %}
                         {% else %}
                             <a href="tel:{{ site_settings.phone }}" class="btn btn-primary">
-                                    <i class="fas fa-phone me-2"></i>{% trans "اتصل الآن" %}
-                                </a>
+                                <i class="fas fa-phone me-2"></i>{% trans "اتصل الآن" %}
+                            </a>
                         {% endif %}
                     </td>
                     <td>
@@ -84,6 +87,17 @@
 </div>
 
 <style>
+/* تنسيق شارة الخصم للمتغيرات - متوافق مع الشارة الرئيسية */
+.variant-discount-badge {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.7rem;
+    display: inline-block;
+}
+
 /* تنسيقات جدول متغيرات المنتج - شكل بطاقات */
 .variants-table-container {
     max-height: 350px;
@@ -325,7 +339,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // صياغة عرض السعر حسب اللغة
     const formattedPrice = currentLanguage === 'en'
         ? `${parseFloat(price).toFixed(2)} JDs`
-        : price + ' د.أ' ;
+        : `${parseFloat(price).toFixed(2)} د.أ`;
     // تحديث معلومات العرض في قسم التفاصيل
     if (selectedVariantSku) selectedVariantSku.textContent = sku || '-';
     if (selectedVariantPrice) selectedVariantPrice.textContent = formattedPrice;
@@ -348,10 +362,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (discountBadgeElement) {
             discountBadgeElement.style.display = '';
-            // تحديث نص الخصم مع الحفاظ على أيقونة النسبة المئوية
-            const iconHtml = discountBadgeElement.innerHTML.split('</i>')[0] + '</i> ';
+            // تحديث نص الخصم
             const discountText = currentLanguage === 'en' ? 'discount' : 'خصم';
-            discountBadgeElement.innerHTML = `${iconHtml}${discountPercentage}% ${discountText}`;
+            discountBadgeElement.textContent = `${discountPercentage}% ${discountText}`;
         }
     } else {
         // إخفاء عناصر الخصم إذا لم يكن هناك خصم

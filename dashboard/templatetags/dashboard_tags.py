@@ -535,3 +535,20 @@ def get_item(dictionary, key):
 @register.filter
 def get(dictionary, key):
     return dictionary.get(key, key)
+
+
+@register.filter
+def lookup(dictionary, key):
+    """
+    استخراج قيمة من قاموس باستخدام مفتاح
+    مثال: {{ row|lookup:key }}
+    """
+    if dictionary is None:
+        return ''
+    try:
+        return dictionary.get(key, '')
+    except (AttributeError, TypeError):
+        try:
+            return getattr(dictionary, key, '')
+        except (AttributeError, TypeError):
+            return ''

@@ -1021,6 +1021,7 @@ class ProductDiscountAdmin(admin.ModelAdmin):
     ]
     search_fields = ['name', 'description', 'code']
     filter_horizontal = ['products']
+    autocomplete_fields = ['category', 'brand']
     date_hierarchy = 'start_date'
     readonly_fields = ['used_count', 'created_at', 'updated_at']
 
@@ -1035,7 +1036,8 @@ class ProductDiscountAdmin(admin.ModelAdmin):
             'fields': (
                 ('discount_type', 'value'),
                 'max_discount_amount',
-                ('application_type', 'category'),
+                'application_type',
+                ('category', 'brand'),
                 'products',
             )
         }),

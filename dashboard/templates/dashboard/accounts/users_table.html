@@ -10,8 +10,9 @@
             <th scope="col">{% trans 'الهاتف' %}</th>
             <th scope="col">{% trans 'الدور' %}</th>
             <th scope="col">{% trans 'الحالة' %}</th>
+            <th scope="col">{% trans 'التحقق' %}</th>
             <th scope="col">{% trans 'تاريخ التسجيل' %}</th>
-            <th scope="col" width="120">{% trans 'الإجراءات' %}</th>
+            <th scope="col" width="150">{% trans 'الإجراءات' %}</th>
         </tr>
     </thead>
     <tbody>
@@ -57,6 +58,17 @@
                 </span>
                 {% endif %}
             </td>
+            <td>
+                {% if user.is_verified %}
+                <span class="badge bg-success">
+                    <i class="fas fa-check-circle"></i> {% trans 'موثق' %}
+                </span>
+                {% else %}
+                <span class="badge bg-warning text-dark">
+                    <i class="fas fa-clock"></i> {% trans 'غير موثق' %}
+                </span>
+                {% endif %}
+            </td>
             <td>{{ user.date_joined|date:"Y/m/d" }}</td>
             <td>
                 <div class="d-flex">
@@ -68,6 +80,20 @@
                         <i class="fas fa-edit"></i>
                     </a>
                     {% endif %}
+                    {% if perms.accounts.change_user %}
+                    <form action="{% url 'dashboard:dashboard_user_verify_toggle' user_id=user.id %}" method="POST" class="d-inline">
+                        {% csrf_token %}
+                        {% if user.is_verified %}
+                        <button type="submit" class="btn btn-sm btn-outline-warning me-1" title="{% trans 'إلغاء تفعيل البريد' %}" onclick="return confirm('{% trans 'هل أنت متأكد من إلغاء تفعيل البريد الإلكتروني لهذا المستخدم؟' %}')">
+                            <i class="fas fa-envelope-open"></i>
+                        </button>
+                        {% else %}
+                        <button type="submit" class="btn btn-sm btn-outline-info me-1" title="{% trans 'تفعيل البريد' %}">
+                            <i class="fas fa-envelope-circle-check"></i>
+                        </button>
+                        {% endif %}
+                    </form>
+                    {% endif %}
                     {% if perms.accounts.delete_user and not user.is_superuser and user != request.user %}
                     <button class="btn btn-sm btn-outline-danger btn-delete-user" data-user-id="{{ user.id }}" title="{% trans 'حذف' %}">
                         <i class="fas fa-trash"></i>
@@ -78,7 +104,7 @@
         </tr>
         {% empty %}
         <tr>
-            <td colspan="8" class="text-center py-4">
+            <td colspan="9" class="text-center py-4">
                 <div class="py-5">
                     <i class="fas fa-users fa-3x text-muted mb-3"></i>
                     <p>{% trans 'لا يوجد مستخدمين حتى الآن' %}</p>

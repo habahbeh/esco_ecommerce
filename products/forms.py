@@ -392,6 +392,12 @@ try:
     # التحقق من نموذج ProductReviewForm
     review_fields = ['rating', 'title', 'content', 'image', 'recommend']
     validate_form_fields(ProductReview, review_fields)
-    print("✅ نماذج المراجعات متوافقة مع النموذج")
+    try:
+        print("✅ نماذج المراجعات متوافقة مع النموذج")
+    except UnicodeEncodeError:
+        print("[OK] Review forms are compatible with the model")
 except Exception as e:
-    print(f"⚠️ تحذير: مشكلة في توافق النماذج - {e}")
+    try:
+        print(f"⚠️ تحذير: مشكلة في توافق النماذج - {e}")
+    except UnicodeEncodeError:
+        print(f"[WARNING] Form compatibility issue - {e}")

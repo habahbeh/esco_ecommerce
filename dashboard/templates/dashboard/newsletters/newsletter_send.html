@@ -1,0 +1,263 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "إرسال نشرة بريدية" %}{% endblock %}
+{% block page_title %}{% trans "إرسال نشرة بريدية" %}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_newsletters' %}">{% trans "اشتراكات النشرة البريدية" %}</a></li>
+{% endblock %}
+{% block current_page %}{% trans "إرسال نشرة بريدية" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- نموذج الإرسال -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-paper-plane me-2 text-success"></i>
+                        {% trans "إرسال نشرة بريدية جديدة" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="newsletter-send-form">
+                        {% csrf_token %}
+
+                        <!-- نوع النشرة -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-list-alt me-1 text-primary"></i>
+                                {% trans "نوع النشرة البريدية" %}
+                            </label>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="card border h-100 email-type-card" data-type="new_products">
+                                        <div class="card-body text-center p-3">
+                                            <input type="radio" name="email_type" value="new_products" id="type_products" class="d-none" checked>
+                                            <label for="type_products" class="d-block cursor-pointer mb-0">
+                                                <i class="fas fa-box-open fa-3x text-primary mb-2"></i>
+                                                <h6 class="mb-1">{% trans "منتجات جديدة" %}</h6>
+                                                <small class="text-muted">{% trans "آخر المنتجات المضافة" %}</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card border h-100 email-type-card" data-type="new_brands">
+                                        <div class="card-body text-center p-3">
+                                            <input type="radio" name="email_type" value="new_brands" id="type_brands" class="d-none">
+                                            <label for="type_brands" class="d-block cursor-pointer mb-0">
+                                                <i class="fas fa-certificate fa-3x text-info mb-2"></i>
+                                                <h6 class="mb-1">{% trans "علامات تجارية جديدة" %}</h6>
+                                                <small class="text-muted">{% trans "آخر العلامات التجارية" %}</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card border h-100 email-type-card" data-type="promotions">
+                                        <div class="card-body text-center p-3">
+                                            <input type="radio" name="email_type" value="promotions" id="type_promotions" class="d-none">
+                                            <label for="type_promotions" class="d-block cursor-pointer mb-0">
+                                                <i class="fas fa-percent fa-3x text-danger mb-2"></i>
+                                                <h6 class="mb-1">{% trans "عروض وخصومات" %}</h6>
+                                                <small class="text-muted">{% trans "المنتجات ذات الخصومات" %}</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- موضوع الرسالة -->
+                        <div class="mb-4">
+                            <label for="subject" class="form-label fw-bold">
+                                <i class="fas fa-heading me-1 text-primary"></i>
+                                {% trans "موضوع الرسالة" %}
+                                <small class="text-muted fw-normal">({% trans "اختياري" %})</small>
+                            </label>
+                            <input type="text" class="form-control" id="subject" name="subject"
+                                   placeholder="{% trans "اتركه فارغاً لاستخدام العنوان الافتراضي" %}">
+                            <small class="text-muted">
+                                {% trans "العناوين الافتراضية:" %}
+                                <br>• {% trans "منتجات جديدة:" %} "منتجات جديدة من ESCO | New Products from ESCO"
+                                <br>• {% trans "علامات تجارية:" %} "علامات تجارية جديدة في ESCO | New Brands at ESCO"
+                                <br>• {% trans "عروض:" %} "عروض حصرية من ESCO | Special Offers from ESCO"
+                            </small>
+                        </div>
+
+                        <!-- كود الخصم -->
+                        <div class="mb-4" id="coupon-section">
+                            <label for="coupon_code" class="form-label fw-bold">
+                                <i class="fas fa-ticket-alt me-1 text-success"></i>
+                                {% trans "كود الخصم" %}
+                                <small class="text-muted fw-normal">({% trans "اختياري" %})</small>
+                            </label>
+                            <input type="text" class="form-control" id="coupon_code" name="coupon_code"
+                                   placeholder="{% trans "أدخل كود الخصم لتضمينه في الرسالة" %}">
+                        </div>
+
+                        <!-- خيارات إضافية للعروض -->
+                        <div id="promotion-options" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="promotion_title" class="form-label">{% trans "عنوان العرض" %}</label>
+                                        <input type="text" class="form-control" id="promotion_title" name="promotion_title"
+                                               value="عروض حصرية" placeholder="{% trans "عنوان العرض" %}">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="promotion_subtitle" class="form-label">{% trans "العنوان الفرعي" %}</label>
+                                        <input type="text" class="form-control" id="promotion_subtitle" name="promotion_subtitle"
+                                               value="خصومات تصل إلى 50%" placeholder="{% trans "العنوان الفرعي" %}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="coupon_value" class="form-label">{% trans "قيمة الخصم" %}</label>
+                                <input type="text" class="form-control" id="coupon_value" name="coupon_value"
+                                       value="10%" placeholder="{% trans "مثال: 10% أو 5 د.أ" %}">
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- زر الإرسال -->
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{% url 'dashboard:dashboard_newsletters' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-right me-1"></i>
+                                {% trans "رجوع" %}
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg" id="send-btn">
+                                <i class="fas fa-paper-plane me-1"></i>
+                                {% trans "إرسال النشرة البريدية" %}
+                                <span class="badge bg-white text-success ms-2">{{ subscribers_count }} {% trans "مشترك" %}</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- الشريط الجانبي -->
+        <div class="col-lg-4">
+            <!-- معلومات الإرسال -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2 text-info"></i>
+                        {% trans "معلومات الإرسال" %}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                            <i class="fas fa-users text-success"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small">{% trans "عدد المستلمين" %}</div>
+                            <div class="h5 mb-0 fw-bold">{{ subscribers_count }}</div>
+                        </div>
+                    </div>
+                    <hr>
+                    <p class="text-muted small mb-0">
+                        <i class="fas fa-check-circle text-success me-1"></i>
+                        {% trans "سيتم الإرسال فقط للمشتركين الموثقين والنشطين" %}
+                    </p>
+                </div>
+            </div>
+
+            <!-- ملاحظات -->
+            <div class="card shadow-sm border-warning">
+                <div class="card-header bg-warning bg-opacity-10 py-3">
+                    <h6 class="card-title mb-0 text-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        {% trans "ملاحظات هامة" %}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0 small">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            {% trans "يتم إرسال الرسائل للمشتركين الموثقين فقط" %}
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            {% trans "كل رسالة تحتوي على رابط إلغاء الاشتراك" %}
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            {% trans "يتم تحديث إحصائيات المشتركين تلقائياً" %}
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-clock text-warning me-2"></i>
+                            {% trans "قد يستغرق الإرسال بضع دقائق حسب عدد المشتركين" %}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.email-type-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.email-type-card:hover {
+    border-color: #0d6efd !important;
+    box-shadow: 0 0 10px rgba(13, 110, 253, 0.2);
+}
+.email-type-card.selected {
+    border-color: #0d6efd !important;
+    border-width: 2px !important;
+    background-color: rgba(13, 110, 253, 0.05);
+}
+.cursor-pointer {
+    cursor: pointer;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // تحديد نوع النشرة
+    $('.email-type-card').on('click', function() {
+        $('.email-type-card').removeClass('selected');
+        $(this).addClass('selected');
+        $(this).find('input[type="radio"]').prop('checked', true);
+
+        var type = $(this).data('type');
+        if (type === 'promotions') {
+            $('#promotion-options').slideDown();
+        } else {
+            $('#promotion-options').slideUp();
+        }
+    });
+
+    // تحديد الأول افتراضياً
+    $('.email-type-card[data-type="new_products"]').addClass('selected');
+
+    // تأكيد الإرسال
+    $('#newsletter-send-form').on('submit', function(e) {
+        if (!confirm('{% trans "هل أنت متأكد من إرسال النشرة البريدية لجميع المشتركين؟" %}')) {
+            e.preventDefault();
+            return false;
+        }
+
+        $('#send-btn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> {% trans "جاري الإرسال..." %}');
+    });
+});
+</script>
+{% endblock %}

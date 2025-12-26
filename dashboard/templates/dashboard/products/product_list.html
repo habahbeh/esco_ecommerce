@@ -70,17 +70,30 @@
     .product-price {
         font-weight: 600;
         color: #28a745;
+        white-space: nowrap;
     }
     .product-compare-price {
         text-decoration: line-through;
         color: #dc3545;
         font-size: 0.85rem;
+        white-space: nowrap;
     }
     .bulk-actions {
         display: none;
     }
     .select-all-container {
-        width: 55px;
+        width: 35px;
+    }
+    /* منع التفاف شارات الحالة والمخزون */
+    #products-datatable td .badge,
+    #products-datatable td .stock-badge {
+        white-space: nowrap;
+    }
+    #products-datatable td:nth-child(7) {
+        min-width: 90px;
+    }
+    #products-datatable td:nth-child(8) {
+        min-width: 100px;
     }
     .stats-card {
         border-right: 3px solid transparent;
@@ -209,6 +222,30 @@
 
     left: auto !important;;
 }
+
+/* تصميم بطاقات نطاق التصدير */
+.export-scope-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: #fff;
+}
+.export-scope-card:hover {
+    background-color: #f8f9fa;
+    border-color: #0077c8 !important;
+}
+.export-scope-card:has(input:checked) {
+    background-color: #e3f2fd;
+    border-color: #0077c8 !important;
+    box-shadow: 0 0 0 2px rgba(0, 119, 200, 0.25);
+}
+.export-scope-card:has(input:disabled) {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: #f5f5f5;
+}
+.cursor-pointer {
+    cursor: pointer;
+}
 </style>
 {% endblock %}
 
@@ -303,6 +340,10 @@
                             <a href="{% url 'dashboard:product_import' %}" class="btn btn-success">
                                 <i class="fas fa-file-import"></i> استيراد منتجات
                             </a>
+                            <!-- زر محرر الأسعار الجماعي -->
+                            <a href="{% url 'dashboard:bulk_price_editor' %}" class="btn btn-warning">
+                                <i class="fa fa-money-bill-wave me-1"></i> {% trans 'تعديل الأسعار' %}
+                            </a>
 
                         {{ import_id }}
                             {% if import_id %}
@@ -317,27 +358,57 @@
 
                 <!-- قسم الإجراءات الجماعية -->
                 <div class="bulk-actions-container mb-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div class="d-flex align-items-center flex-wrap gap-2">
                             <span class="bulk-badge"><span id="selected-count">0</span> {% trans 'محدد' %}</span>
+
+                            <!-- أزرار الإجراءات المباشرة -->
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-success bulk-action-btn" data-action="publish" title="{% trans 'نشر المنتجات المحددة' %}">
+                                    <i class="fa fa-check-circle me-1"></i>{% trans 'نشر' %}
+                                </button>
+                                <button type="button" class="btn btn-sm btn-secondary bulk-action-btn" data-action="draft" title="{% trans 'تحويل إلى مسودة' %}">
+                                    <i class="fa fa-edit me-1"></i>{% trans 'مسودة' %}
+                                </button>
+                                <button type="button" class="btn btn-sm btn-danger bulk-action-btn" data-action="delete" title="{% trans 'حذف المنتجات المحددة' %}">
+                                    <i class="fa fa-trash me-1"></i>{% trans 'حذف' %}
+                                </button>
+                            </div>
+
+                            <!-- زر تعديل الأسعار -->
+                            <button type="button" id="edit-prices-btn" class="btn btn-sm btn-warning">
+                                <i class="fa fa-money-bill-wave me-1"></i>{% trans 'تعديل الأسعار' %}
+                            </button>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="cancel-selection">
+                            <i class="fa fa-times me-1"></i>{% trans 'إلغاء' %}
+                        </button>
+                    </div>
+
+                    <!-- قسم التأكيد المضمن -->
+                    <div id="bulk-confirm-section" class="mt-2 p-2 bg-warning-subtle border border-warning rounded d-none">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <span id="bulk-confirm-message" class="text-dark">
+                                <i class="fa fa-exclamation-triangle text-warning me-1"></i>
+                                {% trans 'هل أنت متأكد؟' %}
+                            </span>
                             <div class="btn-group">
-                                <select id="bulk-action" class="form-select form-select-sm">
-                                    <option value="">{% trans 'اختر إجراء...' %}</option>
-                                    <option value="activate">{% trans 'تفعيل' %}</option>
-                                    <option value="deactivate">{% trans 'إلغاء تفعيل' %}</option>
-                                    <option value="publish">{% trans 'نشر' %}</option>
-                                    <option value="draft">{% trans 'مسودة' %}</option>
-                                    <option value="delete">{% trans 'حذف' %}</option>
-                                    <option value="update_stock">{% trans 'تحديث المخزون' %}</option>
-                                </select>
-                                <button type="button" id="apply-bulk-action" class="btn btn-sm btn-success">
-                                    {% trans 'تطبيق' %}
+                                <button type="button" class="btn btn-sm btn-light" id="bulk-cancel-confirm">
+                                    {% trans 'إلغاء' %}
+                                </button>
+                                <button type="button" class="btn btn-sm btn-primary" id="bulk-do-confirm">
+                                    <i class="fa fa-check me-1"></i>{% trans 'تأكيد' %}
                                 </button>
                             </div>
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" id="cancel-selection">
-                            <i class="fa fa-times"></i> {% trans 'إلغاء التحديد' %}
-                        </button>
+                    </div>
+                </div>
+
+                <!-- إشعار النتيجة -->
+                <div id="bulk-result-toast" class="mb-3 d-none">
+                    <div class="alert alert-dismissible fade show mb-0" role="alert">
+                        <span id="bulk-result-message"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 </div>
 
@@ -494,7 +565,7 @@
                     <table id="products-datatable" class="table table-hover align-middle w-100">
                         <thead class="table-light">
                             <tr>
-                                <th width="50">
+                                <th width="35">
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="select-all">
                                     </div>
@@ -502,11 +573,12 @@
                                 <th>{% trans 'المنتج' %}</th>
                                 <th>{% trans 'SKU' %}</th>
                                 <th>{% trans 'الفئة' %}</th>
+                                <th>{% trans 'العلامة التجارية' %}</th>
                                 <th>{% trans 'السعر' %}</th>
                                 <th>{% trans 'المخزون' %}</th>
-                                <th>{% trans 'الحالة' %}</th>
+                                <th style="min-width: 100px;">{% trans 'الحالة' %}</th>
                                 <th>{% trans 'التاريخ' %}</th>
-                                <th width="120">{% trans 'الإجراءات' %}</th>
+                                <th width="110">{% trans 'الإجراءات' %}</th>
                             </tr>
                         </thead>
                     </table>
@@ -539,24 +611,119 @@
     </div>
 </div>
 
-<!-- نافذة تأكيد الإجراءات الجماعية -->
-<div class="modal fade" id="bulkActionModal" tabindex="-1" aria-labelledby="bulkActionModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+<!-- نافذة التصدير -->
+<div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="bulkActionModalLabel">{% trans 'تأكيد الإجراء' %}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="exportModalLabel">
+                    <i class="fa fa-download me-2"></i>{% trans 'تصدير المنتجات' %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p id="bulk-action-message">{% trans 'هل أنت متأكد من تنفيذ هذا الإجراء على المنتجات المحددة؟' %}</p>
+                <!-- نطاق التصدير -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold">
+                        <i class="fa fa-filter me-1"></i>{% trans 'نطاق التصدير' %}
+                    </label>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="export-scope-card border rounded p-3 h-100 d-block cursor-pointer" for="scopeAll">
+                                <input class="form-check-input me-2" type="radio" name="exportScope" id="scopeAll" value="all" checked>
+                                <i class="fa fa-globe text-primary me-1"></i>
+                                <strong>{% trans 'جميع المنتجات' %}</strong>
+                                <small class="text-muted d-block mt-1">{% trans 'تصدير كل المنتجات مع الفلاتر الحالية' %}</small>
+                            </label>
+                        </div>
+                        <div class="col-6">
+                            <label class="export-scope-card border rounded p-3 h-100 d-block cursor-pointer" for="scopeSelected">
+                                <input class="form-check-input me-2" type="radio" name="exportScope" id="scopeSelected" value="selected">
+                                <i class="fa fa-check-square text-success me-1"></i>
+                                <strong>{% trans 'المحددة فقط' %}</strong>
+                                <small class="text-muted d-block mt-1" id="selectedCountLabel">{% trans 'اختر منتجات من الجدول' %}</small>
+                            </label>
+                        </div>
+                        <div class="col-6">
+                            <label class="export-scope-card border rounded p-3 h-100 d-block cursor-pointer" for="scopeCategory">
+                                <input class="form-check-input me-2" type="radio" name="exportScope" id="scopeCategory" value="category_only">
+                                <i class="fa fa-folder text-warning me-1"></i>
+                                <strong>{% trans 'فئة محددة' %}</strong>
+                                <small class="text-muted d-block mt-1" id="categoryLabel">{% trans 'اختر فئة من الفلاتر' %}</small>
+                            </label>
+                        </div>
+                        <div class="col-6">
+                            <label class="export-scope-card border rounded p-3 h-100 d-block cursor-pointer" for="scopeBrand">
+                                <input class="form-check-input me-2" type="radio" name="exportScope" id="scopeBrand" value="brand_only">
+                                <i class="fa fa-tag text-info me-1"></i>
+                                <strong>{% trans 'علامة تجارية' %}</strong>
+                                <small class="text-muted d-block mt-1" id="brandLabel">{% trans 'اختر علامة من الفلاتر' %}</small>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- خيارات إضافية -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold">
+                        <i class="fa fa-cog me-1"></i>{% trans 'خيارات إضافية' %}
+                    </label>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="includeVariants" checked>
+                        <label class="form-check-label" for="includeVariants">
+                            {% trans 'تضمين المتغيرات (Variants)' %}
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="includeImages">
+                        <label class="form-check-label" for="includeImages">
+                            <i class="fa fa-image text-info me-1"></i>{% trans 'تضمين روابط الصور' %}
+                        </label>
+                    </div>
+                </div>
+
+                <!-- صيغة التصدير -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold">
+                        <i class="fa fa-file me-1"></i>{% trans 'صيغة التصدير' %}
+                    </label>
+                    <div class="row g-2">
+                        <div class="col-6 col-md-3">
+                            <button type="button" class="btn btn-outline-success w-100 export-format-btn" data-format="excel">
+                                <i class="fa fa-file-excel d-block mb-1" style="font-size: 1.5rem;"></i>
+                                <small>Excel</small>
+                            </button>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <button type="button" class="btn btn-outline-primary w-100 export-format-btn" data-format="csv">
+                                <i class="fa fa-file-csv d-block mb-1" style="font-size: 1.5rem;"></i>
+                                <small>CSV</small>
+                            </button>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <button type="button" class="btn btn-outline-danger w-100 export-format-btn" data-format="pdf">
+                                <i class="fa fa-file-pdf d-block mb-1" style="font-size: 1.5rem;"></i>
+                                <small>PDF</small>
+                            </button>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <button type="button" class="btn btn-outline-secondary w-100 export-format-btn" data-format="print">
+                                <i class="fa fa-print d-block mb-1" style="font-size: 1.5rem;"></i>
+                                <small>{% trans 'طباعة' %}</small>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans 'إلغاء' %}</button>
-                <button type="button" id="confirm-bulk-action" class="btn btn-primary">{% trans 'تأكيد' %}</button>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fa fa-times me-1"></i>{% trans 'إلغاء' %}
+                </button>
             </div>
         </div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -573,6 +740,133 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
 <script>
+    // ==================== دالة تصدير المنتجات ====================
+
+    // فتح نافذة التصدير
+    function openExportModal() {
+        // تحديث labels قبل فتح النافذة
+        updateExportModalLabels();
+        $('#exportModal').modal('show');
+    }
+
+    // تحديث labels في نافذة التصدير
+    function updateExportModalLabels() {
+        // عدد المنتجات المحددة
+        var selectedCount = $('.product-checkbox:checked').length;
+        if (selectedCount > 0) {
+            $('#selectedCountLabel').text(selectedCount + ' {% trans "منتج محدد" %}');
+            $('#scopeSelected').prop('disabled', false);
+        } else {
+            $('#selectedCountLabel').text('{% trans "اختر منتجات من الجدول" %}');
+            $('#scopeSelected').prop('disabled', true);
+        }
+
+        // الفئة المحددة
+        var categoryId = $('#category_filter').val();
+        var categoryText = $('#category_filter option:selected').text().trim();
+        if (categoryId) {
+            $('#categoryLabel').text(categoryText);
+            $('#scopeCategory').prop('disabled', false);
+        } else {
+            $('#categoryLabel').text('{% trans "اختر فئة من الفلاتر" %}');
+            $('#scopeCategory').prop('disabled', true);
+        }
+
+        // العلامة التجارية المحددة
+        var brandId = $('#brand_filter').val();
+        var brandText = $('#brand_filter option:selected').text().trim();
+        if (brandId) {
+            $('#brandLabel').text(brandText);
+            $('#scopeBrand').prop('disabled', false);
+        } else {
+            $('#brandLabel').text('{% trans "اختر علامة من الفلاتر" %}');
+            $('#scopeBrand').prop('disabled', true);
+        }
+    }
+
+    // تنفيذ التصدير
+    function executeExport(format) {
+        var params = new URLSearchParams();
+        params.append('format', format);
+
+        // الحصول على النطاق المحدد
+        var scope = $('input[name="exportScope"]:checked').val();
+        params.append('scope', scope);
+
+        // الحصول على الفلاتر
+        var category = $('#category_filter').val();
+        var brand = $('#brand_filter').val();
+        var status = $('#status_filter').val();
+        var search = $('#products-datatable_filter input').val();
+
+        if (category) params.append('category', category);
+        if (brand) params.append('brand', brand);
+        if (status) params.append('status', status);
+        if (search) params.append('q', search);
+
+        // خيار تضمين المتغيرات
+        var includeVariants = $('#includeVariants').is(':checked');
+        params.append('include_variants', includeVariants ? 'true' : 'false');
+
+        // خيار تضمين الصور
+        var includeImages = $('#includeImages').is(':checked');
+        params.append('include_images', includeImages ? 'true' : 'false');
+
+        // إذا كان النطاق "المحددة فقط"، أضف IDs المنتجات
+        if (scope === 'selected') {
+            var selectedIds = [];
+            $('.product-checkbox:checked').each(function() {
+                selectedIds.push($(this).val());
+            });
+            if (selectedIds.length > 0) {
+                params.append('selected', selectedIds.join(','));
+            } else {
+                alert('{% trans "الرجاء تحديد منتج واحد على الأقل" %}');
+                return;
+            }
+        }
+
+        // إغلاق النافذة
+        $('#exportModal').modal('hide');
+
+        // فتح رابط التصدير
+        var exportUrl = "{% url 'dashboard:products_export' %}?" + params.toString();
+
+        if (format === 'print') {
+            window.open(exportUrl, '_blank');
+        } else {
+            window.location.href = exportUrl;
+        }
+    }
+
+    // دالة التصدير القديمة (للتوافق مع الخلفية)
+    function exportProducts(format) {
+        // جمع معلمات التصفية الحالية
+        var params = new URLSearchParams();
+        params.append('format', format);
+
+        var category = $('#category_filter').val();
+        var brand = $('#brand_filter').val();
+        var status = $('#status_filter').val();
+        var search = $('#products-datatable_filter input').val();
+
+        if (category) params.append('category', category);
+        if (brand) params.append('brand', brand);
+        if (status) params.append('status', status);
+        if (search) params.append('q', search);
+
+        // فتح رابط التصدير
+        var exportUrl = "{% url 'dashboard:products_export' %}?" + params.toString();
+
+        if (format === 'print') {
+            // فتح صفحة الطباعة في نافذة جديدة
+            window.open(exportUrl, '_blank');
+        } else {
+            // تنزيل الملف
+            window.location.href = exportUrl;
+        }
+    }
+
     $(document).ready(function() {
         // إخفاء قسم الفلاتر افتراضيًا
         $("#filters-container").hide();
@@ -628,30 +922,83 @@
                             ? '<img src="' + data.image_url + '" alt="' + data.name + '" class="product-thumbnail me-2">'
                             : '<div class="product-thumbnail-placeholder me-2"><i class="fa fa-image"></i></div>';
 
-                        let brand = data.brand_name
-                            ? '<div class="product-brand small">' + data.brand_name + '</div>'
-                            : '';
-
                         return '<div class="d-flex align-items-center">' +
                             img +
-                            '<div><div class="product-name">' + data.name + '</div>' + brand + '</div></div>';
+                            '<div><div class="product-name">' + data.name + '</div></div></div>';
                     }
                 },
                 { data: 'sku' },
                 {
                     data: 'category_name',
                     render: function(data) {
-                        return '<span class="badge bg-light text-dark">' + data + '</span>';
+                        if (!data) return '<span class="text-muted">-</span>';
+
+                        // مجموعة ألوان متنوعة للفئات
+                        var categoryColors = [
+                            { bg: '#e1f5fe', text: '#0277bd' },  // أزرق فاتح
+                            { bg: '#f1f8e9', text: '#558b2f' },  // أخضر ليموني
+                            { bg: '#fbe9e7', text: '#d84315' },  // برتقالي محمر
+                            { bg: '#ede7f6', text: '#5e35b1' },  // بنفسجي غامق
+                            { bg: '#e0f2f1', text: '#00796b' },  // أخضر مائي
+                            { bg: '#fff9c4', text: '#f57f17' },  // أصفر ذهبي
+                            { bg: '#fce4ec', text: '#ad1457' },  // وردي غامق
+                            { bg: '#eceff1', text: '#455a64' },  // رمادي أزرق
+                            { bg: '#ffecb3', text: '#ff6f00' },  // كهرماني
+                            { bg: '#dcedc8', text: '#33691e' },  // أخضر فاتح
+                        ];
+
+                        // حساب hash بسيط من اسم الفئة
+                        var hash = 0;
+                        for (var i = 0; i < data.length; i++) {
+                            hash = ((hash << 5) - hash) + data.charCodeAt(i);
+                            hash |= 0;
+                        }
+                        var colorIndex = Math.abs(hash) % categoryColors.length;
+                        var color = categoryColors[colorIndex];
+
+                        return '<span class="badge" style="background-color: ' + color.bg + '; color: ' + color.text + ';">' + data + '</span>';
+                    }
+                },
+                {
+                    data: 'brand_name',
+                    render: function(data) {
+                        if (!data) return '<span class="text-muted">-</span>';
+
+                        // مجموعة ألوان متنوعة للعلامات التجارية
+                        var brandColors = [
+                            { bg: '#e3f2fd', text: '#1565c0' },  // أزرق
+                            { bg: '#f3e5f5', text: '#7b1fa2' },  // بنفسجي
+                            { bg: '#e8f5e9', text: '#2e7d32' },  // أخضر
+                            { bg: '#fff3e0', text: '#e65100' },  // برتقالي
+                            { bg: '#fce4ec', text: '#c2185b' },  // وردي
+                            { bg: '#e0f7fa', text: '#00838f' },  // سماوي
+                            { bg: '#fff8e1', text: '#f9a825' },  // أصفر
+                            { bg: '#efebe9', text: '#5d4037' },  // بني
+                            { bg: '#e8eaf6', text: '#3949ab' },  // نيلي
+                            { bg: '#e0f2f1', text: '#00695c' },  // أخضر مزرق
+                        ];
+
+                        // حساب hash بسيط من اسم العلامة التجارية
+                        var hash = 0;
+                        for (var i = 0; i < data.length; i++) {
+                            hash = ((hash << 5) - hash) + data.charCodeAt(i);
+                            hash |= 0;
+                        }
+                        var colorIndex = Math.abs(hash) % brandColors.length;
+                        var color = brandColors[colorIndex];
+
+                        return '<span class="badge" style="background-color: ' + color.bg + '; color: ' + color.text + ';">' + data + '</span>';
                     }
                 },
                 {
                     data: null,
                     render: function(data) {
+                        let currentPrice = parseFloat(data.current_price).toFixed(2);
                         let comparePrice = data.compare_price && data.compare_price > data.current_price
-                            ? '<div class="product-compare-price">' + data.compare_price + ' د.ا</div>'
+                            ? '<div class="product-compare-price">' + parseFloat(data.compare_price).toFixed(2) + ' د.ا</div>'
                             : '';
 
-                        return '<div class="product-price">' + data.current_price + ' د.ا</div>' + comparePrice;
+                        return '<div class="product-price">' + currentPrice + ' د.ا</div>' + comparePrice;
                     }
                 },
                 {
@@ -726,7 +1073,7 @@
                     }
                 }
             ],
-            order: [[7, 'desc']], // ترتيب حسب التاريخ (تنازلي)
+            order: [[8, 'desc']], // ترتيب حسب التاريخ (تنازلي)
             pageLength: 25,
             lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "{% trans 'الكل' %}"]],
             language: {
@@ -748,57 +1095,15 @@
             dom: '<"row"<"col-sm-12 col-md-6"B><"col-sm-12 col-md-6"f>>rtip',
             buttons: [
     {
-        extend: 'collection',
         text: '<i class="fa fa-download me-1"></i> {% trans "تصدير" %}',
-        className: 'btn btn-primary',  // تغيير من btn-outline-primary إلى btn btn-primary للحصول على خلفية ملونة واضحة
-        autoClose: true,
-        fade: 0,  // إلغاء تأثير التلاشي للحصول على تجربة أفضل
-        buttons: [
-            {
-                extend: 'excel',
-                text: '<i class="fa fa-file-excel me-1"></i> {% trans "Excel" %}',
-                className: 'btn btn-sm btn-light text-primary border',  // تحسين تنسيق الزر الفرعي
-                exportOptions: {
-                    columns: [1, 2, 3, 4, 5, 6, 7]
-                },
-                title: '{% trans "قائمة المنتجات" %} - {{ "now"|date:"Y-m-d" }}'
-            },
-            {
-                extend: 'csv',
-                text: '<i class="fa fa-file-csv me-1"></i> {% trans "CSV" %}',
-                className: 'btn btn-sm btn-light text-primary border',
-                exportOptions: {
-                    columns: [1, 2, 3, 4, 5, 6, 7]
-                }
-            },
-            {
-                extend: 'pdf',
-                text: '<i class="fa fa-file-pdf me-1"></i> {% trans "PDF" %}',
-                className: 'btn btn-sm btn-light text-danger border',
-                exportOptions: {
-                    columns: [1, 2, 3, 4, 5, 6, 7]
-                },
-                title: '{% trans "قائمة المنتجات" %} - {{ "now"|date:"Y-m-d" }}',
-                customize: function(doc) {
-                    doc.defaultStyle.font = 'Cairo';
-                    doc.defaultStyle.alignment = 'right';
-                    doc.styles.tableHeader.alignment = 'right';
-                }
-            },
-            {
-                extend: 'print',
-                text: '<i class="fa fa-print me-1"></i> {% trans "طباعة" %}',
-                className: 'btn btn-sm btn-light text-dark border',
-                exportOptions: {
-                    columns: [1, 2, 3, 4, 5, 6, 7]
-                },
-                title: '{% trans "قائمة المنتجات" %} - {{ "now"|date:"Y-m-d" }}'
-            }
-        ]
+        className: 'btn btn-primary',
+        action: function() {
+            openExportModal();
+        }
     },
     {
         text: '<i class="fa fa-sync-alt me-1"></i> {% trans "تحديث" %}',
-        className: 'btn btn-secondary',  // تغيير من btn-outline-secondary إلى btn btn-secondary لمزيد من الوضوح
+        className: 'btn btn-secondary',
         action: function (e, dt, node, config) {
             dt.ajax.reload();
         }
@@ -881,8 +1186,10 @@
 
             if (selectedCount > 0) {
                 $('.bulk-actions-container').fadeIn(300);
+                $('#edit-prices-btn').show();  // إظهار زر تعديل الأسعار
             } else {
                 $('.bulk-actions-container').fadeOut(300);
+                $('#edit-prices-btn').hide();  // إخفاء زر تعديل الأسعار
             }
 
             // تحديث حالة تحديد الكل
@@ -897,80 +1204,166 @@
         $('#cancel-selection').click(function() {
             $('.product-checkbox, #select-all').prop('checked', false);
             updateBulkActions();
+            hideBulkConfirm();
         });
 
-        // تطبيق الإجراءات الجماعية
-        $('#apply-bulk-action').click(function() {
-            const action = $('#bulk-action').val();
-            if (!action) {
-                alert('{% trans "الرجاء اختيار إجراء" %}');
-                return;
-            }
+        // ==================== دوال مساعدة للإجراءات الجماعية ====================
 
-            // تخصيص رسالة التأكيد حسب الإجراء
-            let actionMessage = '';
-            switch(action) {
-                case 'activate':
-                    actionMessage = '{% trans "هل أنت متأكد من تفعيل المنتجات المحددة؟" %}';
-                    break;
-                case 'deactivate':
-                    actionMessage = '{% trans "هل أنت متأكد من إلغاء تفعيل المنتجات المحددة؟" %}';
-                    break;
-                case 'publish':
-                    actionMessage = '{% trans "هل أنت متأكد من نشر المنتجات المحددة؟" %}';
-                    break;
-                case 'draft':
-                    actionMessage = '{% trans "هل أنت متأكد من تحويل المنتجات المحددة إلى مسودة؟" %}';
-                    break;
-                case 'delete':
-                    actionMessage = '{% trans "هل أنت متأكد من حذف المنتجات المحددة؟ هذا الإجراء لا يمكن التراجع عنه." %}';
-                    break;
-                case 'update_stock':
-                    actionMessage = '{% trans "سيتم تحويلك إلى صفحة تحديث المخزون للمنتجات المحددة. هل تريد المتابعة؟" %}';
-                    break;
-                default:
-                    actionMessage = '{% trans "هل أنت متأكد من تنفيذ هذا الإجراء على المنتجات المحددة؟" %}';
-            }
+        // متغير لتخزين الإجراء المطلوب تنفيذه والمنتجات المحددة
+        let pendingBulkAction = null;
+        let pendingBulkProducts = [];
 
-            $('#bulk-action-message').text(actionMessage);
-            $('#bulkActionModal').modal('show');
-        });
+        // عرض نتيجة الإجراء (يجب تعريفها أولاً)
+        function showBulkResult(success, message) {
+            const $toast = $('#bulk-result-toast');
+            const $alert = $toast.find('.alert');
 
-        // تأكيد الإجراءات الجماعية
-        $('#confirm-bulk-action').click(function() {
-            $('#bulkActionModal').modal('hide');
+            $alert.removeClass('alert-success alert-danger')
+                  .addClass(success ? 'alert-success' : 'alert-danger');
+            $('#bulk-result-message').html('<i class="fa fa-' + (success ? 'check-circle' : 'times-circle') + ' me-1"></i>' + message);
+            $toast.removeClass('d-none');
 
-            const action = $('#bulk-action').val();
-            const selectedProducts = [];
-            $('.product-checkbox:checked').each(function() {
-                selectedProducts.push($(this).val());
+            // إخفاء تلقائي بعد 5 ثواني
+            setTimeout(function() {
+                $toast.addClass('d-none');
+            }, 5000);
+        }
+
+        // إخفاء قسم التأكيد
+        function hideBulkConfirm() {
+            $('#bulk-confirm-section').addClass('d-none');
+            pendingBulkAction = null;
+            pendingBulkProducts = [];
+        }
+
+        // رسائل التأكيد للإجراءات
+        function getActionMessage(action, count) {
+            const messages = {
+                'publish': '{% trans "نشر" %} <strong>' + count + '</strong> {% trans "منتج؟" %}',
+                'draft': '{% trans "تحويل" %} <strong>' + count + '</strong> {% trans "منتج إلى مسودة؟" %}',
+                'delete': '<span class="text-danger">{% trans "حذف" %} <strong>' + count + '</strong> {% trans "منتج نهائياً؟" %}</span>'
+            };
+            return messages[action] || '{% trans "تنفيذ الإجراء؟" %}';
+        }
+
+        // تنفيذ الإجراء الجماعي
+        function executeBulkAction(action, selectedProducts) {
+            // تعطيل الزر أثناء التنفيذ
+            const $btn = $('#bulk-do-confirm');
+            $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i>{% trans "جاري..." %}');
+
+            // تجهيز البيانات بتنسيق يفهمه Django
+            // Django يتوقع selected_products[] أو إرسال كل عنصر منفصل
+            let formData = new FormData();
+            formData.append('action', action);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+            selectedProducts.forEach(function(id) {
+                formData.append('selected_products', id);
             });
+
+            console.log('Executing bulk action:', action, 'Products:', selectedProducts);
 
             // إرسال الطلب للخادم
             $.ajax({
                 url: "{% url 'dashboard:dashboard_product_bulk_actions' %}",
                 type: "POST",
-                data: {
-                    action: action,
-                    selected_products: selectedProducts,
-                    csrfmiddlewaretoken: '{{ csrf_token }}'
-                },
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                data: formData,
+                processData: false,
+                contentType: false,
                 success: function(response) {
-                    // إظهار رسالة نجاح
-                    alert(response.message || '{% trans "تم تنفيذ الإجراء بنجاح" %}');
-
-                    // تحديث الجدول
+                    console.log('Success:', response);
+                    showBulkResult(true, response.message || '{% trans "تم تنفيذ الإجراء بنجاح" %}');
                     productsTable.ajax.reload();
-
-                    // إعادة تعيين التحديد
                     $('#select-all').prop('checked', false);
                     updateBulkActions();
                 },
-                error: function(xhr) {
-                    // إظهار رسالة خطأ
-                    alert(xhr.responseJSON?.message || '{% trans "حدث خطأ أثناء تنفيذ الإجراء" %}');
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', status, error, xhr.responseText);
+                    showBulkResult(false, xhr.responseJSON?.message || '{% trans "حدث خطأ أثناء تنفيذ الإجراء" %}');
+                },
+                complete: function() {
+                    $btn.prop('disabled', false).html('<i class="fa fa-check me-1"></i>{% trans "تأكيد" %}');
+                    hideBulkConfirm();
                 }
             });
+        }
+
+        // ==================== ربط أحداث الإجراءات الجماعية ====================
+
+        // النقر على أزرار الإجراءات (نشر، مسودة، حذف)
+        $(document).on('click', '.bulk-action-btn', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const action = $(this).data('action');
+
+            // جمع المنتجات المحددة وتخزينها مباشرة
+            pendingBulkProducts = [];
+            $('.product-checkbox:checked').each(function() {
+                pendingBulkProducts.push($(this).val());
+            });
+
+            const count = pendingBulkProducts.length;
+
+            console.log('Bulk action clicked:', action, 'Count:', count, 'Products:', pendingBulkProducts);
+
+            if (count === 0) {
+                showBulkResult(false, '{% trans "الرجاء تحديد منتج واحد على الأقل" %}');
+                return;
+            }
+
+            pendingBulkAction = action;
+
+            // عرض رسالة التأكيد
+            const message = getActionMessage(action, count);
+            $('#bulk-confirm-message').html('<i class="fa fa-exclamation-triangle text-warning me-1"></i>' + message);
+            $('#bulk-confirm-section').removeClass('d-none');
+
+            console.log('Confirm section shown for action:', action);
+        });
+
+        // إلغاء التأكيد
+        $(document).on('click', '#bulk-cancel-confirm', function(e) {
+            e.preventDefault();
+            console.log('Cancel confirm clicked');
+            hideBulkConfirm();
+        });
+
+        // تأكيد وتنفيذ الإجراء
+        $(document).on('click', '#bulk-do-confirm', function(e) {
+            e.preventDefault();
+
+            console.log('Do confirm clicked, pendingAction:', pendingBulkAction, 'pendingProducts:', pendingBulkProducts);
+
+            if (!pendingBulkAction) {
+                console.log('No pending action');
+                return;
+            }
+
+            if (!pendingBulkProducts || pendingBulkProducts.length === 0) {
+                showBulkResult(false, '{% trans "لا توجد منتجات محددة" %}');
+                hideBulkConfirm();
+                return;
+            }
+
+            // استخدام المنتجات المخزنة مسبقاً
+            executeBulkAction(pendingBulkAction, pendingBulkProducts);
+        });
+
+        // زر تعديل الأسعار
+        $(document).on('click', '#edit-prices-btn', function(e) {
+            e.preventDefault();
+            const selectedProducts = [];
+            $('.product-checkbox:checked').each(function() {
+                selectedProducts.push($(this).val());
+            });
+            if (selectedProducts.length > 0) {
+                const productsParam = selectedProducts.join(',');
+                window.location.href = "{% url 'dashboard:bulk_price_editor' %}?products=" + productsParam;
+            } else {
+                showBulkResult(false, '{% trans "الرجاء تحديد منتج واحد على الأقل" %}');
+            }
         });
 
         // تأكيد حذف المنتج
@@ -1006,6 +1399,25 @@
 
         // عرض الإجراءات الجماعية مبدئياً (إذا كان هناك منتجات محددة)
         updateBulkActions();
+
+        // ==================== أحداث نافذة التصدير ====================
+
+        // عند النقر على أزرار صيغة التصدير
+        $(document).on('click', '.export-format-btn', function(e) {
+            e.preventDefault();
+            var format = $(this).data('format');
+            executeExport(format);
+        });
+
+        // تحديث labels عند تغيير الفلاتر
+        $('#category_filter, #brand_filter').on('change', function() {
+            updateExportModalLabels();
+        });
+
+        // تحديث labels عند تغيير التحديد
+        $(document).on('change', '.product-checkbox, #select-all', function() {
+            updateExportModalLabels();
+        });
     });
 </script>
 {% endblock %}

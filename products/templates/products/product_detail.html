@@ -211,20 +211,19 @@
                         {% if product.show_price  %}
                             <div class="d-flex align-items-center flex-wrap">
                                 <span class="current-price" id="productCurrentPrice">
-{#                                    {{ product.current_price|floatformat:2 }} {% trans "د.أ" %}#}
+                                    {{ product.current_price|floatformat:2 }} {% trans "د.أ" %}
                                 </span>
-                                {% if product.has_discount %}
+                                {% if product.has_discount and product.savings_percentage > 0 %}
                                     <span class="original-price" id="productOriginalPrice">
                                         {{ product.base_price|floatformat:2 }}
                                     </span>
                                     <span class="discount-badge-large" id="productDiscountBadge">
-                                        <i class="fas fa-percentage"></i>
-                                        {{ product.discount_percentage }}% {% trans "خصم" %}
+                                        {{ product.savings_percentage }}% {% trans "خصم" %}
                                     </span>
                                 {% endif %}
                             </div>
                             <div class="price-notice">{% trans "شامل ضريبة القيمة المضافة" %}</div>
-                            {% if product.has_discount %}
+                            {% if product.has_discount and product.savings_amount > 0 %}
                                 <div class="mt-2">
                                     <span class="savings-amount">
                                         <i class="fas fa-piggy-bank"></i>

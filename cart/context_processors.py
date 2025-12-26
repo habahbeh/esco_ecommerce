@@ -2,11 +2,15 @@
 """
 Cart Context Processor
 Makes cart data available in all templates
+Updated: min_quantity validation for automatic discounts
 """
 
 from decimal import Decimal
 from django.conf import settings
-from products.models import Product, ProductVariant
+from products.models import Product, ProductVariant, ProductDiscount
+from core.models import SiteSettings
+from django.utils import timezone
+from django.db.models import Q
 import logging
 
 logger = logging.getLogger(__name__)
@@ -46,6 +50,11 @@ def cart_context(request):
     has_digital = False
     has_physical = False
 
+    # Track automatic (campaign) discount savings
+    automatic_discount_savings = Decimal('0.00')
+    cart_original_subtotal = Decimal('0.00')  # Subtotal before any automatic discounts
+    automatic_discount_info = None  # Store discount type/value info
+
     # Process cart items
     #for item_id, item_data in cart.items():
     for item_id, item_data in list(cart.items()):
@@ -77,13 +86,40 @@ def cart_context(request):
             # Get quantity
             quantity = int(item_data.get('quantity', 1))
 
-            # Calculate price
+            # Calculate price - check min_quantity for automatic discounts
             if variant and variant.base_price:
-                price = variant.current_price if hasattr(variant, 'current_price') else variant.base_price
+                # For variants, check if min_quantity is met for automatic discounts
+                base_price = variant.variant_base_price if hasattr(variant, 'variant_base_price') else variant.base_price
+                # Variants inherit discount from product
+                discount = product.get_best_campaign_discount()
+
+                if discount and not discount.requires_coupon_code and discount.min_quantity:
+                    # Automatic discount with min_quantity requirement
+                    if quantity >= discount.min_quantity:
+                        price = variant.current_price if hasattr(variant, 'current_price') else base_price
+                    else:
+                        # Don't apply discount - use base price
+                        price = base_price
+                else:
+                    price = variant.current_price if hasattr(variant, 'current_price') else base_price
+
                 stock_quantity = variant.stock_quantity
                 track_inventory = variant.track_inventory
             else:
-                price = product.current_price
+                # For products, check if min_quantity is met for automatic discounts
+                base_price = product.base_price
+                discount = product.get_best_campaign_discount()
+
+                if discount and not discount.requires_coupon_code and discount.min_quantity:
+                    # Automatic discount with min_quantity requirement
+                    if quantity >= discount.min_quantity:
+                        price = product.current_price
+                    else:
+                        # Don't apply discount - use base price
+                        price = base_price
+                else:
+                    price = product.current_price
+
                 stock_quantity = product.stock_quantity
                 track_inventory = product.track_inventory
 
@@ -113,6 +149,22 @@ def cart_context(request):
             if product.requires_shipping:
                 has_physical = True
 
+            # Calculate item savings from automatic discount
+            item_savings = Decimal('0.00')
+            item_original_subtotal = base_price * quantity
+            has_automatic_discount = False
+
+            if price < base_price:
+                item_savings = (base_price - price) * quantity
+                has_automatic_discount = True
+                # Store discount info (from the first item that has a discount)
+                if automatic_discount_info is None and discount:
+                    automatic_discount_info = {
+                        'type': discount.discount_type,
+                        'value': discount.value,
+                        'name': discount.name,
+                    }
+
             # Create cart item object
             cart_item = {
                 'id': item_id,
@@ -120,13 +172,16 @@ def cart_context(request):
                 'variant': variant,
                 'quantity': quantity,
                 'price': price,
-                'original_price': product.base_price,
+                'original_price': base_price,
                 'subtotal': item_subtotal,
+                'original_subtotal': item_original_subtotal,
                 'in_stock': in_stock,
                 'stock_message': stock_message,
                 'stock_quantity': stock_quantity,
                 'weight': item_weight,
-                'savings': (product.base_price - price) * quantity if product.has_discount else Decimal('0.00'),
+                'savings': item_savings,
+                'has_automatic_discount': has_automatic_discount,
+                'discount': discount if discount and not discount.requires_coupon_code else None,
                 'image': product.default_image.image.url if product.default_image else None,
                 'variant_info': {
                     'id': variant.id if variant else None,
@@ -139,6 +194,8 @@ def cart_context(request):
             # Add to totals
             cart_count += quantity
             cart_subtotal += item_subtotal
+            cart_original_subtotal += item_original_subtotal
+            automatic_discount_savings += item_savings
 
             # Add to items list
             cart_items.append(cart_item)
@@ -157,28 +214,169 @@ def cart_context(request):
     if cart_subtotal > 0 and not has_digital:  # No tax on digital products
         cart_tax = cart_subtotal * tax_rate
 
-    # تعريف القيمة الافتراضية قبل الشرط
-    free_shipping_threshold = Decimal(getattr(settings, 'FREE_SHIPPING_THRESHOLD', '0.00'))
+    # Get shipping settings from database
+    try:
+        site_settings = SiteSettings.get_settings()
+        shipping_enabled = site_settings.shipping_enabled
+        shipping_fee_amman = site_settings.shipping_fee_amman
+        shipping_fee_other = site_settings.shipping_fee_other
+        free_shipping_threshold = site_settings.free_shipping_threshold
+    except Exception:
+        # Fallback to defaults if settings not available
+        shipping_enabled = True
+        shipping_fee_amman = Decimal('2.00')
+        shipping_fee_other = Decimal('3.00')
+        free_shipping_threshold = Decimal('0.00')
+
+    # Get selected city from session (default to Amman)
+    selected_city = request.session.get('shipping_city', 'amman')
 
     # Calculate shipping
-    if has_physical and cart_subtotal > 0:
-        # Free shipping threshold
-        free_shipping_threshold = Decimal(getattr(settings, 'FREE_SHIPPING_THRESHOLD', '50.00'))
-        if cart_subtotal < free_shipping_threshold:
-            # Basic shipping calculation
-            base_shipping = Decimal(getattr(settings, 'BASE_SHIPPING_COST', '5.00'))
-            weight_rate = Decimal(getattr(settings, 'SHIPPING_WEIGHT_RATE', '0.50'))  # per kg
-            cart_shipping = base_shipping + (cart_weight * weight_rate)
+    if has_physical and cart_subtotal > 0 and shipping_enabled:
+        # Check free shipping threshold
+        if free_shipping_threshold > 0 and cart_subtotal >= free_shipping_threshold:
+            cart_shipping = Decimal('0.00')
+        else:
+            # Apply shipping fee based on city
+            if selected_city == 'amman':
+                cart_shipping = shipping_fee_amman
+            else:
+                cart_shipping = shipping_fee_other
 
     # Apply coupon discount if exists
     coupon_code = request.session.get('coupon_code')
-    if coupon_code and cart_subtotal > 0:
-        # Here you would validate and calculate coupon discount
-        # For now, just a placeholder
-        cart_discount = Decimal('0.00')
+    coupon_discount_id = request.session.get('coupon_discount_id')
+    applied_coupon = None
+    coupon_discount = Decimal('0.00')
+    eligible_items_count = 0
+    max_discount_applied = False
+    original_coupon_discount = Decimal('0.00')
 
-    # Calculate final total
-    cart_total = cart_subtotal + cart_tax + cart_shipping - cart_discount
+    if coupon_code and coupon_discount_id and cart_subtotal > 0:
+        try:
+            now = timezone.now()
+            # Get the coupon discount
+            discount = ProductDiscount.objects.filter(
+                id=coupon_discount_id,
+                code__iexact=coupon_code,
+                is_active=True,
+                requires_coupon_code=True,
+                start_date__lte=now
+            ).filter(
+                Q(end_date__isnull=True) | Q(end_date__gte=now)
+            ).first()
+
+            if discount:
+                applied_coupon = discount
+
+                # Check minimum purchase amount (applies to ALL application types)
+                meets_min_purchase = True
+                if discount.min_purchase_amount:
+                    if cart_original_subtotal < discount.min_purchase_amount:
+                        meets_min_purchase = False
+
+                # Calculate discount per eligible item
+                for item in cart_items:
+                    product = item['product']
+                    item_quantity = item['quantity']
+
+                    # Check if product is eligible AND meets minimum quantity requirement
+                    meets_min_quantity = True
+                    if discount.min_quantity and item_quantity < discount.min_quantity:
+                        meets_min_quantity = False
+
+                    if discount.applies_to_product(product) and meets_min_quantity and meets_min_purchase:
+                        # This item is eligible for the coupon discount
+                        item_price = item['price']
+
+                        # Calculate discount for this item
+                        # Use apply_max_cap=False so max_discount_amount is applied to total, not per item
+                        item_discount = discount.calculate_discount_amount(item_price, item_quantity, apply_max_cap=False)
+                        item_total_discount = item_discount * item_quantity
+
+                        # Store discount info in cart item
+                        item['coupon_eligible'] = True
+                        item['coupon_discount'] = item_total_discount
+                        item['price_after_coupon'] = item_price - item_discount
+                        item['subtotal_after_coupon'] = item['subtotal'] - item_total_discount
+
+                        coupon_discount += item_total_discount
+                        eligible_items_count += 1
+                    else:
+                        # This item is NOT eligible for the coupon (product doesn't match or min quantity/purchase not met)
+                        item['coupon_eligible'] = False
+                        item['coupon_discount'] = Decimal('0.00')
+                        item['price_after_coupon'] = item['price']
+                        item['subtotal_after_coupon'] = item['subtotal']
+
+                        # Store reason for ineligibility
+                        if not meets_min_purchase:
+                            item['coupon_ineligible_reason'] = f'الحد الأدنى للشراء {discount.min_purchase_amount} د.أ'
+                        elif discount.applies_to_product(product) and not meets_min_quantity:
+                            item['coupon_ineligible_reason'] = f'الحد الأدنى للكمية {discount.min_quantity}'
+
+                # Apply max_discount_amount to total coupon discount (not per item)
+                max_discount_applied = False
+                original_coupon_discount = coupon_discount
+                if discount.max_discount_amount and coupon_discount > discount.max_discount_amount:
+                    max_discount_applied = True
+                    # Calculate the ratio to proportionally reduce each item's discount
+                    reduction_ratio = discount.max_discount_amount / coupon_discount
+
+                    # Adjust each eligible item's discount proportionally
+                    for item in cart_items:
+                        if item.get('coupon_eligible') and item.get('coupon_discount', Decimal('0.00')) > 0:
+                            original_item_discount = item['coupon_discount']
+                            adjusted_discount = original_item_discount * reduction_ratio
+                            item['coupon_discount'] = adjusted_discount
+                            item['subtotal_after_coupon'] = item['subtotal'] - adjusted_discount
+                            # Recalculate price_after_coupon per unit
+                            if item['quantity'] > 0:
+                                item['price_after_coupon'] = item['price'] - (adjusted_discount / item['quantity'])
+
+                    # Cap the total coupon discount
+                    coupon_discount = discount.max_discount_amount
+            else:
+                # Coupon is no longer valid, remove from session
+                if 'coupon_code' in request.session:
+                    del request.session['coupon_code']
+                if 'coupon_discount_id' in request.session:
+                    del request.session['coupon_discount_id']
+                request.session.modified = True
+                coupon_code = None
+
+        except Exception as e:
+            logger.error(f"Error applying coupon discount: {str(e)}")
+            coupon_discount = Decimal('0.00')
+
+    # Set cart_discount to coupon_discount for backward compatibility
+    cart_discount = coupon_discount
+
+    # Check if there are any active coupon-based discounts available
+    has_coupon_discounts_available = False
+    try:
+        now = timezone.now()
+        coupon_discounts_exist = ProductDiscount.objects.filter(
+            is_active=True,
+            requires_coupon_code=True,
+            start_date__lte=now
+        ).filter(
+            Q(end_date__isnull=True) | Q(end_date__gte=now)
+        ).exists()
+        has_coupon_discounts_available = coupon_discounts_exist
+    except Exception as e:
+        logger.error(f"Error checking coupon discounts availability: {str(e)}")
+
+    # Calculate final total (with coupon discount applied)
+    # Note: cart_subtotal already includes tax (prices in DB include tax),
+    # so we don't add cart_tax here - it's just for display purposes
+    cart_total = cart_subtotal + cart_shipping - cart_discount
+
+    # Calculate subtotal after coupon (for display)
+    cart_subtotal_after_coupon = cart_subtotal - coupon_discount
+
+    # Recalculate tax after coupon discount
+    cart_tax_after_coupon = cart_subtotal_after_coupon * tax_rate if cart_subtotal_after_coupon > 0 and not has_digital else Decimal('0.00')
 
     # Prepare summary data
     cart_summary = {
@@ -221,12 +419,35 @@ def cart_context(request):
         'cart_summary': cart_summary,
         'coupon_code': coupon_code,
 
+        # Coupon discount info
+        'applied_coupon': applied_coupon,
+        'coupon_discount': coupon_discount,
+        'eligible_items_count': eligible_items_count,
+        'has_coupon_discounts_available': has_coupon_discounts_available,
+        'max_discount_applied': max_discount_applied,
+        'original_coupon_discount': original_coupon_discount,
+        'cart_subtotal_after_coupon': cart_subtotal_after_coupon,
+        'cart_tax_after_coupon': cart_tax_after_coupon,
+
+        # Automatic (campaign) discount info
+        'automatic_discount_savings': automatic_discount_savings,
+        'cart_original_subtotal': cart_original_subtotal,
+        'has_automatic_discount': automatic_discount_savings > 0,
+        'automatic_discount_info': automatic_discount_info,
+
+        # Shipping info
+        'shipping_enabled': shipping_enabled,
+        'shipping_fee_amman': shipping_fee_amman,
+        'shipping_fee_other': shipping_fee_other,
+        'selected_shipping_city': selected_city,
+        'free_shipping_threshold': free_shipping_threshold,
+
         # Messages for UI
         'cart_messages': {
             'empty': 'سلة التسوق فارغة',
-            'free_shipping': f'احصل على شحن مجاني عند الشراء بقيمة {free_shipping_threshold} د.أ أو أكثر' if has_physical else None,
+            'free_shipping': f'احصل على شحن مجاني عند الشراء بقيمة {free_shipping_threshold} د.أ أو أكثر' if has_physical and free_shipping_threshold > 0 else None,
             'free_shipping_qualified': 'تهانينا! لقد حصلت على شحن مجاني' if has_physical and cart_summary[
-                'has_free_shipping'] else None,
+                'has_free_shipping'] and free_shipping_threshold > 0 else None,
         }
     }
 

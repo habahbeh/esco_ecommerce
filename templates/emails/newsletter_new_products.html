@@ -1,0 +1,126 @@
+{% extends "emails/base_email.html" %}
+
+{% block title %}منتجات جديدة - New Products | ESCO{% endblock %}
+
+{% block content %}
+<div class="greeting">
+    مرحباً {% if name %}{{ name }}{% else %}عزيزنا العميل{% endif %}! 👋
+    <br>
+    <span style="font-size: 14px; color: #666;">Hello {% if name %}{{ name }}{% else %}Dear Customer{% endif %}!</span>
+</div>
+
+<p class="content-text">
+    يسعدنا أن نقدم لك أحدث المنتجات المتوفرة الآن في متجرنا!
+    <br>
+    <span style="font-size: 13px; color: #666;">We're excited to present our latest products now available in our store!</span>
+</p>
+
+<!-- Section Title -->
+<h2 class="section-title">
+    🆕 منتجات جديدة | New Products
+</h2>
+
+<!-- Products Grid -->
+{% if products %}
+<table role="presentation" class="products-grid" width="100%" cellspacing="10" cellpadding="0" border="0">
+    {% for product in products %}
+    {% if forloop.counter0|divisibleby:2 %}
+    <tr>
+    {% endif %}
+        <td style="width: 48%; vertical-align: top; padding: 0;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                <!-- Product Image -->
+                <tr>
+                    <td style="padding: 15px; text-align: center; background-color: #f8f9fa;">
+                        {% if product.image %}
+                        <a href="{{ product.url }}" style="text-decoration: none;">
+                            <img src="{{ product.image }}" alt="{{ product.name }}" style="width: 100%; max-width: 120px; height: 120px; object-fit: contain; border-radius: 8px;">
+                        </a>
+                        {% else %}
+                        <div style="width: 120px; height: 120px; background-color: #e0e0e0; border-radius: 8px; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+                            <span style="font-size: 40px;">📦</span>
+                        </div>
+                        {% endif %}
+                    </td>
+                </tr>
+
+                <!-- Product Info -->
+                <tr>
+                    <td style="padding: 15px; text-align: center;">
+                        <p style="font-size: 14px; color: #333; font-weight: bold; margin: 0 0 5px; line-height: 1.4; min-height: 40px;">
+                            {{ product.name|truncatewords:8 }}
+                        </p>
+
+                        {% if product.brand %}
+                        <p style="font-size: 11px; color: #888; margin: 0 0 8px;">{{ product.brand }}</p>
+                        {% endif %}
+
+                        <div style="margin: 10px 0;">
+                            <span style="font-size: 18px; color: #1e88e5; font-weight: bold;">{{ product.price }} د.أ</span>
+                            {% if product.old_price %}
+                            <br>
+                            <span style="font-size: 12px; color: #999; text-decoration: line-through;">{{ product.old_price }} د.أ</span>
+                            {% endif %}
+                        </div>
+
+                        {% if product.discount_percentage %}
+                        <span style="display: inline-block; background-color: #e53935; color: #fff; padding: 4px 12px; border-radius: 15px; font-size: 11px; font-weight: bold; margin-bottom: 10px;">
+                            خصم {{ product.discount_percentage }}%
+                        </span>
+                        {% endif %}
+
+                        <div style="margin-top: 10px;">
+                            <a href="{{ product.url }}" style="display: inline-block; padding: 10px 20px; background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%); color: #ffffff !important; text-decoration: none; border-radius: 25px; font-size: 12px; font-weight: bold;">
+                                عرض المنتج | View
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </td>
+        {% if forloop.counter|divisibleby:2 or forloop.last %}
+        {% if not forloop.counter|divisibleby:2 %}
+        <td style="width: 48%;"></td>
+        {% endif %}
+    </tr>
+    {% endif %}
+    {% endfor %}
+</table>
+{% endif %}
+
+<div class="btn-container" style="margin: 30px 0;">
+    <a href="{{ site_url }}/products/?sort=-published_at" class="btn-primary">
+        تصفح جميع المنتجات الجديدة
+        <br>
+        <span style="font-size: 12px;">Browse All New Products</span>
+    </a>
+</div>
+
+<div class="divider"></div>
+
+<!-- Why Shop With Us -->
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin: 20px 0;">
+    <tr>
+        <td style="text-align: center; padding: 10px;">
+            <span style="font-size: 28px;">🚚</span>
+            <p style="margin: 5px 0; font-size: 13px; color: #333;">توصيل سريع<br><span style="color: #888;">Fast Delivery</span></p>
+        </td>
+        <td style="text-align: center; padding: 10px;">
+            <span style="font-size: 28px;">✅</span>
+            <p style="margin: 5px 0; font-size: 13px; color: #333;">منتجات أصلية<br><span style="color: #888;">Genuine Products</span></p>
+        </td>
+        <td style="text-align: center; padding: 10px;">
+            <span style="font-size: 28px;">💳</span>
+            <p style="margin: 5px 0; font-size: 13px; color: #333;">دفع آمن<br><span style="color: #888;">Secure Payment</span></p>
+        </td>
+    </tr>
+</table>
+
+<div class="info-box">
+    <p>
+        <strong>عرض خاص للمشتركين!</strong> استخدم كود <strong style="color: #e53935;">{{ coupon_code|default:"WELCOME10" }}</strong> للحصول على خصم إضافي.
+        <br>
+        <span style="font-size: 12px; color: #666;">Special offer for subscribers! Use code <strong>{{ coupon_code|default:"WELCOME10" }}</strong> for extra discount.</span>
+    </p>
+</div>
+{% endblock %}

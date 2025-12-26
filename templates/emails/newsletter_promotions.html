@@ -1,0 +1,173 @@
+{% extends "emails/base_email.html" %}
+
+{% block title %}عروض خاصة - Special Offers | ESCO{% endblock %}
+
+{% block content %}
+<div class="greeting">
+    مرحباً {% if name %}{{ name }}{% else %}عزيزنا العميل{% endif %}! 🎉
+    <br>
+    <span style="font-size: 14px; color: #666;">Hello {% if name %}{{ name }}{% else %}Dear Customer{% endif %}!</span>
+</div>
+
+<!-- Special Banner -->
+<div style="background: linear-gradient(135deg, #e53935 0%, #c62828 100%); border-radius: 15px; padding: 25px; text-align: center; margin: 20px 0;">
+    <p style="color: #ffffff; font-size: 28px; font-weight: bold; margin: 0;">
+        🔥 {{ promotion_title|default:"عروض حصرية" }}
+    </p>
+    <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin: 10px 0 0;">
+        {{ promotion_subtitle|default:"خصومات تصل إلى 50% على منتجات مختارة" }}
+        <br>
+        <span style="font-size: 12px;">{{ promotion_subtitle_en|default:"Up to 50% off on selected products" }}</span>
+    </p>
+</div>
+
+<p class="content-text">
+    لا تفوت فرصة الحصول على أفضل العروض والخصومات على منتجاتك المفضلة!
+    <br>
+    <span style="font-size: 13px; color: #666;">Don't miss the chance to get the best deals on your favorite products!</span>
+</p>
+
+<!-- Countdown (if applicable) -->
+{% if end_date %}
+<div style="text-align: center; background-color: #fff3e0; border-radius: 10px; padding: 15px; margin: 20px 0;">
+    <p style="margin: 0; color: #e65100; font-size: 14px;">
+        ⏰ <strong>العرض ينتهي في: {{ end_date }}</strong>
+        <br>
+        <span style="font-size: 12px;">Offer ends: {{ end_date }}</span>
+    </p>
+</div>
+{% endif %}
+
+<!-- Section Title -->
+<h2 class="section-title">
+    🏷️ منتجات بأسعار مخفضة | Discounted Products
+</h2>
+
+<!-- Products on Sale -->
+{% if products %}
+<table role="presentation" width="100%" cellspacing="10" cellpadding="0" border="0">
+    {% for product in products %}
+    {% if forloop.counter0|divisibleby:2 %}
+    <tr>
+    {% endif %}
+        <td style="width: 48%; vertical-align: top; padding: 0; text-align: center;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                <!-- Discount Badge -->
+                {% if product.discount_percentage %}
+                <tr>
+                    <td style="padding: 0;">
+                        <div style="background: linear-gradient(135deg, #e53935 0%, #c62828 100%); color: #fff; padding: 8px 15px; font-size: 14px; font-weight: bold; text-align: center;">
+                            -{{ product.discount_percentage }}%
+                        </div>
+                    </td>
+                </tr>
+                {% endif %}
+
+                <!-- Product Image -->
+                <tr>
+                    <td style="padding: 15px; text-align: center; background-color: #f8f9fa;">
+                        {% if product.image %}
+                        <a href="{{ product.url }}" style="text-decoration: none;">
+                            <img src="{{ product.image }}" alt="{{ product.name }}" style="width: 100%; max-width: 120px; height: 120px; object-fit: contain; border-radius: 8px;">
+                        </a>
+                        {% else %}
+                        <div style="width: 120px; height: 120px; background-color: #e0e0e0; border-radius: 8px; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+                            <span style="font-size: 40px;">📦</span>
+                        </div>
+                        {% endif %}
+                    </td>
+                </tr>
+
+                <!-- Product Info -->
+                <tr>
+                    <td style="padding: 15px;">
+                        <p style="font-size: 14px; color: #333; font-weight: bold; margin: 0 0 5px; line-height: 1.4; min-height: 40px;">
+                            {{ product.name|truncatewords:8 }}
+                        </p>
+
+                        {% if product.brand %}
+                        <p style="font-size: 11px; color: #888; margin: 0 0 10px;">{{ product.brand }}</p>
+                        {% endif %}
+
+                        <div style="margin: 10px 0;">
+                            <span style="font-size: 20px; color: #e53935; font-weight: bold;">{{ product.price }} د.أ</span>
+                            {% if product.old_price %}
+                            <br>
+                            <span style="font-size: 13px; color: #999; text-decoration: line-through;">{{ product.old_price }} د.أ</span>
+                            {% endif %}
+                        </div>
+
+                        <a href="{{ product.url }}" style="display: inline-block; padding: 10px 20px; background: linear-gradient(135deg, #e53935 0%, #c62828 100%); color: #ffffff !important; text-decoration: none; border-radius: 25px; font-size: 12px; font-weight: bold;">
+                            اشتري الآن | Buy Now
+                        </a>
+                    </td>
+                </tr>
+            </table>
+        </td>
+        {% if forloop.counter|divisibleby:2 or forloop.last %}
+        {% if not forloop.counter|divisibleby:2 %}
+        <td style="width: 48%;"></td>
+        {% endif %}
+    </tr>
+    {% endif %}
+    {% endfor %}
+</table>
+{% endif %}
+
+<div class="btn-container" style="margin: 30px 0;">
+    <a href="{{ site_url }}/special-offers/" class="btn-primary" style="background: linear-gradient(135deg, #e53935 0%, #c62828 100%);">
+        تصفح جميع العروض
+        <br>
+        <span style="font-size: 12px;">View All Offers</span>
+    </a>
+</div>
+
+<div class="divider"></div>
+
+<!-- Coupon Code Section -->
+{% if coupon_code %}
+<div style="text-align: center; background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); border-radius: 15px; padding: 25px; margin: 20px 0;">
+    <p style="color: #ffffff; font-size: 16px; margin: 0 0 10px;">
+        🎁 <strong>كود خصم إضافي حصري للمشتركين</strong>
+        <br>
+        <span style="font-size: 12px;">Exclusive Subscriber Discount Code</span>
+    </p>
+    <div style="background-color: #ffffff; display: inline-block; padding: 12px 30px; border-radius: 8px; margin: 10px 0;">
+        <span style="font-size: 24px; font-weight: bold; color: #388e3c; letter-spacing: 3px;">{{ coupon_code }}</span>
+    </div>
+    <p style="color: rgba(255,255,255,0.9); font-size: 13px; margin: 10px 0 0;">
+        خصم {{ coupon_value|default:"10%" }} على طلبك القادم
+        <br>
+        <span style="font-size: 11px;">{{ coupon_value|default:"10%" }} off your next order</span>
+    </p>
+</div>
+{% endif %}
+
+<!-- Why Shop With Us -->
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin: 25px 0;">
+    <tr>
+        <td style="text-align: center; padding: 15px; background-color: #f5f5f5; border-radius: 10px; margin: 0 5px;">
+            <span style="font-size: 28px;">✅</span>
+            <p style="margin: 8px 0 0; font-size: 12px; color: #333;">منتجات أصلية 100%<br><span style="color: #888;">100% Genuine</span></p>
+        </td>
+        <td style="width: 10px;"></td>
+        <td style="text-align: center; padding: 15px; background-color: #f5f5f5; border-radius: 10px; margin: 0 5px;">
+            <span style="font-size: 28px;">🔒</span>
+            <p style="margin: 8px 0 0; font-size: 12px; color: #333;">دفع آمن<br><span style="color: #888;">Secure Payment</span></p>
+        </td>
+        <td style="width: 10px;"></td>
+        <td style="text-align: center; padding: 15px; background-color: #f5f5f5; border-radius: 10px; margin: 0 5px;">
+            <span style="font-size: 28px;">🚚</span>
+            <p style="margin: 8px 0 0; font-size: 12px; color: #333;">توصيل سريع<br><span style="color: #888;">Fast Delivery</span></p>
+        </td>
+    </tr>
+</table>
+
+<div class="info-box">
+    <p>
+        <strong>💡 نصيحة:</strong> أضف المنتجات إلى سلة التسوق الآن قبل نفاد الكمية!
+        <br>
+        <span style="font-size: 12px; color: #666;"><strong>Tip:</strong> Add products to cart now before they run out!</span>
+    </p>
+</div>
+{% endblock %}

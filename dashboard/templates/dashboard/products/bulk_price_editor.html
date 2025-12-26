@@ -1,0 +1,684 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{% trans 'محرر الأسعار الجماعي' %}{% endblock %}
+{% block page_title %}{% trans 'محرر الأسعار الجماعي' %}{% endblock %}
+{% block current_page %}{% trans 'تعديل أسعار المتغيرات' %}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_products' %}">{% trans 'المنتجات' %}</a></li>
+<li class="breadcrumb-item active">{% trans 'محرر الأسعار' %}</li>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+<style>
+    .price-input {
+        max-width: 120px;
+        text-align: left;
+        direction: ltr;
+    }
+    .price-cell {
+        white-space: nowrap;
+    }
+    .product-name-cell {
+        max-width: 250px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .variant-name {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    .sku-badge {
+        font-size: 0.75rem;
+        font-family: monospace;
+    }
+    .filters-card {
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .stats-badge {
+        font-size: 1.1rem;
+        padding: 8px 16px;
+    }
+    .table-responsive {
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+    .sticky-header thead th {
+        position: sticky;
+        top: 0;
+        background-color: #f8f9fa;
+        z-index: 10;
+    }
+    .price-changed {
+        background-color: #fff3cd !important;
+        transition: background-color 0.3s ease;
+    }
+    .save-indicator {
+        display: none;
+        color: #198754;
+        margin-left: 5px;
+    }
+    .btn-save-all {
+        position: sticky;
+        bottom: 20px;
+        z-index: 100;
+    }
+    .stock-badge {
+        min-width: 40px;
+        display: inline-block;
+    }
+    .current-price-display {
+        font-weight: 600;
+        color: #0d6efd;
+    }
+    .old-price-display {
+        text-decoration: line-through;
+        color: #dc3545;
+        font-size: 0.85rem;
+    }
+    .new-price-display {
+        font-weight: 600;
+        color: #198754;
+        font-size: 0.95rem;
+    }
+    .change-percentage {
+        font-size: 0.8rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+    .change-positive {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    .change-negative {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    .view-product-link {
+        font-size: 0.8rem;
+        text-decoration: none;
+    }
+    .view-product-link:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- بطاقة الفلاتر -->
+<div class="card filters-card mb-4">
+    <div class="card-body">
+        <form method="get" id="filters-form">
+            <div class="row g-3 align-items-center">
+                <!-- فلتر الفئة -->
+                <div class="col-auto">
+                    <label class="col-form-label fw-bold">
+                        <i class="fa fa-folder me-1"></i> {% trans 'الفئة' %}
+                    </label>
+                </div>
+                <div class="col-md-2">
+                    <select name="category" id="category_filter" class="form-select select2">
+                        <option value="">{% trans 'اختر...' %}</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
+                            {% if category.level == 1 %}&nbsp;&nbsp;{% elif category.level == 2 %}&nbsp;&nbsp;&nbsp;&nbsp;{% elif category.level >= 3 %}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{% endif %}{{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- فلتر العلامة التجارية -->
+                <div class="col-auto">
+                    <label class="col-form-label fw-bold">
+                        <i class="fa fa-tag me-1"></i> {% trans 'العلامة التجارية' %}
+                    </label>
+                </div>
+                <div class="col-md-2">
+                    <select name="brand" id="brand_filter" class="form-select select2">
+                        <option value="">{% trans 'اختر...' %}</option>
+                        {% for brand in brands %}
+                        <option value="{{ brand.id }}" {% if selected_brand == brand.id|stringformat:"s" %}selected{% endif %}>
+                            {{ brand.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- حقل البحث -->
+                <div class="col-auto">
+                    <label class="col-form-label fw-bold">
+                        <i class="fa fa-search me-1"></i> {% trans 'بحث' %}
+                    </label>
+                </div>
+                <div class="col-md-3">
+                    <input type="text" name="q" class="form-control"
+                           placeholder="{% trans 'ابحث باسم المنتج أو المتغير أو SKU...' %}"
+                           value="{{ search_query }}">
+                </div>
+
+                <!-- أزرار التصفية -->
+                <div class="col-auto">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa fa-filter me-1"></i> {% trans 'تصفية' %}
+                        </button>
+                        <a href="{% url 'dashboard:bulk_price_editor' %}" class="btn btn-outline-secondary">
+                            <i class="fa fa-times"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            {% if product_ids %}
+            <input type="hidden" name="products" value="{{ product_ids }}">
+            <div class="mt-3">
+                <span class="badge bg-info">
+                    <i class="fa fa-info-circle me-1"></i>
+                    {% trans 'يتم عرض متغيرات المنتجات المحددة فقط' %}
+                </span>
+                <a href="{% url 'dashboard:bulk_price_editor' %}" class="btn btn-sm btn-outline-secondary ms-2">
+                    {% trans 'عرض الكل' %}
+                </a>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- إحصائيات سريعة -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-light border-0">
+            <div class="card-body text-center py-3">
+                <h5 class="mb-0">
+                    <i class="fa fa-box text-info me-2"></i>
+                    <span class="stats-badge badge bg-info">{{ total_products|intcomma }}</span>
+                    {% trans 'منتج' %}
+                    <span class="text-muted mx-2">|</span>
+                    <i class="fa fa-cubes text-primary me-2"></i>
+                    <span class="stats-badge badge bg-primary">{{ total_variants|intcomma }}</span>
+                    {% trans 'متغير' %}
+                </h5>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-light border-0">
+            <div class="card-body text-center py-3">
+                <h5 class="mb-0">
+                    <i class="fa fa-list-ol text-success me-2"></i>
+                    {% trans 'عرض' %}
+                    <span class="text-success">{{ variants.start_index }}-{{ variants.end_index }}</span>
+                    {% trans 'من' %}
+                    <span class="stats-badge badge bg-success">{{ variants.paginator.count|intcomma }}</span>
+                </h5>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-light border-0">
+            <div class="card-body text-center py-3">
+                <h5 class="mb-0 text-muted" id="changes-counter">
+                    <i class="fa fa-edit me-2"></i>
+                    <span id="changes-count">0</span> {% trans 'تغيير معلق' %}
+                </h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- جدول المتغيرات -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fa fa-money-bill-wave text-success me-2"></i>
+            {% trans 'متغيرات المنتجات وأسعارها' %}
+        </h5>
+        <div>
+            <a href="{% url 'dashboard:dashboard_products' %}" class="btn btn-outline-secondary btn-sm me-2">
+                <i class="fa fa-arrow-right me-1"></i> {% trans 'العودة للمنتجات' %}
+            </a>
+        </div>
+    </div>
+
+    <div class="card-body p-0">
+        {% if variants %}
+        <form method="post" id="bulk-price-form">
+            {% csrf_token %}
+
+            <div class="table-responsive">
+                <table class="table table-hover table-striped sticky-header mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="50">#</th>
+                            <th>{% trans 'المنتج' %}</th>
+                            <th>{% trans 'العلامة' %}</th>
+                            <th>{% trans 'المتغير' %}</th>
+                            <th>{% trans 'SKU' %}</th>
+                            <th>{% trans 'الفئة' %}</th>
+                            <th width="80">{% trans 'المخزون' %}</th>
+                            <th>{% trans 'السعر الحالي' %}</th>
+                            <th width="140">{% trans 'السعر الجديد' %}</th>
+                            <th width="100">{% trans 'التغيير' %}</th>
+                            <th width="80">{% trans 'عرض' %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for variant in variants %}
+                        <tr data-variant-id="{{ variant.id }}">
+                            <td class="text-muted">{{ forloop.counter|add:variants.start_index|add:-1 }}</td>
+                            <td class="product-name-cell" title="{{ variant.product.name }}">
+                                <a href="{% url 'dashboard:dashboard_product_detail' product_id=variant.product.id %}"
+                                   class="text-decoration-none fw-bold">
+                                    {{ variant.product.name }}
+                                </a>
+                            </td>
+                            <td>
+                                {% if variant.product.brand %}
+                                <span class="badge bg-info text-white">{{ variant.product.brand.name }}</span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="variant-name">{{ variant.name }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary sku-badge">{{ variant.sku }}</span>
+                            </td>
+                            <td>
+                                {% if variant.product.category %}
+                                <span class="badge bg-light text-dark">{{ variant.product.category.name }}</span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if variant.stock_quantity is not None %}
+                                    {% if variant.stock_quantity > 10 %}
+                                    <span class="badge bg-success">{{ variant.stock_quantity }}</span>
+                                    {% elif variant.stock_quantity > 0 %}
+                                    <span class="badge bg-warning text-dark">{{ variant.stock_quantity }}</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">0</span>
+                                    {% endif %}
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="price-cell">
+                                <span class="current-price-display" id="current-price-{{ variant.id }}">
+                                    {{ variant.variant_base_price|floatformat:2 }} {% trans 'د.أ' %}
+                                </span>
+                                {% if variant.has_discount %}
+                                <br>
+                                <span class="old-price-display">
+                                    {% trans 'بعد الخصم:' %} {{ variant.current_price|floatformat:2 }} {% trans 'د.أ' %}
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="input-group input-group-sm">
+                                    <input type="number"
+                                           name="price_{{ variant.id }}"
+                                           id="price_{{ variant.id }}"
+                                           class="form-control price-input"
+                                           step="0.01"
+                                           min="0.01"
+                                           placeholder="{{ variant.variant_base_price|floatformat:2 }}"
+                                           data-original-price="{{ variant.variant_base_price }}"
+                                           tabindex="{{ forloop.counter }}"
+                                           oninput="handlePriceInput(this)">
+                                    <span class="input-group-text">{% trans 'د.أ' %}</span>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <span id="change-display-{{ variant.id }}" class="change-percentage d-none">
+                                    --
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <a href="{% url 'products:product_detail' slug=variant.product.slug %}"
+                                   target="_blank"
+                                   class="btn btn-sm btn-outline-primary view-product-link"
+                                   title="{% trans 'عرض المنتج على الموقع' %}">
+                                    <i class="fa fa-external-link-alt"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- قسم تأكيد الحفظ المضمن (مخفي افتراضياً) -->
+            <div id="inline-confirm-section" class="card-footer bg-warning-subtle border-warning d-none">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <i class="fa fa-exclamation-triangle text-warning me-2"></i>
+                        <span>{% trans 'هل تريد حفظ' %} <strong id="inline-changes-count">0</strong> {% trans 'تغيير؟' %}</span>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-secondary btn-sm me-2" onclick="cancelConfirmation()">
+                            <i class="fa fa-times me-1"></i> {% trans 'إلغاء' %}
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="confirmAndSubmit()">
+                            <i class="fa fa-check me-1"></i> {% trans 'تأكيد الحفظ' %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- قسم لا توجد تغييرات (مخفي افتراضياً) -->
+            <div id="no-changes-section" class="card-footer bg-info-subtle border-info d-none">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <i class="fa fa-info-circle text-info fa-lg me-2"></i>
+                        <span>{% trans 'لم يتم إجراء أي تغييرات على الأسعار' %}</span>
+                    </div>
+                    <button type="button" class="btn btn-info btn-sm" onclick="hideNoChangesSection()">
+                        <i class="fa fa-check me-1"></i> {% trans 'حسناً' %}
+                    </button>
+                </div>
+            </div>
+
+            <!-- زر الحفظ العائم -->
+            <div id="save-footer" class="card-footer bg-white sticky-bottom py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted">
+                            <i class="fa fa-info-circle me-1"></i>
+                            {% trans 'اترك الحقل فارغًا للإبقاء على السعر الحالي' %}
+                        </span>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-outline-secondary me-2" onclick="clearAllChanges()">
+                            <i class="fa fa-undo me-1"></i> {% trans 'إلغاء التغييرات' %}
+                        </button>
+                        <button type="button" class="btn btn-success btn-lg" id="save-btn">
+                            <i class="fa fa-save me-1"></i> {% trans 'حفظ التغييرات' %}
+                            <span class="badge bg-light text-success ms-1" id="save-count">0</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <!-- التصفح -->
+        {% if variants.has_other_pages %}
+        <div class="card-footer bg-white">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if variants.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_brand %}&brand={{ selected_brand }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if product_ids %}&products={{ product_ids }}{% endif %}">
+                            <i class="fa fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ variants.previous_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_brand %}&brand={{ selected_brand }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if product_ids %}&products={{ product_ids }}{% endif %}">
+                            <i class="fa fa-angle-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in variants.paginator.page_range %}
+                        {% if variants.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                        {% elif num > variants.number|add:'-3' and num < variants.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_brand %}&brand={{ selected_brand }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if product_ids %}&products={{ product_ids }}{% endif %}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if variants.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ variants.next_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_brand %}&brand={{ selected_brand }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if product_ids %}&products={{ product_ids }}{% endif %}">
+                            <i class="fa fa-angle-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ variants.paginator.num_pages }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_brand %}&brand={{ selected_brand }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if product_ids %}&products={{ product_ids }}{% endif %}">
+                            <i class="fa fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <!-- لا توجد نتائج -->
+        <div class="text-center py-5">
+            <i class="fa fa-search fa-4x text-muted mb-3"></i>
+            <h5 class="text-muted">{% trans 'لا توجد متغيرات مطابقة' %}</h5>
+            <p class="text-muted">{% trans 'جرب تغيير معايير البحث أو التصفية' %}</p>
+            <a href="{% url 'dashboard:bulk_price_editor' %}" class="btn btn-primary mt-2">
+                <i class="fa fa-redo me-1"></i> {% trans 'إعادة تعيين الفلاتر' %}
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+$(document).ready(function() {
+    // تهيئة Select2
+    $('.select2').select2({
+        dir: $('html').attr('dir'),
+        placeholder: "{% trans 'اختر...' %}",
+        allowClear: true,
+        width: '100%'
+    });
+
+    // ربط زر الحفظ بحدث النقر
+    var saveBtn = document.getElementById('save-btn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            showConfirmation();
+        });
+    }
+});
+
+// تخزين معلومات التغييرات
+let changesData = {};
+
+// دالة موحدة للتعامل مع إدخال السعر - يتم تحديث العداد فوراً
+function handlePriceInput(input) {
+    const originalPrice = parseFloat(input.dataset.originalPrice);
+    const newValue = input.value.trim();
+    const variantId = input.id.replace('price_', '');
+    const changeDisplay = document.getElementById('change-display-' + variantId);
+    const row = input.closest('tr');
+
+    if (newValue !== '' && !isNaN(parseFloat(newValue))) {
+        const newPrice = parseFloat(newValue);
+        const difference = newPrice - originalPrice;
+        const percentChange = ((difference / originalPrice) * 100).toFixed(1);
+
+        // إظهار نسبة التغيير
+        changeDisplay.classList.remove('d-none', 'change-positive', 'change-negative');
+
+        if (difference > 0) {
+            changeDisplay.innerHTML = '<i class="fa fa-arrow-up me-1"></i>+' + percentChange + '%';
+            changeDisplay.classList.add('change-positive');
+        } else if (difference < 0) {
+            changeDisplay.innerHTML = '<i class="fa fa-arrow-down me-1"></i>' + percentChange + '%';
+            changeDisplay.classList.add('change-negative');
+        } else {
+            changeDisplay.classList.add('d-none');
+        }
+
+        // تمييز الصف وتخزين البيانات فقط إذا كان السعر مختلفاً
+        if (newPrice !== originalPrice) {
+            row.classList.add('price-changed');
+
+            const productName = row.querySelector('.product-name-cell a').textContent.trim();
+            const variantName = row.querySelector('.variant-name').textContent.trim();
+
+            changesData[variantId] = {
+                name: productName + ' - ' + variantName,
+                oldPrice: originalPrice,
+                newPrice: newPrice,
+                percentChange: percentChange,
+                isIncrease: difference > 0
+            };
+        } else {
+            // السعر نفسه - إزالة من التغييرات
+            row.classList.remove('price-changed');
+            changeDisplay.classList.add('d-none');
+            delete changesData[variantId];
+        }
+    } else {
+        // الحقل فارغ - إزالة من التغييرات
+        row.classList.remove('price-changed');
+        changeDisplay.classList.add('d-none');
+        delete changesData[variantId];
+    }
+
+    // تحديث العداد فوراً
+    updateChangesCounter();
+}
+
+function updateChangesCounter() {
+    const count = Object.keys(changesData).length;
+    document.getElementById('changes-count').textContent = count;
+    document.getElementById('save-count').textContent = count;
+
+    const counter = document.getElementById('changes-counter');
+    if (count > 0) {
+        counter.classList.remove('text-muted');
+        counter.classList.add('text-warning');
+    } else {
+        counter.classList.remove('text-warning');
+        counter.classList.add('text-muted');
+    }
+}
+
+function clearAllChanges() {
+    document.querySelectorAll('.price-input').forEach(input => {
+        input.value = '';
+        const variantId = input.id.replace('price_', '');
+        const changeDisplay = document.getElementById('change-display-' + variantId);
+        changeDisplay.classList.add('d-none');
+        input.closest('tr').classList.remove('price-changed');
+    });
+    changesData = {};
+    updateChangesCounter();
+
+    // إخفاء أقسام التأكيد والعودة للوضع الطبيعي
+    document.getElementById('inline-confirm-section').classList.add('d-none');
+    document.getElementById('no-changes-section').classList.add('d-none');
+    document.getElementById('save-footer').classList.remove('d-none');
+}
+
+function buildInlineChangesSummary() {
+    const tbody = document.getElementById('inline-changes-body');
+    tbody.innerHTML = '';
+
+    for (const [variantId, data] of Object.entries(changesData)) {
+        const row = document.createElement('tr');
+        const changeClass = data.isIncrease ? 'text-success' : 'text-danger';
+        const changeIcon = data.isIncrease ? 'fa-arrow-up' : 'fa-arrow-down';
+        const changeSign = data.isIncrease ? '+' : '';
+
+        row.innerHTML = `
+            <td class="small">${data.name}</td>
+            <td class="text-center text-muted">${data.oldPrice.toFixed(2)}</td>
+            <td class="text-center fw-bold">${data.newPrice.toFixed(2)}</td>
+            <td class="text-center ${changeClass}">
+                <i class="fa ${changeIcon} me-1"></i>${changeSign}${data.percentChange}%
+            </td>
+        `;
+        tbody.appendChild(row);
+    }
+}
+
+// تأكيد قبل مغادرة الصفحة إذا كانت هناك تغييرات
+window.addEventListener('beforeunload', function(e) {
+    if (Object.keys(changesData).length > 0) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
+
+// عرض قسم التأكيد المضمن
+function showConfirmation() {
+    const actualChangesCount = Object.keys(changesData).length;
+    const noChangesSection = document.getElementById('no-changes-section');
+    const inlineConfirmSection = document.getElementById('inline-confirm-section');
+    const saveFooter = document.getElementById('save-footer');
+    const inlineChangesCount = document.getElementById('inline-changes-count');
+
+    if (actualChangesCount === 0) {
+        // عرض قسم لا توجد تغييرات
+        noChangesSection.classList.remove('d-none');
+        inlineConfirmSection.classList.add('d-none');
+        saveFooter.classList.add('d-none');
+        noChangesSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+
+    // تحديث عدد التغييرات
+    inlineChangesCount.textContent = actualChangesCount;
+
+    // إظهار قسم التأكيد وإخفاء زر الحفظ
+    inlineConfirmSection.classList.remove('d-none');
+    saveFooter.classList.add('d-none');
+    noChangesSection.classList.add('d-none');
+
+    // التمرير لعرض قسم التأكيد
+    inlineConfirmSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// إلغاء التأكيد والعودة لزر الحفظ
+function cancelConfirmation() {
+    const inlineConfirmSection = document.getElementById('inline-confirm-section');
+    const saveFooter = document.getElementById('save-footer');
+
+    inlineConfirmSection.style.display = 'none';
+    inlineConfirmSection.classList.add('d-none');
+    saveFooter.style.display = '';
+    saveFooter.classList.remove('d-none');
+}
+
+// إخفاء قسم لا توجد تغييرات
+function hideNoChangesSection() {
+    const noChangesSection = document.getElementById('no-changes-section');
+    const saveFooter = document.getElementById('save-footer');
+
+    noChangesSection.style.display = 'none';
+    noChangesSection.classList.add('d-none');
+    saveFooter.style.display = '';
+    saveFooter.classList.remove('d-none');
+}
+
+// تأكيد وإرسال النموذج
+function confirmAndSubmit() {
+    // إعادة تعيين المتغيرات لتجنب رسالة beforeunload
+    changesData = {};
+
+    // إرسال النموذج
+    const form = document.getElementById('bulk-price-form');
+    if (form) {
+        form.submit();
+    }
+}
+</script>
+{% endblock %}

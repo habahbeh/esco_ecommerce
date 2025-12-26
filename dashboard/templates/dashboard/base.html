@@ -171,6 +171,10 @@
                                 {% if perms.products.view_brand %}
                                 <li><a href="{% url 'dashboard:dashboard_brands' %}">العلامات التجارية</a></li>
                                 {% endif %}
+
+                                {% if perms.products.view_productdiscount or request.user.is_superuser %}
+                                <li><a href="{% url 'dashboard:dashboard_discounts' %}">خصومات المنتجات</a></li>
+                                {% endif %}
                             </ul>
                         </li>
                         {% endif %}
@@ -304,6 +308,10 @@
                             <ul class="submenu">
                                 {% if perms.core.view_sitesettings or request.user.is_superuser %}
                                     <li><a href="{% url 'dashboard:dashboard_site_settings' %}">إعدادات الموقع</a></li>
+                                {% endif %}
+
+                                {% if request.user.is_superuser %}
+                                    <li><a href="{% url 'dashboard:dashboard_shipping_settings' %}">إعدادات الشحن</a></li>
                                 {% endif %}
 
                                 {% if perms.core.view_slideritem or request.user.is_superuser %}

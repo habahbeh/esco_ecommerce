@@ -1107,7 +1107,22 @@ class Product(TimeStampedModel, SEOModel):
 
         # Update stock status based on quantity
         if self.track_inventory:
-            available_qty = self.stock_quantity - self.reserved_quantity
+            # Check if product has variants
+            if self.pk:  # Only check variants if product already exists
+                from django.db.models import Sum
+                variants_stock = self.variants.filter(is_active=True).aggregate(
+                    total=Sum('stock_quantity')
+                )['total']
+
+                if variants_stock is not None and variants_stock > 0:
+                    # Product has variants with stock - use variants total
+                    available_qty = variants_stock
+                else:
+                    # No variants or no variant stock - use product stock
+                    available_qty = self.stock_quantity - self.reserved_quantity
+            else:
+                available_qty = self.stock_quantity - self.reserved_quantity
+
             if available_qty <= 0:
                 self.stock_status = 'out_of_stock'
             elif available_qty <= self.min_stock_level:
@@ -1177,18 +1192,26 @@ class Product(TimeStampedModel, SEOModel):
 
     @property
     def current_price(self):
-        """Calculate current price with active discount"""
-        if self.has_discount:
+        """Calculate current price with active discount (product-level or campaign)"""
+        # First check product-level discount
+        if self._has_product_discount:
             if self.discount_percentage > 0:
                 discount = self.base_price * (self.discount_percentage / 100)
                 return self.base_price - discount
             elif self.discount_amount > 0:
                 return self.base_price - self.discount_amount
+
+        # Then check campaign discounts
+        campaign_discount = self.get_best_campaign_discount()
+        if campaign_discount:
+            discount_amount = campaign_discount.calculate_discount_amount(self.base_price)
+            return self.base_price - discount_amount
+
         return self.base_price
 
     @property
-    def has_discount(self):
-        """Check if product has active discount"""
+    def _has_product_discount(self):
+        """Check if product has active product-level discount"""
         now = timezone.now()
         has_discount_value = self.discount_percentage > 0 or self.discount_amount > 0
 
@@ -1206,6 +1229,95 @@ class Product(TimeStampedModel, SEOModel):
         return True
 
     @property
+    def has_discount(self):
+        """Check if product has active discount (product-level or campaign)"""
+        if self._has_product_discount:
+            return True
+        # Check for campaign discounts
+        return self.get_best_campaign_discount() is not None
+
+    def get_best_campaign_discount(self):
+        """
+        Get the best applicable campaign discount for this product.
+
+        Priority order (by specificity - most specific wins):
+        1. specific_products - Explicitly selected products
+        2. category_and_brand - Must match both category AND brand
+        3. brand - Specific brand targeting
+        4. category - Category-wide discount
+        5. all_products / minimum_purchase - Store-wide discounts
+
+        Within the same priority level, the discount with highest value wins.
+        """
+        from products.models import ProductDiscount
+        applicable_discounts = ProductDiscount.get_applicable_discounts_for_product(self)
+
+        if not applicable_discounts:
+            return None
+
+        # Filter out discounts that require coupon code (those are applied at checkout)
+        auto_discounts = [d for d in applicable_discounts if not d.requires_coupon_code]
+
+        if not auto_discounts:
+            return None
+
+        # Filter out buy_x_get_y discounts for single product display
+        # These only apply when quantity >= buy_quantity (at checkout)
+        display_discounts = [d for d in auto_discounts if d.discount_type != 'buy_x_get_y']
+
+        if not display_discounts:
+            return None
+
+        # Define priority order (lower number = higher priority)
+        PRIORITY_ORDER = {
+            'specific_products': 1,
+            'category_and_brand': 2,
+            'brand': 3,
+            'category': 4,
+            'all_products': 5,
+            'minimum_purchase': 5,
+        }
+
+        # Group discounts by priority level
+        priority_groups = {}
+        for discount in display_discounts:
+            priority = PRIORITY_ORDER.get(discount.application_type, 99)
+            if priority not in priority_groups:
+                priority_groups[priority] = []
+            priority_groups[priority].append(discount)
+
+        # Get the highest priority group (lowest number)
+        if not priority_groups:
+            return None
+
+        highest_priority = min(priority_groups.keys())
+        best_priority_discounts = priority_groups[highest_priority]
+
+        # Within the same priority, find the discount with best value
+        best_discount = None
+        best_discount_amount = Decimal('0.00')
+
+        for discount in best_priority_discounts:
+            discount_amount = discount.calculate_discount_amount(self.base_price)
+            if discount_amount > best_discount_amount:
+                best_discount_amount = discount_amount
+                best_discount = discount
+
+        return best_discount
+
+    def get_active_campaign_discount(self):
+        """Get active campaign discount info for display"""
+        discount = self.get_best_campaign_discount()
+        if discount:
+            return {
+                'name': discount.name,
+                'type': discount.discount_type,
+                'value': discount.value,
+                'discount_amount': discount.calculate_discount_amount(self.base_price),
+            }
+        return None
+
+    @property
     def savings_amount(self):
         """Calculate savings amount"""
         if self.has_discount:
@@ -1221,7 +1333,19 @@ class Product(TimeStampedModel, SEOModel):
 
     @property
     def available_quantity(self):
-        """Get available quantity (stock - reserved)"""
+        """Get available quantity (stock - reserved) or total variant stock if product has variants"""
+        # Check if product has active variants with stock
+        if self.pk:
+            from django.db.models import Sum
+            variants_stock = self.variants.filter(is_active=True).aggregate(
+                total=Sum('stock_quantity')
+            )['total']
+
+            if variants_stock is not None and variants_stock > 0:
+                # Return total variant stock
+                return variants_stock
+
+        # Fallback to product's own stock
         return max(0, self.stock_quantity - self.reserved_quantity)
 
     @property
@@ -1798,11 +1922,41 @@ class ProductVariant(TimeStampedModel):
         return f"{self.product.name} - {self.name}"
 
     @property
+    def variant_base_price(self):
+        """Get base price for this variant"""
+        return self.base_price if self.base_price else self.product.base_price
+
+    @property
     def current_price(self):
-        """Get current price (variant or product price)"""
-        if self.base_price:
-            return self.base_price
-        return self.product.current_price
+        """Get current price (variant or product price) with campaign discount applied"""
+        price = self.variant_base_price
+
+        # Apply campaign discount from the product (brand/category discounts)
+        campaign_discount = self.product.get_best_campaign_discount()
+        if campaign_discount:
+            discount_amount = campaign_discount.calculate_discount_amount(price)
+            return price - discount_amount
+
+        return price
+
+    @property
+    def has_discount(self):
+        """Check if variant has active discount (from campaign)"""
+        return self.product.get_best_campaign_discount() is not None
+
+    @property
+    def savings_amount(self):
+        """Calculate savings amount for this variant"""
+        if self.has_discount:
+            return self.variant_base_price - self.current_price
+        return Decimal('0.00')
+
+    @property
+    def savings_percentage(self):
+        """Calculate savings percentage for this variant"""
+        if self.has_discount and self.variant_base_price > 0:
+            return int((self.savings_amount / self.variant_base_price) * 100)
+        return 0
 
     @property
     def available_quantity(self):
@@ -2418,13 +2572,13 @@ class ProductDiscount(TimeStampedModel):
     DISCOUNT_TYPE_CHOICES = [
         ('percentage', _('نسبة مئوية')),
         ('fixed_amount', _('مبلغ ثابت')),
-        ('buy_x_get_y', _('اشتري X واحصل على Y')),
-        ('free_shipping', _('شحن مجاني')),
     ]
 
     APPLICATION_TYPE_CHOICES = [
         ('all_products', _('جميع المنتجات')),
         ('category', _('فئة محددة')),
+        ('brand', _('علامة تجارية محددة')),
+        ('category_and_brand', _('فئة وعلامة تجارية')),
         ('specific_products', _('منتجات محددة')),
         ('minimum_purchase', _('حد أدنى للشراء')),
     ]
@@ -2486,7 +2640,17 @@ class ProductDiscount(TimeStampedModel):
         null=True,
         blank=True,
         related_name='discounts',
-        verbose_name=_("الفئة")
+        verbose_name=_("الفئة"),
+        help_text=_("اختر الفئة لتطبيق الخصم على جميع منتجاتها")
+    )
+    brand = models.ForeignKey(
+        Brand,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='discounts',
+        verbose_name=_("العلامة التجارية"),
+        help_text=_("اختر العلامة التجارية لتطبيق الخصم على جميع منتجاتها")
     )
     products = models.ManyToManyField(
         Product,
@@ -2646,9 +2810,29 @@ class ProductDiscount(TimeStampedModel):
                 'category': _("يجب تحديد الفئة عند اختيار نوع التطبيق 'فئة محددة'")
             })
 
+        if self.application_type == 'brand' and not self.brand:
+            raise ValidationError({
+                'brand': _("يجب تحديد العلامة التجارية عند اختيار نوع التطبيق 'علامة تجارية محددة'")
+            })
+
+        if self.application_type == 'category_and_brand':
+            if not self.category:
+                raise ValidationError({
+                    'category': _("يجب تحديد الفئة عند اختيار نوع التطبيق 'فئة وعلامة تجارية'")
+                })
+            if not self.brand:
+                raise ValidationError({
+                    'brand': _("يجب تحديد العلامة التجارية عند اختيار نوع التطبيق 'فئة وعلامة تجارية'")
+                })
+
         if self.application_type == 'specific_products' and not self.products.exists():
             raise ValidationError({
                 'products': _("يجب تحديد المنتجات عند اختيار نوع التطبيق 'منتجات محددة'")
+            })
+
+        if self.application_type == 'minimum_purchase' and not self.min_purchase_amount:
+            raise ValidationError({
+                'min_purchase_amount': _("يجب تحديد الحد الأدنى للشراء عند اختيار نوع التطبيق 'حد أدنى للشراء'")
             })
 
         # Validate coupon code requirement
@@ -2719,24 +2903,50 @@ class ProductDiscount(TimeStampedModel):
             return True
 
         elif self.application_type == 'category':
-            if self.category:
+            if self.category and product.category:
                 # Check if product is in this category or subcategory
                 product_categories = product.category.get_all_parents(include_self=True)
                 return self.category in product_categories
 
+        elif self.application_type == 'brand':
+            if self.brand and product.brand:
+                return product.brand.id == self.brand.id
+
+        elif self.application_type == 'category_and_brand':
+            # Must match both category AND brand
+            if self.category and self.brand and product.category and product.brand:
+                product_categories = product.category.get_all_parents(include_self=True)
+                category_match = self.category in product_categories
+                brand_match = product.brand.id == self.brand.id
+                return category_match and brand_match
+
         elif self.application_type == 'specific_products':
             return self.products.filter(id=product.id).exists()
 
+        elif self.application_type == 'minimum_purchase':
+            # minimum_purchase applies to all products, but cart total is checked separately
+            # The cart context processor will verify min_purchase_amount is met
+            return True
+
         return False
 
-    def calculate_discount_amount(self, original_price, quantity=1):
-        """Calculate discount amount for given price and quantity"""
+    def calculate_discount_amount(self, original_price, quantity=1, apply_max_cap=True):
+        """
+        Calculate discount amount for given price and quantity
+
+        Args:
+            original_price: The original price to calculate discount from
+            quantity: The quantity of items
+            apply_max_cap: Whether to apply max_discount_amount cap per item.
+                          Set to False when calculating cart totals where the cap
+                          will be applied to the total discount instead.
+        """
         if not self.is_valid:
             return Decimal('0.00')
 
         if self.discount_type == 'percentage':
             discount = original_price * (self.value / 100)
-            if self.max_discount_amount:
+            if apply_max_cap and self.max_discount_amount:
                 discount = min(discount, self.max_discount_amount)
             return discount
 
@@ -2747,7 +2957,7 @@ class ProductDiscount(TimeStampedModel):
             if quantity >= self.buy_quantity:
                 free_items = (quantity // self.buy_quantity) * self.get_quantity
                 free_items = min(free_items, quantity)  # Can't get more free than total
-                return original_price * (free_items / quantity) * (self.get_discount_percentage / 100)
+                return original_price * Decimal(free_items) / Decimal(quantity) * self.get_discount_percentage / Decimal('100')
 
         return Decimal('0.00')
 

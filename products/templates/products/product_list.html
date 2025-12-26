@@ -14,6 +14,44 @@
     {% endif %}
 {% endblock %}
 
+{% block extra_meta %}
+<!-- Open Graph Meta Tags for Social Media Sharing -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{{ site_settings.site_name|default:'ESCO' }}">
+{% if category %}
+<meta property="og:title" content="{% if LANGUAGE_CODE == 'en' and category.name_en %}{{ category.name_en }}{% else %}{{ category.name }}{% endif %} - {{ site_settings.site_name|default:'ESCO' }}">
+<meta property="og:description" content="{% if LANGUAGE_CODE == 'en' and category.description_en %}{{ category.description_en|truncatewords:30 }}{% else %}{{ category.description|truncatewords:30 }}{% endif %}">
+{% if category.image %}
+<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ category.image.url }}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+{% elif site_settings.logo %}
+<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ site_settings.logo.url }}">
+{% endif %}
+<meta property="og:url" content="{{ request.build_absolute_uri }}">
+{% else %}
+<meta property="og:title" content="{% trans 'جميع المنتجات' %} - {{ site_settings.site_name|default:'ESCO' }}">
+<meta property="og:description" content="{{ site_settings.site_description|default:'تصفح جميع المنتجات' }}">
+{% if site_settings.logo %}
+<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ site_settings.logo.url }}">
+{% endif %}
+<meta property="og:url" content="{{ request.build_absolute_uri }}">
+{% endif %}
+
+<!-- Twitter Card Meta Tags -->
+<meta name="twitter:card" content="summary_large_image">
+{% if category %}
+<meta name="twitter:title" content="{% if LANGUAGE_CODE == 'en' and category.name_en %}{{ category.name_en }}{% else %}{{ category.name }}{% endif %}">
+<meta name="twitter:description" content="{% if LANGUAGE_CODE == 'en' and category.description_en %}{{ category.description_en|truncatewords:30 }}{% else %}{{ category.description|truncatewords:30 }}{% endif %}">
+{% if category.image %}
+<meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ category.image.url }}">
+{% endif %}
+{% else %}
+<meta name="twitter:title" content="{% trans 'جميع المنتجات' %} - {{ site_settings.site_name|default:'ESCO' }}">
+<meta name="twitter:description" content="{{ site_settings.site_description|default:'تصفح جميع المنتجات' }}">
+{% endif %}
+{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'products/css/category_tree.css' %}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/magnific-popup.js/1.1.0/magnific-popup.min.css">

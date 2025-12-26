@@ -1,0 +1,144 @@
+{% extends "emails/base_email.html" %}
+
+{% block title %}تفعيل حسابك - Activate Your Account | ESCO{% endblock %}
+
+{% block content %}
+<div class="greeting">
+    مرحباً {% if name %}{{ name }}{% else %}عزيزنا العميل{% endif %}! 🎉
+    <br>
+    <span style="font-size: 14px; color: #666;">Welcome {% if name %}{{ name }}{% else %}Dear Customer{% endif %}!</span>
+</div>
+
+<p class="content-text">
+    شكراً لتسجيلك في <strong>ESCO</strong> - شركة المخازن الهندسية.
+    <br>
+    <span style="font-size: 13px; color: #666;">Thank you for registering at ESCO - Engineering Stores Company.</span>
+</p>
+
+<p class="content-text">
+    لتفعيل حسابك والبدء بالتسوق، يرجى الضغط على الزر أدناه:
+    <br>
+    <span style="font-size: 13px; color: #666;">To activate your account and start shopping, please click the button below:</span>
+</p>
+
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tr>
+        <td align="center" style="padding: 30px 0;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                    <td style="background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); background-color: #4caf50; border-radius: 8px; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);">
+                        <a href="{{ verification_url }}" target="_blank" style="display: inline-block; padding: 16px 45px; color: #ffffff; text-decoration: none; font-size: 18px; font-weight: bold; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                            ✓ تفعيل الحساب | Activate Account
+                        </a>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+
+<div class="info-box">
+    <p>
+        <strong>ملاحظة:</strong> إذا لم تقم بإنشاء حساب في ESCO، يمكنك تجاهل هذه الرسالة.
+        <br>
+        <span style="font-size: 12px; color: #666;"><strong>Note:</strong> If you didn't create an account at ESCO, you can ignore this email.</span>
+    </p>
+</div>
+
+<p class="content-text">
+    بعد تفعيل حسابك، ستتمكن من:
+    <br>
+    <span style="font-size: 13px; color: #666;">After activating your account, you'll be able to:</span>
+</p>
+
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin: 20px 0;">
+    <tr>
+        <td style="padding: 10px 0;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                    <td style="width: 40px; text-align: center;">
+                        <span style="font-size: 20px;">🛒</span>
+                    </td>
+                    <td style="padding-right: 10px;">
+                        <span style="color: #333333; font-size: 14px;">
+                            إتمام عمليات الشراء
+                            <br>
+                            <span style="color: #888; font-size: 12px;">Complete purchases</span>
+                        </span>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td style="padding: 10px 0;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                    <td style="width: 40px; text-align: center;">
+                        <span style="font-size: 20px;">📦</span>
+                    </td>
+                    <td style="padding-right: 10px;">
+                        <span style="color: #333333; font-size: 14px;">
+                            تتبع طلباتك
+                            <br>
+                            <span style="color: #888; font-size: 12px;">Track your orders</span>
+                        </span>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td style="padding: 10px 0;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                    <td style="width: 40px; text-align: center;">
+                        <span style="font-size: 20px;">❤️</span>
+                    </td>
+                    <td style="padding-right: 10px;">
+                        <span style="color: #333333; font-size: 14px;">
+                            حفظ المنتجات المفضلة
+                            <br>
+                            <span style="color: #888; font-size: 12px;">Save favorite products</span>
+                        </span>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td style="padding: 10px 0;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                    <td style="width: 40px; text-align: center;">
+                        <span style="font-size: 20px;">🎁</span>
+                    </td>
+                    <td style="padding-right: 10px;">
+                        <span style="color: #333333; font-size: 14px;">
+                            الحصول على عروض حصرية
+                            <br>
+                            <span style="color: #888; font-size: 12px;">Get exclusive offers</span>
+                        </span>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+
+<div class="divider"></div>
+
+<p class="content-text" style="font-size: 13px; color: #888888;">
+    إذا لم يعمل الزر أعلاه، يمكنك نسخ الرابط التالي ولصقه في متصفحك:
+    <br>
+    <span style="font-size: 11px;">If the button above doesn't work, copy and paste this link in your browser:</span>
+    <br>
+    <a href="{{ verification_url }}" style="color: #1e88e5; word-break: break-all;">{{ verification_url }}</a>
+</p>
+
+<p class="content-text" style="font-size: 13px; color: #888888;">
+    ⏰ هذا الرابط صالح لمدة {{ expiry_hours|default:"24" }} ساعة فقط.
+    <br>
+    <span style="font-size: 11px;">This link is valid for {{ expiry_hours|default:"24" }} hours only.</span>
+</p>
+{% endblock %}

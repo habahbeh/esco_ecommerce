@@ -4,6 +4,26 @@
 
 {% block title %}{% trans "التصنيفات" %} | {{ site_settings.site_name|default:"ESCO" }}{% endblock %}
 
+{% block extra_meta %}
+<!-- Open Graph Meta Tags for Social Media Sharing -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{{ site_settings.site_name|default:'ESCO' }}">
+<meta property="og:title" content="{% trans 'التصنيفات' %} - {{ site_settings.site_name|default:'ESCO' }}">
+<meta property="og:description" content="{% trans 'تصفح منتجاتنا حسب التصنيف' %}">
+{% if site_settings.logo %}
+<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ site_settings.logo.url }}">
+{% endif %}
+<meta property="og:url" content="{{ request.build_absolute_uri }}">
+
+<!-- Twitter Card Meta Tags -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{% trans 'التصنيفات' %} - {{ site_settings.site_name|default:'ESCO' }}">
+<meta name="twitter:description" content="{% trans 'تصفح منتجاتنا حسب التصنيف' %}">
+{% if site_settings.logo %}
+<meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ site_settings.logo.url }}">
+{% endif %}
+{% endblock %}
+
 {% block content %}
 <div class="container py-5">
     <div class="section-header text-center mb-5">

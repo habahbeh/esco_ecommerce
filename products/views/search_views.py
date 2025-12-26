@@ -609,9 +609,12 @@ def search_suggestions(request):
             if product_url != '#' and not product_url.startswith(('/en/', '/ar/')):
                 product_url = lang_prefix + product_url
 
+            # Use English name if language is English and name_en exists
+            product_title = product.name_en if current_lang == 'en' and product.name_en else product.name
+
             suggestions.append({
                 'type': 'product',
-                'title': product.name,
+                'title': product_title,
                 'url': product_url,
                 'image': main_image_url,
                 'price': str(current_price),
@@ -623,9 +626,12 @@ def search_suggestions(request):
             if category_url != '#' and not category_url.startswith(('/en/', '/ar/')):
                 category_url = lang_prefix + category_url
 
+            # Use English name if language is English and name_en exists
+            category_title = category.name_en if current_lang == 'en' and category.name_en else category.name
+
             suggestions.append({
                 'type': 'category',
-                'title': category.name,
+                'title': category_title,
                 'url': category_url,
                 'count': category.products.filter(
                     is_active=True,
@@ -644,9 +650,12 @@ def search_suggestions(request):
             if brand_url != '#' and not brand_url.startswith(('/en/', '/ar/')):
                 brand_url = lang_prefix + brand_url
 
+            # Use English name if language is English and name_en exists
+            brand_title = brand.name_en if current_lang == 'en' and brand.name_en else brand.name
+
             suggestions.append({
                 'type': 'brand',
-                'title': brand.name,
+                'title': brand_title,
                 'url': brand_url,
                 'count': brand.products.filter(
                     is_active=True,

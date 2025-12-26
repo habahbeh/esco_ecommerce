@@ -48,6 +48,29 @@
     -webkit-appearance: none;
     margin: 0;
 }
+
+/* Coupon eligible item styling */
+.coupon-eligible-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #198754;
+    background-color: #d1e7dd;
+    border-radius: 4px;
+    margin-top: 4px;
+}
+
+.coupon-discount-amount {
+    color: #198754;
+    font-size: 0.85rem;
+}
+
+.original-price-strike {
+    text-decoration: line-through;
+    color: #999;
+    font-size: 0.85rem;
+}
     </style>
     <div class="container py-5">
         <h1 class="mb-4">{% trans "سلة التسوق" %}</h1>
@@ -108,10 +131,20 @@
                     {% endif %}
                 </small>
             {% endif %}
+                                                        {% if item.coupon_eligible and applied_coupon %}
+                                                        <div class="coupon-eligible-badge">
+                                                            <i class="fas fa-tag me-1"></i>{% trans "خصم" %} {{ applied_coupon.code }}
+                                                        </div>
+                                                        {% endif %}
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td>{{ item.price|without_tax|floatformat:2 }} {% trans "د.أ" %}</td>
+                                            <td class="text-nowrap">
+                                                {% if item.has_automatic_discount %}
+                                                <span class="text-muted text-decoration-line-through me-2" style="font-size: 0.9rem;">{{ item.original_price|without_tax|floatformat:2 }}</span>
+                                                {% endif %}
+                                                <span class="fw-semibold">{{ item.price|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                                            </td>
                                           <td>
     <div class="quantity-selector" data-item-id="{{ item.id }}">
         <button type="button" class="quantity-btn minus-btn">
@@ -129,7 +162,19 @@
         </button>
     </div>
 </td>
-                                            <td>{{ item.subtotal|without_tax|floatformat:2 }} {% trans "د.أ" %}</td>
+                                            <td class="text-nowrap">
+                                                {% if item.coupon_eligible and item.coupon_discount > 0 %}
+                                                <span class="text-muted text-decoration-line-through me-2" style="font-size: 0.9rem;">{{ item.subtotal|without_tax|floatformat:2 }}</span>
+                                                <span class="fw-bold text-primary">{{ item.subtotal_after_coupon|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                                                <span class="badge bg-success ms-1" style="font-size: 0.7rem;">-{{ item.coupon_discount|without_tax|floatformat:2 }}</span>
+                                                {% elif item.has_automatic_discount %}
+                                                <span class="text-muted text-decoration-line-through me-2" style="font-size: 0.9rem;">{{ item.original_subtotal|without_tax|floatformat:2 }}</span>
+                                                <span class="fw-bold text-primary">{{ item.subtotal|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                                                <span class="badge bg-success ms-1" style="font-size: 0.7rem;">-{{ item.savings|without_tax|floatformat:2 }}</span>
+                                                {% else %}
+                                                <span class="fw-semibold">{{ item.subtotal|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                                                {% endif %}
+                                            </td>
                                             <td>
                                                 <form action="{% url 'cart:remove_from_cart' item.id %}" method="post"
                                                       class="d-inline">
@@ -168,46 +213,70 @@
         </div>
         <div class="card-body">
             {% if cart_items %}
-                <div class="mb-4" id="cart-summary-items">
+                <div class="mb-3" id="cart-summary-items">
                     {% for item in cart_items %}
-                        <div class="d-flex justify-content-between mb-2 cart-summary-item"
-                             id="summary-item-{{ item.id }}" data-item-id="{{ item.id }}">
-                            <div>
-                                <span>{% if LANGUAGE_CODE == 'en' %}
-                                    {{ item.product.name_en }}
-                                {% else %}
-                                    {{ item.product.name }}
-                                {% endif %}</span>
+                        <div class="cart-summary-item p-2 mb-2 bg-light rounded" id="summary-item-{{ item.id }}" data-item-id="{{ item.id }}">
+                            <!-- اسم المنتج والمتغير -->
+                            <div class="fw-semibold mb-1">
+                                {% if LANGUAGE_CODE == 'en' %}{{ item.product.name_en }}{% else %}{{ item.product.name }}{% endif %}
+                            </div>
+                            {% if item.variant %}
+                            <small class="text-muted d-block mb-2">
+                                {% if item.variant.attributes %}
+                                    {% for key, value in item.variant.attributes.items %}
+                                        {{ key }}: {{ value }}{% if not forloop.last %} | {% endif %}
+                                    {% endfor %}
+                                {% elif item.variant.variant_details %}
+                                    {{ item.variant.variant_details }}
+                                {% elif item.variant.options.all %}
+                                    {% for option in item.variant.options.all %}
+                                        {{ option.option_group.name }}: {{ option.name }}{% if not forloop.last %} | {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                            </small>
+                            {% endif %}
+
+                            <!-- تفاصيل السعر -->
+                            <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    {% if item.variant %}
-                                                <small class="text-muted">
-                                                    {% if item.variant.attributes %}
-                                                        {% for key, value in item.variant.attributes.items %}
-                                                            <span>{{ key }}: {{ value }}</span>{% if not forloop.last %}
-                                                            | {% endif %}
-                                                        {% endfor %}
-                                                    {% elif item.variant.variant_details %}
-                                                        {{ item.variant.variant_details }}
-                                                    {% elif item.variant.options.all %}
-                                                        {% for option in item.variant.options.all %}
-                                                            <span>{{ option.option_group.name }}: {{ option.name }}</span>
-                                                            {% if not forloop.last %} | {% endif %}
-                                                        {% endfor %}
-                                                    {% else %}
-                                                        {% for attr_value in item.variant.attribute_values.all %}
-                                                            <span>{{ attr_value.attribute.name }}: {{ attr_value.value }}</span>
-                                                            {% if not forloop.last %} | {% endif %}
-                                                        {% endfor %}
-                                                    {% endif %}
-                                                </small>
-                                            {% endif %}
+                                    <!-- الكمية × السعر -->
+                                    <small class="text-muted">
+                                        <span class="item-quantity">{{ item.quantity }}</span> ×
+                                        <span class="item-price">{{ item.price|without_tax|floatformat:2 }}</span>
+                                        {% if item.has_automatic_discount %}
+                                        <span class="text-decoration-line-through ms-1">{{ item.original_price|without_tax|floatformat:2 }}</span>
+                                        {% endif %}
+                                    </small>
                                 </div>
-                                <small class="text-muted d-block">
-                                    <span class="item-quantity">{{ item.quantity }}</span>
-                                    × <span class="item-price">{{ item.price|without_tax|floatformat:2 }}</span>
+                                <div class="text-end">
+                                    <!-- المجموع -->
+                                    {% if item.coupon_eligible and item.coupon_discount > 0 %}
+                                    <small class="text-decoration-line-through text-muted d-block">{{ item.subtotal|without_tax|floatformat:2 }}</small>
+                                    <span class="item-subtotal fw-bold">{{ item.subtotal_after_coupon|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                                    {% elif item.has_automatic_discount %}
+                                    <small class="text-decoration-line-through text-muted d-block">{{ item.original_subtotal|without_tax|floatformat:2 }}</small>
+                                    <span class="item-subtotal fw-bold text-success">{{ item.subtotal|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                                    {% else %}
+                                    <span class="item-subtotal fw-semibold">{{ item.subtotal|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- الخصومات المطبقة -->
+                            {% if item.has_automatic_discount and item.savings > 0 %}
+                            <div class="mt-1">
+                                <small class="text-success">
+                                    {% trans "وفرت" %} {{ item.savings|without_tax|floatformat:2 }} {% trans "د.أ" %}
                                 </small>
                             </div>
-                            <span class="item-subtotal">{{ item.subtotal|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                            {% endif %}
+                            {% if item.coupon_eligible and item.coupon_discount > 0 %}
+                            <div class="mt-1">
+                                <small class="text-success">
+                                    {% trans "خصم الكوبون" %} {{ item.coupon_discount|without_tax|floatformat:2 }} {% trans "د.أ" %}
+                                </small>
+                            </div>
+                            {% endif %}
                         </div>
                     {% endfor %}
                 </div>
@@ -215,26 +284,135 @@
                 <hr>
             {% endif %}
 
-            <div class="d-flex justify-content-between mb-3">
-                <span>{% trans "المجموع الفرعي" %}</span>
-                <span class="cart-subtotal">{{ cart_subtotal|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
-            </div>
-
-            <div class="d-flex justify-content-between mb-2">
-                <span>{% trans "الضريبة" %}</span>
-                <span class="cart-tax">{{ cart_tax|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+            <!-- كود الخصم - يظهر فقط إذا كانت هناك كوبونات متاحة -->
+            {% if has_coupon_discounts_available or applied_coupon %}
+            <div class="coupon-section mb-3">
+                <label class="form-label fw-bold">{% trans "كود الخصم" %}</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="coupon-code" placeholder="{% trans 'أدخل كود الخصم' %}" value="{{ applied_coupon.code|default:'' }}">
+                    <button class="btn btn-outline-primary" type="button" id="apply-coupon-btn">
+                        {% trans "تطبيق" %}
+                    </button>
+                </div>
+                <div id="coupon-message" class="mt-2"></div>
+                {% if applied_coupon %}
+                <div class="applied-coupon mt-2 p-2 bg-success bg-opacity-10 rounded">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-success">
+                            <i class="fas fa-check-circle me-1"></i>
+                            {% trans "كود الخصم مطبق:" %} <strong>{{ applied_coupon.code }}</strong>
+                        </span>
+                        <button type="button" class="btn btn-sm btn-link text-danger p-0" id="remove-coupon-btn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    {% if eligible_items_count > 0 %}
+                    <small class="text-muted d-block mt-1">
+                        <i class="fas fa-info-circle me-1"></i>
+                        {% blocktrans count counter=eligible_items_count %}يطبق على {{ counter }} منتج{% plural %}يطبق على {{ counter }} منتجات{% endblocktrans %}
+                    </small>
+                    {% else %}
+                    <small class="text-warning d-block mt-1">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        {% if applied_coupon.min_purchase_amount and cart_original_subtotal < applied_coupon.min_purchase_amount %}
+                        {% blocktrans with min_amount=applied_coupon.min_purchase_amount|without_tax|floatformat:0 %}لا يمكن تطبيق الخصم لأن المجموع أقل من {{ min_amount }} د.أ{% endblocktrans %}
+                        {% elif applied_coupon.min_quantity %}
+                        {% blocktrans with min_qty=applied_coupon.min_quantity %}الحد الأدنى للكمية {{ min_qty }} لتطبيق الخصم{% endblocktrans %}
+                        {% else %}
+                        {% trans "لا توجد منتجات مؤهلة لهذا الخصم في السلة" %}
+                        {% endif %}
+                    </small>
+                    {% endif %}
+                </div>
+                {% endif %}
             </div>
 
             <hr>
+            {% endif %}
 
-            <div class="d-flex justify-content-between mb-4">
-                <strong>{% trans "المجموع" %}</strong>
-                <strong class="cart-total">{{ cart_total|without_tax|floatformat:2 }} {% trans "د.أ" %}</strong>
+            <!-- ملخص الأسعار - Price Summary -->
+            <div class="price-summary">
+                <!-- 1. السعر الأصلي (قبل الخصم) - Original Price -->
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">{% trans "السعر الأصلي" %}</span>
+                    <span class="cart-original-subtotal text-muted">{{ cart_original_subtotal|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                </div>
+
+                <!-- 2. الخصم (إذا وجد) - Discount -->
+                {% if has_automatic_discount %}
+                <div class="d-flex justify-content-between mb-2 text-success automatic-discount-line">
+                    <span>{% trans "الخصم" %}
+                        {% if automatic_discount_info %}
+                            {% if automatic_discount_info.type == 'percentage' %}({{ automatic_discount_info.value|floatformat:0 }}%){% elif automatic_discount_info.type == 'fixed_amount' %}({{ automatic_discount_info.value|without_tax|floatformat:2 }} {% trans "د.أ" %}/{% trans "قطعة" %}){% endif %}
+                        {% endif %}
+                    </span>
+                    <span class="automatic-discount">-{{ automatic_discount_savings|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                </div>
+                {% endif %}
+
+                <!-- 3. خصم الكوبون (إذا وجد) - Coupon Discount -->
+                {% if coupon_discount and coupon_discount > 0 %}
+                <div class="d-flex justify-content-between mb-2 text-success coupon-discount-line">
+                    <span>{% trans "خصم الكوبون" %} ({{ applied_coupon.code }}){% if max_discount_applied %} <small class="text-muted">({% trans "الحد الأقصى" %})</small>{% endif %}</span>
+                    <span class="coupon-discount">-{{ coupon_discount|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                </div>
+                {% if max_discount_applied and applied_coupon.max_discount_amount %}
+                <div class="mb-2">
+                    <small class="text-muted"><i class="fas fa-info-circle me-1"></i>{% trans "تم تطبيق الحد الأقصى للخصم" %}: {{ applied_coupon.max_discount_amount|without_tax|floatformat:2 }} {% trans "د.أ" %}</small>
+                </div>
+                {% endif %}
+                {% endif %}
+
+                <hr class="my-2">
+
+                <!-- 4. المجموع الفرعي (بعد الخصم، قبل الضريبة) - Subtotal -->
+                <div class="d-flex justify-content-between mb-2">
+                    <span>{% trans "المجموع الفرعي" %}</span>
+                    <span class="cart-subtotal fw-semibold">{{ cart_subtotal_after_coupon|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                </div>
+
+                <!-- 5. الضريبة - Tax -->
+                <div class="d-flex justify-content-between mb-2">
+                    <span>{% trans "الضريبة" %} (16%)</span>
+                    <span class="cart-tax">{{ cart_tax_after_coupon|floatformat:2 }} {% trans "د.أ" %}</span>
+                </div>
+
+                <!-- 6. أجور النقل - Shipping -->
+                {% if shipping_enabled and cart_has_physical %}
+                <div class="d-flex justify-content-between mb-2">
+                    <span>
+                        {% trans "أجور النقل" %}
+                        <small class="text-muted">
+                            ({% if selected_shipping_city == 'amman' %}{% trans "عمان" %}{% else %}{% trans "باقي المحافظات" %}{% endif %})
+                        </small>
+                    </span>
+                    {% if cart_shipping > 0 %}
+                    <span class="cart-shipping">{{ cart_shipping|floatformat:2 }} {% trans "د.أ" %}</span>
+                    {% else %}
+                    <span class="cart-shipping text-success">{% trans "مجاني" %}</span>
+                    {% endif %}
+                </div>
+                <!-- اختيار المنطقة -->
+                <div class="mb-3">
+                    <select class="form-select form-select-sm" id="shipping-city-select">
+                        <option value="amman" {% if selected_shipping_city == 'amman' %}selected{% endif %}>{% trans "عمان" %} ({{ shipping_fee_amman|floatformat:2 }} {% trans "د.أ" %})</option>
+                        <option value="other" {% if selected_shipping_city == 'other' %}selected{% endif %}>{% trans "باقي المحافظات" %} ({{ shipping_fee_other|floatformat:2 }} {% trans "د.أ" %})</option>
+                    </select>
+                </div>
+                {% endif %}
+
+                <hr class="my-2">
+
+                <!-- 7. المجموع الكلي - Total -->
+                <div class="d-flex justify-content-between mb-3">
+                    <strong class="fs-5">{% trans "المجموع الكلي" %}</strong>
+                    <strong class="cart-total fs-5 text-primary">{{ cart_total|floatformat:2 }} {% trans "د.أ" %}</strong>
+                </div>
             </div>
 
-           <a href="/checkout/" class="btn btn-primary w-100">
-               {% trans "إتمام الطلب" %}
-           </a>
+            <a href="/checkout/" class="btn btn-primary w-100 py-2">
+                <i class="fas fa-lock me-2"></i>{% trans "إتمام الطلب" %}
+            </a>
         </div>
     </div>
 </div>
@@ -322,24 +500,149 @@
 
     // تحديث عرض السلة بالقيم الجديدة
    function updateCartDisplay(data) {
-    // تحديث كمية وإجمالي العنصر في الجدول الرئيسي
-    var itemRow = $('.quantity-selector[data-item-id="' + data.item_id + '"]').closest('tr');
-    itemRow.find('td:eq(3)').text(data.item_subtotal + ' د.أ');
+    // تحديث جميع العناصر بمعلومات الخصم (تلقائي + كوبون)
+    var itemsInfo = data.items_info || data.items_coupon_info || [];
+    if (itemsInfo.length > 0) {
+        itemsInfo.forEach(function(itemInfo) {
+            var itemRow = $('.quantity-selector[data-item-id="' + itemInfo.id + '"]').closest('tr');
+            var summaryItem = $('#summary-item-' + itemInfo.id);
+            var priceCell = itemRow.find('td:eq(1)');
+            var subtotalCell = itemRow.find('td:eq(3)');
 
-    // تحديث العنصر في ملخص الطلب
-    var summaryItem = $('#summary-item-' + data.item_id);
-    if (summaryItem.length) {
-        // تحديث الكمية
-        summaryItem.find('.item-quantity').text(data.item_quantity);
+            // تحديث خلية السعر في الجدول الرئيسي (أفقي)
+            if (itemInfo.has_automatic_discount) {
+                priceCell.html(
+                    '<span class="text-muted text-decoration-line-through me-2" style="font-size: 0.9rem;">' + itemInfo.original_price + '</span>' +
+                    '<span class="fw-semibold">' + itemInfo.price + ' د.أ</span>'
+                );
+            } else {
+                priceCell.html('<span class="fw-semibold">' + itemInfo.price + ' د.أ</span>');
+            }
 
-        // تحديث المجموع الفرعي للعنصر
-        summaryItem.find('.item-subtotal').text(data.item_subtotal + ' د.أ');
+            // تحديث خلية المجموع في الجدول الرئيسي (أفقي)
+            if (itemInfo.coupon_eligible && parseFloat(itemInfo.coupon_discount) > 0) {
+                subtotalCell.html(
+                    '<span class="text-muted text-decoration-line-through me-2" style="font-size: 0.9rem;">' + itemInfo.subtotal + '</span>' +
+                    '<span class="fw-bold text-primary">' + itemInfo.subtotal_after_coupon + ' د.أ</span>' +
+                    '<span class="badge bg-success ms-1" style="font-size: 0.7rem;">-' + itemInfo.coupon_discount + '</span>'
+                );
+            } else if (itemInfo.has_automatic_discount) {
+                subtotalCell.html(
+                    '<span class="text-muted text-decoration-line-through me-2" style="font-size: 0.9rem;">' + itemInfo.original_subtotal + '</span>' +
+                    '<span class="fw-bold text-primary">' + itemInfo.subtotal + ' د.أ</span>' +
+                    '<span class="badge bg-success ms-1" style="font-size: 0.7rem;">-' + itemInfo.savings + '</span>'
+                );
+            } else {
+                subtotalCell.html('<span class="fw-semibold">' + itemInfo.subtotal + ' د.أ</span>');
+            }
+
+            // تحديث العنصر في ملخص الطلب
+            if (summaryItem.length) {
+                var subtotalDiv = summaryItem.find('.text-end');
+                var priceSpan = summaryItem.find('.item-price');
+
+                // تحديث السعر
+                if (priceSpan.length) {
+                    priceSpan.text(itemInfo.price);
+                }
+
+                if (itemInfo.coupon_eligible && parseFloat(itemInfo.coupon_discount) > 0) {
+                    subtotalDiv.html(
+                        '<span class="text-muted text-decoration-line-through me-1">' + itemInfo.subtotal + '</span>' +
+                        '<span class="item-subtotal fw-bold">' + itemInfo.subtotal_after_coupon + ' د.أ</span>'
+                    );
+                } else if (itemInfo.has_automatic_discount) {
+                    subtotalDiv.html(
+                        '<span class="text-muted text-decoration-line-through me-1">' + itemInfo.original_subtotal + '</span>' +
+                        '<span class="item-subtotal fw-bold text-success">' + itemInfo.subtotal + ' د.أ</span>'
+                    );
+                } else {
+                    subtotalDiv.html('<span class="item-subtotal fw-semibold">' + itemInfo.subtotal + ' د.أ</span>');
+                }
+            }
+        });
+    } else {
+        // طريقة قديمة للتوافق
+        var itemRow = $('.quantity-selector[data-item-id="' + data.item_id + '"]').closest('tr');
+        itemRow.find('td:eq(3)').html('<span class="fw-semibold">' + data.item_subtotal + ' د.أ</span>');
+
+        var summaryItem = $('#summary-item-' + data.item_id);
+        if (summaryItem.length) {
+            summaryItem.find('.item-quantity').text(data.item_quantity);
+            summaryItem.find('.item-subtotal').text(data.item_subtotal + ' د.أ');
+        }
+    }
+
+    // تحديث الكمية في ملخص الطلب للعنصر المحدث
+    var updatedSummaryItem = $('#summary-item-' + data.item_id);
+    if (updatedSummaryItem.length) {
+        updatedSummaryItem.find('.item-quantity').text(data.item_quantity);
     }
 
     // تحديث إجماليات السلة
+    // 1. السعر الأصلي
+    $('.cart-original-subtotal').text(data.cart_original_subtotal + ' د.أ');
+
+    // 2. المجموع الفرعي (بعد الخصم)
     $('.cart-subtotal').text(data.cart_subtotal + ' د.أ');
+
+    // 3. الضريبة
     $('.cart-tax').text(data.cart_tax + ' د.أ');
+
+    // 4. المجموع الكلي
     $('.cart-total').text(data.cart_total + ' د.أ');
+
+    // تحديث خصم تلقائي (حملة)
+    var automaticDiscountLine = $('.automatic-discount-line');
+    if (data.has_automatic_discount && parseFloat(data.automatic_discount_savings) > 0) {
+        // تحديد نص الخصم بناءً على نوعه
+        var discountLabel = '{% trans "الخصم" %}';
+        if (data.automatic_discount_info) {
+            if (data.automatic_discount_info.type === 'percentage') {
+                discountLabel += ' (' + parseFloat(data.automatic_discount_info.value).toFixed(0) + '%)';
+            } else if (data.automatic_discount_info.type === 'fixed_amount') {
+                // Apply without_tax to fixed amount: value * 0.84
+                var valueWithoutTax = (parseFloat(data.automatic_discount_info.value) * 0.84).toFixed(2);
+                discountLabel += ' (' + valueWithoutTax + ' د.أ/قطعة)';
+            }
+        }
+
+        if (automaticDiscountLine.length) {
+            automaticDiscountLine.find('span:first').text(discountLabel);
+            $('.automatic-discount').text('-' + data.automatic_discount_savings + ' د.أ');
+            automaticDiscountLine.show();
+        } else {
+            // إضافة سطر الخصم التلقائي
+            var discountHtml = '<div class="d-flex justify-content-between mb-2 text-success automatic-discount-line">' +
+                '<span>' + discountLabel + '</span>' +
+                '<span class="automatic-discount">-' + data.automatic_discount_savings + ' د.أ</span>' +
+                '</div>';
+            $('.cart-original-subtotal').closest('.d-flex').after(discountHtml);
+        }
+    } else {
+        // إخفاء سطر الخصم التلقائي إذا لم يعد هناك خصم
+        automaticDiscountLine.hide();
+    }
+
+    // تحديث خصم الكوبون الإجمالي
+    var couponDiscountLine = $('.coupon-discount-line');
+    if (data.has_coupon && parseFloat(data.coupon_discount) > 0) {
+        if (couponDiscountLine.length) {
+            $('.coupon-discount').text('-' + data.coupon_discount + ' د.أ');
+            couponDiscountLine.show();
+        } else {
+            // إضافة سطر خصم الكوبون إذا لم يكن موجود
+            var couponHtml = '<div class="d-flex justify-content-between mb-2 text-success coupon-discount-line">' +
+                '<span>{% trans "خصم الكوبون" %} (' + data.coupon_code + ')</span>' +
+                '<span class="coupon-discount">-' + data.coupon_discount + ' د.أ</span>' +
+                '</div>';
+            var afterElement = $('.automatic-discount-line:visible').length ? $('.automatic-discount-line') : $('.cart-original-subtotal').closest('.d-flex');
+            afterElement.after(couponHtml);
+        }
+    } else {
+        // إخفاء سطر خصم الكوبون إذا لم يعد هناك خصم
+        couponDiscountLine.hide();
+    }
 
     // تحديث عدد العناصر في السلة (إذا كان موجودًا في الصفحة)
     $('.cart-count').text(data.cart_count);
@@ -364,6 +667,93 @@
         message.alert('close');
     }, 3000);
 }
+
+    // تطبيق كود الخصم
+    $('#apply-coupon-btn').click(function() {
+        var couponCode = $('#coupon-code').val().trim();
+        if (!couponCode) {
+            $('#coupon-message').html('<div class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>{% trans "الرجاء إدخال كود الخصم" %}</div>');
+            return;
+        }
+
+        var btn = $(this);
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+        $.ajax({
+            url: '{% url "cart:apply_coupon" %}',
+            type: 'POST',
+            data: {
+                'coupon_code': couponCode,
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    if (response.warning) {
+                        // الكوبون صالح لكن الحد الأدنى للشراء غير مستوفى
+                        $('#coupon-message').html('<div class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>' + response.message + '</div>');
+                    } else {
+                        $('#coupon-message').html('<div class="text-success"><i class="fas fa-check-circle me-1"></i>' + response.message + '</div>');
+                    }
+                    // إعادة تحميل الصفحة لتحديث الأسعار
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    $('#coupon-message').html('<div class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>' + response.message + '</div>');
+                }
+            },
+            error: function() {
+                $('#coupon-message').html('<div class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>{% trans "حدث خطأ أثناء تطبيق الكود" %}</div>');
+            },
+            complete: function() {
+                btn.prop('disabled', false).html('{% trans "تطبيق" %}');
+            }
+        });
+    });
+
+    // إزالة كود الخصم
+    $('#remove-coupon-btn').click(function() {
+        $.ajax({
+            url: '{% url "cart:remove_coupon" %}',
+            type: 'POST',
+            data: {
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            success: function(response) {
+                location.reload();
+            }
+        });
+    });
+
+    // تطبيق الكود عند الضغط على Enter
+    $('#coupon-code').keypress(function(e) {
+        if (e.which == 13) {
+            $('#apply-coupon-btn').click();
+        }
+    });
+
+    // تحديث منطقة الشحن
+    $('#shipping-city-select').change(function() {
+        var city = $(this).val();
+
+        $.ajax({
+            url: '{% url "cart:update_shipping_city" %}',
+            type: 'POST',
+            data: {
+                'city': city,
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    // إعادة تحميل الصفحة لتحديث الأسعار
+                    location.reload();
+                }
+            },
+            error: function() {
+                alert('{% trans "حدث خطأ أثناء تحديث منطقة الشحن" %}');
+            }
+        });
+    });
 });
     </script>
 {% endblock %}

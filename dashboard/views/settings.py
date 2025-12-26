@@ -260,16 +260,31 @@ class ShippingSettingsView( SuperuserRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # استرجاع طرق الشحن من نموذج ShippingMethod
-        from checkout.models import ShippingMethod
-        context['shipping_methods'] = ShippingMethod.objects.all().order_by('sort_order')
-
-        # الحصول على إعدادات الشحن العامة
-        context['free_shipping_threshold'] = getattr(django_settings, 'FREE_SHIPPING_THRESHOLD', 0)
-        context['default_shipping_cost'] = getattr(django_settings, 'DEFAULT_SHIPPING_COST', 0)
-        context['international_shipping_enabled'] = getattr(django_settings, 'INTERNATIONAL_SHIPPING_ENABLED', False)
+        # الحصول على إعدادات الموقع (تتضمن إعدادات الشحن)
+        site_settings = SiteSettings.get_settings()
+        context['site_settings'] = site_settings
 
         return context
+
+    def post(self, request, *args, **kwargs):
+        """معالجة النموذج المرسل - تحديث إعدادات الشحن"""
+        from decimal import Decimal
+
+        site_settings = SiteSettings.get_settings()
+
+        # تحديث إعدادات الشحن
+        site_settings.shipping_enabled = request.POST.get('shipping_enabled') == 'on'
+        site_settings.shipping_fee_amman = Decimal(request.POST.get('shipping_fee_amman', '2.00') or '2.00')
+        site_settings.shipping_fee_other = Decimal(request.POST.get('shipping_fee_other', '3.00') or '3.00')
+        site_settings.free_shipping_threshold = Decimal(request.POST.get('free_shipping_threshold', '0.00') or '0.00')
+
+        site_settings.save()
+
+        # مسح ذاكرة التخزين المؤقت
+        cache.delete('site_settings')
+
+        messages.success(request, _("تم تحديث إعدادات الشحن بنجاح"))
+        return redirect('dashboard:dashboard_shipping_settings')
 
 
 class TaxSettingsView( SuperuserRequiredMixin, TemplateView):

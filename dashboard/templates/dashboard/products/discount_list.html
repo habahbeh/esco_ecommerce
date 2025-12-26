@@ -184,10 +184,16 @@
                             <span class="badge bg-secondary">{% trans "جميع المنتجات" %}</span>
                             {% elif discount.application_type == 'category' %}
                             <span class="badge bg-info">{% trans "فئة:" %} {{ discount.category.name }}</span>
+                            {% elif discount.application_type == 'brand' %}
+                            <span class="badge bg-primary">{% trans "علامة تجارية:" %} {{ discount.brand.name }}</span>
+                            {% elif discount.application_type == 'category_and_brand' %}
+                            <span class="badge bg-dark">{% trans "فئة:" %} {{ discount.category.name }} + {% trans "علامة:" %} {{ discount.brand.name }}</span>
                             {% elif discount.application_type == 'specific_products' %}
                             <span class="badge bg-warning">{% trans "منتجات محددة" %} ({{ discount.products.count }})</span>
                             {% elif discount.application_type == 'minimum_purchase' %}
                             <span class="badge bg-success">{% trans "الحد الأدنى للشراء" %}</span>
+                            {% else %}
+                            <span class="badge bg-light text-dark">{% trans "غير محدد" %}</span>
                             {% endif %}
                         </td>
                         <td>{{ discount.start_date|date:"Y-m-d H:i" }}</td>

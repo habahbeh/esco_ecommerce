@@ -510,17 +510,73 @@ class SpecialOffersView(BaseProductListView):
     template_name = 'products/special_offers.html'
 
     def get_queryset(self):
-        """Get products with active discounts"""
+        """Get products with active discounts (product-level or campaign discounts)"""
         from django.utils import timezone
+        from products.models import ProductDiscount
         now = timezone.now()
 
-        return self.get_optimized_product_queryset().filter(
+        # Get base queryset
+        base_qs = self.get_optimized_product_queryset()
+
+        # Get products with product-level discounts
+        product_level_discounts = base_qs.filter(
             Q(discount_percentage__gt=0) | Q(discount_amount__gt=0)
         ).filter(
             Q(discount_start__isnull=True) | Q(discount_start__lte=now)
         ).filter(
             Q(discount_end__isnull=True) | Q(discount_end__gte=now)
-        ).order_by('-discount_percentage', '-created_at')
+        )
+
+        # Get active campaign discounts
+        active_discounts = ProductDiscount.get_active_discounts()
+
+        # Collect product IDs that have campaign discounts
+        campaign_product_ids = set()
+        for discount in active_discounts:
+            # Skip buy_x_get_y and coupon-required discounts for display
+            if discount.discount_type == 'buy_x_get_y' or discount.requires_coupon_code:
+                continue
+
+            if discount.application_type == 'all_products':
+                # All products have this discount - get all active product IDs
+                campaign_product_ids.update(base_qs.values_list('id', flat=True))
+            elif discount.application_type == 'category' and discount.category:
+                # Products in this category
+                campaign_product_ids.update(
+                    base_qs.filter(category=discount.category).values_list('id', flat=True)
+                )
+                # Also include subcategories
+                subcategories = discount.category.get_descendants()
+                campaign_product_ids.update(
+                    base_qs.filter(category__in=subcategories).values_list('id', flat=True)
+                )
+            elif discount.application_type == 'brand' and discount.brand:
+                # Products of this brand
+                campaign_product_ids.update(
+                    base_qs.filter(brand=discount.brand).values_list('id', flat=True)
+                )
+            elif discount.application_type == 'category_and_brand' and discount.category and discount.brand:
+                # Products matching both category and brand
+                campaign_product_ids.update(
+                    base_qs.filter(category=discount.category, brand=discount.brand).values_list('id', flat=True)
+                )
+                # Also include subcategories
+                subcategories = discount.category.get_descendants()
+                campaign_product_ids.update(
+                    base_qs.filter(category__in=subcategories, brand=discount.brand).values_list('id', flat=True)
+                )
+            elif discount.application_type == 'specific_products':
+                # Specific products
+                campaign_product_ids.update(
+                    discount.products.filter(is_active=True).values_list('id', flat=True)
+                )
+
+        # Combine: products with product-level discounts OR campaign discounts
+        product_level_ids = set(product_level_discounts.values_list('id', flat=True))
+        all_discount_ids = product_level_ids | campaign_product_ids
+
+        # Return combined queryset, ordered by savings percentage
+        return base_qs.filter(id__in=all_discount_ids).order_by('-created_at')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -532,19 +588,20 @@ class SpecialOffersView(BaseProductListView):
         context['category_tree'] = category_view.build_category_tree()
 
         # الحصول على المنتجات مع العروض النشطة
-        products = self.get_queryset()
+        products = list(self.get_queryset())
 
-        # حساب إجمالي التوفير
+        # حساب إجمالي التوفير (including campaign discounts)
         total_savings = sum(
-            (product.base_price - product.current_price)
+            product.savings_amount
             for product in products
             if product.has_discount
         )
         context['total_savings'] = total_savings
-        context['products_count'] = products.count()
+        context['products_count'] = len(products)
 
         # إضافة جديدة: الحصول على أقرب تاريخ انتهاء للعروض
         from django.utils import timezone
+        from products.models import ProductDiscount
         now = timezone.now()
 
         # تحضير البيانات الإحصائية للعروض
@@ -559,21 +616,32 @@ class SpecialOffersView(BaseProductListView):
         one_day_later = now + timezone.timedelta(days=1)
         one_week_later = now + timezone.timedelta(days=7)
 
+        # Get active campaign discounts for expiry date calculation
+        active_discounts = ProductDiscount.get_active_discounts()
+        for discount in active_discounts:
+            if discount.end_date and discount.end_date > now:
+                if nearest_expiry is None or discount.end_date < nearest_expiry:
+                    nearest_expiry = discount.end_date
+                if discount.end_date <= one_day_later:
+                    offers_stats['ending_today_count'] += 1
+                elif discount.end_date <= one_week_later:
+                    offers_stats['ending_this_week_count'] += 1
+
         for product in products:
-            # حساب إحصائيات العروض
+            # حساب إحصائيات العروض - check product-level discount dates
             if product.discount_end:
                 if product.discount_end <= one_day_later:
                     offers_stats['ending_today_count'] += 1
                 elif product.discount_end <= one_week_later:
                     offers_stats['ending_this_week_count'] += 1
+                # تحديد أقرب تاريخ انتهاء مستقبلي
+                if product.discount_end > now:
+                    if nearest_expiry is None or product.discount_end < nearest_expiry:
+                        nearest_expiry = product.discount_end
 
-            if product.discount_percentage >= 50:
+            # Check savings percentage (from any discount source)
+            if product.savings_percentage >= 50:
                 offers_stats['high_discount_count'] += 1
-
-            # تحديد أقرب تاريخ انتهاء مستقبلي
-            if product.discount_end and product.discount_end > now:
-                if nearest_expiry is None or product.discount_end < nearest_expiry:
-                    nearest_expiry = product.discount_end
 
         # إضافة تاريخ الانتهاء الأقرب إلى السياق
         if nearest_expiry:

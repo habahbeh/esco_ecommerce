@@ -13,9 +13,10 @@
 {% block current_page %}تفاصيل الطلب #{{ order.order_number }}{% endblock %}
 
 {% block content %}
+<!-- معلومات الطلب + العميل + الشحن في بطاقة واحدة -->
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">معلومات الطلب</h5>
+        <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>معلومات الطلب والعميل</h5>
         <div>
             <span class="badge bg-{{ order.status|status_badge }} me-2">{{ order.get_status_display }}</span>
             <span class="badge bg-{{ order.payment_status|status_badge }}">{{ order.get_payment_status_display }}</span>
@@ -23,39 +24,21 @@
     </div>
     <div class="card-body">
         <div class="row">
-            <div class="col-md-6">
-                <table class="table table-borderless">
+            <!-- معلومات الطلب -->
+            <div class="col-md-3">
+                <h6 class="text-primary mb-3"><i class="fas fa-shopping-cart me-1"></i> بيانات الطلب</h6>
+                <table class="table table-sm table-borderless mb-0">
                     <tr>
-                        <th style="width: 35%">رقم الطلب:</th>
-                        <td>{{ order.order_number }}</td>
+                        <th style="width: 45%">رقم الطلب:</th>
+                        <td><strong>{{ order.order_number }}</strong></td>
                     </tr>
                     <tr>
                         <th>تاريخ الطلب:</th>
                         <td>{{ order.created_at|date:"Y-m-d H:i" }}</td>
                     </tr>
                     <tr>
-                        <th>حالة الطلب:</th>
-                        <td>
-                            <span class="badge bg-{{ order.status|status_badge }}">{{ order.get_status_display }}</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>حالة الدفع:</th>
-                        <td>
-                            <span class="badge bg-{{ order.payment_status|status_badge }}">{{ order.get_payment_status_display }}</span>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            <div class="col-md-6">
-                <table class="table table-borderless">
-                    <tr>
-                        <th style="width: 35%">طريقة الدفع:</th>
-                        <td>{{ order.payment_method }}</td>
-                    </tr>
-                    <tr>
                         <th>المبلغ الإجمالي:</th>
-                        <td>{{ order.grand_total|currency }}</td>
+                        <td><strong class="text-success">{{ order.grand_total|currency }}</strong></td>
                     </tr>
                     <tr>
                         <th>آخر تحديث:</th>
@@ -63,122 +46,91 @@
                     </tr>
                 </table>
             </div>
-        </div>
-    </div>
-</div>
 
-<!-- معلومات العميل -->
-<div class="row">
-    <div class="col-md-6 mb-4">
-        <div class="card h-100">
-            <div class="card-header">
-                <h5 class="mb-0">معلومات العميل</h5>
-            </div>
-            <div class="card-body">
-                <table class="table table-borderless">
+            <!-- معلومات العميل -->
+            <div class="col-md-3">
+                <h6 class="text-primary mb-3"><i class="fas fa-user me-1"></i> بيانات العميل</h6>
+                <table class="table table-sm table-borderless mb-0">
                     <tr>
-                        <th style="width: 35%">الاسم الكامل:</th>
+                        <th style="width: 45%">الاسم:</th>
                         <td>{{ order.full_name }}</td>
                     </tr>
                     <tr>
-                        <th>البريد الإلكتروني:</th>
-                        <td>{{ order.email }}</td>
+                        <th>البريد:</th>
+                        <td><a href="mailto:{{ order.email }}">{{ order.email }}</a></td>
                     </tr>
                     <tr>
-                        <th>رقم الهاتف:</th>
-                        <td>{{ order.phone }}</td>
+                        <th>الهاتف:</th>
+                        <td dir="ltr">{{ order.phone }}</td>
                     </tr>
                     {% if user_info %}
                     <tr>
                         <th>عدد الطلبات:</th>
                         <td>{{ user_info.orders_count }}</td>
                     </tr>
-                    <tr>
-                        <th>الإنفاق الإجمالي:</th>
-                        <td>{{ user_info.total_spent|currency }}</td>
-                    </tr>
                     {% endif %}
                 </table>
                 {% if order.user %}
-                <a href="{% url 'dashboard:dashboard_user_detail' user_id=order.user.id %}" class="btn btn-sm btn-outline-primary">
-                    عرض ملف العميل
+                <a href="{% url 'dashboard:dashboard_user_detail' user_id=order.user.id %}" class="btn btn-sm btn-outline-primary mt-2">
+                    <i class="fas fa-user-circle me-1"></i>ملف العميل
                 </a>
                 {% endif %}
             </div>
-        </div>
-    </div>
 
-    <div class="col-md-6 mb-4">
-        <div class="card h-100">
-            <div class="card-header">
-                <h5 class="mb-0">عنوان الشحن</h5>
-            </div>
-            <div class="card-body">
-                <address>
-                    {{ order.shipping_address }}<br>
-                    {{ order.shipping_city }}، {{ order.shipping_state }}<br>
-                    {{ order.shipping_country }} {{ order.shipping_postal_code }}<br>
+            <!-- عنوان الشحن -->
+            <div class="col-md-3">
+                <h6 class="text-primary mb-3"><i class="fas fa-truck me-1"></i> عنوان الشحن</h6>
+                <address class="mb-0">
+                    <i class="fas fa-map-marker-alt text-muted me-1"></i>{{ order.shipping_address }}<br>
+                    <i class="fas fa-city text-muted me-1"></i>{{ order.shipping_city }}{% if order.shipping_state %}، {{ order.shipping_state }}{% endif %}<br>
+                    <i class="fas fa-globe text-muted me-1"></i>{{ order.shipping_country }}
+                    {% if order.shipping_postal_code %}<br><i class="fas fa-envelope text-muted me-1"></i>{{ order.shipping_postal_code }}{% endif %}
                 </address>
             </div>
-        </div>
-    </div>
-</div>
 
-<!-- وصل الدفع - إذا كان موجوداً -->
-{% if payment_info %}
-<div class="card mb-4">
-    <div class="card-header">
-        <h5 class="mb-0">معلومات الدفع</h5>
-    </div>
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-6">
-                <table class="table table-borderless">
+            <!-- معلومات الدفع -->
+            <div class="col-md-3">
+                <h6 class="text-primary mb-3"><i class="fas fa-credit-card me-1"></i> معلومات الدفع</h6>
+                <table class="table table-sm table-borderless mb-0">
                     <tr>
-                        <th style="width: 35%">طريقة الدفع:</th>
-                        <td>{{ payment_info.method }}</td>
+                        <th style="width: 45%">طريقة الدفع:</th>
+                        <td>{{ order.payment_method|default:"--" }}</td>
                     </tr>
                     <tr>
                         <th>حالة الدفع:</th>
                         <td>
-                            <span class="badge bg-{{ payment_info.status|status_badge }}">{{ order.get_payment_status_display }}</span>
+                            <span class="badge bg-{{ order.payment_status|status_badge }}" id="paymentStatusBadge">{{ order.get_payment_status_display }}</span>
                         </td>
                     </tr>
+                    {% if payment_info.id %}
                     <tr>
                         <th>رقم المعاملة:</th>
-                        <td>{{ payment_info.id|default:"--" }}</td>
+                        <td>{{ payment_info.id }}</td>
                     </tr>
+                    {% endif %}
                 </table>
-            </div>
-            
-            <!-- صورة وصل الدفع إذا كان موجوداً -->
-            {% if payments and payments.0.transaction and payments.0.transaction.metadata.receipt_path %}
-            <div class="col-md-6">
-                <h6>وصل الدفع:</h6>
-                <a href="{{ MEDIA_URL }}{{ payments.0.transaction.metadata.receipt_path }}" target="_blank" class="d-block">
-                    <img src="{{ MEDIA_URL }}{{ payments.0.transaction.metadata.receipt_path }}" alt="وصل الدفع" class="img-thumbnail" style="max-height: 200px;">
-                </a>
+                <!-- صورة وصل الدفع إذا كان موجوداً -->
+                {% if payments and payments.0.transaction and payments.0.transaction.metadata.receipt_path %}
                 <div class="mt-2">
-                    <a href="{{ MEDIA_URL }}{{ payments.0.transaction.metadata.receipt_path }}" class="btn btn-sm btn-outline-primary" target="_blank">
-                        عرض وصل الدفع بالحجم الكامل
+                    <a href="{{ MEDIA_URL }}{{ payments.0.transaction.metadata.receipt_path }}" target="_blank" class="btn btn-sm btn-outline-success">
+                        <i class="fas fa-receipt me-1"></i>عرض وصل الدفع
                     </a>
                 </div>
+                {% endif %}
             </div>
-            {% endif %}
         </div>
     </div>
 </div>
-{% endif %}
 
 <!-- منتجات الطلب -->
 <div class="card mb-4">
     <div class="card-header">
-        <h5 class="mb-0">منتجات الطلب</h5>
+        <h5 class="mb-0"><i class="fas fa-boxes me-2"></i>منتجات الطلب</h5>
     </div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-bordered table-hover">
-                <thead>
+                <thead class="table-light">
                     <tr>
                         <th>#</th>
                         <th>المنتج</th>
@@ -193,30 +145,29 @@
                         <td>{{ forloop.counter }}</td>
                         <td>
                             {{ item.product_name }}
-                             <div>
-                                    {% if item.variant %}
-                                                <small class="text-muted">
-                                                    {% if item.variant.attributes %}
-                                                        {% for key, value in item.variant.attributes.items %}
-                                                            <span>{{ key }}: {{ value }}</span>{% if not forloop.last %}
-                                                            | {% endif %}
-                                                        {% endfor %}
-                                                    {% elif item.variant.variant_details %}
-                                                        {{ item.variant.variant_details }}
-                                                    {% elif item.variant.options.all %}
-                                                        {% for option in item.variant.options.all %}
-                                                            <span>{{ option.option_group.name }}: {{ option.name }}</span>
-                                                            {% if not forloop.last %} | {% endif %}
-                                                        {% endfor %}
-                                                    {% else %}
-                                                        {% for attr_value in item.variant.attribute_values.all %}
-                                                            <span>{{ attr_value.attribute.name }}: {{ attr_value.value }}</span>
-                                                            {% if not forloop.last %} | {% endif %}
-                                                        {% endfor %}
-                                                    {% endif %}
-                                                </small>
-                                            {% endif %}
-                                </div>
+                            <div>
+                                {% if item.variant %}
+                                <small class="text-muted">
+                                    {% if item.variant.attributes %}
+                                        {% for key, value in item.variant.attributes.items %}
+                                            <span>{{ key }}: {{ value }}</span>{% if not forloop.last %} | {% endif %}
+                                        {% endfor %}
+                                    {% elif item.variant.variant_details %}
+                                        {{ item.variant.variant_details }}
+                                    {% elif item.variant.options.all %}
+                                        {% for option in item.variant.options.all %}
+                                            <span>{{ option.option_group.name }}: {{ option.name }}</span>
+                                            {% if not forloop.last %} | {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        {% for attr_value in item.variant.attribute_values.all %}
+                                            <span>{{ attr_value.attribute.name }}: {{ attr_value.value }}</span>
+                                            {% if not forloop.last %} | {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                </small>
+                                {% endif %}
+                            </div>
                         </td>
                         <td>{{ item.unit_price|divide:1.16|currency }}</td>
                         <td>{{ item.quantity }}</td>
@@ -229,7 +180,6 @@
                         <th colspan="4" class="text-end">المجموع الفرعي:</th>
                         <td>{{ order.total_price|divide:1.16|currency }}</td>
                     </tr>
-
                     <tr>
                         <th colspan="4" class="text-end">الضريبة:</th>
                         <td>{{ order.tax_amount|divide:1.16|currency }}</td>
@@ -250,88 +200,242 @@
     </div>
 </div>
 
-<!-- تحديث حالة الطلب -->
-<div class="row">
-    <div class="col-md-6">
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">تحديث حالة الطلب</h5>
-            </div>
-            <div class="card-body">
-                <form method="post" action="{% url 'dashboard:dashboard_order_update_status' order_id=order.id %}">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="status" class="form-label">حالة الطلب</label>
-                        <select name="status" id="status" class="form-select">
-                            <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>قيد الانتظار
-                            </option>
-                            <option value="confirmed" {% if order.status == 'confirmed' %}selected{% endif %}>تأكيد
-                                الطلب
-                            </option>
-                            <option value="closed" {% if order.status == 'closed' %}selected{% endif %}>إغلاق الطلب
-                            </option>
-                            <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>ملغي
-                            </option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="status_notes" class="form-label">ملاحظات</label>
-                        <textarea name="status_notes" id="status_notes" class="form-control" rows="3"></textarea>
-                    </div>
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="notify_customer" name="notify_customer" checked>
-                        <label class="form-check-label" for="notify_customer">إخطار العميل</label>
-                    </div>
-                    <button type="submit" class="btn btn-primary">تحديث الحالة</button>
-                </form>
+<!-- دليل سير العمل مع التعليمات الكاملة -->
+<div class="card mb-4 border-primary">
+    <div class="card-header bg-primary text-white">
+        <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0"><i class="fas fa-route me-2"></i>دليل سير العمل - خطوات معالجة الطلب</h6>
+            <div class="d-flex gap-2">
+                <span class="badge bg-light text-dark">الطلب: {{ order.get_status_display }}</span>
+                <span class="badge bg-light text-dark">الدفع: {{ order.get_payment_status_display }}</span>
             </div>
         </div>
     </div>
+    <div class="card-body">
+        {% if order.status == 'cancelled' %}
+        <!-- حالة الإلغاء -->
+        <div class="text-center py-4">
+            <div class="alert alert-danger mb-0">
+                <i class="fas fa-ban fa-3x mb-3"></i>
+                <h4>تم إلغاء الطلب</h4>
+                <p class="mb-0">تم إلغاء هذا الطلب بتاريخ {{ order.updated_at|date:"Y-m-d H:i" }}</p>
+            </div>
+        </div>
+        {% elif order.status == 'closed' %}
+        <!-- حالة الإغلاق -->
+        <div class="text-center py-4">
+            <div class="alert alert-success mb-0">
+                <i class="fas fa-check-double fa-3x mb-3"></i>
+                <h4>تم إكمال الطلب بنجاح</h4>
+                <p class="mb-0">تم تسليم الطلب للعميل وإغلاقه بتاريخ {{ order.updated_at|date:"Y-m-d H:i" }}</p>
+            </div>
+        </div>
+        {% else %}
+        <!-- خطوات سير العمل -->
+        <div class="row">
+            <!-- الخطوة 1: تم إرسال الطلب -->
+            <div class="col-md-3 mb-3 mb-md-0">
+                <div class="workflow-box {% if order.status == 'pending' %}active{% elif order.status == 'processing' or order.status == 'confirmed' or order.status == 'closed' %}completed{% endif %}" data-step="0">
+                    <div class="step-number">1</div>
+                    <div class="step-icon"><i class="fas fa-paper-plane"></i></div>
+                    <div class="step-title">تم إرسال الطلب</div>
+                    <div class="step-desc">
+                        <strong>المطلوب:</strong> راجع بيانات الطلب والمنتجات وتأكد من صحتها.
+                    </div>
+                    <div class="step-payment">
+                        <i class="fas fa-credit-card"></i> الدفع: <span class="badge bg-{{ order.payment_status|status_badge }}">{{ order.get_payment_status_display }}</span>
+                    </div>
+                    {% if order.status == 'pending' %}
+                    <div class="step-action-btn mt-2">
+                        <form method="post" action="{% url 'dashboard:dashboard_order_update_status' order_id=order.id %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="status" value="processing">
+                            <input type="hidden" name="notify_customer" value="on">
+                            <button type="submit" class="btn btn-primary btn-sm w-100">
+                                <i class="fas fa-arrow-left me-1"></i>بدء المعالجة
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
 
-    <div class="col-md-6">
-        <div class="card mb-4" hidden>
-            <div class="card-header">
-                <h5 class="mb-0">تحديث حالة الدفع</h5>
-            </div>
-            <div class="card-body">
-                <form method="post" action="{% url 'dashboard:dashboard_order_update_payment_status' order_id=order.id %}">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="payment_status" class="form-label">حالة الدفع</label>
-                        <select name="payment_status" id="payment_status" class="form-select">
-                            {% for status_value, status_name in payment_status_choices %}
-                            <option value="{{ status_value }}" {% if order.payment_status == status_value %}selected{% endif %}>
-                                {{ status_name }}
-                            </option>
-                            {% endfor %}
-                        </select>
+            <!-- الخطوة 2: قيد المعالجة -->
+            <div class="col-md-3 mb-3 mb-md-0">
+                <div class="workflow-box {% if order.status == 'processing' %}active{% elif order.status == 'confirmed' or order.status == 'closed' %}completed{% endif %}" data-step="1">
+                    <div class="step-number">2</div>
+                    <div class="step-icon"><i class="fas fa-cogs"></i></div>
+                    <div class="step-title">قيد المعالجة</div>
+                    <div class="step-desc">
+                        <strong>المطلوب:</strong> تحقق من وصل الدفع (تحويل بنكي)، جهّز المنتجات، تواصل مع العميل.
                     </div>
-                    <div class="mb-3">
-                        <label for="payment_notes" class="form-label">ملاحظات</label>
-                        <textarea name="payment_notes" id="payment_notes" class="form-control" rows="3"></textarea>
+                    <div class="step-payment">
+                        <i class="fas fa-credit-card"></i> الدفع: <span class="badge bg-{{ order.payment_status|status_badge }}">{{ order.get_payment_status_display }}</span>
                     </div>
-                    <button type="submit" class="btn btn-primary">تحديث حالة الدفع</button>
-                </form>
+                    {% if order.status == 'processing' %}
+                    <div class="step-action-btn mt-2">
+                        <form method="post" action="{% url 'dashboard:dashboard_order_update_status' order_id=order.id %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="status" value="confirmed">
+                            <input type="hidden" name="notify_customer" value="on">
+                            <button type="submit" class="btn btn-success btn-sm w-100">
+                                <i class="fas fa-arrow-left me-1"></i>تأكيد الطلب
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
+
+            <!-- الخطوة 3: تم التأكيد -->
+            <div class="col-md-3 mb-3 mb-md-0">
+                <div class="workflow-box {% if order.status == 'confirmed' %}active{% elif order.status == 'closed' %}completed{% endif %}" data-step="2">
+                    <div class="step-number">3</div>
+                    <div class="step-icon"><i class="fas fa-check-circle"></i></div>
+                    <div class="step-title">تم التأكيد</div>
+                    <div class="step-desc">
+                        <strong>المطلوب:</strong> سلّم الطلب للعميل مباشرة أو أرسله عبر شركة الشحن.
+                    </div>
+                    <div class="step-payment">
+                        <i class="fas fa-credit-card"></i> الدفع: <span class="badge bg-{{ order.payment_status|status_badge }}">{{ order.get_payment_status_display }}</span>
+                    </div>
+                    {% if order.status == 'confirmed' %}
+                    <div class="step-action-btn mt-2">
+                        <form method="post" action="{% url 'dashboard:dashboard_order_update_status' order_id=order.id %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="status" value="closed">
+                            <input type="hidden" name="notify_customer" value="on">
+                            <button type="submit" class="btn btn-info text-white btn-sm w-100">
+                                <i class="fas fa-arrow-left me-1"></i>إغلاق الطلب
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- الخطوة 4: تم الإغلاق -->
+            <div class="col-md-3">
+                <div class="workflow-box {% if order.status == 'closed' %}active{% endif %}" data-step="3">
+                    <div class="step-number">4</div>
+                    <div class="step-icon"><i class="fas fa-box-open"></i></div>
+                    <div class="step-title">تم الإغلاق</div>
+                    <div class="step-desc">
+                        <strong>النتيجة:</strong> تم تسليم الطلب بنجاح. الطلب مكتمل ولا يمكن التعديل عليه.
+                    </div>
+                    <div class="step-payment">
+                        <i class="fas fa-credit-card"></i> الدفع: <span class="badge bg-{{ order.payment_status|status_badge }}">{{ order.get_payment_status_display }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ملخص الإجراء التالي -->
+        <div class="alert alert-info alert-permanent mt-4 mb-0">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h6 class="mb-2"><i class="fas fa-hand-point-left me-2"></i>الإجراء التالي المطلوب:</h6>
+                    {% if order.status == 'pending' %}
+                        <p class="mb-0">
+                            <strong>1.</strong> راجع بيانات الطلب والمنتجات أعلاه<br>
+                            <strong>2.</strong> تأكد من صحة عنوان الشحن ورقم الهاتف<br>
+                            <strong>3.</strong> اضغط <strong>"بدء المعالجة"</strong> للانتقال للخطوة التالية
+                        </p>
+                    {% elif order.status == 'processing' %}
+                        <p class="mb-0">
+                            <strong>1.</strong> تحقق من وصل الدفع (إذا كان تحويل بنكي) في قسم "معلومات الدفع"<br>
+                            <strong>2.</strong> جهّز المنتجات للشحن أو التسليم<br>
+                            <strong>3.</strong> اضغط <strong>"تأكيد الطلب"</strong> - سيتحول الدفع تلقائياً إلى "مدفوع"
+                        </p>
+                    {% elif order.status == 'confirmed' %}
+                        <p class="mb-0">
+                            <strong>1.</strong> سلّم الطلب للعميل مباشرة أو سلّمه لشركة الشحن<br>
+                            <strong>2.</strong> تأكد من استلام العميل للطلب<br>
+                            <strong>3.</strong> اضغط <strong>"إغلاق الطلب"</strong> لإتمام العملية
+                        </p>
+                    {% endif %}
+                </div>
+                <div class="col-md-6 mt-3 mt-md-0">
+                    <!-- تحديث حالة الطلب والدفع معاً -->
+                    <form method="post" action="{% url 'dashboard:dashboard_order_update_both' order_id=order.id %}" id="updateBothForm">
+                        {% csrf_token %}
+                        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-md-end">
+                            <div class="d-flex align-items-center gap-1">
+                                <label class="small text-muted mb-0">الطلب:</label>
+                                <select name="status" id="orderStatusSelect" class="native-select">
+                                    <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>تم الإرسال</option>
+                                    <option value="processing" {% if order.status == 'processing' %}selected{% endif %}>قيد المعالجة</option>
+                                    <option value="confirmed" {% if order.status == 'confirmed' %}selected{% endif %}>تم التأكيد</option>
+                                    <option value="closed" {% if order.status == 'closed' %}selected{% endif %}>مغلق</option>
+                                    <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>ملغي</option>
+                                </select>
+                            </div>
+                            <div class="d-flex align-items-center gap-1">
+                                <label class="small text-muted mb-0">الدفع:</label>
+                                <select name="payment_status" id="paymentStatusSelect" class="native-select">
+                                    {% for status_value, status_name in payment_status_choices %}
+                                    <option value="{{ status_value }}" {% if order.payment_status == status_value %}selected{% endif %}>{{ status_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <input type="hidden" name="notify_customer" value="on">
+                            <button type="submit" class="btn btn-warning btn-sm" title="تحديث حالة الطلب والدفع">
+                                <i class="fas fa-save me-1"></i>حفظ
+                            </button>
+                            <!-- إلغاء الطلب -->
+                            <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#cancelModal" title="إلغاء الطلب">
+                                <i class="fas fa-ban"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal إلغاء الطلب -->
+<div class="modal fade" id="cancelModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>تأكيد إلغاء الطلب</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'dashboard:dashboard_order_cancel' order_id=order.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-warning me-2"></i>
+                        <strong>تحذير:</strong> هذا الإجراء لا يمكن التراجع عنه!
+                    </div>
+                    <p>هل أنت متأكد من إلغاء الطلب رقم <strong>{{ order.order_number }}</strong>؟</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">تراجع</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-ban me-1"></i>نعم، إلغاء الطلب
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
 <!-- ملاحظات الطلب -->
+{% if order.notes %}
 <div class="card mb-4">
     <div class="card-header">
-        <h5 class="mb-0">ملاحظات الطلب</h5>
+        <h5 class="mb-0"><i class="fas fa-sticky-note me-2"></i>ملاحظات العميل</h5>
     </div>
     <div class="card-body">
-        <div class="mb-3">
-            <label class="form-label">ملاحظات العميل:</label>
-            <div class="p-3 bg-light rounded">
-                {{ order.notes|default:"لا توجد ملاحظات"|linebreaks }}
-            </div>
+        <div class="p-3 bg-light rounded">
+            {{ order.notes|linebreaks }}
         </div>
     </div>
 </div>
+{% endif %}
 
 <!-- الإجراءات -->
 <div class="d-flex justify-content-between mb-4">
@@ -343,38 +447,236 @@
             <i class="fas fa-print"></i> طباعة الطلب
         </a>
     </div>
-    <div>
-        {% if order.status != 'cancelled' and order.status != 'refunded' %}
-        <form method="post" action="{% url 'dashboard:dashboard_order_cancel' order_id=order.id %}" class="d-inline" 
-              onsubmit="return confirm('هل أنت متأكد من إلغاء هذا الطلب؟');">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-danger">
-                <i class="fas fa-ban"></i> إلغاء الطلب
-            </button>
-        </form>
-        {% endif %}
-    </div>
 </div>
 
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* تصميم صناديق سير العمل */
+.workflow-box {
+    background: #f8f9fa;
+    border: 2px solid #dee2e6;
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    position: relative;
+    height: 100%;
+    transition: all 0.3s ease;
+}
+
+.workflow-box .step-number {
+    position: absolute;
+    top: -12px;
+    right: 15px;
+    background: #6c757d;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.workflow-box .step-icon {
+    font-size: 2rem;
+    color: #6c757d;
+    margin-bottom: 10px;
+}
+
+.workflow-box .step-title {
+    font-weight: bold;
+    color: #495057;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.workflow-box .step-desc {
+    font-size: 0.8rem;
+    color: #6c757d;
+    line-height: 1.5;
+    margin-bottom: 10px;
+    text-align: right;
+}
+
+.workflow-box .step-payment {
+    font-size: 0.75rem;
+    color: #495057;
+    padding: 8px;
+    background: rgba(0,0,0,0.03);
+    border-radius: 6px;
+    margin-top: 8px;
+}
+
+.workflow-box .step-action-btn {
+    margin-top: 10px;
+}
+
+/* الخطوة النشطة */
+.workflow-box.active {
+    background: linear-gradient(135deg, #0d6efd 0%, #0056b3 100%);
+    border-color: #0d6efd;
+    box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3);
+}
+
+.workflow-box.active .step-number {
+    background: #fff;
+    color: #0d6efd;
+}
+
+.workflow-box.active .step-icon,
+.workflow-box.active .step-title,
+.workflow-box.active .step-desc {
+    color: white;
+}
+
+.workflow-box.active .step-payment {
+    background: rgba(255,255,255,0.15);
+    color: white;
+}
+
+/* الخطوة المكتملة */
+.workflow-box.completed {
+    background: #d4edda;
+    border-color: #28a745;
+}
+
+.workflow-box.completed .step-number {
+    background: #28a745;
+}
+
+.workflow-box.completed .step-icon {
+    color: #28a745;
+}
+
+.workflow-box.completed .step-title {
+    color: #155724;
+}
+
+.workflow-box.completed .step-desc {
+    color: #155724;
+}
+
+.workflow-box.completed .step-payment {
+    background: rgba(40, 167, 69, 0.1);
+}
+
+/* تأثيرات البطاقات */
+.card.border-primary {
+    box-shadow: 0 2px 10px rgba(13, 110, 253, 0.1);
+}
+
+/* تنسيق الموديول */
+.modal-header.bg-danger {
+    border-bottom: none;
+}
+
+/* تحسينات للهواتف */
+@media (max-width: 768px) {
+    .workflow-box {
+        margin-bottom: 15px;
+    }
+
+    .workflow-box .step-icon {
+        font-size: 1.5rem;
+    }
+
+    .workflow-box .step-desc {
+        font-size: 0.75rem;
+    }
+}
+
+/* تنسيق القوائم المنسدلة الأصلية */
+.native-select {
+    padding: 4px 24px 4px 8px;
+    font-size: 13px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background-color: #fff;
+    cursor: pointer;
+    min-width: 100px;
+}
+
+.native-select:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.native-select:hover {
+    border-color: #86b7fe;
+}
+</style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // للعناصر ذات الصلة بتحديث الطلب
-    var statusSelect = document.getElementById('status');
-    var notifyCheckbox = document.getElementById('notify_customer');
-    
-    // تفعيل/تعطيل خيار الإخطار حسب الحالة المختارة
-    statusSelect.addEventListener('change', function() {
-        var selectedStatus = this.value;
-        if (selectedStatus === 'processing' || selectedStatus === 'shipped' || selectedStatus === 'delivered') {
-            notifyCheckbox.disabled = false;
-            notifyCheckbox.checked = true;
-        } else {
-            notifyCheckbox.disabled = false;
+    const orderStatusSelect = document.getElementById('orderStatusSelect');
+    const paymentStatusSelect = document.getElementById('paymentStatusSelect');
+    const workflowBoxes = document.querySelectorAll('.workflow-box');
+    const stepPaymentBadges = document.querySelectorAll('.step-payment .badge');
+    const headerPaymentBadge = document.getElementById('paymentStatusBadge');
+
+    // خريطة حالات الدفع
+    const paymentStatusMap = {
+        'pending': { text: 'قيد الانتظار', class: 'bg-warning' },
+        'paid': { text: 'مدفوع', class: 'bg-success' },
+        'failed': { text: 'فشل', class: 'bg-danger' },
+        'refunded': { text: 'مسترجع', class: 'bg-info' }
+    };
+
+    // تحديث شكل خطوات سير العمل عند تغيير حالة الطلب
+    function updateWorkflowBoxes(selectedStatus) {
+        const statusOrder = ['pending', 'processing', 'confirmed', 'closed'];
+        const selectedIndex = statusOrder.indexOf(selectedStatus);
+
+        workflowBoxes.forEach(function(box, index) {
+            box.classList.remove('active', 'completed');
+
+            if (selectedStatus === 'cancelled') {
+                // لا تفعل شيئاً - كل الخطوات تبقى رمادية
+            } else if (index < selectedIndex) {
+                box.classList.add('completed');
+            } else if (index === selectedIndex) {
+                box.classList.add('active');
+            }
+            // index > selectedIndex تبقى بدون فئة (رمادية)
+        });
+    }
+
+    // تحديث بادجات حالة الدفع في الخطوات
+    function updatePaymentBadges(selectedPayment) {
+        const paymentInfo = paymentStatusMap[selectedPayment] || paymentStatusMap['pending'];
+
+        // تحديث بادج الدفع في الهيدر (في قسم معلومات الدفع)
+        if (headerPaymentBadge) {
+            headerPaymentBadge.className = 'badge ' + paymentInfo.class;
+            headerPaymentBadge.textContent = paymentInfo.text;
         }
-    });
+
+        // تحديث جميع بادجات الدفع في خطوات سير العمل
+        stepPaymentBadges.forEach(function(badge) {
+            badge.className = 'badge ' + paymentInfo.class;
+            badge.textContent = paymentInfo.text;
+        });
+    }
+
+    // ربط أحداث التغيير
+    if (orderStatusSelect && workflowBoxes.length > 0) {
+        orderStatusSelect.addEventListener('change', function() {
+            updateWorkflowBoxes(this.value);
+        });
+    }
+
+    if (paymentStatusSelect) {
+        paymentStatusSelect.addEventListener('change', function() {
+            updatePaymentBadges(this.value);
+        });
+    }
 });
 </script>
 {% endblock %}

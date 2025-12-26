@@ -145,7 +145,7 @@ urlpatterns = [
 
     # تفاصيل المنتج
     # path('<slug:slug>/', ProductDetailView.as_view(), name='product_detail'),
-    re_path(r'products/(?P<slug>[-\w\u0600-\u06FF]+)/$', ProductDetailView.as_view(), name='product_detail'),
+    re_path(r'(?P<slug>[-\w\u0600-\u06FF]+)/$', ProductDetailView.as_view(), name='product_detail'),
 
     path('variant/<int:variant_id>/', ProductVariantDetailView.as_view(), name='variant_detail'),
 

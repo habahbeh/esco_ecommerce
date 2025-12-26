@@ -21,6 +21,7 @@ from django.contrib import messages
 from django.urls import reverse_lazy, reverse
 from django.utils.translation import gettext_lazy as _
 from django.utils.decorators import method_decorator
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.debug import sensitive_post_parameters
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -93,52 +94,65 @@ class RegisterView(CreateView):
         # حفظ المستخدم بشكل آمن
         user = form.save()
 
-        # تفعيل المستخدم تلقائياً
-        user.is_verified = True
-        user.verification_token = None
-        user.verification_token_expires = None
-        user.save(update_fields=['is_verified', 'verification_token', 'verification_token_expires'])
+        # تعيين المستخدم كغير مفعل حتى يتم التحقق من البريد الإلكتروني
+        user.is_verified = False
+        user.generate_verification_token()
 
         # إنشاء سجل نشاط
         UserActivity.objects.create(
             user=user,
             activity_type='registration',
-            description=_('تم التسجيل في الموقع'),
+            description=_('تم التسجيل في الموقع - في انتظار تفعيل البريد الإلكتروني'),
             ip_address=self.request.META.get('REMOTE_ADDR')
         )
 
-        # تسجيل دخول المستخدم تلقائياً
-        login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
+        # إرسال بريد التحقق
+        self.send_verification_email(user)
 
-        # العودة للصفحة السابقة أو الصفحة الرئيسية
-        next_url = self.request.GET.get('next')
-        if next_url:
-            return redirect(next_url)
-        return redirect('core:home')
+        messages.success(
+            self.request,
+            _('تم التسجيل بنجاح! يرجى التحقق من بريدك الإلكتروني لتفعيل حسابك.')
+        )
+
+        return redirect('accounts:register_done')
 
     def send_verification_email(self, user):
         """إرسال بريد إلكتروني للتحقق"""
-        current_site = get_current_site(self.request)
-        subject = _('تفعيل حسابك في {0}').format(current_site.name)
-        verification_link = self.request.build_absolute_uri(
-            reverse('accounts:verify_email', kwargs={'token': user.verification_token})
-        )
+        from django.utils.html import strip_tags
 
-        message = render_to_string('accounts/email/verification_email.html', {
+        # Use dynamic URL based on environment (DEBUG setting)
+        if settings.DEBUG:
+            # Local development
+            base_url = 'http://127.0.0.1:8000'
+        else:
+            # Production
+            base_url = 'https://esco.jo'
+
+        verification_url = f'{base_url}/accounts/verify-email/{user.verification_token}/'
+        site_url = base_url
+        logo_url = f'{base_url}/static/images/logo.png'
+
+        context = {
             'user': user,
-            'verification_link': verification_link,
-            'site_name': current_site.name,
-            'expiry_hours': 24,  # صلاحية الرمز 24 ساعة
-        })
+            'name': user.get_full_name() or user.username,
+            'verification_url': verification_url,
+            'site_url': site_url,
+            'logo_url': logo_url,
+            'expiry_hours': 24,
+            'year': timezone.now().year,
+        }
+
+        html_message = render_to_string('emails/user_verification.html', context)
+        plain_message = strip_tags(html_message)
 
         try:
             send_mail(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
+                subject='تفعيل حسابك في ESCO | Activate Your ESCO Account',
+                message=plain_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
                 fail_silently=False,
-                html_message=message
+                html_message=html_message
             )
         except Exception as e:
             # تسجيل الخطأ ولكن لا نعرضه للمستخدم
@@ -197,35 +211,58 @@ class ResendVerificationEmailView(FormView):
     template_name = 'accounts/resend_verification.html'
     form_class = forms.Form
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Pre-fill email from session if available
+        context['unverified_email'] = self.request.session.get('unverified_email', '')
+        return context
+
     def form_valid(self, form):
+        from django.utils.html import strip_tags
+
         email = self.request.POST.get('email')
         try:
             user = User.objects.get(email=email, is_verified=False)
             # إنشاء رمز تحقق جديد
             user.generate_verification_token()
 
-            # إرسال البريد
-            current_site = get_current_site(self.request)
-            subject = _('تفعيل حسابك في {0}').format(current_site.name)
-            verification_link = self.request.build_absolute_uri(
-                reverse('accounts:verify_email', kwargs={'token': user.verification_token})
-            )
+            # Use dynamic URL based on environment (DEBUG setting)
+            if settings.DEBUG:
+                # Local development
+                base_url = 'http://127.0.0.1:8000'
+            else:
+                # Production
+                base_url = 'https://esco.jo'
 
-            message = render_to_string('accounts/email/verification_email.html', {
+            verification_url = f'{base_url}/accounts/verify-email/{user.verification_token}/'
+            site_url = base_url
+            logo_url = f'{base_url}/static/images/logo.png'
+
+            context = {
                 'user': user,
-                'verification_link': verification_link,
-                'site_name': current_site.name,
+                'name': user.get_full_name() or user.username,
+                'verification_url': verification_url,
+                'site_url': site_url,
+                'logo_url': logo_url,
                 'expiry_hours': 24,
-            })
+                'year': timezone.now().year,
+            }
+
+            html_message = render_to_string('emails/user_verification.html', context)
+            plain_message = strip_tags(html_message)
 
             send_mail(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
+                subject='تفعيل حسابك في ESCO | Activate Your ESCO Account',
+                message=plain_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
                 fail_silently=False,
-                html_message=message
+                html_message=html_message
             )
+
+            # Clear the session email
+            if 'unverified_email' in self.request.session:
+                del self.request.session['unverified_email']
 
             messages.success(self.request, _('تم إرسال رابط التفعيل. يرجى التحقق من بريدك الإلكتروني.'))
         except User.DoesNotExist:
@@ -491,23 +528,15 @@ class LoginView(View):
                     messages.error(request, _('حسابك غير نشط. يرجى الاتصال بالإدارة.'))
                     return render(request, self.template_name, {'form': form})
 
-                # تعديل: السماح بتسجيل الدخول حتى لو كان البريد الإلكتروني غير موثق
-                # اختياري: تفعيل المستخدم تلقائياً إذا لم يكن مفعلاً
+                # التحقق من تفعيل البريد الإلكتروني
                 if not user.is_verified:
-                    user.is_verified = True
-                    user.verification_token = None
-                    user.verification_token_expires = None
-                    user.save(update_fields=['is_verified', 'verification_token', 'verification_token_expires'])
-
-                    # إنشاء سجل نشاط
-                    UserActivity.objects.create(
-                        user=user,
-                        activity_type='email_verified',
-                        description=_('تم تفعيل البريد الإلكتروني تلقائياً عند تسجيل الدخول'),
-                        ip_address=request.META.get('REMOTE_ADDR')
+                    messages.warning(
+                        request,
+                        _('يرجى تفعيل حسابك أولاً. تحقق من بريدك الإلكتروني أو اطلب إعادة إرسال رابط التفعيل.')
                     )
-
-                    messages.success(request, _('تم تفعيل حسابك تلقائياً.'))
+                    # Store email in session for resend functionality
+                    request.session['unverified_email'] = user.email
+                    return redirect('accounts:resend_verification')
 
                 # تسجيل الدخول
                 login(request, user)
@@ -573,68 +602,141 @@ class LogoutView(View):
         return redirect('core:home')
 
 
-class ProfileView(LoginRequiredMixin, UpdateView):
+class ProfileView(LoginRequiredMixin, View):
     """
     عرض الملف الشخصي - يتيح للمستخدمين عرض وتحديث معلوماتهم الشخصية
     Profile view - allows users to view and update their personal information
     """
-    model = User
     template_name = 'accounts/profile.html'
-    form_class = UserProfileForm
-    success_url = reverse_lazy('accounts:profile')
 
-    def get_object(self):
-        return self.request.user
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        # إضافة نموذج الملف الشخصي الموسع
+    def get_profile(self):
+        """الحصول على أو إنشاء الملف الشخصي للمستخدم"""
         if hasattr(self.request.user, 'profile'):
-            profile = self.request.user.profile
-        else:
-            profile = UserProfile.objects.create(user=self.request.user)
+            return self.request.user.profile
+        return UserProfile.objects.create(user=self.request.user)
 
-        if self.request.POST:
-            context['profile_form'] = ExtendedUserProfileForm(
-                self.request.POST, instance=profile
+    def get_context_data(self):
+        profile = self.get_profile()
+        return {
+            'form': UserProfileForm(instance=self.request.user),
+            'profile_form': ExtendedUserProfileForm(instance=profile),
+            'addresses': UserAddress.objects.filter(user=self.request.user),
+            'password_form': PasswordChangeForm(self.request.user),
+            'notification_form': NotificationPreferencesForm(instance=profile),
+        }
+
+    def get(self, request):
+        context = self.get_context_data()
+        return render(request, self.template_name, context)
+
+    def post(self, request):
+        form_type = request.POST.get('form_type', '')
+        profile = self.get_profile()
+
+        if form_type == 'all_forms':
+            # حفظ جميع البيانات في نموذج واحد
+            has_errors = False
+
+            # 1. حفظ المعلومات الشخصية الأساسية (User model)
+            form = UserProfileForm(request.POST, request.FILES, instance=request.user)
+            if form.is_valid():
+                form.save()
+            else:
+                has_errors = True
+
+            # 2. حفظ النبذة الشخصية (UserProfile model)
+            profile_form = ExtendedUserProfileForm(request.POST, instance=profile)
+            if profile_form.is_valid():
+                profile_form.save()
+            else:
+                has_errors = True
+
+            # 3. حفظ روابط التواصل الاجتماعي (UserProfile model)
+            profile.website = request.POST.get('website', '')
+            profile.twitter = request.POST.get('twitter', '')
+            profile.facebook = request.POST.get('facebook', '')
+            profile.instagram = request.POST.get('instagram', '')
+            profile.linkedin = request.POST.get('linkedin', '')
+            profile.save()
+
+            if has_errors:
+                messages.error(request, _('حدث خطأ أثناء حفظ بعض البيانات. يرجى مراجعة الحقول المطلوبة.'))
+                context = self.get_context_data()
+                context['form'] = form
+                context['profile_form'] = profile_form
+                return render(request, self.template_name, context)
+            else:
+                messages.success(request, _('تم حفظ جميع التغييرات بنجاح'))
+
+                # تسجيل النشاط
+                UserActivity.objects.create(
+                    user=request.user,
+                    activity_type='profile_update',
+                    description=_('تحديث الملف الشخصي'),
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+
+        elif form_type == 'user_form':
+            # حفظ المعلومات الشخصية الأساسية (User model)
+            form = UserProfileForm(request.POST, request.FILES, instance=request.user)
+            if form.is_valid():
+                form.save()
+                messages.success(request, _('تم تحديث المعلومات الشخصية بنجاح'))
+
+                # تسجيل النشاط
+                UserActivity.objects.create(
+                    user=request.user,
+                    activity_type='profile_update',
+                    description=_('تحديث المعلومات الشخصية'),
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+            else:
+                messages.error(request, _('حدث خطأ أثناء حفظ المعلومات الشخصية'))
+                context = self.get_context_data()
+                context['form'] = form
+                return render(request, self.template_name, context)
+
+        elif form_type == 'profile_form':
+            # حفظ النبذة الشخصية (UserProfile model)
+            profile_form = ExtendedUserProfileForm(request.POST, instance=profile)
+            if profile_form.is_valid():
+                profile_form.save()
+                messages.success(request, _('تم تحديث النبذة الشخصية بنجاح'))
+
+                # تسجيل النشاط
+                UserActivity.objects.create(
+                    user=request.user,
+                    activity_type='profile_update',
+                    description=_('تحديث النبذة الشخصية'),
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+            else:
+                messages.error(request, _('حدث خطأ أثناء حفظ النبذة الشخصية'))
+                context = self.get_context_data()
+                context['profile_form'] = profile_form
+                return render(request, self.template_name, context)
+
+        elif form_type == 'social_form':
+            # حفظ روابط التواصل الاجتماعي (UserProfile model)
+            # نستخدم نفس النموذج ولكن نحفظ فقط حقول التواصل الاجتماعي
+            profile.website = request.POST.get('website', '')
+            profile.twitter = request.POST.get('twitter', '')
+            profile.facebook = request.POST.get('facebook', '')
+            profile.instagram = request.POST.get('instagram', '')
+            profile.linkedin = request.POST.get('linkedin', '')
+            profile.save()
+
+            messages.success(request, _('تم تحديث روابط التواصل الاجتماعي بنجاح'))
+
+            # تسجيل النشاط
+            UserActivity.objects.create(
+                user=request.user,
+                activity_type='profile_update',
+                description=_('تحديث روابط التواصل الاجتماعي'),
+                ip_address=request.META.get('REMOTE_ADDR')
             )
-        else:
-            context['profile_form'] = ExtendedUserProfileForm(instance=profile)
 
-        # إضافة عناوين المستخدم
-        context['addresses'] = UserAddress.objects.filter(user=self.request.user)
-
-        # إضافة نموذج تغيير كلمة المرور
-        context['password_form'] = PasswordChangeForm(self.request.user)
-
-        # إضافة نموذج تفضيلات الإشعارات
-        context['notification_form'] = NotificationPreferencesForm(instance=profile)
-
-        return context
-
-    def form_valid(self, form):
-        # حفظ نموذج الملف الشخصي الأساسي
-        response = super().form_valid(form)
-
-        # حفظ نموذج الملف الشخصي الموسع
-        profile_form = ExtendedUserProfileForm(
-            self.request.POST, instance=self.request.user.profile
-        )
-        if profile_form.is_valid():
-            profile_form.save()
-
-        messages.success(self.request, _('تم تحديث الملف الشخصي بنجاح'))
-
-        # إنشاء سجل نشاط - Create activity log
-        UserActivity.objects.create(
-            user=self.request.user,
-            activity_type='profile_update',
-            description=_('تحديث الملف الشخصي'),
-            ip_address=self.request.META.get('REMOTE_ADDR')
-        )
-
-        return response
+        return redirect('accounts:profile')
 
 
 class ChangePasswordView(LoginRequiredMixin, FormView):

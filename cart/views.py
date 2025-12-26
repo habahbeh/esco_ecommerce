@@ -4,6 +4,7 @@ from django.views.generic import View, TemplateView
 from django.contrib import messages
 from django.http import JsonResponse
 from django.utils.translation import gettext as _
+from django.db import models
 from decimal import Decimal
 
 from products.models import Product, ProductVariant
@@ -51,38 +52,16 @@ class CartMixin:
 class CartDetailView(CartMixin, TemplateView):
     """
     Display cart details
+    Uses cart_context processor for cart_items with min_quantity validation
     """
     template_name = 'cart/cart_detail.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        cart = self.get_cart(self.request)
-        cart_items = []
 
-        for item_id, item_data in cart.items():
-            try:
-                product = Product.objects.get(id=item_data['product_id'])
-                variant = None
-                if 'variant_id' in item_data:
-                    try:
-                        variant = ProductVariant.objects.get(id=item_data['variant_id'])
-                    except ProductVariant.DoesNotExist:
-                        pass
-
-                cart_items.append({
-                    'id': item_id,
-                    'product': product,
-                    'variant': variant,
-                    'quantity': item_data.get('quantity', 1),
-                    'price': variant.current_price if variant else product.current_price,
-                    'subtotal': (variant.current_price if variant else product.current_price) * item_data.get('quantity', 1)
-                })
-            except Product.DoesNotExist:
-                continue
-
-        context['cart_items'] = cart_items
-        # context['cart_total'] = self.get_cart_total(self.request)
-        context['cart_count'] = self.get_cart_items_count(self.request)
+        # Note: cart_items, cart_count, cart_total, etc. are provided by
+        # cart_context processor in context_processors.py
+        # This processor handles min_quantity validation for automatic discounts
 
         # إضافة معلومات عما إذا كان المستخدم مسجل دخول أم لا
         context['is_authenticated'] = self.request.user.is_authenticated
@@ -292,19 +271,64 @@ class UpdateCartItemView(CartMixin, View):
                 cart_context = self.get_cart_context(request)
 
                 # تحديث بيانات الاستجابة بالقيم الجديدة
+                # Helper: remove 16% tax = price - (price * 0.16) = price * 0.84
+                def without_tax(value):
+                    return round(value * Decimal('0.84'), 2)
+
                 response_data.update({
                     'cart_count': cart_context['cart_count'],
-                    'cart_subtotal': str(round(cart_context['cart_subtotal']/ Decimal('1.16'),2)),
-                    'cart_tax': str(round(cart_context['cart_tax'],2)),
-                    'cart_total': str(round(cart_context['cart_total']/ Decimal('1.16'),2)),
+                    'cart_subtotal': str(without_tax(cart_context['cart_subtotal'])),
+                    'cart_tax': str(round(cart_context['cart_tax'], 2)),
+                    'cart_total': str(cart_context['cart_total']),  # Total with tax (no without_tax filter)
+                    # Coupon discount info
+                    'coupon_discount': str(without_tax(cart_context.get('coupon_discount', Decimal('0.00')))),
+                    'has_coupon': cart_context.get('applied_coupon') is not None,
+                    'coupon_code': cart_context.get('coupon_code', ''),
+                    'eligible_items_count': cart_context.get('eligible_items_count', 0),
+                    # Automatic discount info
+                    'has_automatic_discount': cart_context.get('has_automatic_discount', False),
+                    'automatic_discount_savings': str(without_tax(cart_context.get('automatic_discount_savings', Decimal('0.00')))),
+                    'cart_original_subtotal': str(without_tax(cart_context.get('cart_original_subtotal', Decimal('0.00')))),
+                    'automatic_discount_info': cart_context.get('automatic_discount_info'),
                 })
 
                 # البحث عن معلومات العنصر المحدث
                 if quantity > 0:  # فقط إذا لم تتم إزالة العنصر
                     for item in cart_context['cart_items']:
                         if item['id'] == item_key:
-                            response_data['item_subtotal'] = str(round(item['subtotal'] / Decimal('1.16'),2))
+                            response_data['item_subtotal'] = str(without_tax(item['subtotal']))
+                            response_data['item_price'] = str(without_tax(item['price']))
+                            response_data['item_original_price'] = str(without_tax(item['original_price']))
+                            response_data['item_original_subtotal'] = str(without_tax(item.get('original_subtotal', item['subtotal'])))
+                            # Add automatic discount info for this item
+                            response_data['item_has_automatic_discount'] = item.get('has_automatic_discount', False)
+                            response_data['item_savings'] = str(without_tax(item.get('savings', Decimal('0.00'))))
+                            # Add coupon info for this item
+                            response_data['item_coupon_eligible'] = item.get('coupon_eligible', False)
+                            response_data['item_coupon_discount'] = str(without_tax(item.get('coupon_discount', Decimal('0.00'))))
+                            response_data['item_subtotal_after_coupon'] = str(without_tax(item.get('subtotal_after_coupon', item['subtotal'])))
                             break
+
+                # Add all items info for updating UI (includes both coupon and automatic discount)
+                items_info = []
+                for item in cart_context['cart_items']:
+                    items_info.append({
+                        'id': item['id'],
+                        'price': str(without_tax(item['price'])),
+                        'original_price': str(without_tax(item['original_price'])),
+                        'subtotal': str(without_tax(item['subtotal'])),
+                        'original_subtotal': str(without_tax(item.get('original_subtotal', item['subtotal']))),
+                        # Automatic discount info
+                        'has_automatic_discount': item.get('has_automatic_discount', False),
+                        'savings': str(without_tax(item.get('savings', Decimal('0.00')))),
+                        # Coupon info
+                        'coupon_eligible': item.get('coupon_eligible', False),
+                        'coupon_discount': str(without_tax(item.get('coupon_discount', Decimal('0.00')))),
+                        'subtotal_after_coupon': str(without_tax(item.get('subtotal_after_coupon', item['subtotal']))),
+                    })
+                response_data['items_info'] = items_info
+                # Keep items_coupon_info for backward compatibility
+                response_data['items_coupon_info'] = items_info
 
             except Exception as e:
                 # معالجة أي استثناءات
@@ -394,16 +418,115 @@ class ApplyCouponView(CartMixin, View):
     Apply coupon to cart
     """
     def post(self, request):
-        coupon_code = request.POST.get('coupon_code', '').strip()
-        
+        from products.models import ProductDiscount
+        from django.utils import timezone
+
+        coupon_code = request.POST.get('coupon_code', '').strip().upper()
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
         if not coupon_code:
+            if is_ajax:
+                return JsonResponse({
+                    'success': False,
+                    'message': str(_('الرجاء إدخال كود الخصم'))
+                })
             messages.error(request, _('الرجاء إدخال كود الخصم'))
-        else:
-            # Here you would implement coupon validation logic
-            # For now, just store the coupon code
+            return redirect('cart:cart_detail')
+
+        # البحث عن الخصم بالكود
+        try:
+            now = timezone.now()
+            discount = ProductDiscount.objects.filter(
+                code__iexact=coupon_code,
+                is_active=True,
+                requires_coupon_code=True,
+                start_date__lte=now
+            ).filter(
+                models.Q(end_date__isnull=True) | models.Q(end_date__gte=now)
+            ).first()
+
+            if not discount:
+                if is_ajax:
+                    return JsonResponse({
+                        'success': False,
+                        'message': str(_('كود الخصم غير صالح أو منتهي الصلاحية'))
+                    })
+                messages.error(request, _('كود الخصم غير صالح أو منتهي الصلاحية'))
+                return redirect('cart:cart_detail')
+
+            # التحقق من عدد مرات الاستخدام
+            if discount.max_uses and discount.current_uses >= discount.max_uses:
+                if is_ajax:
+                    return JsonResponse({
+                        'success': False,
+                        'message': str(_('تم استنفاد عدد مرات استخدام هذا الكود'))
+                    })
+                messages.error(request, _('تم استنفاد عدد مرات استخدام هذا الكود'))
+                return redirect('cart:cart_detail')
+
+            # حفظ الكود في الجلسة
             request.session['coupon_code'] = coupon_code
-            messages.success(request, _('تم تطبيق كود الخصم'))
-        
+            request.session['coupon_discount_id'] = discount.id
+            request.session.modified = True
+
+            # حساب مجموع السلة للتحقق من الحد الأدنى للشراء والحد الأقصى للخصم
+            from .context_processors import cart_context
+            cart_ctx = cart_context(request)
+            cart_original_subtotal = cart_ctx.get('cart_original_subtotal', Decimal('0.00'))
+            max_discount_applied = cart_ctx.get('max_discount_applied', False)
+            coupon_discount_amount = cart_ctx.get('coupon_discount', Decimal('0.00'))
+
+            # التحقق من الحد الأدنى للشراء
+            meets_min_purchase = True
+            min_purchase_message = ''
+            if discount.min_purchase_amount and cart_original_subtotal < discount.min_purchase_amount:
+                meets_min_purchase = False
+                min_purchase_message = _('تم حفظ كود الخصم، لكن لا يمكن تطبيقه لأن المجموع أقل من {} د.أ').format(int(discount.min_purchase_amount))
+
+            # رسالة الحد الأقصى للخصم
+            max_discount_message = ''
+            if max_discount_applied and discount.max_discount_amount:
+                max_discount_message = _('تم تطبيق الحد الأقصى للخصم: {} د.أ').format(round(float(discount.max_discount_amount) * 0.84, 2))
+
+            if is_ajax:
+                if meets_min_purchase:
+                    message = str(_('تم تطبيق كود الخصم بنجاح'))
+                    if max_discount_message:
+                        message += ' - ' + str(max_discount_message)
+                    return JsonResponse({
+                        'success': True,
+                        'message': message,
+                        'discount_name': discount.name,
+                        'discount_type': discount.discount_type,
+                        'discount_value': str(discount.value),
+                        'max_discount_applied': max_discount_applied,
+                        'max_discount_amount': str(discount.max_discount_amount) if discount.max_discount_amount else None
+                    })
+                else:
+                    return JsonResponse({
+                        'success': True,
+                        'message': str(min_purchase_message),
+                        'warning': True,
+                        'discount_name': discount.name,
+                        'min_purchase_amount': str(discount.min_purchase_amount)
+                    })
+
+            if meets_min_purchase:
+                success_message = _('تم تطبيق كود الخصم بنجاح')
+                if max_discount_message:
+                    success_message = str(success_message) + ' - ' + str(max_discount_message)
+                messages.success(request, success_message)
+            else:
+                messages.warning(request, min_purchase_message)
+
+        except Exception as e:
+            if is_ajax:
+                return JsonResponse({
+                    'success': False,
+                    'message': str(_('حدث خطأ أثناء تطبيق كود الخصم'))
+                })
+            messages.error(request, _('حدث خطأ أثناء تطبيق كود الخصم'))
+
         return redirect('cart:cart_detail')
 
 
@@ -412,10 +535,52 @@ class RemoveCouponView(CartMixin, View):
     Remove coupon from cart
     """
     def post(self, request):
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
         if 'coupon_code' in request.session:
             del request.session['coupon_code']
-            request.session.modified = True
-            messages.success(request, _('تم إزالة كود الخصم'))
-        
+        if 'coupon_discount_id' in request.session:
+            del request.session['coupon_discount_id']
+        request.session.modified = True
+
+        if is_ajax:
+            return JsonResponse({
+                'success': True,
+                'message': str(_('تم إزالة كود الخصم'))
+            })
+
+        messages.success(request, _('تم إزالة كود الخصم'))
+        return redirect('cart:cart_detail')
+
+
+class UpdateShippingCityView(CartMixin, View):
+    """
+    Update shipping city in session for shipping fee calculation
+    """
+    def post(self, request):
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        city = request.POST.get('city', 'amman')
+
+        # Validate city value
+        if city not in ['amman', 'other']:
+            city = 'amman'
+
+        # Save to session
+        request.session['shipping_city'] = city
+        request.session.modified = True
+
+        if is_ajax:
+            # Get updated cart context
+            from .context_processors import cart_context
+            cart_ctx = cart_context(request)
+
+            return JsonResponse({
+                'success': True,
+                'message': str(_('تم تحديث منطقة الشحن')),
+                'shipping_fee': str(cart_ctx.get('cart_shipping', 0)),
+                'cart_total': str(cart_ctx.get('cart_total', 0)),
+                'city': city
+            })
+
         return redirect('cart:cart_detail')
 

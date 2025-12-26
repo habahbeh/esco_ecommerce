@@ -57,6 +57,8 @@ urlpatterns = [
 
     path('accounts/users/<uuid:user_id>/reset-password/', views.UserResetPasswordView.as_view(),
          name='dashboard_user_reset_password'),
+    path('accounts/users/<uuid:user_id>/verify-toggle/', views.UserVerifyToggleView.as_view(),
+         name='dashboard_user_verify_toggle'),
 
     # إدارة الأدوار
     path('accounts/roles/', views.RoleListView.as_view(), name='dashboard_roles'),
@@ -90,10 +92,14 @@ urlpatterns = [
     # path('products/import/export-errors/', views.export_import_errors, name='export_import_errors'),
 
     path('products/import/', import_export.product_import_view, name='product_import'),
-    path('products/import/template/', import_export.generate_csv_template, name='excel_template'),
+    path('products/import/template/', import_export.generate_import_template, name='product_import_template'),
+    path('products/import/preview/', import_export.product_import_preview, name='product_import_preview'),
     path('products/import/results/<str:import_id>/', import_export.import_results_view, name='import_results'),
     path('products/import/progress/', import_export.import_progress_view, name='import_progress'),
     path('products/import/export-errors/', import_export.export_errors_view, name='export_import_errors'),
+    path('products/export/', import_export.export_products_view, name='products_export'),
+    # للتوافق مع الكود القديم
+    path('products/import/csv-template/', import_export.generate_csv_template, name='excel_template'),
     # path('products/import/export-errors/', views.export_errors_view, name='export_import_errors'),
 
     path('products/image/<int:image_id>/delete/', views.ProductImageDeleteView.as_view(), name='dashboard_product_image_delete'),
@@ -132,6 +138,10 @@ urlpatterns = [
     path('products/reviews/<str:review_id>/', views.ReviewDetailView.as_view(), name='dashboard_review_detail'),
     path('products/reviews/<str:review_id>/action/', views.review_action, name='dashboard_review_action'),
 
+    # محرر الأسعار الجماعي
+    path('products/bulk-price-editor/', views.BulkPriceEditorView.as_view(), name='bulk_price_editor'),
+    path('products/bulk-price-editor/api/', views.BulkPriceEditorAPIView.as_view(), name='bulk_price_editor_api'),
+
     # روابط المنتجات ذات المعرفات - يجب أن تكون بعد المسارات الثابتة
     path('products/<str:product_id>/', views.ProductDetailView.as_view(), name='dashboard_product_detail'),
     path('products/<str:product_id>/edit/', views.ProductFormView.as_view(), name='dashboard_product_edit'),
@@ -150,6 +160,8 @@ urlpatterns = [
          name='dashboard_order_update_status'),
     path('orders/<str:order_id>/update-payment-status/', views.OrderUpdatePaymentStatusView.as_view(),
          name='dashboard_order_update_payment_status'),
+    path('orders/<str:order_id>/update-both/', views.OrderUpdateBothView.as_view(),
+         name='dashboard_order_update_both'),
     path('orders/<str:order_id>/cancel/', views.OrderCancelView.as_view(), name='dashboard_order_cancel'),
     path('orders/<str:order_id>/print/', views.OrderPrintView.as_view(), name='dashboard_order_print'),
 
@@ -273,6 +285,9 @@ urlpatterns = [
     path('settings/newsletters/create/', views.dashboard_newsletter_create, name='dashboard_newsletter_create'),
     path('settings/newsletters/<int:pk>/edit/', views.dashboard_newsletter_edit, name='dashboard_newsletter_edit'),
     path('settings/newsletters/<int:pk>/delete/', views.dashboard_newsletter_delete, name='dashboard_newsletter_delete'),
+    path('settings/newsletters/<int:pk>/verify/', views.dashboard_newsletter_verify, name='dashboard_newsletter_verify'),
+    path('settings/newsletters/<int:pk>/toggle-verify/', views.dashboard_newsletter_toggle_verify, name='dashboard_newsletter_toggle_verify'),
+    path('settings/newsletters/send/', views.dashboard_newsletter_send, name='dashboard_newsletter_send'),
 
     # ========================= واجهات برمجة التطبيقات API =========================
     path('api/stats/', views.DashboardStatsAPIView.as_view(), name='dashboard_stats_api'),

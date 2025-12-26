@@ -101,6 +101,7 @@
         font-weight: 500;
         border-bottom: 3px solid transparent;
         transition: all 0.3s ease;
+        cursor: pointer;
     }
 
     .profile-nav .nav-link.active {
@@ -172,6 +173,30 @@
         background-color: rgba(var(--bs-primary-rgb), 0.1);
     }
 
+    /* Tab content styles */
+    .tab-pane {
+        display: none;
+    }
+    .tab-pane.active {
+        display: block;
+    }
+
+    /* Address card styles */
+    .address-card {
+        border: 1px solid rgba(0,0,0,0.1);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+    .address-card:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .address-card.default {
+        border-color: var(--bs-primary);
+        background-color: rgba(var(--bs-primary-rgb), 0.05);
+    }
+
     /* Dark mode adjustments */
     [data-bs-theme="dark"] .profile-container {
         box-shadow: 0 5px 20px rgba(0,0,0,0.3);
@@ -199,6 +224,27 @@
             padding: 1.5rem;
         }
     }
+
+    /* Floating save button */
+    .floating-save-btn {
+        position: fixed;
+        bottom: 30px;
+        left: 30px;
+        z-index: 1000;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        border-radius: 50px;
+        padding: 15px 30px;
+        display: none;
+    }
+    .floating-save-btn.show {
+        display: block;
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0% { box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        50% { box-shadow: 0 4px 25px rgba(var(--bs-primary-rgb),0.5); }
+        100% { box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+    }
 </style>
 {% endblock %}
 
@@ -217,9 +263,9 @@
                 <div class="profile-header">
                     <div class="profile-avatar">
                         {% if user.avatar %}
-                            <img src="{{ user.avatar.url }}" alt="{{ user.get_full_name }}">
+                            <img src="{{ user.avatar.url }}" alt="{{ user.get_full_name }}" id="avatar-preview">
                         {% else %}
-                            <img src="{% static 'images/default-avatar.png' %}" alt="{{ user.get_full_name }}">
+                            <img src="{% static 'images/default-avatar.png' %}" alt="{{ user.get_full_name }}" id="avatar-preview">
                         {% endif %}
                         <label for="avatar-upload" class="avatar-edit">
                             <i class="fas fa-camera"></i>
@@ -254,332 +300,455 @@
                 </div>
 
                 <div class="profile-nav">
-                    <ul class="nav nav-tabs border-0">
-                        <li class="nav-item">
-                            <a class="nav-link active" href="{% url 'accounts:profile' %}">
+                    <ul class="nav nav-tabs border-0" id="profileTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="profile-tab" data-tab="profile" type="button" role="tab">
                                 <i class="fas fa-user me-2"></i>{% trans "الملف الشخصي" %}
-                            </a>
+                            </button>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'accounts:address_list' %}">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="addresses-tab" data-tab="addresses" type="button" role="tab">
                                 <i class="fas fa-map-marker-alt me-2"></i>{% trans "العناوين" %}
-                            </a>
+                            </button>
                         </li>
-                        <li class="nav-item" hidden>
-                            <a class="nav-link" href="{% url 'accounts:order_history' %}">
-                                <i class="fas fa-box me-2"></i>{% trans "الطلبات" %}
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'accounts:change_password' %}">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="password-tab" data-tab="password" type="button" role="tab">
                                 <i class="fas fa-lock me-2"></i>{% trans "كلمة المرور" %}
-                            </a>
-                        </li>
-                        <li class="nav-item" hidden>
-                            <a class="nav-link" href="{% url 'accounts:notification_preferences' %}">
-                                <i class="fas fa-bell me-2"></i>{% trans "الإشعارات" %}
-                            </a>
+                            </button>
                         </li>
                     </ul>
                 </div>
 
-                <div class="profile-content">
-                    <div class="row">
-                        <div class="col-lg-8">
-                            <div class="profile-section">
-                                <h3 class="profile-section-title">
-                                    <i class="fas fa-user-edit"></i>{% trans "المعلومات الشخصية" %}
-                                </h3>
-                                <form method="post" class="profile-form needs-validation" enctype="multipart/form-data" novalidate>
-                                    {% csrf_token %}
+                <form method="post" class="profile-form needs-validation" enctype="multipart/form-data" novalidate id="profile-main-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="all_forms">
 
-                                    {% if form.non_field_errors %}
-                                        <div class="alert alert-danger">
-                                            {% for error in form.non_field_errors %}
-                                                {{ error }}
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
+                    <div class="profile-content">
+                        <!-- Tab: Profile -->
+                        <div class="tab-pane active" id="tab-profile" role="tabpanel">
+                            <div class="row">
+                                <div class="col-lg-8">
+                                    <div class="profile-section">
+                                        <h3 class="profile-section-title">
+                                            <i class="fas fa-user-edit"></i>{% trans "المعلومات الشخصية" %}
+                                        </h3>
 
-                                    <div class="row mb-3">
-                                        <div class="col-md-6 mb-3 mb-md-0">
-                                            <label for="id_first_name" class="form-label">{% trans "الاسم الأول" %}</label>
-                                            <input type="text" name="first_name" id="id_first_name" class="form-control" value="{{ form.first_name.value|default:user.first_name }}" required>
-                                            {% if form.first_name.errors %}
-                                                <div class="text-danger mt-1">
-                                                    {% for error in form.first_name.errors %}{{ error }}{% endfor %}
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label for="id_last_name" class="form-label">{% trans "اسم العائلة" %}</label>
-                                            <input type="text" name="last_name" id="id_last_name" class="form-control" value="{{ form.last_name.value|default:user.last_name }}" required>
-                                            {% if form.last_name.errors %}
-                                                <div class="text-danger mt-1">
-                                                    {% for error in form.last_name.errors %}{{ error }}{% endfor %}
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-
-                                    <div class="row mb-3">
-                                        <div class="col-md-6 mb-3 mb-md-0">
-                                            <label for="id_email" class="form-label">{% trans "البريد الإلكتروني" %}</label>
-                                            <input type="email" name="email" id="id_email" class="form-control" value="{{ form.email.value|default:user.email }}" required>
-                                            {% if form.email.errors %}
-                                                <div class="text-danger mt-1">
-                                                    {% for error in form.email.errors %}{{ error }}{% endfor %}
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label for="id_phone_number" class="form-label">{% trans "رقم الهاتف" %}</label>
-                                            <input type="tel" name="phone_number" id="id_phone_number" class="form-control" value="{{ form.phone_number.value|default:user.phone_number }}">
-                                            {% if form.phone_number.errors %}
-                                                <div class="text-danger mt-1">
-                                                    {% for error in form.phone_number.errors %}{{ error }}{% endfor %}
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-
-                                    <div class="row mb-3">
-                                        <div class="col-md-6 mb-3 mb-md-0">
-                                            <label for="id_birth_date" class="form-label">{% trans "تاريخ الميلاد" %}</label>
-                                            <input type="date" name="birth_date" id="id_birth_date" class="form-control" value="{{ form.birth_date.value|default:user.birth_date|date:'Y-m-d' }}">
-                                            {% if form.birth_date.errors %}
-                                                <div class="text-danger mt-1">
-                                                    {% for error in form.birth_date.errors %}{{ error }}{% endfor %}
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label for="id_gender" class="form-label">{% trans "الجنس" %}</label>
-                                            <select name="gender" id="id_gender" class="form-select">
-                                                <option value="">{% trans "اختر..." %}</option>
-                                                <option value="M" {% if user.gender == 'M' %}selected{% endif %}>{% trans "ذكر" %}</option>
-                                                <option value="F" {% if user.gender == 'F' %}selected{% endif %}>{% trans "أنثى" %}</option>
-                                            </select>
-                                            {% if form.gender.errors %}
-                                                <div class="text-danger mt-1">
-                                                    {% for error in form.gender.errors %}{{ error }}{% endfor %}
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-
-                                    <div class="row mb-3">
-                                        <div class="col-md-6 mb-3 mb-md-0">
-                                            <label for="id_language" class="form-label">{% trans "اللغة المفضلة" %}</label>
-                                            <select name="language" id="id_language" class="form-select">
-                                                <option value="ar" {% if user.language == 'ar' %}selected{% endif %}>{% trans "العربية" %}</option>
-                                                <option value="en" {% if user.language == 'en' %}selected{% endif %}>{% trans "الإنجليزية" %}</option>
-                                            </select>
-                                            {% if form.language.errors %}
-                                                <div class="text-danger mt-1">
-                                                    {% for error in form.language.errors %}{{ error }}{% endfor %}
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label for="id_timezone" class="form-label">{% trans "المنطقة الزمنية" %}</label>
-                                            <input type="text" name="timezone" id="id_timezone" class="form-control" value="{{ form.timezone.value|default:user.timezone }}">
-                                            {% if form.timezone.errors %}
-                                                <div class="text-danger mt-1">
-                                                    {% for error in form.timezone.errors %}{{ error }}{% endfor %}
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-
-                                    <input type="hidden" name="form_type" value="user_form">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save me-2"></i>{% trans "حفظ التغييرات" %}
-                                    </button>
-                                </form>
-                            </div>
-
-                            <div class="profile-section">
-                                <h3 class="profile-section-title">
-                                    <i class="fas fa-info-circle"></i>{% trans "نبذة شخصية" %}
-                                </h3>
-                                <form method="post" class="profile-form">
-                                    {% csrf_token %}
-
-                                    <div class="mb-3">
-                                        <label for="id_bio" class="form-label">{% trans "نبذة مختصرة عنك" %}</label>
-                                        <textarea name="bio" id="id_bio" class="form-control" rows="4">{{ profile_form.bio.value|default:user.profile.bio }}</textarea>
-                                        {% if profile_form.bio.errors %}
-                                            <div class="text-danger mt-1">
-                                                {% for error in profile_form.bio.errors %}{{ error }}{% endfor %}
+                                        {% if form.non_field_errors %}
+                                            <div class="alert alert-danger">
+                                                {% for error in form.non_field_errors %}
+                                                    {{ error }}
+                                                {% endfor %}
                                             </div>
                                         {% endif %}
-                                    </div>
 
-                                    <div class="mb-3">
-                                        <label for="id_interests" class="form-label">{% trans "الاهتمامات" %}</label>
-                                        <textarea name="interests" id="id_interests" class="form-control" rows="3" placeholder="{% trans 'اهتماماتك مفصولة بفواصل...' %}">{{ profile_form.interests.value|default:user.profile.interests }}</textarea>
-                                        {% if profile_form.interests.errors %}
-                                            <div class="text-danger mt-1">
-                                                {% for error in profile_form.interests.errors %}{{ error }}{% endfor %}
+                                        <div class="row mb-3">
+                                            <div class="col-md-6 mb-3 mb-md-0">
+                                                <label for="id_first_name" class="form-label">{% trans "الاسم الأول" %}</label>
+                                                <input type="text" name="first_name" id="id_first_name" class="form-control" value="{{ form.first_name.value|default:user.first_name }}" required>
+                                                {% if form.first_name.errors %}
+                                                    <div class="text-danger mt-1">
+                                                        {% for error in form.first_name.errors %}{{ error }}{% endfor %}
+                                                    </div>
+                                                {% endif %}
                                             </div>
-                                        {% endif %}
+                                            <div class="col-md-6">
+                                                <label for="id_last_name" class="form-label">{% trans "اسم العائلة" %}</label>
+                                                <input type="text" name="last_name" id="id_last_name" class="form-control" value="{{ form.last_name.value|default:user.last_name }}" required>
+                                                {% if form.last_name.errors %}
+                                                    <div class="text-danger mt-1">
+                                                        {% for error in form.last_name.errors %}{{ error }}{% endfor %}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+
+                                        <div class="row mb-3">
+                                            <div class="col-md-6 mb-3 mb-md-0">
+                                                <label for="id_email" class="form-label">{% trans "البريد الإلكتروني" %}</label>
+                                                <input type="email" name="email" id="id_email" class="form-control" value="{{ form.email.value|default:user.email }}" required>
+                                                {% if form.email.errors %}
+                                                    <div class="text-danger mt-1">
+                                                        {% for error in form.email.errors %}{{ error }}{% endfor %}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="id_phone_number" class="form-label">{% trans "رقم الهاتف" %}</label>
+                                                <input type="tel" name="phone_number" id="id_phone_number" class="form-control" value="{{ form.phone_number.value|default:user.phone_number }}">
+                                                {% if form.phone_number.errors %}
+                                                    <div class="text-danger mt-1">
+                                                        {% for error in form.phone_number.errors %}{{ error }}{% endfor %}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+
+                                        <div class="row mb-3">
+                                            <div class="col-md-6 mb-3 mb-md-0">
+                                                <label for="id_birth_date" class="form-label">{% trans "تاريخ الميلاد" %}</label>
+                                                <input type="date" name="birth_date" id="id_birth_date" class="form-control" value="{{ form.birth_date.value|default:user.birth_date|date:'Y-m-d' }}">
+                                                {% if form.birth_date.errors %}
+                                                    <div class="text-danger mt-1">
+                                                        {% for error in form.birth_date.errors %}{{ error }}{% endfor %}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="id_gender" class="form-label">{% trans "الجنس" %}</label>
+                                                <select name="gender" id="id_gender" class="form-select">
+                                                    <option value="">{% trans "اختر..." %}</option>
+                                                    <option value="M" {% if user.gender == 'M' %}selected{% endif %}>{% trans "ذكر" %}</option>
+                                                    <option value="F" {% if user.gender == 'F' %}selected{% endif %}>{% trans "أنثى" %}</option>
+                                                </select>
+                                                {% if form.gender.errors %}
+                                                    <div class="text-danger mt-1">
+                                                        {% for error in form.gender.errors %}{{ error }}{% endfor %}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+
+                                        <div class="row mb-3">
+                                            <div class="col-md-6 mb-3 mb-md-0">
+                                                <label for="id_language" class="form-label">{% trans "اللغة المفضلة" %}</label>
+                                                <select name="language" id="id_language" class="form-select">
+                                                    <option value="ar" {% if user.language == 'ar' %}selected{% endif %}>{% trans "العربية" %}</option>
+                                                    <option value="en" {% if user.language == 'en' %}selected{% endif %}>{% trans "الإنجليزية" %}</option>
+                                                </select>
+                                                {% if form.language.errors %}
+                                                    <div class="text-danger mt-1">
+                                                        {% for error in form.language.errors %}{{ error }}{% endfor %}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="id_timezone" class="form-label">{% trans "المنطقة الزمنية" %}</label>
+                                                <input type="text" name="timezone" id="id_timezone" class="form-control" value="{{ form.timezone.value|default:user.timezone }}">
+                                                {% if form.timezone.errors %}
+                                                    <div class="text-danger mt-1">
+                                                        {% for error in form.timezone.errors %}{{ error }}{% endfor %}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    <div class="row mb-3">
-                                        <div class="col-md-6 mb-3 mb-md-0">
-                                            <label for="id_profession" class="form-label">{% trans "المهنة" %}</label>
-                                            <input type="text" name="profession" id="id_profession" class="form-control" value="{{ profile_form.profession.value|default:user.profile.profession }}">
-                                            {% if profile_form.profession.errors %}
+                                    <div class="profile-section">
+                                        <h3 class="profile-section-title">
+                                            <i class="fas fa-info-circle"></i>{% trans "نبذة شخصية" %}
+                                        </h3>
+
+                                        <div class="mb-3">
+                                            <label for="id_bio" class="form-label">{% trans "نبذة مختصرة عنك" %}</label>
+                                            <textarea name="bio" id="id_bio" class="form-control" rows="4">{{ profile_form.bio.value|default:user.profile.bio }}</textarea>
+                                            {% if profile_form.bio.errors %}
                                                 <div class="text-danger mt-1">
-                                                    {% for error in profile_form.profession.errors %}{{ error }}{% endfor %}
+                                                    {% for error in profile_form.bio.errors %}{{ error }}{% endfor %}
                                                 </div>
                                             {% endif %}
                                         </div>
-                                        <div class="col-md-6">
-                                            <label for="id_company" class="form-label">{% trans "الشركة" %}</label>
-                                            <input type="text" name="company" id="id_company" class="form-control" value="{{ profile_form.company.value|default:user.profile.company }}">
-                                            {% if profile_form.company.errors %}
+
+                                        <div class="mb-3">
+                                            <label for="id_interests" class="form-label">{% trans "الاهتمامات" %}</label>
+                                            <textarea name="interests" id="id_interests" class="form-control" rows="3" placeholder="{% trans 'اهتماماتك مفصولة بفواصل...' %}">{{ profile_form.interests.value|default:user.profile.interests }}</textarea>
+                                            {% if profile_form.interests.errors %}
                                                 <div class="text-danger mt-1">
-                                                    {% for error in profile_form.company.errors %}{{ error }}{% endfor %}
+                                                    {% for error in profile_form.interests.errors %}{{ error }}{% endfor %}
                                                 </div>
                                             {% endif %}
                                         </div>
+
+                                        <div class="row mb-3">
+                                            <div class="col-md-6 mb-3 mb-md-0">
+                                                <label for="id_profession" class="form-label">{% trans "المهنة" %}</label>
+                                                <input type="text" name="profession" id="id_profession" class="form-control" value="{{ profile_form.profession.value|default:user.profile.profession }}">
+                                                {% if profile_form.profession.errors %}
+                                                    <div class="text-danger mt-1">
+                                                        {% for error in profile_form.profession.errors %}{{ error }}{% endfor %}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="id_company" class="form-label">{% trans "الشركة" %}</label>
+                                                <input type="text" name="company" id="id_company" class="form-control" value="{{ profile_form.company.value|default:user.profile.company }}">
+                                                {% if profile_form.company.errors %}
+                                                    <div class="text-danger mt-1">
+                                                        {% for error in profile_form.company.errors %}{{ error }}{% endfor %}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-4">
+                                    <div class="profile-section">
+                                        <h3 class="profile-section-title">
+                                            <i class="fas fa-link"></i>{% trans "روابط التواصل" %}
+                                        </h3>
+
+                                        <div class="mb-3">
+                                            <label for="id_website" class="form-label">{% trans "الموقع الشخصي الإلكتروني" %} <small class="text-muted">({% trans "اختياري" %})</small></label>
+                                            <input type="url" name="website" id="id_website" class="form-control" value="{{ profile_form.website.value|default:user.profile.website }}" placeholder="https://www.example.com">
+                                            <small class="form-text text-muted">{% trans "مثال:" %} https://www.mywebsite.com</small>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="id_twitter" class="form-label">{% trans "تويتر" %}</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="fab fa-twitter"></i></span>
+                                                <input type="text" name="twitter" id="id_twitter" class="form-control" value="{{ profile_form.twitter.value|default:user.profile.twitter }}">
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="id_facebook" class="form-label">{% trans "فيسبوك" %}</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="fab fa-facebook-f"></i></span>
+                                                <input type="text" name="facebook" id="id_facebook" class="form-control" value="{{ profile_form.facebook.value|default:user.profile.facebook }}">
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="id_instagram" class="form-label">{% trans "انستغرام" %}</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="fab fa-instagram"></i></span>
+                                                <input type="text" name="instagram" id="id_instagram" class="form-control" value="{{ profile_form.instagram.value|default:user.profile.instagram }}">
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="id_linkedin" class="form-label">{% trans "لينكد إن" %}</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="fab fa-linkedin-in"></i></span>
+                                                <input type="text" name="linkedin" id="id_linkedin" class="form-control" value="{{ profile_form.linkedin.value|default:user.profile.linkedin }}">
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    <input type="hidden" name="form_type" value="profile_form">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save me-2"></i>{% trans "حفظ التغييرات" %}
-                                    </button>
-                                </form>
+                                    <!-- Save Button in Profile Tab -->
+                                    <div class="d-grid mt-4">
+                                        <button type="submit" class="btn btn-primary btn-lg">
+                                            <i class="fas fa-save me-2"></i>{% trans "حفظ جميع التغييرات" %}
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="col-lg-4">
-                            <div class="profile-section">
-                                <h3 class="profile-section-title">
-                                    <i class="fas fa-link"></i>{% trans "روابط التواصل" %}
+                        <!-- Tab: Addresses -->
+                        <div class="tab-pane" id="tab-addresses" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h3 class="profile-section-title mb-0">
+                                    <i class="fas fa-map-marker-alt"></i>{% trans "عناويني" %}
                                 </h3>
-                                <form method="post" class="profile-form">
-                                    {% csrf_token %}
-
-                                    <div class="mb-3">
-                                        <label for="id_website" class="form-label">{% trans "الموقع الشخصي" %}</label>
-                                        <input type="url" name="website" id="id_website" class="form-control" value="{{ profile_form.website.value|default:user.profile.website }}">
-                                        {% if profile_form.website.errors %}
-                                            <div class="text-danger mt-1">
-                                                {% for error in profile_form.website.errors %}{{ error }}{% endfor %}
-                                            </div>
-                                        {% endif %}
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label for="id_twitter" class="form-label">{% trans "تويتر" %}</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text"><i class="fab fa-twitter"></i></span>
-                                            <input type="text" name="twitter" id="id_twitter" class="form-control" value="{{ profile_form.twitter.value|default:user.profile.twitter }}">
-                                        </div>
-                                        {% if profile_form.twitter.errors %}
-                                            <div class="text-danger mt-1">
-                                                {% for error in profile_form.twitter.errors %}{{ error }}{% endfor %}
-                                            </div>
-                                        {% endif %}
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label for="id_facebook" class="form-label">{% trans "فيسبوك" %}</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text"><i class="fab fa-facebook-f"></i></span>
-                                            <input type="text" name="facebook" id="id_facebook" class="form-control" value="{{ profile_form.facebook.value|default:user.profile.facebook }}">
-                                        </div>
-                                        {% if profile_form.facebook.errors %}
-                                            <div class="text-danger mt-1">
-                                                {% for error in profile_form.facebook.errors %}{{ error }}{% endfor %}
-                                            </div>
-                                        {% endif %}
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label for="id_instagram" class="form-label">{% trans "انستغرام" %}</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text"><i class="fab fa-instagram"></i></span>
-                                            <input type="text" name="instagram" id="id_instagram" class="form-control" value="{{ profile_form.instagram.value|default:user.profile.instagram }}">
-                                        </div>
-                                        {% if profile_form.instagram.errors %}
-                                            <div class="text-danger mt-1">
-                                                {% for error in profile_form.instagram.errors %}{{ error }}{% endfor %}
-                                            </div>
-                                        {% endif %}
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label for="id_linkedin" class="form-label">{% trans "لينكد إن" %}</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text"><i class="fab fa-linkedin-in"></i></span>
-                                            <input type="text" name="linkedin" id="id_linkedin" class="form-control" value="{{ profile_form.linkedin.value|default:user.profile.linkedin }}">
-                                        </div>
-                                        {% if profile_form.linkedin.errors %}
-                                            <div class="text-danger mt-1">
-                                                {% for error in profile_form.linkedin.errors %}{{ error }}{% endfor %}
-                                            </div>
-                                        {% endif %}
-                                    </div>
-
-                                    <input type="hidden" name="form_type" value="social_form">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save me-2"></i>{% trans "حفظ التغييرات" %}
-                                    </button>
-                                </form>
+                                <a href="{% url 'accounts:address_add' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus me-2"></i>{% trans "إضافة عنوان جديد" %}
+                                </a>
                             </div>
 
-                            <div class="profile-section">
-                                <h3 class="profile-section-title">
-                                    <i class="fas fa-shield-alt"></i>{% trans "أمان الحساب" %}
-                                </h3>
-
-                                <div class="card mb-3 card-hover">
-                                    <div class="card-body">
-                                        <h5 class="card-title">{% trans "كلمة المرور" %}</h5>
-                                        <p class="card-text text-muted">{% trans "قم بتغيير كلمة المرور الخاصة بك" %}</p>
-                                        <a href="{% url 'accounts:change_password' %}" class="btn btn-outline-primary btn-sm">
-                                            <i class="fas fa-key me-2"></i>{% trans "تغيير كلمة المرور" %}
+                            <div class="row">
+                                {% for address in addresses %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="address-card {% if address.is_default %}default{% endif %}">
+                                        {% if address.is_default %}
+                                        <span class="badge bg-primary mb-2">{% trans "العنوان الافتراضي" %}</span>
+                                        {% endif %}
+                                        <h5>{{ address.label|default:address.get_type_display }}</h5>
+                                        <p class="mb-1"><strong>{{ address.full_name }}</strong></p>
+                                        <p class="mb-1">{{ address.address_line1 }}</p>
+                                        {% if address.address_line2 %}
+                                        <p class="mb-1">{{ address.address_line2 }}</p>
+                                        {% endif %}
+                                        <p class="mb-1">{{ address.city }}{% if address.state %}, {{ address.state }}{% endif %}</p>
+                                        <p class="mb-1">{{ address.country }}</p>
+                                        {% if address.phone %}
+                                        <p class="mb-2"><i class="fas fa-phone me-2"></i>{{ address.phone }}</p>
+                                        {% endif %}
+                                        <div class="mt-3">
+                                            <a href="{% url 'accounts:address_edit' pk=address.pk %}" class="btn btn-sm btn-outline-primary me-1">
+                                                <i class="fas fa-edit"></i> {% trans "تعديل" %}
+                                            </a>
+                                            {% if not address.is_default %}
+                                            <form action="{% url 'accounts:set_default_address' pk=address.pk %}" method="post" class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-outline-success me-1">
+                                                    <i class="fas fa-check"></i> {% trans "تعيين كافتراضي" %}
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                            <a href="{% url 'accounts:address_delete' pk=address.pk %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('{% trans "هل أنت متأكد من حذف هذا العنوان؟" %}')">
+                                                <i class="fas fa-trash"></i> {% trans "حذف" %}
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="col-12">
+                                    <div class="text-center py-5">
+                                        <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
+                                        <h5>{% trans "لا توجد عناوين محفوظة" %}</h5>
+                                        <p class="text-muted">{% trans "أضف عنوانك الأول لتسهيل عملية الطلب" %}</p>
+                                        <a href="{% url 'accounts:address_add' %}" class="btn btn-primary">
+                                            <i class="fas fa-plus me-2"></i>{% trans "إضافة عنوان" %}
                                         </a>
                                     </div>
                                 </div>
+                                {% endfor %}
+                            </div>
 
-                                <div class="card mb-3 card-hover" hidden>
-                                    <div class="card-body">
-                                        <h5 class="card-title">{% trans "الإشعارات" %}</h5>
-                                        <p class="card-text text-muted">{% trans "إدارة تفضيلات الإشعارات" %}</p>
-                                        <a href="{% url 'accounts:notification_preferences' %}" class="btn btn-outline-primary btn-sm">
-                                            <i class="fas fa-bell me-2"></i>{% trans "إعدادات الإشعارات" %}
-                                        </a>
+                            <!-- Save Button in Addresses Tab -->
+                            <div class="d-grid mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-save me-2"></i>{% trans "حفظ جميع التغييرات" %}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Tab: Password -->
+                        <div class="tab-pane" id="tab-password" role="tabpanel">
+                            <div class="row justify-content-center">
+                                <div class="col-lg-6">
+                                    <div class="profile-section">
+                                        <h3 class="profile-section-title">
+                                            <i class="fas fa-lock"></i>{% trans "تغيير كلمة المرور" %}
+                                        </h3>
+
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            {% trans "لتغيير كلمة المرور، يرجى استخدام الصفحة المخصصة لذلك" %}
+                                        </div>
+
+                                        <div class="text-center">
+                                            <a href="{% url 'accounts:change_password' %}" class="btn btn-primary btn-lg">
+                                                <i class="fas fa-key me-2"></i>{% trans "تغيير كلمة المرور" %}
+                                            </a>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div class="card card-hover">
-                                    <div class="card-body">
-                                        <h5 class="card-title">{% trans "إعدادات الأمان" %}</h5>
-                                        <p class="card-text text-muted">{% trans "إدارة إعدادات أمان الحساب" %}</p>
-                                        <a href="{% url 'accounts:change_password' %}" class="btn btn-outline-primary btn-sm">
-                                            <i class="fas fa-lock me-2"></i>{% trans "إعدادات الأمان" %}
-                                        </a>
+                                    <div class="profile-section mt-4">
+                                        <h3 class="profile-section-title">
+                                            <i class="fas fa-shield-alt"></i>{% trans "أمان الحساب" %}
+                                        </h3>
+
+                                        <div class="card mb-3 card-hover">
+                                            <div class="card-body">
+                                                <h5 class="card-title">{% trans "حالة التحقق" %}</h5>
+                                                {% if user.is_verified %}
+                                                <p class="text-success"><i class="fas fa-check-circle me-2"></i>{% trans "تم التحقق من بريدك الإلكتروني" %}</p>
+                                                {% else %}
+                                                <p class="text-warning"><i class="fas fa-exclamation-circle me-2"></i>{% trans "لم يتم التحقق من بريدك الإلكتروني" %}</p>
+                                                <a href="{% url 'accounts:resend_verification' %}" class="btn btn-sm btn-warning">
+                                                    {% trans "إعادة إرسال رابط التحقق" %}
+                                                </a>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+
+                                        <div class="card card-hover">
+                                            <div class="card-body">
+                                                <h5 class="card-title">{% trans "آخر تسجيل دخول" %}</h5>
+                                                <p class="text-muted mb-0">{{ user.last_login|date:"Y/m/d H:i"|default:"-" }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Save Button in Password Tab -->
+                                    <div class="d-grid mt-4">
+                                        <button type="submit" class="btn btn-primary btn-lg">
+                                            <i class="fas fa-save me-2"></i>{% trans "حفظ جميع التغييرات" %}
+                                        </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Floating Save Button (appears when form has changes) -->
+<button type="button" class="btn btn-primary floating-save-btn" id="floatingSaveBtn">
+    <i class="fas fa-save me-2"></i>{% trans "حفظ التغييرات" %}
+</button>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // تحديث الصورة الشخصية عند اختيارها
     document.addEventListener('DOMContentLoaded', function() {
+        // ============ Tab Navigation ============
+        const tabButtons = document.querySelectorAll('#profileTabs .nav-link');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+
+        tabButtons.forEach(function(button) {
+            button.addEventListener('click', function() {
+                const targetTab = this.getAttribute('data-tab');
+
+                // Remove active class from all buttons and panes
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabPanes.forEach(pane => pane.classList.remove('active'));
+
+                // Add active class to clicked button and corresponding pane
+                this.classList.add('active');
+                document.getElementById('tab-' + targetTab).classList.add('active');
+
+                // Update URL hash without scrolling
+                history.replaceState(null, null, '#' + targetTab);
+            });
+        });
+
+        // Check URL hash on load
+        const hash = window.location.hash.substring(1);
+        if (hash) {
+            const targetButton = document.querySelector('[data-tab="' + hash + '"]');
+            if (targetButton) {
+                targetButton.click();
+            }
+        }
+
+        // ============ Form Change Detection ============
+        const profileForm = document.getElementById('profile-main-form');
+        const floatingSaveBtn = document.getElementById('floatingSaveBtn');
+        let formChanged = false;
+
+        if (profileForm) {
+            // Track changes
+            profileForm.addEventListener('input', function() {
+                formChanged = true;
+                floatingSaveBtn.classList.add('show');
+            });
+
+            profileForm.addEventListener('change', function() {
+                formChanged = true;
+                floatingSaveBtn.classList.add('show');
+            });
+
+            // Reset on submit
+            profileForm.addEventListener('submit', function() {
+                formChanged = false;
+                floatingSaveBtn.classList.remove('show');
+            });
+        }
+
+        // Floating save button click
+        if (floatingSaveBtn) {
+            floatingSaveBtn.addEventListener('click', function() {
+                profileForm.submit();
+            });
+        }
+
+        // Warn before leaving with unsaved changes
+        window.addEventListener('beforeunload', function(e) {
+            if (formChanged) {
+                e.preventDefault();
+                e.returnValue = '';
+                return '';
+            }
+        });
+
+        // ============ Avatar Upload ============
         const avatarUpload = document.getElementById('avatar-upload');
         const avatarForm = document.getElementById('avatar-form');
 
@@ -589,12 +758,10 @@
                     const formData = new FormData(avatarForm);
                     formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
-                    // إظهار حالة التحميل
-                    const avatarImage = document.querySelector('.profile-avatar img');
+                    const avatarImage = document.getElementById('avatar-preview');
                     avatarImage.style.opacity = '0.5';
 
-                    // رفع الصورة باستخدام AJAX
-                    fetch('/accounts/profile/update-avatar/', {  // استخدام مسار ثابت بدلاً من URL tag
+                    fetch('/accounts/profile/update-avatar/', {
                         method: 'POST',
                         body: formData,
                         credentials: 'same-origin'
@@ -602,7 +769,6 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            // تحديث الصورة
                             avatarImage.src = data.avatar_url + '?t=' + new Date().getTime();
                             avatarImage.style.opacity = '1';
                         } else {

@@ -13,9 +13,10 @@ class Order(models.Model):
     """
 
     STATUS_CHOICES = [
-        ('pending', _('قيد الانتظار')),
-        ('confirmed', _('تأكيد الطلب')),
-        ('closed', _('إغلاق الطلب')),
+        ('pending', _('تم إرسال الطلب')),
+        ('processing', _('قيد المعالجة')),
+        ('confirmed', _('تم تأكيد الطلب')),
+        ('closed', _('تم إغلاق الطلب')),
         ('cancelled', _('ملغي')),
     ]
 

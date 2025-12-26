@@ -1,0 +1,99 @@
+{% extends "emails/base_email.html" %}
+
+{% block title %}تأكيد الاشتراك في النشرة البريدية - ESCO{% endblock %}
+
+{% block content %}
+<div class="greeting">
+    مرحباً {% if name %}{{ name }}{% else %}عزيزنا المشترك{% endif %}! 👋
+</div>
+
+<p class="content-text">
+    شكراً لاهتمامك بالاشتراك في النشرة البريدية لـ <strong>ESCO</strong> - شركة المخازن الهندسية.
+</p>
+
+<p class="content-text">
+    لإتمام عملية الاشتراك والتأكد من صحة بريدك الإلكتروني، يرجى الضغط على الزر أدناه:
+</p>
+
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tr>
+        <td align="center" style="padding: 30px 0;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                    <td style="background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%); background-color: #1e88e5; border-radius: 8px; box-shadow: 0 4px 15px rgba(30, 136, 229, 0.3);">
+                        <a href="{{ verification_url }}" target="_blank" style="display: inline-block; padding: 16px 45px; color: #ffffff; text-decoration: none; font-size: 18px; font-weight: bold; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                            ✓ تأكيد الاشتراك
+                        </a>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+
+<div class="info-box">
+    <p>
+        <strong>ملاحظة:</strong> إذا لم تقم بطلب الاشتراك في النشرة البريدية، يمكنك تجاهل هذه الرسالة.
+    </p>
+</div>
+
+<p class="content-text">
+    بعد تأكيد اشتراكك، ستحصل على:
+</p>
+
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin: 20px 0;">
+    <tr>
+        <td style="padding: 10px 0;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                    <td style="width: 40px; text-align: center;">
+                        <span style="font-size: 20px;">🆕</span>
+                    </td>
+                    <td style="padding-right: 10px;">
+                        <span style="color: #333333; font-size: 14px;">إشعارات بأحدث المنتجات والعروض</span>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td style="padding: 10px 0;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                    <td style="width: 40px; text-align: center;">
+                        <span style="font-size: 20px;">🏷️</span>
+                    </td>
+                    <td style="padding-right: 10px;">
+                        <span style="color: #333333; font-size: 14px;">خصومات وعروض حصرية للمشتركين</span>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td style="padding: 10px 0;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                    <td style="width: 40px; text-align: center;">
+                        <span style="font-size: 20px;">🏢</span>
+                    </td>
+                    <td style="padding-right: 10px;">
+                        <span style="color: #333333; font-size: 14px;">أخبار العلامات التجارية الجديدة</span>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+
+<div class="divider"></div>
+
+<p class="content-text" style="font-size: 13px; color: #888888;">
+    إذا لم يعمل الزر أعلاه، يمكنك نسخ الرابط التالي ولصقه في متصفحك:<br>
+    <a href="{{ verification_url }}" style="color: #1e88e5; word-break: break-all;">{{ verification_url }}</a>
+</p>
+
+<p class="content-text" style="font-size: 13px; color: #888888;">
+    هذا الرابط صالح لمدة 24 ساعة فقط.
+</p>
+{% endblock %}

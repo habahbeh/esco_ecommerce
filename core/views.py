@@ -171,18 +171,134 @@ def preview_color(request):
     return JsonResponse({'success': False})
 
 def newsletter_subscribe(request):
-    """معالجة الاشتراك في النشرة البريدية"""
+    """معالجة الاشتراك في النشرة البريدية مع التحقق من البريد"""
     if request.method == 'POST':
-        email = request.POST.get('email')
-        if email:
-            try:
-                newsletter, created = Newsletter.objects.get_or_create(email=email)
-                if created:
-                    messages.success(request, _('تم الاشتراك بنجاح! شكراً لك.'))
-                else:
-                    messages.info(request, _('أنت مشترك بالفعل في النشرة البريدية.'))
-            except Exception as e:
-                print(f"Error: {e}")  # للتصحيح
-                messages.error(request, _('حدث خطأ أثناء الاشتراك. يرجى المحاولة مرة أخرى.'))
+        email = request.POST.get('email', '').strip().lower()
+        name = request.POST.get('name', '').strip()
+
+        if not email:
+            messages.error(request, _('يرجى إدخال البريد الإلكتروني'))
+            return redirect(request.META.get('HTTP_REFERER', '/'))
+
+        # التحقق من صحة البريد الإلكتروني
+        import re
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, email):
+            messages.error(request, _('يرجى إدخال بريد إلكتروني صحيح'))
+            return redirect(request.META.get('HTTP_REFERER', '/'))
+
+        # التحقق من النطاقات المؤقتة/الوهمية
+        blocked_domains = [
+            'tempmail.com', 'throwaway.com', 'guerrillamail.com', 'mailinator.com',
+            '10minutemail.com', 'fakeinbox.com', 'trashmail.com', 'getnada.com',
+            'temp-mail.org', 'disposablemail.com', 'yopmail.com', 'sharklasers.com',
+            'tempail.com', 'fakemailgenerator.com', 'emailondeck.com', 'mohmal.com'
+        ]
+        email_domain = email.split('@')[-1].lower()
+        if email_domain in blocked_domains:
+            messages.error(request, _('يرجى استخدام بريد إلكتروني حقيقي وليس مؤقت'))
+            return redirect(request.META.get('HTTP_REFERER', '/'))
+
+        try:
+            newsletter, created = Newsletter.objects.get_or_create(
+                email=email,
+                defaults={'name': name}
+            )
+
+            if created:
+                # إنشاء رمز التحقق
+                newsletter.generate_verification_token()
+                newsletter.generate_unsubscribe_token()
+                newsletter.verification_sent_at = timezone.now()
+                newsletter.save()
+
+                # إرسال رسالة التحقق
+                send_verification_email(request, newsletter)
+                messages.success(request, _('تم إرسال رسالة تأكيد إلى بريدك الإلكتروني. يرجى التحقق من صندوق الوارد.'))
+            elif not newsletter.is_verified:
+                # إعادة إرسال رسالة التحقق إذا لم يتم التحقق بعد
+                newsletter.generate_verification_token()
+                newsletter.verification_sent_at = timezone.now()
+                newsletter.save()
+                send_verification_email(request, newsletter)
+                messages.info(request, _('تم إعادة إرسال رسالة التأكيد إلى بريدك الإلكتروني.'))
+            else:
+                messages.info(request, _('أنت مشترك بالفعل في النشرة البريدية.'))
+
+        except Exception as e:
+            print(f"Newsletter subscription error: {e}")
+            messages.error(request, _('حدث خطأ أثناء الاشتراك. يرجى المحاولة مرة أخرى.'))
+
         return redirect(request.META.get('HTTP_REFERER', '/'))
-    return redirect('/')  # إعادة توجيه إلى الصفحة الرئيسية إذا لم تكن طلب POST
+    return redirect('/')
+
+
+def send_verification_email(request, newsletter):
+    """إرسال رسالة التحقق من البريد الإلكتروني"""
+    from django.core.mail import send_mail
+    from django.template.loader import render_to_string
+    from django.utils.html import strip_tags
+
+    # Use production URLs
+    site_url = 'https://esco.jo'
+    verification_url = f'https://esco.jo/newsletter/verify/{newsletter.verification_token}/'
+    logo_url = 'https://esco.jo/static/images/logo.png'
+
+    context = {
+        'name': newsletter.name,
+        'email': newsletter.email,
+        'verification_url': verification_url,
+        'site_url': site_url,
+        'logo_url': logo_url,
+        'year': timezone.now().year,
+    }
+
+    html_message = render_to_string('emails/newsletter_verification.html', context)
+    plain_message = strip_tags(html_message)
+
+    try:
+        send_mail(
+            subject='تأكيد الاشتراك في النشرة البريدية - ESCO | Confirm Newsletter Subscription',
+            message=plain_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[newsletter.email],
+            html_message=html_message,
+            fail_silently=False,
+        )
+        return True
+    except Exception as e:
+        print(f"Error sending verification email: {e}")
+        return False
+
+
+def newsletter_verify(request, token):
+    """التحقق من صحة البريد الإلكتروني"""
+    try:
+        newsletter = Newsletter.objects.get(verification_token=token)
+
+        if newsletter.is_verified:
+            messages.info(request, _('تم التحقق من بريدك الإلكتروني مسبقاً.'))
+        else:
+            newsletter.is_verified = True
+            newsletter.verified_at = timezone.now()
+            newsletter.verification_token = None  # إلغاء الرمز بعد الاستخدام
+            newsletter.save()
+            messages.success(request, _('تم تأكيد اشتراكك بنجاح! شكراً لك.'))
+
+    except Newsletter.DoesNotExist:
+        messages.error(request, _('رابط التحقق غير صالح أو منتهي الصلاحية.'))
+
+    return redirect('/')
+
+
+def newsletter_unsubscribe(request, token):
+    """إلغاء الاشتراك من النشرة البريدية"""
+    try:
+        newsletter = Newsletter.objects.get(unsubscribe_token=token)
+        newsletter.is_active = False
+        newsletter.save()
+        messages.success(request, _('تم إلغاء اشتراكك من النشرة البريدية بنجاح.'))
+    except Newsletter.DoesNotExist:
+        messages.error(request, _('رابط إلغاء الاشتراك غير صالح.'))
+
+    return redirect('/')

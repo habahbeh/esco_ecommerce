@@ -760,28 +760,11 @@
                 {% for product in products %}
                     <div class="offer-card" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
                         <!-- Badges -->
+                        {% if product.has_discount and product.savings_percentage > 0 %}
                         <span class="discount-badge">
-                            {{ product.discount_percentage|floatformat:0 }}% {% trans "خصم" %}
+                            {{ product.savings_percentage|floatformat:0 }}% {% trans "خصم" %}
                         </span>
-
-{#                        {% if forloop.counter <= 3 %}#}
-{#                            <span class="hot-deal-badge">#}
-{#                                <i class="fas fa-fire me-1"></i>{% trans "صفقة ساخنة" %}#}
-{#                            </span>#}
-{#                        {% endif %}#}
-
-
-
-                        <!-- Product Image -->
-{#                        <div class="offer-image">#}
-{#                            <a href="{% url 'products:product_detail' product.slug %}">#}
-{#                                {% if product.images.exists %}#}
-{#                                    <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}">#}
-{#                                {% else %}#}
-{#                                    <img src="{{ product.default_image.url }}" alt="{{ product.name }}">#}
-{#                                {% endif %}#}
-{#                            </a>#}
-{#                        </div>#}
+                        {% endif %}
 
                     <!-- Product Image -->
 <div class="offer-image">
@@ -808,9 +791,12 @@
 
                             <div class="offer-prices">
                                 <span class="current-price">{{ product.current_price|floatformat:2 }} {% trans "د.أ" %}</span>
+                                {% if product.has_discount and product.savings_percentage > 0 %}
                                 <span class="original-price">{{ product.base_price|floatformat:2 }}</span>
+                                {% endif %}
                             </div>
 
+                            {% if product.has_discount and product.savings_amount > 0 %}
                             <div class="savings-info">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <span>
@@ -820,6 +806,7 @@
                                     <span class="savings-badge">{{ product.savings_percentage }}%</span>
                                 </div>
                             </div>
+                            {% endif %}
 
                             <!-- Stock Progress -->
 

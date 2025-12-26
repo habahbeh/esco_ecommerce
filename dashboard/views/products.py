@@ -1304,6 +1304,7 @@ class ProductDataTableView(DashboardAccessMixin, View):
         if search_value:
             queryset = queryset.filter(
                 Q(name__icontains=search_value) |
+                Q(name_en__icontains=search_value) |
                 Q(sku__icontains=search_value) |
                 Q(description__icontains=search_value) |
                 Q(search_keywords__icontains=search_value)
@@ -1446,6 +1447,7 @@ class ProductListView(DashboardAccessMixin, View):
         if query:
             products = products.filter(
                 Q(name__icontains=query) |
+                Q(name_en__icontains=query) |
                 Q(sku__icontains=query) |
                 Q(description__icontains=query) |
                 Q(search_keywords__icontains=query)
@@ -1990,42 +1992,61 @@ class ProductBulkActionsView(DashboardAccessMixin, View):
     def post(self, request):
         action = request.POST.get('action')
         product_ids = request.POST.getlist('selected_products')
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
         if not product_ids:
+            if is_ajax:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'لم يتم تحديد أي منتجات'
+                }, status=400)
             messages.error(request, 'لم يتم تحديد أي منتجات')
             return redirect('dashboard:dashboard_products')
 
         products = Product.objects.filter(id__in=product_ids)
         count = products.count()
+        message = ''
+        success = True
 
         if action == 'activate':
             products.update(is_active=True)
-            messages.success(request, f'تم تفعيل {count} منتج بنجاح')
+            message = f'تم تفعيل {count} منتج بنجاح'
 
         elif action == 'deactivate':
             products.update(is_active=False)
-            messages.success(request, f'تم إلغاء تفعيل {count} منتج بنجاح')
+            message = f'تم إلغاء تفعيل {count} منتج بنجاح'
 
         elif action == 'publish':
             products.update(status='published', published_at=timezone.now())
-            messages.success(request, f'تم نشر {count} منتج بنجاح')
+            message = f'تم نشر {count} منتج بنجاح'
 
         elif action == 'draft':
             products.update(status='draft')
-            messages.success(request, f'تم تحويل {count} منتج إلى مسودة بنجاح')
+            message = f'تم تحويل {count} منتج إلى مسودة بنجاح'
 
         elif action == 'delete':
             try:
                 products.delete()
-                messages.success(request, f'تم حذف {count} منتج بنجاح')
+                message = f'تم حذف {count} منتج بنجاح'
             except Exception as e:
-                messages.error(request, f'حدث خطأ أثناء حذف المنتجات: {str(e)}')
+                success = False
+                message = f'حدث خطأ أثناء حذف المنتجات: {str(e)}'
 
-        elif action == 'update_stock':
-            # هذا سيعيدنا إلى صفحة تحديث المخزون للمنتجات المحددة
-            product_ids_str = ','.join(product_ids)
-            return redirect(f'dashboard_update_stock?products={product_ids_str}')
+        else:
+            success = False
+            message = 'إجراء غير معروف'
 
+        if is_ajax:
+            return JsonResponse({
+                'success': success,
+                'message': message,
+                'count': count
+            })
+
+        if success:
+            messages.success(request, message)
+        else:
+            messages.error(request, message)
         return redirect('dashboard:dashboard_products')
 
 
@@ -2655,8 +2676,9 @@ class DiscountFormView(DashboardAccessMixin, View):
             form_title = 'إنشاء خصم جديد'
             selected_products = []
 
-        # جلب الفئات والمنتجات
+        # جلب الفئات والعلامات التجارية والمنتجات
         categories = Category.objects.filter(is_active=True)
+        brands = Brand.objects.filter(is_active=True).order_by('name')
         products = Product.objects.filter(is_active=True, status='published').order_by('name')[
                    :100]  # عرض أول 100 منتج فقط للاختيار
 
@@ -2665,6 +2687,7 @@ class DiscountFormView(DashboardAccessMixin, View):
             'form_title': form_title,
             'selected_products': selected_products,
             'categories': categories,
+            'brands': brands,
             'products': products,
             'discount_types': ProductDiscount.DISCOUNT_TYPE_CHOICES,
             'application_types': ProductDiscount.APPLICATION_TYPE_CHOICES,
@@ -2683,6 +2706,7 @@ class DiscountFormView(DashboardAccessMixin, View):
 
         application_type = request.POST.get('application_type')
         category_id = request.POST.get('category') or None
+        brand_id = request.POST.get('brand') or None
         product_ids = request.POST.getlist('products')
 
         start_date = request.POST.get('start_date')
@@ -2731,6 +2755,7 @@ class DiscountFormView(DashboardAccessMixin, View):
                 discount.max_discount_amount = max_discount_amount
                 discount.application_type = application_type
                 discount.category_id = category_id
+                discount.brand_id = brand_id
                 discount.start_date = start_date
                 discount.end_date = end_date
                 discount.min_purchase_amount = min_purchase_amount
@@ -2758,6 +2783,7 @@ class DiscountFormView(DashboardAccessMixin, View):
                     max_discount_amount=max_discount_amount,
                     application_type=application_type,
                     category_id=category_id,
+                    brand_id=brand_id,
                     start_date=start_date,
                     end_date=end_date,
                     min_purchase_amount=min_purchase_amount,
@@ -3359,3 +3385,194 @@ class ProductImageDeleteView(DashboardAccessMixin, View):
         image.delete()
 
         return JsonResponse({'success': True})
+
+
+# ========================= تعديل أسعار المتغيرات بشكل جماعي =========================
+
+@method_decorator(permission_required('products.change_product'), name='dispatch')
+class BulkPriceEditorView(DashboardAccessMixin, View):
+    """
+    محرر الأسعار الجماعي - لتعديل أسعار متغيرات المنتجات بشكل جماعي
+    Bulk Price Editor - for editing product variant prices in bulk
+    """
+    template_name = 'dashboard/products/bulk_price_editor.html'
+
+    def get(self, request):
+        """عرض صفحة محرر الأسعار الجماعي"""
+        # استخراج الفلاتر
+        category_id = request.GET.get('category', '')
+        brand_id = request.GET.get('brand', '')
+        search_query = request.GET.get('q', '')
+        product_ids = request.GET.get('products', '')  # للمنتجات المحددة من قائمة المنتجات
+
+        # جلب قائمة الفئات والعلامات التجارية للفلترة
+        categories = Category.objects.filter(is_active=True).order_by('tree_id', 'lft')
+        brands = Brand.objects.filter(is_active=True).order_by('name')
+
+        # بناء استعلام المتغيرات
+        variants_queryset = ProductVariant.objects.select_related(
+            'product', 'product__category', 'product__brand'
+        ).filter(is_active=True, product__is_active=True)
+
+        # تطبيق الفلاتر
+        if product_ids:
+            # إذا كانت هناك منتجات محددة من قائمة المنتجات
+            product_id_list = [pid.strip() for pid in product_ids.split(',') if pid.strip()]
+            if product_id_list:
+                variants_queryset = variants_queryset.filter(product_id__in=product_id_list)
+
+        if category_id:
+            try:
+                category = Category.objects.get(id=category_id)
+                # تضمين الفئات الفرعية
+                category_ids = category.get_descendants(include_self=True).values_list('id', flat=True)
+                variants_queryset = variants_queryset.filter(product__category_id__in=category_ids)
+            except Category.DoesNotExist:
+                pass
+
+        if brand_id:
+            variants_queryset = variants_queryset.filter(product__brand_id=brand_id)
+
+        if search_query:
+            variants_queryset = variants_queryset.filter(
+                Q(product__name__icontains=search_query) |
+                Q(product__name_en__icontains=search_query) |
+                Q(name__icontains=search_query) |
+                Q(sku__icontains=search_query)
+            )
+
+        # ترتيب النتائج
+        variants_queryset = variants_queryset.order_by('product__name', 'sort_order', 'name')
+
+        # تقسيم الصفحات
+        paginator = Paginator(variants_queryset, 50)  # 50 متغير لكل صفحة
+        page_number = request.GET.get('page', 1)
+        variants = paginator.get_page(page_number)
+
+        context = {
+            'variants': variants,
+            'categories': categories,
+            'brands': brands,
+            'selected_category': category_id,
+            'selected_brand': brand_id,
+            'search_query': search_query,
+            'product_ids': product_ids,
+            'total_variants': variants_queryset.count(),
+            'total_products': variants_queryset.values('product_id').distinct().count(),
+        }
+
+        return render(request, self.template_name, context)
+
+    def post(self, request):
+        """حفظ تعديلات الأسعار"""
+        try:
+            # استخراج البيانات المرسلة
+            variant_prices = {}
+            for key, value in request.POST.items():
+                if key.startswith('price_'):
+                    variant_id = key.replace('price_', '')
+                    if value.strip():
+                        try:
+                            variant_prices[variant_id] = Decimal(value.strip())
+                        except InvalidOperation:
+                            messages.error(request, f'قيمة السعر غير صالحة للمتغير {variant_id}')
+                            return redirect(request.META.get('HTTP_REFERER', 'dashboard:bulk_price_editor'))
+
+            if not variant_prices:
+                messages.warning(request, 'لم يتم إدخال أي تغييرات على الأسعار')
+                return redirect(request.META.get('HTTP_REFERER', 'dashboard:bulk_price_editor'))
+
+            # تحديث الأسعار
+            updated_count = 0
+            for variant_id, new_price in variant_prices.items():
+                try:
+                    variant = ProductVariant.objects.get(id=variant_id)
+                    old_price = variant.base_price
+
+                    # التحقق من تغيير السعر
+                    if old_price != new_price:
+                        variant.base_price = new_price
+                        variant.save(update_fields=['base_price', 'updated_at'])
+                        updated_count += 1
+                except ProductVariant.DoesNotExist:
+                    continue
+
+            if updated_count > 0:
+                messages.success(request, f'تم تحديث أسعار {updated_count} متغير بنجاح')
+            else:
+                messages.info(request, 'لم يتم تغيير أي أسعار')
+
+            # إعادة التوجيه مع الاحتفاظ بالفلاتر
+            return redirect(request.META.get('HTTP_REFERER', 'dashboard:bulk_price_editor'))
+
+        except Exception as e:
+            messages.error(request, f'حدث خطأ أثناء تحديث الأسعار: {str(e)}')
+            return redirect('dashboard:bulk_price_editor')
+
+
+@method_decorator(permission_required('products.change_product'), name='dispatch')
+class BulkPriceEditorAPIView(DashboardAccessMixin, View):
+    """API لتحديث الأسعار بشكل جماعي عبر AJAX"""
+
+    def post(self, request):
+        """تحديث الأسعار عبر AJAX"""
+        try:
+            data = json.loads(request.body)
+            prices = data.get('prices', {})
+
+            if not prices:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'لم يتم إرسال أي بيانات'
+                }, status=400)
+
+            updated_count = 0
+            errors = []
+
+            for variant_id, new_price in prices.items():
+                try:
+                    variant = ProductVariant.objects.get(id=variant_id)
+                    old_price = variant.base_price
+
+                    # تحويل السعر
+                    try:
+                        new_price_decimal = Decimal(str(new_price))
+                    except (InvalidOperation, ValueError):
+                        errors.append(f'قيمة السعر غير صالحة للمتغير {variant.name}')
+                        continue
+
+                    # التحقق من أن السعر موجب
+                    if new_price_decimal <= 0:
+                        errors.append(f'السعر يجب أن يكون أكبر من صفر للمتغير {variant.name}')
+                        continue
+
+                    # تحديث السعر إذا تغير
+                    if old_price != new_price_decimal:
+                        variant.base_price = new_price_decimal
+                        variant.save(update_fields=['base_price', 'updated_at'])
+                        updated_count += 1
+
+                except ProductVariant.DoesNotExist:
+                    errors.append(f'المتغير {variant_id} غير موجود')
+
+            response_data = {
+                'success': True,
+                'updated_count': updated_count,
+                'message': f'تم تحديث {updated_count} سعر بنجاح'
+            }
+
+            if errors:
+                response_data['errors'] = errors
+
+            return JsonResponse(response_data)
+
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'message': 'بيانات غير صالحة'
+            }, status=400)
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'حدث خطأ: {str(e)}'
+            }, status=500)

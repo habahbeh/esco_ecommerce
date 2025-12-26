@@ -1,0 +1,340 @@
+{% load static dashboard_tags %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - طباعة - ESCO</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Cairo', 'Arial', sans-serif;
+            direction: rtl;
+            text-align: right;
+            background-color: #fff;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .print-header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #0077c8;
+        }
+
+        .print-header .logo {
+            font-size: 32px;
+            font-weight: 700;
+            color: #0077c8;
+            letter-spacing: 2px;
+        }
+
+        .print-header h1 {
+            color: #333;
+            font-size: 22px;
+            margin: 10px 0 5px;
+        }
+
+        .print-header .meta {
+            color: #666;
+            font-size: 13px;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar button {
+            padding: 10px 25px;
+            font-size: 14px;
+            font-family: 'Cairo', sans-serif;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-print {
+            background-color: #0077c8;
+            color: white;
+        }
+
+        .btn-print:hover {
+            background-color: #005fa3;
+        }
+
+        .btn-close {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-close:hover {
+            background-color: #5a6268;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-bottom: 20px;
+            padding: 12px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 8px;
+        }
+
+        .stats-bar .stat {
+            text-align: center;
+        }
+
+        .stats-bar .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0077c8;
+        }
+
+        .stats-bar .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        thead {
+            background: linear-gradient(135deg, #0077c8 0%, #005fa3 100%);
+            color: white;
+        }
+
+        th {
+            padding: 12px 10px;
+            text-align: center;
+            font-weight: 600;
+            white-space: nowrap;
+            font-size: 11px;
+        }
+
+        td {
+            padding: 10px 8px;
+            text-align: center;
+            border-bottom: 1px solid #e9ecef;
+            vertical-align: middle;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        tbody tr:hover {
+            background-color: #e3f2fd;
+        }
+
+        .product-name {
+            text-align: right;
+            font-weight: 600;
+            color: #333;
+            max-width: 200px;
+        }
+
+        .variant-name {
+            text-align: right;
+            color: #666;
+        }
+
+        .price {
+            font-weight: 600;
+            color: #28a745;
+            direction: ltr;
+            white-space: nowrap;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .badge-warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-secondary {
+            background-color: #e9ecef;
+            color: #495057;
+        }
+
+        .print-footer {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 2px solid #e9ecef;
+            color: #666;
+            font-size: 11px;
+        }
+
+        .print-footer .brand {
+            color: #0077c8;
+            font-weight: 700;
+        }
+
+        @media print {
+            body {
+                padding: 0;
+                font-size: 9px;
+            }
+
+            .toolbar {
+                display: none !important;
+            }
+
+            .print-header {
+                margin-bottom: 15px;
+                padding-bottom: 10px;
+            }
+
+            .stats-bar {
+                margin-bottom: 15px;
+                padding: 8px;
+            }
+
+            table {
+                font-size: 8px;
+                box-shadow: none;
+            }
+
+            th, td {
+                padding: 6px 4px;
+            }
+
+            th {
+                font-size: 9px;
+            }
+
+            .product-name {
+                max-width: 150px;
+            }
+
+            tbody tr:hover {
+                background-color: inherit;
+            }
+        }
+
+        @page {
+            size: A4 landscape;
+            margin: 8mm;
+        }
+    </style>
+</head>
+<body>
+    <div class="print-header">
+        <div class="logo">ESCO</div>
+        <h1>{{ title }}</h1>
+        <p class="meta">تاريخ الطباعة: {{ timestamp }}</p>
+    </div>
+
+    <div class="toolbar">
+        <button class="btn-print" onclick="window.print();">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
+                <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/>
+            </svg>
+            طباعة
+        </button>
+        <button class="btn-close" onclick="window.close();">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+            </svg>
+            إغلاق
+        </button>
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat">
+            <div class="stat-value">{{ total_count }}</div>
+            <div class="stat-label">إجمالي السجلات</div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    {% for key, label in columns.items %}
+                    <th>{{ label }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in data %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    {% for key, label in columns.items %}
+                    <td{% if key == 'product_name' %} class="product-name"{% elif key == 'variant_name' %} class="variant-name"{% elif key == 'variant_price' %} class="price"{% endif %}>
+                        {% if key == 'product_status' %}
+                            {% with status=row|lookup:key %}
+                            <span class="badge {% if status == 'منشور' %}badge-success{% elif status == 'مسودة' %}badge-warning{% else %}badge-secondary{% endif %}">
+                                {{ status }}
+                            </span>
+                            {% endwith %}
+                        {% elif key == 'variant_price' %}
+                            {{ row|lookup:key }} د.أ
+                        {% elif key == 'variant_active' %}
+                            {% with active=row|lookup:key %}
+                            {% if active == 'نعم' %}
+                            <span class="badge badge-success">{{ active }}</span>
+                            {% elif active == 'لا' %}
+                            <span class="badge badge-warning">{{ active }}</span>
+                            {% else %}
+                            {{ active }}
+                            {% endif %}
+                            {% endwith %}
+                        {% else %}
+                            {{ row|lookup:key }}
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="print-footer">
+        <p>تم الطباعة من <span class="brand">ESCO</span> - نظام إدارة المتجر الإلكتروني</p>
+        <p>{{ timestamp }}</p>
+    </div>
+</body>
+</html>

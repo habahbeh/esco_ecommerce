@@ -69,53 +69,67 @@
 
                             <!-- شريط تقدم الطلب -->
                             <div class="order-progress mb-4">
+                                {% if order.status != 'cancelled' %}
                                 <div class="progress-steps">
-                                    <div class="step {% if order.status == 'pending' or order.status == 'processing' or order.status == 'shipped' or order.status == 'delivered' %}active{% endif %}">
+                                    <!-- 1. تم إرسال الطلب -->
+                                    <div class="step {% if order.status == 'pending' or order.status == 'processing' or order.status == 'confirmed' or order.status == 'closed' %}active{% endif %}">
                                         <div class="step-icon">
-                                            <i class="fas fa-shopping-cart"></i>
+                                            <i class="fas fa-paper-plane"></i>
                                         </div>
-                                        <div class="step-label">{% trans "تم الطلب" %}</div>
+                                        <div class="step-label">{% trans "تم إرسال الطلب" %}</div>
                                     </div>
 
-                                    <div class="step {% if order.status == 'processing' or order.status == 'shipped' or order.status == 'delivered' %}active{% endif %}">
+                                    <!-- 2. قيد المعالجة -->
+                                    <div class="step {% if order.status == 'processing' or order.status == 'confirmed' or order.status == 'closed' %}active{% endif %}">
                                         <div class="step-icon">
-                                            <i class="fas fa-box"></i>
+                                            <i class="fas fa-cogs"></i>
                                         </div>
                                         <div class="step-label">{% trans "قيد المعالجة" %}</div>
                                     </div>
 
-                                    <div class="step {% if order.status == 'shipped' or order.status == 'delivered' %}active{% endif %}">
+                                    <!-- 3. تم تأكيد الطلب -->
+                                    <div class="step {% if order.status == 'confirmed' or order.status == 'closed' %}active{% endif %}">
                                         <div class="step-icon">
-                                            <i class="fas fa-truck"></i>
+                                            <i class="fas fa-check-circle"></i>
                                         </div>
-                                        <div class="step-label">{% trans "تم الشحن" %}</div>
+                                        <div class="step-label">{% trans "تم تأكيد الطلب" %}</div>
                                     </div>
 
-                                    <div class="step {% if order.status == 'delivered' %}active{% endif %}">
+                                    <!-- 4. تم إغلاق الطلب -->
+                                    <div class="step {% if order.status == 'closed' %}active{% endif %}">
                                         <div class="step-icon">
-                                            <i class="fas fa-check"></i>
+                                            <i class="fas fa-box-open"></i>
                                         </div>
-                                        <div class="step-label">{% trans "تم التوصيل" %}</div>
+                                        <div class="step-label">{% trans "تم إغلاق الطلب" %}</div>
                                     </div>
                                 </div>
                                 <div class="progress-bar-container">
                                     <div class="progress-bar-fill" style="width:
                                         {% if order.status == 'pending' %}25%
                                         {% elif order.status == 'processing' %}50%
-                                        {% elif order.status == 'shipped' %}75%
-                                        {% elif order.status == 'delivered' %}100%
+                                        {% elif order.status == 'confirmed' %}75%
+                                        {% elif order.status == 'closed' %}100%
                                         {% else %}0%
                                         {% endif %}">
                                     </div>
                                 </div>
+                                {% else %}
+                                <!-- حالة الإلغاء -->
+                                <div class="text-center">
+                                    <div class="cancelled-icon mb-3">
+                                        <i class="fas fa-times-circle text-danger" style="font-size: 4rem;"></i>
+                                    </div>
+                                    <h5 class="text-danger">{% trans "تم إلغاء الطلب" %}</h5>
+                                </div>
+                                {% endif %}
                             </div>
 
                             <!-- حالة الطلب الحالية -->
                             <div class="alert
                                 {% if order.status == 'pending' %}alert-warning
                                 {% elif order.status == 'processing' %}alert-info
-                                {% elif order.status == 'shipped' %}alert-primary
-                                {% elif order.status == 'delivered' %}alert-success
+                                {% elif order.status == 'confirmed' %}alert-primary
+                                {% elif order.status == 'closed' %}alert-success
                                 {% elif order.status == 'cancelled' %}alert-danger
                                 {% else %}alert-secondary
                                 {% endif %}">
@@ -159,11 +173,7 @@
                                 <div class="row mb-2">
                                     <div class="col-md-4 fw-bold">{% trans "طريقة الدفع:" %}</div>
                                     <div class="col-md-8">
-                                        {% if order.payment_method %}
-                                            {{ order.payment_method.name }}
-                                        {% else %}
-                                            {{ order.payment_method_display }}
-                                        {% endif %}
+                                        {{ order.payment_method|default:"-" }}
                                     </div>
                                 </div>
 
@@ -194,14 +204,20 @@
                                             {% for item in order.items.all %}
                                             <tr>
                                                 <td>
-                                                    {% if LANGUAGE_CODE == 'en' %}
-                                                        {{ item.product.name_en }}
+                                                    {% if item.product %}
+                                                        {% if LANGUAGE_CODE == 'en' and item.product.name_en %}
+                                                            {{ item.product.name_en }}
+                                                        {% else %}
+                                                            {{ item.product.name }}
+                                                        {% endif %}
                                                     {% else %}
-                                                        {{ item.product.name }}
+                                                        {{ item.product_name }}
                                                     {% endif %}
-                                                    {% if item.variant %}
+                                                    {% if item.variant_name %}
+                                                        <br><small class="text-muted">{{ item.variant_name }}</small>
+                                                    {% elif item.variant %}
                                                         <br><small class="text-muted">
-                                                            {% if LANGUAGE_CODE == 'en' %}
+                                                            {% if LANGUAGE_CODE == 'en' and item.variant.name_en %}
                                                                 {{ item.variant.name_en }}
                                                             {% else %}
                                                                 {{ item.variant.name }}
@@ -210,8 +226,8 @@
                                                     {% endif %}
                                                 </td>
                                                 <td>{{ item.quantity }}</td>
-                                                <td>{{ item.price|floatformat:2 }} {% trans "د.أ" %}</td>
-                                                <td>{{ item.get_total|floatformat:2 }} {% trans "د.أ" %}</td>
+                                                <td>{{ item.unit_price|floatformat:2 }} {% trans "د.أ" %}</td>
+                                                <td>{{ item.total_price|floatformat:2 }} {% trans "د.أ" %}</td>
                                             </tr>
                                             {% endfor %}
                                         </tbody>
@@ -243,19 +259,22 @@
 /* تصميم شريط التقدم */
 .order-progress {
     margin: 2rem 0;
+    position: relative;
 }
 
 .progress-steps {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 1rem;
     position: relative;
+    z-index: 2;
 }
 
 .step {
     flex: 1;
     text-align: center;
-    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .step-icon {
@@ -267,11 +286,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 0.5rem;
     font-size: 1.25rem;
     transition: all 0.3s ease;
     position: relative;
     z-index: 2;
+    flex-shrink: 0;
 }
 
 .step.active .step-icon {
@@ -280,8 +299,12 @@
 }
 
 .step-label {
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     color: #6c757d;
+    margin-top: 8px;
+    text-align: center;
+    max-width: 80px;
+    line-height: 1.3;
 }
 
 .step.active .step-label {
@@ -290,11 +313,13 @@
 }
 
 .progress-bar-container {
-    position: relative;
+    position: absolute;
+    top: 25px;
+    left: 12.5%;
+    right: 12.5%;
     height: 4px;
     background: #e9ecef;
-    margin-top: -27px;
-    margin-bottom: 27px;
+    z-index: 1;
 }
 
 .progress-bar-fill {
@@ -307,11 +332,15 @@
 @media (max-width: 768px) {
     .progress-steps {
         flex-wrap: wrap;
+        gap: 1.5rem;
     }
 
     .step {
-        flex-basis: 50%;
-        margin-bottom: 2rem;
+        flex-basis: calc(50% - 0.75rem);
+    }
+
+    .step-label {
+        max-width: 100px;
     }
 
     .progress-bar-container {

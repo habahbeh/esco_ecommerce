@@ -97,7 +97,7 @@ class User(AbstractUser):
     # Email verification
     is_verified = models.BooleanField(
         _("موثق"),
-        default=True,
+        default=False,
         help_text=_("هل تم تأكيد البريد الإلكتروني؟")
     )
 

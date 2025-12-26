@@ -1,6 +1,7 @@
 {% extends "dashboard/base.html" %}
 {% load static %}
 {% load i18n %}
+{% load l10n %}
 {% load crispy_forms_tags %}
 {% load dashboard_tags %}
 
@@ -78,11 +79,6 @@
                         <i class="fas fa-gift me-1"></i> {% trans "اشتري X واحصل على Y" %}
                     </button>
                 </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button" role="tab" aria-controls="advanced" aria-selected="false">
-                        <i class="fas fa-cogs me-1"></i> {% trans "الإعدادات المتقدمة" %}
-                    </button>
-                </li>
             </ul>
 
             <!-- محتوى التابز -->
@@ -134,7 +130,7 @@
                         <div class="col-md-4 mb-3">
                             <label for="value" class="form-label required">{% trans "قيمة الخصم" %}</label>
                             <div class="input-group">
-                                <input type="number" class="form-control" id="value" name="value" value="{{ discount.value|default:'0' }}" step="0.01" min="0.01" required>
+                                <input type="number" class="form-control" id="value" name="value" value="{% if discount.value %}{% localize off %}{{ discount.value }}{% endlocalize %}{% else %}0{% endif %}" step="0.01" min="0.01" required>
                                 <span class="input-group-text discount-unit">%</span>
                             </div>
                             <div class="form-text discount-value-help">{% trans "قيمة الخصم حسب النوع المحدد" %}</div>
@@ -143,7 +139,7 @@
                         <div class="col-md-4 mb-3 max-discount-field">
                             <label for="max_discount_amount" class="form-label">{% trans "الحد الأقصى للخصم" %}</label>
                             <div class="input-group">
-                                <input type="number" class="form-control" id="max_discount_amount" name="max_discount_amount" value="{{ discount.max_discount_amount|default:'' }}" step="0.01" min="0">
+                                <input type="number" class="form-control" id="max_discount_amount" name="max_discount_amount" value="{% if discount.max_discount_amount %}{% localize off %}{{ discount.max_discount_amount }}{% endlocalize %}{% endif %}" step="0.01" min="0">
                                 <span class="input-group-text">د.ا</span>
                             </div>
                             <div class="form-text">{% trans "الحد الأقصى لمبلغ الخصم (للنسب المئوية)" %}</div>
@@ -189,7 +185,7 @@
                         </div>
 
                         <!-- الفئة المحددة -->
-                        <div class="col-md-12 mb-3 category-field" {% if discount.application_type != 'category' %}style="display: none;"{% endif %}>
+                        <div class="col-md-6 mb-3 category-field" {% if discount.application_type != 'category' and discount.application_type != 'category_and_brand' %}style="display: none;"{% endif %}>
                             <label for="category" class="form-label">{% trans "الفئة" %}</label>
                             <select class="form-select" id="category" name="category">
                                 <option value="">{% trans "-- اختر الفئة --" %}</option>
@@ -200,6 +196,20 @@
                                 {% endfor %}
                             </select>
                             <div class="form-text">{% trans "الفئة التي سيتم تطبيق الخصم عليها وعلى منتجاتها" %}</div>
+                        </div>
+
+                        <!-- العلامة التجارية المحددة -->
+                        <div class="col-md-6 mb-3 brand-field" {% if discount.application_type != 'brand' and discount.application_type != 'category_and_brand' %}style="display: none;"{% endif %}>
+                            <label for="brand" class="form-label">{% trans "العلامة التجارية" %}</label>
+                            <select class="form-select" id="brand" name="brand">
+                                <option value="">{% trans "-- اختر العلامة التجارية --" %}</option>
+                                {% for brand_item in brands %}
+                                <option value="{{ brand_item.id }}" {% if discount.brand_id == brand_item.id %}selected{% endif %}>
+                                    {{ brand_item.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">{% trans "العلامة التجارية التي سيتم تطبيق الخصم على جميع منتجاتها" %}</div>
                         </div>
 
                         <!-- المنتجات المحددة -->
@@ -217,7 +227,7 @@
                         <div class="col-md-6 mb-3 min-purchase-field">
                             <label for="min_purchase_amount" class="form-label">{% trans "الحد الأدنى للشراء" %}</label>
                             <div class="input-group">
-                                <input type="number" class="form-control" id="min_purchase_amount" name="min_purchase_amount" value="{{ discount.min_purchase_amount|default:'' }}" step="0.01" min="0">
+                                <input type="number" class="form-control" id="min_purchase_amount" name="min_purchase_amount" value="{% if discount.min_purchase_amount %}{% localize off %}{{ discount.min_purchase_amount }}{% endlocalize %}{% endif %}" step="0.01" min="0">
                                 <span class="input-group-text">د.ا</span>
                             </div>
                             <div class="form-text">{% trans "الحد الأدنى لمبلغ الشراء لتطبيق الخصم" %}</div>
@@ -258,7 +268,7 @@
                         <div class="col-md-4 mb-3">
                             <label for="get_discount_percentage" class="form-label">{% trans "نسبة الخصم" %}</label>
                             <div class="input-group">
-                                <input type="number" class="form-control" id="get_discount_percentage" name="get_discount_percentage" value="{{ discount.get_discount_percentage|default:'100' }}" min="0" max="100" step="1">
+                                <input type="number" class="form-control" id="get_discount_percentage" name="get_discount_percentage" value="{% if discount.get_discount_percentage %}{% localize off %}{{ discount.get_discount_percentage }}{% endlocalize %}{% else %}100{% endif %}" min="0" max="100" step="1">
                                 <span class="input-group-text">%</span>
                             </div>
                             <div class="form-text">{% trans "نسبة الخصم على المنتجات المجانية (100% = مجاني بالكامل)" %}</div>
@@ -282,40 +292,6 @@
                     </div>
                 </div>
 
-                <!-- تاب الإعدادات المتقدمة -->
-                <div class="tab-pane fade" id="advanced" role="tabpanel" aria-labelledby="advanced-tab">
-                    <div class="row g-3">
-                        <!-- حدود الاستخدام -->
-                        <div class="col-md-6 mb-3">
-                            <label for="max_uses" class="form-label">{% trans "الحد الأقصى للاستخدام" %}</label>
-                            <input type="number" class="form-control" id="max_uses" name="max_uses" value="{{ discount.max_uses|default:'' }}" min="1">
-                            <div class="form-text">{% trans "الحد الأقصى لعدد مرات استخدام هذا الخصم بشكل إجمالي (اتركه فارغاً لعدم وجود حد)" %}</div>
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label for="max_uses_per_user" class="form-label">{% trans "الحد الأقصى للاستخدام لكل مستخدم" %}</label>
-                            <input type="number" class="form-control" id="max_uses_per_user" name="max_uses_per_user" value="{{ discount.max_uses_per_user|default:'' }}" min="1">
-                            <div class="form-text">{% trans "الحد الأقصى لعدد مرات استخدام هذا الخصم من قبل كل مستخدم (اتركه فارغاً لعدم وجود حد)" %}</div>
-                        </div>
-
-                        <!-- إعدادات متقدمة -->
-                        <div class="col-md-6 mb-3">
-                            <label for="priority" class="form-label">{% trans "الأولوية" %}</label>
-                            <input type="number" class="form-control" id="priority" name="priority" value="{{ discount.priority|default:'0' }}" min="0">
-                            <div class="form-text">{% trans "أولوية تطبيق الخصم (الأعلى أولاً) عند وجود عدة خصومات متاحة" %}</div>
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <div class="form-check form-switch mt-4">
-                                <input class="form-check-input" type="checkbox" id="is_stackable" name="is_stackable" {% if discount.is_stackable %}checked{% endif %}>
-                                <label class="form-check-label" for="is_stackable">
-                                    {% trans "قابل للتجميع مع خصومات أخرى" %}
-                                </label>
-                                <div class="form-text">{% trans "إذا كان هذا الخصم يمكن تطبيقه مع خصومات أخرى في نفس الوقت" %}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <hr class="my-4">
@@ -424,6 +400,14 @@
             width: '100%'
         });
 
+        // تفعيل Select2 للعلامة التجارية
+        $('#brand').select2({
+            theme: 'bootstrap-5',
+            placeholder: "{% trans 'اختر العلامة التجارية...' %}",
+            allowClear: true,
+            width: '100%'
+        });
+
         // تحديث عرض الحقول حسب نوع الخصم
         function updateDiscountTypeFields() {
             var discountType = $('#discount_type').val();
@@ -464,10 +448,15 @@
             var applicationType = $('#application_type').val();
 
             // إخفاء جميع الحقول ثم إظهار المناسبة
-            $('.category-field, .products-field').hide();
+            $('.category-field, .brand-field, .products-field').hide();
 
             if (applicationType === 'category') {
                 $('.category-field').show();
+            } else if (applicationType === 'brand') {
+                $('.brand-field').show();
+            } else if (applicationType === 'category_and_brand') {
+                $('.category-field').show();
+                $('.brand-field').show();
             } else if (applicationType === 'specific_products') {
                 $('.products-field').show();
             }
@@ -526,6 +515,25 @@
                 alert("{% trans 'يجب تحديد الفئة عند اختيار نوع التطبيق فئة محددة' %}");
                 $('#category').focus();
                 isValid = false;
+            }
+
+            if (applicationType === 'brand' && !$('#brand').val()) {
+                alert("{% trans 'يجب تحديد العلامة التجارية عند اختيار نوع التطبيق علامة تجارية محددة' %}");
+                $('#brand').focus();
+                isValid = false;
+            }
+
+            if (applicationType === 'category_and_brand') {
+                if (!$('#category').val()) {
+                    alert("{% trans 'يجب تحديد الفئة عند اختيار نوع التطبيق فئة وعلامة تجارية' %}");
+                    $('#category').focus();
+                    isValid = false;
+                }
+                if (!$('#brand').val()) {
+                    alert("{% trans 'يجب تحديد العلامة التجارية عند اختيار نوع التطبيق فئة وعلامة تجارية' %}");
+                    $('#brand').focus();
+                    isValid = false;
+                }
             }
 
             if (applicationType === 'specific_products' && $('#products').val().length === 0) {

@@ -1,0 +1,238 @@
+{% load dashboard_tags %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - ESCO</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Cairo', 'Arial', sans-serif;
+            direction: rtl;
+            text-align: right;
+            background-color: #fff;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #0077c8;
+        }
+
+        .header h1 {
+            color: #0077c8;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            background: #f8f9fa;
+            padding: 15px 25px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #e9ecef;
+        }
+
+        .stat-item .number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0077c8;
+            display: block;
+        }
+
+        .stat-item .label {
+            font-size: 13px;
+            color: #666;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 12px;
+        }
+
+        thead {
+            background-color: #0077c8;
+            color: white;
+        }
+
+        th {
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 10px 8px;
+            text-align: center;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        tbody tr:hover {
+            background-color: #e3f2fd;
+        }
+
+        .product-name {
+            text-align: right;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .variant-name {
+            text-align: right;
+            color: #666;
+        }
+
+        .price {
+            font-weight: 600;
+            color: #28a745;
+            direction: ltr;
+        }
+
+        .status-published {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .status-draft {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .footer .brand {
+            color: #0077c8;
+            font-weight: 600;
+        }
+
+        @media print {
+            body {
+                padding: 0;
+                font-size: 10px;
+            }
+
+            .header {
+                margin-bottom: 15px;
+            }
+
+            .stats {
+                margin-bottom: 15px;
+            }
+
+            table {
+                font-size: 9px;
+            }
+
+            th, td {
+                padding: 6px 4px;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+        }
+
+        @page {
+            size: A4 landscape;
+            margin: 10mm;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ title }}</h1>
+        <p class="subtitle">تاريخ التصدير: {{ timestamp }}</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat-item">
+            <span class="number">{{ total_count }}</span>
+            <span class="label">إجمالي السجلات</span>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                {% for key, label in columns.items %}
+                <th>{{ label }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+            <tr>
+                {% for key, label in columns.items %}
+                <td{% if key == 'product_name' %} class="product-name"{% elif key == 'variant_name' %} class="variant-name"{% elif key == 'variant_price' %} class="price"{% endif %}>
+                    {% if key == 'product_status' %}
+                        <span class="{% if row.product_status == 'منشور' %}status-published{% else %}status-draft{% endif %}">
+                            {{ row|lookup:key }}
+                        </span>
+                    {% elif key == 'variant_price' %}
+                        {{ row|lookup:key }} د.أ
+                    {% else %}
+                        {{ row|lookup:key }}
+                    {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>تم التصدير من <span class="brand">ESCO</span> - نظام إدارة المتجر</p>
+        <p>{{ timestamp }}</p>
+    </div>
+
+    <script>
+        // طباعة تلقائية عند فتح الملف (اختياري)
+        // window.onload = function() { window.print(); }
+    </script>
+</body>
+</html>

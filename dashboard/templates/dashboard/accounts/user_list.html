@@ -104,7 +104,7 @@
 {% block content %}
 <!-- بطاقة الإحصائيات السريعة -->
 <div class="row mb-4">
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="card bg-primary text-white border-0 shadow-sm h-100">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
@@ -119,7 +119,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="card bg-success text-white border-0 shadow-sm h-100">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
@@ -134,16 +134,31 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="card bg-info text-white border-0 shadow-sm h-100">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="text-white-50 mb-2">{% trans 'المستخدمين الجدد اليوم' %}</h6>
-                        <h3 class="mb-0">{{ new_users_today|default:"0" }}</h3>
+                        <h6 class="text-white-50 mb-2">{% trans 'البريد موثق' %}</h6>
+                        <h3 class="mb-0">{{ verified_users|default:"0" }}</h3>
                     </div>
                     <div class="stat-icon">
-                        <i class="fas fa-user-plus fa-2x opacity-50"></i>
+                        <i class="fas fa-envelope-circle-check fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50 mb-2">{% trans 'غير موثق' %}</h6>
+                        <h3 class="mb-0">{{ unverified_users|default:"0" }}</h3>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-envelope-open fa-2x opacity-50"></i>
                     </div>
                 </div>
             </div>
@@ -156,13 +171,13 @@
     <div class="card-body">
         <form method="GET" action="{% url 'dashboard:dashboard_users' %}" id="filter-form">
             <div class="row">
-                <div class="col-md-5">
+                <div class="col-md-4">
                     <div class="search-box mb-3 mb-md-0">
                         <input type="text" name="q" class="form-control" placeholder="{% trans 'بحث باسم المستخدم أو البريد الإلكتروني...' %}" value="{{ query }}">
                         <span class="search-icon"><i class="fas fa-search"></i></span>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <select name="role" class="form-select mb-3 mb-md-0">
                         <option value="">{% trans 'جميع الأدوار' %}</option>
                         {% for role in roles %}
@@ -175,6 +190,13 @@
                         <option value="">{% trans 'جميع الحالات' %}</option>
                         <option value="active" {% if status_filter == 'active' %}selected{% endif %}>{% trans 'نشط' %}</option>
                         <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>{% trans 'غير نشط' %}</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="verified" class="form-select mb-3 mb-md-0">
+                        <option value="">{% trans 'حالة التحقق' %}</option>
+                        <option value="verified" {% if verified_filter == 'verified' %}selected{% endif %}>{% trans 'موثق' %}</option>
+                        <option value="unverified" {% if verified_filter == 'unverified' %}selected{% endif %}>{% trans 'غير موثق' %}</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -297,7 +319,7 @@
 <script>
     $(document).ready(function() {
         // معالجة تغيير عناصر الفلترة
-        $('select[name="role"], select[name="status"]').change(function() {
+        $('select[name="role"], select[name="status"], select[name="verified"]').change(function() {
             $('#filter-form').submit();
         });
 

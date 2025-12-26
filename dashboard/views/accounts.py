@@ -60,6 +60,13 @@ class UserListView(DashboardAccessMixin, View):
         elif status_filter == 'inactive':
             users = users.filter(is_active=False)
 
+        # تصفية حسب التحقق من البريد الإلكتروني
+        verified_filter = request.GET.get('verified', '')
+        if verified_filter == 'verified':
+            users = users.filter(is_verified=True)
+        elif verified_filter == 'unverified':
+            users = users.filter(is_verified=False)
+
         # التصفح الجزئي
         paginator = Paginator(users, 10)  # 10 مستخدمين في كل صفحة
         page = request.GET.get('page', 1)
@@ -74,8 +81,11 @@ class UserListView(DashboardAccessMixin, View):
             'query': query,
             'role_filter': role_filter,
             'status_filter': status_filter,
+            'verified_filter': verified_filter,
             'total_users': User.objects.count(),
             'active_users': User.objects.filter(is_active=True).count(),
+            'verified_users': User.objects.filter(is_verified=True).count(),
+            'unverified_users': User.objects.filter(is_verified=False).count(),
         }
 
         # إذا كان الطلب AJAX، نعيد جزء الجدول فقط
@@ -796,3 +806,40 @@ class UserAddressListView(DashboardAccessMixin, View):
             'user': user,
             'addresses': addresses
         })
+
+
+@method_decorator(permission_required('accounts.change_user'), name='dispatch')
+class UserVerifyToggleView(DashboardAccessMixin, View):
+    """تفعيل/إلغاء تفعيل التحقق من البريد الإلكتروني للمستخدم"""
+
+    def post(self, request, user_id):
+        user = get_object_or_404(User, id=user_id)
+
+        # تبديل حالة التحقق
+        user.is_verified = not user.is_verified
+        user.verification_token = None
+        user.verification_token_expires = None
+        user.save(update_fields=['is_verified', 'verification_token', 'verification_token_expires'])
+
+        if user.is_verified:
+            messages.success(request, _('تم تفعيل البريد الإلكتروني للمستخدم {} بنجاح').format(user.get_full_name() or user.username))
+        else:
+            messages.warning(request, _('تم إلغاء تفعيل البريد الإلكتروني للمستخدم {}').format(user.get_full_name() or user.username))
+
+        # تسجيل النشاط
+        UserActivity.objects.create(
+            user=request.user,
+            activity_type='user_verification_toggle',
+            description=_('تم {} التحقق من البريد الإلكتروني للمستخدم {}').format(
+                _('تفعيل') if user.is_verified else _('إلغاء تفعيل'),
+                user.get_full_name() or user.username
+            ),
+            object_id=str(user.id),
+            content_type='accounts.user'
+        )
+
+        # إعادة التوجيه للصفحة السابقة
+        next_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
+        if next_url:
+            return redirect(next_url)
+        return redirect('dashboard:dashboard_users')

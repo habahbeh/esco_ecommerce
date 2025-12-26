@@ -3,7 +3,7 @@
 {% load dashboard_tags %}
 
 {% block title %}{% trans 'استيراد المنتجات' %}{% endblock %}
-{% block page_title %}{% trans 'استيراد المنتجات من Excel' %}{% endblock %}
+{% block page_title %}{% trans 'استيراد المنتجات' %}{% endblock %}
 
 {% block breadcrumbs %}
 <li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_products' %}">{% trans 'المنتجات' %}</a></li>
@@ -12,177 +12,1441 @@
 {% block current_page %}{% trans 'استيراد المنتجات' %}{% endblock %}
 
 {% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet" />
 <style>
-    .import-steps {
-        margin-bottom: 2rem;
+    /* منطقة السحب والإفلات */
+    .drop-zone {
+        border: 2px dashed #dee2e6;
+        border-radius: 12px;
+        padding: 40px 20px;
+        text-align: center;
+        background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
     }
-    .import-steps .step {
+    .drop-zone:hover {
+        border-color: #0077c8;
+        background: linear-gradient(135deg, #e3f2fd 0%, #fff 100%);
+    }
+    .drop-zone.drag-over {
+        border-color: #0077c8;
+        background: linear-gradient(135deg, #bbdefb 0%, #e3f2fd 100%);
+        transform: scale(1.02);
+    }
+    .drop-zone.has-file {
+        border-color: #28a745;
+        background: linear-gradient(135deg, #d4edda 0%, #fff 100%);
+    }
+    .drop-zone-icon {
+        font-size: 48px;
+        color: #6c757d;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+    .drop-zone:hover .drop-zone-icon {
+        color: #0077c8;
+        transform: translateY(-5px);
+    }
+    .drop-zone.has-file .drop-zone-icon {
+        color: #28a745;
+    }
+    .drop-zone-text {
+        color: #6c757d;
+        font-size: 1.1rem;
+    }
+    .drop-zone-hint {
+        color: #adb5bd;
+        font-size: 0.85rem;
+        margin-top: 8px;
+    }
+    .file-info {
+        display: none;
+        margin-top: 15px;
+        padding: 15px;
+        background: #fff;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+    }
+    .drop-zone.has-file .file-info {
+        display: block;
+    }
+    .file-name {
+        font-weight: 600;
+        color: #333;
+    }
+    .file-size {
+        color: #6c757d;
+        font-size: 0.85rem;
+    }
+    .remove-file-btn {
+        color: #dc3545;
+        cursor: pointer;
+    }
+    .remove-file-btn:hover {
+        color: #a71d2a;
+    }
+
+    /* أنواع الاستيراد */
+    .import-mode-card {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 15px;
+        height: 100%;
+    }
+    .import-mode-card:hover {
+        border-color: #0077c8;
+        background-color: #f8f9fa;
+    }
+    .import-mode-card.selected {
+        border-color: #0077c8;
+        background-color: #e3f2fd;
+        box-shadow: 0 0 0 3px rgba(0, 119, 200, 0.15);
+    }
+    .import-mode-card .mode-icon {
+        font-size: 28px;
+        margin-bottom: 10px;
+    }
+    .import-mode-card .mode-title {
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    .import-mode-card .mode-desc {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+
+    /* خطوات المعالج */
+    .wizard-steps {
         display: flex;
-        margin-bottom: 1rem;
+        justify-content: center;
+        margin-bottom: 30px;
+        position: relative;
     }
-    .import-steps .step-number {
-        width: 30px;
-        height: 30px;
-        background-color: var(--bs-primary);
-        color: #fff;
+    .wizard-steps::before {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: 25%;
+        right: 25%;
+        height: 2px;
+        background: #e9ecef;
+        z-index: 0;
+    }
+    .wizard-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+        flex: 1;
+        max-width: 150px;
+    }
+    .wizard-step-number {
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
+        background: #e9ecef;
+        color: #6c757d;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-left: 1rem;
-        flex-shrink: 0;
-    }
-    .import-steps .step-content {
-        flex: 1;
-    }
-    .import-steps .step-title {
         font-weight: 600;
-        margin-bottom: 0.5rem;
+        margin-bottom: 8px;
+        transition: all 0.3s ease;
     }
-    .import-tips {
-        background-color: #f8f9fa;
-        border-right: 4px solid var(--bs-primary);
-        padding: 1rem;
-        border-radius: 0.25rem;
+    .wizard-step.active .wizard-step-number {
+        background: #0077c8;
+        color: #fff;
     }
-    .file-upload-wrapper {
-        position: relative;
-        margin-bottom: 1rem;
+    .wizard-step.completed .wizard-step-number {
+        background: #28a745;
+        color: #fff;
     }
-    .sample-file-link {
-        margin-top: 0.5rem;
-        display: inline-block;
+    .wizard-step-label {
+        font-size: 0.85rem;
+        color: #6c757d;
+        text-align: center;
+    }
+    .wizard-step.active .wizard-step-label {
+        color: #0077c8;
+        font-weight: 600;
     }
 
-    .btn-with-icon {
+    /* قسم المعاينة */
+    .preview-section {
+        display: none;
+    }
+    .preview-table-container {
+        max-height: 400px;
+        overflow: auto;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+    }
+    .preview-table {
+        font-size: 0.85rem;
+        margin: 0;
+    }
+    .preview-table th {
+        position: sticky;
+        top: 0;
+        background: #0077c8;
+        color: #fff;
+        z-index: 10;
+    }
+    .preview-row-error {
+        background-color: #fff3cd !important;
+    }
+    .preview-row-valid {
+        background-color: #d4edda !important;
+    }
+
+    /* شريط التقدم */
+    .import-progress-section {
+        display: none;
+    }
+    .progress-stats {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin-bottom: 20px;
+    }
+    .progress-stat {
+        text-align: center;
+    }
+    .progress-stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+    .progress-stat-label {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    .progress-stat.success .progress-stat-value { color: #28a745; }
+    .progress-stat.updated .progress-stat-value { color: #17a2b8; }
+    .progress-stat.error .progress-stat-value { color: #dc3545; }
+
+    /* نصائح الاستيراد */
+    .import-tips {
+        background: linear-gradient(135deg, #e3f2fd 0%, #fff 100%);
+        border-radius: 10px;
+        padding: 20px;
+        border-right: 4px solid #0077c8;
+    }
+    .import-tips h6 {
+        color: #0077c8;
+        margin-bottom: 15px;
+    }
+    .import-tips ul {
+        margin: 0;
+        padding-right: 20px;
+    }
+    .import-tips li {
+        margin-bottom: 8px;
+        color: #555;
+    }
+
+    /* جدول مثال الصيغة */
+    .format-example {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 15px;
+        overflow-x: auto;
+    }
+    .format-example table {
+        font-size: 0.8rem;
+        margin: 0;
+    }
+    .format-example th {
+        background: #0077c8;
+        color: #fff;
+        white-space: nowrap;
+    }
+    .format-example td {
+        white-space: nowrap;
+    }
+    .format-highlight {
+        background: #fff3cd;
+        font-family: monospace;
+        padding: 2px 5px;
+        border-radius: 3px;
+    }
+
+    /* جداول أمثلة الاستيراد - مدمجة */
+    #importExamplesAccordion .table {
+        font-size: 0.7rem;
+        margin: 0;
+    }
+    #importExamplesAccordion .table th,
+    #importExamplesAccordion .table td {
+        padding: 0.25rem 0.35rem;
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+    #importExamplesAccordion .table th {
+        font-size: 0.65rem;
+        font-weight: 600;
+    }
+    #importExamplesAccordion .accordion-body {
+        padding: 0.75rem;
+    }
+    #importExamplesAccordion .table-responsive {
+        margin: 0 -0.75rem;
+        padding: 0 0.75rem;
+    }
+    #importExamplesAccordion .format-highlight {
+        font-size: 0.6rem;
+        padding: 1px 3px;
+    }
+    #importExamplesAccordion .alert {
+        font-size: 0.75rem;
+    }
+
+    /* زر التحميل */
+    .template-download-btn {
         display: inline-flex;
         align-items: center;
-        gap: 5px;
+        gap: 8px;
+        padding: 12px 24px;
+        background: linear-gradient(135deg, #0077c8 0%, #005fa3 100%);
+        color: #fff;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    .template-download-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 119, 200, 0.3);
+        color: #fff;
     }
 
-    .alert-info-custom {
-        background-color: #e1f5fe;
-        border-color: #b3e5fc;
-        color: #0288d1;
+    /* إحصائيات الملف */
+    .file-stats {
+        display: flex;
+        gap: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin-top: 15px;
+    }
+    .file-stat {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .file-stat-icon {
+        width: 35px;
+        height: 35px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+    .file-stat-icon.products { background: #e3f2fd; color: #0077c8; }
+    .file-stat-icon.variants { background: #e8f5e9; color: #28a745; }
+    .file-stat-icon.errors { background: #fce4ec; color: #dc3545; }
+
+    /* خيارات متقدمة */
+    .advanced-options {
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        margin-top: 20px;
+    }
+    .advanced-options-header {
+        padding: 15px 20px;
+        background: #f8f9fa;
+        border-radius: 10px 10px 0 0;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .advanced-options-header:hover {
+        background: #e9ecef;
+    }
+    .advanced-options-body {
+        padding: 20px;
+        display: none;
+    }
+    .advanced-options.open .advanced-options-body {
+        display: block;
+    }
+    .advanced-options.open .advanced-options-header i {
+        transform: rotate(180deg);
     }
 </style>
 {% endblock %}
 
 {% block content %}
+<!-- خطوات المعالج -->
+<div class="wizard-steps mb-4">
+    <div class="wizard-step active" data-step="1">
+        <div class="wizard-step-number">1</div>
+        <div class="wizard-step-label">{% trans 'رفع الملف' %}</div>
+    </div>
+    <div class="wizard-step" data-step="2">
+        <div class="wizard-step-number">2</div>
+        <div class="wizard-step-label">{% trans 'المعاينة' %}</div>
+    </div>
+    <div class="wizard-step" data-step="3">
+        <div class="wizard-step-number">3</div>
+        <div class="wizard-step-label">{% trans 'الاستيراد' %}</div>
+    </div>
+    <div class="wizard-step" data-step="4">
+        <div class="wizard-step-number">4</div>
+        <div class="wizard-step-label">{% trans 'النتائج' %}</div>
+    </div>
+</div>
+
 <div class="row">
+    <!-- القسم الرئيسي -->
     <div class="col-lg-8">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-transparent border-0">
-                <h5 class="mb-0">{% trans 'استيراد المنتجات من ملف CSV' %}</h5>
-            </div>
-            <div class="card-body">
-                <!-- تنبيه حول قالب Excel -->
-                <div class="alert alert-info-custom mb-4">
-                    <h6><i class="fas fa-info-circle me-2"></i>{% trans 'هام: تنسيق ملف الاستيراد' %}</h6>
-                    <p class="mb-0">{% trans 'تأكد من استخدام نموذج الملف المقدم أدناه. لا تقم بتعديل أو حذف صف العناوين (الصف الأول) لأنه ضروري لعملية الاستيراد.' %}</p>
+        <!-- الخطوة 1: رفع الملف والإعدادات -->
+        <div class="upload-section" id="step-1">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">
+                        <i class="fa fa-cloud-upload-alt text-primary me-2"></i>
+                        {% trans 'رفع ملف الاستيراد' %}
+                    </h5>
                 </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" id="import-form" action="{% url 'dashboard:product_import' %}">
+                        {% csrf_token %}
 
-                <form method="post" enctype="multipart/form-data" action="{% url 'dashboard:product_import' %}">
-                    {% csrf_token %}
-
-                    <div class="file-upload-wrapper">
-                        <label for="{{ form.file.id_for_label }}" class="form-label">{{ form.file.label }}</label>
-                        {{ form.file }}
-                        <div class="form-text">{{ form.file.help_text }}</div>
-                        {% if form.file.errors %}
-                        <div class="invalid-feedback d-block">
-                            {% for error in form.file.errors %}
-                            {{ error }}
-                            {% endfor %}
+                        <!-- منطقة السحب والإفلات -->
+                        <div class="drop-zone" id="drop-zone">
+                            <input type="file" name="file" id="import-file-input" class="d-none" accept=".csv,.xlsx,.xls">
+                            <div class="drop-zone-icon">
+                                <i class="fa fa-file-excel"></i>
+                            </div>
+                            <div class="drop-zone-text">
+                                {% trans 'اسحب الملف هنا أو انقر للاختيار' %}
+                            </div>
+                            <div class="drop-zone-hint">
+                                {% trans 'يدعم: Excel (.xlsx, .xls) و CSV (.csv) - الحد الأقصى 10 ميجابايت' %}
+                            </div>
+                            <div class="file-info">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <i class="fa fa-file-excel text-success me-2"></i>
+                                        <span class="file-name" id="file-name"></span>
+                                        <span class="file-size ms-2" id="file-size"></span>
+                                    </div>
+                                    <span class="remove-file-btn" id="remove-file" title="{% trans 'إزالة الملف' %}">
+                                        <i class="fa fa-times-circle fa-lg"></i>
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                        {% endif %}
-                        <a href="{% url 'dashboard:excel_template' %}" class="sample-file-link btn-with-icon">
-                            <i class="fas fa-download"></i> {% trans 'تحميل نموذج الملف' %}
-                        </a>
-                    </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="{{ form.category.id_for_label }}" class="form-label">{{ form.category.label }}</label>
-                            {{ form.category }}
-                            <div class="form-text">{{ form.category.help_text }}</div>
+                        <!-- نوع الاستيراد -->
+                        <div class="mt-4">
+                            <label class="form-label fw-bold">
+                                <i class="fa fa-cogs text-primary me-1"></i>
+                                {% trans 'نوع الاستيراد' %}
+                            </label>
+                            <div class="row g-3">
+                                <div class="col-md-6 col-lg-3">
+                                    <label class="import-mode-card selected" data-mode="full">
+                                        <input type="radio" name="import_mode" value="full" class="d-none" checked>
+                                        <div class="mode-icon text-primary"><i class="fa fa-boxes"></i></div>
+                                        <div class="mode-title">{% trans 'استيراد كامل' %}</div>
+                                        <div class="mode-desc">{% trans 'منتجات + متغيرات' %}</div>
+                                    </label>
+                                </div>
+                                <div class="col-md-6 col-lg-3">
+                                    <label class="import-mode-card" data-mode="products_only">
+                                        <input type="radio" name="import_mode" value="products_only" class="d-none">
+                                        <div class="mode-icon text-success"><i class="fa fa-box"></i></div>
+                                        <div class="mode-title">{% trans 'منتجات فقط' %}</div>
+                                        <div class="mode-desc">{% trans 'بدون متغيرات' %}</div>
+                                    </label>
+                                </div>
+                                <div class="col-md-6 col-lg-3">
+                                    <label class="import-mode-card" data-mode="variants_only">
+                                        <input type="radio" name="import_mode" value="variants_only" class="d-none">
+                                        <div class="mode-icon text-info"><i class="fa fa-cubes"></i></div>
+                                        <div class="mode-title">{% trans 'متغيرات فقط' %}</div>
+                                        <div class="mode-desc">{% trans 'لمنتجات موجودة' %}</div>
+                                    </label>
+                                </div>
+                                <div class="col-md-6 col-lg-3">
+                                    <label class="import-mode-card" data-mode="update">
+                                        <input type="radio" name="import_mode" value="update" class="d-none">
+                                        <div class="mode-icon text-warning"><i class="fa fa-sync-alt"></i></div>
+                                        <div class="mode-title">{% trans 'تحديث فقط' %}</div>
+                                        <div class="mode-desc">{% trans 'لا يتم إنشاء جديد' %}</div>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <div class="form-check">
-                                {{ form.update_existing }}
-                                <label class="form-check-label" for="{{ form.update_existing.id_for_label }}">
-                                    {{ form.update_existing.label }}
+                        <!-- فلترة حسب الفئة/العلامة التجارية -->
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    <i class="fa fa-folder text-warning me-1"></i>
+                                    {% trans 'استيراد لفئة محددة' %}
                                 </label>
-                                <div class="form-text">{{ form.update_existing.help_text }}</div>
+                                <select name="filter_by_category" class="form-select select2">
+                                    <option value="">{% trans '-- اختر الفئة (اختياري) --' %}</option>
+                                    {% for cat in categories %}
+                                    <option value="{{ cat.id }}">
+                                        {% if cat.level == 1 %}&nbsp;&nbsp;{% elif cat.level == 2 %}&nbsp;&nbsp;&nbsp;&nbsp;{% elif cat.level >= 3 %}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{% endif %}{{ cat.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">{% trans 'تعيين جميع المنتجات لهذه الفئة' %}</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    <i class="fa fa-tag text-info me-1"></i>
+                                    {% trans 'استيراد لعلامة تجارية محددة' %}
+                                </label>
+                                <select name="filter_by_brand" class="form-select select2">
+                                    <option value="">{% trans '-- اختر العلامة التجارية (اختياري) --' %}</option>
+                                    {% for brand in brands %}
+                                    <option value="{{ brand.id }}">{{ brand.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">{% trans 'تعيين جميع المنتجات لهذه العلامة' %}</small>
+                            </div>
+                        </div>
+
+                        <!-- خيارات متقدمة -->
+                        <div class="advanced-options mt-4" id="advanced-options">
+                            <div class="advanced-options-header" onclick="toggleAdvancedOptions()">
+                                <span class="fw-bold">
+                                    <i class="fa fa-sliders-h me-2"></i>
+                                    {% trans 'خيارات متقدمة' %}
+                                </span>
+                                <i class="fa fa-chevron-down"></i>
+                            </div>
+                            <div class="advanced-options-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-label">{% trans 'الفئة الافتراضية' %}</label>
+                                        <select name="category" class="form-select select2">
+                                            <option value="">{% trans '-- إنشاء فئة جديدة --' %}</option>
+                                            {% for cat in categories %}
+                                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <small class="text-muted">{% trans 'للمنتجات التي لا تحتوي على فئة' %}</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">{% trans 'العلامة التجارية الافتراضية' %}</label>
+                                        <select name="brand" class="form-select select2">
+                                            <option value="">{% trans '-- إنشاء علامة جديدة --' %}</option>
+                                            {% for brand in brands %}
+                                            <option value="{{ brand.id }}">{{ brand.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <small class="text-muted">{% trans 'للمنتجات التي لا تحتوي على علامة' %}</small>
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-2">
+                                            <input type="checkbox" name="update_existing" id="update_existing" class="form-check-input" checked>
+                                            <label class="form-check-label" for="update_existing">
+                                                {% trans 'تحديث المنتجات الموجودة' %}
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input type="checkbox" name="skip_errors" id="skip_errors" class="form-check-input" checked>
+                                            <label class="form-check-label" for="skip_errors">
+                                                {% trans 'تخطي الصفوف الخاطئة' %}
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-2">
+                                            <input type="checkbox" name="create_categories" id="create_categories" class="form-check-input" checked>
+                                            <label class="form-check-label" for="create_categories">
+                                                {% trans 'إنشاء فئات جديدة تلقائياً' %}
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input type="checkbox" name="create_brands" id="create_brands" class="form-check-input" checked>
+                                            <label class="form-check-label" for="create_brands">
+                                                {% trans 'إنشاء علامات تجارية جديدة تلقائياً' %}
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- أزرار الإجراءات -->
+                        <div class="mt-4 d-flex gap-3">
+                            <button type="button" class="btn btn-primary btn-lg flex-grow-1" id="preview-btn" disabled>
+                                <i class="fa fa-eye me-2"></i>
+                                {% trans 'معاينة البيانات' %}
+                            </button>
+                            <button type="submit" class="btn btn-success btn-lg" id="import-btn" disabled>
+                                <i class="fa fa-file-import me-2"></i>
+                                {% trans 'استيراد مباشر' %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- الخطوة 2: المعاينة -->
+        <div class="preview-section" id="step-2">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fa fa-table text-primary me-2"></i>
+                        {% trans 'معاينة البيانات' %}
+                    </h5>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="back-to-upload">
+                        <i class="fa fa-arrow-right me-1"></i>
+                        {% trans 'رجوع' %}
+                    </button>
+                </div>
+                <div class="card-body">
+                    <!-- إحصائيات المعاينة -->
+                    <div class="file-stats mb-4">
+                        <div class="file-stat">
+                            <div class="file-stat-icon products"><i class="fa fa-box"></i></div>
+                            <div>
+                                <div class="fw-bold" id="preview-products-count">0</div>
+                                <div class="text-muted small">{% trans 'منتجات' %}</div>
+                            </div>
+                        </div>
+                        <div class="file-stat">
+                            <div class="file-stat-icon variants"><i class="fa fa-cubes"></i></div>
+                            <div>
+                                <div class="fw-bold" id="preview-variants-count">0</div>
+                                <div class="text-muted small">{% trans 'متغيرات' %}</div>
+                            </div>
+                        </div>
+                        <div class="file-stat">
+                            <div class="file-stat-icon errors"><i class="fa fa-exclamation-triangle"></i></div>
+                            <div>
+                                <div class="fw-bold" id="preview-errors-count">0</div>
+                                <div class="text-muted small">{% trans 'أخطاء' %}</div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="mt-4">
-                        <button type="submit" class="btn btn-primary btn-with-icon">
-                            <i class="fas fa-file-import"></i> {% trans 'استيراد المنتجات' %}
-                        </button>
-                        <a href="{% url 'dashboard:dashboard_products' %}" class="btn btn-secondary btn-with-icon">
-                            <i class="fas fa-times"></i> {% trans 'إلغاء' %}
-                        </a>
+                    <!-- جدول المعاينة -->
+                    <div class="preview-table-container">
+                        <table class="table preview-table table-bordered table-striped mb-0">
+                            <thead>
+                                <tr id="preview-header"></tr>
+                            </thead>
+                            <tbody id="preview-body"></tbody>
+                        </table>
                     </div>
-                </form>
+
+                    <!-- أزرار الإجراءات -->
+                    <div class="mt-4 d-flex gap-3">
+                        <button type="button" class="btn btn-success btn-lg flex-grow-1" id="confirm-import-btn">
+                            <i class="fa fa-check me-2"></i>
+                            {% trans 'تأكيد الاستيراد' %}
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-lg" id="cancel-import-btn">
+                            <i class="fa fa-times me-2"></i>
+                            {% trans 'إلغاء' %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- الخطوة 3: التقدم -->
+        <div class="import-progress-section" id="step-3">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">
+                        <i class="fa fa-spinner fa-spin text-primary me-2"></i>
+                        {% trans 'جاري الاستيراد...' %}
+                    </h5>
+                </div>
+                <div class="card-body text-center py-5">
+                    <!-- إحصائيات التقدم -->
+                    <div class="progress-stats">
+                        <div class="progress-stat">
+                            <div class="progress-stat-value" id="progress-processed">0</div>
+                            <div class="progress-stat-label">{% trans 'معالج' %}</div>
+                        </div>
+                        <div class="progress-stat success">
+                            <div class="progress-stat-value" id="progress-success">0</div>
+                            <div class="progress-stat-label">{% trans 'نجح' %}</div>
+                        </div>
+                        <div class="progress-stat updated">
+                            <div class="progress-stat-value" id="progress-updated">0</div>
+                            <div class="progress-stat-label">{% trans 'محدّث' %}</div>
+                        </div>
+                        <div class="progress-stat error">
+                            <div class="progress-stat-value" id="progress-errors">0</div>
+                            <div class="progress-stat-label">{% trans 'فشل' %}</div>
+                        </div>
+                    </div>
+
+                    <!-- شريط التقدم -->
+                    <div class="progress mt-4" style="height: 25px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                             role="progressbar"
+                             id="import-progress-bar"
+                             style="width: 0%">
+                            <span id="progress-percentage">0%</span>
+                        </div>
+                    </div>
+
+                    <p class="text-muted mt-3" id="progress-status">{% trans 'جاري تحضير البيانات...' %}</p>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- القسم الجانبي -->
     <div class="col-lg-4">
-        <div class="card border-0 shadow-sm h-100">
+        <!-- تحميل القالب -->
+        <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-transparent border-0">
-                <h5 class="mb-0">{% trans 'تعليمات الاستيراد' %}</h5>
+                <h5 class="mb-0">
+                    <i class="fa fa-download text-success me-2"></i>
+                    {% trans 'قالب الاستيراد' %}
+                </h5>
             </div>
-            <div class="card-body">
-                <div class="import-steps">
-                    <div class="step">
-                        <div class="step-number">1</div>
-                        <div class="step-content">
-                            <div class="step-title">{% trans 'تحميل نموذج ملف الاستيراد' %}</div>
-                            <p>{% trans 'قم بتحميل نموذج ملف Excel الذي يحتوي على العناوين المطلوبة للاستيراد.' %}</p>
+            <div class="card-body text-center">
+                <p class="text-muted mb-4">{% trans 'قم بتحميل القالب وتعبئته بالبيانات ثم ارفعه للاستيراد' %}</p>
+                <a href="{% url 'dashboard:product_import_template' %}" class="template-download-btn">
+                    <i class="fa fa-file-excel"></i>
+                    {% trans 'تحميل القالب' %}
+                </a>
+            </div>
+        </div>
+
+        <!-- أمثلة أنواع الاستيراد الأربعة -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent border-0">
+                <h5 class="mb-0">
+                    <i class="fa fa-book text-primary me-2"></i>
+                    {% trans 'أمثلة أنواع الاستيراد' %}
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <!-- أكورديون الأمثلة -->
+                <div class="accordion accordion-flush" id="importExamplesAccordion">
+                    <!-- مثال 1: استيراد كامل -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#example1">
+                                <i class="fa fa-boxes text-primary me-2"></i>
+                                <strong>{% trans 'استيراد كامل (منتجات + متغيرات)' %}</strong>
+                            </button>
+                        </h2>
+                        <div id="example1" class="accordion-collapse collapse" data-bs-parent="#importExamplesAccordion">
+                            <div class="accordion-body">
+                                <p class="small text-muted mb-2">{% trans 'استخدم نفس SKU لربط المتغيرات بالمنتج:' %}</p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered mb-0">
+                                        <thead class="table-primary">
+                                            <tr>
+                                                <th>name</th>
+                                                <th>sku</th>
+                                                <th>price</th>
+                                                <th>variant</th>
+                                                <th>attr</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>iPhone</td>
+                                                <td>IP15</td>
+                                                <td>999</td>
+                                                <td>128GB</td>
+                                                <td><code>color:B</code></td>
+                                            </tr>
+                                            <tr class="table-light">
+                                                <td>iPhone</td>
+                                                <td>IP15</td>
+                                                <td>-</td>
+                                                <td>256GB</td>
+                                                <td><code>color:W</code></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="alert alert-info py-1 px-2 mt-2 mb-0">
+                                    <i class="fa fa-info-circle me-1"></i>
+                                    {% trans 'نفس SKU = نفس المنتج، صفوف متعددة = متغيرات' %}
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="step">
-                        <div class="step-number">2</div>
-                        <div class="step-content">
-                            <div class="step-title">{% trans 'إعداد بيانات المنتجات' %}</div>
-                            <p>{% trans 'قم بتعبئة بيانات المنتجات في الملف. لا تقم بتعديل صف العناوين الإنجليزية.' %}</p>
+
+                    <!-- مثال 2: منتجات فقط -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#example2">
+                                <i class="fa fa-box text-success me-2"></i>
+                                <strong>{% trans 'منتجات فقط (بدون متغيرات)' %}</strong>
+                            </button>
+                        </h2>
+                        <div id="example2" class="accordion-collapse collapse" data-bs-parent="#importExamplesAccordion">
+                            <div class="accordion-body">
+                                <p class="small text-muted mb-2">{% trans 'منتجات بسيطة بدون متغيرات:' %}</p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered mb-0">
+                                        <thead class="table-success">
+                                            <tr>
+                                                <th>name</th>
+                                                <th>sku</th>
+                                                <th>cat</th>
+                                                <th>price</th>
+                                                <th>stock</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>سماعات</td>
+                                                <td>BT-01</td>
+                                                <td>إلكترو</td>
+                                                <td>49</td>
+                                                <td>100</td>
+                                            </tr>
+                                            <tr>
+                                                <td>شاحن</td>
+                                                <td>CH-02</td>
+                                                <td>إلكترو</td>
+                                                <td>25</td>
+                                                <td>200</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="alert alert-success py-1 px-2 mt-2 mb-0">
+                                    <i class="fa fa-check-circle me-1"></i>
+                                    {% trans 'يتم تجاهل أعمدة المتغيرات في هذا الوضع' %}
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="step">
-                        <div class="step-number">3</div>
-                        <div class="step-content">
-                            <div class="step-title">{% trans 'استيراد المنتجات' %}</div>
-                            <p>{% trans 'قم بتحميل الملف واضغط على زر "استيراد المنتجات" لبدء عملية الاستيراد.' %}</p>
+
+                    <!-- مثال 3: متغيرات فقط -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#example3">
+                                <i class="fa fa-cubes text-info me-2"></i>
+                                <strong>{% trans 'متغيرات فقط (لمنتجات موجودة)' %}</strong>
+                            </button>
+                        </h2>
+                        <div id="example3" class="accordion-collapse collapse" data-bs-parent="#importExamplesAccordion">
+                            <div class="accordion-body">
+                                <p class="small text-muted mb-2">{% trans 'إضافة متغيرات لمنتج موجود:' %}</p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered mb-0">
+                                        <thead class="table-info">
+                                            <tr>
+                                                <th>sku</th>
+                                                <th>variant</th>
+                                                <th>attr</th>
+                                                <th>price</th>
+                                                <th>stock</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>IP15</td>
+                                                <td>1TB أسود</td>
+                                                <td><code>s:1TB</code></td>
+                                                <td>1599</td>
+                                                <td>20</td>
+                                            </tr>
+                                            <tr>
+                                                <td>IP15</td>
+                                                <td>1TB ذهبي</td>
+                                                <td><code>s:1TB</code></td>
+                                                <td>1599</td>
+                                                <td>15</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="alert alert-warning py-1 px-2 mt-2 mb-0">
+                                    <i class="fa fa-exclamation-triangle me-1"></i>
+                                    {% trans 'المنتج يجب أن يكون موجوداً مسبقاً (SKU: IP15)' %}
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="step">
-                        <div class="step-number">4</div>
-                        <div class="step-content">
-                            <div class="step-title">{% trans 'مراجعة النتائج وتصحيح الأخطاء' %}</div>
-                            <p>{% trans 'بعد الاستيراد، ستظهر النتائج. في حالة وجود أخطاء، يمكنك تصدير المنتجات الخاطئة وتصحيحها.' %}</p>
+
+                    <!-- مثال 4: تحديث فقط -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#example4">
+                                <i class="fa fa-sync-alt text-warning me-2"></i>
+                                <strong>{% trans 'تحديث فقط (لا يتم إنشاء جديد)' %}</strong>
+                            </button>
+                        </h2>
+                        <div id="example4" class="accordion-collapse collapse" data-bs-parent="#importExamplesAccordion">
+                            <div class="accordion-body">
+                                <p class="small text-muted mb-2">{% trans 'تحديث أسعار/مخزون منتجات موجودة:' %}</p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered mb-0">
+                                        <thead class="table-warning">
+                                            <tr>
+                                                <th>sku</th>
+                                                <th>price</th>
+                                                <th>stock</th>
+                                                <th>status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>IP15</td>
+                                                <td class="text-success fw-bold">899</td>
+                                                <td class="text-primary fw-bold">150</td>
+                                                <td>pub</td>
+                                            </tr>
+                                            <tr>
+                                                <td>BT-01</td>
+                                                <td class="text-success fw-bold">39</td>
+                                                <td class="text-primary fw-bold">200</td>
+                                                <td>pub</td>
+                                            </tr>
+                                            <tr class="table-danger">
+                                                <td>NEW</td>
+                                                <td>99</td>
+                                                <td>50</td>
+                                                <td><del>draft</del></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="alert alert-danger py-1 px-2 mt-2 mb-0">
+                                    <i class="fa fa-ban me-1"></i>
+                                    {% trans 'الصف الأخير يُتجاهل لأن المنتج غير موجود' %}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
 
+        <!-- صيغة الخصائص -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent border-0 py-2">
+                <h6 class="mb-0">
+                    <i class="fa fa-code text-info me-2"></i>
+                    {% trans 'صيغة الخصائص' %}
+                </h6>
+            </div>
+            <div class="card-body py-2">
+                <div class="bg-dark text-light p-2 rounded mb-2">
+                    <code class="text-warning small">key:value|key:value</code>
+                </div>
+                <div class="small">
+                    <code class="format-highlight">color:أسود</code>
+                    <code class="format-highlight">size:XL</code>
+                    <code class="format-highlight">storage:256GB</code>
+                </div>
+            </div>
+        </div>
+
+        <!-- نصائح الاستيراد -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0">
+                <h5 class="mb-0">
+                    <i class="fa fa-lightbulb text-warning me-2"></i>
+                    {% trans 'نصائح مهمة' %}
+                </h5>
+            </div>
+            <div class="card-body">
                 <div class="import-tips">
-                    <h6>{% trans 'نصائح للاستيراد الناجح:' %}</h6>
-                    <ul>
-                        <li>{% trans 'تأكد من ملء الحقول الإلزامية (الاسم).' %}</li>
-                        <li>{% trans 'يمكنك ترك حقل SKU فارغًا وسيتم إنشاؤه تلقائيًا.' %}</li>
-                        <li>{% trans 'يمكن للنظام إنشاء فئات وعلامات تجارية جديدة تلقائيًا.' %}</li>
-                        <li>{% trans 'الحد الأقصى لحجم الملف هو 10 ميجابايت.' %}</li>
-                        <li>{% trans 'حافظ على الصف الأول من نموذج الملف كما هو.' %}</li>
+                    <h6 class="text-primary mb-3"><i class="fa fa-file-excel me-2"></i>{% trans 'قبل البدء' %}</h6>
+                    <ul class="mb-4">
+                        <li>{% trans 'قم بتحميل القالب أولاً واستخدمه كمرجع' %}</li>
+                        <li>{% trans 'لا تحذف صف العناوين (الصف الأول)' %}</li>
+                        <li>{% trans 'الحد الأقصى لحجم الملف: 10 ميجابايت' %}</li>
+                        <li>{% trans 'الملفات المدعومة: Excel (.xlsx, .xls) و CSV' %}</li>
+                    </ul>
+
+                    <h6 class="text-success mb-3"><i class="fa fa-check-circle me-2"></i>{% trans 'الحقول الإلزامية' %}</h6>
+                    <ul class="mb-4">
+                        <li><strong>name</strong>: {% trans 'اسم المنتج (مطلوب دائماً)' %}</li>
+                        <li><strong>base_price</strong>: {% trans 'السعر الأساسي (مطلوب للمنتجات الجديدة)' %}</li>
+                    </ul>
+
+                    <h6 class="text-info mb-3"><i class="fa fa-link me-2"></i>{% trans 'ربط المتغيرات' %}</h6>
+                    <ul class="mb-4">
+                        <li>{% trans 'لربط متغيرات بمنتج واحد، استخدم نفس <strong>product_sku</strong> في جميع الصفوف' %}</li>
+                        <li>{% trans 'الصف الأول يحتوي على بيانات المنتج الكاملة' %}</li>
+                        <li>{% trans 'الصفوف التالية تحتوي فقط على بيانات المتغير' %}</li>
+                    </ul>
+
+                    <h6 class="text-warning mb-3"><i class="fa fa-magic me-2"></i>{% trans 'الإنشاء التلقائي' %}</h6>
+                    <ul class="mb-4">
+                        <li>{% trans 'يتم إنشاء <strong>SKU</strong> تلقائياً إذا ترك فارغاً' %}</li>
+                        <li>{% trans 'يمكن إنشاء <strong>الفئات</strong> و<strong>العلامات التجارية</strong> تلقائياً' %}</li>
+                        <li>{% trans 'يتم إنشاء <strong>Slug</strong> تلقائياً من الاسم' %}</li>
+                    </ul>
+
+                    <h6 class="text-danger mb-3"><i class="fa fa-exclamation-triangle me-2"></i>{% trans 'تجنب الأخطاء' %}</h6>
+                    <ul class="mb-0">
+                        <li>{% trans 'تأكد من عدم تكرار SKU لمنتجات مختلفة' %}</li>
+                        <li>{% trans 'استخدم الأرقام فقط للأسعار والكميات' %}</li>
+                        <li>{% trans 'الحالة (status) يجب أن تكون: published أو draft' %}</li>
+                        <li>{% trans 'حقل is_active يقبل: Yes/No أو True/False أو 1/0' %}</li>
                     </ul>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+$(document).ready(function() {
+    // تهيئة Select2
+    $('.select2').select2({
+        theme: 'bootstrap-5',
+        dir: 'rtl',
+        allowClear: true,
+        placeholder: function() {
+            return $(this).data('placeholder') || "{% trans 'اختر...' %}";
+        }
+    });
+
+    // متغيرات عامة
+    let selectedFile = null;
+    let currentStep = 1;
+    let importId = null;
+    let progressInterval = null;
+
+    // ===== السحب والإفلات =====
+    const dropZone = $('#drop-zone');
+    const fileInput = $('#import-file-input');
+    const previewBtn = $('#preview-btn');
+    const importBtn = $('#import-btn');
+
+    // منع السلوك الافتراضي للسحب
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.on(eventName, function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+    });
+
+    // تمييز منطقة السحب
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.on(eventName, function() {
+            dropZone.addClass('drag-over');
+        });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.on(eventName, function() {
+            dropZone.removeClass('drag-over');
+        });
+    });
+
+    // معالجة إفلات الملف
+    dropZone.on('drop', function(e) {
+        const files = e.originalEvent.dataTransfer.files;
+        if (files.length) {
+            handleFile(files[0]);
+        }
+    });
+
+    // النقر لاختيار الملف
+    dropZone.on('click', function(e) {
+        if (!$(e.target).closest('.file-info').length) {
+            fileInput.click();
+        }
+    });
+
+    // تغيير الملف المختار
+    fileInput.on('change', function() {
+        if (this.files.length) {
+            handleFile(this.files[0]);
+        }
+    });
+
+    // معالجة الملف
+    function handleFile(file) {
+        const allowedTypes = [
+            'text/csv',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        ];
+        const allowedExtensions = ['.csv', '.xls', '.xlsx'];
+        const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+
+        if (!allowedExtensions.includes(fileExt)) {
+            Swal.fire({
+                icon: 'error',
+                title: "{% trans 'صيغة غير مدعومة' %}",
+                text: "{% trans 'يرجى اختيار ملف Excel أو CSV' %}"
+            });
+            return;
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+            Swal.fire({
+                icon: 'error',
+                title: "{% trans 'الملف كبير جداً' %}",
+                text: "{% trans 'الحد الأقصى لحجم الملف هو 10 ميجابايت' %}"
+            });
+            return;
+        }
+
+        selectedFile = file;
+        dropZone.addClass('has-file');
+        $('#file-name').text(file.name);
+        $('#file-size').text(formatFileSize(file.size));
+        previewBtn.prop('disabled', false);
+        importBtn.prop('disabled', false);
+
+        // تحديث input file
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        fileInput[0].files = dataTransfer.files;
+    }
+
+    // إزالة الملف
+    $('#remove-file').on('click', function(e) {
+        e.stopPropagation();
+        selectedFile = null;
+        dropZone.removeClass('has-file');
+        fileInput.val('');
+        previewBtn.prop('disabled', true);
+        importBtn.prop('disabled', true);
+    });
+
+    // تنسيق حجم الملف
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // ===== اختيار نوع الاستيراد =====
+    $('.import-mode-card').on('click', function() {
+        $('.import-mode-card').removeClass('selected');
+        $(this).addClass('selected');
+        $(this).find('input[type="radio"]').prop('checked', true);
+    });
+
+    // ===== الخيارات المتقدمة =====
+    window.toggleAdvancedOptions = function() {
+        $('#advanced-options').toggleClass('open');
+    };
+
+    // ===== المعاينة =====
+    $(document).on('click', '#preview-btn', function(e) {
+        e.preventDefault();
+        console.log('Preview button clicked');
+        console.log('selectedFile:', selectedFile);
+        console.log('fileInput files:', fileInput[0].files);
+
+        // استخدام الملف من input إذا كان selectedFile فارغ
+        const file = selectedFile || (fileInput[0].files.length > 0 ? fileInput[0].files[0] : null);
+
+        if (!file) {
+            console.log('No file selected');
+            Swal.fire({
+                icon: 'warning',
+                title: "{% trans 'تنبيه' %}",
+                text: "{% trans 'يرجى اختيار ملف أولاً' %}"
+            });
+            return;
+        }
+
+        const formData = new FormData($('#import-form')[0]);
+        formData.append('preview', 'true');
+
+        // التأكد من وجود الملف في FormData
+        if (!formData.get('file') || formData.get('file').size === 0) {
+            formData.set('file', file);
+        }
+
+        console.log('File in formData:', formData.get('file'));
+        console.log('CSRF Token:', $('input[name="csrfmiddlewaretoken"]').val());
+
+        Swal.fire({
+            title: "{% trans 'جاري تحليل الملف...' %}",
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        $.ajax({
+            url: "{% url 'dashboard:product_import_preview' %}",
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val()
+            },
+            success: function(response) {
+                Swal.close();
+                console.log('Preview response:', response);
+                if (response.success) {
+                    showPreview(response);
+                    goToStep(2);
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: "{% trans 'خطأ في تحليل الملف' %}",
+                        text: response.error || "{% trans 'حدث خطأ غير متوقع' %}"
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                Swal.close();
+                console.error('Preview error:', status, error);
+                console.error('Response:', xhr.responseText);
+                let errorMsg = "{% trans 'فشل في تحليل الملف' %}";
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg = xhr.responseJSON.error;
+                } else if (xhr.status === 403) {
+                    errorMsg = "{% trans 'خطأ في المصادقة - يرجى تحديث الصفحة' %}";
+                } else if (xhr.status === 0) {
+                    errorMsg = "{% trans 'فشل الاتصال بالخادم' %}";
+                }
+                Swal.fire({
+                    icon: 'error',
+                    title: "{% trans 'خطأ' %}",
+                    text: errorMsg
+                });
+            }
+        });
+    });
+
+    // عرض بيانات المعاينة
+    function showPreview(data) {
+        $('#preview-products-count').text(data.products_count || 0);
+        $('#preview-variants-count').text(data.variants_count || 0);
+        $('#preview-errors-count').text(data.errors_count || 0);
+
+        // بناء رأس الجدول
+        const headerRow = $('#preview-header');
+        headerRow.empty();
+        data.columns.forEach(function(col) {
+            headerRow.append('<th>' + col + '</th>');
+        });
+
+        // بناء جسم الجدول
+        const tbody = $('#preview-body');
+        tbody.empty();
+        data.rows.forEach(function(row, index) {
+            const tr = $('<tr>');
+            if (row.has_error) {
+                tr.addClass('preview-row-error');
+            }
+            data.columns.forEach(function(col) {
+                tr.append('<td>' + (row[col] || '') + '</td>');
+            });
+            tbody.append(tr);
+        });
+    }
+
+    // ===== التنقل بين الخطوات =====
+    function goToStep(step) {
+        currentStep = step;
+
+        // تحديث مظهر الخطوات
+        $('.wizard-step').removeClass('active completed');
+        for (let i = 1; i < step; i++) {
+            $(`.wizard-step[data-step="${i}"]`).addClass('completed');
+        }
+        $(`.wizard-step[data-step="${step}"]`).addClass('active');
+
+        // إظهار/إخفاء الأقسام
+        $('#step-1').toggle(step === 1);
+        $('#step-2').toggle(step === 2);
+        $('#step-3').toggle(step === 3);
+    }
+
+    // الرجوع للخطوة الأولى
+    $('#back-to-upload, #cancel-import-btn').on('click', function() {
+        goToStep(1);
+    });
+
+    // ===== تأكيد الاستيراد =====
+    $('#confirm-import-btn').on('click', function() {
+        startImport();
+    });
+
+    // بدء الاستيراد
+    function startImport() {
+        const formData = new FormData($('#import-form')[0]);
+
+        goToStep(3);
+
+        $.ajax({
+            url: "{% url 'dashboard:product_import' %}",
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    importId = response.import_id;
+                    startProgressPolling();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: "{% trans 'خطأ' %}",
+                        text: response.error || "{% trans 'فشل بدء الاستيراد' %}"
+                    });
+                    goToStep(1);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Import error:', status, error, xhr.responseText);
+                Swal.fire({
+                    icon: 'error',
+                    title: "{% trans 'خطأ' %}",
+                    text: "{% trans 'فشل في الاتصال بالخادم' %}: " + (xhr.responseJSON?.error || error)
+                });
+                goToStep(1);
+            }
+        });
+    }
+
+    // ===== تتبع التقدم =====
+    function startProgressPolling() {
+        progressInterval = setInterval(checkProgress, 1000);
+    }
+
+    function checkProgress() {
+        if (!importId) return;
+
+        $.ajax({
+            url: "{% url 'dashboard:import_progress' %}",
+            type: 'GET',
+            data: { import_id: importId },
+            success: function(response) {
+                if (response.success) {
+                    updateProgressUI(response.progress);
+
+                    if (response.progress.status === 'completed' || response.progress.status === 'error') {
+                        clearInterval(progressInterval);
+                        showResults(response.progress);
+                    }
+                }
+            }
+        });
+    }
+
+    function updateProgressUI(progress) {
+        const processed = progress.processed || 0;
+        const total = progress.total || 1;
+        const percentage = Math.round((processed / total) * 100);
+
+        $('#progress-processed').text(processed);
+        $('#progress-success').text(progress.success || 0);
+        $('#progress-updated').text(progress.updated || 0);
+        $('#progress-errors').text(progress.errors || 0);
+
+        $('#import-progress-bar').css('width', percentage + '%');
+        $('#progress-percentage').text(percentage + '%');
+
+        if (progress.status === 'processing') {
+            $('#progress-status').text("{% trans 'جاري معالجة الصف' %} " + processed + " {% trans 'من' %} " + total);
+        }
+    }
+
+    function showResults(progress) {
+        goToStep(4);
+
+        const hasErrors = (progress.errors || 0) > 0;
+        const productsCount = (progress.success || 0) + (progress.updated || 0);
+        const variantsCount = (progress.variants_created || 0) + (progress.variants_updated || 0);
+        const successCount = productsCount + variantsCount;
+
+        let icon = 'success';
+        let title = "{% trans 'تم الاستيراد بنجاح!' %}";
+
+        if (successCount === 0 && hasErrors) {
+            icon = 'error';
+            title = "{% trans 'فشل الاستيراد' %}";
+        } else if (hasErrors) {
+            icon = 'warning';
+            title = "{% trans 'تم الاستيراد مع بعض الأخطاء' %}";
+        }
+
+        // بناء HTML للنتائج
+        let badgesHtml = '';
+
+        // المنتجات
+        if (progress.success > 0) {
+            badgesHtml += `<span class="badge bg-success fs-6 me-2">${progress.success} {% trans 'منتج جديد' %}</span>`;
+        }
+        if (progress.updated > 0) {
+            badgesHtml += `<span class="badge bg-info fs-6 me-2">${progress.updated} {% trans 'منتج محدث' %}</span>`;
+        }
+
+        // المتغيرات
+        if (progress.variants_created > 0) {
+            badgesHtml += `<span class="badge bg-primary fs-6 me-2">${progress.variants_created} {% trans 'متغير جديد' %}</span>`;
+        }
+        if (progress.variants_updated > 0) {
+            badgesHtml += `<span class="badge bg-warning text-dark fs-6 me-2">${progress.variants_updated} {% trans 'متغير محدث' %}</span>`;
+        }
+
+        // الأخطاء
+        if (hasErrors) {
+            badgesHtml += `<span class="badge bg-danger fs-6">${progress.errors} {% trans 'خطأ' %}</span>`;
+        }
+
+        // إذا لم يكن هناك شيء للعرض
+        if (!badgesHtml) {
+            badgesHtml = `<span class="badge bg-secondary fs-6">{% trans 'لا توجد تغييرات' %}</span>`;
+        }
+
+        let html = `
+            <div class="text-center">
+                <div class="mb-3">
+                    ${badgesHtml}
+                </div>
+            </div>
+        `;
+
+        Swal.fire({
+            icon: icon,
+            title: title,
+            html: html,
+            showCancelButton: hasErrors,
+            confirmButtonText: "{% trans 'الذهاب للمنتجات' %}",
+            cancelButtonText: "{% trans 'تحميل تقرير الأخطاء' %}",
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = "{% url 'dashboard:dashboard_products' %}";
+            } else if (result.dismiss === Swal.DismissReason.cancel && hasErrors) {
+                window.location.href = "{% url 'dashboard:export_import_errors' %}?import_id=" + importId;
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

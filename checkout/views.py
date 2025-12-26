@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import TemplateView, View
 from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.utils import timezone
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
@@ -12,12 +12,41 @@ from django.urls import reverse
 from .models import CheckoutSession, PaymentMethod, ShippingMethod
 from cart.models import Cart
 from orders.models import Order
+from orders.utils import send_order_confirmation_email
 from payment.models import Payment, Transaction
 import uuid
 import os
+import logging
 from decimal import Decimal
 
-class CheckoutView(LoginRequiredMixin, View):
+logger = logging.getLogger(__name__)
+
+
+class VerifiedUserRequiredMixin(UserPassesTestMixin):
+    """
+    Mixin to check if user's email is verified.
+    Unverified users cannot complete checkout.
+    """
+    def test_func(self):
+        return self.request.user.is_authenticated and self.request.user.is_verified
+
+    def handle_no_permission(self):
+        if not self.request.user.is_authenticated:
+            messages.warning(self.request, _('يرجى تسجيل الدخول للمتابعة'))
+            return redirect('accounts:login')
+
+        if not self.request.user.is_verified:
+            messages.warning(
+                self.request,
+                _('يرجى تفعيل حسابك أولاً لإتمام عملية الشراء. تحقق من بريدك الإلكتروني.')
+            )
+            self.request.session['unverified_email'] = self.request.user.email
+            return redirect('accounts:resend_verification')
+
+        return redirect('core:home')
+
+
+class CheckoutView(LoginRequiredMixin, VerifiedUserRequiredMixin, View):
     """
     صفحة بيانات العميل - الخطوة الأولى في عملية الدفع
     تتطلب تسجيل الدخول
@@ -108,10 +137,10 @@ class CheckoutView(LoginRequiredMixin, View):
         return redirect('checkout:payment_method')
 
 
-class PaymentMethodView(LoginRequiredMixin, View):
+class PaymentMethodView(LoginRequiredMixin, VerifiedUserRequiredMixin, View):
     """
     صفحة اختيار طريقة الدفع
-    تتطلب تسجيل الدخول
+    تتطلب تسجيل الدخول وتفعيل الحساب
     """
     template_name = 'checkout/payment_method.html'
     login_url = '/accounts/login/'  # URL صفحة تسجيل الدخول
@@ -147,10 +176,10 @@ class PaymentMethodView(LoginRequiredMixin, View):
         return redirect('checkout:payment_confirmation')
 
 
-class PaymentConfirmationView(LoginRequiredMixin, View):
+class PaymentConfirmationView(LoginRequiredMixin, VerifiedUserRequiredMixin, View):
     """
     صفحة تأكيد الدفع وإرفاق الإيصال
-    تتطلب تسجيل الدخول
+    تتطلب تسجيل الدخول وتفعيل الحساب
     """
     template_name = 'checkout/payment_confirmation.html'
     login_url = '/accounts/login/'  # URL صفحة تسجيل الدخول
@@ -376,6 +405,14 @@ class PaymentConfirmationView(LoginRequiredMixin, View):
             del request.session['checkout_data']
 
         request.session.modified = True
+
+        # إرسال بريد إلكتروني لتأكيد الطلب
+        try:
+            send_order_confirmation_email(order)
+            logger.info(f'Order confirmation email sent for order #{order.order_number}')
+        except Exception as e:
+            # لا نوقف العملية إذا فشل إرسال البريد
+            logger.error(f'Failed to send order confirmation email for order #{order.order_number}: {str(e)}')
 
         # توجيه المستخدم إلى صفحة نجاح الطلب
         return redirect('checkout:order_success', order_id=order.id)

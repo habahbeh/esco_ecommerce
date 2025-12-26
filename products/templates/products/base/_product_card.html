@@ -15,8 +15,8 @@
         <div class="product-badge-new">{% trans "جديد" %}</div>
     {% elif product.is_featured %}
         <div class="product-badge-featured">{% trans "مميز" %}</div>
-    {% elif product.has_discount %}
-        <div class="product-badge-sale">-{{ product.discount_percentage }}%</div>
+    {% elif product.has_discount and product.savings_percentage > 0 %}
+        <div class="product-badge-sale">-{{ product.savings_percentage }}%</div>
     {% endif %}
 
     <div class="product-image-container">
@@ -58,8 +58,7 @@
 {#            {% endif %}#}
         </div>
         <div class="product-actions">
-            {% get_current_language as CURRENT_LANGUAGE %}
-            <a href="{% if CURRENT_LANGUAGE == 'en' %}/en{% endif %}{% url 'products:product_detail' product.slug %}" class="btn btn-primary">{% trans "عرض التفاصيل" %}</a>
+            <a href="{% url 'products:product_detail' product.slug %}" class="btn btn-primary">{% trans "عرض التفاصيل" %}</a>
 {#            {% if product.in_stock %}#}
 {#            <form action="{% url 'cart:add_to_cart' product.id %}" method="post" class="d-inline add-to-cart-form1">#}
 {#                {% csrf_token %}#}

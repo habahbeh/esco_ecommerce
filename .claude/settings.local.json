@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ssh:*)",
+      "Bash(rsync:*)",
+      "Bash(tar:*)",
+      "Bash(scp:*)",
+      "Bash(curl:*)",
+      "Bash(cat:*)",
+      "Bash(echo 'Index created' \")",
+      "Bash(certutil -hashfile:*)",
+      "Bash(ssh -o StrictHostKeyChecking=no root@206.81.25.184 \"grep -rn ''SITE_URL\\\\|SITE_DOMAIN\\\\|localhost\\\\|127.0.0.1\\\\|206.81'' /var/www/esco_ecommerce/esco_project/settings.py 2>/dev/null\")",
+      "Bash(findstr:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git config:*)",
+      "Bash(git credential approve:*)",
+      "Bash(ssh root@esco.jo \"cd /var/www/esco_ecommerce && git pull origin main\")",
+      "Bash(ssh root@esco.jo \"git config --global --add safe.directory /var/www/esco_ecommerce && cd /var/www/esco_ecommerce && git pull origin main\")",
+      "Bash(ssh root@esco.jo \"cd /var/www/esco_ecommerce && git fetch origin && git reset --hard origin/main\")",
+      "Bash(ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 root@206.81.25.184 \"cd /var/www/esco_ecommerce && source venv/bin/activate && python manage.py migrate core\")",
+      "Bash(ssh -o StrictHostKeyChecking=no root@206.81.25.184 \"cd /var/www/esco_ecommerce && source venv/bin/activate && python manage.py showmigrations core\")",
+      "Bash(ssh -o StrictHostKeyChecking=no root@206.81.25.184 \"cd /var/www/esco_ecommerce && source venv/bin/activate && python manage.py shell -c \"\"from core.models import Newsletter; print\\([f.name for f in Newsletter._meta.get_fields\\(\\)]\\)\"\"\")"
+    ]
+  }
+}
