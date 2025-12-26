@@ -14,11 +14,10 @@ logger = logging.getLogger(__name__)
 
 def get_site_url():
     """
-    Get the site URL based on environment (local/production)
-    الحصول على رابط الموقع حسب البيئة (محلي/إنتاج)
+    Get the site URL - always use production URL
+    الحصول على رابط الموقع - استخدام رابط الإنتاج دائماً
     """
-    if settings.DEBUG:
-        return 'http://localhost:8000'
+    # Always use production URL for email links
     return 'https://esco.jo'
 
 

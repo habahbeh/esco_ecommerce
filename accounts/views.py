@@ -120,13 +120,8 @@ class RegisterView(CreateView):
         """إرسال بريد إلكتروني للتحقق"""
         from django.utils.html import strip_tags
 
-        # Use dynamic URL based on environment (DEBUG setting)
-        if settings.DEBUG:
-            # Local development
-            base_url = 'http://127.0.0.1:8000'
-        else:
-            # Production
-            base_url = 'https://esco.jo'
+        # Always use production URL for email links
+        base_url = 'https://esco.jo'
 
         verification_url = f'{base_url}/accounts/verify-email/{user.verification_token}/'
         site_url = base_url
@@ -226,13 +221,8 @@ class ResendVerificationEmailView(FormView):
             # إنشاء رمز تحقق جديد
             user.generate_verification_token()
 
-            # Use dynamic URL based on environment (DEBUG setting)
-            if settings.DEBUG:
-                # Local development
-                base_url = 'http://127.0.0.1:8000'
-            else:
-                # Production
-                base_url = 'https://esco.jo'
+            # Always use production URL for email links
+            base_url = 'https://esco.jo'
 
             verification_url = f'{base_url}/accounts/verify-email/{user.verification_token}/'
             site_url = base_url
