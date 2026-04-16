@@ -46,13 +46,19 @@ class SliderItemAdmin(admin.ModelAdmin):
     إدارة عناصر السلايدر - تتيح للمشرفين إضافة وتعديل عناصر السلايدر
     Slider items admin - allows administrators to add and edit slider items
     """
-    list_display = ('title', 'subtitle', 'order', 'is_active')
+    list_display = ('title', 'title_en', 'subtitle', 'order', 'is_active')
     list_editable = ('order', 'is_active')
     list_filter = ('is_active',)
-    search_fields = ('title', 'subtitle', 'description')
+    search_fields = ('title', 'title_en', 'subtitle', 'subtitle_en', 'description', 'description_en')
     fieldsets = (
-        (_('معلومات العنصر الأساسية'), {
-            'fields': ('title', 'subtitle', 'description', 'image')
+        (_('المحتوى بالعربية'), {
+            'fields': ('title', 'subtitle', 'description')
+        }),
+        (_('English Content'), {
+            'fields': ('title_en', 'subtitle_en', 'description_en')
+        }),
+        (_('الصورة'), {
+            'fields': ('image',)
         }),
         (_('إعدادات الأزرار'), {
             'fields': ('primary_button_text', 'primary_button_url',

@@ -150,8 +150,9 @@ class RegisterView(CreateView):
                 html_message=html_message
             )
         except Exception as e:
-            # تسجيل الخطأ ولكن لا نعرضه للمستخدم
-            print(f"Error sending verification email: {e}")
+            import logging
+            logger = logging.getLogger('django')
+            logger.error(f"Error sending verification email to {user.email}: {e}", exc_info=True)
 
 
 class RegisterDoneView(TemplateView):

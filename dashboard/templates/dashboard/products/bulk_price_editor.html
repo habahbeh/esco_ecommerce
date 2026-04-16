@@ -233,12 +233,24 @@
     </div>
 </div>
 
+<!-- ملاحظة توضيحية -->
+<div class="alert alert-info alert-dismissible fade show mb-4 border-0 shadow-sm" role="alert">
+    <div class="d-flex align-items-start">
+        <i class="fa fa-info-circle fa-lg me-3 mt-1 text-info"></i>
+        <div>
+            <strong>{% trans 'ملاحظة:' %}</strong>
+            {% trans 'الأرقام هنا تشمل جميع المنتجات (منشورة، مسودة، غير نشطة). أما صفحة الموقع العامة فتعرض فقط المنتجات المنشورة والنشطة، لذلك قد تلاحظ اختلافاً في الأعداد.' %}
+        </div>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+
 <!-- جدول المتغيرات -->
 <div class="card shadow-sm">
     <div class="card-header bg-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
             <i class="fa fa-money-bill-wave text-success me-2"></i>
-            {% trans 'متغيرات المنتجات وأسعارها' %}
+            {% trans 'المنتجات والمتغيرات وأسعارها' %}
         </h5>
         <div>
             <a href="{% url 'dashboard:dashboard_products' %}" class="btn btn-outline-secondary btn-sm me-2">
@@ -270,41 +282,47 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for variant in variants %}
-                        <tr data-variant-id="{{ variant.id }}">
+                        {% for row in variants %}
+                        <tr data-uid="{{ row.uid }}">
                             <td class="text-muted">{{ forloop.counter|add:variants.start_index|add:-1 }}</td>
-                            <td class="product-name-cell" title="{{ variant.product.name }}">
-                                <a href="{% url 'dashboard:dashboard_product_detail' product_id=variant.product.id %}"
+                            <td class="product-name-cell" title="{{ row.product.name }}">
+                                <a href="{% url 'dashboard:dashboard_product_detail' product_id=row.product.id %}"
                                    class="text-decoration-none fw-bold">
-                                    {{ variant.product.name }}
+                                    {{ row.product.name }}
                                 </a>
                             </td>
                             <td>
-                                {% if variant.product.brand %}
-                                <span class="badge bg-info text-white">{{ variant.product.brand.name }}</span>
+                                {% if row.product.brand %}
+                                <span class="badge bg-info text-white">{{ row.product.brand.name }}</span>
                                 {% else %}
                                 <span class="text-muted">-</span>
                                 {% endif %}
                             </td>
                             <td>
-                                <span class="variant-name">{{ variant.name }}</span>
+                                {% if row.kind == 'variant' %}
+                                <span class="variant-name">{{ row.variant_name }}</span>
+                                {% else %}
+                                <span class="variant-name badge bg-light text-muted" title="{% trans 'منتج بدون متغيرات' %}">
+                                    <i class="fa fa-box me-1"></i>{% trans 'منتج' %}
+                                </span>
+                                {% endif %}
                             </td>
                             <td>
-                                <span class="badge bg-secondary sku-badge">{{ variant.sku }}</span>
+                                <span class="badge bg-secondary sku-badge">{{ row.sku }}</span>
                             </td>
                             <td>
-                                {% if variant.product.category %}
-                                <span class="badge bg-light text-dark">{{ variant.product.category.name }}</span>
+                                {% if row.product.category %}
+                                <span class="badge bg-light text-dark">{{ row.product.category.name }}</span>
                                 {% else %}
                                 <span class="text-muted">-</span>
                                 {% endif %}
                             </td>
                             <td class="text-center">
-                                {% if variant.stock_quantity is not None %}
-                                    {% if variant.stock_quantity > 10 %}
-                                    <span class="badge bg-success">{{ variant.stock_quantity }}</span>
-                                    {% elif variant.stock_quantity > 0 %}
-                                    <span class="badge bg-warning text-dark">{{ variant.stock_quantity }}</span>
+                                {% if row.stock_quantity is not None %}
+                                    {% if row.stock_quantity > 10 %}
+                                    <span class="badge bg-success">{{ row.stock_quantity }}</span>
+                                    {% elif row.stock_quantity > 0 %}
+                                    <span class="badge bg-warning text-dark">{{ row.stock_quantity }}</span>
                                     {% else %}
                                     <span class="badge bg-danger">0</span>
                                     {% endif %}
@@ -313,38 +331,38 @@
                                 {% endif %}
                             </td>
                             <td class="price-cell">
-                                <span class="current-price-display" id="current-price-{{ variant.id }}">
-                                    {{ variant.variant_base_price|floatformat:2 }} {% trans 'د.أ' %}
+                                <span class="current-price-display" id="current-price-{{ row.uid }}">
+                                    {{ row.current_price|floatformat:2 }} {% trans 'د.أ' %}
                                 </span>
-                                {% if variant.has_discount %}
+                                {% if row.has_discount %}
                                 <br>
                                 <span class="old-price-display">
-                                    {% trans 'بعد الخصم:' %} {{ variant.current_price|floatformat:2 }} {% trans 'د.أ' %}
+                                    {% trans 'بعد الخصم:' %} {{ row.discounted_price|floatformat:2 }} {% trans 'د.أ' %}
                                 </span>
                                 {% endif %}
                             </td>
                             <td>
                                 <div class="input-group input-group-sm">
                                     <input type="number"
-                                           name="price_{{ variant.id }}"
-                                           id="price_{{ variant.id }}"
+                                           name="price_{{ row.uid }}"
+                                           id="price_{{ row.uid }}"
                                            class="form-control price-input"
                                            step="0.01"
                                            min="0.01"
-                                           placeholder="{{ variant.variant_base_price|floatformat:2 }}"
-                                           data-original-price="{{ variant.variant_base_price }}"
+                                           placeholder="{{ row.current_price|floatformat:2 }}"
+                                           data-original-price="{{ row.current_price }}"
                                            tabindex="{{ forloop.counter }}"
                                            oninput="handlePriceInput(this)">
                                     <span class="input-group-text">{% trans 'د.أ' %}</span>
                                 </div>
                             </td>
                             <td class="text-center">
-                                <span id="change-display-{{ variant.id }}" class="change-percentage d-none">
+                                <span id="change-display-{{ row.uid }}" class="change-percentage d-none">
                                     --
                                 </span>
                             </td>
                             <td class="text-center">
-                                <a href="{% url 'products:product_detail' slug=variant.product.slug %}"
+                                <a href="{% url 'products:product_detail' slug=row.product.slug %}"
                                    target="_blank"
                                    class="btn btn-sm btn-outline-primary view-product-link"
                                    title="{% trans 'عرض المنتج على الموقع' %}">
@@ -461,7 +479,7 @@
         <!-- لا توجد نتائج -->
         <div class="text-center py-5">
             <i class="fa fa-search fa-4x text-muted mb-3"></i>
-            <h5 class="text-muted">{% trans 'لا توجد متغيرات مطابقة' %}</h5>
+            <h5 class="text-muted">{% trans 'لا توجد نتائج مطابقة' %}</h5>
             <p class="text-muted">{% trans 'جرب تغيير معايير البحث أو التصفية' %}</p>
             <a href="{% url 'dashboard:bulk_price_editor' %}" class="btn btn-primary mt-2">
                 <i class="fa fa-redo me-1"></i> {% trans 'إعادة تعيين الفلاتر' %}

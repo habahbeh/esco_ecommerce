@@ -278,6 +278,11 @@
                                 <i class="fa fa-share-alt"></i> التواصل الاجتماعي
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="about-tab" data-bs-toggle="tab" href="#about" role="tab">
+                                <i class="fa fa-info"></i> نبذة عن الشركة
+                            </a>
+                        </li>
                     </ul>
 
                     <div class="tab-content" id="settingsTabContent">
@@ -329,6 +334,44 @@
                                             {% endif %}
                                         </div>
                                         <input type="file" name="favicon" id="id_favicon" class="form-control d-none" accept="image/*">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr>
+                            <h6 class="text-primary mb-3">
+                                <i class="fa fa-book me-1"></i> كتالوج الشركة (PDF)
+                                <small class="text-muted ms-2">— PDF فقط، حد أقصى 25 ميجابايت</small>
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="id_catalog_ar" class="form-label">الكتالوج (عربي)</label>
+                                        <input type="file" name="catalog_ar" id="id_catalog_ar" class="form-control" accept="application/pdf,.pdf">
+                                        {% if form.catalog_ar.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.catalog_ar.errors }}</div>
+                                        {% endif %}
+                                        {% if object.catalog_ar %}
+                                        <small class="d-block mt-1">
+                                            <i class="fa fa-file-pdf text-danger"></i>
+                                            <a href="{{ object.catalog_ar.url }}" target="_blank">الملف الحالي</a>
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="id_catalog_en" class="form-label">Catalog (English)</label>
+                                        <input type="file" name="catalog_en" id="id_catalog_en" class="form-control" accept="application/pdf,.pdf">
+                                        {% if form.catalog_en.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.catalog_en.errors }}</div>
+                                        {% endif %}
+                                        {% if object.catalog_en %}
+                                        <small class="d-block mt-1">
+                                            <i class="fa fa-file-pdf text-danger"></i>
+                                            <a href="{{ object.catalog_en.url }}" target="_blank">Current file</a>
+                                        </small>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -444,6 +487,28 @@
                                     <span class="input-group-text bg-light"><i class="fab fa-whatsapp-in text-primary"></i></span>
                                     <input type="url" name="whatsapp" id="id_whatsapp" class="form-control" value="{{ object.whatsapp }}" dir="ltr" placeholder="https://whatsapp.com/">
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- نبذة عن الشركة (عربي + إنجليزي) -->
+                        <div class="tab-pane fade" id="about" role="tabpanel">
+                            <div class="alert alert-info">
+                                <i class="fa fa-info-circle me-1"></i>
+                                هذا المحتوى يظهر في صفحة <a href="/about/" target="_blank">نبذة عن الشركة</a>. يدعم HTML بسيط (فقرات، عناوين، روابط).
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="id_about_content_ar" class="form-label fw-bold">
+                                    <i class="fa fa-language me-1"></i> المحتوى بالعربية
+                                </label>
+                                <textarea name="about_content_ar" id="id_about_content_ar" class="form-control" rows="10" dir="rtl">{{ about_content.content_ar }}</textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="id_about_content_en" class="form-label fw-bold">
+                                    <i class="fa fa-language me-1"></i> English Content
+                                </label>
+                                <textarea name="about_content_en" id="id_about_content_en" class="form-control" rows="10" dir="ltr">{{ about_content.content_en }}</textarea>
                             </div>
                         </div>
                     </div>

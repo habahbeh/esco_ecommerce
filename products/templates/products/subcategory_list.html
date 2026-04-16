@@ -85,9 +85,16 @@
                                     {{ category.name }}
                                 {% endif %}
                             </h3>
-                            <span class="badge bg-primary rounded-pill mb-2">
-                                {{ category.total_products }} {% trans "منتج" %}
-                            </span>
+                            <div class="d-flex justify-content-center gap-2 mb-2">
+                                <span class="badge bg-primary rounded-pill">
+                                    <i class="fas fa-box me-1"></i>{{ category.total_products }} {% trans "منتج" %}
+                                </span>
+                                {% if category.total_variants %}
+                                <span class="badge bg-info rounded-pill">
+                                    <i class="fas fa-palette me-1"></i>{{ category.total_variants }} {% trans "Option" %}
+                                </span>
+                                {% endif %}
+                            </div>
                             
                             {% if category.children.exists %}
                             <div class="mt-2">

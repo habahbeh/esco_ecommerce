@@ -3414,24 +3414,30 @@ class BulkPriceEditorView(DashboardAccessMixin, View):
             'product', 'product__category', 'product__brand'
         ).filter(is_active=True, product__is_active=True)
 
-        # تطبيق الفلاتر
+        # استعلام المنتجات التي ليس لها متغيرات نشطة (ستُحرَّر على مستوى المنتج)
+        products_without_variants_qs = Product.objects.select_related(
+            'category', 'brand'
+        ).filter(is_active=True).exclude(variants__is_active=True).distinct()
+
+        # تطبيق الفلاتر على كلا الاستعلامين
         if product_ids:
-            # إذا كانت هناك منتجات محددة من قائمة المنتجات
             product_id_list = [pid.strip() for pid in product_ids.split(',') if pid.strip()]
             if product_id_list:
                 variants_queryset = variants_queryset.filter(product_id__in=product_id_list)
+                products_without_variants_qs = products_without_variants_qs.filter(id__in=product_id_list)
 
         if category_id:
             try:
                 category = Category.objects.get(id=category_id)
-                # تضمين الفئات الفرعية
-                category_ids = category.get_descendants(include_self=True).values_list('id', flat=True)
+                category_ids = list(category.get_descendants(include_self=True).values_list('id', flat=True))
                 variants_queryset = variants_queryset.filter(product__category_id__in=category_ids)
+                products_without_variants_qs = products_without_variants_qs.filter(category_id__in=category_ids)
             except Category.DoesNotExist:
                 pass
 
         if brand_id:
             variants_queryset = variants_queryset.filter(product__brand_id=brand_id)
+            products_without_variants_qs = products_without_variants_qs.filter(brand_id=brand_id)
 
         if search_query:
             variants_queryset = variants_queryset.filter(
@@ -3440,65 +3446,127 @@ class BulkPriceEditorView(DashboardAccessMixin, View):
                 Q(name__icontains=search_query) |
                 Q(sku__icontains=search_query)
             )
+            products_without_variants_qs = products_without_variants_qs.filter(
+                Q(name__icontains=search_query) |
+                Q(name_en__icontains=search_query) |
+                Q(sku__icontains=search_query)
+            )
 
         # ترتيب النتائج
         variants_queryset = variants_queryset.order_by('product__name', 'sort_order', 'name')
+        products_without_variants_qs = products_without_variants_qs.order_by('name')
+
+        # بناء قائمة صفوف موحّدة: متغيرات + منتجات بدون متغيرات
+        rows = []
+        for v in variants_queryset:
+            rows.append({
+                'kind': 'variant',
+                'uid': f'v{v.id}',
+                'product': v.product,
+                'variant_name': v.name,
+                'sku': v.sku,
+                'stock_quantity': v.stock_quantity,
+                'current_price': v.variant_base_price,
+                'has_discount': getattr(v, 'has_discount', False),
+                'discounted_price': v.current_price,
+            })
+        for p in products_without_variants_qs:
+            rows.append({
+                'kind': 'product',
+                'uid': f'p{p.id}',
+                'product': p,
+                'variant_name': '',
+                'sku': p.sku,
+                'stock_quantity': p.stock_quantity,
+                'current_price': p.base_price,
+                'has_discount': getattr(p, 'has_discount', False),
+                'discounted_price': getattr(p, 'current_price', p.base_price),
+            })
+        rows.sort(key=lambda r: ((r['product'].name or '').lower(), r['variant_name']))
 
         # تقسيم الصفحات
-        paginator = Paginator(variants_queryset, 50)  # 50 متغير لكل صفحة
+        paginator = Paginator(rows, 50)
         page_number = request.GET.get('page', 1)
-        variants = paginator.get_page(page_number)
+        page_rows = paginator.get_page(page_number)
+
+        total_products = len({r['product'].id for r in rows})
+        total_variants = sum(1 for r in rows if r['kind'] == 'variant')
+        total_simple_products = sum(1 for r in rows if r['kind'] == 'product')
 
         context = {
-            'variants': variants,
+            'variants': page_rows,  # احتفظنا بالاسم لتوافق القالب
             'categories': categories,
             'brands': brands,
             'selected_category': category_id,
             'selected_brand': brand_id,
             'search_query': search_query,
             'product_ids': product_ids,
-            'total_variants': variants_queryset.count(),
-            'total_products': variants_queryset.values('product_id').distinct().count(),
+            'total_variants': total_variants,
+            'total_products': total_products,
+            'total_simple_products': total_simple_products,
         }
 
         return render(request, self.template_name, context)
 
     def post(self, request):
-        """حفظ تعديلات الأسعار"""
+        """حفظ تعديلات الأسعار - يدعم المتغيرات (price_v<id>) والمنتجات بدون متغيرات (price_p<id>)"""
         try:
-            # استخراج البيانات المرسلة
+            # استخراج الأسعار المرسلة مع التفرقة بين المتغير والمنتج
             variant_prices = {}
+            product_prices = {}
             for key, value in request.POST.items():
-                if key.startswith('price_'):
-                    variant_id = key.replace('price_', '')
-                    if value.strip():
-                        try:
-                            variant_prices[variant_id] = Decimal(value.strip())
-                        except InvalidOperation:
-                            messages.error(request, f'قيمة السعر غير صالحة للمتغير {variant_id}')
-                            return redirect(request.META.get('HTTP_REFERER', 'dashboard:bulk_price_editor'))
+                if not key.startswith('price_'):
+                    continue
+                raw_id = key.replace('price_', '', 1)
+                if not value.strip():
+                    continue
+                try:
+                    price = Decimal(value.strip())
+                except InvalidOperation:
+                    messages.error(request, f'قيمة السعر غير صالحة ({raw_id})')
+                    return redirect(request.META.get('HTTP_REFERER', 'dashboard:bulk_price_editor'))
 
-            if not variant_prices:
+                if raw_id.startswith('v'):
+                    variant_prices[raw_id[1:]] = price
+                elif raw_id.startswith('p'):
+                    product_prices[raw_id[1:]] = price
+                else:
+                    # توافق رجعي: مفاتيح قديمة بدون بادئة تُعامل كمتغيرات
+                    variant_prices[raw_id] = price
+
+            if not variant_prices and not product_prices:
                 messages.warning(request, 'لم يتم إدخال أي تغييرات على الأسعار')
                 return redirect(request.META.get('HTTP_REFERER', 'dashboard:bulk_price_editor'))
 
-            # تحديث الأسعار
-            updated_count = 0
+            updated_variants = 0
+            updated_products = 0
+
             for variant_id, new_price in variant_prices.items():
                 try:
                     variant = ProductVariant.objects.get(id=variant_id)
-                    old_price = variant.base_price
-
-                    # التحقق من تغيير السعر
-                    if old_price != new_price:
+                    if variant.base_price != new_price:
                         variant.base_price = new_price
                         variant.save(update_fields=['base_price', 'updated_at'])
-                        updated_count += 1
+                        updated_variants += 1
                 except ProductVariant.DoesNotExist:
                     continue
 
-            if updated_count > 0:
-                messages.success(request, f'تم تحديث أسعار {updated_count} متغير بنجاح')
+            for product_id, new_price in product_prices.items():
+                try:
+                    product = Product.objects.get(id=product_id)
+                    if product.base_price != new_price:
+                        product.base_price = new_price
+                        product.save(update_fields=['base_price', 'updated_at'])
+                        updated_products += 1
+                except Product.DoesNotExist:
+                    continue
+
+            total_updated = updated_variants + updated_products
+            if total_updated > 0:
+                messages.success(
+                    request,
+                    f'تم تحديث {updated_products} منتج و {updated_variants} متغير بنجاح'
+                )
             else:
                 messages.info(request, 'لم يتم تغيير أي أسعار')
 

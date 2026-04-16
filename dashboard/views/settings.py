@@ -14,7 +14,7 @@ from django.core.cache import cache
 from django.http import JsonResponse
 from django.db import transaction
 
-from core.models import SiteSettings
+from core.models import SiteSettings, StaticContent
 from dashboard.models import DashboardUserSettings, DashboardWidget
 from dashboard.forms.core import SiteSettingsForm
 from dashboard.forms.dashboard import DashboardUserSettingsForm, DashboardWidgetForm
@@ -42,6 +42,15 @@ class SiteSettingsView( SuperuserRequiredMixin, UpdateView):
         """الحصول على كائن الإعدادات الحالي أو إنشاء واحد جديد إذا لم يكن موجوداً"""
         settings = SiteSettings.get_settings()
         return settings
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        about, _created = StaticContent.objects.get_or_create(
+            key='about',
+            defaults={'content_ar': '', 'content_en': ''},
+        )
+        context['about_content'] = about
+        return context
 
     def form_valid(self, form):
         # تخزين الملفات القديمة للحذف لاحقاً إذا تم تغييرها
@@ -93,6 +102,20 @@ class SiteSettingsView( SuperuserRequiredMixin, UpdateView):
 
         # مسح ذاكرة التخزين المؤقت للإعدادات
         cache.delete('site_settings')
+
+        # حفظ محتوى "نبذة عن الشركة" (عربي + إنجليزي)
+        about_ar = self.request.POST.get('about_content_ar')
+        about_en = self.request.POST.get('about_content_en')
+        if about_ar is not None or about_en is not None:
+            about, _created = StaticContent.objects.get_or_create(
+                key='about',
+                defaults={'content_ar': '', 'content_en': ''},
+            )
+            if about_ar is not None:
+                about.content_ar = about_ar
+            if about_en is not None:
+                about.content_en = about_en
+            about.save()
 
         messages.success(self.request, _("تم تحديث إعدادات الموقع بنجاح"))
         return response

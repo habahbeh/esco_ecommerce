@@ -7,16 +7,20 @@ class SliderItemForm(forms.ModelForm):
     class Meta:
         model = SliderItem
         fields = [
-            'title', 'subtitle', 'description', 'image',
+            'title', 'subtitle', 'description',
+            'title_en', 'subtitle_en', 'description_en',
+            'image',
             'primary_button_text', 'primary_button_url',
             'secondary_button_text', 'secondary_button_url',
             'order', 'is_active'
         ]
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 3}),
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'subtitle': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'title_en': forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
+            'subtitle_en': forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
+            'description_en': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'dir': 'ltr'}),
             'primary_button_text': forms.TextInput(attrs={'class': 'form-control'}),
             'primary_button_url': forms.TextInput(attrs={'class': 'form-control'}),
             'secondary_button_text': forms.TextInput(attrs={'class': 'form-control'}),

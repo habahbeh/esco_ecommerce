@@ -12,6 +12,8 @@ class SiteSettings(models.Model):
     site_description = models.TextField(_("وصف الموقع"), blank=True)
     logo = models.ImageField(_("الشعار"), upload_to='site/', null=True, blank=True)
     favicon = models.ImageField(_("أيقونة الموقع"), upload_to='site/', null=True, blank=True)
+    catalog_ar = models.FileField(_("الكتالوج (عربي)"), upload_to='catalogs/', null=True, blank=True)
+    catalog_en = models.FileField(_("Catalog (English)"), upload_to='catalogs/', null=True, blank=True)
     email = models.EmailField(_("البريد الإلكتروني"), blank=True)
     phone = models.CharField(_("رقم الهاتف"), max_length=20, blank=True)
     phone_whatsapp = models.CharField(_("رقم الهاتف واتساب"), max_length=20, blank=True)
@@ -167,8 +169,11 @@ class SliderItem(models.Model):
     Slider items model - stores items displayed in the main slider
     """
     title = models.CharField(_("العنوان"), max_length=100)
+    title_en = models.CharField(_("Title (EN)"), max_length=100, blank=True)
     subtitle = models.CharField(_("العنوان الفرعي"), max_length=150)
+    subtitle_en = models.CharField(_("Subtitle (EN)"), max_length=150, blank=True)
     description = models.TextField(_("الوصف"), blank=True)
+    description_en = models.TextField(_("Description (EN)"), blank=True)
     image = models.ImageField(_("الصورة"), upload_to='sliders/')
 
     # زر أساسي

@@ -224,13 +224,18 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 try:
     from .settings_local import EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD, DEFAULT_FROM_EMAIL
+    try:
+        from .settings_local import EMAIL_USE_SSL
+    except ImportError:
+        EMAIL_USE_SSL = False
 except ImportError:
     # Fallback to console email for development if settings_local.py doesn't exist
     # الرجوع إلى إيميل الكونسول للتطوير إذا لم يكن settings_local.py موجوداً
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     EMAIL_HOST = 'smtp.gmail.com'
-    EMAIL_PORT = 587
-    EMAIL_USE_TLS = True
+    EMAIL_PORT = 465
+    EMAIL_USE_TLS = False
+    EMAIL_USE_SSL = True
     EMAIL_HOST_USER = ''
     EMAIL_HOST_PASSWORD = ''
     DEFAULT_FROM_EMAIL = 'noreply@example.com'

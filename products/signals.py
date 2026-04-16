@@ -5,9 +5,21 @@ from .models import Product
 from .rag.indexer import ProductIndexer
 from .rag.logger import log_step
 
+PRICE_ONLY_FIELDS = {
+    'base_price', 'compare_price', 'cost',
+    'discount_percentage', 'discount_amount',
+    'discount_start', 'discount_end',
+    'updated_at',
+}
+
+
 @receiver(post_save, sender=Product)
 def update_product_in_vector_db(sender, instance, created, **kwargs):
     """تحديث المنتج في ChromaDB عند الحفظ"""
+    update_fields = kwargs.get('update_fields')
+    if update_fields and set(update_fields).issubset(PRICE_ONLY_FIELDS):
+        return
+
     if instance.is_active and instance.status == 'published':
         try:
             indexer = ProductIndexer()

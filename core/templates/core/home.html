@@ -880,11 +880,11 @@
     <div class="carousel-inner" >
         {% for item in slider_items %}
         <div class="carousel-item {% if forloop.first %}active{% endif %}">
-            <img src="{{ item.image.url }}" class="d-block w-100" alt="{{ item.title }}">
+            <img src="{{ item.image.url }}" class="d-block w-100" alt="{% if LANGUAGE_CODE == 'en' %}{{ item.title_en|default:item.title }}{% else %}{{ item.title }}{% endif %}">
             <div class="carousel-caption">
-                <h2>{{ item.title }}</h2>
-                <h5>{{ item.subtitle }}</h5>
-                <p>{{ item.description }}</p>
+                <h2>{% if LANGUAGE_CODE == 'en' %}{{ item.title_en|default:item.title }}{% else %}{{ item.title }}{% endif %}</h2>
+                <h5>{% if LANGUAGE_CODE == 'en' %}{{ item.subtitle_en|default:item.subtitle }}{% else %}{{ item.subtitle }}{% endif %}</h5>
+                <p>{% if LANGUAGE_CODE == 'en' %}{{ item.description_en|default:item.description }}{% else %}{{ item.description }}{% endif %}</p>
                 <div class="slider-buttons">
                     <a href="{{ item.primary_button_url }}" class="btn btn-primary">{{ item.primary_button_text }}</a>
                     {% if item.secondary_button_text %}

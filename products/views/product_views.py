@@ -42,26 +42,41 @@ class CategoryListView(ListView):
             'children__children__products'
         ).order_by('sort_order', 'name')
 
-        # حساب العدد لكل فئة
+        # حساب عدد المنتجات والخيارات (المتغيرات) لكل فئة
+        # --- استعلام واحد لكل الفئات (تجنّب N+1) ---
+        from django.db.models import Count, Q as _Q
+        _stats = Category.objects.filter(is_active=True).annotate(
+            _products=Count(
+                'products', filter=_Q(products__is_active=True, products__status='published'), distinct=True
+            ),
+            _variants=Count(
+                'products__variants',
+                filter=_Q(products__is_active=True, products__status='published',
+                          products__variants__is_active=True),
+                distinct=True
+            ),
+        )
+        cat_products = {c.id: c._products for c in _stats}
+        cat_variants = {c.id: c._variants for c in _stats}
+
         for category in categories:
-            # جمع كل المنتجات
-            total = category.products.filter(is_active=True, status='published').count()
+            total_products = cat_products.get(category.id, 0)
+            total_variants = cat_variants.get(category.id, 0)
 
-            # إضافة منتجات الأطفال
             for child in category.children.filter(is_active=True):
-                # حساب منتجات الطفل مع أطفاله
-                child_total = child.products.filter(is_active=True, status='published').count()
+                child_p = cat_products.get(child.id, 0)
+                child_v = cat_variants.get(child.id, 0)
 
-                # إضافة منتجات الأحفاد
                 for grandchild in child.children.filter(is_active=True):
-                    grandchild_count = grandchild.products.filter(is_active=True, status='published').count()
-                    child_total += grandchild_count
+                    child_p += cat_products.get(grandchild.id, 0)
+                    child_v += cat_variants.get(grandchild.id, 0)
 
-                # حفظ العدد الإجمالي للطفل
-                child.products_count = child_total
-                total += child_total
+                child.products_count = child_p
+                total_products += child_p
+                total_variants += child_v
 
-            category.products_total = total
+            category.products_total = total_products
+            category.variants_total = total_variants
 
         return categories
         # return Category.objects.filter(
@@ -172,10 +187,23 @@ class SubCategoryListView(ListView):
             ).annotate(
                 total_products=Count(
                     'products',
-                    filter=Q(products__is_active=True, products__status='published')
+                    filter=Q(products__is_active=True, products__status='published'),
+                    distinct=True
                 ) + Count(
                     'children__products',
-                    filter=Q(children__products__is_active=True, children__products__status='published')
+                    filter=Q(children__products__is_active=True, children__products__status='published'),
+                    distinct=True
+                ),
+                total_variants=Count(
+                    'products__variants',
+                    filter=Q(products__is_active=True, products__status='published',
+                             products__variants__is_active=True),
+                    distinct=True
+                ) + Count(
+                    'children__products__variants',
+                    filter=Q(children__products__is_active=True, children__products__status='published',
+                             children__products__variants__is_active=True),
+                    distinct=True
                 )
             ).order_by('sort_order', 'name')
         except Category.DoesNotExist:
@@ -205,7 +233,14 @@ class BrandListView(ListView):
         ).annotate(
             total_products=Count(
                 'products',
-                filter=Q(products__is_active=True, products__status='published')
+                filter=Q(products__is_active=True, products__status='published'),
+                distinct=True
+            ),
+            total_variants=Count(
+                'products__variants',
+                filter=Q(products__is_active=True, products__status='published',
+                         products__variants__is_active=True),
+                distinct=True
             )
         ).order_by('sort_order', 'name')
 

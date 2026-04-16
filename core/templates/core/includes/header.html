@@ -213,7 +213,7 @@
                     <li><a href="{% url 'products:special_offers' %}" class="{% if '/products/offers/' in request.path %}active{% endif %}"><i class="fas fa-tags me-2"></i>{% trans "العروض الخاصة" %}</a></li>
                     <li><a href="{% url 'events:event_list' %}" class="{% if '/events/' in request.path %}active{% endif %}"><i class="fas fa-calendar-alt me-2"></i>{% trans "الفعاليات" %}</a></li>
                     <li>
-                        <a href="{% if CURRENT_LANGUAGE == 'en' %}/media/pdf/ESCO-Catalog-English.pdf{% else %}/media/pdf/ESCO-Catalog-Arabic.pdf{% endif %}"
+                        <a href="{% if CURRENT_LANGUAGE == 'en' %}{% if site_settings.catalog_en %}{{ site_settings.catalog_en.url }}{% else %}/media/pdf/ESCO-Catalog-English.pdf{% endif %}{% else %}{% if site_settings.catalog_ar %}{{ site_settings.catalog_ar.url }}{% else %}/media/pdf/ESCO-Catalog-Arabic.pdf{% endif %}{% endif %}"
                            target="_blank">
                             <i class="fas fa-book me-2"></i>{% trans "كتالوج" %}
                         </a>
@@ -265,7 +265,7 @@
         </li>
         <li><a href="{% url 'events:event_list' %}"><i class="fas fa-calendar-alt"></i>{% trans "الفعاليات" %}</a></li>
         <li>
-            <a href="{% if CURRENT_LANGUAGE == 'en' %}/media/pdf/ESCO-Catalog-English.pdf{% else %}/media/pdf/ESCO-Catalog-Arabic.pdf{% endif %}"
+            <a href="{% if CURRENT_LANGUAGE == 'en' %}{% if site_settings.catalog_en %}{{ site_settings.catalog_en.url }}{% else %}/media/pdf/ESCO-Catalog-English.pdf{% endif %}{% else %}{% if site_settings.catalog_ar %}{{ site_settings.catalog_ar.url }}{% else %}/media/pdf/ESCO-Catalog-Arabic.pdf{% endif %}{% endif %}"
                target="_blank">
                 <i class="fas fa-book"></i>{% trans "كتالوج" %}
             </a>

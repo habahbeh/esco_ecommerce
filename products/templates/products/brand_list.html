@@ -20,7 +20,7 @@
                     <div class="card h-100 brand-card shadow-sm">
                         <div class="brand-image-container">
                             {% if brand.logo %}
-                            <img src="{{ brand.logo.url }}" alt="{{ brand.name }}" class="brand-logo img-fluid">
+                            <img src="{{ brand.logo.url }}" alt="{% if LANGUAGE_CODE == 'en' %}{{ brand.name_en|default:brand.name }}{% else %}{{ brand.name }}{% endif %}" class="brand-logo img-fluid">
                             {% else %}
                             <div class="brand-placeholder w-100 text-center">
                                 <i class="fas fa-trademark fa-3x text-muted"></i>
@@ -28,10 +28,15 @@
                             {% endif %}
                         </div>
                         <div class="card-body text-center">
-                            <h3 class="h5 card-title mb-2">{{ brand.name }}</h3>
+                            <h3 class="h5 card-title mb-2">{% if LANGUAGE_CODE == 'en' %}{{ brand.name_en|default:brand.name }}{% else %}{{ brand.name }}{% endif %}</h3>
                             <span class="badge bg-primary rounded-pill">
-                                {{ brand.total_products }} {% trans "منتج" %}
+                                <i class="fas fa-box me-1"></i>{{ brand.total_products }} {% trans "Product" %}
                             </span>
+                            {% if brand.total_variants %}
+                            <span class="badge bg-info rounded-pill">
+                                <i class="fas fa-palette me-1"></i>{{ brand.total_variants }} {% trans "Option" %}
+                            </span>
+                            {% endif %}
                         </div>
                     </div>
                 </a>
