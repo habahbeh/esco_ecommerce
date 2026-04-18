@@ -179,7 +179,7 @@
             </div>
             <div class="card-body d-flex flex-column">
                 <div class="role-description">
-                    {{ role.description|default:_('لا يوجد وصف') }}
+                    {% if role.description %}{{ role.description }}{% else %}{% trans 'لا يوجد وصف' %}{% endif %}
                 </div>
                 <div class="permissions-summary">
                     <div class="mb-2">{% trans 'الصلاحيات:' %}</div>

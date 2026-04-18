@@ -141,6 +141,7 @@ urlpatterns = [
     # محرر الأسعار الجماعي
     path('products/bulk-price-editor/', views.BulkPriceEditorView.as_view(), name='bulk_price_editor'),
     path('products/bulk-price-editor/api/', views.BulkPriceEditorAPIView.as_view(), name='bulk_price_editor_api'),
+    path('products/price-visibility/api/', views.PriceVisibilityAPIView.as_view(), name='price_visibility_api'),
 
     # روابط المنتجات ذات المعرفات - يجب أن تكون بعد المسارات الثابتة
     path('products/<str:product_id>/', views.ProductDetailView.as_view(), name='dashboard_product_detail'),

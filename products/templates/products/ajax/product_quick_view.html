@@ -106,7 +106,7 @@
 
                     <!-- Price -->
                     <div class="product-price mb-4">
-                        {% if product.show_price and product.category.show_prices %}
+                        {% if product.is_price_visible %}
                             <div class="price-wrapper">
                                 <span class="current-price h4 text-primary fw-bold">
                                     {{ product.current_price|floatformat:2 }} {% trans "د.أ" %}

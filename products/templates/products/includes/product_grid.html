@@ -90,6 +90,7 @@
         {% endif %}
 
         <!-- السعر -->
+        {% if product.is_price_visible %}
         <div class="product-price">
             <span class="current-price">
                 {{ product.current_price|floatformat:2 }} {{ site_settings.currency_symbol|default:"ر.س" }}
@@ -104,6 +105,7 @@
                 </span>
             {% endif %}
         </div>
+        {% endif %}
 
         <!-- الوصف (يظهر فقط في عرض القائمة) -->
         <p class="product-description d-none">

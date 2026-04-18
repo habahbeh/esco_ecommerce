@@ -4,6 +4,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
+from django.utils.translation import gettext as _
 from django.utils.text import slugify
 from django.db import transaction
 from django.core.files.storage import default_storage
@@ -685,13 +686,13 @@ def product_import_view(request):
                     'total': len(df)
                 })
 
-            messages.success(request, f"تم بدء استيراد {len(df)} صف. يرجى الانتظار حتى اكتمال العملية.")
+            messages.success(request, _('تم بدء استيراد %s صف. يرجى الانتظار حتى اكتمال العملية.') % len(df))
             return redirect('dashboard:import_results', import_id=import_manager.import_id)
 
         except Exception as e:
             if is_ajax:
                 return JsonResponse({'success': False, 'error': str(e)})
-            messages.error(request, f"حدث خطأ: {str(e)}")
+            messages.error(request, _('حدث خطأ: %s') % str(e))
             return redirect('dashboard:product_import')
 
     # عرض النموذج
@@ -703,7 +704,7 @@ def product_import_view(request):
         'form': form,
         'categories': categories,
         'brands': brands,
-        'form_title': 'استيراد المنتجات',
+        'form_title': _('استيراد المنتجات'),
     }
 
     return render(request, 'dashboard/products/product_import.html', context)
@@ -715,12 +716,12 @@ def product_import_preview(request):
     معاينة بيانات الاستيراد قبل التنفيذ
     """
     if request.method != 'POST':
-        return JsonResponse({'success': False, 'error': 'طريقة غير صحيحة'})
+        return JsonResponse({'success': False, 'error': _('طريقة غير صحيحة')})
 
     try:
         uploaded_file = request.FILES.get('file')
         if not uploaded_file:
-            return JsonResponse({'success': False, 'error': 'لم يتم اختيار ملف'})
+            return JsonResponse({'success': False, 'error': _('لم يتم اختيار ملف')})
 
         import_mode = request.POST.get('import_mode', 'full')
 
@@ -801,7 +802,7 @@ def import_results_view(request, import_id):
     import_data = import_manager.load_import_data()
 
     if not progress_data or not import_data:
-        messages.error(request, "انتهت صلاحية بيانات الاستيراد أو أن معرف الاستيراد غير صحيح")
+        messages.error(request, _('انتهت صلاحية بيانات الاستيراد أو أن معرف الاستيراد غير صحيح'))
         return redirect('dashboard:product_import')
 
     context = {
@@ -825,13 +826,13 @@ def import_progress_view(request):
     import_id = request.GET.get('import_id')
 
     if not import_id:
-        return JsonResponse({'success': False, 'error': "معرف الاستيراد مفقود"})
+        return JsonResponse({'success': False, 'error': _('معرف الاستيراد مفقود')})
 
     import_manager = ImportManager(import_id)
     progress_data = import_manager.load_progress()
 
     if not progress_data:
-        return JsonResponse({'success': False, 'error': "بيانات الاستيراد غير موجودة"})
+        return JsonResponse({'success': False, 'error': _('بيانات الاستيراد غير موجودة')})
 
     return JsonResponse({
         'success': True,
@@ -848,24 +849,24 @@ def export_errors_view(request):
     export_format = request.GET.get('format', 'excel')
 
     if not import_id:
-        messages.error(request, "معرف الاستيراد مفقود")
+        messages.error(request, _('معرف الاستيراد مفقود'))
         return redirect('dashboard:product_import')
 
     import_manager = ImportManager(import_id)
     progress_data = import_manager.load_progress()
 
     if not progress_data:
-        messages.error(request, "بيانات الاستيراد غير موجودة")
+        messages.error(request, _('بيانات الاستيراد غير موجودة'))
         return redirect('dashboard:product_import')
 
     if not progress_data.get('error_details'):
-        messages.warning(request, "لا توجد أخطاء للتصدير")
+        messages.warning(request, _('لا توجد أخطاء للتصدير'))
         return redirect('dashboard:import_results', import_id=import_id)
 
     export_data = import_manager.export_errors()
 
     if not export_data:
-        messages.error(request, "فشل في تصدير الأخطاء")
+        messages.error(request, _('فشل في تصدير الأخطاء'))
         return redirect('dashboard:import_results', import_id=import_id)
 
     response = HttpResponse(

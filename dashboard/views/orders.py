@@ -23,6 +23,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.decorators import method_decorator
 from dashboard.decorators import permission_required
+from django.utils.translation import gettext as _
 
 # ========================= قائمة الطلبات =========================
 
@@ -216,7 +217,7 @@ class OrderUpdateStatusView(DashboardAccessMixin, View):
 
         new_status = request.POST.get('status')
         if not new_status or new_status not in dict(Order.STATUS_CHOICES):
-            messages.error(request, 'الرجاء تحديد حالة صحيحة')
+            messages.error(request, _('الرجاء تحديد حالة صحيحة'))
             return redirect('dashboard:dashboard_order_detail', order_id=order.id)
 
         # تحديث الحالة
@@ -272,11 +273,11 @@ class OrderUpdateStatusView(DashboardAccessMixin, View):
         if notify_customer and old_status != new_status:
             email_sent = self.send_order_status_email(order, new_status)
             if email_sent:
-                messages.success(request, f'تم تحديث حالة الطلب إلى {dict(Order.STATUS_CHOICES)[new_status]} وتم إرسال إشعار للعميل')
+                messages.success(request, _('تم تحديث حالة الطلب إلى %s وتم إرسال إشعار للعميل') % dict(Order.STATUS_CHOICES)[new_status])
             else:
-                messages.warning(request, f'تم تحديث حالة الطلب إلى {dict(Order.STATUS_CHOICES)[new_status]} ولكن فشل إرسال الإشعار للعميل')
+                messages.warning(request, _('تم تحديث حالة الطلب إلى %s ولكن فشل إرسال الإشعار للعميل') % dict(Order.STATUS_CHOICES)[new_status])
         else:
-            messages.success(request, f'تم تحديث حالة الطلب إلى {dict(Order.STATUS_CHOICES)[new_status]}')
+            messages.success(request, _('تم تحديث حالة الطلب إلى %s') % dict(Order.STATUS_CHOICES)[new_status])
 
         return redirect('dashboard:dashboard_order_detail', order_id=order.id)
 
@@ -303,7 +304,7 @@ class OrderUpdatePaymentStatusView(DashboardAccessMixin, View):
 
         new_payment_status = request.POST.get('payment_status')
         if not new_payment_status or new_payment_status not in dict(Order.PAYMENT_STATUS_CHOICES):
-            messages.error(request, 'الرجاء تحديد حالة دفع صحيحة')
+            messages.error(request, _('الرجاء تحديد حالة دفع صحيحة'))
             return redirect('dashboard:dashboard_order_detail', order_id=order.id)
 
         # تحديث حالة الدفع
@@ -321,7 +322,7 @@ class OrderUpdatePaymentStatusView(DashboardAccessMixin, View):
         # حفظ التغييرات
         order.save()
 
-        messages.success(request, f'تم تحديث حالة الدفع إلى {dict(Order.PAYMENT_STATUS_CHOICES)[new_payment_status]}')
+        messages.success(request, _('تم تحديث حالة الدفع إلى %s') % dict(Order.PAYMENT_STATUS_CHOICES)[new_payment_status])
         return redirect('dashboard:dashboard_order_detail', order_id=order.id)
 
 
@@ -339,12 +340,12 @@ class OrderUpdateBothView(DashboardAccessMixin, View):
 
         # التحقق من صحة حالة الطلب
         if not new_status or new_status not in dict(Order.STATUS_CHOICES):
-            messages.error(request, 'الرجاء تحديد حالة طلب صحيحة')
+            messages.error(request, _('الرجاء تحديد حالة طلب صحيحة'))
             return redirect('dashboard:dashboard_order_detail', order_id=order.id)
 
         # التحقق من صحة حالة الدفع
         if not new_payment_status or new_payment_status not in dict(Order.PAYMENT_STATUS_CHOICES):
-            messages.error(request, 'الرجاء تحديد حالة دفع صحيحة')
+            messages.error(request, _('الرجاء تحديد حالة دفع صحيحة'))
             return redirect('dashboard:dashboard_order_detail', order_id=order.id)
 
         # حفظ القيم القديمة
@@ -402,14 +403,14 @@ class OrderUpdateBothView(DashboardAccessMixin, View):
         # رسالة النجاح
         success_parts = []
         if old_status != new_status:
-            success_parts.append(f'حالة الطلب: {dict(Order.STATUS_CHOICES)[new_status]}')
+            success_parts.append(_('حالة الطلب: %s') % dict(Order.STATUS_CHOICES)[new_status])
         if old_payment_status != new_payment_status:
-            success_parts.append(f'حالة الدفع: {dict(Order.PAYMENT_STATUS_CHOICES)[new_payment_status]}')
+            success_parts.append(_('حالة الدفع: %s') % dict(Order.PAYMENT_STATUS_CHOICES)[new_payment_status])
 
         if success_parts:
-            messages.success(request, f'تم تحديث {" و ".join(success_parts)}')
+            messages.success(request, _('تم تحديث %s') % ' و '.join(success_parts))
         else:
-            messages.info(request, 'لم يتم إجراء أي تغييرات')
+            messages.info(request, _('لم يتم إجراء أي تغييرات'))
 
         return redirect('dashboard:dashboard_order_detail', order_id=order.id)
 
@@ -425,7 +426,7 @@ class OrderCancelView(DashboardAccessMixin, View):
 
         # التحقق من إمكانية إلغاء الطلب
         if order.status in ['delivered', 'refunded', 'cancelled']:
-            messages.error(request, 'لا يمكن إلغاء هذا الطلب في حالته الحالية')
+            messages.error(request, _('لا يمكن إلغاء هذا الطلب في حالته الحالية'))
             return redirect('dashboard:dashboard_order_detail', order_id=order.id)
 
         # إلغاء الطلب
@@ -458,7 +459,7 @@ class OrderCancelView(DashboardAccessMixin, View):
                         variant.stock_quantity += item.quantity
                         variant.save()
 
-        messages.success(request, 'تم إلغاء الطلب بنجاح')
+        messages.success(request, _('تم إلغاء الطلب بنجاح'))
         return redirect('dashboard:dashboard_order_detail', order_id=order.id)
 
 
@@ -544,7 +545,7 @@ class OrderCreateView(DashboardAccessMixin, View):
 
         # التحقق من البيانات المطلوبة
         if not full_name or not email or not shipping_address:
-            messages.error(request, 'الرجاء ملء جميع الحقول المطلوبة')
+            messages.error(request, _('الرجاء ملء جميع الحقول المطلوبة'))
             return redirect('dashboard_order_create')
 
         try:
@@ -588,7 +589,7 @@ class OrderCreateView(DashboardAccessMixin, View):
             variants = request.POST.getlist('variant_id[]')
 
             if not product_ids:
-                messages.error(request, 'يجب إضافة منتج واحد على الأقل إلى الطلب')
+                messages.error(request, _('يجب إضافة منتج واحد على الأقل إلى الطلب'))
                 order.delete()
                 return redirect('dashboard_order_create')
 
@@ -646,11 +647,11 @@ class OrderCreateView(DashboardAccessMixin, View):
             order.grand_total = total_price + shipping_cost + tax_amount - discount_amount
             order.save()
 
-            messages.success(request, f'تم إنشاء الطلب بنجاح برقم {order.order_number}')
+            messages.success(request, _('تم إنشاء الطلب بنجاح برقم %s') % order.order_number)
             return redirect('dashboard:dashboard_order_detail', order_id=order.id)
 
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء إنشاء الطلب: {str(e)}')
+            messages.error(request, _('حدث خطأ أثناء إنشاء الطلب: %s') % str(e))
             return redirect('dashboard:dashboard_order_create')
 
 
@@ -864,7 +865,7 @@ class OrderExportView(DashboardAccessMixin, View):
 
         else:
             # تنسيقات أخرى يمكن دعمها مستقبلاً (مثل Excel, PDF)
-            messages.error(request, 'تنسيق التصدير غير مدعوم')
+            messages.error(request, _('تنسيق التصدير غير مدعوم'))
             return redirect('dashboard_orders')
 
 
@@ -875,7 +876,7 @@ def order_search(request):
     """بحث سريع عن الطلبات (للاستخدام مع AJAX)"""
 
     if not request.user.is_authenticated or not (request.user.is_staff or request.user.is_superuser):
-        return JsonResponse({'error': 'غير مصرح لك بالوصول'}, status=403)
+        return JsonResponse({'error': _('غير مصرح لك بالوصول')}, status=403)
 
     query = request.GET.get('q', '')
     if not query or len(query) < 3:

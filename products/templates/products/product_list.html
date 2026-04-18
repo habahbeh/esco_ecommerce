@@ -9,6 +9,12 @@
         {% else %}
             {{ category.name }}
         {% endif %} - {% trans "المنتجات" %}
+    {% elif brand %}
+        {% if LANGUAGE_CODE == 'en' and brand.name_en %}
+            {{ brand.name_en }}
+        {% else %}
+            {{ brand.name }}
+        {% endif %} - {% trans "المنتجات" %}
     {% else %}
         {% trans "جميع المنتجات" %}
     {% endif %}
@@ -29,6 +35,15 @@
 <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ site_settings.logo.url }}">
 {% endif %}
 <meta property="og:url" content="{{ request.build_absolute_uri }}">
+{% elif brand %}
+<meta property="og:title" content="{% if LANGUAGE_CODE == 'en' and brand.name_en %}{{ brand.name_en }}{% else %}{{ brand.name }}{% endif %} - {{ site_settings.site_name|default:'ESCO' }}">
+<meta property="og:description" content="{% trans 'تصفح منتجات' %} {% if LANGUAGE_CODE == 'en' and brand.name_en %}{{ brand.name_en }}{% else %}{{ brand.name }}{% endif %}">
+{% if brand.logo %}
+<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ brand.logo.url }}">
+{% elif site_settings.logo %}
+<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ site_settings.logo.url }}">
+{% endif %}
+<meta property="og:url" content="{{ request.build_absolute_uri }}">
 {% else %}
 <meta property="og:title" content="{% trans 'جميع المنتجات' %} - {{ site_settings.site_name|default:'ESCO' }}">
 <meta property="og:description" content="{{ site_settings.site_description|default:'تصفح جميع المنتجات' }}">
@@ -45,6 +60,12 @@
 <meta name="twitter:description" content="{% if LANGUAGE_CODE == 'en' and category.description_en %}{{ category.description_en|truncatewords:30 }}{% else %}{{ category.description|truncatewords:30 }}{% endif %}">
 {% if category.image %}
 <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ category.image.url }}">
+{% endif %}
+{% elif brand %}
+<meta name="twitter:title" content="{% if LANGUAGE_CODE == 'en' and brand.name_en %}{{ brand.name_en }}{% else %}{{ brand.name }}{% endif %} - {{ site_settings.site_name|default:'ESCO' }}">
+<meta name="twitter:description" content="{% trans 'تصفح منتجات' %} {% if LANGUAGE_CODE == 'en' and brand.name_en %}{{ brand.name_en }}{% else %}{{ brand.name }}{% endif %}">
+{% if brand.logo %}
+<meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ brand.logo.url }}">
 {% endif %}
 {% else %}
 <meta name="twitter:title" content="{% trans 'جميع المنتجات' %} - {{ site_settings.site_name|default:'ESCO' }}">
@@ -352,6 +373,17 @@
                         {{ category.name }}
                     {% endif %}
                 </li>
+            {% elif brand %}
+                <li class="breadcrumb-item">
+                    <a href="{% url 'products:product_list' %}">{% trans "المنتجات" %}</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">
+                    {% if LANGUAGE_CODE == 'en' and brand.name_en %}
+                        {{ brand.name_en }}
+                    {% else %}
+                        {{ brand.name }}
+                    {% endif %}
+                </li>
             {% else %}
                 <li class="breadcrumb-item active" aria-current="page">
                     {% trans "المنتجات" %}
@@ -374,6 +406,12 @@
                             {% else %}
                                 {{ category.name }}
                             {% endif %}
+                        {% elif brand %}
+                            {% if LANGUAGE_CODE == 'en' and brand.name_en %}
+                                {{ brand.name_en }}
+                            {% else %}
+                                {{ brand.name }}
+                            {% endif %}
                         {% else %}
                             {% trans "منتجاتنا" %}
                         {% endif %}
@@ -387,6 +425,8 @@
 {#                                {{ category.description|truncatechars:100|default:"تصفح المنتجات في هذه الفئة" }}#}
                                 {{ category.description|default:"تصفح المنتجات في هذه الفئة" }}
                             {% endif %}
+                        {% elif brand %}
+                            {% trans "تصفح منتجات" %} {% if LANGUAGE_CODE == 'en' and brand.name_en %}{{ brand.name_en }}{% else %}{{ brand.name }}{% endif %}
                         {% else %}
                             {% if LANGUAGE_CODE == 'en' %}
                                 {% trans "Browse our collection of distinguished products" %}
@@ -484,10 +524,12 @@
                                     <div class="card-body">
                                         <h3 class="card-title">{{ product.name }}</h3>
                                         <div class="product-details">
+                                            {% if product.is_price_visible %}
                                             <div class="product-info">
                                                 <i class="fas fa-tag"></i>
                                                 <span>{{ product.current_price|floatformat:2 }} {% trans "د.أ" %}</span>
                                             </div>
+                                            {% endif %}
                                             <div class="product-info">
                                                 <i class="fas fa-layer-group"></i>
                                                 <span>{{ product.category.name }}</span>

@@ -398,7 +398,7 @@
                                     </li>
                                     <li>
                                         <div class="info-label">{% trans 'آخر تسجيل دخول' %}</div>
-                                        <div class="info-value">{{ user_obj.last_login|date:"Y/m/d - g:i a"|default:"لم يسجل الدخول بعد" }}</div>
+                                        <div class="info-value">{% if user_obj.last_login %}{{ user_obj.last_login|date:"Y/m/d - g:i a" }}{% else %}{% trans 'لم يسجل الدخول بعد' %}{% endif %}</div>
                                     </li>
                                     <li>
                                         <div class="info-label">{% trans 'الدور' %}</div>
@@ -507,7 +507,7 @@
                                     </li>
                                     <li>
                                         <div class="info-label">{% trans 'إجمالي المبلغ المنفق' %}</div>
-                                        <div class="info-value">{{ total_spent|floatformat:2 }} د.ا</div>
+                                        <div class="info-value">{{ total_spent|floatformat:2 }} {% trans "د.ا" %}</div>
                                     </li>
                                     <li>
                                         <div class="info-label">{% trans 'آخر نشاط' %}</div>
@@ -709,7 +709,7 @@
                                      <span class="badge bg-{{ order.status|status_badge }}">{{ order.get_status_display }}</span>
                                 </td>
                                 <td>{{ order.payment_method }}</td>
-                                <td><strong>{{ order.grand_total|floatformat:2 }} د.ا</strong></td>
+                                <td><strong>{{ order.grand_total|floatformat:2 }} {% trans "د.ا" %}</strong></td>
                                 <td>
                                     <a href="{% url 'dashboard:dashboard_order_detail' order_id=order.id %}" class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-eye"></i> {% trans 'عرض' %}

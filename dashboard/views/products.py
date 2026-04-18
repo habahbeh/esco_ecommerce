@@ -282,7 +282,7 @@ def direct_import_view(request):
 
         context = {
             'form': form,
-            'form_title': 'استيراد المنتجات من Excel',
+            'form_title': _('استيراد المنتجات من Excel'),
         }
 
         return render(request, 'dashboard/products/product_import.html', context)
@@ -433,20 +433,20 @@ def export_import_errors(request):
     import_id = request.GET.get('import_id')
 
     if not import_id:
-        messages.error(request, 'معرف الاستيراد مفقود')
+        messages.error(request, _('معرف الاستيراد مفقود'))
         return redirect('dashboard:product_import')
 
     # استرجاع بيانات التقدم من cache
     progress_json = cache.get(f'import_progress_{import_id}')
     if not progress_json:
-        messages.error(request, 'انتهت صلاحية بيانات الاستيراد')
+        messages.error(request, _('انتهت صلاحية بيانات الاستيراد'))
         return redirect('dashboard:product_import')
 
     progress_data = json.loads(progress_json)
     error_details = progress_data.get('error_details', [])
 
     if not error_details:
-        messages.warning(request, 'لا توجد أخطاء للتصدير')
+        messages.warning(request, _('لا توجد أخطاء للتصدير'))
         return redirect('dashboard:import_results', import_id=import_id)
 
     # إنشاء DataFrame من بيانات الأخطاء
@@ -639,7 +639,7 @@ class ProductImportView(DashboardAccessMixin, View):
 
         context = {
             'form': form,
-            'form_title': 'استيراد المنتجات من Excel',
+            'form_title': _('استيراد المنتجات من Excel'),
         }
 
         return render(request, 'dashboard/products/product_import.html', context)
@@ -1689,7 +1689,7 @@ class ProductFormView(DashboardAccessMixin, View):
                     return redirect('dashboard:dashboard_product_detail', product_id=str(product.id))
 
             except Exception as e:
-                messages.error(request, f'حدث خطأ أثناء حفظ المنتج: {str(e)}')
+                messages.error(request, _('حدث خطأ أثناء حفظ المنتج: %s') % str(e))
         else:
             # في حالة وجود أخطاء في النموذج
             for field, errors in form.errors.items():
@@ -1979,9 +1979,9 @@ class ProductDeleteView(DashboardAccessMixin, View):
         try:
             product_name = product.name
             product.delete()
-            messages.success(request, f'تم حذف المنتج "{product_name}" بنجاح')
+            messages.success(request, _('تم حذف المنتج "%s" بنجاح') % product_name)
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء حذف المنتج: {str(e)}')
+            messages.error(request, _('حدث خطأ أثناء حذف المنتج: %s') % str(e))
 
         return redirect('dashboard:dashboard_products')
 
@@ -1998,9 +1998,9 @@ class ProductBulkActionsView(DashboardAccessMixin, View):
             if is_ajax:
                 return JsonResponse({
                     'success': False,
-                    'message': 'لم يتم تحديد أي منتجات'
+                    'message': _('لم يتم تحديد أي منتجات')
                 }, status=400)
-            messages.error(request, 'لم يتم تحديد أي منتجات')
+            messages.error(request, _('لم يتم تحديد أي منتجات'))
             return redirect('dashboard:dashboard_products')
 
         products = Product.objects.filter(id__in=product_ids)
@@ -2252,7 +2252,7 @@ class CategoryFormView(DashboardAccessMixin, View):
                 try:
                     content_blocks = json.loads(content_blocks_str)
                 except json.JSONDecodeError:
-                    messages.warning(request, 'حدث خطأ في معالجة بيانات كتل المحتوى')
+                    messages.warning(request, _('حدث خطأ في معالجة بيانات كتل المحتوى'))
 
             # معالجة الصور
             image = form_files.get('image')
@@ -2283,7 +2283,7 @@ class CategoryFormView(DashboardAccessMixin, View):
                     category.banner_image = banner_image
 
                 category.save()
-                messages.success(request, 'تم تحديث الفئة بنجاح')
+                messages.success(request, _('تم تحديث الفئة بنجاح'))
             else:
                 # إنشاء سلج من الاسم
                 slug = slugify(name, allow_unicode=True)
@@ -2327,7 +2327,7 @@ class CategoryFormView(DashboardAccessMixin, View):
                     print(f"خطأ في إنشاء الفئة: {str(creation_error)}")
                     raise
 
-                messages.success(request, 'تم إنشاء الفئة بنجاح')
+                messages.success(request, _('تم إنشاء الفئة بنجاح'))
 
             # تحديد ما إذا كان يجب الاستمرار في التحرير أم العودة إلى صفحة القائمة
             if 'save_and_continue' in form_data:
@@ -2338,7 +2338,7 @@ class CategoryFormView(DashboardAccessMixin, View):
         except Exception as e:
             # طباعة الخطأ الدقيق في سجل التطبيق
             print(f"خطأ عام أثناء حفظ الفئة: {str(e)}")
-            messages.error(request, f'حدث خطأ أثناء حفظ الفئة: {str(e)}')
+            messages.error(request, _('حدث خطأ أثناء حفظ الفئة: %s') % str(e))
 
             # الحصول على قائمة الفئات للاختيار كأب
             parent_categories = Category.objects.exclude(id=category_id if category_id else None)
@@ -2364,20 +2364,20 @@ class CategoryDeleteView(DashboardAccessMixin, View):
         # التحقق من وجود منتجات في هذه الفئة
         products_count = category.products.count()
         if products_count > 0:
-            messages.error(request, f'لا يمكن حذف الفئة لأنها تحتوي على {products_count} منتج')
+            messages.error(request, _('لا يمكن حذف الفئة لأنها تحتوي على %s منتج') % products_count)
             return redirect('dashboard:dashboard_categories')
 
         # التحقق من وجود فئات فرعية
         if category.children.exists():
-            messages.error(request, 'لا يمكن حذف الفئة لأنها تحتوي على فئات فرعية')
+            messages.error(request, _('لا يمكن حذف الفئة لأنها تحتوي على فئات فرعية'))
             return redirect('dashboard:dashboard_categories')
 
         try:
             category_name = category.name
             category.delete()
-            messages.success(request, f'تم حذف الفئة "{category_name}" بنجاح')
+            messages.success(request, _('تم حذف الفئة "%s" بنجاح') % category_name)
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء حذف الفئة: {str(e)}')
+            messages.error(request, _('حدث خطأ أثناء حذف الفئة: %s') % str(e))
 
         return redirect('dashboard:dashboard_categories')
 
@@ -2483,7 +2483,7 @@ class BrandFormView(DashboardAccessMixin, View):
 
         # التحقق من البيانات المطلوبة
         if not name:
-            messages.error(request, 'اسم العلامة التجارية مطلوب')
+            messages.error(request, _('اسم العلامة التجارية مطلوب'))
             return redirect(request.path)
 
         # إنشاء سلج (slug) من الاسم
@@ -2520,7 +2520,7 @@ class BrandFormView(DashboardAccessMixin, View):
                     brand.slug = slug
 
                 brand.save()
-                messages.success(request, 'تم تحديث العلامة التجارية بنجاح')
+                messages.success(request, _('تم تحديث العلامة التجارية بنجاح'))
             else:
                 # التحقق من فريدية السلج
                 if Brand.objects.filter(slug=slug).exists():
@@ -2547,7 +2547,7 @@ class BrandFormView(DashboardAccessMixin, View):
                     social_links=social_links,
                     created_by=request.user,
                 )
-                messages.success(request, 'تم إنشاء العلامة التجارية بنجاح')
+                messages.success(request, _('تم إنشاء العلامة التجارية بنجاح'))
 
             # معالجة الصور المرفوعة
             logo = request.FILES.get('logo')
@@ -2565,7 +2565,7 @@ class BrandFormView(DashboardAccessMixin, View):
             return redirect('dashboard:dashboard_brands')
 
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء حفظ العلامة التجارية: {str(e)}')
+            messages.error(request, _('حدث خطأ أثناء حفظ العلامة التجارية: %s') % str(e))
             return redirect(request.path)
 
 
@@ -2579,15 +2579,15 @@ class BrandDeleteView(DashboardAccessMixin, View):
         # التحقق من وجود منتجات لهذه العلامة التجارية
         products_count = brand.products.count()
         if products_count > 0:
-            messages.error(request, f'لا يمكن حذف العلامة التجارية لأنها مرتبطة بـ {products_count} منتج')
+            messages.error(request, _('لا يمكن حذف العلامة التجارية لأنها مرتبطة بـ %s منتج') % products_count)
             return redirect('dashboard:dashboard_brands')
 
         try:
             brand_name = brand.name
             brand.delete()
-            messages.success(request, f'تم حذف العلامة التجارية "{brand_name}" بنجاح')
+            messages.success(request, _('تم حذف العلامة التجارية "%s" بنجاح') % brand_name)
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء حذف العلامة التجارية: {str(e)}')
+            messages.error(request, _('حدث خطأ أثناء حذف العلامة التجارية: %s') % str(e))
 
         return redirect('dashboard:dashboard_brands')
 
@@ -2728,7 +2728,7 @@ class DiscountFormView(DashboardAccessMixin, View):
 
         # التحقق من البيانات المطلوبة
         if not name or not discount_type or not value:
-            messages.error(request, 'الرجاء ملء جميع الحقول المطلوبة: الاسم، نوع الخصم، قيمة الخصم')
+            messages.error(request, _('الرجاء ملء جميع الحقول المطلوبة: الاسم، نوع الخصم، قيمة الخصم'))
             return redirect(request.path)
 
         # تحويل التواريخ من نص إلى كائنات datetime
@@ -2738,7 +2738,7 @@ class DiscountFormView(DashboardAccessMixin, View):
             if end_date:
                 end_date = timezone.make_aware(datetime.datetime.strptime(end_date, '%Y-%m-%dT%H:%M'))
         except ValueError:
-            messages.error(request, 'صيغة التاريخ غير صحيحة')
+            messages.error(request, _('صيغة التاريخ غير صحيحة'))
             return redirect(request.path)
 
         try:
@@ -2771,7 +2771,7 @@ class DiscountFormView(DashboardAccessMixin, View):
                 discount.priority = priority
 
                 discount.save()
-                messages.success(request, 'تم تحديث الخصم بنجاح')
+                messages.success(request, _('تم تحديث الخصم بنجاح'))
             else:
                 # إنشاء خصم جديد
                 discount = ProductDiscount.objects.create(
@@ -2799,7 +2799,7 @@ class DiscountFormView(DashboardAccessMixin, View):
                     priority=priority,
                     created_by=request.user,
                 )
-                messages.success(request, 'تم إنشاء الخصم بنجاح')
+                messages.success(request, _('تم إنشاء الخصم بنجاح'))
 
             # تحديث المنتجات المرتبطة
             if product_ids and application_type == 'specific_products':
@@ -2810,7 +2810,7 @@ class DiscountFormView(DashboardAccessMixin, View):
             return redirect('dashboard:dashboard_discounts')
 
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء حفظ الخصم: {str(e)}')
+            messages.error(request, _('حدث خطأ أثناء حفظ الخصم: %s') % str(e))
             return redirect(request.path)
 
 
@@ -2823,9 +2823,9 @@ class DiscountDeleteView(DashboardAccessMixin, View):
         try:
             discount_name = discount.name
             discount.delete()
-            messages.success(request, f'تم حذف الخصم "{discount_name}" بنجاح')
+            messages.success(request, _('تم حذف الخصم "%s" بنجاح') % discount_name)
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء حذف الخصم: {str(e)}')
+            messages.error(request, _('حدث خطأ أثناء حذف الخصم: %s') % str(e))
 
         return redirect('dashboard:dashboard_discounts')
 
@@ -3019,7 +3019,7 @@ class TagFormView(DashboardAccessMixin, View):
 
         # التحقق من البيانات المطلوبة
         if not name:
-            messages.error(request, 'اسم الوسم مطلوب')
+            messages.error(request, _('اسم الوسم مطلوب'))
             return redirect(request.path)
 
         # إنشاء سلج (slug) من الاسم
@@ -3046,7 +3046,7 @@ class TagFormView(DashboardAccessMixin, View):
                     tag.slug = slug
 
                 tag.save()
-                messages.success(request, 'تم تحديث الوسم بنجاح')
+                messages.success(request, _('تم تحديث الوسم بنجاح'))
             else:
                 # التحقق من فريدية السلج
                 if Tag.objects.filter(slug=slug).exists():
@@ -3062,12 +3062,12 @@ class TagFormView(DashboardAccessMixin, View):
                     is_active=is_active,
                     is_featured=is_featured,
                 )
-                messages.success(request, 'تم إنشاء الوسم بنجاح')
+                messages.success(request, _('تم إنشاء الوسم بنجاح'))
 
             return redirect('dashboard:dashboard_tags')
 
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء حفظ الوسم: {str(e)}')
+            messages.error(request, _('حدث خطأ أثناء حفظ الوسم: %s') % str(e))
             return redirect(request.path)
 
 
@@ -3080,15 +3080,15 @@ class TagDeleteView(DashboardAccessMixin, View):
         # التحقق من وجود منتجات مرتبطة بهذا الوسم
         products_count = tag.products.count()
         if products_count > 0:
-            messages.error(request, f'لا يمكن حذف الوسم لأنه مرتبط بـ {products_count} منتج')
+            messages.error(request, _('لا يمكن حذف الوسم لأنه مرتبط بـ %s منتج') % products_count)
             return redirect('dashboard:dashboard_tags')
 
         try:
             tag_name = tag.name
             tag.delete()
-            messages.success(request, f'تم حذف الوسم "{tag_name}" بنجاح')
+            messages.success(request, _('تم حذف الوسم "%s" بنجاح') % tag_name)
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء حذف الوسم: {str(e)}')
+            messages.error(request, _('حدث خطأ أثناء حذف الوسم: %s') % str(e))
 
         return redirect('dashboard:dashboard_tags')
 
@@ -3148,7 +3148,7 @@ class ProductVariantFormView(DashboardAccessMixin, View):
                 return redirect('dashboard:dashboard_product_detail', product_id=product.id)
 
             except Exception as e:
-                messages.error(request, f'حدث خطأ أثناء حفظ متغير المنتج: {str(e)}')
+                messages.error(request, _('حدث خطأ أثناء حفظ متغير المنتج: %s') % str(e))
         else:
             for field, errors in form.errors.items():
                 for error in errors:
@@ -3174,9 +3174,9 @@ class ProductVariantDeleteView(DashboardAccessMixin, View):
         try:
             variant_name = variant.name
             variant.delete()
-            messages.success(request, f'تم حذف متغير المنتج "{variant_name}" بنجاح')
+            messages.success(request, _('تم حذف متغير المنتج "%s" بنجاح') % variant_name)
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء حذف متغير المنتج: {str(e)}')
+            messages.error(request, _('حدث خطأ أثناء حذف متغير المنتج: %s') % str(e))
 
         return redirect('dashboard:dashboard_product_detail', product_id=product.id)
 
@@ -3190,7 +3190,7 @@ class ProductVariantBulkActionsView(DashboardAccessMixin, View):
         variant_ids = request.POST.getlist('selected_variants')
 
         if not variant_ids:
-            messages.error(request, 'لم يتم تحديد أي متغيرات للمنتج')
+            messages.error(request, _('لم يتم تحديد أي متغيرات للمنتج'))
             return redirect('dashboard:dashboard_product_detail', product_id=product.id)
 
         variants = ProductVariant.objects.filter(id__in=variant_ids, product=product)
@@ -3198,18 +3198,18 @@ class ProductVariantBulkActionsView(DashboardAccessMixin, View):
 
         if action == 'activate':
             variants.update(is_active=True)
-            messages.success(request, f'تم تفعيل {count} متغير بنجاح')
+            messages.success(request, _('تم تفعيل %s متغير بنجاح') % count)
 
         elif action == 'deactivate':
             variants.update(is_active=False)
-            messages.success(request, f'تم إلغاء تفعيل {count} متغير بنجاح')
+            messages.success(request, _('تم إلغاء تفعيل %s متغير بنجاح') % count)
 
         elif action == 'delete':
             try:
                 variants.delete()
-                messages.success(request, f'تم حذف {count} متغير بنجاح')
+                messages.success(request, _('تم حذف %s متغير بنجاح') % count)
             except Exception as e:
-                messages.error(request, f'حدث خطأ أثناء حذف المتغيرات: {str(e)}')
+                messages.error(request, _('حدث خطأ أثناء حذف المتغيرات: %s') % str(e))
 
         elif action == 'update_stock':
             # تحويل لصفحة تحديث المخزون للمتغيرات المحددة
@@ -3523,7 +3523,7 @@ class BulkPriceEditorView(DashboardAccessMixin, View):
                 try:
                     price = Decimal(value.strip())
                 except InvalidOperation:
-                    messages.error(request, f'قيمة السعر غير صالحة ({raw_id})')
+                    messages.error(request, _('قيمة السعر غير صالحة (%s)') % raw_id)
                     return redirect(request.META.get('HTTP_REFERER', 'dashboard:bulk_price_editor'))
 
                 if raw_id.startswith('v'):
@@ -3535,7 +3535,7 @@ class BulkPriceEditorView(DashboardAccessMixin, View):
                     variant_prices[raw_id] = price
 
             if not variant_prices and not product_prices:
-                messages.warning(request, 'لم يتم إدخال أي تغييرات على الأسعار')
+                messages.warning(request, _('لم يتم إدخال أي تغييرات على الأسعار'))
                 return redirect(request.META.get('HTTP_REFERER', 'dashboard:bulk_price_editor'))
 
             updated_variants = 0
@@ -3565,16 +3565,16 @@ class BulkPriceEditorView(DashboardAccessMixin, View):
             if total_updated > 0:
                 messages.success(
                     request,
-                    f'تم تحديث {updated_products} منتج و {updated_variants} متغير بنجاح'
+                    _('تم تحديث %s منتج و %s متغير بنجاح') % (updated_products, updated_variants)
                 )
             else:
-                messages.info(request, 'لم يتم تغيير أي أسعار')
+                messages.info(request, _('لم يتم تغيير أي أسعار'))
 
             # إعادة التوجيه مع الاحتفاظ بالفلاتر
             return redirect(request.META.get('HTTP_REFERER', 'dashboard:bulk_price_editor'))
 
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء تحديث الأسعار: {str(e)}')
+            messages.error(request, _('حدث خطأ أثناء تحديث الأسعار: %s') % str(e))
             return redirect('dashboard:bulk_price_editor')
 
 
@@ -3644,3 +3644,94 @@ class BulkPriceEditorAPIView(DashboardAccessMixin, View):
                 'success': False,
                 'message': f'حدث خطأ: {str(e)}'
             }, status=500)
+
+
+class PriceVisibilityAPIView(DashboardAccessMixin, View):
+    """API لتحديث إظهار/إخفاء الأسعار على مستويات متعددة"""
+
+    def post(self, request):
+        if not (request.user.is_superuser or request.user.has_perm('products.change_product')):
+            return JsonResponse({'success': False, 'message': 'ليس لديك صلاحية'}, status=403)
+        try:
+            data = json.loads(request.body)
+            scope = data.get('scope')
+            visible = data.get('visible', True)
+
+            if scope == 'all':
+                product_count = Product.objects.all().update(show_price=visible)
+                cat_count = Category.objects.all().update(show_prices=visible)
+                brand_count = Brand.objects.all().update(show_prices=visible)
+                return JsonResponse({
+                    'success': True,
+                    'message': f'تم تحديث {product_count} منتج و {cat_count} فئة و {brand_count} علامة تجارية',
+                    'updated_count': product_count,
+                })
+
+            elif scope == 'category':
+                category_id = data.get('category_id')
+                if not category_id:
+                    return JsonResponse({'success': False, 'message': 'لم يتم تحديد الفئة'}, status=400)
+                try:
+                    category = Category.objects.get(id=category_id)
+                except Category.DoesNotExist:
+                    return JsonResponse({'success': False, 'message': 'الفئة غير موجودة'}, status=404)
+                descendants = category.get_descendants(include_self=True)
+                cat_count = descendants.update(show_prices=visible)
+                products_qs = Product.objects.filter(category__in=descendants)
+                product_count = products_qs.update(show_price=visible)
+                if visible:
+                    brand_ids = products_qs.values_list('brand_id', flat=True).distinct()
+                    Brand.objects.filter(id__in=brand_ids, show_prices=False).update(show_prices=True)
+                status_text = 'إظهار' if visible else 'إخفاء'
+                return JsonResponse({
+                    'success': True,
+                    'message': f'تم {status_text} الأسعار لفئة {category.name} و {cat_count - 1} فئة فرعية ({product_count} منتج)',
+                    'updated_count': product_count,
+                })
+
+            elif scope == 'brand':
+                brand_id = data.get('brand_id')
+                if not brand_id:
+                    return JsonResponse({'success': False, 'message': 'لم يتم تحديد العلامة التجارية'}, status=400)
+                try:
+                    brand = Brand.objects.get(id=brand_id)
+                except Brand.DoesNotExist:
+                    return JsonResponse({'success': False, 'message': 'العلامة التجارية غير موجودة'}, status=404)
+                brand.show_prices = visible
+                brand.save(update_fields=['show_prices'])
+                products_qs = Product.objects.filter(brand=brand)
+                product_count = products_qs.update(show_price=visible)
+                if visible:
+                    cat_ids = products_qs.values_list('category_id', flat=True).distinct()
+                    Category.objects.filter(id__in=cat_ids, show_prices=False).update(show_prices=True)
+                status_text = 'إظهار' if visible else 'إخفاء'
+                return JsonResponse({
+                    'success': True,
+                    'message': f'تم {status_text} الأسعار للعلامة التجارية {brand.name} ({product_count} منتج)',
+                    'updated_count': product_count,
+                })
+
+            elif scope == 'selected':
+                product_ids = data.get('product_ids', [])
+                if not product_ids:
+                    return JsonResponse({'success': False, 'message': 'لم يتم تحديد منتجات'}, status=400)
+                products_qs = Product.objects.filter(id__in=product_ids)
+                count = products_qs.update(show_price=visible)
+                if visible:
+                    cat_ids = products_qs.values_list('category_id', flat=True).distinct()
+                    Category.objects.filter(id__in=cat_ids, show_prices=False).update(show_prices=True)
+                    brand_ids = products_qs.values_list('brand_id', flat=True).distinct()
+                    Brand.objects.filter(id__in=brand_ids, show_prices=False).update(show_prices=True)
+                return JsonResponse({
+                    'success': True,
+                    'message': f'تم تحديث {count} منتج',
+                    'updated_count': count,
+                })
+
+            else:
+                return JsonResponse({'success': False, 'message': 'نطاق غير صالح'}, status=400)
+
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'message': 'بيانات غير صالحة'}, status=400)
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': f'حدث خطأ: {str(e)}'}, status=500)

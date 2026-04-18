@@ -1,26 +1,26 @@
 {% extends 'dashboard/base.html' %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}حذف عنصر السلايدر{% endblock %}
-{% block page_title %}حذف عنصر السلايدر{% endblock %}
+{% block title %}{% trans 'حذف عنصر السلايدر' %}{% endblock %}
+{% block page_title %}{% trans 'حذف عنصر السلايدر' %}{% endblock %}
 
 {% block breadcrumbs %}
-<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_site_settings' %}">الإعدادات</a></li>
-<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_sliders' %}">إدارة السلايدر</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_site_settings' %}">{% trans 'الإعدادات' %}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_sliders' %}">{% trans 'إدارة السلايدر' %}</a></li>
 {% endblock %}
-{% block current_page %}حذف عنصر السلايدر{% endblock %}
+{% block current_page %}{% trans 'حذف عنصر السلايدر' %}{% endblock %}
 
 {% block content %}
 <div class="card">
     <div class="card-header bg-danger text-white">
-        <h5 class="card-title mb-0">تأكيد الحذف</h5>
+        <h5 class="card-title mb-0">{% trans 'تأكيد الحذف' %}</h5>
     </div>
     <div class="card-body">
         <div class="alert alert-warning">
-            <h5>هل أنت متأكد من حذف عنصر السلايدر: "{{ slider.title }}"؟</h5>
-            <p>هذا الإجراء لا يمكن التراجع عنه!</p>
+            <h5>{% trans 'هل أنت متأكد من حذف عنصر السلايدر:' %} "{{ slider.title }}"؟</h5>
+            <p>{% trans 'هذا الإجراء لا يمكن التراجع عنه!' %}</p>
         </div>
-        
+
         <div class="row mb-4">
             <div class="col-md-4">
                 <img src="{{ slider.image.url }}" alt="{{ slider.title }}" class="img-fluid img-thumbnail">
@@ -31,12 +31,12 @@
                 <p>{{ slider.description }}</p>
             </div>
         </div>
-        
+
         <form method="post">
             {% csrf_token %}
             <div class="form-group text-end">
-                <a href="{% url 'dashboard:dashboard_sliders' %}" class="btn btn-secondary">إلغاء</a>
-                <button type="submit" class="btn btn-danger">تأكيد الحذف</button>
+                <a href="{% url 'dashboard:dashboard_sliders' %}" class="btn btn-secondary">{% trans 'إلغاء' %}</a>
+                <button type="submit" class="btn btn-danger">{% trans 'تأكيد الحذف' %}</button>
             </div>
         </form>
     </div>

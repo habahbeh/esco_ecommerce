@@ -261,12 +261,12 @@ $(document).ready(function() {
                     }
                 } else {
                     // عرض الخطأ في تنبيه ثابت
-                    showPermanentAlert('danger', 'خطأ: ' + response.error);
+                    showPermanentAlert('danger', "{% trans 'خطأ' %}" + ': ' + response.error);
                     clearInterval(checkProgressInterval);
                 }
             },
             error: function() {
-                console.log('خطأ في الاتصال أثناء التحقق من التقدم');
+                console.log('Error checking import progress');
             }
         });
     }
@@ -275,7 +275,10 @@ $(document).ready(function() {
     function updateProgressUI(progress) {
         if (progress.status === 'error') {
             // عرض الخطأ
-            $('#progress-text').text('حدث خطأ: ' + (progress.error_message || 'خطأ غير معروف'));
+            const isArabic = document.documentElement.getAttribute('lang') === 'ar';
+            const errorPrefix = isArabic ? 'حدث خطأ: ' : 'An error occurred: ';
+            const unknownError = isArabic ? 'خطأ غير معروف' : 'Unknown error';
+            $('#progress-text').text(errorPrefix + (progress.error_message || unknownError));
             $('.progress-bar').addClass('bg-danger');
             return;
         }

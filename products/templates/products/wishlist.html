@@ -451,7 +451,7 @@
                                 </a>
                             </h3>
                             
-                            {% if item.product.show_price and item.product.category.show_prices %}
+                            {% if item.product.is_price_visible %}
                                 <div class="wishlist-price">
                                     <span class="current-price">{{ item.product.current_price|floatformat:2 }} {% trans "د.أ" %}</span>
                                     {% if item.product.has_discount %}

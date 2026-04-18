@@ -1,12 +1,13 @@
 {% extends 'dashboard/base.html' %}
 {% load static %}
+{% load i18n %}
 
 {% block title %}{{ page_title }}{% endblock %}
 {% block page_title %}{{ page_title }}{% endblock %}
 
 {% block breadcrumbs %}
-<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_home' %}">الرئيسية</a></li>
-<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_events' %}">إدارة الفعاليات</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_home' %}">{% trans "الرئيسية" %}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_events' %}">{% trans "إدارة الفعاليات" %}</a></li>
 {% endblock %}
 {% block current_page %}{{ current_page }}{% endblock %}
 
@@ -68,7 +69,7 @@
             <!-- المعلومات الأساسية -->
             <div class="card mb-4">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="card-title mb-0">المعلومات الأساسية</h5>
+                    <h5 class="card-title mb-0">{% trans "المعلومات الأساسية" %}</h5>
                 </div>
                 <div class="card-body">
                     <div class="row mb-3">
@@ -79,7 +80,7 @@
                                 {% if form.slug.errors %}
                                 <div class="invalid-feedback d-block">{{ form.slug.errors }}</div>
                                 {% endif %}
-                                <small class="text-muted">اتركه فارغاً لإنشاء معرف تلقائي</small>
+                                <small class="text-muted">{% trans "اتركه فارغاً لإنشاء معرف تلقائي" %}</small>
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -151,16 +152,16 @@
             <!-- المحتوى بالعربية والإنجليزية -->
             <div class="card mb-4">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="card-title mb-0">المحتوى</h5>
+                    <h5 class="card-title mb-0">{% trans "المحتوى" %}</h5>
                 </div>
                 <div class="card-body">
                     <!-- لسانات اللغة -->
                     <ul class="nav nav-tabs content-tabs mb-3" id="contentTabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="arabic-tab" data-bs-toggle="tab" data-bs-target="#arabic-content" type="button" role="tab" aria-controls="arabic-content" aria-selected="true">المحتوى العربي</button>
+                            <button class="nav-link active" id="arabic-tab" data-bs-toggle="tab" data-bs-target="#arabic-content" type="button" role="tab" aria-controls="arabic-content" aria-selected="true">{% trans "المحتوى العربي" %}</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="english-tab" data-bs-toggle="tab" data-bs-target="#english-content" type="button" role="tab" aria-controls="english-content" aria-selected="false">المحتوى الإنجليزي</button>
+                            <button class="nav-link" id="english-tab" data-bs-toggle="tab" data-bs-target="#english-content" type="button" role="tab" aria-controls="english-content" aria-selected="false">{% trans "المحتوى الإنجليزي" %}</button>
                         </li>
                     </ul>
 
@@ -259,7 +260,7 @@
             <!-- الصور -->
             <div class="card mb-4">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="card-title mb-0">الصور</h5>
+                    <h5 class="card-title mb-0">{% trans "الصور" %}</h5>
                 </div>
                 <div class="card-body">
                     <div class="row mb-3">
@@ -298,8 +299,8 @@
             </div>
 
             <div class="form-group text-end">
-                <a href="{% url 'dashboard:dashboard_events' %}" class="btn btn-secondary">إلغاء</a>
-                <button type="submit" class="btn btn-primary">حفظ</button>
+                <a href="{% url 'dashboard:dashboard_events' %}" class="btn btn-secondary">{% trans "إلغاء" %}</a>
+                <button type="submit" class="btn btn-primary">{% trans "حفظ" %}</button>
             </div>
         </form>
     </div>
@@ -311,6 +312,8 @@
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.js"></script>
 <script>
     $(document).ready(function() {
+        const isArabic = document.documentElement.getAttribute('lang') === 'ar';
+
         // تفعيل محرر النصوص المتقدم للوصف بالعربية
         $('#{{ form.description.id_for_label }}').summernote({
             height: 200,
@@ -365,27 +368,22 @@
 
         // التحقق من صحة النموذج قبل الإرسال
         $('form').on('submit', function(e) {
-            // إضافة فئة was-validated للعرض البصري للتحقق
             $(this).addClass('was-validated');
 
-            // تحقق من أن جميع الحقول المطلوبة معبأة
             let isValid = true;
+            const requiredMsg = isArabic ? 'هذا الحقل مطلوب' : 'This field is required';
 
             $(this).find('[required]').each(function() {
                 if ($(this).val() === '') {
                     isValid = false;
-                    // إضافة رسالة خطأ
                     if ($(this).next('.invalid-feedback').length === 0) {
-                        $(this).after('<div class="invalid-feedback d-block">هذا الحقل مطلوب</div>');
+                        $(this).after('<div class="invalid-feedback d-block">' + requiredMsg + '</div>');
                     }
                 }
             });
 
-            // إذا كان النموذج غير صالح، أوقف الإرسال
             if (!isValid) {
                 e.preventDefault();
-
-                // التمرير إلى أول حقل به خطأ
                 $('html, body').animate({
                     scrollTop: $('[required]:invalid').first().offset().top - 100
                 }, 500);

@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.contrib import messages
+from django.utils.translation import gettext as _
 from django.db.models import Q, Count, Sum, F
 from django.core.paginator import Paginator
 from django.http import JsonResponse
@@ -185,10 +186,10 @@ class ShippingMethodFormView(DashboardAccessMixin, View):
     def get(self, request, method_id=None):
         if method_id:
             shipping_method = get_object_or_404(ShippingMethod, id=method_id)
-            form_title = 'تحديث طريقة الشحن'
+            form_title = _('تحديث طريقة الشحن')
         else:
             shipping_method = None
-            form_title = 'إنشاء طريقة شحن جديدة'
+            form_title = _('إنشاء طريقة شحن جديدة')
 
         context = {
             'shipping_method': shipping_method,
@@ -213,7 +214,7 @@ class ShippingMethodFormView(DashboardAccessMixin, View):
 
         # التحقق من البيانات المطلوبة
         if not name or not code:
-            messages.error(request, 'اسم ورمز طريقة الشحن مطلوبان')
+            messages.error(request, _('اسم ورمز طريقة الشحن مطلوبان'))
             return redirect(request.path)
 
         # التحقق من عدم تكرار الرمز
@@ -223,7 +224,7 @@ class ShippingMethodFormView(DashboardAccessMixin, View):
             existing = ShippingMethod.objects.filter(code=code).exists()
 
         if existing:
-            messages.error(request, 'رمز طريقة الشحن مستخدم بالفعل')
+            messages.error(request, _('رمز طريقة الشحن مستخدم بالفعل'))
             return redirect(request.path)
 
         try:
@@ -245,7 +246,7 @@ class ShippingMethodFormView(DashboardAccessMixin, View):
                 shipping_method.restrictions = restrictions
 
                 shipping_method.save()
-                messages.success(request, 'تم تحديث طريقة الشحن بنجاح')
+                messages.success(request, _('تم تحديث طريقة الشحن بنجاح'))
             else:
                 # إنشاء طريقة شحن جديدة
                 shipping_method = ShippingMethod.objects.create(
@@ -261,7 +262,7 @@ class ShippingMethodFormView(DashboardAccessMixin, View):
                     sort_order=sort_order,
                     restrictions=restrictions,
                 )
-                messages.success(request, 'تم إنشاء طريقة الشحن بنجاح')
+                messages.success(request, _('تم إنشاء طريقة الشحن بنجاح'))
 
             # معالجة الصورة إذا تم تحميلها
             icon = request.FILES.get('icon')
@@ -272,7 +273,7 @@ class ShippingMethodFormView(DashboardAccessMixin, View):
             return redirect('dashboard:dashboard_shipping_methods')
 
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء حفظ طريقة الشحن: {str(e)}')
+            messages.error(request, _('حدث خطأ أثناء حفظ طريقة الشحن: %s') % str(e))
             return redirect(request.path)
 
 
@@ -285,15 +286,15 @@ class ShippingMethodDeleteView(DashboardAccessMixin, View):
         # التحقق من وجود جلسات دفع تستخدم هذه الطريقة
         checkout_count = CheckoutSession.objects.filter(shipping_method=shipping_method).count()
         if checkout_count > 0:
-            messages.error(request, f'لا يمكن حذف طريقة الشحن لأنها مستخدمة في {checkout_count} جلسة دفع')
+            messages.error(request, _('لا يمكن حذف طريقة الشحن لأنها مستخدمة في %s جلسة دفع') % checkout_count)
             return redirect('dashboard:dashboard_shipping_methods')
 
         try:
             method_name = shipping_method.name
             shipping_method.delete()
-            messages.success(request, f'تم حذف طريقة الشحن "{method_name}" بنجاح')
+            messages.success(request, _('تم حذف طريقة الشحن "%s" بنجاح') % method_name)
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء حذف طريقة الشحن: {str(e)}')
+            messages.error(request, _('حدث خطأ أثناء حذف طريقة الشحن: %s') % str(e))
 
         return redirect('dashboard:dashboard_shipping_methods')
 
@@ -322,10 +323,10 @@ class PaymentMethodFormView(DashboardAccessMixin, View):
     def get(self, request, method_id=None):
         if method_id:
             payment_method = get_object_or_404(PaymentMethod, id=method_id)
-            form_title = 'تحديث طريقة الدفع'
+            form_title = _('تحديث طريقة الدفع')
         else:
             payment_method = None
-            form_title = 'إنشاء طريقة دفع جديدة'
+            form_title = _('إنشاء طريقة دفع جديدة')
 
         context = {
             'payment_method': payment_method,
@@ -363,7 +364,7 @@ class PaymentMethodFormView(DashboardAccessMixin, View):
 
         # التحقق من البيانات المطلوبة
         if not name or not name_en or not code or not payment_type:
-            messages.error(request, 'اسم ورمز ونوع طريقة الدفع مطلوبة باللغتين العربية والإنجليزية')
+            messages.error(request, _('اسم ورمز ونوع طريقة الدفع مطلوبة باللغتين العربية والإنجليزية'))
             return redirect(request.path)
 
         # التحقق من عدم تكرار الرمز
@@ -373,7 +374,7 @@ class PaymentMethodFormView(DashboardAccessMixin, View):
             existing = PaymentMethod.objects.filter(code=code).exists()
 
         if existing:
-            messages.error(request, 'رمز طريقة الدفع مستخدم بالفعل')
+            messages.error(request, _('رمز طريقة الدفع مستخدم بالفعل'))
             return redirect(request.path)
 
         try:
@@ -403,7 +404,7 @@ class PaymentMethodFormView(DashboardAccessMixin, View):
                     payment_method.api_credentials = api_data
 
                 payment_method.save()
-                messages.success(request, 'تم تحديث طريقة الدفع بنجاح')
+                messages.success(request, _('تم تحديث طريقة الدفع بنجاح'))
             else:
                 # إنشاء طريقة دفع جديدة
                 payment_method = PaymentMethod.objects.create(
@@ -424,7 +425,7 @@ class PaymentMethodFormView(DashboardAccessMixin, View):
                     sort_order=sort_order,
                     api_credentials=api_data,
                 )
-                messages.success(request, 'تم إنشاء طريقة الدفع بنجاح')
+                messages.success(request, _('تم إنشاء طريقة الدفع بنجاح'))
 
             # معالجة الصورة إذا تم تحميلها
             icon = request.FILES.get('icon')
@@ -442,7 +443,7 @@ class PaymentMethodFormView(DashboardAccessMixin, View):
             return redirect('dashboard:dashboard_payment_methods')
 
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء حفظ طريقة الدفع: {str(e)}')
+            messages.error(request, _('حدث خطأ أثناء حفظ طريقة الدفع: %s') % str(e))
             return redirect(request.path)
 
 @method_decorator(permission_required('checkout.delete_paymentmethod'), name='dispatch')
@@ -455,15 +456,15 @@ class PaymentMethodDeleteView(DashboardAccessMixin, View):
         # التحقق من وجود جلسات دفع تستخدم هذه الطريقة
         checkout_count = CheckoutSession.objects.filter(payment_method=payment_method).count()
         if checkout_count > 0:
-            messages.error(request, f'لا يمكن حذف طريقة الدفع لأنها مستخدمة في {checkout_count} جلسة دفع')
+            messages.error(request, _('لا يمكن حذف طريقة الدفع لأنها مستخدمة في %s جلسة دفع') % checkout_count)
             return redirect('dashboard:dashboard_payment_methods')
 
         try:
             method_name = payment_method.name
             payment_method.delete()
-            messages.success(request, f'تم حذف طريقة الدفع "{method_name}" بنجاح')
+            messages.success(request, _('تم حذف طريقة الدفع "%s" بنجاح') % method_name)
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء حذف طريقة الدفع: {str(e)}')
+            messages.error(request, _('حدث خطأ أثناء حذف طريقة الدفع: %s') % str(e))
 
         return redirect('dashboard:dashboard_payment_methods')
 
@@ -544,10 +545,10 @@ class CouponFormView(DashboardAccessMixin, View):
     def get(self, request, coupon_id=None):
         if coupon_id:
             coupon = get_object_or_404(Coupon, id=coupon_id)
-            form_title = 'تحديث كوبون الخصم'
+            form_title = _('تحديث كوبون الخصم')
         else:
             coupon = None
-            form_title = 'إنشاء كوبون خصم جديد'
+            form_title = _('إنشاء كوبون خصم جديد')
 
         context = {
             'coupon': coupon,
@@ -573,7 +574,7 @@ class CouponFormView(DashboardAccessMixin, View):
 
         # التحقق من البيانات المطلوبة
         if not code or not discount_type or not discount_value or not start_date:
-            messages.error(request, 'الرجاء ملء جميع الحقول المطلوبة')
+            messages.error(request, _('الرجاء ملء جميع الحقول المطلوبة'))
             return redirect(request.path)
 
         # التحقق من عدم تكرار الكود
@@ -583,7 +584,7 @@ class CouponFormView(DashboardAccessMixin, View):
             existing = Coupon.objects.filter(code=code).exists()
 
         if existing:
-            messages.error(request, 'كود الكوبون مستخدم بالفعل')
+            messages.error(request, _('كود الكوبون مستخدم بالفعل'))
             return redirect(request.path)
 
         # تحويل التواريخ من نص إلى كائنات datetime
@@ -595,7 +596,7 @@ class CouponFormView(DashboardAccessMixin, View):
             else:
                 end_date = None
         except ValueError:
-            messages.error(request, 'صيغة التاريخ غير صحيحة')
+            messages.error(request, _('صيغة التاريخ غير صحيحة'))
             return redirect(request.path)
 
         try:
@@ -617,7 +618,7 @@ class CouponFormView(DashboardAccessMixin, View):
                 coupon.is_active = is_active
 
                 coupon.save()
-                messages.success(request, 'تم تحديث كوبون الخصم بنجاح')
+                messages.success(request, _('تم تحديث كوبون الخصم بنجاح'))
             else:
                 # إنشاء كوبون جديد
                 coupon = Coupon.objects.create(
@@ -633,12 +634,12 @@ class CouponFormView(DashboardAccessMixin, View):
                     max_uses_per_user=max_uses_per_user,
                     is_active=is_active,
                 )
-                messages.success(request, 'تم إنشاء كوبون الخصم بنجاح')
+                messages.success(request, _('تم إنشاء كوبون الخصم بنجاح'))
 
             return redirect('dashboard:dashboard_coupons')
 
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء حفظ كوبون الخصم: {str(e)}')
+            messages.error(request, _('حدث خطأ أثناء حفظ كوبون الخصم: %s') % str(e))
             return redirect(request.path)
 
 
@@ -651,14 +652,14 @@ class CouponDeleteView(DashboardAccessMixin, View):
         # التحقق من استخدام الكوبون
         usage_count = CouponUsage.objects.filter(coupon=coupon).count()
         if usage_count > 0:
-            messages.warning(request, f'تم حذف كوبون الخصم مع العلم أنه تم استخدامه {usage_count} مرة')
+            messages.warning(request, _('تم حذف كوبون الخصم مع العلم أنه تم استخدامه %s مرة') % usage_count)
 
         try:
             coupon_code = coupon.code
             coupon.delete()
-            messages.success(request, f'تم حذف كوبون الخصم "{coupon_code}" بنجاح')
+            messages.success(request, _('تم حذف كوبون الخصم "%s" بنجاح') % coupon_code)
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء حذف كوبون الخصم: {str(e)}')
+            messages.error(request, _('حدث خطأ أثناء حذف كوبون الخصم: %s') % str(e))
 
         return redirect('dashboard:dashboard_coupons')
 

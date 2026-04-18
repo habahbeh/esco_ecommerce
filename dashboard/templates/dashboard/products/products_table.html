@@ -70,10 +70,10 @@ $(document).ready(function() {
                 data: null,
                 render: function(data) {
                     let comparePrice = data.compare_price && data.compare_price > data.current_price
-                        ? '<div class="product-compare-price">' + data.compare_price + ' د.ا</div>'
+                        ? '<div class="product-compare-price">' + data.compare_price + ' {% trans "د.ا" %}</div>'
                         : '';
 
-                    return '<div class="product-price">' + data.current_price + ' د.ا</div>' + comparePrice;
+                    return '<div class="product-price">' + data.current_price + ' {% trans "د.ا" %}</div>' + comparePrice;
                 }
             },
             {

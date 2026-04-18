@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
+from django.utils.translation import gettext as _
 from events.models import Event, EventImage
 from dashboard.forms.event_forms import EventForm, EventImageForm
 
@@ -12,8 +13,8 @@ def dashboard_events(request):
     events = Event.objects.all().order_by('order', '-start_date')
     context = {
         'events': events,
-        'page_title': 'إدارة الفعاليات',
-        'current_page': 'إدارة الفعاليات'
+        'page_title': _('إدارة الفعاليات'),
+        'current_page': _('إدارة الفعاليات')
     }
     return render(request, 'dashboard/events/event_list.html', context)
 
@@ -26,15 +27,15 @@ def dashboard_event_create(request):
         form = EventForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
-            messages.success(request, 'تم إضافة الفعالية بنجاح')
+            messages.success(request, _('تم إضافة الفعالية بنجاح'))
             return redirect('dashboard:dashboard_events')
     else:
         form = EventForm()
 
     context = {
         'form': form,
-        'page_title': 'إضافة فعالية جديدة',
-        'current_page': 'إضافة فعالية جديدة'
+        'page_title': _('إضافة فعالية جديدة'),
+        'current_page': _('إضافة فعالية جديدة')
     }
     return render(request, 'dashboard/events/event_form.html', context)
 
@@ -49,7 +50,7 @@ def dashboard_event_edit(request, pk):
         form = EventForm(request.POST, request.FILES, instance=event)
         if form.is_valid():
             form.save()
-            messages.success(request, 'تم تحديث الفعالية بنجاح')
+            messages.success(request, _('تم تحديث الفعالية بنجاح'))
             return redirect('dashboard:dashboard_events')
     else:
         form = EventForm(instance=event)
@@ -57,8 +58,8 @@ def dashboard_event_edit(request, pk):
     context = {
         'form': form,
         'event': event,
-        'page_title': 'تعديل الفعالية',
-        'current_page': 'تعديل الفعالية'
+        'page_title': _('تعديل الفعالية'),
+        'current_page': _('تعديل الفعالية')
     }
     return render(request, 'dashboard/events/event_form.html', context)
 
@@ -71,13 +72,13 @@ def dashboard_event_delete(request, pk):
 
     if request.method == 'POST':
         event.delete()
-        messages.success(request, 'تم حذف الفعالية بنجاح')
+        messages.success(request, _('تم حذف الفعالية بنجاح'))
         return redirect('dashboard:dashboard_events')
 
     context = {
         'event': event,
-        'page_title': 'حذف الفعالية',
-        'current_page': 'حذف الفعالية'
+        'page_title': _('حذف الفعالية'),
+        'current_page': _('حذف الفعالية')
     }
     return render(request, 'dashboard/events/event_confirm_delete.html', context)
 
@@ -96,7 +97,7 @@ def dashboard_event_detail(request, pk):
             new_image = image_form.save(commit=False)
             new_image.event = event
             new_image.save()
-            messages.success(request, 'تم إضافة الصورة بنجاح')
+            messages.success(request, _('تم إضافة الصورة بنجاح'))
             return redirect('dashboard:dashboard_event_detail', pk=event.id)
     else:
         image_form = EventImageForm(initial={'order': event_images.count()})
@@ -105,8 +106,8 @@ def dashboard_event_detail(request, pk):
         'event': event,
         'event_images': event_images,
         'image_form': image_form,
-        'page_title': f'تفاصيل الفعالية: {event.title}',
-        'current_page': 'تفاصيل الفعالية'
+        'page_title': _('تفاصيل الفعالية') + f': {event.title}',
+        'current_page': _('تفاصيل الفعالية')
     }
     return render(request, 'dashboard/events/event_detail.html', context)
 
@@ -129,7 +130,7 @@ def dashboard_event_image_edit(request, event_pk, image_pk):
                 updated_image.image = image.image
 
             updated_image.save()
-            messages.success(request, 'تم تحديث الصورة بنجاح')
+            messages.success(request, _('تم تحديث الصورة بنجاح'))
             return redirect('dashboard:dashboard_event_detail', pk=event.id)
     else:
         form = EventImageForm(instance=image)
@@ -138,8 +139,8 @@ def dashboard_event_image_edit(request, event_pk, image_pk):
         'form': form,
         'event': event,
         'image': image,
-        'page_title': 'تعديل صورة',
-        'current_page': 'تعديل صورة'
+        'page_title': _('تعديل صورة'),
+        'current_page': _('تعديل صورة')
     }
     return render(request, 'dashboard/events/event_image_form.html', context)
 
@@ -153,13 +154,13 @@ def dashboard_event_image_delete(request, event_pk, image_pk):
 
     if request.method == 'POST':
         image.delete()
-        messages.success(request, 'تم حذف الصورة بنجاح')
+        messages.success(request, _('تم حذف الصورة بنجاح'))
         return redirect('dashboard:dashboard_event_detail', pk=event.id)
 
     context = {
         'event': event,
         'image': image,
-        'page_title': 'حذف صورة',
-        'current_page': 'حذف صورة'
+        'page_title': _('حذف صورة'),
+        'current_page': _('حذف صورة')
     }
     return render(request, 'dashboard/events/event_image_confirm_delete.html', context)

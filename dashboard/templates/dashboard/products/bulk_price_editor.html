@@ -191,6 +191,348 @@
     </div>
 </div>
 
+<!-- لوحة التحكم بإظهار/إخفاء الأسعار -->
+<div id="visibility-panel" class="card mb-4 border-0 shadow-sm">
+    <div class="card-header bg-gradient-light border-bottom p-0" style="background: linear-gradient(135deg, #f8f9fc 0%, #eef2f7 100%);">
+        <button class="btn btn-link text-decoration-none w-100 text-start p-3"
+                data-bs-toggle="collapse" data-bs-target="#visibility-panel-body"
+                aria-expanded="true" aria-controls="visibility-panel-body">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h5 class="mb-1 fw-bold">
+                        <i class="fa fa-eye text-primary me-2"></i>
+                        {% trans 'التحكم بإظهار الأسعار' %}
+                    </h5>
+                    <p class="mb-0 text-muted small pe-3">
+                        <i class="fa fa-info-circle me-1"></i>
+                        <strong>{% trans 'مبدأ العمل:' %}</strong>
+                        {% trans 'عند الضغط على "إظهار" في أي مستوى، يتم تفعيل الأسعار على جميع المستويات المرتبطة تلقائياً لضمان ظهور السعر فوراً. أما "إخفاء" فيُخفي الأسعار على المستوى المحدد ومنتجاته.' %}
+                    </p>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                    <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2">
+                        <i class="fa fa-shield-alt me-1"></i>{% trans '4 مستويات تحكم' %}
+                    </span>
+                    <i class="fa fa-chevron-down text-muted transition-icon"></i>
+                </div>
+            </div>
+        </button>
+    </div>
+    <div class="collapse show" id="visibility-panel-body">
+    <div class="card-body p-4">
+        <div class="row g-4">
+            <!-- 1. منتجات محددة (الأضيق نطاقاً) -->
+            <div class="col-md-6 col-lg-3">
+                <div class="visibility-control-card h-100" style="border: 2px solid #e9ecef; border-radius: 12px; transition: all 0.3s ease; overflow: hidden;">
+                    <div class="p-3 text-center" style="background: linear-gradient(135deg, #19875415 0%, #19875408 100%); border-bottom: 2px solid #e9ecef;">
+                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-2" style="width: 48px; height: 48px; background: rgba(25, 135, 84, 0.1);">
+                            <i class="fa fa-check-square fa-lg text-success"></i>
+                        </div>
+                        <h6 class="fw-bold mb-1">{% trans 'منتجات محددة' %}</h6>
+                        <span class="text-muted small d-block">
+                            <span class="badge bg-dark rounded-pill" id="selected-products-count">0</span> {% trans 'منتج محدد' %}
+                        </span>
+                    </div>
+                    <div class="p-3">
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-outline-success btn-sm fw-semibold visibility-action-btn"
+                                    onclick="updateVisibility('selected', true)">
+                                <i class="fa fa-eye me-1"></i> {% trans 'إظهار' %}
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm fw-semibold visibility-action-btn"
+                                    onclick="updateVisibility('selected', false)">
+                                <i class="fa fa-eye-slash me-1"></i> {% trans 'إخفاء' %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. حسب العلامة التجارية -->
+            <div class="col-md-6 col-lg-3">
+                <div class="visibility-control-card h-100" style="border: 2px solid #e9ecef; border-radius: 12px; transition: all 0.3s ease; overflow: hidden;">
+                    <div class="p-3 text-center" style="background: linear-gradient(135deg, #ffc10715 0%, #ffc10708 100%); border-bottom: 2px solid #e9ecef;">
+                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-2" style="width: 48px; height: 48px; background: rgba(255, 193, 7, 0.1);">
+                            <i class="fa fa-tag fa-lg text-warning"></i>
+                        </div>
+                        <h6 class="fw-bold mb-1">{% trans 'حسب العلامة التجارية' %}</h6>
+                        <span class="text-muted small d-block">{% trans 'جميع منتجات العلامة' %}</span>
+                    </div>
+                    <div class="p-3">
+                        <select id="visibility-brand" class="form-select form-select-sm mb-2 select2-visibility">
+                            <option value="">{% trans 'اختر العلامة...' %}</option>
+                            {% for brand in brands %}
+                            <option value="{{ brand.id }}">{{ brand.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-outline-success btn-sm fw-semibold visibility-action-btn"
+                                    onclick="updateVisibility('brand', true)">
+                                <i class="fa fa-eye me-1"></i> {% trans 'إظهار' %}
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm fw-semibold visibility-action-btn"
+                                    onclick="updateVisibility('brand', false)">
+                                <i class="fa fa-eye-slash me-1"></i> {% trans 'إخفاء' %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. حسب الفئة -->
+            <div class="col-md-6 col-lg-3">
+                <div class="visibility-control-card h-100" style="border: 2px solid #e9ecef; border-radius: 12px; transition: all 0.3s ease; overflow: hidden;">
+                    <div class="p-3 text-center" style="background: linear-gradient(135deg, #0dcaf015 0%, #0dcaf008 100%); border-bottom: 2px solid #e9ecef;">
+                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-2" style="width: 48px; height: 48px; background: rgba(13, 202, 240, 0.1);">
+                            <i class="fa fa-folder fa-lg text-info"></i>
+                        </div>
+                        <h6 class="fw-bold mb-1">{% trans 'حسب الفئة' %}</h6>
+                        <span class="text-muted small d-block">{% trans 'يشمل الفئات الفرعية' %}</span>
+                    </div>
+                    <div class="p-3">
+                        <select id="visibility-category" class="form-select form-select-sm mb-2 select2-visibility">
+                            <option value="">{% trans 'اختر الفئة...' %}</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}">
+                                {% if category.level == 1 %}&nbsp;&nbsp;{% elif category.level == 2 %}&nbsp;&nbsp;&nbsp;&nbsp;{% elif category.level >= 3 %}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{% endif %}{{ category.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-outline-success btn-sm fw-semibold visibility-action-btn"
+                                    onclick="updateVisibility('category', true)">
+                                <i class="fa fa-eye me-1"></i> {% trans 'إظهار' %}
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm fw-semibold visibility-action-btn"
+                                    onclick="updateVisibility('category', false)">
+                                <i class="fa fa-eye-slash me-1"></i> {% trans 'إخفاء' %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. جميع المنتجات (الأوسع نطاقاً) -->
+            <div class="col-md-6 col-lg-3">
+                <div class="visibility-control-card h-100" style="border: 2px solid #e9ecef; border-radius: 12px; transition: all 0.3s ease; overflow: hidden;">
+                    <div class="p-3 text-center" style="background: linear-gradient(135deg, #6c757d15 0%, #6c757d08 100%); border-bottom: 2px solid #e9ecef;">
+                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-2" style="width: 48px; height: 48px; background: rgba(108, 117, 125, 0.1);">
+                            <i class="fa fa-globe fa-lg text-secondary"></i>
+                        </div>
+                        <h6 class="fw-bold mb-1">{% trans 'جميع المنتجات' %}</h6>
+                        <span class="text-muted small d-block">{% trans 'تحديث شامل' %}</span>
+                    </div>
+                    <div class="p-3">
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-outline-success btn-sm fw-semibold visibility-action-btn"
+                                    onclick="updateVisibility('all', true)">
+                                <i class="fa fa-eye me-1"></i> {% trans 'إظهار الكل' %}
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm fw-semibold visibility-action-btn"
+                                    onclick="updateVisibility('all', false)">
+                                <i class="fa fa-eye-slash me-1"></i> {% trans 'إخفاء الكل' %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- دليل الاستخدام - داخل لوحة التحكم، مخفي افتراضياً -->
+    <div class="card-body border-top py-2 px-4">
+        <button class="btn btn-link text-decoration-none p-0 w-100 text-start collapsed"
+                data-bs-toggle="collapse" data-bs-target="#visibility-tutorial"
+                aria-expanded="false" aria-controls="visibility-tutorial">
+            <div class="d-flex align-items-center justify-content-between">
+                <span class="text-info fw-semibold small">
+                    <i class="fa fa-question-circle me-1"></i>
+                    {% trans 'دليل الاستخدام والأمثلة العملية' %}
+                </span>
+                <i class="fa fa-chevron-down text-muted small transition-icon"></i>
+            </div>
+        </button>
+    </div>
+    <div class="collapse" id="visibility-tutorial">
+        <div class="card-body pt-0 px-4 pb-4">
+            <!-- كيف يعمل كل زر -->
+            <h6 class="fw-bold text-primary mb-3">
+                <i class="fa fa-cogs me-2"></i>
+                {% trans 'كيف يعمل كل زر؟' %}
+            </h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="card border-secondary h-100">
+                        <div class="card-header bg-secondary-subtle py-2">
+                            <strong class="small"><i class="fa fa-globe text-secondary me-1"></i> {% trans 'جميع المنتجات' %}</strong>
+                        </div>
+                        <div class="card-body small py-2">
+                            <div class="mb-2">
+                                <span class="badge bg-success mb-1"><i class="fa fa-eye me-1"></i>{% trans 'إظهار الكل' %}</span>
+                                <p class="mb-0 text-muted">{% trans 'يُفعّل إظهار الأسعار لجميع المنتجات + جميع الفئات + جميع العلامات التجارية دفعة واحدة.' %}</p>
+                            </div>
+                            <div>
+                                <span class="badge bg-danger mb-1"><i class="fa fa-eye-slash me-1"></i>{% trans 'إخفاء الكل' %}</span>
+                                <p class="mb-0 text-muted">{% trans 'يُخفي أسعار جميع المنتجات + جميع الفئات + جميع العلامات التجارية دفعة واحدة.' %}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-info h-100">
+                        <div class="card-header bg-info-subtle py-2">
+                            <strong class="small"><i class="fa fa-folder text-info me-1"></i> {% trans 'حسب الفئة' %}</strong>
+                        </div>
+                        <div class="card-body small py-2">
+                            <div class="mb-2">
+                                <span class="badge bg-success mb-1"><i class="fa fa-eye me-1"></i>{% trans 'إظهار' %}</span>
+                                <p class="mb-0 text-muted">{% trans 'يُفعّل إظهار الأسعار للفئة وفئاتها الفرعية + جميع منتجاتها + يُفعّل العلامات التجارية المرتبطة تلقائياً.' %}</p>
+                            </div>
+                            <div>
+                                <span class="badge bg-danger mb-1"><i class="fa fa-eye-slash me-1"></i>{% trans 'إخفاء' %}</span>
+                                <p class="mb-0 text-muted">{% trans 'يُخفي أسعار الفئة وفئاتها الفرعية + جميع منتجاتها.' %}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-warning h-100">
+                        <div class="card-header bg-warning-subtle py-2">
+                            <strong class="small"><i class="fa fa-tag text-warning me-1"></i> {% trans 'حسب العلامة التجارية' %}</strong>
+                        </div>
+                        <div class="card-body small py-2">
+                            <div class="mb-2">
+                                <span class="badge bg-success mb-1"><i class="fa fa-eye me-1"></i>{% trans 'إظهار' %}</span>
+                                <p class="mb-0 text-muted">{% trans 'يُفعّل إظهار الأسعار للعلامة التجارية + جميع منتجاتها + يُفعّل الفئات المرتبطة تلقائياً.' %}</p>
+                            </div>
+                            <div>
+                                <span class="badge bg-danger mb-1"><i class="fa fa-eye-slash me-1"></i>{% trans 'إخفاء' %}</span>
+                                <p class="mb-0 text-muted">{% trans 'يُخفي أسعار العلامة التجارية + جميع منتجاتها.' %}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-success h-100">
+                        <div class="card-header bg-success-subtle py-2">
+                            <strong class="small"><i class="fa fa-check-square text-success me-1"></i> {% trans 'منتجات محددة' %}</strong>
+                        </div>
+                        <div class="card-body small py-2">
+                            <div class="mb-2">
+                                <span class="badge bg-success mb-1"><i class="fa fa-eye me-1"></i>{% trans 'إظهار' %}</span>
+                                <p class="mb-0 text-muted">{% trans 'يُفعّل إظهار الأسعار للمنتجات المحددة + يُفعّل فئاتها وعلاماتها التجارية تلقائياً لضمان ظهور السعر.' %}</p>
+                            </div>
+                            <div>
+                                <span class="badge bg-danger mb-1"><i class="fa fa-eye-slash me-1"></i>{% trans 'إخفاء' %}</span>
+                                <p class="mb-0 text-muted">{% trans 'يُخفي أسعار المنتجات المحددة فقط (لا يؤثر على الفئة أو العلامة).' %}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- أمثلة عملية -->
+            <h6 class="fw-bold text-primary mb-3">
+                <i class="fa fa-lightbulb me-2"></i>
+                {% trans 'أمثلة عملية' %}
+            </h6>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light h-100">
+                        <div class="card-body small">
+                            <h6 class="fw-bold"><i class="fa fa-play-circle text-primary me-1"></i> {% trans 'سيناريو 1: إخفاء أسعار فئة كاملة' %}</h6>
+                            <p class="text-muted">{% trans 'تريد إخفاء أسعار جميع منتجات "قسم الصحي":' %}</p>
+                            <ol class="mb-2">
+                                <li>{% trans 'اختر "قسم الصحي" من قائمة الفئات' %}</li>
+                                <li>{% trans 'اضغط "إخفاء"' %}</li>
+                            </ol>
+                            <div class="alert alert-secondary py-2 mb-0 small">
+                                <i class="fa fa-arrow-left me-1"></i>
+                                <strong>{% trans 'ما يحدث:' %}</strong>
+                                {% trans 'يتم إخفاء الفئة + فئاتها الفرعية + جميع منتجاتها. حتى لو أظهرت المنتج لاحقاً بشكل فردي، ستحتاج أيضاً لإظهار الفئة ليظهر السعر.' %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light h-100">
+                        <div class="card-body small">
+                            <h6 class="fw-bold"><i class="fa fa-play-circle text-success me-1"></i> {% trans 'سيناريو 2: إظهار أسعار فئة بعد إخفاء الكل' %}</h6>
+                            <p class="text-muted">{% trans 'أخفيت كل الأسعار وتريد إظهار فئة واحدة فقط:' %}</p>
+                            <ol class="mb-2">
+                                <li>{% trans 'اختر الفئة المطلوبة' %}</li>
+                                <li>{% trans 'اضغط "إظهار"' %}</li>
+                            </ol>
+                            <div class="alert alert-success py-2 mb-0 small">
+                                <i class="fa fa-arrow-left me-1"></i>
+                                <strong>{% trans 'ما يحدث:' %}</strong>
+                                {% trans 'يتم إظهار الفئة + فئاتها الفرعية + منتجاتها + العلامات التجارية المرتبطة. السعر يظهر فوراً دون خطوات إضافية.' %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light h-100">
+                        <div class="card-body small">
+                            <h6 class="fw-bold"><i class="fa fa-play-circle text-warning me-1"></i> {% trans 'سيناريو 3: إظهار منتجات محددة بعد إخفاء الكل' %}</h6>
+                            <p class="text-muted">{% trans 'أخفيت كل الأسعار وتريد إظهار منتجين فقط:' %}</p>
+                            <ol class="mb-2">
+                                <li>{% trans 'حدد المنتجات من الجدول بمربعات الاختيار' %}</li>
+                                <li>{% trans 'اضغط "إظهار" في قسم المنتجات المحددة' %}</li>
+                            </ol>
+                            <div class="alert alert-success py-2 mb-0 small">
+                                <i class="fa fa-arrow-left me-1"></i>
+                                <strong>{% trans 'ما يحدث:' %}</strong>
+                                {% trans 'يتم إظهار المنتجات المحددة + فئاتها + علاماتها التجارية تلقائياً. السعر يظهر فوراً.' %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light h-100">
+                        <div class="card-body small">
+                            <h6 class="fw-bold"><i class="fa fa-play-circle text-danger me-1"></i> {% trans 'سيناريو 4: إخفاء علامة تجارية' %}</h6>
+                            <p class="text-muted">{% trans 'تريد إخفاء أسعار علامة تجارية معينة:' %}</p>
+                            <ol class="mb-2">
+                                <li>{% trans 'اختر العلامة التجارية من القائمة' %}</li>
+                                <li>{% trans 'اضغط "إخفاء"' %}</li>
+                            </ol>
+                            <div class="alert alert-secondary py-2 mb-0 small">
+                                <i class="fa fa-arrow-left me-1"></i>
+                                <strong>{% trans 'ما يحدث:' %}</strong>
+                                {% trans 'يتم إخفاء العلامة التجارية + جميع منتجاتها في كل الفئات.' %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+</div>
+
+<style>
+.visibility-control-card:hover {
+    border-color: #0d6efd !important;
+    box-shadow: 0 4px 15px rgba(13, 110, 253, 0.1);
+    transform: translateY(-2px);
+}
+.visibility-action-btn {
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s ease;
+}
+.visibility-action-btn:hover {
+    transform: scale(1.02);
+}
+.transition-icon {
+    transition: transform 0.3s ease;
+}
+[aria-expanded="true"] .transition-icon {
+    transform: rotate(180deg);
+}
+</style>
+
 <!-- إحصائيات سريعة -->
 <div class="row mb-4">
     <div class="col-md-4">
@@ -268,6 +610,10 @@
                 <table class="table table-hover table-striped sticky-header mb-0">
                     <thead class="table-light">
                         <tr>
+                            <th width="40">
+                                <input type="checkbox" id="select-all-products" class="form-check-input"
+                                       onchange="toggleSelectAll(this)" title="{% trans 'تحديد الكل' %}">
+                            </th>
                             <th width="50">#</th>
                             <th>{% trans 'المنتج' %}</th>
                             <th>{% trans 'العلامة' %}</th>
@@ -278,12 +624,17 @@
                             <th>{% trans 'السعر الحالي' %}</th>
                             <th width="140">{% trans 'السعر الجديد' %}</th>
                             <th width="100">{% trans 'التغيير' %}</th>
-                            <th width="80">{% trans 'عرض' %}</th>
+                            <th width="80">{% trans 'السعر' %}</th>
+                            <th width="60">{% trans 'عرض' %}</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for row in variants %}
-                        <tr data-uid="{{ row.uid }}">
+                        <tr data-uid="{{ row.uid }}" data-product-id="{{ row.product.id }}">
+                            <td>
+                                <input type="checkbox" class="form-check-input product-select-checkbox"
+                                       value="{{ row.product.id }}" onchange="updateSelectedCount()">
+                            </td>
                             <td class="text-muted">{{ forloop.counter|add:variants.start_index|add:-1 }}</td>
                             <td class="product-name-cell" title="{{ row.product.name }}">
                                 <a href="{% url 'dashboard:dashboard_product_detail' product_id=row.product.id %}"
@@ -360,6 +711,17 @@
                                 <span id="change-display-{{ row.uid }}" class="change-percentage d-none">
                                     --
                                 </span>
+                            </td>
+                            <td class="text-center">
+                                {% if row.product.is_price_visible %}
+                                    <span class="badge bg-success-subtle text-success" title="{% trans 'السعر ظاهر' %}">
+                                        <i class="fa fa-eye"></i>
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-danger-subtle text-danger" title="{% trans 'السعر مخفي' %}">
+                                        <i class="fa fa-eye-slash"></i>
+                                    </span>
+                                {% endif %}
                             </td>
                             <td class="text-center">
                                 <a href="{% url 'products:product_detail' slug=row.product.slug %}"
@@ -496,7 +858,7 @@
 <script>
 $(document).ready(function() {
     // تهيئة Select2
-    $('.select2').select2({
+    $('.select2, .select2-visibility').select2({
         dir: $('html').attr('dir'),
         placeholder: "{% trans 'اختر...' %}",
         allowClear: true,
@@ -698,5 +1060,189 @@ function confirmAndSubmit() {
         form.submit();
     }
 }
+
+// ===== التحكم بإظهار/إخفاء الأسعار =====
+
+function toggleSelectAll(checkbox) {
+    document.querySelectorAll('.product-select-checkbox').forEach(cb => {
+        cb.checked = checkbox.checked;
+    });
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    const checked = document.querySelectorAll('.product-select-checkbox:checked');
+    document.getElementById('selected-products-count').textContent = checked.length;
+}
+
+function getSelectedProductIds() {
+    const checked = document.querySelectorAll('.product-select-checkbox:checked');
+    const ids = new Set();
+    checked.forEach(cb => ids.add(cb.value));
+    return Array.from(ids);
+}
+
+function showToast(message, type) {
+    const icons = { success: 'check-circle', danger: 'times-circle', warning: 'exclamation-triangle', info: 'info-circle' };
+    const titles = { success: "{% trans 'نجاح' %}", danger: "{% trans 'خطأ' %}", warning: "{% trans 'تنبيه' %}", info: "{% trans 'معلومة' %}" };
+    const colors = { success: '#198754', danger: '#dc3545', warning: '#ffc107', info: '#0dcaf0' };
+    const textColors = { warning: '#856404' };
+
+    const alertModal = document.getElementById('alertModal');
+    const iconEl = alertModal.querySelector('.alert-modal-icon');
+    const titleEl = document.getElementById('alertModalTitle');
+    const bodyEl = document.getElementById('alertModalBody');
+    const accent = colors[type] || colors.info;
+
+    iconEl.innerHTML = '<i class="fa fa-' + (icons[type] || 'info-circle') + ' fa-3x"></i>';
+    iconEl.style.color = accent;
+    iconEl.style.background = accent + '15';
+    titleEl.textContent = titles[type] || '';
+    titleEl.style.color = textColors[type] || accent;
+    bodyEl.textContent = message;
+
+    new bootstrap.Modal(alertModal).show();
+}
+
+function showConfirmModal(title, message, icon, confirmClass, onConfirm) {
+    document.getElementById('confirmModalTitle').innerHTML = '<i class="fa fa-' + icon + ' me-2"></i>' + title;
+    document.getElementById('confirmModalBody').textContent = message;
+    const confirmBtn = document.getElementById('confirmModalBtn');
+    confirmBtn.className = 'btn fw-semibold ' + confirmClass;
+    confirmBtn.onclick = function() {
+        bootstrap.Modal.getInstance(document.getElementById('confirmModal')).hide();
+        onConfirm();
+    };
+    new bootstrap.Modal(document.getElementById('confirmModal')).show();
+}
+
+function updateVisibility(scope, visible) {
+    let payload = { scope: scope, visible: visible };
+
+    if (scope === 'category') {
+        const catId = document.getElementById('visibility-category').value;
+        if (!catId) {
+            showToast("{% trans 'يرجى اختيار الفئة أولاً' %}", 'warning');
+            return;
+        }
+        payload.category_id = catId;
+    } else if (scope === 'brand') {
+        const brandId = document.getElementById('visibility-brand').value;
+        if (!brandId) {
+            showToast("{% trans 'يرجى اختيار العلامة التجارية أولاً' %}", 'warning');
+            return;
+        }
+        payload.brand_id = brandId;
+    } else if (scope === 'selected') {
+        const productIds = getSelectedProductIds();
+        if (productIds.length === 0) {
+            showToast("{% trans 'يرجى تحديد منتج واحد على الأقل من الجدول' %}", 'warning');
+            return;
+        }
+        payload.product_ids = productIds;
+    }
+
+    const action = visible ? "{% trans 'إظهار' %}" : "{% trans 'إخفاء' %}";
+    const scopeLabels = {
+        all: "{% trans 'جميع المنتجات' %}",
+        category: "{% trans 'الفئة المحددة' %}",
+        brand: "{% trans 'العلامة التجارية المحددة' %}",
+        selected: "{% trans 'المنتجات المحددة' %}"
+    };
+    const icon = visible ? 'eye text-success' : 'eye-slash text-danger';
+    const confirmClass = visible ? 'btn-success' : 'btn-danger';
+    const title = action + " {% trans 'الأسعار' %}";
+    const message = "{% trans 'هل أنت متأكد من' %} " + action + " {% trans 'أسعار' %} " + scopeLabels[scope] + "{% trans '؟' %}";
+
+    showConfirmModal(title, message, icon, confirmClass, function() {
+        function getCookie(name) {
+            const cookies = document.cookie.split(';');
+            for (let c of cookies) {
+                c = c.trim();
+                if (c.startsWith(name + '=')) return decodeURIComponent(c.substring(name.length + 1));
+            }
+            return null;
+        }
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value
+            || getCookie('csrftoken')
+            || '{{ csrf_token }}';
+
+        const apiUrl = "{% url 'dashboard:price_visibility_api' %}";
+        const body = JSON.stringify(payload);
+
+        fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            },
+            body: body,
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error('HTTP ' + response.status + ': ' + text.substring(0, 200));
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                const alertModal = document.getElementById('alertModal');
+                alertModal.addEventListener('hidden.bs.modal', () => location.reload(), { once: true });
+            } else {
+                showToast(data.message || "{% trans 'حدث خطأ غير متوقع' %}", 'danger');
+            }
+        })
+        .catch(err => {
+            console.error('Visibility API error:', err);
+            showToast("{% trans 'حدث خطأ في الاتصال بالخادم' %}", 'danger');
+        });
+    });
+}
 </script>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-header border-0 pb-0 pt-4 px-4">
+                <h5 class="modal-title fw-bold" id="confirmModalTitle"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 py-3">
+                <p class="mb-0 text-muted fs-6" id="confirmModalBody"></p>
+            </div>
+            <div class="modal-footer border-0 pt-0 pb-4 px-4 gap-2">
+                <button type="button" class="btn btn-light fw-semibold px-4" data-bs-dismiss="modal" style="border-radius: 10px;">
+                    <i class="fa fa-times me-1"></i> {% trans 'إلغاء' %}
+                </button>
+                <button type="button" class="btn btn-primary fw-semibold px-4" id="confirmModalBtn" style="border-radius: 10px;">
+                    <i class="fa fa-check me-1"></i> {% trans 'تأكيد' %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alert Modal -->
+<div class="modal fade" id="alertModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg text-center" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-body px-4 pt-4 pb-2">
+                <div class="alert-modal-icon d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 72px; height: 72px;">
+                </div>
+                <h5 class="fw-bold mb-2" id="alertModalTitle"></h5>
+                <p class="text-muted mb-0" id="alertModalBody"></p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pb-4 pt-2">
+                <button type="button" class="btn btn-primary fw-semibold px-5" data-bs-dismiss="modal" style="border-radius: 10px;">
+                    <i class="fa fa-check me-1"></i> {% trans 'حسناً' %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}

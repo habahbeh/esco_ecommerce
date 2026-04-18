@@ -789,14 +789,16 @@
                                 </a>
                             </h3>
 
+                            {% if product.is_price_visible %}
                             <div class="offer-prices">
                                 <span class="current-price">{{ product.current_price|floatformat:2 }} {% trans "د.أ" %}</span>
                                 {% if product.has_discount and product.savings_percentage > 0 %}
                                 <span class="original-price">{{ product.base_price|floatformat:2 }}</span>
                                 {% endif %}
                             </div>
+                            {% endif %}
 
-                            {% if product.has_discount and product.savings_amount > 0 %}
+                            {% if product.is_price_visible and product.has_discount and product.savings_amount > 0 %}
                             <div class="savings-info">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <span>

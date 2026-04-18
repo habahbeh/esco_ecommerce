@@ -427,9 +427,9 @@
             <div class="col-md-7 mb-4">
                 <div class="product-price-section">
                     <div class="product-price-info">
-                        <div class="product-price">{{ product.current_price|floatformat:2 }} د.ا</div>
+                        <div class="product-price">{{ product.current_price|floatformat:2 }} {% trans "د.ا" %}</div>
                         {% if product.compare_price and product.compare_price > product.current_price %}
-                        <div class="product-compare-price">{{ product.compare_price|floatformat:2 }} د.ا</div>
+                        <div class="product-compare-price">{{ product.compare_price|floatformat:2 }} {% trans "د.ا" %}</div>
                         <div class="product-discount-badge">{{ product.savings_percentage }}% {% trans 'خصم' %}</div>
                         {% endif %}
                     </div>
@@ -437,13 +437,13 @@
                     <div class="product-metadata">
                         <div class="product-metadata-item">
                             <i class="fa fa-tag"></i>
-                            <span>{% trans 'التكلفة:' %} {% if product.cost %}{{ product.cost|floatformat:2 }} د.ا{% else %}{% trans 'غير محدد' %}{% endif %}</span>
+                            <span>{% trans 'التكلفة:' %} {% if product.cost %}{{ product.cost|floatformat:2 }} {% trans "د.ا" %}{% else %}{% trans 'غير محدد' %}{% endif %}</span>
                         </div>
                         <div class="product-metadata-item">
                             <i class="fa fa-chart-line"></i>
                             <span>{% trans 'الهامش:' %}
                                 {% if product.cost %}
-                                    {{ product.current_price|subtract:product.cost|floatformat:2 }} د.ا
+                                    {{ product.current_price|subtract:product.cost|floatformat:2 }} {% trans "د.ا" %}
                                     ({{ product.current_price|subtract:product.cost|divide:product.current_price|multiply:100|floatformat:0 }}%)
                                 {% else %}
                                     {% trans 'غير محدد' %}
@@ -771,7 +771,7 @@
                                                 </div>
                                             </td>
                                             <td>{{ variant.sku }}</td>
-                                            <td>{{ variant.current_price|floatformat:2 }} د.ا</td>
+                                            <td>{{ variant.current_price|floatformat:2 }} {% trans "د.ا" %}</td>
                                             <td>{{ variant.available_quantity }}</td>
                                             <td>
                                                 {% if variant.is_active %}
@@ -1007,7 +1007,7 @@
                             <div class="card-body">
                                 <h5 class="card-title">{{ related_product.name }}</h5>
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <div class="product-price">{{ related_product.current_price|floatformat:2 }} د.ا</div>
+                                    <div class="product-price">{{ related_product.current_price|floatformat:2 }} {% trans "د.ا" %}</div>
                                     <a href="{% url 'dashboard:dashboard_product_detail' product_id=related_product.id %}" class="btn btn-sm btn-outline-primary">
                                         <i class="fa fa-eye"></i>
                                     </a>

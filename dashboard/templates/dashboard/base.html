@@ -8,20 +8,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>{% block title %}لوحة التحكم{% endblock %} | {{ site_settings.site_name }}</title>
+    <title>{% block title %}{% trans "لوحة التحكم" %}{% endblock %} | {{ site_settings.site_name }}</title>
 
     <!-- Favicon -->
     {% if site_settings.favicon %}
     <link rel="shortcut icon" href="{{ site_settings.favicon.url }}" type="image/x-icon">
     {% endif %}
 
-    <!-- خط Cairo من Google Fonts -->
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    {% if LANGUAGE_BIDI %}
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    {% else %}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    {% endif %}
 
-    <!-- Bootstrap 5 RTL CSS -->
+    <!-- Bootstrap 5 CSS (RTL for Arabic, LTR for English) -->
+    {% if LANGUAGE_BIDI %}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" integrity="sha384-PJsj/BTMqILvmcej7ulplguok8ag4xFTPryRq8xevL7eBYSmpXKcbNVuy+P0RMgq" crossorigin="anonymous">
+    {% else %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" crossorigin="anonymous">
+    {% endif %}
 
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -39,8 +47,10 @@
     <link rel="stylesheet" href="{% static 'dashboard/css/dashboard-ltr.css' %}">
     {% endif %}
 
-    <!-- Cairo Font CSS for Arabic -->
+    {% if LANGUAGE_BIDI %}
+    <!-- Arabic-specific CSS -->
     <link rel="stylesheet" href="{% static 'dashboard/css/custom-arabic.css' %}">
+    {% endif %}
 
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -50,12 +60,9 @@
 
     <!-- إضافة نمط CSS للقائمة الجانبية في الموبايل -->
     <style>
-        /* أنماط القائمة الجانبية للموبايل */
         @media (max-width: 767.98px) {
-            /* تحديد موضع القائمة في الموبايل */
             #sidebar {
                 position: fixed;
-                right: -280px; /* للواجهة العربية RTL */
                 top: 0;
                 width: 280px;
                 height: 100vh;
@@ -65,13 +72,24 @@
                 box-shadow: none;
             }
 
-            /* فئة تفعيل القائمة عند النقر على الزر */
-            #sidebar.mobile-open {
+            html[dir="rtl"] #sidebar {
+                right: -280px;
+                left: auto;
+            }
+            html[dir="ltr"] #sidebar {
+                left: -280px;
+                right: auto;
+            }
+
+            html[dir="rtl"] #sidebar.mobile-open {
                 right: 0;
                 box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
             }
+            html[dir="ltr"] #sidebar.mobile-open {
+                left: 0;
+                box-shadow: 5px 0 15px rgba(0, 0, 0, 0.1);
+            }
 
-            /* طبقة تعتيم خلف القائمة */
             .sidebar-overlay {
                 position: fixed;
                 top: 0;
@@ -83,14 +101,13 @@
                 display: none;
             }
 
-            /* عرض طبقة التعتيم عندما تكون القائمة مفتوحة */
             .sidebar-overlay.show {
                 display: block;
             }
 
-            /* المحتوى الرئيسي */
             .main-content-wrapper {
                 margin-right: 0 !important;
+                margin-left: 0 !important;
                 width: 100%;
             }
         }
@@ -130,7 +147,7 @@
                     </div>
                     <div class="user-details">
                         <div class="user-name">{{ request.user.get_full_name }}</div>
-                        <div class="user-role">{{ request.user.role.name|default:"مدير" }}</div>
+                        <div class="user-role">{{ request.user.role.name|default:_("مدير") }}</div>
                     </div>
                 </div>
 
@@ -141,39 +158,39 @@
                         <li class="menu-item {% if request.path == '/dashboard/' %}active{% endif %}">
                             <a href="{% url 'dashboard:dashboard_home' %}">
                                 <i class="fa fa-tachometer-alt"></i>
-                                <span>الرئيسية</span>
+                                <span>{% trans "الرئيسية" %}</span>
                             </a>
                         </li>
 
                         <!-- Products Section -->
                         {% if perms.products.view_product or perms.products.add_product or perms.products.view_category or perms.products.view_brand %}
                         <li class="menu-item-section">
-                            <span>المنتجات</span>
+                            <span>{% trans "المنتجات" %}</span>
                         </li>
                         <li class="menu-item {% if 'products' in request.path %}active{% endif %}">
                             <a href="{% url 'dashboard:dashboard_products' %}">
                                 <i class="fa fa-box"></i>
-                                <span>إدارة المنتجات</span>
+                                <span>{% trans "إدارة المنتجات" %}</span>
                             </a>
                             <ul class="submenu">
                                 {% if perms.products.view_product %}
-                                <li><a href="{% url 'dashboard:dashboard_products' %}">قائمة المنتجات</a></li>
+                                <li><a href="{% url 'dashboard:dashboard_products' %}">{% trans "قائمة المنتجات" %}</a></li>
                                 {% endif %}
 
                                 {% if perms.products.add_product %}
-                                <li><a href="{% url 'dashboard:dashboard_product_create' %}">إضافة منتج جديد</a></li>
+                                <li><a href="{% url 'dashboard:dashboard_product_create' %}">{% trans "إضافة منتج جديد" %}</a></li>
                                 {% endif %}
 
                                 {% if perms.products.view_category %}
-                                <li><a href="{% url 'dashboard:dashboard_categories' %}">الفئات</a></li>
+                                <li><a href="{% url 'dashboard:dashboard_categories' %}">{% trans "الفئات" %}</a></li>
                                 {% endif %}
 
                                 {% if perms.products.view_brand %}
-                                <li><a href="{% url 'dashboard:dashboard_brands' %}">العلامات التجارية</a></li>
+                                <li><a href="{% url 'dashboard:dashboard_brands' %}">{% trans "العلامات التجارية" %}</a></li>
                                 {% endif %}
 
                                 {% if perms.products.view_productdiscount or request.user.is_superuser %}
-                                <li><a href="{% url 'dashboard:dashboard_discounts' %}">خصومات المنتجات</a></li>
+                                <li><a href="{% url 'dashboard:dashboard_discounts' %}">{% trans "خصومات المنتجات" %}</a></li>
                                 {% endif %}
                             </ul>
                         </li>
@@ -182,20 +199,20 @@
                         <!-- Orders Section -->
                         {% if perms.orders.view_order %}
                         <li class="menu-item-section">
-                            <span>الطلبات</span>
+                            <span>{% trans "الطلبات" %}</span>
                         </li>
                         <li class="menu-item {% if 'orders' in request.path %}active{% endif %}">
                             <a href="{% url 'dashboard:dashboard_orders' %}">
                                 <i class="fa fa-shopping-cart"></i>
-                                <span>إدارة الطلبات</span>
+                                <span>{% trans "إدارة الطلبات" %}</span>
                             </a>
                             <ul class="submenu">
                                 {% if perms.orders.view_order %}
-                                <li><a href="{% url 'dashboard:dashboard_orders' %}">قائمة الطلبات</a></li>
+                                <li><a href="{% url 'dashboard:dashboard_orders' %}">{% trans "قائمة الطلبات" %}</a></li>
                                 {% endif %}
 
                                 {% if perms.orders.view_order %}
-                                <li><a href="{% url 'dashboard:dashboard_delivery_orders_report' %}">الطلبات المنتظرة التوصيل</a></li>
+                                <li><a href="{% url 'dashboard:dashboard_delivery_orders_report' %}">{% trans "الطلبات المنتظرة التوصيل" %}</a></li>
                                 {% endif %}
                             </ul>
                         </li>
@@ -205,20 +222,20 @@
                         <!-- قسم الفعاليات والمعارض -->
                         {% if perms.events.view_event or request.user.is_superuser %}
                             <li class="menu-item-section">
-                                <span>الفعاليات</span>
+                                <span>{% trans "الفعاليات" %}</span>
                             </li>
                             <li class="menu-item {% if 'events' in request.path %}active{% endif %}">
                                 <a href="{% url 'dashboard:dashboard_events' %}">
                                     <i class="fa fa-calendar-alt"></i>
-                                    <span>إدارة الفعاليات</span>
+                                    <span>{% trans "إدارة الفعاليات" %}</span>
                                 </a>
                                 <ul class="submenu">
                                     {% if perms.events.view_event %}
-                                        <li><a href="{% url 'dashboard:dashboard_events' %}">قائمة الفعاليات</a></li>
+                                        <li><a href="{% url 'dashboard:dashboard_events' %}">{% trans "قائمة الفعاليات" %}</a></li>
                                     {% endif %}
 
                                     {% if perms.events.add_event %}
-                                        <li><a href="{% url 'dashboard:dashboard_event_create' %}">إضافة فعالية جديدة</a></li>
+                                        <li><a href="{% url 'dashboard:dashboard_event_create' %}">{% trans "إضافة فعالية جديدة" %}</a></li>
                                     {% endif %}
                                 </ul>
                             </li>
@@ -227,18 +244,18 @@
                         <!-- Checkout & Payments Section -->
                         {% if perms.checkout.view_paymentmethod %}
                         <li class="menu-item-section">
-                            <span>المدفوعات</span>
+                            <span>{% trans "المدفوعات" %}</span>
                         </li>
 
                         {% if perms.checkout.view_paymentmethod %}
                         <li class="menu-item {% if 'checkout' in request.path %}active{% endif %}">
                             <a href="{% url 'dashboard:dashboard_checkout_sessions' %}">
                                 <i class="fa fa-credit-card"></i>
-                                <span>عمليات الدفع</span>
+                                <span>{% trans "عمليات الدفع" %}</span>
                             </a>
                             <ul class="submenu">
                                 {% if perms.checkout.view_paymentmethod %}
-                                <li><a href="{% url 'dashboard:dashboard_payment_methods' %}">طرق الدفع</a></li>
+                                <li><a href="{% url 'dashboard:dashboard_payment_methods' %}">{% trans "طرق الدفع" %}</a></li>
                                 {% endif %}
                             </ul>
                         </li>
@@ -248,24 +265,24 @@
                         <!-- Users Section -->
                         {% if perms.accounts.view_user %}
                         <li class="menu-item-section">
-                            <span>المستخدمين</span>
+                            <span>{% trans "المستخدمين" %}</span>
                         </li>
                         <li class="menu-item {% if 'accounts' in request.path %}active{% endif %}">
                             <a href="{% url 'dashboard:dashboard_users' %}">
                                 <i class="fa fa-users"></i>
-                                <span>إدارة المستخدمين</span>
+                                <span>{% trans "إدارة المستخدمين" %}</span>
                             </a>
                             <ul class="submenu">
                                 {% if perms.accounts.view_user %}
-                                <li><a href="{% url 'dashboard:dashboard_users' %}">قائمة المستخدمين</a></li>
+                                <li><a href="{% url 'dashboard:dashboard_users' %}">{% trans "قائمة المستخدمين" %}</a></li>
                                 {% endif %}
 
                                 {% if perms.accounts.add_user %}
-                                <li><a href="{% url 'dashboard:dashboard_user_create' %}">إضافة مستخدم جديد</a></li>
+                                <li><a href="{% url 'dashboard:dashboard_user_create' %}">{% trans "إضافة مستخدم جديد" %}</a></li>
                                 {% endif %}
 
                                 {% if perms.accounts.view_role %}
-                                <li><a href="{% url 'dashboard:dashboard_roles' %}">الأدوار والصلاحيات</a></li>
+                                <li><a href="{% url 'dashboard:dashboard_roles' %}">{% trans "الأدوار والصلاحيات" %}</a></li>
                                 {% endif %}
                             </ul>
                         </li>
@@ -274,22 +291,22 @@
                         <!-- Reports Section - مخفي حاليًا -->
                         {% if perms.dashboard.view_reports %}
                         <li class="menu-item-section" hidden>
-                            <span>التقارير</span>
+                            <span>{% trans "التقارير" %}</span>
                         </li>
                         <li class="menu-item {% if 'reports' in request.path %}active{% endif %}" hidden>
                             <a href="{% url 'dashboard:dashboard_reports' %}">
                                 <i class="fa fa-chart-bar"></i>
-                                <span>التقارير والإحصائيات</span>
+                                <span>{% trans "التقارير والإحصائيات" %}</span>
                             </a>
                             <ul class="submenu">
                                 {% if perms.dashboard.view_reports %}
-                                <li><a href="{% url 'dashboard:dashboard_sales_report' %}">تقارير المبيعات</a></li>
-                                <li><a href="{% url 'dashboard:dashboard_product_report' %}">تقارير المنتجات</a></li>
-                                <li><a href="{% url 'dashboard:dashboard_customer_report' %}">تقارير العملاء</a></li>
-                                <li><a href="{% url 'dashboard:dashboard_inventory_report' %}">تقارير المخزون</a></li>
-                                <li><a href="{% url 'dashboard:dashboard_revenue_report' %}">تقارير الإيرادات</a></li>
-                                <li><a href="{% url 'dashboard:dashboard_tax_report' %}">تقارير الضرائب</a></li>
-                                <li><a href="{% url 'dashboard:dashboard_export_report' %}">تصدير التقارير</a></li>
+                                <li><a href="{% url 'dashboard:dashboard_sales_report' %}">{% trans "تقارير المبيعات" %}</a></li>
+                                <li><a href="{% url 'dashboard:dashboard_product_report' %}">{% trans "تقارير المنتجات" %}</a></li>
+                                <li><a href="{% url 'dashboard:dashboard_customer_report' %}">{% trans "تقارير العملاء" %}</a></li>
+                                <li><a href="{% url 'dashboard:dashboard_inventory_report' %}">{% trans "تقارير المخزون" %}</a></li>
+                                <li><a href="{% url 'dashboard:dashboard_revenue_report' %}">{% trans "تقارير الإيرادات" %}</a></li>
+                                <li><a href="{% url 'dashboard:dashboard_tax_report' %}">{% trans "تقارير الضرائب" %}</a></li>
+                                <li><a href="{% url 'dashboard:dashboard_export_report' %}">{% trans "تصدير التقارير" %}</a></li>
                                 {% endif %}
                             </ul>
                         </li>
@@ -298,29 +315,28 @@
                         <!-- Settings Section -->
                         {% if perms.core.view_sitesettings or request.user.is_superuser %}
                         <li class="menu-item-section">
-                            <span>الإعدادات</span>
+                            <span>{% trans "الإعدادات" %}</span>
                         </li>
                         <li class="menu-item {% if 'settings' in request.path %}active{% endif %}">
                             <a href="{% url 'dashboard:dashboard_site_settings' %}">
                                 <i class="fa fa-cogs"></i>
-                                <span>إعدادات النظام</span>
+                                <span>{% trans "إعدادات النظام" %}</span>
                             </a>
                             <ul class="submenu">
                                 {% if perms.core.view_sitesettings or request.user.is_superuser %}
-                                    <li><a href="{% url 'dashboard:dashboard_site_settings' %}">إعدادات الموقع</a></li>
+                                    <li><a href="{% url 'dashboard:dashboard_site_settings' %}">{% trans "إعدادات الموقع" %}</a></li>
                                 {% endif %}
 
                                 {% if request.user.is_superuser %}
-                                    <li><a href="{% url 'dashboard:dashboard_shipping_settings' %}">إعدادات الشحن</a></li>
+                                    <li><a href="{% url 'dashboard:dashboard_shipping_settings' %}">{% trans "إعدادات الشحن" %}</a></li>
                                 {% endif %}
 
                                 {% if perms.core.view_slideritem or request.user.is_superuser %}
-                                    <li><a href="{% url 'dashboard:dashboard_sliders' %}">إدارة السلايدر</a></li>
+                                    <li><a href="{% url 'dashboard:dashboard_sliders' %}">{% trans "إدارة السلايدر" %}</a></li>
                                 {% endif %}
 
-                                <!-- إضافة رابط النشرة البريدية هنا -->
                                 {% if perms.core.view_newsletter or request.user.is_superuser %}
-                                    <li><a href="{% url 'dashboard:dashboard_newsletters' %}">اشتراكات النشرة البريدية</a></li>
+                                    <li><a href="{% url 'dashboard:dashboard_newsletters' %}">{% trans "اشتراكات النشرة البريدية" %}</a></li>
                                 {% endif %}
                             </ul>
                         </li>
@@ -332,17 +348,17 @@
             <!-- Sidebar Footer -->
             <div class="sidebar-footer">
                 <div class="sidebar-footer-item">
-                    <a href="{% url 'dashboard:dashboard_site_settings' %}" title="إعدادات لوحة التحكم">
+                    <a href="{% url 'dashboard:dashboard_site_settings' %}" title="{% trans 'إعدادات لوحة التحكم' %}">
                         <i class="fa fa-cog"></i>
                     </a>
                 </div>
                 <div class="sidebar-footer-item">
-                    <a href="{% url 'core:home' %}" target="_blank" title="عرض الموقع">
+                    <a href="{% url 'core:home' %}" target="_blank" title="{% trans 'عرض الموقع' %}">
                         <i class="fa fa-globe"></i>
                     </a>
                 </div>
                 <div class="sidebar-footer-item">
-                    <a href="{% url 'dashboard:logout' %}" title="تسجيل الخروج">
+                    <a href="{% url 'dashboard:logout' %}" title="{% trans 'تسجيل الخروج' %}">
                         <i class="fa fa-sign-out-alt"></i>
                     </a>
                 </div>
@@ -367,7 +383,7 @@
 
                     <!-- Page Title -->
                     <div class="page-title">
-                        <h1 class="h4 mb-0">{% block page_title %}لوحة التحكم{% endblock %}</h1>
+                        <h1 class="h4 mb-0">{% block page_title %}{% trans "لوحة التحكم" %}{% endblock %}</h1>
                     </div>
 
                     <!-- Right Navbar Items -->
@@ -382,9 +398,9 @@
                             </a>
                             <div class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="notificationsDropdown">
                                 <div class="dropdown-header d-flex justify-content-between align-items-center">
-                                    <span>الإشعارات</span>
+                                    <span>{% trans "الإشعارات" %}</span>
                                     {% if notifications %}
-                                    <a href="#" class="text-primary mark-all-read">قراءة الكل</a>
+                                    <a href="#" class="text-primary mark-all-read">{% trans "قراءة الكل" %}</a>
                                     {% endif %}
                                 </div>
                                 <div class="notifications-container">
@@ -403,18 +419,18 @@
                                         {% endfor %}
                                     {% else %}
                                         <div class="dropdown-item text-center">
-                                            <span class="text-muted">لا توجد إشعارات جديدة</span>
+                                            <span class="text-muted">{% trans "لا توجد إشعارات جديدة" %}</span>
                                         </div>
                                     {% endif %}
                                 </div>
                                 <div class="dropdown-footer">
-                                    <a href="{% url 'dashboard:dashboard_notifications' %}">عرض جميع الإشعارات</a>
+                                    <a href="{% url 'dashboard:dashboard_notifications' %}">{% trans "عرض جميع الإشعارات" %}</a>
                                 </div>
                             </div>
                         </li>
 
                         <!-- Language Switcher -->
-                        <li class="nav-item dropdown" hidden>
+                        <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button"
                                data-bs-toggle="dropdown" aria-expanded="false">
                                 {% if LANGUAGE_CODE == 'ar' %}
@@ -426,7 +442,13 @@
                             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
                                 <form action="{% url 'set_language' %}" method="post">
                                     {% csrf_token %}
-                                    <input name="next" type="hidden" value="{{ request.path }}">
+                                    {% if request.path|slice:":4" == "/en/" %}
+                                        <input name="next" type="hidden" value="{{ request.path|slice:'3:' }}">
+                                    {% elif request.path|slice:":3" == "/en" %}
+                                        <input name="next" type="hidden" value="/">
+                                    {% else %}
+                                        <input name="next" type="hidden" value="{{ request.path }}">
+                                    {% endif %}
                                     <button type="submit" name="language" value="ar"
                                             class="dropdown-item {% if LANGUAGE_CODE == 'ar' %}active{% endif %}">
                                         <i class="flag-icon flag-icon-jo me-2"></i> العربية
@@ -459,14 +481,14 @@
                                     </div>
                                 </div>
                                 <a class="dropdown-item" href="{% url 'dashboard:dashboard_user_detail' request.user.id %}">
-                                    <i class="fa fa-user me-2"></i> الملف الشخصي
+                                    <i class="fa fa-user me-2"></i> {% trans "الملف الشخصي" %}
                                 </a>
                                 <a class="dropdown-item" href="{% url 'dashboard:dashboard_site_settings' %}">
-                                    <i class="fa fa-cog me-2"></i> الإعدادات
+                                    <i class="fa fa-cog me-2"></i> {% trans "الإعدادات" %}
                                 </a>
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="{% url 'dashboard:logout' %}">
-                                    <i class="fa fa-sign-out-alt me-2"></i> تسجيل الخروج
+                                    <i class="fa fa-sign-out-alt me-2"></i> {% trans "تسجيل الخروج" %}
                                 </a>
                             </div>
                         </li>
@@ -480,7 +502,7 @@
                 <div class="breadcrumbs-container">
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_home' %}">الرئيسية</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_home' %}">{% trans "الرئيسية" %}</a></li>
                             {% block breadcrumbs %}{% endblock %}
                             <li class="breadcrumb-item active" aria-current="page">{% block current_page %}{% endblock %}</li>
                         </ol>
@@ -511,12 +533,12 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="copyright">
-                                &copy; {{ current_year }} {{ site_settings.site_name }}. جميع الحقوق محفوظة.
+                                &copy; {{ current_year }} {{ site_settings.site_name }}. {% trans "جميع الحقوق محفوظة." %}
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="version text-end">
-                                الإصدار {{ site_settings.app_version|default:"1.0.0" }}
+                                {% trans "الإصدار" %} {{ site_settings.app_version|default:"1.0.0" }}
                             </div>
                         </div>
                     </div>

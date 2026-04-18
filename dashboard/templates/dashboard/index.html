@@ -287,7 +287,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="text-muted mb-2">{% trans 'إجمالي المبيعات' %}</h6>
-                        <h3 class="mb-0">{{ total_sales|floatformat:2 }} د.ا</h3>
+                        <h3 class="mb-0">{{ total_sales|floatformat:2 }} {% trans "د.ا" %}</h3>
                         <div class="mt-2">
                             {% if monthly_sales_change > 0 %}
                             <span class="badge bg-success-subtle text-success percent-badge">
@@ -514,7 +514,7 @@
                                 <small class="text-muted">{{ order.full_name }}</small>
                             </div>
                             <div class="text-end">
-                                <div class="mb-1">{{ order.grand_total|floatformat:2 }} د.ا</div>
+                                <div class="mb-1">{{ order.grand_total|floatformat:2 }} {% trans "د.ا" %}</div>
                                 <span class="status-badge bg-{{ order.status_badge_class }}-subtle text-{{ order.status_badge_class }}">
                                     <i class="fas fa-circle"></i> {{ order.get_status_display }}
                                 </span>
@@ -540,7 +540,7 @@
                 <i class="fas fa-money-bill-wave"></i>
             </div>
             <div class="revenue-stat-title">{% trans 'إجمالي الإيرادات اليومية' %}</div>
-            <div class="revenue-stat-value">{{ daily_revenue|floatformat:2 }} د.ا</div>
+            <div class="revenue-stat-value">{{ daily_revenue|floatformat:2 }} {% trans "د.ا" %}</div>
             <div class="revenue-stat-percent {% if daily_revenue_change > 0 %}revenue-stat-positive{% else %}revenue-stat-negative{% endif %}">
                 <i class="fas fa-{% if daily_revenue_change > 0 %}arrow-up{% else %}arrow-down{% endif %}"></i>
                 {{ daily_revenue_change|abs|floatformat:1 }}% {% trans 'مقارنة بالأمس' %}
@@ -554,7 +554,7 @@
                 <i class="fas fa-calendar-week"></i>
             </div>
             <div class="revenue-stat-title">{% trans 'إجمالي الإيرادات الأسبوعية' %}</div>
-            <div class="revenue-stat-value">{{ weekly_revenue|floatformat:2 }} د.ا</div>
+            <div class="revenue-stat-value">{{ weekly_revenue|floatformat:2 }} {% trans "د.ا" %}</div>
             <div class="revenue-stat-percent {% if weekly_revenue_change > 0 %}revenue-stat-positive{% else %}revenue-stat-negative{% endif %}">
                 <i class="fas fa-{% if weekly_revenue_change > 0 %}arrow-up{% else %}arrow-down{% endif %}"></i>
                 {{ weekly_revenue_change|abs|floatformat:1 }}% {% trans 'مقارنة بالأسبوع الماضي' %}
@@ -568,7 +568,7 @@
                 <i class="fas fa-calendar-alt"></i>
             </div>
             <div class="revenue-stat-title">{% trans 'إجمالي الإيرادات الشهرية' %}</div>
-            <div class="revenue-stat-value">{{ monthly_revenue|floatformat:2 }} د.ا</div>
+            <div class="revenue-stat-value">{{ monthly_revenue|floatformat:2 }} {% trans "د.ا" %}</div>
             <div class="revenue-stat-percent {% if monthly_revenue_change > 0 %}revenue-stat-positive{% else %}revenue-stat-negative{% endif %}">
                 <i class="fas fa-{% if monthly_revenue_change > 0 %}arrow-up{% else %}arrow-down{% endif %}"></i>
                 {{ monthly_revenue_change|abs|floatformat:1 }}% {% trans 'مقارنة بالشهر الماضي' %}
@@ -582,7 +582,7 @@
                 <i class="fas fa-shopping-bag"></i>
             </div>
             <div class="revenue-stat-title">{% trans 'متوسط قيمة الطلب' %}</div>
-            <div class="revenue-stat-value">{{ average_order_value|floatformat:2 }} د.ا</div>
+            <div class="revenue-stat-value">{{ average_order_value|floatformat:2 }} {% trans "د.ا" %}</div>
             <div class="revenue-stat-percent {% if average_order_change > 0 %}revenue-stat-positive{% else %}revenue-stat-negative{% endif %}">
                 <i class="fas fa-{% if average_order_change > 0 %}arrow-up{% else %}arrow-down{% endif %}"></i>
                 {{ average_order_change|abs|floatformat:1 }}% {% trans 'مقارنة بالشهر الماضي' %}
@@ -620,7 +620,7 @@
                             </div>
                             <div class="text-end">
                                 <div class="mb-1">{{ product.sales_count }} {% trans 'مبيعات' %}</div>
-                                <div class="text-success">{{ product.current_price|floatformat:2 }} د.ا</div>
+                                <div class="text-success">{{ product.current_price|floatformat:2 }} {% trans "د.ا" %}</div>
                             </div>
                         </div>
                     </a>
@@ -894,7 +894,7 @@
                     beginAtZero: true,
                     ticks: {
                         callback: function(value) {
-                            return value.toLocaleString() + ' د.ا';
+                            return value.toLocaleString() + ' {% trans "د.ا" %}';
                         }
                     }
                 }

@@ -1,15 +1,16 @@
 {% extends 'dashboard/base.html' %}
 {% load static %}
+{% load i18n %}
 
-{% block title %}تعديل صورة{% endblock %}
-{% block page_title %}تعديل صورة{% endblock %}
+{% block title %}{% trans "تعديل صورة" %}{% endblock %}
+{% block page_title %}{% trans "تعديل صورة" %}{% endblock %}
 
 {% block breadcrumbs %}
-<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_home' %}">الرئيسية</a></li>
-<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_events' %}">إدارة الفعاليات</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_home' %}">{% trans "الرئيسية" %}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_events' %}">{% trans "إدارة الفعاليات" %}</a></li>
 <li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_event_detail' event.id %}">{{ event.title }}</a></li>
 {% endblock %}
-{% block current_page %}تعديل صورة{% endblock %}
+{% block current_page %}{% trans "تعديل صورة" %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -58,7 +59,7 @@
 {% block content %}
 <div class="card">
     <div class="card-header">
-        <h5 class="card-title mb-0">تعديل صورة</h5>
+        <h5 class="card-title mb-0">{% trans "تعديل صورة" %}</h5>
     </div>
     <div class="card-body">
         <div class="row mb-3">
@@ -69,7 +70,7 @@
                 {% else %}
                     <div class="text-center py-4 bg-light rounded">
                         <i class="fa fa-image fa-3x text-muted"></i>
-                        <p class="text-muted mt-2">لا توجد صورة</p>
+                        <p class="text-muted mt-2">{% trans "لا توجد صورة" %}</p>
                     </div>
                 {% endif %}
             </div>
@@ -86,14 +87,13 @@
                             {% else %}
                                 <div class="text-center py-3 bg-light rounded" style="max-width: 150px;">
                                     <i class="fa fa-image fa-2x text-muted"></i>
-                                    <p class="text-muted mt-2 small">لا توجد صورة</p>
+                                    <p class="text-muted mt-2 small">{% trans "لا توجد صورة" %}</p>
                                 </div>
                             {% endif %}
                         </div>
                         <div class="input-group">
                             {{ form.image }}
-                            <small class="form-text text-muted d-block w-100">اترك هذا الحقل فارغاً إذا كنت لا تريد
-                                تغيير الصورة الحالية.</small>
+                            <small class="form-text text-muted d-block w-100">{% trans "اترك هذا الحقل فارغاً إذا كنت لا تريد تغيير الصورة الحالية." %}</small>
                         </div>
                         {% if form.image.errors %}
                             <div class="invalid-feedback d-block">{{ form.image.errors }}</div>
@@ -111,10 +111,10 @@
                     <!-- لسانات اللغة -->
                     <ul class="nav nav-tabs lang-tabs mb-3" id="langTabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="arabic-tab" data-bs-toggle="tab" data-bs-target="#arabic-content" type="button" role="tab" aria-controls="arabic-content" aria-selected="true">المحتوى العربي</button>
+                            <button class="nav-link active" id="arabic-tab" data-bs-toggle="tab" data-bs-target="#arabic-content" type="button" role="tab" aria-controls="arabic-content" aria-selected="true">{% trans "المحتوى العربي" %}</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="english-tab" data-bs-toggle="tab" data-bs-target="#english-content" type="button" role="tab" aria-controls="english-content" aria-selected="false">المحتوى الإنجليزي</button>
+                            <button class="nav-link" id="english-tab" data-bs-toggle="tab" data-bs-target="#english-content" type="button" role="tab" aria-controls="english-content" aria-selected="false">{% trans "المحتوى الإنجليزي" %}</button>
                         </li>
                     </ul>
 
@@ -144,8 +144,8 @@
                     </div>
 
                     <div class="form-group text-end mt-4">
-                        <a href="{% url 'dashboard:dashboard_event_detail' event.id %}" class="btn btn-secondary">إلغاء</a>
-                        <button type="submit" class="btn btn-primary">حفظ</button>
+                        <a href="{% url 'dashboard:dashboard_event_detail' event.id %}" class="btn btn-secondary">{% trans "إلغاء" %}</a>
+                        <button type="submit" class="btn btn-primary">{% trans "حفظ" %}</button>
                     </div>
                 </form>
             </div>
@@ -157,29 +157,26 @@
 {% block extra_js %}
 <script>
     $(document).ready(function() {
+        const isArabic = document.documentElement.getAttribute('lang') === 'ar';
+
         // التحقق من صحة النموذج قبل الإرسال
         $('form').on('submit', function(e) {
-            // إضافة فئة was-validated للعرض البصري للتحقق
             $(this).addClass('was-validated');
 
-            // تحقق من أن جميع الحقول المطلوبة معبأة
             let isValid = true;
+            const requiredMsg = isArabic ? 'هذا الحقل مطلوب' : 'This field is required';
 
             $(this).find('[required]').each(function() {
                 if ($(this).val() === '') {
                     isValid = false;
-                    // إضافة رسالة خطأ
                     if ($(this).next('.invalid-feedback').length === 0) {
-                        $(this).after('<div class="invalid-feedback d-block">هذا الحقل مطلوب</div>');
+                        $(this).after('<div class="invalid-feedback d-block">' + requiredMsg + '</div>');
                     }
                 }
             });
 
-            // إذا كان النموذج غير صالح، أوقف الإرسال
             if (!isValid) {
                 e.preventDefault();
-
-                // التمرير إلى أول حقل به خطأ
                 $('html, body').animate({
                     scrollTop: $('[required]:invalid').first().offset().top - 100
                 }, 500);

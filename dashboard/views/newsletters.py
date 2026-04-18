@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
+from django.utils.translation import gettext as _
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -34,8 +35,8 @@ def dashboard_newsletters(request):
         'verified_subscribers': verified_subscribers,
         'unverified_subscribers': unverified_subscribers,
         'inactive_subscribers': inactive_subscribers,
-        'page_title': 'اشتراكات النشرة البريدية',
-        'current_page': 'اشتراكات النشرة البريدية'
+        'page_title': _('اشتراكات النشرة البريدية'),
+        'current_page': _('اشتراكات النشرة البريدية')
     }
     return render(request, 'dashboard/newsletters/newsletter_list.html', context)
 
@@ -48,15 +49,15 @@ def dashboard_newsletter_create(request):
         form = NewsletterForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, 'تم إضافة الاشتراك بنجاح')
+            messages.success(request, _('تم إضافة الاشتراك بنجاح'))
             return redirect('dashboard:dashboard_newsletters')
     else:
         form = NewsletterForm()
 
     context = {
         'form': form,
-        'page_title': 'إضافة اشتراك جديد',
-        'current_page': 'إضافة اشتراك جديد'
+        'page_title': _('إضافة اشتراك جديد'),
+        'current_page': _('إضافة اشتراك جديد')
     }
     return render(request, 'dashboard/newsletters/newsletter_form.html', context)
 
@@ -71,7 +72,7 @@ def dashboard_newsletter_edit(request, pk):
         form = NewsletterForm(request.POST, instance=newsletter)
         if form.is_valid():
             form.save()
-            messages.success(request, 'تم تحديث الاشتراك بنجاح')
+            messages.success(request, _('تم تحديث الاشتراك بنجاح'))
             return redirect('dashboard:dashboard_newsletters')
     else:
         form = NewsletterForm(instance=newsletter)
@@ -79,8 +80,8 @@ def dashboard_newsletter_edit(request, pk):
     context = {
         'form': form,
         'newsletter': newsletter,
-        'page_title': 'تعديل اشتراك',
-        'current_page': 'تعديل اشتراك'
+        'page_title': _('تعديل اشتراك'),
+        'current_page': _('تعديل اشتراك')
     }
     return render(request, 'dashboard/newsletters/newsletter_form.html', context)
 
@@ -93,13 +94,13 @@ def dashboard_newsletter_delete(request, pk):
 
     if request.method == 'POST':
         newsletter.delete()
-        messages.success(request, 'تم حذف الاشتراك بنجاح')
+        messages.success(request, _('تم حذف الاشتراك بنجاح'))
         return redirect('dashboard:dashboard_newsletters')
 
     context = {
         'newsletter': newsletter,
-        'page_title': 'حذف اشتراك',
-        'current_page': 'حذف اشتراك'
+        'page_title': _('حذف اشتراك'),
+        'current_page': _('حذف اشتراك')
     }
     return render(request, 'dashboard/newsletters/newsletter_confirm_delete.html', context)
 
@@ -115,7 +116,7 @@ def dashboard_newsletter_verify(request, pk):
         newsletter.verified_at = timezone.now()
         newsletter.verification_token = None  # Clear the token
         newsletter.save()
-        messages.success(request, f'تم التحقق من الاشتراك {newsletter.email} بنجاح')
+        messages.success(request, _('تم التحقق من الاشتراك %s بنجاح') % newsletter.email)
 
     return redirect('dashboard:dashboard_newsletters')
 
@@ -130,12 +131,12 @@ def dashboard_newsletter_toggle_verify(request, pk):
         if newsletter.is_verified:
             newsletter.is_verified = False
             newsletter.verified_at = None
-            messages.success(request, f'تم إلغاء التحقق من الاشتراك {newsletter.email}')
+            messages.success(request, _('تم إلغاء التحقق من الاشتراك %s') % newsletter.email)
         else:
             newsletter.is_verified = True
             newsletter.verified_at = timezone.now()
             newsletter.verification_token = None
-            messages.success(request, f'تم التحقق من الاشتراك {newsletter.email} بنجاح')
+            messages.success(request, _('تم التحقق من الاشتراك %s بنجاح') % newsletter.email)
         newsletter.save()
 
     return redirect('dashboard:dashboard_newsletters')
@@ -155,7 +156,7 @@ def dashboard_newsletter_send(request):
             subscribers = Newsletter.objects.filter(is_active=True, is_verified=True)
 
             if not subscribers.exists():
-                messages.warning(request, 'لا يوجد مشتركين موثقين لإرسال النشرة إليهم')
+                messages.warning(request, _('لا يوجد مشتركين موثقين لإرسال النشرة إليهم'))
                 return redirect('dashboard:dashboard_newsletter_send')
 
             site_settings = SiteSettings.get_settings()
@@ -292,7 +293,7 @@ def dashboard_newsletter_send(request):
                 default_subject = 'عروض حصرية من ESCO | Special Offers from ESCO'
 
             else:
-                messages.error(request, 'نوع النشرة غير صحيح')
+                messages.error(request, _('نوع النشرة غير صحيح'))
                 return redirect('dashboard:dashboard_newsletter_send')
 
             # استخدام الموضوع المخصص أو الافتراضي
@@ -346,9 +347,9 @@ def dashboard_newsletter_send(request):
                     error_count += 1
 
             if success_count > 0:
-                messages.success(request, f'تم إرسال النشرة البريدية بنجاح إلى {success_count} مشترك')
+                messages.success(request, _('تم إرسال النشرة البريدية بنجاح إلى %s مشترك') % success_count)
             if error_count > 0:
-                messages.warning(request, f'فشل إرسال {error_count} رسالة')
+                messages.warning(request, _('فشل إرسال %s رسالة') % error_count)
 
             return redirect('dashboard:dashboard_newsletters')
 
@@ -356,7 +357,7 @@ def dashboard_newsletter_send(request):
             error_traceback = traceback.format_exc()
             logger.error(f"Newsletter send error: {e}\n{error_traceback}")
             print(f"Newsletter send error: {e}\n{error_traceback}")  # For server logs
-            messages.error(request, f'حدث خطأ أثناء إرسال النشرة البريدية: {str(e)}')
+            messages.error(request, _('حدث خطأ أثناء إرسال النشرة البريدية: %s') % str(e))
             return redirect('dashboard:dashboard_newsletter_send')
 
     # GET request - عرض نموذج الإرسال
@@ -364,7 +365,7 @@ def dashboard_newsletter_send(request):
 
     context = {
         'subscribers_count': subscribers_count,
-        'page_title': 'إرسال نشرة بريدية',
-        'current_page': 'إرسال نشرة بريدية'
+        'page_title': _('إرسال نشرة بريدية'),
+        'current_page': _('إرسال نشرة بريدية')
     }
     return render(request, 'dashboard/newsletters/newsletter_send.html', context)

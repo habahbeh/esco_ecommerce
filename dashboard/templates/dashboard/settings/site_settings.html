@@ -3,11 +3,11 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 
-{% block title %}إعدادات الموقع{% endblock %}
+{% block title %}{% trans "إعدادات الموقع" %}{% endblock %}
 
-{% block page_title %}إعدادات الموقع{% endblock %}
+{% block page_title %}{% trans "إعدادات الموقع" %}{% endblock %}
 
-{% block current_page %}إعدادات الموقع{% endblock %}
+{% block current_page %}{% trans "إعدادات الموقع" %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -247,9 +247,9 @@
         <!-- بطاقة الإعدادات الرئيسية -->
         <div class="card settings-card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title"><i class="fa fa-cog section-icon"></i>إعدادات الموقع العامة</h5>
+                <h5 class="card-title"><i class="fa fa-cog section-icon"></i>{% trans "إعدادات الموقع العامة" %}</h5>
                 <button type="button" class="btn btn-sm btn-outline-secondary" id="togglePreview">
-                    <i class="fa fa-eye"></i> معاينة مباشرة
+                    <i class="fa fa-eye"></i> {% trans "معاينة مباشرة" %}
                 </button>
             </div>
             <div class="card-body">
@@ -260,27 +260,27 @@
                     <ul class="nav nav-tabs mb-4" id="settingsTabs" role="tablist">
                         <li class="nav-item">
                             <a class="nav-link active" id="basic-tab" data-bs-toggle="tab" href="#basic" role="tab">
-                                <i class="fa fa-info-circle"></i> معلومات أساسية
+                                <i class="fa fa-info-circle"></i> {% trans "معلومات أساسية" %}
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="appearance-tab" data-bs-toggle="tab" href="#appearance" role="tab">
-                                <i class="fa fa-palette"></i> المظهر والألوان
+                                <i class="fa fa-palette"></i> {% trans "المظهر والألوان" %}
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="contact-tab" data-bs-toggle="tab" href="#contact" role="tab">
-                                <i class="fa fa-address-book"></i> معلومات الاتصال
+                                <i class="fa fa-address-book"></i> {% trans "معلومات الاتصال" %}
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="social-tab" data-bs-toggle="tab" href="#social" role="tab">
-                                <i class="fa fa-share-alt"></i> التواصل الاجتماعي
+                                <i class="fa fa-share-alt"></i> {% trans "التواصل الاجتماعي" %}
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="about-tab" data-bs-toggle="tab" href="#about" role="tab">
-                                <i class="fa fa-info"></i> نبذة عن الشركة
+                                <i class="fa fa-info"></i> {% trans "نبذة عن الشركة" %}
                             </a>
                         </li>
                     </ul>
@@ -291,13 +291,13 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label for="id_site_name" class="form-label">اسم الموقع</label>
+                                        <label for="id_site_name" class="form-label">{% trans "اسم الموقع" %}</label>
                                         <input type="text" name="site_name" id="id_site_name" class="form-control" value="{{ object.site_name }}" required>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label for="id_site_description" class="form-label">وصف الموقع</label>
+                                        <label for="id_site_description" class="form-label">{% trans "وصف الموقع" %}</label>
                                         <textarea name="site_description" id="id_site_description" class="form-control" rows="1">{{ object.site_description }}</textarea>
                                     </div>
                                 </div>
@@ -306,14 +306,14 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="img-preview-container">
-                                        <label class="form-label">شعار الموقع</label>
+                                        <label class="form-label">{% trans "شعار الموقع" %}</label>
                                         <div class="img-preview" id="logo-preview" onclick="document.getElementById('id_logo').click();">
                                             {% if object.logo %}
                                             <!-- سيتم تعبئته بواسطة JavaScript -->
                                             {% else %}
                                             <div class="text-center">
                                                 <i class="fa fa-cloud-upload-alt upload-icon"></i>
-                                                <p class="mt-2 mb-0">انقر لتحميل الشعار</p>
+                                                <p class="mt-2 mb-0">{% trans "انقر لتحميل الشعار" %}</p>
                                             </div>
                                             {% endif %}
                                         </div>
@@ -322,14 +322,14 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="img-preview-container">
-                                        <label class="form-label">أيقونة الموقع (Favicon)</label>
+                                        <label class="form-label">{% trans "أيقونة الموقع (Favicon)" %}</label>
                                         <div class="img-preview" id="favicon-preview" onclick="document.getElementById('id_favicon').click();">
                                             {% if object.favicon %}
                                             <!-- سيتم تعبئته بواسطة JavaScript -->
                                             {% else %}
                                             <div class="text-center">
                                                 <i class="fa fa-cloud-upload-alt upload-icon"></i>
-                                                <p class="mt-2 mb-0">انقر لتحميل الأيقونة</p>
+                                                <p class="mt-2 mb-0">{% trans "انقر لتحميل الأيقونة" %}</p>
                                             </div>
                                             {% endif %}
                                         </div>
@@ -340,13 +340,13 @@
 
                             <hr>
                             <h6 class="text-primary mb-3">
-                                <i class="fa fa-book me-1"></i> كتالوج الشركة (PDF)
-                                <small class="text-muted ms-2">— PDF فقط، حد أقصى 25 ميجابايت</small>
+                                <i class="fa fa-book me-1"></i> {% trans "كتالوج الشركة (PDF)" %}
+                                <small class="text-muted ms-2">— {% trans "PDF فقط، حد أقصى 25 ميجابايت" %}</small>
                             </h6>
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label for="id_catalog_ar" class="form-label">الكتالوج (عربي)</label>
+                                        <label for="id_catalog_ar" class="form-label">{% trans "الكتالوج (عربي)" %}</label>
                                         <input type="file" name="catalog_ar" id="id_catalog_ar" class="form-control" accept="application/pdf,.pdf">
                                         {% if form.catalog_ar.errors %}
                                         <div class="invalid-feedback d-block">{{ form.catalog_ar.errors }}</div>
@@ -354,7 +354,7 @@
                                         {% if object.catalog_ar %}
                                         <small class="d-block mt-1">
                                             <i class="fa fa-file-pdf text-danger"></i>
-                                            <a href="{{ object.catalog_ar.url }}" target="_blank">الملف الحالي</a>
+                                            <a href="{{ object.catalog_ar.url }}" target="_blank">{% trans "الملف الحالي" %}</a>
                                         </small>
                                         {% endif %}
                                     </div>
@@ -382,7 +382,7 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label for="id_primary_color" class="form-label">اللون الرئيسي</label>
+                                        <label for="id_primary_color" class="form-label">{% trans "اللون الرئيسي" %}</label>
                                         <select name="primary_color" id="id_primary_color" class="form-select">
                                             {% for value, name in object.PRIMARY_COLOR_CHOICES %}
                                             <option value="{{ value }}" {% if object.primary_color == value %}selected{% endif %} style="background-color: {{ value }}; color: {% if value == '#1e88e5' or value == '#e53935' or value == '#0357b5' or value == '#6d4c41' %}white{% else %}black{% endif %};">{{ name }}</option>
@@ -390,25 +390,25 @@
                                         </select>
 
                                         <div class="color-preview" id="color-preview" style="background-color: {{ object.primary_color }};">
-                                            <span>معاينة اللون الرئيسي</span>
+                                            <span>{% trans "معاينة اللون الرئيسي" %}</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label">إعدادات الوضع الداكن</label>
+                                        <label class="form-label">{% trans "إعدادات الوضع الداكن" %}</label>
                                         <div class="form-check form-switch mb-2">
                                             <input class="form-check-input" type="checkbox" name="enable_dark_mode" id="id_enable_dark_mode" {% if object.enable_dark_mode %}checked{% endif %}>
-                                            <label class="form-check-label" for="id_enable_dark_mode">تفعيل الوضع الداكن</label>
+                                            <label class="form-check-label" for="id_enable_dark_mode">{% trans "تفعيل الوضع الداكن" %}</label>
                                         </div>
                                         <div class="form-check form-switch">
                                             <input class="form-check-input" type="checkbox" name="default_dark_mode" id="id_default_dark_mode" {% if object.default_dark_mode %}checked{% endif %}>
-                                            <label class="form-check-label" for="id_default_dark_mode">الوضع الداكن افتراضيًا</label>
+                                            <label class="form-check-label" for="id_default_dark_mode">{% trans "الوضع الداكن افتراضيًا" %}</label>
                                         </div>
 
                                         <div id="dark-mode-preview" class="dark-mode-preview" style="display: {% if object.enable_dark_mode %}block{% else %}none{% endif %};">
-                                            <h6>معاينة الوضع الداكن</h6>
-                                            <p class="mb-0">هكذا سيظهر الموقع في الوضع الداكن</p>
+                                            <h6>{% trans "معاينة الوضع الداكن" %}</h6>
+                                            <p class="mb-0">{% trans "هكذا سيظهر الموقع في الوضع الداكن" %}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -420,7 +420,7 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label for="id_email" class="form-label">البريد الإلكتروني</label>
+                                        <label for="id_email" class="form-label">{% trans "البريد الإلكتروني" %}</label>
                                         <div class="input-group">
                                             <span class="input-group-text"><i class="fa fa-envelope"></i></span>
                                             <input type="email" name="email" id="id_email" class="form-control" value="{{ object.email }}" dir="ltr">
@@ -429,7 +429,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label for="id_phone" class="form-label">رقم الهاتف</label>
+                                        <label for="id_phone" class="form-label">{% trans "رقم الهاتف" %}</label>
                                         <div class="input-group">
                                             <span class="input-group-text"><i class="fa fa-phone"></i></span>
                                             <input type="text" name="phone" id="id_phone" class="form-control" value="{{ object.phone }}" dir="ltr">
@@ -439,7 +439,7 @@
                             </div>
 
                             <div class="mb-3">
-                                <label for="id_address" class="form-label">العنوان</label>
+                                <label for="id_address" class="form-label">{% trans "العنوان" %}</label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="fa fa-map-marker-alt"></i></span>
                                     <textarea name="address" id="id_address" class="form-control" rows="2">{{ object.address }}</textarea>
@@ -450,7 +450,7 @@
                         <!-- التواصل الاجتماعي -->
                         <div class="tab-pane fade" id="social" role="tabpanel">
                             <div class="mb-3">
-                                <label for="id_facebook" class="form-label">فيسبوك</label>
+                                <label for="id_facebook" class="form-label">{% trans "فيسبوك" %}</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light"><i class="fab fa-facebook-f text-primary"></i></span>
                                     <input type="url" name="facebook" id="id_facebook" class="form-control" value="{{ object.facebook }}" dir="ltr" placeholder="https://facebook.com/username">
@@ -458,7 +458,7 @@
                             </div>
 
                             <div class="mb-3">
-                                <label for="id_twitter" class="form-label">تويتر</label>
+                                <label for="id_twitter" class="form-label">{% trans "تويتر" %}</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light"><i class="fab fa-twitter text-info"></i></span>
                                     <input type="url" name="twitter" id="id_twitter" class="form-control" value="{{ object.twitter }}" dir="ltr" placeholder="https://twitter.com/username">
@@ -466,7 +466,7 @@
                             </div>
 
                             <div class="mb-3">
-                                <label for="id_instagram" class="form-label">انستغرام</label>
+                                <label for="id_instagram" class="form-label">{% trans "انستغرام" %}</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light"><i class="fab fa-instagram text-danger"></i></span>
                                     <input type="url" name="instagram" id="id_instagram" class="form-control" value="{{ object.instagram }}" dir="ltr" placeholder="https://instagram.com/username">
@@ -474,7 +474,7 @@
                             </div>
 
                             <div class="mb-3">
-                                <label for="id_linkedin" class="form-label">لينكد إن</label>
+                                <label for="id_linkedin" class="form-label">{% trans "لينكد إن" %}</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light"><i class="fab fa-linkedin-in text-primary"></i></span>
                                     <input type="url" name="linkedin" id="id_linkedin" class="form-control" value="{{ object.linkedin }}" dir="ltr" placeholder="https://linkedin.com/in/username">
@@ -482,7 +482,7 @@
                             </div>
 
                             <div class="mb-3">
-                                <label for="id_whatsapp" class="form-label">واتساب</label>
+                                <label for="id_whatsapp" class="form-label">{% trans "واتساب" %}</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light"><i class="fab fa-whatsapp-in text-primary"></i></span>
                                     <input type="url" name="whatsapp" id="id_whatsapp" class="form-control" value="{{ object.whatsapp }}" dir="ltr" placeholder="https://whatsapp.com/">
@@ -494,12 +494,12 @@
                         <div class="tab-pane fade" id="about" role="tabpanel">
                             <div class="alert alert-info">
                                 <i class="fa fa-info-circle me-1"></i>
-                                هذا المحتوى يظهر في صفحة <a href="/about/" target="_blank">نبذة عن الشركة</a>. يدعم HTML بسيط (فقرات، عناوين، روابط).
+                                {% trans "هذا المحتوى يظهر في صفحة نبذة عن الشركة. يدعم HTML بسيط (فقرات، عناوين، روابط)." %}
                             </div>
 
                             <div class="mb-4">
                                 <label for="id_about_content_ar" class="form-label fw-bold">
-                                    <i class="fa fa-language me-1"></i> المحتوى بالعربية
+                                    <i class="fa fa-language me-1"></i> {% trans "المحتوى بالعربية" %}
                                 </label>
                                 <textarea name="about_content_ar" id="id_about_content_ar" class="form-control" rows="10" dir="rtl">{{ about_content.content_ar }}</textarea>
                             </div>
@@ -517,10 +517,10 @@
 
                     <div class="d-flex justify-content-between mt-4">
                         <button type="button" class="btn btn-outline-secondary" onclick="window.location.reload();">
-                            <i class="fa fa-undo"></i> إلغاء التغييرات
+                            <i class="fa fa-undo"></i> {% trans "إلغاء التغييرات" %}
                         </button>
                         <button type="submit" class="btn btn-primary">
-                            <i class="fa fa-save"></i> حفظ الإعدادات
+                            <i class="fa fa-save"></i> {% trans "حفظ الإعدادات" %}
                         </button>
                     </div>
                 </form>
@@ -530,7 +530,7 @@
         <!-- معاينة المباشرة (تظهر عند الضغط على زر المعاينة) -->
         <div class="card settings-card" id="livePreviewCard" style="display: none;">
             <div class="card-header">
-                <h5 class="card-title"><i class="fa fa-eye section-icon"></i>معاينة مباشرة للإعدادات</h5>
+                <h5 class="card-title"><i class="fa fa-eye section-icon"></i>{% trans "معاينة مباشرة للإعدادات" %}</h5>
             </div>
             <div class="card-body">
                 <div class="live-preview">
@@ -552,7 +552,7 @@
                                         {% else %}
                                         <div class="alert alert-light border">
                                             <i class="fa fa-image fa-2x mb-2"></i><br>
-                                            <span>لم يتم تحميل شعار</span>
+                                            <span>{% trans "لم يتم تحميل شعار" %}</span>
                                         </div>
                                         {% endif %}
                                     </div>
@@ -563,14 +563,14 @@
                                     <p class="mb-1" id="preview-description">{{ object.site_description }}</p>
                                     <div class="d-flex justify-content-between">
                                         <span><i class="fa fa-envelope"></i> <span id="preview-email">{{ object.email|default:"info@example.com" }}</span></span>
-                                        <span><i class="fa fa-phone"></i> <span id="preview-phone">{{ object.phone|default:"غير محدد" }}</span></span>
+                                        <span><i class="fa fa-phone"></i> <span id="preview-phone">{% trans "غير محدد" as not_specified %}{{ object.phone|default:not_specified }}</span></span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="preview-section">
-                            <span class="preview-section-title">وسائل التواصل</span>
+                            <span class="preview-section-title">{% trans "وسائل التواصل" %}</span>
                             <div class="d-flex flex-wrap justify-content-center">
                                 <div id="preview-socials" class="d-flex gap-3">
                                     {% if object.facebook or object.twitter or object.instagram or object.linkedin %}
@@ -590,7 +590,7 @@
                                     <a href="#" class="btn btn-sm btn-outline-primary"><i class="fab fa-whatsapp-in"></i></a>
                                     {% endif %}
                                     {% else %}
-                                    <div class="text-muted">لم يتم إضافة وسائل تواصل اجتماعي</div>
+                                    <div class="text-muted">{% trans "لم يتم إضافة وسائل تواصل اجتماعي" %}</div>
                                     {% endif %}
                                 </div>
                             </div>
@@ -605,30 +605,30 @@
         <!-- بطاقة المعلومات -->
         <div class="card settings-card">
             <div class="card-header">
-                <h5 class="card-title"><i class="fa fa-info-circle section-icon"></i>ملخص الإعدادات</h5>
+                <h5 class="card-title"><i class="fa fa-info-circle section-icon"></i>{% trans "ملخص الإعدادات" %}</h5>
             </div>
             <div class="card-body">
                 <div class="alert alert-light border-primary border-start border-4">
                     <i class="fa fa-lightbulb text-warning"></i>
-                    تُستخدم هذه الإعدادات في تخصيص مظهر وسلوك الموقع. قم بحفظ التغييرات لتطبيقها على الموقع.
+                    {% trans "تُستخدم هذه الإعدادات في تخصيص مظهر وسلوك الموقع. قم بحفظ التغييرات لتطبيقها على الموقع." %}
                 </div>
 
                 <div class="table-responsive mt-3">
                     <table class="table table-bordered info-table">
                         <tr>
-                            <th>اسم الموقع</th>
+                            <th>{% trans "اسم الموقع" %}</th>
                             <td id="info-site-name">{{ object.site_name }}</td>
                         </tr>
                         <tr>
-                            <th>البريد الإلكتروني</th>
-                            <td id="info-email">{{ object.email|default:"غير محدد" }}</td>
+                            <th>{% trans "البريد الإلكتروني" %}</th>
+                            <td id="info-email">{% trans "غير محدد" as not_specified %}{{ object.email|default:not_specified }}</td>
                         </tr>
                         <tr>
-                            <th>رقم الهاتف</th>
-                            <td id="info-phone">{{ object.phone|default:"غير محدد" }}</td>
+                            <th>{% trans "رقم الهاتف" %}</th>
+                            <td id="info-phone">{% trans "غير محدد" as not_specified %}{{ object.phone|default:not_specified }}</td>
                         </tr>
                         <tr>
-                            <th>اللون الرئيسي</th>
+                            <th>{% trans "اللون الرئيسي" %}</th>
                             <td>
                                 <div class="d-flex align-items-center">
                                     <span class="d-inline-block rounded-circle me-2" style="width: 20px; height: 20px; background-color: {{ object.primary_color }};"></span>
@@ -637,12 +637,12 @@
                             </td>
                         </tr>
                         <tr>
-                            <th>الوضع الداكن</th>
+                            <th>{% trans "الوضع الداكن" %}</th>
                             <td id="info-dark-mode">
                                 {% if object.enable_dark_mode %}
-                                <span class="badge bg-success">مفعل</span>
+                                <span class="badge bg-success">{% trans "مفعل" %}</span>
                                 {% else %}
-                                <span class="badge bg-secondary">غير مفعل</span>
+                                <span class="badge bg-secondary">{% trans "غير مفعل" %}</span>
                                 {% endif %}
                             </td>
                         </tr>
@@ -654,7 +654,7 @@
         <!-- بطاقة وسائل التواصل -->
         <div class="card settings-card">
             <div class="card-header">
-                <h5 class="card-title"><i class="fa fa-share-alt section-icon"></i>وسائل التواصل الاجتماعي</h5>
+                <h5 class="card-title"><i class="fa fa-share-alt section-icon"></i>{% trans "وسائل التواصل الاجتماعي" %}</h5>
             </div>
             <div class="card-body">
                 <div id="social-links-container">
@@ -715,7 +715,7 @@
                     {% else %}
                     <div class="alert alert-light text-center border">
                         <i class="fa fa-share-alt fa-2x mb-2"></i>
-                        <p class="mb-0">لم يتم إضافة أي روابط لوسائل التواصل الاجتماعي بعد.</p>
+                        <p class="mb-0">{% trans "لم يتم إضافة أي روابط لوسائل التواصل الاجتماعي بعد." %}</p>
                     </div>
                     {% endif %}
                 </div>
@@ -725,25 +725,25 @@
         <!-- بطاقة نصائح -->
         <div class="card settings-card">
             <div class="card-header">
-                <h5 class="card-title"><i class="fa fa-lightbulb section-icon"></i>نصائح مفيدة</h5>
+                <h5 class="card-title"><i class="fa fa-lightbulb section-icon"></i>{% trans "نصائح مفيدة" %}</h5>
             </div>
             <div class="card-body">
                 <ul class="list-group">
                     <li class="list-group-item">
                         <i class="fa fa-check-circle text-success me-2"></i>
-                        الشعار المثالي بأبعاد 300×100 بكسل.
+                        {% trans "الشعار المثالي بأبعاد 300×100 بكسل." %}
                     </li>
                     <li class="list-group-item">
                         <i class="fa fa-check-circle text-success me-2"></i>
-                        أيقونة الموقع (Favicon) يجب أن تكون بأبعاد 32×32 بكسل.
+                        {% trans "أيقونة الموقع (Favicon) يجب أن تكون بأبعاد 32×32 بكسل." %}
                     </li>
                     <li class="list-group-item">
                         <i class="fa fa-check-circle text-success me-2"></i>
-                        اختر لون رئيسي يعكس هوية موقعك.
+                        {% trans "اختر لون رئيسي يعكس هوية موقعك." %}
                     </li>
                     <li class="list-group-item">
                         <i class="fa fa-check-circle text-success me-2"></i>
-                        تأكد من إضافة معلومات الاتصال الصحيحة.
+                        {% trans "تأكد من إضافة معلومات الاتصال الصحيحة." %}
                     </li>
                 </ul>
             </div>
@@ -752,7 +752,7 @@
 </div>
 
 <!-- زر حفظ عائم -->
-<button type="button" class="btn btn-primary btn-floating" id="scrollToTop" title="العودة لأعلى الصفحة">
+<button type="button" class="btn btn-primary btn-floating" id="scrollToTop" title="{% trans 'العودة لأعلى الصفحة' %}">
     <i class="fa fa-arrow-up"></i>
 </button>
 {% endblock %}
@@ -843,34 +843,34 @@
             if ($(this).is(':checked')) {
                 $('#dark-mode-preview').slideDown();
                 $('#id_default_dark_mode').prop('disabled', false);
-                $('#info-dark-mode').html('<span class="badge bg-success">مفعل</span>');
+                $('#info-dark-mode').html('<span class="badge bg-success">{% trans "مفعل" %}</span>');
             } else {
                 $('#dark-mode-preview').slideUp();
                 $('#id_default_dark_mode').prop('checked', false).prop('disabled', true);
-                $('#info-dark-mode').html('<span class="badge bg-secondary">غير مفعل</span>');
+                $('#info-dark-mode').html('<span class="badge bg-secondary">{% trans "غير مفعل" %}</span>');
             }
         });
 
         // تحديث المعلومات في الوقت الحقيقي
         $('#id_site_name').on('input', function() {
-            var value = $(this).val() || "اسم الموقع";
+            var value = $(this).val() || "{% trans 'اسم الموقع' %}";
             $('#info-site-name').text(value);
             $('#preview-site-name').text(value);
         });
 
         $('#id_site_description').on('input', function() {
-            var value = $(this).val() || "وصف الموقع";
+            var value = $(this).val() || "{% trans 'وصف الموقع' %}";
             $('#preview-description').text(value);
         });
 
         $('#id_email').on('input', function() {
-            var value = $(this).val() || "غير محدد";
+            var value = $(this).val() || "{% trans 'غير محدد' %}";
             $('#info-email').text(value);
             $('#preview-email').text(value);
         });
 
         $('#id_phone').on('input', function() {
-            var value = $(this).val() || "غير محدد";
+            var value = $(this).val() || "{% trans 'غير محدد' %}";
             $('#info-phone').text(value);
             $('#preview-phone').text(value);
         });
@@ -898,7 +898,7 @@
                     html += '<a href="#" class="btn btn-sm btn-outline-primary"><i class="fab fa-linkedin-in"></i></a>';
                 }
             } else {
-                html = '<div class="text-muted">لم يتم إضافة وسائل تواصل اجتماعي</div>';
+                html = '<div class="text-muted">{% trans "لم يتم إضافة وسائل تواصل اجتماعي" %}</div>';
             }
 
             $('#preview-socials').html(html);
@@ -969,7 +969,7 @@
                 html = `
                 <div class="alert alert-light text-center border">
                     <i class="fa fa-share-alt fa-2x mb-2"></i>
-                    <p class="mb-0">لم يتم إضافة أي روابط لوسائل التواصل الاجتماعي بعد.</p>
+                    <p class="mb-0">{% trans "لم يتم إضافة أي روابط لوسائل التواصل الاجتماعي بعد." %}</p>
                 </div>`;
             }
 
@@ -1026,17 +1026,17 @@
                 contentType: false,
                 beforeSend: function() {
                     // إظهار مؤشر التحميل
-                    $('button[type="submit"]').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> جاري الحفظ...');
+                    $('button[type="submit"]').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> {% trans "جاري الحفظ..." %}');
                 },
                 success: function(response) {
                     // إظهار رسالة نجاح
-                    toastr.success('تم حفظ الإعدادات بنجاح');
-                    $('button[type="submit"]').prop('disabled', false).html('<i class="fa fa-save"></i> حفظ الإعدادات');
+                    toastr.success('{% trans "تم حفظ الإعدادات بنجاح" %}');
+                    $('button[type="submit"]').prop('disabled', false).html('<i class="fa fa-save"></i> {% trans "حفظ الإعدادات" %}');
                 },
                 error: function(xhr, status, error) {
                     // إظهار رسالة خطأ
-                    toastr.error('حدث خطأ أثناء حفظ الإعدادات');
-                    $('button[type="submit"]').prop('disabled', false).html('<i class="fa fa-save"></i> حفظ الإعدادات');
+                    toastr.error('{% trans "حدث خطأ أثناء حفظ الإعدادات" %}');
+                    $('button[type="submit"]').prop('disabled', false).html('<i class="fa fa-save"></i> {% trans "حفظ الإعدادات" %}');
                 }
             });
             */

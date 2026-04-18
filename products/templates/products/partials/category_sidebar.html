@@ -50,7 +50,9 @@
                         </div>
                         <div class="flex-grow-1 min-width-0">
                             <h6 class="mb-0 text-truncate">{{ related.name }}</h6>
+                            {% if related.is_price_visible %}
                             <div class="small text-primary fw-bold">{{ related.current_price|floatformat:2 }} {% trans "د.أ" %}</div>
+                            {% endif %}
                         </div>
                     </a>
                 {% endfor %}

@@ -54,7 +54,7 @@
                                                     </div>
                     </td>
                     <td class="fw-bold">
-                        {% if product.show_price %}
+                        {% if product.is_price_visible %}
                             {% if variant.has_discount %}
                                 <div class="text-decoration-line-through text-muted" style="font-size: 0.8rem;">{{ variant.variant_base_price|floatformat:2 }} {% trans "د.أ" %}</div>
                                 <div class="text-danger fw-bold">{{ variant.current_price|floatformat:2 }} {% trans "د.أ" %}</div>

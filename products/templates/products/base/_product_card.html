@@ -36,10 +36,12 @@
             {% endif %}
         </h3>
         <div class="product-details">
+            {% if product.is_price_visible %}
             <div class="product-info">
                 <i class="fas fa-tag"></i>
                 <span>{{ product.current_price|floatformat:2 }} {% trans "د.أ" %}</span>
             </div>
+            {% endif %}
             <div class="product-info">
                 <i class="fas fa-layer-group"></i>
                 {% if LANGUAGE_CODE == 'en' %}

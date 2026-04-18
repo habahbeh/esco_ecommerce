@@ -66,12 +66,14 @@
         </form>
 
         <!-- عرض السعر المحدث بناءً على المتغير -->
+        {% if product.is_price_visible %}
         <div class="variant-price mt-2">
             <span class="price-label">{% trans "السعر" %}:</span>
             <span class="price-value" id="variant_price">
                 {{ selected_variant.price|default:product.current_price|floatformat:2 }} {% trans "د.أ" %}
             </span>
         </div>
+        {% endif %}
 
         <!-- JavaScript لتحديث معرف المتغير والسعر عند الاختيار -->
         <script>

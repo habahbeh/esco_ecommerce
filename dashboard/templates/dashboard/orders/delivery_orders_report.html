@@ -3,14 +3,14 @@
 {% load i18n %}
 {% load dashboard_tags %}
 
-{% block title %}تقرير الطلبات المنتظرة التوصيل{% endblock %}
-{% block page_title %}تقرير الطلبات المنتظرة التوصيل{% endblock %}
+{% block title %}{% trans "تقرير الطلبات المنتظرة التوصيل" %}{% endblock %}
+{% block page_title %}{% trans "تقرير الطلبات المنتظرة التوصيل" %}{% endblock %}
 
 {% block breadcrumbs %}
-<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_orders' %}">إدارة الطلبات</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_orders' %}">{% trans "إدارة الطلبات" %}</a></li>
 {% endblock %}
 
-{% block current_page %}تقرير الطلبات المنتظرة التوصيل{% endblock %}
+{% block current_page %}{% trans "تقرير الطلبات المنتظرة التوصيل" %}{% endblock %}
 
 {% block content %}
 <!-- ملخص الإحصائيات -->
@@ -19,10 +19,10 @@
         <div class="card stat-card bg-primary text-white h-100">
             <div class="card-body">
                 <h5 class="card-title mb-4">
-                    <i class="fas fa-truck me-2"></i> إجمالي الطلبات المنتظرة
+                    <i class="fas fa-truck me-2"></i> {% trans "إجمالي الطلبات المنتظرة" %}
                 </h5>
                 <h3 class="mb-2">{{ stats.total_orders }}</h3>
-                <p class="card-text">طلب منتظر التوصيل</p>
+                <p class="card-text">{% trans "طلب منتظر التوصيل" %}</p>
             </div>
         </div>
     </div>
@@ -30,10 +30,10 @@
         <div class="card stat-card bg-success text-white h-100">
             <div class="card-body">
                 <h5 class="card-title mb-4">
-                    <i class="fas fa-money-bill-wave me-2"></i> القيمة الإجمالية
+                    <i class="fas fa-money-bill-wave me-2"></i> {% trans "القيمة الإجمالية" %}
                 </h5>
                 <h3 class="mb-2">{{ stats.total_value|currency }}</h3>
-                <p class="card-text">إجمالي قيمة الطلبات</p>
+                <p class="card-text">{% trans "إجمالي قيمة الطلبات" %}</p>
             </div>
         </div>
     </div>
@@ -42,39 +42,39 @@
 <!-- فلاتر البحث -->
 <div class="card mb-4">
     <div class="card-header bg-light">
-        <h5 class="mb-0">بحث وتصفية</h5>
+        <h5 class="mb-0">{% trans "بحث وتصفية" %}</h5>
     </div>
     <div class="card-body">
         <form method="get" id="search-form">
             <div class="row">
                 <div class="col-md-4 mb-3">
-                    <label for="q" class="form-label">بحث</label>
+                    <label for="q" class="form-label">{% trans "بحث" %}</label>
                     <div class="input-group">
-                        <input type="text" class="form-control" id="q" name="q" placeholder="رقم الطلب، اسم العميل..." value="{{ query }}">
+                        <input type="text" class="form-control" id="q" name="q" placeholder="{% trans 'رقم الطلب، اسم العميل...' %}" value="{{ query }}">
                         <button class="btn btn-outline-primary" type="submit">
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label for="date_from" class="form-label">من تاريخ</label>
+                    <label for="date_from" class="form-label">{% trans "من تاريخ" %}</label>
                     <input type="date" class="form-control" id="date_from" name="date_from" value="{{ date_from|date:'Y-m-d' }}">
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label for="date_to" class="form-label">إلى تاريخ</label>
+                    <label for="date_to" class="form-label">{% trans "إلى تاريخ" %}</label>
                     <input type="date" class="form-control" id="date_to" name="date_to" value="{{ date_to|date:'Y-m-d' }}">
                 </div>
             </div>
             <div class="row">
                 <div class="col-12">
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-filter me-1"></i> تصفية
+                        <i class="fas fa-filter me-1"></i> {% trans "تصفية" %}
                     </button>
                     <a href="{% url 'dashboard:dashboard_delivery_orders_report' %}" class="btn btn-outline-secondary">
-                        <i class="fas fa-eraser me-1"></i> مسح الفلاتر
+                        <i class="fas fa-eraser me-1"></i> {% trans "مسح الفلاتر" %}
                     </a>
                     <a href="#" class="btn btn-outline-success float-end" onclick="window.print()">
-                        <i class="fas fa-print me-1"></i> طباعة التقرير
+                        <i class="fas fa-print me-1"></i> {% trans "طباعة التقرير" %}
                     </a>
                 </div>
             </div>
@@ -85,21 +85,21 @@
 <!-- جدول الطلبات -->
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">قائمة الطلبات المنتظرة التوصيل</h5>
-        <span class="badge bg-primary">{{ orders.paginator.count }} طلب</span>
+        <h5 class="mb-0">{% trans "قائمة الطلبات المنتظرة التوصيل" %}</h5>
+        <span class="badge bg-primary">{{ orders.paginator.count }} {% trans "طلب" %}</span>
     </div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-hover table-striped">
                 <thead>
                     <tr>
-                        <th>رقم الطلب</th>
-                        <th>تاريخ الطلب</th>
-                        <th>العميل</th>
-                        <th>الهاتف</th>
-                        <th>العنوان</th>
-                        <th>المبلغ</th>
-                        <th>الإجراءات</th>
+                        <th>{% trans "رقم الطلب" %}</th>
+                        <th>{% trans "تاريخ الطلب" %}</th>
+                        <th>{% trans "العميل" %}</th>
+                        <th>{% trans "الهاتف" %}</th>
+                        <th>{% trans "العنوان" %}</th>
+                        <th>{% trans "المبلغ" %}</th>
+                        <th>{% trans "الإجراءات" %}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -113,13 +113,13 @@
                         <td>{{ order.grand_total|currency }}</td>
                         <td>
                             <a href="{% url 'dashboard:dashboard_order_detail' order_id=order.id %}" class="btn btn-sm btn-info">
-                                <i class="fas fa-eye"></i> عرض
+                                <i class="fas fa-eye"></i> {% trans "عرض" %}
                             </a>
                             <a href="{% url 'dashboard:dashboard_order_print' order_id=order.id %}" class="btn btn-sm btn-success" target="_blank">
-                                <i class="fas fa-print"></i> طباعة وإغلاق
+                                <i class="fas fa-print"></i> {% trans "طباعة وإغلاق" %}
                             </a>
                             <a href="tel:{{ order.phone }}" class="btn btn-sm btn-primary">
-                                <i class="fas fa-phone"></i> اتصال
+                                <i class="fas fa-phone"></i> {% trans "اتصال" %}
                             </a>
                         </td>
                     </tr>
@@ -127,7 +127,7 @@
                     <tr>
                         <td colspan="7" class="text-center py-4">
                             <div class="alert alert-info mb-0">
-                                <i class="fas fa-info-circle me-2"></i> لا توجد طلبات منتظرة التوصيل حالياً
+                                <i class="fas fa-info-circle me-2"></i> {% trans "لا توجد طلبات منتظرة التوصيل حالياً" %}
                             </div>
                         </td>
                     </tr>
@@ -260,12 +260,12 @@
 
 <!-- عنوان التقرير للطباعة - مخفي عادةً ويظهر فقط عند الطباعة -->
 <div class="print-header" style="display: none;">
-    <h1>تقرير الطلبات المنتظرة التوصيل</h1>
-    <p>تاريخ الطباعة: {% now "Y-m-d H:i" %}</p>
+    <h1>{% trans "تقرير الطلبات المنتظرة التوصيل" %}</h1>
+    <p>{% trans "تاريخ الطباعة:" %} {% now "Y-m-d H:i" %}</p>
 </div>
 
 <!-- تذييل الطباعة -->
 <div class="print-footer" style="display: none;">
-    <p>© {% now "Y" %} - تم إنشاء هذا التقرير بواسطة نظام إدارة المتجر</p>
+    <p>© {% now "Y" %} - {% trans "تم إنشاء هذا التقرير بواسطة نظام إدارة المتجر" %}</p>
 </div>
 {% endblock %}

@@ -1,12 +1,12 @@
 {% extends 'dashboard/base.html' %}
-{% load static %}
+{% load static i18n %}
 
 {% block title %}{{ page_title }}{% endblock %}
 {% block page_title %}{{ page_title }}{% endblock %}
 
 {% block breadcrumbs %}
-<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_site_settings' %}">الإعدادات</a></li>
-<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_newsletters' %}">اشتراكات النشرة البريدية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_site_settings' %}">{% trans 'الإعدادات' %}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_newsletters' %}">{% trans 'اشتراكات النشرة البريدية' %}</a></li>
 {% endblock %}
 {% block current_page %}{{ current_page }}{% endblock %}
 
@@ -18,7 +18,7 @@
     <div class="card-body">
         <form method="post">
             {% csrf_token %}
-            
+
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group mb-3">
@@ -41,10 +41,10 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="form-group text-end mt-3">
-                <a href="{% url 'dashboard:dashboard_newsletters' %}" class="btn btn-secondary">إلغاء</a>
-                <button type="submit" class="btn btn-primary">حفظ</button>
+                <a href="{% url 'dashboard:dashboard_newsletters' %}" class="btn btn-secondary">{% trans 'إلغاء' %}</a>
+                <button type="submit" class="btn btn-primary">{% trans 'حفظ' %}</button>
             </div>
         </form>
     </div>

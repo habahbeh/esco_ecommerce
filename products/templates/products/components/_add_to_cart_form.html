@@ -23,12 +23,14 @@
         </div>
 
         <!-- Quantity x Price Display -->
+        {% if product.is_price_visible %}
         <div class="quantity-price" style="display: none;">
             <span class="quantity-price-text">
                 <span class="qty-amount">1</span> × {{ CURRENCY_SYMBOL|default:"د.أ" }} <span class="unit-price">{{ product.current_price|floatformat:2 }}</span> =
                 <strong>{{ CURRENCY_SYMBOL|default:"د.أ" }} <span class="total-price">{{ product.current_price|floatformat:2 }}</span></strong>
             </span>
         </div>
+        {% endif %}
     </div>
 
     <!-- Hidden Fields for Variants -->

@@ -789,24 +789,27 @@ function populatePricing(data) {
     const pricingContainer = document.getElementById('quickViewPricing');
     let pricingHTML = '';
 
-    if (data.has_discount) {
-        pricingHTML = `
-            <div class="pricing-container">
-                <span class="current-price">${parseFloat(data.price).toFixed(2)} {% trans "د.أ" %}</span>
-                <span class="original-price">${parseFloat(data.base_price).toFixed(2)}</span>
-                <span class="discount-badge">${data.discount_percentage}% {% trans "خصم" %}</span>
-            </div>
-            <div class="savings-amount mt-2">
-                <i class="fas fa-piggy-bank me-1"></i>
-                {% trans "توفر" %} ${(parseFloat(data.base_price) - parseFloat(data.price)).toFixed(2)} {% trans "د.أ" %}
-            </div>
-        `;
+    if (data.show_price && data.price !== null) {
+        if (data.has_discount) {
+            pricingHTML = `
+                <div class="pricing-container">
+                    <span class="current-price">${parseFloat(data.price).toFixed(2)} {% trans "د.أ" %}</span>
+                    <span class="original-price">${parseFloat(data.base_price).toFixed(2)}</span>
+                    <span class="discount-badge">${data.discount_percentage}% {% trans "خصم" %}</span>
+                </div>
+                <div class="savings-amount mt-2">
+                    <i class="fas fa-piggy-bank me-1"></i>
+                    {% trans "توفر" %} ${(parseFloat(data.base_price) - parseFloat(data.price)).toFixed(2)} {% trans "د.أ" %}
+                </div>
+            `;
+        } else {
+            pricingHTML = `
+                <div class="pricing-container">
+                    <span class="current-price">${parseFloat(data.price).toFixed(2)} {% trans "د.أ" %}</span>
+                </div>
+            `;
+        }
     } else {
-        pricingHTML = `
-            <div class="pricing-container">
-                <span class="current-price">${parseFloat(data.price).toFixed(2)} {% trans "د.أ" %}</span>
-            </div>
-        `;
     }
 
     pricingContainer.innerHTML = pricingHTML;

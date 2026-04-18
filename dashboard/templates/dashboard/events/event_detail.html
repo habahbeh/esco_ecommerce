@@ -1,12 +1,13 @@
 {% extends 'dashboard/base.html' %}
 {% load static %}
+{% load i18n %}
 
-{% block title %}تفاصيل الفعالية{% endblock %}
-{% block page_title %}تفاصيل الفعالية{% endblock %}
+{% block title %}{% trans "تفاصيل الفعالية" %}{% endblock %}
+{% block page_title %}{% trans "تفاصيل الفعالية" %}{% endblock %}
 
 {% block breadcrumbs %}
-<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_home' %}">الرئيسية</a></li>
-<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_events' %}">إدارة الفعاليات</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_home' %}">{% trans "الرئيسية" %}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_events' %}">{% trans "إدارة الفعاليات" %}</a></li>
 {% endblock %}
 {% block current_page %}{{ event.title }}{% endblock %}
 
@@ -44,10 +45,10 @@
     <div class="col-md-8">
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">معلومات الفعالية</h5>
+                <h5 class="card-title mb-0">{% trans "معلومات الفعالية" %}</h5>
                 <div>
                     <a href="{% url 'dashboard:dashboard_event_edit' event.id %}" class="btn btn-primary btn-sm">
-                        <i class="fa fa-edit"></i> تعديل
+                        <i class="fa fa-edit"></i> {% trans "تعديل" %}
                     </a>
                 </div>
             </div>
@@ -65,7 +66,7 @@
 
                         <div class="mb-3">
                             <span class="badge {% if event.is_active %}bg-success{% else %}bg-secondary{% endif %}">
-                                {% if event.is_active %}نشط{% else %}غير نشط{% endif %}
+                                {% if event.is_active %}{% trans "نشط" %}{% else %}{% trans "غير نشط" %}{% endif %}
                             </span>
                             <span class="badge
                                 {% if event.is_upcoming %}bg-primary{% elif event.is_ongoing %}bg-warning text-dark{% else %}bg-danger{% endif %}">
@@ -73,28 +74,28 @@
                             </span>
                         </div>
 
-                        <p><strong>تاريخ البدء:</strong> {{ event.start_date|date:"Y/m/d - H:i" }}</p>
-                        <p><strong>تاريخ الانتهاء:</strong> {{ event.end_date|date:"Y/m/d - H:i" }}</p>
-                        <p><strong>الموقع:</strong> {{ event.location }}</p>
+                        <p><strong>{% trans "تاريخ البدء:" %}</strong> {{ event.start_date|date:"Y/m/d - H:i" }}</p>
+                        <p><strong>{% trans "تاريخ الانتهاء:" %}</strong> {{ event.end_date|date:"Y/m/d - H:i" }}</p>
+                        <p><strong>{% trans "الموقع:" %}</strong> {{ event.location }}</p>
                         {% if event.location_en %}
-                        <p><strong>الموقع (EN):</strong> {{ event.location_en }}</p>
+                        <p><strong>{% trans "الموقع (EN):" %}</strong> {{ event.location_en }}</p>
                         {% endif %}
-                        <p><strong>يعرض في:</strong>
+                        <p><strong>{% trans "يعرض في:" %}</strong>
                             {% if event.display_in == 'banner' %}
-                            شريط علوي
+                            {% trans "شريط علوي" %}
                             {% elif event.display_in == 'slider' %}
-                            معرض شرائح
+                            {% trans "معرض شرائح" %}
                             {% elif event.display_in == 'both' %}
-                            كلاهما
+                            {% trans "كلاهما" %}
                             {% endif %}
                         </p>
-                        <p><strong>الترتيب:</strong> {{ event.order }}</p>
+                        <p><strong>{% trans "الترتيب:" %}</strong> {{ event.order }}</p>
 
                         {% if event.registration_url %}
-                        <p><strong>رابط التسجيل:</strong> <a href="{{ event.registration_url }}" target="_blank">{{ event.registration_url }}</a></p>
-                        <p><strong>نص الزر:</strong> {{ event.button_text }}</p>
+                        <p><strong>{% trans "رابط التسجيل:" %}</strong> <a href="{{ event.registration_url }}" target="_blank">{{ event.registration_url }}</a></p>
+                        <p><strong>{% trans "نص الزر:" %}</strong> {{ event.button_text }}</p>
                         {% if event.button_text_en %}
-                        <p><strong>نص الزر (EN):</strong> {{ event.button_text_en }}</p>
+                        <p><strong>{% trans "نص الزر (EN):" %}</strong> {{ event.button_text_en }}</p>
                         {% endif %}
                         {% endif %}
                     </div>
@@ -104,29 +105,29 @@
                 <div class="mt-3">
                     <ul class="nav nav-tabs lang-tabs mb-3" id="contentTabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="arabic-content-tab" data-bs-toggle="tab" data-bs-target="#arabic-content" type="button" role="tab" aria-controls="arabic-content" aria-selected="true">المحتوى العربي</button>
+                            <button class="nav-link active" id="arabic-content-tab" data-bs-toggle="tab" data-bs-target="#arabic-content" type="button" role="tab" aria-controls="arabic-content" aria-selected="true">{% trans "المحتوى العربي" %}</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="english-content-tab" data-bs-toggle="tab" data-bs-target="#english-content" type="button" role="tab" aria-controls="english-content" aria-selected="false">المحتوى الإنجليزي</button>
+                            <button class="nav-link" id="english-content-tab" data-bs-toggle="tab" data-bs-target="#english-content" type="button" role="tab" aria-controls="english-content" aria-selected="false">{% trans "المحتوى الإنجليزي" %}</button>
                         </li>
                     </ul>
 
                     <div class="tab-content" id="contentTabsContent">
                         <!-- المحتوى العربي -->
                         <div class="tab-pane fade show active" id="arabic-content" role="tabpanel" aria-labelledby="arabic-content-tab">
-                            <h5>الوصف المختصر</h5>
+                            <h5>{% trans "الوصف المختصر" %}</h5>
                             <p>{{ event.short_description }}</p>
 
-                            <h5>الوصف الكامل</h5>
+                            <h5>{% trans "الوصف الكامل" %}</h5>
                             <div>{{ event.description|safe }}</div>
                         </div>
 
                         <!-- المحتوى الإنجليزي -->
                         <div class="tab-pane fade" id="english-content" role="tabpanel" aria-labelledby="english-content-tab">
-                            <h5>الوصف المختصر</h5>
+                            <h5>{% trans "الوصف المختصر" %}</h5>
                             <p>{{ event.short_description_en|default:"لا يوجد وصف مختصر بالإنجليزية" }}</p>
 
-                            <h5>الوصف الكامل</h5>
+                            <h5>{% trans "الوصف الكامل" %}</h5>
                             <div>{{ event.description_en|safe|default:"لا يوجد وصف بالإنجليزية" }}</div>
                         </div>
                     </div>
@@ -139,23 +140,23 @@
     <div class="col-md-4">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0">معرض الصور</h5>
+                <h5 class="card-title mb-0">{% trans "معرض الصور" %}</h5>
             </div>
             <div class="card-body">
                 <form method="post" enctype="multipart/form-data" class="mb-4">
                     {% csrf_token %}
                     <div class="form-group mb-2">
-                        <label for="{{ image_form.image.id_for_label }}" class="form-label required">إضافة صورة جديدة</label>
+                        <label for="{{ image_form.image.id_for_label }}" class="form-label required">{% trans "إضافة صورة جديدة" %}</label>
                         {{ image_form.image }}
                     </div>
 
                     <!-- لسانات اللغة للصورة الجديدة -->
                     <ul class="nav nav-tabs lang-tabs mb-2" id="newImageTabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="new-arabic-tab" data-bs-toggle="tab" data-bs-target="#new-arabic-content" type="button" role="tab" aria-controls="new-arabic-content" aria-selected="true">عربي</button>
+                            <button class="nav-link active" id="new-arabic-tab" data-bs-toggle="tab" data-bs-target="#new-arabic-content" type="button" role="tab" aria-controls="new-arabic-content" aria-selected="true">{% trans "عربي" %}</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="new-english-tab" data-bs-toggle="tab" data-bs-target="#new-english-content" type="button" role="tab" aria-controls="new-english-content" aria-selected="false">إنجليزي</button>
+                            <button class="nav-link" id="new-english-tab" data-bs-toggle="tab" data-bs-target="#new-english-content" type="button" role="tab" aria-controls="new-english-content" aria-selected="false">{% trans "إنجليزي" %}</button>
                         </li>
                     </ul>
 
@@ -181,7 +182,7 @@
                         <label for="{{ image_form.order.id_for_label }}" class="form-label">{{ image_form.order.label }}</label>
                         {{ image_form.order }}
                     </div>
-                    <button type="submit" class="btn btn-primary mt-2">إضافة صورة</button>
+                    <button type="submit" class="btn btn-primary mt-2">{% trans "إضافة صورة" %}</button>
                 </form>
 
                 <hr>
@@ -198,17 +199,17 @@
                                 {% else %}
                                     <div class="text-center py-4 bg-light">
                                         <i class="fa fa-image fa-3x text-muted"></i>
-                                        <p class="text-muted mt-2">لا توجد صورة</p>
+                                        <p class="text-muted mt-2">{% trans "لا توجد صورة" %}</p>
                                     </div>
                                 {% endif %}
                                 <div class="card-body p-2">
                                     {% if image.caption or image.caption_en %}
                                     <ul class="nav nav-tabs lang-tabs mb-2 small" id="imageTabs{{ image.id }}" role="tablist">
                                         <li class="nav-item" role="presentation">
-                                            <button class="nav-link active py-1 px-2" id="ar-tab{{ image.id }}" data-bs-toggle="tab" data-bs-target="#ar-content{{ image.id }}" type="button" role="tab" aria-controls="ar-content{{ image.id }}" aria-selected="true">عربي</button>
+                                            <button class="nav-link active py-1 px-2" id="ar-tab{{ image.id }}" data-bs-toggle="tab" data-bs-target="#ar-content{{ image.id }}" type="button" role="tab" aria-controls="ar-content{{ image.id }}" aria-selected="true">{% trans "عربي" %}</button>
                                         </li>
                                         <li class="nav-item" role="presentation">
-                                            <button class="nav-link py-1 px-2" id="en-tab{{ image.id }}" data-bs-toggle="tab" data-bs-target="#en-content{{ image.id }}" type="button" role="tab" aria-controls="en-content{{ image.id }}" aria-selected="false">إنجليزي</button>
+                                            <button class="nav-link py-1 px-2" id="en-tab{{ image.id }}" data-bs-toggle="tab" data-bs-target="#en-content{{ image.id }}" type="button" role="tab" aria-controls="en-content{{ image.id }}" aria-selected="false">{% trans "إنجليزي" %}</button>
                                         </li>
                                     </ul>
 
@@ -221,7 +222,7 @@
                                         </div>
                                     </div>
                                     {% endif %}
-                                    <p class="card-text small text-muted">الترتيب: {{ image.order }}</p>
+                                    <p class="card-text small text-muted">{% trans "الترتيب:" %} {{ image.order }}</p>
                                     <div class="btn-group btn-group-sm w-100">
                                         <a href="{% url 'dashboard:dashboard_event_image_edit' event.id image.id %}" class="btn btn-info">
                                             <i class="fa fa-edit"></i>
@@ -238,7 +239,7 @@
                 </div>
                 {% else %}
                 <div class="alert alert-info">
-                    لا توجد صور في معرض هذه الفعالية.
+                    {% trans "لا توجد صور في معرض هذه الفعالية." %}
                 </div>
                 {% endif %}
             </div>

@@ -16,6 +16,7 @@ from products.models import Product, Category, Brand
 from orders.models import Order
 from cart.models import Cart
 from dashboard.forms.accounts import DashboardLoginForm  # استخدام نموذج تسجيل الدخول من accounts
+from django.utils.translation import gettext as _
 
 
 # دالة مساعدة للتحقق من صلاحيات الوصول للوحة التحكم
@@ -201,11 +202,11 @@ def dashboard_login(request):
                         return redirect('dashboard:dashboard_home')
                 else:
                     # المستخدم ليس لديه صلاحية الوصول للوحة التحكم
-                    messages.error(request, 'ليس لديك صلاحية الوصول إلى لوحة التحكم.')
+                    messages.error(request, _('ليس لديك صلاحية الوصول إلى لوحة التحكم.'))
                     return redirect('dashboard:dashboard_access_denied')
             else:
                 # فشل تسجيل الدخول
-                messages.error(request, 'اسم المستخدم أو كلمة المرور غير صحيحة.')
+                messages.error(request, _('اسم المستخدم أو كلمة المرور غير صحيحة.'))
     else:
         # إنشاء نموذج فارغ
         form = DashboardLoginForm()
@@ -227,5 +228,5 @@ def dashboard_access_denied(request):
 # في dashboard/views/dashboard.py
 def dashboard_logout(request):
     logout(request)
-    messages.success(request, 'تم تسجيل الخروج بنجاح')
+    messages.success(request, _('تم تسجيل الخروج بنجاح'))
     return redirect('dashboard:dashboard_login')

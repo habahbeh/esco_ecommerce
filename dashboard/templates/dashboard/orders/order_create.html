@@ -3,14 +3,14 @@
 {% load i18n %}
 {% load dashboard_tags %}
 
-{% block title %}إنشاء طلب جديد{% endblock %}
-{% block page_title %}إنشاء طلب جديد{% endblock %}
+{% block title %}{% trans 'إنشاء طلب جديد' %}{% endblock %}
+{% block page_title %}{% trans 'إنشاء طلب جديد' %}{% endblock %}
 
 {% block breadcrumbs %}
-<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_orders' %}">إدارة الطلبات</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_orders' %}">{% trans 'إدارة الطلبات' %}</a></li>
 {% endblock %}
 
-{% block current_page %}إنشاء طلب جديد{% endblock %}
+{% block current_page %}{% trans 'إنشاء طلب جديد' %}{% endblock %}
 
 {% block extra_css %}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -45,7 +45,7 @@
 {% block content %}
 <div class="card">
     <div class="card-header">
-        <h5 class="mb-0">إنشاء طلب جديد</h5>
+        <h5 class="mb-0">{% trans 'إنشاء طلب جديد' %}</h5>
     </div>
     <div class="card-body">
         <form method="post" id="createOrderForm">
@@ -53,12 +53,12 @@
 
             <!-- بيانات العميل -->
             <div class="mb-4">
-                <h5 class="border-bottom pb-2">معلومات العميل</h5>
+                <h5 class="border-bottom pb-2">{% trans 'معلومات العميل' %}</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="user_id" class="form-label">حساب المستخدم (اختياري)</label>
+                        <label for="user_id" class="form-label">{% trans 'حساب المستخدم (اختياري)' %}</label>
                         <select name="user_id" id="user_id" class="form-select select2">
-                            <option value="">اختر المستخدم أو اترك فارغاً لعميل جديد</option>
+                            <option value="">{% trans 'اختر المستخدم أو اترك فارغاً لعميل جديد' %}</option>
                             {% for user in users %}
                             <option value="{{ user.id }}">{{ user.get_full_name|default:user.username }} ({{ user.email }})</option>
                             {% endfor %}
@@ -68,15 +68,15 @@
 
                 <div class="row">
                     <div class="col-md-4 mb-3">
-                        <label for="full_name" class="form-label">الاسم الكامل <span class="text-danger">*</span></label>
+                        <label for="full_name" class="form-label">{% trans 'الاسم الكامل' %} <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="full_name" name="full_name" required>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label for="email" class="form-label">البريد الإلكتروني <span class="text-danger">*</span></label>
+                        <label for="email" class="form-label">{% trans 'البريد الإلكتروني' %} <span class="text-danger">*</span></label>
                         <input type="email" class="form-control" id="email" name="email" required>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label for="phone" class="form-label">رقم الهاتف <span class="text-danger">*</span></label>
+                        <label for="phone" class="form-label">{% trans 'رقم الهاتف' %} <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="phone" name="phone" required>
                     </div>
                 </div>
@@ -84,26 +84,26 @@
 
             <!-- عنوان الشحن -->
             <div class="mb-4">
-                <h5 class="border-bottom pb-2">عنوان الشحن</h5>
+                <h5 class="border-bottom pb-2">{% trans 'عنوان الشحن' %}</h5>
                 <div class="row">
                     <div class="col-md-12 mb-3">
-                        <label for="shipping_address" class="form-label">العنوان <span class="text-danger">*</span></label>
+                        <label for="shipping_address" class="form-label">{% trans 'العنوان' %} <span class="text-danger">*</span></label>
                         <textarea class="form-control" id="shipping_address" name="shipping_address" rows="3" required></textarea>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label for="shipping_city" class="form-label">المدينة <span class="text-danger">*</span></label>
+                        <label for="shipping_city" class="form-label">{% trans 'المدينة' %} <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="shipping_city" name="shipping_city" required>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label for="shipping_state" class="form-label">المحافظة/الولاية <span class="text-danger">*</span></label>
+                        <label for="shipping_state" class="form-label">{% trans 'المحافظة/الولاية' %} <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="shipping_state" name="shipping_state" required>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label for="shipping_country" class="form-label">الدولة <span class="text-danger">*</span></label>
+                        <label for="shipping_country" class="form-label">{% trans 'الدولة' %} <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="shipping_country" name="shipping_country" value="الأردن" required>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label for="shipping_postal_code" class="form-label">الرمز البريدي</label>
+                        <label for="shipping_postal_code" class="form-label">{% trans 'الرمز البريدي' %}</label>
                         <input type="text" class="form-control" id="shipping_postal_code" name="shipping_postal_code">
                     </div>
                 </div>
@@ -111,29 +111,29 @@
 
             <!-- المنتجات -->
             <div class="mb-4">
-                <h5 class="border-bottom pb-2">المنتجات</h5>
+                <h5 class="border-bottom pb-2">{% trans 'المنتجات' %}</h5>
                 <div id="products-container">
                     <!-- ستتم إضافة عناصر المنتج هنا بواسطة JavaScript -->
                 </div>
                 <button type="button" class="btn btn-outline-primary" id="add-product">
-                    <i class="fas fa-plus-circle"></i> إضافة منتج
+                    <i class="fas fa-plus-circle"></i> {% trans 'إضافة منتج' %}
                 </button>
             </div>
 
             <!-- التكاليف -->
             <div class="mb-4">
-                <h5 class="border-bottom pb-2">التكاليف والمبالغ</h5>
+                <h5 class="border-bottom pb-2">{% trans 'التكاليف والمبالغ' %}</h5>
                 <div class="row">
                     <div class="col-md-4 mb-3">
-                        <label for="shipping_cost" class="form-label">تكلفة الشحن</label>
+                        <label for="shipping_cost" class="form-label">{% trans 'تكلفة الشحن' %}</label>
                         <input type="number" step="0.01" min="0" class="form-control" id="shipping_cost" name="shipping_cost" value="0.00">
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label for="tax_amount" class="form-label">مبلغ الضريبة</label>
+                        <label for="tax_amount" class="form-label">{% trans 'مبلغ الضريبة' %}</label>
                         <input type="number" step="0.01" min="0" class="form-control" id="tax_amount" name="tax_amount" value="0.00">
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label for="discount_amount" class="form-label">مبلغ الخصم</label>
+                        <label for="discount_amount" class="form-label">{% trans 'مبلغ الخصم' %}</label>
                         <input type="number" step="0.01" min="0" class="form-control" id="discount_amount" name="discount_amount" value="0.00">
                     </div>
                 </div>
@@ -141,10 +141,10 @@
 
             <!-- معلومات الطلب -->
             <div class="mb-4">
-                <h5 class="border-bottom pb-2">معلومات الطلب</h5>
+                <h5 class="border-bottom pb-2">{% trans 'معلومات الطلب' %}</h5>
                 <div class="row">
                     <div class="col-md-4 mb-3">
-                        <label for="status" class="form-label">حالة الطلب</label>
+                        <label for="status" class="form-label">{% trans 'حالة الطلب' %}</label>
                         <select name="status" id="status" class="form-select">
                             {% for status_value, status_name in status_choices %}
                             <option value="{{ status_value }}" {% if status_value == 'pending' %}selected{% endif %}>
@@ -154,7 +154,7 @@
                         </select>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label for="payment_status" class="form-label">حالة الدفع</label>
+                        <label for="payment_status" class="form-label">{% trans 'حالة الدفع' %}</label>
                         <select name="payment_status" id="payment_status" class="form-select">
                             {% for status_value, status_name in payment_status_choices %}
                             <option value="{{ status_value }}" {% if status_value == 'pending' %}selected{% endif %}>
@@ -164,13 +164,13 @@
                         </select>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label for="payment_method" class="form-label">طريقة الدفع</label>
+                        <label for="payment_method" class="form-label">{% trans 'طريقة الدفع' %}</label>
                         <input type="text" class="form-control" id="payment_method" name="payment_method" value="الدفع عند الاستلام">
                     </div>
                 </div>
 
                 <div class="mb-3">
-                    <label for="notes" class="form-label">ملاحظات</label>
+                    <label for="notes" class="form-label">{% trans 'ملاحظات' %}</label>
                     <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
                 </div>
             </div>
@@ -178,10 +178,10 @@
             <!-- أزرار الإجراءات -->
             <div class="d-flex justify-content-between">
                 <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save"></i> إنشاء الطلب
+                    <i class="fas fa-save"></i> {% trans 'إنشاء الطلب' %}
                 </button>
                 <a href="{% url 'dashboard:dashboard_orders' %}" class="btn btn-secondary">
-                    <i class="fas fa-times"></i> إلغاء
+                    <i class="fas fa-times"></i> {% trans 'إلغاء' %}
                 </a>
             </div>
         </form>
@@ -204,13 +204,12 @@
             const userId = $(this).val();
             if (userId) {
                 // يمكن إضافة AJAX لجلب بيانات المستخدم وعناوينه
-                // في هذا المثال، نفترض أنك ستنفذ هذه الوظيفة لاحقاً
             }
         });
 
         // إضافة منتج جديد
         let productCounter = 0;
-        
+
         $('#add-product').on('click', function() {
             addProductRow();
         });
@@ -238,7 +237,6 @@
                             <label for="variant_id_${productCounter}" class="form-label">المتغير (اختياري)</label>
                             <select name="variant_id[]" id="variant_id_${productCounter}" class="form-select variant-select">
                                 <option value="">اختر المتغير</option>
-                                <!-- سيتم تحميل المتغيرات عند اختيار المنتج -->
                             </select>
                         </div>
                     </div>
@@ -254,27 +252,23 @@
                     </div>
                 </div>
             `;
-            
+
             $('#products-container').append(productHtml);
-            
+
             // تفعيل الأحداث للمنتج الجديد
             $(`#product_id_${productCounter}`).on('change', function() {
                 const productId = $(this).val();
                 const rowId = $(this).data('product-id');
-                
+
                 if (productId) {
-                    // AJAX لجلب متغيرات المنتج وسعره
-                    // في هذا المثال نفترض أنك ستنفذ هذه الوظيفة لاحقاً
-                    // يمكن استخدام نقطة نهاية API مثل:
                     $.ajax({
                         url: `/dashboard/api/products/${productId}/variants/`,
                         type: 'GET',
                         success: function(data) {
-                            // تحديث قائمة المتغيرات
                             const variantSelect = $(`#variant_id_${rowId}`);
                             variantSelect.empty();
                             variantSelect.append('<option value="">اختر المتغير</option>');
-                            
+
                             if (data.variants && data.variants.length > 0) {
                                 data.variants.forEach(variant => {
                                     variantSelect.append(`<option value="${variant.id}" data-price="${variant.price}">${variant.name}</option>`);
@@ -283,8 +277,7 @@
                             } else {
                                 variantSelect.prop('disabled', true);
                             }
-                            
-                            // تعيين السعر الافتراضي (سعر المنتج)
+
                             if (data.price) {
                                 $(`#unit_price_${rowId}`).val(data.price);
                             }
@@ -294,25 +287,23 @@
                         }
                     });
                 } else {
-                    // إفراغ قائمة المتغيرات إذا لم يتم اختيار منتج
                     $(`#variant_id_${rowId}`).empty().append('<option value="">اختر المتغير</option>').prop('disabled', true);
                     $(`#unit_price_${rowId}`).val('');
                 }
             });
-            
+
             // تحديث السعر عند اختيار متغير
             $(`#variant_id_${productCounter}`).on('change', function() {
                 const selectedOption = $(this).find('option:selected');
                 const price = selectedOption.data('price');
-                
+
                 if (price) {
                     $(`#unit_price_${productCounter}`).val(price);
                 }
             });
-            
-            // زيادة العداد للمنتج التالي
+
             productCounter++;
-            
+
             // تفعيل أحداث إزالة المنتج
             $('.remove-product').off('click').on('click', function() {
                 const productId = $(this).data('product-id');
@@ -326,14 +317,12 @@
 
         // التحقق من النموذج قبل الإرسال
         $('#createOrderForm').on('submit', function(e) {
-            // تأكد من إضافة منتج واحد على الأقل
             if ($('.product-item').length === 0) {
                 e.preventDefault();
                 alert('يجب إضافة منتج واحد على الأقل للطلب');
                 return false;
             }
-            
-            // تأكد من اختيار منتج لكل صف
+
             let valid = true;
             $('.product-select').each(function() {
                 if (!$(this).val()) {
@@ -342,22 +331,21 @@
                     return false;
                 }
             });
-            
+
             if (!valid) {
                 e.preventDefault();
                 return false;
             }
-            
-            // تأكد من ملء معلومات العميل
+
             const fullName = $('#full_name').val();
             const email = $('#email').val();
-            
+
             if (!fullName || !email) {
                 e.preventDefault();
                 alert('يرجى ملء جميع معلومات العميل المطلوبة');
                 return false;
             }
-            
+
             return true;
         });
     });

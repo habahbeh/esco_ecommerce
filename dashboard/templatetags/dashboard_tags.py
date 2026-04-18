@@ -1,6 +1,6 @@
 from django import template
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, gettext
 from django.contrib.humanize.templatetags.humanize import intcomma
 from django.template.defaultfilters import floatformat, date as date_filter
 from django.utils import timezone
@@ -24,13 +24,15 @@ def abs(value):
 
 
 @register.filter
-def currency(value, currency_symbol='د.ا'):
+def currency(value, currency_symbol=None):
     """
     تنسيق المبالغ مع رمز العملة
     مثال: {{ product.price|currency:'$' }}
     """
     if value is None:
         return ''
+    if currency_symbol is None:
+        currency_symbol = gettext('د.ا')
     try:
         value = float(value)
         formatted_value = floatformat(value, 2)

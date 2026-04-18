@@ -1,4 +1,5 @@
 // static/dashboard/js/product.js
+var isArabic = document.documentElement.getAttribute('lang') === 'ar';
 
 // تنفيذ الكود عند اكتمال تحميل الصفحة
 document.addEventListener('DOMContentLoaded', function() {
@@ -102,11 +103,11 @@ function setupFormValidation() {
 
             // التحقق من الحقول المطلوبة
             const requiredFields = [
-                { id: 'id_name', message: 'الرجاء إدخال اسم المنتج' },
-                { id: 'id_category', message: 'الرجاء اختيار فئة للمنتج' },
-                { id: 'id_base_price', message: 'الرجاء إدخال سعر المنتج' },
-                { id: 'id_description', message: 'الرجاء إدخال وصف المنتج' },
-                { id: 'id_sku', message: 'الرجاء إدخال رقم المنتج (SKU)' }
+                { id: 'id_name', message: isArabic ? 'الرجاء إدخال اسم المنتج' : 'Please enter product name' },
+                { id: 'id_category', message: isArabic ? 'الرجاء اختيار فئة للمنتج' : 'Please select a category' },
+                { id: 'id_base_price', message: isArabic ? 'الرجاء إدخال سعر المنتج' : 'Please enter product price' },
+                { id: 'id_description', message: isArabic ? 'الرجاء إدخال وصف المنتج' : 'Please enter product description' },
+                { id: 'id_sku', message: isArabic ? 'الرجاء إدخال رقم المنتج (SKU)' : 'Please enter product SKU' }
             ];
 
             for (const field of requiredFields) {
@@ -122,8 +123,8 @@ function setupFormValidation() {
             const discountAmount = parseFloat(document.getElementById('id_discount_amount')?.value || 0);
 
             if (discountPercentage > 0 && discountAmount > 0) {
-                showError(document.getElementById('id_discount_percentage'), 'لا يمكن استخدام نسبة الخصم ومبلغ الخصم معًا');
-                showError(document.getElementById('id_discount_amount'), 'لا يمكن استخدام نسبة الخصم ومبلغ الخصم معًا');
+                showError(document.getElementById('id_discount_percentage'), isArabic ? 'لا يمكن استخدام نسبة الخصم ومبلغ الخصم معًا' : 'Cannot use both discount percentage and discount amount');
+                showError(document.getElementById('id_discount_amount'), isArabic ? 'لا يمكن استخدام نسبة الخصم ومبلغ الخصم معًا' : 'Cannot use both discount percentage and discount amount');
                 hasError = true;
             }
 
@@ -132,7 +133,7 @@ function setupFormValidation() {
             const discountEnd = document.getElementById('id_discount_end')?.value;
 
             if (discountStart && discountEnd && new Date(discountStart) >= new Date(discountEnd)) {
-                showError(document.getElementById('id_discount_end'), 'تاريخ نهاية الخصم يجب أن يكون بعد تاريخ البداية');
+                showError(document.getElementById('id_discount_end'), isArabic ? 'تاريخ نهاية الخصم يجب أن يكون بعد تاريخ البداية' : 'Discount end date must be after start date');
                 hasError = true;
             }
 
@@ -140,7 +141,7 @@ function setupFormValidation() {
                 // إضافة رسالة خطأ عامة
                 const alertDiv = document.createElement('div');
                 alertDiv.className = 'alert alert-danger mb-4';
-                alertDiv.innerHTML = '<strong>الرجاء تصحيح الأخطاء أدناه قبل حفظ المنتج</strong>';
+                alertDiv.innerHTML = '<strong>' + (isArabic ? 'الرجاء تصحيح الأخطاء أدناه قبل حفظ المنتج' : 'Please correct the errors below before saving') + '</strong>';
                 form.prepend(alertDiv);
 
                 // الانتقال إلى التبويب الذي يحتوي على أول خطأ
@@ -226,7 +227,7 @@ function initSpecificationsEditor() {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td colspan="3" class="text-center text-muted">
-                    لا توجد مواصفات حتى الآن. أضف مواصفات للمنتج.
+                    ${isArabic ? 'لا توجد مواصفات حتى الآن. أضف مواصفات للمنتج.' : 'No specifications yet. Add specifications for the product.'}
                 </td>
             `;
             tableBody.appendChild(row);
@@ -241,7 +242,7 @@ function initSpecificationsEditor() {
                 <td>${specifications[key]}</td>
                 <td>
                     <button type="button" class="btn btn-sm btn-danger" data-key="${key}">
-                        حذف
+                        ${isArabic ? 'حذف' : 'Delete'}
                     </button>
                 </td>
             `;
@@ -268,7 +269,7 @@ function initSpecificationsEditor() {
         const value = valueInput.value.trim();
 
         if (!key) {
-            alert('الرجاء إدخال اسم الخاصية');
+            alert(isArabic ? 'الرجاء إدخال اسم الخاصية' : 'Please enter property name');
             keyInput.focus();
             return;
         }
@@ -354,7 +355,7 @@ function initFeaturesEditor() {
         if (features.length === 0) {
             const item = document.createElement('li');
             item.className = 'list-group-item text-center text-muted';
-            item.textContent = 'لا توجد ميزات حتى الآن. أضف ميزات للمنتج.';
+            item.textContent = isArabic ? 'لا توجد ميزات حتى الآن. أضف ميزات للمنتج.' : 'No features yet. Add features for the product.';
             featuresList.appendChild(item);
             return;
         }
@@ -411,7 +412,7 @@ function initFeaturesEditor() {
         const feature = featureInput.value.trim();
 
         if (!feature) {
-            alert('الرجاء إدخال ميزة');
+            alert(isArabic ? 'الرجاء إدخال ميزة' : 'Please enter a feature');
             featureInput.focus();
             return;
         }
@@ -444,68 +445,56 @@ function initFeaturesEditor() {
 // تهيئة Select2
 function setupSelect2() {
     if (window.jQuery && jQuery.fn.select2) {
-        // التهيئة العامة
+        var dir = document.documentElement.getAttribute('dir');
+        var s2Lang = {
+            noResults: function() { return isArabic ? "لا توجد نتائج" : "No results found"; },
+            searching: function() { return isArabic ? "جاري البحث..." : "Searching..."; }
+        };
+
         jQuery('.select2').select2({
-            dir: document.documentElement.getAttribute('dir'),
-            placeholder: "اختر...",
+            dir: dir,
+            placeholder: isArabic ? "اختر..." : "Select...",
             allowClear: true,
             width: '100%'
         });
 
-        // تهيئة خاصة لحقل الفئة
         jQuery('#id_category').select2({
-            dir: document.documentElement.getAttribute('dir'),
-            placeholder: "اختر الفئة...",
+            dir: dir,
+            placeholder: isArabic ? "اختر الفئة..." : "Choose Category...",
             allowClear: true,
             width: '100%',
             templateResult: formatCategoryOption,
             templateSelection: formatCategorySelection,
-            language: {
-                noResults: function() {
-                    return "لا توجد نتائج";
-                },
-                searching: function() {
-                    return "جاري البحث...";
-                }
-            }
+            language: s2Lang
         });
 
-        // تهيئة خاصة لحقل العلامة التجارية
         jQuery('#id_brand').select2({
-            dir: document.documentElement.getAttribute('dir'),
-            placeholder: "اختر العلامة التجارية...",
+            dir: dir,
+            placeholder: isArabic ? "اختر العلامة التجارية..." : "Select brand...",
             allowClear: true,
             width: '100%',
-            language: {
-                noResults: function() {
-                    return "لا توجد نتائج";
-                },
-                searching: function() {
-                    return "جاري البحث...";
-                }
-            }
+            language: s2Lang
         });
 
         jQuery('#id_status').select2({
-            dir: document.documentElement.getAttribute('dir'),
+            dir: dir,
             width: '100%',
-            minimumResultsForSearch: Infinity, // إخفاء البحث لأن الخيارات قليلة
+            minimumResultsForSearch: Infinity,
             templateResult: formatStatusOption,
             templateSelection: formatStatusSelection
         });
 
         jQuery('.select2-stock-status').select2({
-    dir: document.documentElement.getAttribute('dir'),
-    width: '100%',
-    minimumResultsForSearch: Infinity, // إخفاء البحث لأن الخيارات قليلة
-    templateResult: formatStockStatusOption,
-    templateSelection: formatStockStatusSelection
-});
+            dir: dir,
+            width: '100%',
+            minimumResultsForSearch: Infinity,
+            templateResult: formatStockStatusOption,
+            templateSelection: formatStockStatusSelection
+        });
 
-        // البحث عن المنتجات ذات الصلة
         jQuery('#id_related_products, #id_cross_sell_products, #id_upsell_products').select2({
-            dir: document.documentElement.getAttribute('dir'),
-            placeholder: "اختر المنتجات...",
+            dir: dir,
+            placeholder: isArabic ? "اختر المنتجات..." : "Select products...",
             allowClear: true,
             width: '100%',
             ajax: {
@@ -704,8 +693,8 @@ function setupSummernote() {
                 ['insert', ['link', 'picture']],
                 ['view', ['fullscreen', 'codeview', 'help']]
             ],
-            lang: 'ar-AR',
-            placeholder: "أدخل وصفاً تفصيلياً للمنتج هنا..."
+            lang: isArabic ? 'ar-AR' : 'en-US',
+            placeholder: isArabic ? "أدخل وصفاً تفصيلياً للمنتج هنا..." : "Enter a detailed product description here..."
         });
     }
 }
@@ -784,10 +773,10 @@ function setupImageButtons() {
 
                         imagePreview.innerHTML = `
                             <div class="image-preview-inner">
-                                <img src="${e.target.result}" alt="معاينة الصورة">
+                                <img src="${e.target.result}" alt="${isArabic ? 'معاينة الصورة' : 'Image preview'}">
                                 <div class="image-preview-overlay">
                                     <div class="image-preview-actions">
-                                        <button type="button" class="btn btn-light btn-sm rounded-circle btn-remove-temp-image" title="حذف">
+                                        <button type="button" class="btn btn-light btn-sm rounded-circle btn-remove-temp-image" title="${isArabic ? 'حذف' : 'Delete'}">
                                             <i class="fa fa-trash text-danger"></i>
                                         </button>
                                     </div>
@@ -824,7 +813,7 @@ function setupImageButtons() {
     // (نفس الكود السابق مع تحديثات بسيطة)
     // document.querySelectorAll('.btn-remove-image').forEach(button => {
     //     button.addEventListener('click', function() {
-    //         if (confirm("هل أنت متأكد من حذف هذه الصورة؟")) {
+    //         if (confirm(isArabic ? "هل أنت متأكد من حذف هذه الصورة؟" : "Are you sure you want to delete this image?")) {
     //             const imageId = this.getAttribute('data-image-id');
     //             const imageItem = this.closest('.image-preview-item');
     //
@@ -851,7 +840,7 @@ function setupImageButtons() {
 
     document.querySelectorAll('.btn-remove-image').forEach(button => {
     button.addEventListener('click', function() {
-        if (confirm("هل أنت متأكد من حذف هذه الصورة؟")) {
+        if (confirm(isArabic ? "هل أنت متأكد من حذف هذه الصورة؟" : "Are you sure you want to delete this image?")) {
             const imageId = this.getAttribute('data-image-id');
             const imageItem = this.closest('.image-preview-item');
 
@@ -870,13 +859,13 @@ function setupImageButtons() {
                     imageItem.remove();
 
                     // إظهار رسالة نجاح
-                    alert('تم حذف الصورة بنجاح');
+                    alert(isArabic ? 'تم حذف الصورة بنجاح' : 'Image deleted successfully');
                 } else {
-                    alert('حدث خطأ أثناء حذف الصورة');
+                    alert(isArabic ? 'حدث خطأ أثناء حذف الصورة' : 'Error deleting image');
                 }
             })
             .catch(error => {
-                alert('حدث خطأ في الاتصال');
+                alert(isArabic ? 'حدث خطأ في الاتصال' : 'Connection error');
             });
         }
     });
@@ -902,7 +891,7 @@ function setupImageButtons() {
             if (!imageItem.querySelector('.image-preview-badge')) {
                 const badge = document.createElement('div');
                 badge.className = 'image-preview-badge';
-                badge.innerHTML = '<i class="fa fa-check-circle me-1"></i>رئيسية';
+                badge.innerHTML = '<i class="fa fa-check-circle me-1"></i>' + (isArabic ? 'رئيسية' : 'Primary');
                 imageItem.querySelector('.image-preview-inner').appendChild(badge);
             }
 
@@ -958,10 +947,10 @@ function setupStatusButtons() {
         statusSwitch.addEventListener('change', function() {
             if (this.checked) {
                 statusField.value = 'published';
-                statusLabel.innerHTML = '<i class="fa fa-eye text-success me-1"></i> منشور';
+                statusLabel.innerHTML = '<i class="fa fa-eye text-success me-1"></i> ' + (isArabic ? 'منشور' : 'Published');
             } else {
                 statusField.value = 'draft';
-                statusLabel.innerHTML = '<i class="fa fa-eye-slash text-secondary me-1"></i> مسودة';
+                statusLabel.innerHTML = '<i class="fa fa-eye-slash text-secondary me-1"></i> ' + (isArabic ? 'مسودة' : 'Draft');
             }
         });
     }
@@ -974,10 +963,10 @@ function setupStatusButtons() {
         visibilitySwitch.addEventListener('change', function() {
             if (this.checked) {
                 isActiveField.checked = true;
-                visibilityLabel.innerHTML = '<i class="fa fa-check-circle text-success me-1"></i> نشط';
+                visibilityLabel.innerHTML = '<i class="fa fa-check-circle text-success me-1"></i> ' + (isArabic ? 'نشط' : 'Active');
             } else {
                 isActiveField.checked = false;
-                visibilityLabel.innerHTML = '<i class="fa fa-ban text-danger me-1"></i> غير نشط';
+                visibilityLabel.innerHTML = '<i class="fa fa-ban text-danger me-1"></i> ' + (isArabic ? 'غير نشط' : 'Inactive');
             }
         });
     }
@@ -1056,15 +1045,15 @@ function setupDiscountFunctions() {
         if (hasDiscount && currentPrice < base) {
             previewContent.innerHTML = `
                 <div class="d-flex align-items-center">
-                    <div class="h5 mb-0 me-2 product-price">${currentPrice.toFixed(2)} د.ا</div>
-                    <div class="text-decoration-line-through text-muted">${base.toFixed(2)} د.ا</div>
-                    <div class="badge bg-danger ms-2">${savingsPercentage}% خصم</div>
+                    <div class="h5 mb-0 me-2 product-price">${currentPrice.toFixed(2)} ${isArabic ? 'د.ا' : 'JD'}</div>
+                    <div class="text-decoration-line-through text-muted">${base.toFixed(2)} ${isArabic ? 'د.ا' : 'JD'}</div>
+                    <div class="badge bg-danger ms-2">${savingsPercentage}% ${isArabic ? 'خصم' : 'OFF'}</div>
                 </div>
             `;
         } else {
             previewContent.innerHTML = `
                 <div class="d-flex align-items-center">
-                    <div class="h5 mb-0 me-2 product-price">${base.toFixed(2)} د.ا</div>
+                    <div class="h5 mb-0 me-2 product-price">${base.toFixed(2)} ${isArabic ? 'د.ا' : 'JD'}</div>
                 </div>
             `;
         }
@@ -1224,16 +1213,16 @@ function initProductVariantsEditor() {
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header text-secondary">
-                            <h5 class="modal-title" id="deleteVariantModalLabel">حذف متغير المنتج</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+                            <h5 class="modal-title" id="deleteVariantModalLabel">${isArabic ? 'حذف متغير المنتج' : 'Delete Product Variant'}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="${isArabic ? 'إغلاق' : 'Close'}"></button>
                         </div>
                         <div class="modal-body">
                             <input type="hidden" id="delete-variant-index" value="">
-                            <p>سيتم حذف المتغير <strong id="variant-name-to-delete"></strong>.</p>
+                            <p>${isArabic ? 'سيتم حذف المتغير' : 'The variant will be deleted'} <strong id="variant-name-to-delete"></strong>.</p>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                            <button type="button" class="btn btn-danger" id="confirm-delete-variant">حذف</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${isArabic ? 'إلغاء' : 'Cancel'}</button>
+                            <button type="button" class="btn btn-danger" id="confirm-delete-variant">${isArabic ? 'حذف' : 'Delete'}</button>
                         </div>
                     </div>
                 </div>
@@ -1292,7 +1281,7 @@ function initProductVariantsEditor() {
             row.id = 'no-variants-row';
             row.innerHTML = `
                 <td colspan="6" class="text-center text-muted py-3">
-                    <i class="fa fa-info-circle me-1"></i> لا توجد متغيرات للمنتج. أضف متغيرات باستخدام الزر أعلاه.
+                    <i class="fa fa-info-circle me-1"></i> ${isArabic ? 'لا توجد متغيرات للمنتج. أضف متغيرات باستخدام الزر أعلاه.' : 'No variants yet. Add variants using the button above.'}
                 </td>
             `;
             variantsTableBody.appendChild(row);
@@ -1315,8 +1304,8 @@ function initProductVariantsEditor() {
                     <div class="input-group input-group-sm">
                         <input type="number" class="form-control variant-price" 
                             value="${variant.base_price !== null ? variant.base_price : ''}" 
-                            placeholder="السعر الأساسي">
-                        <span class="input-group-text">د.ا</span>
+                            placeholder="${isArabic ? 'السعر الأساسي' : 'Base price'}">
+                        <span class="input-group-text">${isArabic ? 'د.ا' : 'JD'}</span>
                     </div>
                 </td>
                 <td>
@@ -1325,10 +1314,10 @@ function initProductVariantsEditor() {
                 </td>
                 <td>
                     <div class="btn-group btn-group-sm">
-                        <button type="button" class="btn btn-primary edit-variant-btn" title="تعديل">
+                        <button type="button" class="btn btn-primary edit-variant-btn" title="${isArabic ? 'تعديل' : 'Edit'}">
                             <i class="fa fa-edit"></i>
                         </button>
-                        <button type="button" class="btn btn-danger delete-variant-btn" title="حذف">
+                        <button type="button" class="btn btn-danger delete-variant-btn" title="${isArabic ? 'حذف' : 'Delete'}">
                             <i class="fa fa-trash"></i>
                         </button>
                     </div>
@@ -1436,37 +1425,37 @@ function initProductVariantsEditor() {
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="variantModalLabel">
-                            ${index === -1 ? 'إضافة متغير جديد' : 'تعديل المتغير'}
+                            ${index === -1 ? (isArabic ? 'إضافة متغير جديد' : 'Add New Variant') : (isArabic ? 'تعديل المتغير' : 'Edit Variant')}
                         </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="${isArabic ? 'إغلاق' : 'Close'}"></button>
                     </div>
                     <div class="modal-body">
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label for="variant-name" class="form-label">اسم المتغير <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="variant-name" 
-                                    value="${variant.name}" placeholder="مثال: أحمر، كبير، 128GB" required>
+                                <label for="variant-name" class="form-label">${isArabic ? 'اسم المتغير' : 'Variant Name'} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="variant-name"
+                                    value="${variant.name}" placeholder="${isArabic ? 'مثال: أحمر، كبير، 128GB' : 'e.g.: Red, Large, 128GB'}" required>
                             </div>
                             <div class="col-md-6">
-                                <label for="variant-sku" class="form-label">رقم المتغير (SKU)</label>
-                                <input type="text" class="form-control" id="variant-sku" 
-                                    value="${variant.sku}" placeholder="سيتم إنشاؤه تلقائياً إذا تُرك فارغاً">
+                                <label for="variant-sku" class="form-label">${isArabic ? 'رقم المتغير (SKU)' : 'Variant SKU'}</label>
+                                <input type="text" class="form-control" id="variant-sku"
+                                    value="${variant.sku}" placeholder="${isArabic ? 'سيتم إنشاؤه تلقائياً إذا تُرك فارغاً' : 'Auto-generated if left empty'}">
                             </div>
                         </div>
 
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label for="variant-price" class="form-label">السعر</label>
+                                <label for="variant-price" class="form-label">${isArabic ? 'السعر' : 'Price'}</label>
                                 <div class="input-group">
-                                    <input type="number" class="form-control" id="variant-price" 
-                                        value="${variant.base_price !== null ? variant.base_price : ''}" 
-                                        placeholder="سعر المتغير (اختياري)">
-                                    <span class="input-group-text">د.ا</span>
+                                    <input type="number" class="form-control" id="variant-price"
+                                        value="${variant.base_price !== null ? variant.base_price : ''}"
+                                        placeholder="${isArabic ? 'سعر المتغير (اختياري)' : 'Variant price (optional)'}">
+                                    <span class="input-group-text">${isArabic ? 'د.ا' : 'JD'}</span>
                                 </div>
-                                <div class="form-text">اترك فارغاً لاستخدام سعر المنتج الأساسي</div>
+                                <div class="form-text">${isArabic ? 'اترك فارغاً لاستخدام سعر المنتج الأساسي' : 'Leave empty to use base product price'}</div>
                             </div>
                             <div class="col-md-6">
-                                <label for="variant-stock" class="form-label">المخزون</label>
+                                <label for="variant-stock" class="form-label">${isArabic ? 'المخزون' : 'Stock'}</label>
                                 <input type="number" class="form-control" id="variant-stock" 
                                     value="${variant.stock_quantity}" min="0">
                             </div>
@@ -1477,22 +1466,22 @@ function initProductVariantsEditor() {
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" id="variant-active" 
                                         ${variant.is_active ? 'checked' : ''}>
-                                    <label class="form-check-label" for="variant-active">متغير نشط</label>
+                                    <label class="form-check-label" for="variant-active">${isArabic ? 'متغير نشط' : 'Active variant'}</label>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" id="variant-default" 
                                         ${variant.is_default ? 'checked' : ''}>
-                                    <label class="form-check-label" for="variant-default">متغير افتراضي</label>
+                                    <label class="form-check-label" for="variant-default">${isArabic ? 'متغير افتراضي' : 'Default variant'}</label>
                                 </div>
                             </div>
                         </div>
 
                         <hr>
 
-                        <h6>خصائص المتغير</h6>
-                        <p class="text-muted small">أضف خصائص مثل اللون، الحجم، السعة، إلخ.</p>
+                        <h6>${isArabic ? 'خصائص المتغير' : 'Variant Attributes'}</h6>
+                        <p class="text-muted small">${isArabic ? 'أضف خصائص مثل اللون، الحجم، السعة، إلخ.' : 'Add attributes like color, size, capacity, etc.'}</p>
 
                         <div id="variant-attributes">
                             <!-- ستتم إضافة الخصائص هنا -->
@@ -1500,19 +1489,19 @@ function initProductVariantsEditor() {
 
                         <div class="d-flex mt-2 mb-3">
                             <div class="flex-grow-1 me-2">
-                                <input type="text" class="form-control" id="attribute-key" placeholder="اسم الخاصية (مثل: اللون)">
+                                <input type="text" class="form-control" id="attribute-key" placeholder="${isArabic ? 'اسم الخاصية (مثل: اللون)' : 'Attribute name (e.g.: Color)'}">
                             </div>
                             <div class="flex-grow-1 me-2">
-                                <input type="text" class="form-control" id="attribute-value" placeholder="قيمة الخاصية (مثل: أحمر)">
+                                <input type="text" class="form-control" id="attribute-value" placeholder="${isArabic ? 'قيمة الخاصية (مثل: أحمر)' : 'Attribute value (e.g.: Red)'}">
                             </div>
                             <div>
-                                <button type="button" id="add-attribute-btn" class="btn btn-secondary">إضافة</button>
+                                <button type="button" id="add-attribute-btn" class="btn btn-secondary">${isArabic ? 'إضافة' : 'Add'}</button>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                        <button type="button" class="btn btn-primary" id="save-variant-btn">حفظ المتغير</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${isArabic ? 'إلغاء' : 'Cancel'}</button>
+                        <button type="button" class="btn btn-primary" id="save-variant-btn">${isArabic ? 'حفظ المتغير' : 'Save Variant'}</button>
                     </div>
                 </div>
             </div>
@@ -1526,7 +1515,7 @@ function initProductVariantsEditor() {
             variantAttributes.innerHTML = '';
 
             if (Object.keys(variant.attributes).length === 0) {
-                variantAttributes.innerHTML = '<div class="text-muted">لا توجد خصائص محددة</div>';
+                variantAttributes.innerHTML = '<div class="text-muted">' + (isArabic ? 'لا توجد خصائص محددة' : 'No attributes defined') + '</div>';
                 return;
             }
 
@@ -1535,8 +1524,8 @@ function initProductVariantsEditor() {
             attrTable.innerHTML = `
                 <thead class="table-light">
                     <tr>
-                        <th>الخاصية</th>
-                        <th>القيمة</th>
+                        <th>${isArabic ? 'الخاصية' : 'Property'}</th>
+                        <th>${isArabic ? 'القيمة' : 'Value'}</th>
                         <th width="60"></th>
                     </tr>
                 </thead>
@@ -1579,7 +1568,7 @@ function initProductVariantsEditor() {
             const value = attributeValue.value.trim();
 
             if (!key) {
-                alert('الرجاء إدخال اسم الخاصية');
+                alert(isArabic ? 'الرجاء إدخال اسم الخاصية' : 'Please enter attribute name');
                 attributeKey.focus();
                 return;
             }
@@ -1617,7 +1606,7 @@ function initProductVariantsEditor() {
             const variantDefault = document.getElementById('variant-default').checked;
 
             if (!variantName) {
-                alert('الرجاء إدخال اسم المتغير');
+                alert(isArabic ? 'الرجاء إدخال اسم المتغير' : 'Please enter variant name');
                 document.getElementById('variant-name').focus();
                 return;
             }
@@ -1712,7 +1701,7 @@ function initAttributesEditor() {
             const type = attrType.value;
 
             if (!name) {
-                alert('الرجاء إدخال اسم الخاصية');
+                alert(isArabic ? 'الرجاء إدخال اسم الخاصية' : 'Please enter attribute name');
                 attrName.focus();
                 return;
             }
@@ -1769,7 +1758,7 @@ function initAttributesEditor() {
                     emptyRow.id = 'no-attributes-row';
                     emptyRow.innerHTML = `
                         <td colspan="4" class="text-center text-muted py-3">
-                            <i class="fa fa-info-circle me-1"></i> لا توجد خصائص إضافية للمنتج. أضف خصائص باستخدام النموذج أعلاه.
+                            <i class="fa fa-info-circle me-1"></i> ${isArabic ? 'لا توجد خصائص إضافية للمنتج. أضف خصائص باستخدام النموذج أعلاه.' : 'No additional attributes for the product. Add attributes using the form above.'}
                         </td>
                     `;
                     attributesTableBody.appendChild(emptyRow);
@@ -1855,16 +1844,16 @@ function setupAttributeDeleteButtons() {
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header  text-secondary">
-                        <h5 class="modal-title" id="deleteAttributeModalLabel">حذف الخاصية</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+                        <h5 class="modal-title" id="deleteAttributeModalLabel">${isArabic ? 'حذف الخاصية' : 'Delete Attribute'}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="${isArabic ? 'إغلاق' : 'Close'}"></button>
                     </div>
                     <div class="modal-body">
                         <input type="hidden" id="delete-attr-id" value="">
-                        <p>سيتم حذف الخاصية.</p>
+                        <p>${isArabic ? 'سيتم حذف الخاصية.' : 'The attribute will be deleted.'}</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                        <button type="button" class="btn btn-danger" id="confirm-delete-attr">حذف</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${isArabic ? 'إلغاء' : 'Cancel'}</button>
+                        <button type="button" class="btn btn-danger" id="confirm-delete-attr">${isArabic ? 'حذف' : 'Delete'}</button>
                     </div>
                 </div>
             </div>
@@ -1901,7 +1890,7 @@ function setupAttributeDeleteButtons() {
                     emptyRow.id = 'no-attributes-row';
                     emptyRow.innerHTML = `
                         <td colspan="4" class="text-center text-muted py-3">
-                            <i class="fa fa-info-circle me-1"></i> لا توجد خصائص إضافية للمنتج. أضف خصائص باستخدام النموذج أعلاه.
+                            <i class="fa fa-info-circle me-1"></i> ${isArabic ? 'لا توجد خصائص إضافية للمنتج. أضف خصائص باستخدام النموذج أعلاه.' : 'No additional attributes for the product. Add attributes using the form above.'}
                         </td>
                     `;
                     attributesTableBody.appendChild(emptyRow);
@@ -1924,7 +1913,7 @@ function setupAttributeDeleteButtons() {
 
             // تعديل رسالة النافذة المنبثقة
             const modalBody = document.querySelector('#deleteAttributeModal .modal-body p');
-            modalBody.innerHTML = `سيتم حذف الخاصية <strong>${attrName}</strong>`;
+            modalBody.innerHTML = (isArabic ? 'سيتم حذف الخاصية' : 'The attribute will be deleted:') + ` <strong>${attrName}</strong>`;
 
             // عرض النافذة المنبثقة
             const modalInstance = bootstrap.Modal.getInstance(deleteModal) || new bootstrap.Modal(deleteModal);

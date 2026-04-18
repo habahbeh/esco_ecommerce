@@ -1,13 +1,13 @@
 {% extends 'dashboard/base.html' %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}اشتراكات النشرة البريدية{% endblock %}
-{% block page_title %}اشتراكات النشرة البريدية{% endblock %}
+{% block title %}{% trans 'اشتراكات النشرة البريدية' %}{% endblock %}
+{% block page_title %}{% trans 'اشتراكات النشرة البريدية' %}{% endblock %}
 
 {% block breadcrumbs %}
-<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_site_settings' %}">الإعدادات</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_site_settings' %}">{% trans 'الإعدادات' %}</a></li>
 {% endblock %}
-{% block current_page %}اشتراكات النشرة البريدية{% endblock %}
+{% block current_page %}{% trans 'اشتراكات النشرة البريدية' %}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -18,7 +18,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <div class="text-muted small mb-1">إجمالي المشتركين</div>
+                            <div class="text-muted small mb-1">{% trans 'إجمالي المشتركين' %}</div>
                             <div class="h4 mb-0 fw-bold text-primary">{{ total_subscribers }}</div>
                         </div>
                         <div class="text-primary opacity-50">
@@ -33,7 +33,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <div class="text-muted small mb-1">مشتركين موثقين</div>
+                            <div class="text-muted small mb-1">{% trans 'مشتركين موثقين' %}</div>
                             <div class="h4 mb-0 fw-bold text-success">{{ verified_subscribers }}</div>
                         </div>
                         <div class="text-success opacity-50">
@@ -48,7 +48,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <div class="text-muted small mb-1">بانتظار التحقق</div>
+                            <div class="text-muted small mb-1">{% trans 'بانتظار التحقق' %}</div>
                             <div class="h4 mb-0 fw-bold text-warning">{{ unverified_subscribers }}</div>
                         </div>
                         <div class="text-warning opacity-50">
@@ -63,7 +63,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <div class="text-muted small mb-1">غير نشطين</div>
+                            <div class="text-muted small mb-1">{% trans 'غير نشطين' %}</div>
                             <div class="h4 mb-0 fw-bold text-secondary">{{ inactive_subscribers }}</div>
                         </div>
                         <div class="text-secondary opacity-50">
@@ -80,14 +80,14 @@
         <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
             <h5 class="card-title mb-0">
                 <i class="fas fa-envelope-open-text me-2 text-primary"></i>
-                قائمة المشتركين
+                {% trans 'قائمة المشتركين' %}
             </h5>
             <div class="d-flex gap-2">
                 <a href="{% url 'dashboard:dashboard_newsletter_send' %}" class="btn btn-success btn-sm">
-                    <i class="fas fa-paper-plane me-1"></i> إرسال نشرة بريدية
+                    <i class="fas fa-paper-plane me-1"></i> {% trans 'إرسال نشرة بريدية' %}
                 </a>
                 <a href="{% url 'dashboard:dashboard_newsletter_create' %}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus me-1"></i> إضافة مشترك
+                    <i class="fas fa-plus me-1"></i> {% trans 'إضافة مشترك' %}
                 </a>
             </div>
         </div>
@@ -98,13 +98,13 @@
                     <thead class="table-light">
                         <tr>
                             <th>#</th>
-                            <th>الاسم</th>
-                            <th>البريد الإلكتروني</th>
-                            <th>تاريخ الاشتراك</th>
-                            <th>حالة التحقق</th>
-                            <th>الحالة</th>
-                            <th>رسائل مستلمة</th>
-                            <th>الإجراءات</th>
+                            <th>{% trans 'الاسم' %}</th>
+                            <th>{% trans 'البريد الإلكتروني' %}</th>
+                            <th>{% trans 'تاريخ الاشتراك' %}</th>
+                            <th>{% trans 'حالة التحقق' %}</th>
+                            <th>{% trans 'الحالة' %}</th>
+                            <th>{% trans 'رسائل مستلمة' %}</th>
+                            <th>{% trans 'الإجراءات' %}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -121,19 +121,19 @@
                             <td>
                                 {% if newsletter.is_verified %}
                                 <span class="badge bg-success">
-                                    <i class="fas fa-check-circle me-1"></i> موثق
+                                    <i class="fas fa-check-circle me-1"></i> {% trans 'موثق' %}
                                 </span>
                                 {% else %}
                                 <span class="badge bg-warning text-dark">
-                                    <i class="fas fa-clock me-1"></i> بانتظار التحقق
+                                    <i class="fas fa-clock me-1"></i> {% trans 'بانتظار التحقق' %}
                                 </span>
                                 {% endif %}
                             </td>
                             <td>
                                 {% if newsletter.is_active %}
-                                <span class="badge bg-success">نشط</span>
+                                <span class="badge bg-success">{% trans 'نشط' %}</span>
                                 {% else %}
-                                <span class="badge bg-secondary">غير نشط</span>
+                                <span class="badge bg-secondary">{% trans 'غير نشط' %}</span>
                                 {% endif %}
                             </td>
                             <td class="text-center">
@@ -144,19 +144,19 @@
                                     <form action="{% url 'dashboard:dashboard_newsletter_toggle_verify' newsletter.id %}" method="post" class="d-inline">
                                         {% csrf_token %}
                                         {% if newsletter.is_verified %}
-                                        <button type="submit" class="btn btn-sm btn-outline-warning" title="إلغاء التحقق">
+                                        <button type="submit" class="btn btn-sm btn-outline-warning" title="{% trans 'إلغاء التحقق' %}">
                                             <i class="fas fa-times-circle"></i>
                                         </button>
                                         {% else %}
-                                        <button type="submit" class="btn btn-sm btn-outline-success" title="تحقق يدوي">
+                                        <button type="submit" class="btn btn-sm btn-outline-success" title="{% trans 'تحقق يدوي' %}">
                                             <i class="fas fa-check-circle"></i>
                                         </button>
                                         {% endif %}
                                     </form>
-                                    <a href="{% url 'dashboard:dashboard_newsletter_edit' newsletter.id %}" class="btn btn-sm btn-outline-primary" title="تعديل">
+                                    <a href="{% url 'dashboard:dashboard_newsletter_edit' newsletter.id %}" class="btn btn-sm btn-outline-primary" title="{% trans 'تعديل' %}">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <a href="{% url 'dashboard:dashboard_newsletter_delete' newsletter.id %}" class="btn btn-sm btn-outline-danger" title="حذف">
+                                    <a href="{% url 'dashboard:dashboard_newsletter_delete' newsletter.id %}" class="btn btn-sm btn-outline-danger" title="{% trans 'حذف' %}">
                                         <i class="fas fa-trash"></i>
                                     </a>
                                 </div>
@@ -169,8 +169,8 @@
             {% else %}
             <div class="alert alert-info d-flex align-items-center">
                 <i class="fas fa-info-circle me-2"></i>
-                لا توجد اشتراكات في النشرة البريدية حالياً.
-                <a href="{% url 'dashboard:dashboard_newsletter_create' %}" class="alert-link me-1">إضافة اشتراك جديد</a>
+                {% trans 'لا توجد اشتراكات في النشرة البريدية حالياً.' %}
+                <a href="{% url 'dashboard:dashboard_newsletter_create' %}" class="alert-link me-1">{% trans 'إضافة اشتراك جديد' %}</a>
             </div>
             {% endif %}
         </div>

@@ -506,6 +506,7 @@ class Brand(TimeStampedModel, SEOModel):
     is_featured = models.BooleanField(_("مميز"), default=False)
     is_active = models.BooleanField(_("نشط"), default=True)
     is_verified = models.BooleanField(_("موثق"), default=False)
+    show_prices = models.BooleanField(_("إظهار الأسعار"), default=True)
     sort_order = models.IntegerField(_("الترتيب"), default=0)
 
     # Social media
@@ -1189,6 +1190,16 @@ class Product(TimeStampedModel, SEOModel):
 
     def get_absolute_url(self):
         return reverse('products:product_detail', kwargs={'slug': self.slug})
+
+    @property
+    def is_price_visible(self):
+        if not self.show_price:
+            return False
+        if self.category_id and not self.category.show_prices:
+            return False
+        if self.brand_id and not self.brand.show_prices:
+            return False
+        return True
 
     @property
     def current_price(self):

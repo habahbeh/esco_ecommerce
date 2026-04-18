@@ -3,14 +3,14 @@
 {% load i18n %}
 {% load dashboard_tags %}
 
-{% block title %}إدارة الطلبات{% endblock %}
-{% block page_title %}إدارة الطلبات{% endblock %}
+{% block title %}{% trans "إدارة الطلبات" %}{% endblock %}
+{% block page_title %}{% trans "إدارة الطلبات" %}{% endblock %}
 
 {% block breadcrumbs %}
-<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_home' %}">لوحة التحكم</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_home' %}">{% trans "لوحة التحكم" %}</a></li>
 {% endblock %}
 
-{% block current_page %}إدارة الطلبات{% endblock %}
+{% block current_page %}{% trans "إدارة الطلبات" %}{% endblock %}
 
 {% block content %}
 <!-- ملخص الإحصائيات -->
@@ -20,10 +20,10 @@
         <div class="card stat-card bg-primary text-white h-100">
             <div class="card-body">
                 <h5 class="card-title mb-4">
-                    <i class="fas fa-shopping-cart me-2"></i> إجمالي الطلبات
+                    <i class="fas fa-shopping-cart me-2"></i> {% trans "إجمالي الطلبات" %}
                 </h5>
                 <h3 class="mb-2">{{ stats.total_orders }}</h3>
-                <p class="card-text">طلب</p>
+                <p class="card-text">{% trans "طلب" %}</p>
             </div>
         </div>
     </div>
@@ -31,10 +31,10 @@
         <div class="card stat-card bg-warning text-white h-100">
             <div class="card-body">
                 <h5 class="card-title mb-4">
-                    <i class="fas fa-clock me-2"></i> قيد الانتظار
+                    <i class="fas fa-clock me-2"></i> {% trans "قيد الانتظار" %}
                 </h5>
                 <h3 class="mb-2">{{ stats.pending_orders }}</h3>
-                <p class="card-text">طلب</p>
+                <p class="card-text">{% trans "طلب" %}</p>
             </div>
         </div>
     </div>
@@ -42,10 +42,10 @@
         <div class="card stat-card bg-info text-white h-100">
             <div class="card-body">
                 <h5 class="card-title mb-4">
-                    <i class="fas fa-check me-2"></i> تأكيد الطلب
+                    <i class="fas fa-check me-2"></i> {% trans "تأكيد الطلب" %}
                 </h5>
                 <h3 class="mb-2">{{ stats.confirmed_orders }}</h3>
-                <p class="card-text">طلب</p>
+                <p class="card-text">{% trans "طلب" %}</p>
             </div>
         </div>
     </div>
@@ -53,10 +53,10 @@
         <div class="card stat-card bg-success text-white h-100">
             <div class="card-body">
                 <h5 class="card-title mb-4">
-                    <i class="fas fa-truck me-2"></i> إغلاق الطلب
+                    <i class="fas fa-truck me-2"></i> {% trans "إغلاق الطلب" %}
                 </h5>
                 <h3 class="mb-2">{{ stats.closed_orders }}</h3>
-                <p class="card-text">طلب</p>
+                <p class="card-text">{% trans "طلب" %}</p>
             </div>
         </div>
     </div>
@@ -64,10 +64,10 @@
         <div class="card stat-card bg-danger text-white h-100">
             <div class="card-body">
                 <h5 class="card-title mb-4">
-                    <i class="fas fa-ban me-2"></i> ملغي
+                    <i class="fas fa-ban me-2"></i> {% trans "ملغي" %}
                 </h5>
                 <h3 class="mb-2">{{ stats.cancelled_orders }}</h3>
-                <p class="card-text">طلب</p>
+                <p class="card-text">{% trans "طلب" %}</p>
             </div>
         </div>
     </div>
@@ -75,10 +75,10 @@
         <div class="card stat-card bg-secondary text-white h-100">
             <div class="card-body">
                 <h5 class="card-title mb-4">
-                    <i class="fas fa-money-bill-wave me-2"></i> المبيعات
+                    <i class="fas fa-money-bill-wave me-2"></i> {% trans "المبيعات" %}
                 </h5>
                 <h3 class="mb-2">{{ stats.total_sales|currency }}</h3>
-                <p class="card-text">اليوم: {{ stats.today_sales|currency }}</p>
+                <p class="card-text">{% trans "اليوم:" %} {{ stats.today_sales|currency }}</p>
             </div>
         </div>
     </div>
@@ -88,21 +88,21 @@
 <div class="d-flex justify-content-between mb-4">
     <div hidden>
         <a href="{% url 'dashboard:dashboard_order_create' %}" class="btn btn-primary">
-            <i class="fas fa-plus-circle me-1"></i> إضافة طلب جديد
+            <i class="fas fa-plus-circle me-1"></i> {% trans "إضافة طلب جديد" %}
         </a>
         <a href="{% url 'dashboard:dashboard_delivery_orders_report' %}" class="btn btn-info">
-            <i class="fas fa-truck me-1"></i> تقرير الطلبات المنتظرة التوصيل
+            <i class="fas fa-truck me-1"></i> {% trans "تقرير الطلبات المنتظرة التوصيل" %}
         </a>
         <a href="{% url 'dashboard:dashboard_order_dashboard' %}" class="btn btn-light">
-            <i class="fas fa-chart-line me-1"></i> لوحة معلومات الطلبات
+            <i class="fas fa-chart-line me-1"></i> {% trans "لوحة معلومات الطلبات" %}
         </a>
     </div>
     <div>
         <a href="{% url 'dashboard:dashboard_order_export' %}" class="btn btn-outline-success">
-            <i class="fas fa-file-export me-1"></i> تصدير
+            <i class="fas fa-file-export me-1"></i> {% trans "تصدير" %}
         </a>
         <button type="button" class="btn btn-outline-secondary" id="printBtn" hidden>
-            <i class="fas fa-print me-1"></i> طباعة
+            <i class="fas fa-print me-1"></i> {% trans "طباعة" %}
         </button>
     </div>
 </div>
@@ -110,24 +110,24 @@
 <!-- فلاتر البحث -->
 <div class="card mb-4">
     <div class="card-header bg-light">
-        <h5 class="mb-0">بحث وتصفية</h5>
+        <h5 class="mb-0">{% trans "بحث وتصفية" %}</h5>
     </div>
     <div class="card-body">
         <form method="get" id="search-form">
             <div class="row">
                 <div class="col-md-4 mb-3">
-                    <label for="q" class="form-label">بحث</label>
+                    <label for="q" class="form-label">{% trans "بحث" %}</label>
                     <div class="input-group">
-                        <input type="text" class="form-control" id="q" name="q" placeholder="رقم الطلب، اسم العميل..." value="{{ query }}">
+                        <input type="text" class="form-control" id="q" name="q" placeholder="{% trans 'رقم الطلب، اسم العميل...' %}" value="{{ query }}">
                         <button class="btn btn-outline-primary" type="submit">
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label for="status" class="form-label">حالة الطلب</label>
+                    <label for="status" class="form-label">{% trans "حالة الطلب" %}</label>
                     <select name="status" id="status" class="form-select">
-                        <option value="">الكل</option>
+                        <option value="">{% trans "الكل" %}</option>
                         {% for status_value, status_name in status_choices %}
                         <option value="{{ status_value }}" {% if status_filter == status_value %}selected{% endif %}>
                             {{ status_name }}
@@ -136,9 +136,9 @@
                     </select>
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label for="payment_status" class="form-label">حالة الدفع</label>
+                    <label for="payment_status" class="form-label">{% trans "حالة الدفع" %}</label>
                     <select name="payment_status" id="payment_status" class="form-select">
-                        <option value="">الكل</option>
+                        <option value="">{% trans "الكل" %}</option>
                         {% for status_value, status_name in payment_status_choices %}
                         <option value="{{ status_value }}" {% if payment_filter == status_value %}selected{% endif %}>
                             {{ status_name }}
@@ -147,21 +147,21 @@
                     </select>
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label for="date_from" class="form-label">من تاريخ</label>
+                    <label for="date_from" class="form-label">{% trans "من تاريخ" %}</label>
                     <input type="date" class="form-control" id="date_from" name="date_from" value="{{ date_from|date:'Y-m-d' }}">
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label for="date_to" class="form-label">إلى تاريخ</label>
+                    <label for="date_to" class="form-label">{% trans "إلى تاريخ" %}</label>
                     <input type="date" class="form-control" id="date_to" name="date_to" value="{{ date_to|date:'Y-m-d' }}">
                 </div>
             </div>
             <div class="row">
                 <div class="col-12">
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-filter me-1"></i> تصفية
+                        <i class="fas fa-filter me-1"></i> {% trans "تصفية" %}
                     </button>
                     <a href="{% url 'dashboard:dashboard_orders' %}" class="btn btn-outline-secondary">
-                        <i class="fas fa-eraser me-1"></i> مسح الفلاتر
+                        <i class="fas fa-eraser me-1"></i> {% trans "مسح الفلاتر" %}
                     </a>
                 </div>
             </div>
@@ -172,8 +172,8 @@
 <!-- جدول الطلبات -->
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">قائمة الطلبات</h5>
-        <span class="badge bg-primary">{{ orders.paginator.count }} طلب</span>
+        <h5 class="mb-0">{% trans "قائمة الطلبات" %}</h5>
+        <span class="badge bg-primary">{{ orders.paginator.count }} {% trans "طلب" %}</span>
     </div>
     <div class="card-body">
         <div id="orders-table-container">
@@ -182,13 +182,13 @@
                     <thead class="table-light">
                         <tr>
                             <th>#</th>
-                            <th>رقم الطلب</th>
-                            <th>التاريخ</th>
-                            <th>العميل</th>
-                            <th>المبلغ</th>
-                            <th>حالة الطلب</th>
-                            <th>حالة الدفع</th>
-                            <th>الإجراءات</th>
+                            <th>{% trans "رقم الطلب" %}</th>
+                            <th>{% trans "التاريخ" %}</th>
+                            <th>{% trans "العميل" %}</th>
+                            <th>{% trans "المبلغ" %}</th>
+                            <th>{% trans "حالة الطلب" %}</th>
+                            <th>{% trans "حالة الدفع" %}</th>
+                            <th>{% trans "الإجراءات" %}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -210,14 +210,14 @@
                             </td>
                             <td>
                                 <div class="btn-group btn-group-sm" role="group">
-                                    <a href="{% url 'dashboard:dashboard_order_detail' order_id=order.id %}" class="btn btn-info" title="عرض التفاصيل">
+                                    <a href="{% url 'dashboard:dashboard_order_detail' order_id=order.id %}" class="btn btn-info" title="{% trans 'عرض التفاصيل' %}">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="{% url 'dashboard:dashboard_order_print' order_id=order.id %}" class="btn btn-secondary" target="_blank" title="طباعة الطلب">
+                                    <a href="{% url 'dashboard:dashboard_order_print' order_id=order.id %}" class="btn btn-secondary" target="_blank" title="{% trans 'طباعة الطلب' %}">
                                         <i class="fas fa-print"></i>
                                     </a>
                                     {% if order.status != 'cancelled' and order.status != 'refunded' %}
-                                    <button type="button" class="btn btn-danger cancel-order-btn" data-order-id="{{ order.id }}" title="إلغاء الطلب">
+                                    <button type="button" class="btn btn-danger cancel-order-btn" data-order-id="{{ order.id }}" title="{% trans 'إلغاء الطلب' %}">
                                         <i class="fas fa-ban"></i>
                                     </button>
                                     {% endif %}
@@ -228,7 +228,7 @@
                         <tr>
                             <td colspan="8" class="text-center py-4">
                                 <div class="alert alert-info mb-0">
-                                    <i class="fas fa-info-circle me-2"></i> لا توجد طلبات متطابقة مع معايير البحث
+                                    <i class="fas fa-info-circle me-2"></i> {% trans "لا توجد طلبات متطابقة مع معايير البحث" %}
                                 </div>
                             </td>
                         </tr>
@@ -236,7 +236,7 @@
                     </tbody>
                 </table>
             </div>
-            
+
             <!-- ترقيم الصفحات -->
             {% if orders.paginator.num_pages > 1 %}
             <nav aria-label="Page navigation" class="mt-4">
@@ -264,7 +264,7 @@
                         </a>
                     </li>
                     {% endif %}
-                    
+
                     {% for num in orders.paginator.page_range %}
                         {% if orders.number == num %}
                         <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
@@ -272,7 +272,7 @@
                         <li class="page-item"><a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if payment_filter %}&payment_status={{ payment_filter }}{% endif %}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}">{{ num }}</a></li>
                         {% endif %}
                     {% endfor %}
-                    
+
                     {% if orders.has_next %}
                     <li class="page-item">
                         <a class="page-link" href="?page={{ orders.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if payment_filter %}&payment_status={{ payment_filter }}{% endif %}{% if date_from %}&date_from={{ date_from|date:'Y-m-d' }}{% endif %}{% if date_to %}&date_to={{ date_to|date:'Y-m-d' }}{% endif %}" aria-label="Next">
@@ -308,21 +308,21 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="cancelOrderModalLabel">تأكيد إلغاء الطلب</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+                <h5 class="modal-title" id="cancelOrderModalLabel">{% trans "تأكيد إلغاء الطلب" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'إغلاق' %}"></button>
             </div>
             <form id="cancelOrderForm" method="post">
                 {% csrf_token %}
                 <div class="modal-body">
-                    <p>هل أنت متأكد من إلغاء هذا الطلب؟</p>
+                    <p>{% trans "هل أنت متأكد من إلغاء هذا الطلب؟" %}</p>
                     <div class="mb-3">
-                        <label for="cancel_reason" class="form-label">سبب الإلغاء</label>
+                        <label for="cancel_reason" class="form-label">{% trans "سبب الإلغاء" %}</label>
                         <textarea name="cancel_reason" id="cancel_reason" class="form-control" rows="3" required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                    <button type="submit" class="btn btn-danger">تأكيد الإلغاء</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "إلغاء" %}</button>
+                    <button type="submit" class="btn btn-danger">{% trans "تأكيد الإلغاء" %}</button>
                 </div>
             </form>
         </div>
@@ -337,7 +337,7 @@
         const cancelBtns = document.querySelectorAll('.cancel-order-btn');
         const cancelForm = document.getElementById('cancelOrderForm');
         const cancelModal = new bootstrap.Modal(document.getElementById('cancelOrderModal'));
-        
+
         cancelBtns.forEach(btn => {
             btn.addEventListener('click', function() {
                 const orderId = this.getAttribute('data-order-id');
@@ -345,12 +345,12 @@
                 cancelModal.show();
             });
         });
-        
+
         // تفعيل طباعة الصفحة
         document.getElementById('printBtn').addEventListener('click', function() {
             window.print();
         });
-        
+
         // تحديث التصفية تلقائيًا عند تغيير السلكتات
         const filterSelects = document.querySelectorAll('#status, #payment_status');
         filterSelects.forEach(select => {
@@ -358,7 +358,7 @@
                 document.getElementById('search-form').submit();
             });
         });
-        
+
         // استخدام AJAX لتحديث الجدول عند الترقيم
         const paginationLinks = document.querySelectorAll('.pagination .page-link');
         paginationLinks.forEach(link => {
@@ -372,7 +372,7 @@
                 }
             });
         });
-        
+
         function updateTableWithAjax(url) {
             fetch(url, {
                 headers: {
@@ -382,10 +382,10 @@
             .then(response => response.json())
             .then(data => {
                 document.getElementById('orders-table-container').innerHTML = data.html;
-                
+
                 // تحديث URL لتسهيل المشاركة والحفظ
                 history.pushState({}, '', url);
-                
+
                 // إعادة تفعيل أحداث الأزرار
                 initializeTableEvents();
             })
@@ -393,7 +393,7 @@
                 console.error('Error updating table:', error);
             });
         }
-        
+
         function initializeTableEvents() {
             // إعادة تفعيل أزرار إلغاء الطلب
             document.querySelectorAll('.cancel-order-btn').forEach(btn => {
@@ -403,7 +403,7 @@
                     cancelModal.show();
                 });
             });
-            
+
             // إعادة تفعيل روابط الترقيم
             document.querySelectorAll('.pagination .page-link').forEach(link => {
                 link.addEventListener('click', function(e) {

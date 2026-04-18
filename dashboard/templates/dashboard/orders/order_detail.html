@@ -3,20 +3,20 @@
 {% load i18n %}
 {% load dashboard_tags %}
 
-{% block title %}تفاصيل الطلب #{{ order.order_number }}{% endblock %}
-{% block page_title %}تفاصيل الطلب #{{ order.order_number }}{% endblock %}
+{% block title %}{% trans 'تفاصيل الطلب' %} #{{ order.order_number }}{% endblock %}
+{% block page_title %}{% trans 'تفاصيل الطلب' %} #{{ order.order_number }}{% endblock %}
 
 {% block breadcrumbs %}
-<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_orders' %}">إدارة الطلبات</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_orders' %}">{% trans 'إدارة الطلبات' %}</a></li>
 {% endblock %}
 
-{% block current_page %}تفاصيل الطلب #{{ order.order_number }}{% endblock %}
+{% block current_page %}{% trans 'تفاصيل الطلب' %} #{{ order.order_number }}{% endblock %}
 
 {% block content %}
 <!-- معلومات الطلب + العميل + الشحن في بطاقة واحدة -->
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>معلومات الطلب والعميل</h5>
+        <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>{% trans 'معلومات الطلب والعميل' %}</h5>
         <div>
             <span class="badge bg-{{ order.status|status_badge }} me-2">{{ order.get_status_display }}</span>
             <span class="badge bg-{{ order.payment_status|status_badge }}">{{ order.get_payment_status_display }}</span>
@@ -26,22 +26,22 @@
         <div class="row">
             <!-- معلومات الطلب -->
             <div class="col-md-3">
-                <h6 class="text-primary mb-3"><i class="fas fa-shopping-cart me-1"></i> بيانات الطلب</h6>
+                <h6 class="text-primary mb-3"><i class="fas fa-shopping-cart me-1"></i> {% trans 'بيانات الطلب' %}</h6>
                 <table class="table table-sm table-borderless mb-0">
                     <tr>
-                        <th style="width: 45%">رقم الطلب:</th>
+                        <th style="width: 45%">{% trans 'رقم الطلب:' %}</th>
                         <td><strong>{{ order.order_number }}</strong></td>
                     </tr>
                     <tr>
-                        <th>تاريخ الطلب:</th>
+                        <th>{% trans 'تاريخ الطلب:' %}</th>
                         <td>{{ order.created_at|date:"Y-m-d H:i" }}</td>
                     </tr>
                     <tr>
-                        <th>المبلغ الإجمالي:</th>
+                        <th>{% trans 'المبلغ الإجمالي:' %}</th>
                         <td><strong class="text-success">{{ order.grand_total|currency }}</strong></td>
                     </tr>
                     <tr>
-                        <th>آخر تحديث:</th>
+                        <th>{% trans 'آخر تحديث:' %}</th>
                         <td>{{ order.updated_at|date:"Y-m-d H:i" }}</td>
                     </tr>
                 </table>
@@ -49,37 +49,37 @@
 
             <!-- معلومات العميل -->
             <div class="col-md-3">
-                <h6 class="text-primary mb-3"><i class="fas fa-user me-1"></i> بيانات العميل</h6>
+                <h6 class="text-primary mb-3"><i class="fas fa-user me-1"></i> {% trans 'بيانات العميل' %}</h6>
                 <table class="table table-sm table-borderless mb-0">
                     <tr>
-                        <th style="width: 45%">الاسم:</th>
+                        <th style="width: 45%">{% trans 'الاسم:' %}</th>
                         <td>{{ order.full_name }}</td>
                     </tr>
                     <tr>
-                        <th>البريد:</th>
+                        <th>{% trans 'البريد:' %}</th>
                         <td><a href="mailto:{{ order.email }}">{{ order.email }}</a></td>
                     </tr>
                     <tr>
-                        <th>الهاتف:</th>
+                        <th>{% trans 'الهاتف:' %}</th>
                         <td dir="ltr">{{ order.phone }}</td>
                     </tr>
                     {% if user_info %}
                     <tr>
-                        <th>عدد الطلبات:</th>
+                        <th>{% trans 'عدد الطلبات:' %}</th>
                         <td>{{ user_info.orders_count }}</td>
                     </tr>
                     {% endif %}
                 </table>
                 {% if order.user %}
                 <a href="{% url 'dashboard:dashboard_user_detail' user_id=order.user.id %}" class="btn btn-sm btn-outline-primary mt-2">
-                    <i class="fas fa-user-circle me-1"></i>ملف العميل
+                    <i class="fas fa-user-circle me-1"></i>{% trans 'ملف العميل' %}
                 </a>
                 {% endif %}
             </div>
 
             <!-- عنوان الشحن -->
             <div class="col-md-3">
-                <h6 class="text-primary mb-3"><i class="fas fa-truck me-1"></i> عنوان الشحن</h6>
+                <h6 class="text-primary mb-3"><i class="fas fa-truck me-1"></i> {% trans 'عنوان الشحن' %}</h6>
                 <address class="mb-0">
                     <i class="fas fa-map-marker-alt text-muted me-1"></i>{{ order.shipping_address }}<br>
                     <i class="fas fa-city text-muted me-1"></i>{{ order.shipping_city }}{% if order.shipping_state %}، {{ order.shipping_state }}{% endif %}<br>
@@ -90,21 +90,21 @@
 
             <!-- معلومات الدفع -->
             <div class="col-md-3">
-                <h6 class="text-primary mb-3"><i class="fas fa-credit-card me-1"></i> معلومات الدفع</h6>
+                <h6 class="text-primary mb-3"><i class="fas fa-credit-card me-1"></i> {% trans 'معلومات الدفع' %}</h6>
                 <table class="table table-sm table-borderless mb-0">
                     <tr>
-                        <th style="width: 45%">طريقة الدفع:</th>
+                        <th style="width: 45%">{% trans 'طريقة الدفع:' %}</th>
                         <td>{{ order.payment_method|default:"--" }}</td>
                     </tr>
                     <tr>
-                        <th>حالة الدفع:</th>
+                        <th>{% trans 'حالة الدفع:' %}</th>
                         <td>
                             <span class="badge bg-{{ order.payment_status|status_badge }}" id="paymentStatusBadge">{{ order.get_payment_status_display }}</span>
                         </td>
                     </tr>
                     {% if payment_info.id %}
                     <tr>
-                        <th>رقم المعاملة:</th>
+                        <th>{% trans 'رقم المعاملة:' %}</th>
                         <td>{{ payment_info.id }}</td>
                     </tr>
                     {% endif %}
@@ -113,7 +113,7 @@
                 {% if payments and payments.0.transaction and payments.0.transaction.metadata.receipt_path %}
                 <div class="mt-2">
                     <a href="{{ MEDIA_URL }}{{ payments.0.transaction.metadata.receipt_path }}" target="_blank" class="btn btn-sm btn-outline-success">
-                        <i class="fas fa-receipt me-1"></i>عرض وصل الدفع
+                        <i class="fas fa-receipt me-1"></i>{% trans 'عرض وصل الدفع' %}
                     </a>
                 </div>
                 {% endif %}
@@ -125,7 +125,7 @@
 <!-- منتجات الطلب -->
 <div class="card mb-4">
     <div class="card-header">
-        <h5 class="mb-0"><i class="fas fa-boxes me-2"></i>منتجات الطلب</h5>
+        <h5 class="mb-0"><i class="fas fa-boxes me-2"></i>{% trans 'منتجات الطلب' %}</h5>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -133,10 +133,10 @@
                 <thead class="table-light">
                     <tr>
                         <th>#</th>
-                        <th>المنتج</th>
-                        <th>السعر</th>
-                        <th>الكمية</th>
-                        <th>الإجمالي</th>
+                        <th>{% trans 'المنتج' %}</th>
+                        <th>{% trans 'السعر' %}</th>
+                        <th>{% trans 'الكمية' %}</th>
+                        <th>{% trans 'الإجمالي' %}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -177,21 +177,21 @@
                 </tbody>
                 <tfoot>
                     <tr>
-                        <th colspan="4" class="text-end">المجموع الفرعي:</th>
+                        <th colspan="4" class="text-end">{% trans 'المجموع الفرعي:' %}</th>
                         <td>{{ order.total_price|divide:1.16|currency }}</td>
                     </tr>
                     <tr>
-                        <th colspan="4" class="text-end">الضريبة:</th>
+                        <th colspan="4" class="text-end">{% trans 'الضريبة:' %}</th>
                         <td>{{ order.tax_amount|divide:1.16|currency }}</td>
                     </tr>
                     {% if order.discount_amount > 0 %}
                     <tr>
-                        <th colspan="4" class="text-end">الخصم:</th>
+                        <th colspan="4" class="text-end">{% trans 'الخصم:' %}</th>
                         <td>- {{ order.discount_amount|currency }}</td>
                     </tr>
                     {% endif %}
                     <tr class="table-primary">
-                        <th colspan="4" class="text-end">المجموع الكلي:</th>
+                        <th colspan="4" class="text-end">{% trans 'المجموع الكلي:' %}</th>
                         <td><strong>{{ order.grand_total|currency }}</strong></td>
                     </tr>
                 </tfoot>
@@ -204,10 +204,10 @@
 <div class="card mb-4 border-primary">
     <div class="card-header bg-primary text-white">
         <div class="d-flex justify-content-between align-items-center">
-            <h6 class="mb-0"><i class="fas fa-route me-2"></i>دليل سير العمل - خطوات معالجة الطلب</h6>
+            <h6 class="mb-0"><i class="fas fa-route me-2"></i>{% trans 'دليل سير العمل - خطوات معالجة الطلب' %}</h6>
             <div class="d-flex gap-2">
-                <span class="badge bg-light text-dark">الطلب: {{ order.get_status_display }}</span>
-                <span class="badge bg-light text-dark">الدفع: {{ order.get_payment_status_display }}</span>
+                <span class="badge bg-light text-dark">{% trans 'الطلب:' %} {{ order.get_status_display }}</span>
+                <span class="badge bg-light text-dark">{% trans 'الدفع:' %} {{ order.get_payment_status_display }}</span>
             </div>
         </div>
     </div>
@@ -217,8 +217,8 @@
         <div class="text-center py-4">
             <div class="alert alert-danger mb-0">
                 <i class="fas fa-ban fa-3x mb-3"></i>
-                <h4>تم إلغاء الطلب</h4>
-                <p class="mb-0">تم إلغاء هذا الطلب بتاريخ {{ order.updated_at|date:"Y-m-d H:i" }}</p>
+                <h4>{% trans 'تم إلغاء الطلب' %}</h4>
+                <p class="mb-0">{% trans 'تم إلغاء هذا الطلب بتاريخ' %} {{ order.updated_at|date:"Y-m-d H:i" }}</p>
             </div>
         </div>
         {% elif order.status == 'closed' %}
@@ -226,8 +226,8 @@
         <div class="text-center py-4">
             <div class="alert alert-success mb-0">
                 <i class="fas fa-check-double fa-3x mb-3"></i>
-                <h4>تم إكمال الطلب بنجاح</h4>
-                <p class="mb-0">تم تسليم الطلب للعميل وإغلاقه بتاريخ {{ order.updated_at|date:"Y-m-d H:i" }}</p>
+                <h4>{% trans 'تم إكمال الطلب بنجاح' %}</h4>
+                <p class="mb-0">{% trans 'تم تسليم الطلب للعميل وإغلاقه بتاريخ' %} {{ order.updated_at|date:"Y-m-d H:i" }}</p>
             </div>
         </div>
         {% else %}
@@ -238,12 +238,12 @@
                 <div class="workflow-box {% if order.status == 'pending' %}active{% elif order.status == 'processing' or order.status == 'confirmed' or order.status == 'closed' %}completed{% endif %}" data-step="0">
                     <div class="step-number">1</div>
                     <div class="step-icon"><i class="fas fa-paper-plane"></i></div>
-                    <div class="step-title">تم إرسال الطلب</div>
+                    <div class="step-title">{% trans 'تم إرسال الطلب' %}</div>
                     <div class="step-desc">
-                        <strong>المطلوب:</strong> راجع بيانات الطلب والمنتجات وتأكد من صحتها.
+                        <strong>{% trans 'المطلوب:' %}</strong> {% trans 'راجع بيانات الطلب والمنتجات وتأكد من صحتها.' %}
                     </div>
                     <div class="step-payment">
-                        <i class="fas fa-credit-card"></i> الدفع: <span class="badge bg-{{ order.payment_status|status_badge }}">{{ order.get_payment_status_display }}</span>
+                        <i class="fas fa-credit-card"></i> {% trans 'الدفع:' %} <span class="badge bg-{{ order.payment_status|status_badge }}">{{ order.get_payment_status_display }}</span>
                     </div>
                     {% if order.status == 'pending' %}
                     <div class="step-action-btn mt-2">
@@ -252,7 +252,7 @@
                             <input type="hidden" name="status" value="processing">
                             <input type="hidden" name="notify_customer" value="on">
                             <button type="submit" class="btn btn-primary btn-sm w-100">
-                                <i class="fas fa-arrow-left me-1"></i>بدء المعالجة
+                                <i class="fas fa-arrow-left me-1"></i>{% trans 'بدء المعالجة' %}
                             </button>
                         </form>
                     </div>
@@ -265,12 +265,12 @@
                 <div class="workflow-box {% if order.status == 'processing' %}active{% elif order.status == 'confirmed' or order.status == 'closed' %}completed{% endif %}" data-step="1">
                     <div class="step-number">2</div>
                     <div class="step-icon"><i class="fas fa-cogs"></i></div>
-                    <div class="step-title">قيد المعالجة</div>
+                    <div class="step-title">{% trans 'قيد المعالجة' %}</div>
                     <div class="step-desc">
-                        <strong>المطلوب:</strong> تحقق من وصل الدفع (تحويل بنكي)، جهّز المنتجات، تواصل مع العميل.
+                        <strong>{% trans 'المطلوب:' %}</strong> {% trans 'تحقق من وصل الدفع (تحويل بنكي)، جهّز المنتجات، تواصل مع العميل.' %}
                     </div>
                     <div class="step-payment">
-                        <i class="fas fa-credit-card"></i> الدفع: <span class="badge bg-{{ order.payment_status|status_badge }}">{{ order.get_payment_status_display }}</span>
+                        <i class="fas fa-credit-card"></i> {% trans 'الدفع:' %} <span class="badge bg-{{ order.payment_status|status_badge }}">{{ order.get_payment_status_display }}</span>
                     </div>
                     {% if order.status == 'processing' %}
                     <div class="step-action-btn mt-2">
@@ -279,7 +279,7 @@
                             <input type="hidden" name="status" value="confirmed">
                             <input type="hidden" name="notify_customer" value="on">
                             <button type="submit" class="btn btn-success btn-sm w-100">
-                                <i class="fas fa-arrow-left me-1"></i>تأكيد الطلب
+                                <i class="fas fa-arrow-left me-1"></i>{% trans 'تأكيد الطلب' %}
                             </button>
                         </form>
                     </div>
@@ -292,12 +292,12 @@
                 <div class="workflow-box {% if order.status == 'confirmed' %}active{% elif order.status == 'closed' %}completed{% endif %}" data-step="2">
                     <div class="step-number">3</div>
                     <div class="step-icon"><i class="fas fa-check-circle"></i></div>
-                    <div class="step-title">تم التأكيد</div>
+                    <div class="step-title">{% trans 'تم التأكيد' %}</div>
                     <div class="step-desc">
-                        <strong>المطلوب:</strong> سلّم الطلب للعميل مباشرة أو أرسله عبر شركة الشحن.
+                        <strong>{% trans 'المطلوب:' %}</strong> {% trans 'سلّم الطلب للعميل مباشرة أو أرسله عبر شركة الشحن.' %}
                     </div>
                     <div class="step-payment">
-                        <i class="fas fa-credit-card"></i> الدفع: <span class="badge bg-{{ order.payment_status|status_badge }}">{{ order.get_payment_status_display }}</span>
+                        <i class="fas fa-credit-card"></i> {% trans 'الدفع:' %} <span class="badge bg-{{ order.payment_status|status_badge }}">{{ order.get_payment_status_display }}</span>
                     </div>
                     {% if order.status == 'confirmed' %}
                     <div class="step-action-btn mt-2">
@@ -306,7 +306,7 @@
                             <input type="hidden" name="status" value="closed">
                             <input type="hidden" name="notify_customer" value="on">
                             <button type="submit" class="btn btn-info text-white btn-sm w-100">
-                                <i class="fas fa-arrow-left me-1"></i>إغلاق الطلب
+                                <i class="fas fa-arrow-left me-1"></i>{% trans 'إغلاق الطلب' %}
                             </button>
                         </form>
                     </div>
@@ -319,12 +319,12 @@
                 <div class="workflow-box {% if order.status == 'closed' %}active{% endif %}" data-step="3">
                     <div class="step-number">4</div>
                     <div class="step-icon"><i class="fas fa-box-open"></i></div>
-                    <div class="step-title">تم الإغلاق</div>
+                    <div class="step-title">{% trans 'تم الإغلاق' %}</div>
                     <div class="step-desc">
-                        <strong>النتيجة:</strong> تم تسليم الطلب بنجاح. الطلب مكتمل ولا يمكن التعديل عليه.
+                        <strong>{% trans 'النتيجة:' %}</strong> {% trans 'تم تسليم الطلب بنجاح. الطلب مكتمل ولا يمكن التعديل عليه.' %}
                     </div>
                     <div class="step-payment">
-                        <i class="fas fa-credit-card"></i> الدفع: <span class="badge bg-{{ order.payment_status|status_badge }}">{{ order.get_payment_status_display }}</span>
+                        <i class="fas fa-credit-card"></i> {% trans 'الدفع:' %} <span class="badge bg-{{ order.payment_status|status_badge }}">{{ order.get_payment_status_display }}</span>
                     </div>
                 </div>
             </div>
@@ -334,24 +334,24 @@
         <div class="alert alert-info alert-permanent mt-4 mb-0">
             <div class="row align-items-center">
                 <div class="col-md-6">
-                    <h6 class="mb-2"><i class="fas fa-hand-point-left me-2"></i>الإجراء التالي المطلوب:</h6>
+                    <h6 class="mb-2"><i class="fas fa-hand-point-left me-2"></i>{% trans 'الإجراء التالي المطلوب:' %}</h6>
                     {% if order.status == 'pending' %}
                         <p class="mb-0">
-                            <strong>1.</strong> راجع بيانات الطلب والمنتجات أعلاه<br>
-                            <strong>2.</strong> تأكد من صحة عنوان الشحن ورقم الهاتف<br>
-                            <strong>3.</strong> اضغط <strong>"بدء المعالجة"</strong> للانتقال للخطوة التالية
+                            <strong>1.</strong> {% trans 'راجع بيانات الطلب والمنتجات أعلاه' %}<br>
+                            <strong>2.</strong> {% trans 'تأكد من صحة عنوان الشحن ورقم الهاتف' %}<br>
+                            <strong>3.</strong> {% trans 'اضغط' %} <strong>"{% trans 'بدء المعالجة' %}"</strong> {% trans 'للانتقال للخطوة التالية' %}
                         </p>
                     {% elif order.status == 'processing' %}
                         <p class="mb-0">
-                            <strong>1.</strong> تحقق من وصل الدفع (إذا كان تحويل بنكي) في قسم "معلومات الدفع"<br>
-                            <strong>2.</strong> جهّز المنتجات للشحن أو التسليم<br>
-                            <strong>3.</strong> اضغط <strong>"تأكيد الطلب"</strong> - سيتحول الدفع تلقائياً إلى "مدفوع"
+                            <strong>1.</strong> {% trans 'تحقق من وصل الدفع (إذا كان تحويل بنكي) في قسم "معلومات الدفع"' %}<br>
+                            <strong>2.</strong> {% trans 'جهّز المنتجات للشحن أو التسليم' %}<br>
+                            <strong>3.</strong> {% trans 'اضغط' %} <strong>"{% trans 'تأكيد الطلب' %}"</strong> - {% trans 'سيتحول الدفع تلقائياً إلى "مدفوع"' %}
                         </p>
                     {% elif order.status == 'confirmed' %}
                         <p class="mb-0">
-                            <strong>1.</strong> سلّم الطلب للعميل مباشرة أو سلّمه لشركة الشحن<br>
-                            <strong>2.</strong> تأكد من استلام العميل للطلب<br>
-                            <strong>3.</strong> اضغط <strong>"إغلاق الطلب"</strong> لإتمام العملية
+                            <strong>1.</strong> {% trans 'سلّم الطلب للعميل مباشرة أو سلّمه لشركة الشحن' %}<br>
+                            <strong>2.</strong> {% trans 'تأكد من استلام العميل للطلب' %}<br>
+                            <strong>3.</strong> {% trans 'اضغط' %} <strong>"{% trans 'إغلاق الطلب' %}"</strong> {% trans 'لإتمام العملية' %}
                         </p>
                     {% endif %}
                 </div>
@@ -361,17 +361,17 @@
                         {% csrf_token %}
                         <div class="d-flex flex-wrap gap-2 align-items-center justify-content-md-end">
                             <div class="d-flex align-items-center gap-1">
-                                <label class="small text-muted mb-0">الطلب:</label>
+                                <label class="small text-muted mb-0">{% trans 'الطلب:' %}</label>
                                 <select name="status" id="orderStatusSelect" class="native-select">
-                                    <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>تم الإرسال</option>
-                                    <option value="processing" {% if order.status == 'processing' %}selected{% endif %}>قيد المعالجة</option>
-                                    <option value="confirmed" {% if order.status == 'confirmed' %}selected{% endif %}>تم التأكيد</option>
-                                    <option value="closed" {% if order.status == 'closed' %}selected{% endif %}>مغلق</option>
-                                    <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>ملغي</option>
+                                    <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>{% trans 'تم الإرسال' %}</option>
+                                    <option value="processing" {% if order.status == 'processing' %}selected{% endif %}>{% trans 'قيد المعالجة' %}</option>
+                                    <option value="confirmed" {% if order.status == 'confirmed' %}selected{% endif %}>{% trans 'تم التأكيد' %}</option>
+                                    <option value="closed" {% if order.status == 'closed' %}selected{% endif %}>{% trans 'مغلق' %}</option>
+                                    <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>{% trans 'ملغي' %}</option>
                                 </select>
                             </div>
                             <div class="d-flex align-items-center gap-1">
-                                <label class="small text-muted mb-0">الدفع:</label>
+                                <label class="small text-muted mb-0">{% trans 'الدفع:' %}</label>
                                 <select name="payment_status" id="paymentStatusSelect" class="native-select">
                                     {% for status_value, status_name in payment_status_choices %}
                                     <option value="{{ status_value }}" {% if order.payment_status == status_value %}selected{% endif %}>{{ status_name }}</option>
@@ -379,11 +379,11 @@
                                 </select>
                             </div>
                             <input type="hidden" name="notify_customer" value="on">
-                            <button type="submit" class="btn btn-warning btn-sm" title="تحديث حالة الطلب والدفع">
-                                <i class="fas fa-save me-1"></i>حفظ
+                            <button type="submit" class="btn btn-warning btn-sm" title="{% trans 'تحديث حالة الطلب والدفع' %}">
+                                <i class="fas fa-save me-1"></i>{% trans 'حفظ' %}
                             </button>
                             <!-- إلغاء الطلب -->
-                            <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#cancelModal" title="إلغاء الطلب">
+                            <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#cancelModal" title="{% trans 'إلغاء الطلب' %}">
                                 <i class="fas fa-ban"></i>
                             </button>
                         </div>
@@ -400,7 +400,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>تأكيد إلغاء الطلب</h5>
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>{% trans 'تأكيد إلغاء الطلب' %}</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form method="post" action="{% url 'dashboard:dashboard_order_cancel' order_id=order.id %}">
@@ -408,14 +408,14 @@
                 <div class="modal-body">
                     <div class="alert alert-warning">
                         <i class="fas fa-warning me-2"></i>
-                        <strong>تحذير:</strong> هذا الإجراء لا يمكن التراجع عنه!
+                        <strong>{% trans 'تحذير:' %}</strong> {% trans 'هذا الإجراء لا يمكن التراجع عنه!' %}
                     </div>
-                    <p>هل أنت متأكد من إلغاء الطلب رقم <strong>{{ order.order_number }}</strong>؟</p>
+                    <p>{% trans 'هل أنت متأكد من إلغاء الطلب رقم' %} <strong>{{ order.order_number }}</strong>؟</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">تراجع</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans 'تراجع' %}</button>
                     <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-ban me-1"></i>نعم، إلغاء الطلب
+                        <i class="fas fa-ban me-1"></i>{% trans 'نعم، إلغاء الطلب' %}
                     </button>
                 </div>
             </form>
@@ -427,7 +427,7 @@
 {% if order.notes %}
 <div class="card mb-4">
     <div class="card-header">
-        <h5 class="mb-0"><i class="fas fa-sticky-note me-2"></i>ملاحظات العميل</h5>
+        <h5 class="mb-0"><i class="fas fa-sticky-note me-2"></i>{% trans 'ملاحظات العميل' %}</h5>
     </div>
     <div class="card-body">
         <div class="p-3 bg-light rounded">
@@ -441,10 +441,10 @@
 <div class="d-flex justify-content-between mb-4">
     <div>
         <a href="{% url 'dashboard:dashboard_orders' %}" class="btn btn-secondary me-2">
-            <i class="fas fa-arrow-right"></i> العودة للقائمة
+            <i class="fas fa-arrow-right"></i> {% trans 'العودة للقائمة' %}
         </a>
         <a href="{% url 'dashboard:dashboard_order_print' order_id=order.id %}" class="btn btn-outline-dark me-2" target="_blank">
-            <i class="fas fa-print"></i> طباعة الطلب
+            <i class="fas fa-print"></i> {% trans 'طباعة الطلب' %}
         </a>
     </div>
 </div>

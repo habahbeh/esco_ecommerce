@@ -438,22 +438,26 @@ function populateQuickView(product) {
 
     // Update price
     const priceContainer = document.getElementById('quickViewPrice');
-    if (product.has_discount) {
-        priceContainer.innerHTML = `
-            <span class="current-price h4 text-primary">
-                ${product.currency_symbol} ${product.current_price}
-            </span>
-            <span class="original-price text-muted text-decoration-line-through ms-2">
-                ${product.currency_symbol} ${product.base_price}
-            </span>
-            <span class="badge bg-danger ms-2">${product.discount_percentage}% {% trans "خصم" %}</span>
-        `;
+    if (product.show_price && product.current_price !== null) {
+        if (product.has_discount) {
+            priceContainer.innerHTML = `
+                <span class="current-price h4 text-primary">
+                    ${product.currency_symbol} ${product.current_price}
+                </span>
+                <span class="original-price text-muted text-decoration-line-through ms-2">
+                    ${product.currency_symbol} ${product.base_price}
+                </span>
+                <span class="badge bg-danger ms-2">${product.discount_percentage}% {% trans "خصم" %}</span>
+            `;
+        } else {
+            priceContainer.innerHTML = `
+                <span class="current-price h4 text-primary">
+                    ${product.currency_symbol} ${product.base_price}
+                </span>
+            `;
+        }
     } else {
-        priceContainer.innerHTML = `
-            <span class="current-price h4 text-primary">
-                ${product.currency_symbol} ${product.base_price}
-            </span>
-        `;
+        priceContainer.innerHTML = '';
     }
 
     // Update description

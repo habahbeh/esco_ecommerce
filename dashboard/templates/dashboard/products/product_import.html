@@ -1018,9 +1018,10 @@
 <script>
 $(document).ready(function() {
     // تهيئة Select2
+    const isArabic = document.documentElement.getAttribute('lang') === 'ar';
     $('.select2').select2({
         theme: 'bootstrap-5',
-        dir: 'rtl',
+        dir: isArabic ? 'rtl' : 'ltr',
         allowClear: true,
         placeholder: function() {
             return $(this).data('placeholder') || "{% trans 'اختر...' %}";

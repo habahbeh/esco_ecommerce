@@ -1,7 +1,7 @@
 {% load i18n humanize %}
 
 <div class="price-display {% if large %}price-display-large{% endif %}">
-    {% if product.show_price %}
+    {% if product.is_price_visible %}
         {% if product.has_discount and product.savings_percentage > 0 %}
             <div class="price-wrapper has-discount">
                 <div class="current-price">

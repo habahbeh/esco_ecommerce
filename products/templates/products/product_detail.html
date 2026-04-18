@@ -17,8 +17,10 @@
     <meta property="og:image:alt" content="{% if LANGUAGE_CODE == 'en' %}{{ product.name_en }}{% else %}{{ product.name }}{% endif %}">
     {% endif %}
     <meta property="og:site_name" content="{{ site_settings.site_name|default:'ESCO' }}">
+    {% if product.is_price_visible %}
     <meta property="product:price:amount" content="{{ product.current_price }}">
     <meta property="product:price:currency" content="JOD">
+    {% endif %}
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
@@ -207,8 +209,7 @@
                 <!-- قسم السعر -->
                 <div class="price-section">
                     <div class="price-tag">
-{#                        {% if product.show_price and product.category.show_prices %}#}
-                        {% if product.show_price  %}
+                        {% if product.is_price_visible %}
                             <div class="d-flex align-items-center flex-wrap">
                                 <span class="current-price" id="productCurrentPrice">
                                     {{ product.current_price|floatformat:2 }} {% trans "د.أ" %}

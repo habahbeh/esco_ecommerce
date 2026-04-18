@@ -363,11 +363,13 @@
         });
 
         // إضافة أزرار تحديد/إلغاء تحديد للتطبيقات
+        var isArabic = document.documentElement.getAttribute('lang') === 'ar';
+        var toggleLabel = isArabic ? 'تحديد/إلغاء' : 'Toggle';
         $('.app-permissions').each(function() {
             var $app = $(this);
             var appName = $app.data('app');
             var $appHeader = $app.find('.app-header');
-            var $toggleBtn = $('<button type="button" class="btn btn-sm btn-outline-secondary app-toggle-btn">تحديد/إلغاء</button>');
+            var $toggleBtn = $('<button type="button" class="btn btn-sm btn-outline-secondary app-toggle-btn">' + toggleLabel + '</button>');
 
             $appHeader.find('.app-title').prepend($toggleBtn);
 
@@ -390,7 +392,7 @@
             var modelName = $model.data('model');
             var appName = $model.closest('.app-permissions').data('app');
             var $modelTitle = $model.find('.model-title');
-            var $toggleBtn = $('<button type="button" class="btn btn-sm btn-outline-secondary model-toggle-btn">تحديد/إلغاء</button>');
+            var $toggleBtn = $('<button type="button" class="btn btn-sm btn-outline-secondary model-toggle-btn">' + toggleLabel + '</button>');
 
             $modelTitle.prepend($toggleBtn);
 

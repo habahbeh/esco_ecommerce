@@ -116,6 +116,14 @@ class ProductListSerializer(serializers.ModelSerializer):
             return image.image.url
         return None
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not instance.is_price_visible:
+            for field in ('base_price', 'current_price', 'discount_percentage', 'has_discount'):
+                if field in data:
+                    data[field] = None
+        return data
+
 
 class ProductDetailSerializer(serializers.ModelSerializer):
     """
@@ -151,6 +159,16 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'show_price', 'images', 'variants', 'rating', 'review_count',
             'views_count', 'sales_count', 'created_at', 'updated_at'
         ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not instance.is_price_visible:
+            for field in ('base_price', 'current_price', 'discount_percentage',
+                          'discount_amount', 'has_discount', 'savings_amount',
+                          'savings_percentage', 'tax_rate'):
+                if field in data:
+                    data[field] = None
+        return data
 
 
 class ProductReviewSerializer(serializers.ModelSerializer):

@@ -436,7 +436,7 @@
                         {{ form.base_price.label_tag }}
                         <div class="input-group">
                             {{ form.base_price }}
-                            <span class="input-group-text">د.ا</span>
+                            <span class="input-group-text">{% trans "د.ا" %}</span>
                         </div>
                         <div class="form-text">{% trans 'السعر الحالي للمنتج' %}</div>
                         {% if form.base_price.errors %}
@@ -458,7 +458,7 @@
                         {{ form.cost.label_tag }}
                         <div class="input-group">
                             {{ form.cost }}
-                            <span class="input-group-text">د.ا</span>
+                            <span class="input-group-text">{% trans "د.ا" %}</span>
                         </div>
                         <div class="form-text">{% trans 'تكلفة المنتج (للاستخدام الداخلي)' %}</div>
                     </div>
@@ -549,7 +549,7 @@
                                                    class="form-control" step="0.01" min="0"
                                                    value="{% if product.discount_amount %}{% localize off %}{{ product.discount_amount }}{% endlocalize %}{% else %}0{% endif %}"
                                                    oninput="if(this.value === '') this.value = 0;">
-                                            <span class="input-group-text">د.ا</span>
+                                            <span class="input-group-text">{% trans "د.ا" %}</span>
                                         </div>
                                         <div class="form-text">{% trans 'مبلغ الخصم الثابت' %}</div>
                                     </div>
@@ -588,11 +588,11 @@
                                                             {% else %}
                                                                 0.00
                                                             {% endif %}
-                                                            د.ا
+                                                            {% trans "د.ا" %}
                                                         </div>
                                                         {% if product.has_discount %}
-                                                        <div class="text-decoration-line-through text-muted">{{ product.base_price|floatformat:2 }} د.ا</div>
-                                                        <div class="badge bg-danger ms-2">{{ product.savings_percentage }}% خصم</div>
+                                                        <div class="text-decoration-line-through text-muted">{{ product.base_price|floatformat:2 }} {% trans "د.ا" %}</div>
+                                                        <div class="badge bg-danger ms-2">{{ product.savings_percentage }}% {% trans "خصم" %}</div>
                                                         {% endif %}
                                                     </div>
                                                 </div>
@@ -638,15 +638,15 @@
                                     <div class="mb-3">
                                         <div class="d-flex mb-2">
                                             <div class="flex-grow-1 me-2">
-                                                <input type="text" id="feature-input" class="form-control" placeholder="أدخل ميزة جديدة للمنتج" dir="rtl">
+                                                <input type="text" id="feature-input" class="form-control" placeholder="{% trans 'أدخل ميزة جديدة للمنتج' %}" dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}">
                                             </div>
                                             <div>
-                                                <button type="button" id="add-feature-btn" class="btn btn-primary">إضافة</button>
+                                                <button type="button" id="add-feature-btn" class="btn btn-primary">{% trans 'إضافة' %}</button>
                                             </div>
                                         </div>
 
                                         <div class="small text-muted mb-3">
-                                            أدخل ميزات المنتج، ميزة واحدة في كل مرة (مثال: مقاوم للماء، بطارية تدوم طوال اليوم)
+                                            {% trans 'أدخل ميزات المنتج، ميزة واحدة في كل مرة (مثال: مقاوم للماء، بطارية تدوم طوال اليوم)' %}
                                         </div>
 
                                         <ul id="features-list" class="list-group">
@@ -751,27 +751,27 @@
                                     <div class="mb-3">
                                         <div class="d-flex mb-2">
                                             <div class="flex-grow-1 me-2">
-                                                <input type="text" id="spec-key" class="form-control" placeholder="اسم الخاصية (مثل: الشاشة، المعالج)" dir="rtl">
+                                                <input type="text" id="spec-key" class="form-control" placeholder="{% trans 'اسم الخاصية (مثل: الشاشة، المعالج)' %}" dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}">
                                             </div>
                                             <div class="flex-grow-1 me-2">
-                                                <input type="text" id="spec-value" class="form-control" placeholder="القيمة (مثل: 6.7 بوصة، A15 Bionic)" dir="rtl">
+                                                <input type="text" id="spec-value" class="form-control" placeholder="{% trans 'القيمة (مثل: 6.7 بوصة، A15 Bionic)' %}" dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}">
                                             </div>
                                             <div>
-                                                <button type="button" id="add-spec-btn" class="btn btn-primary">إضافة</button>
+                                                <button type="button" id="add-spec-btn" class="btn btn-primary">{% trans 'إضافة' %}</button>
                                             </div>
                                         </div>
 
                                         <div class="small text-muted mb-3">
-                                            أدخل خصائص المنتج الفنية (مثال: اسم الخاصية = الشاشة، القيمة = 6.7 بوصة)
+                                            {% trans 'أدخل خصائص المنتج الفنية (مثال: اسم الخاصية = الشاشة، القيمة = 6.7 بوصة)' %}
                                         </div>
 
                                         <div class="table-responsive">
                                             <table class="table table-bordered json-table">
                                                 <thead>
                                                     <tr>
-                                                        <th>الخاصية</th>
-                                                        <th>القيمة</th>
-                                                        <th width="80">الإجراءات</th>
+                                                        <th>{% trans 'الخاصية' %}</th>
+                                                        <th>{% trans 'القيمة' %}</th>
+                                                        <th width="80">{% trans 'الإجراءات' %}</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody id="specs-table-body">
@@ -793,28 +793,28 @@
                                     <div class="mb-3">
                                         <div class="d-flex mb-2">
                                             <div class="flex-grow-1 me-2">
-                                                <input type="text" id="attr-name" class="form-control" placeholder="اسم الخاصية (مثل: اللون، الحجم)" dir="rtl">
+                                                <input type="text" id="attr-name" class="form-control" placeholder="{% trans 'اسم الخاصية (مثل: اللون، الحجم)' %}" dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}">
                                             </div>
                                             <div class="flex-grow-1 me-2">
                                                 <select id="attr-type" class="form-select">
-                                                    <option value="text">نص</option>
-                                                    <option value="number">رقم</option>
-                                                    <option value="select">قائمة خيارات</option>
-                                                    <option value="boolean">نعم/لا</option>
-                                                    <option value="color">لون</option>
+                                                    <option value="text">{% trans 'نص' %}</option>
+                                                    <option value="number">{% trans 'رقم' %}</option>
+                                                    <option value="select">{% trans 'قائمة خيارات' %}</option>
+                                                    <option value="boolean">{% trans 'نعم/لا' %}</option>
+                                                    <option value="color">{% trans 'لون' %}</option>
                                                 </select>
                                             </div>
                                             <div>
-                                                <button type="button" id="add-attr-btn" class="btn btn-primary">إضافة</button>
+                                                <button type="button" id="add-attr-btn" class="btn btn-primary">{% trans 'إضافة' %}</button>
                                             </div>
                                         </div>
 
                                         <div id="attr-options-container" class="mb-2" style="display: none;">
-                                            <input type="text" id="attr-options" class="form-control" placeholder="خيارات (مفصولة بفواصل، مثال: أحمر، أزرق، أخضر)" dir="rtl">
+                                            <input type="text" id="attr-options" class="form-control" placeholder="{% trans 'خيارات (مفصولة بفواصل، مثال: أحمر، أزرق، أخضر)' %}" dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}">
                                         </div>
 
                                         <div class="small text-muted mb-3">
-                                            أدخل خصائص المنتج الإضافية مع تحديد نوع كل خاصية. يمكنك إضافة خصائص مثل اللون، الحجم، المادة، إلخ.
+                                            {% trans 'أدخل خصائص المنتج الإضافية مع تحديد نوع كل خاصية. يمكنك إضافة خصائص مثل اللون، الحجم، المادة، إلخ.' %}
                                         </div>
 
                                         <div class="table-responsive">
@@ -982,13 +982,13 @@
                                 <div class="seo-preview">
                                     <h6>{% trans 'معاينة ظهور الصفحة في محركات البحث:' %}</h6>
                                     <div class="seo-preview-title" id="seo-preview-title">
-                                        {% if product %}{{ product.meta_title|default:product.name }}{% else %}عنوان المنتج{% endif %}
+                                        {% if product %}{{ product.meta_title|default:product.name }}{% else %}{% trans 'عنوان المنتج' %}{% endif %}
                                     </div>
                                     <div class="seo-preview-url">
                                         www.example.com/products/{{ product.slug|default:'product-name' }}
                                     </div>
                                     <div class="seo-preview-description" id="seo-preview-description">
-                                        {% if product %}{{ product.meta_description|default:product.short_description }}{% else %}وصف المنتج سيظهر هنا. قم بإضافة وصف مختصر وجذاب للمنتج.{% endif %}
+                                        {% if product %}{{ product.meta_description|default:product.short_description }}{% else %}{% trans 'وصف المنتج سيظهر هنا. قم بإضافة وصف مختصر وجذاب للمنتج.' %}{% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -1196,5 +1196,5 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.20/summernote-bs5.min.js"></script>
-<script src="{% static 'dashboard/js/product.js' %}"></script>
+<script src="{% static 'dashboard/js/product.js' %}?v=2"></script>
 {% endblock %}

@@ -338,7 +338,7 @@
                             </a>
                             <!-- أضف هذا بجوار زر إضافة منتج جديد -->
                             <a href="{% url 'dashboard:product_import' %}" class="btn btn-success">
-                                <i class="fas fa-file-import"></i> استيراد منتجات
+                                <i class="fas fa-file-import"></i> {% trans 'استيراد منتجات' %}
                             </a>
                             <!-- زر محرر الأسعار الجماعي -->
                             <a href="{% url 'dashboard:bulk_price_editor' %}" class="btn btn-warning">
@@ -349,7 +349,7 @@
                             {% if import_id %}
                                 <a href="{% url 'dashboard:product_import_direct' import_id=import_id %}"
                                    class="btn btn-secondary">
-                                    استيراد مباشر (للاختبار)
+                                    {% trans 'استيراد مباشر (للاختبار)' %}
                                 </a>
                             {% endif %}
                         </div>
@@ -995,10 +995,10 @@
                     render: function(data) {
                         let currentPrice = parseFloat(data.current_price).toFixed(2);
                         let comparePrice = data.compare_price && data.compare_price > data.current_price
-                            ? '<div class="product-compare-price">' + parseFloat(data.compare_price).toFixed(2) + ' د.ا</div>'
+                            ? '<div class="product-compare-price">' + parseFloat(data.compare_price).toFixed(2) + ' {% trans "د.ا" %}</div>'
                             : '';
 
-                        return '<div class="product-price">' + currentPrice + ' د.ا</div>' + comparePrice;
+                        return '<div class="product-price">' + currentPrice + ' {% trans "د.ا" %}</div>' + comparePrice;
                     }
                 },
                 {

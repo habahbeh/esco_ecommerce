@@ -103,6 +103,7 @@
                                 </h3>
                                 
                                 <!-- السعر -->
+                                {% if product.is_price_visible %}
                                 <div class="text-blue-600 font-semibold text-sm mb-2">
                                     {% if product.current_price %}
                                         {{ product.current_price }}
@@ -113,6 +114,7 @@
                                     {% endif %}
                                     <span class="text-xs text-gray-500">{% trans "ريال" %}</span>
                                 </div>
+                                {% endif %}
                                 
                                 <!-- معلومات إضافية -->
                                 <div class="flex items-center justify-between text-xs text-gray-500 mb-3">
