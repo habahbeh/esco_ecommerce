@@ -3456,42 +3456,81 @@ class BulkPriceEditorView(DashboardAccessMixin, View):
         variants_queryset = variants_queryset.order_by('product__name', 'sort_order', 'name')
         products_without_variants_qs = products_without_variants_qs.order_by('name')
 
-        # بناء قائمة صفوف موحّدة: متغيرات + منتجات بدون متغيرات
+        # Get counts at DB level (cheap queries)
+        total_variants = variants_queryset.count()
+        total_simple_products = products_without_variants_qs.count()
+        total_count = total_variants + total_simple_products
+        total_products = total_count
+
+        # Paginate at DB level instead of loading all rows into memory
+        page_size = 50
+        page_number = int(request.GET.get('page', 1))
+        start = (page_number - 1) * page_size
+
         rows = []
-        for v in variants_queryset:
-            rows.append({
-                'kind': 'variant',
-                'uid': f'v{v.id}',
-                'product': v.product,
-                'variant_name': v.name,
-                'sku': v.sku,
-                'stock_quantity': v.stock_quantity,
-                'current_price': v.variant_base_price,
-                'has_discount': getattr(v, 'has_discount', False),
-                'discounted_price': v.current_price,
-            })
-        for p in products_without_variants_qs:
-            rows.append({
-                'kind': 'product',
-                'uid': f'p{p.id}',
-                'product': p,
-                'variant_name': '',
-                'sku': p.sku,
-                'stock_quantity': p.stock_quantity,
-                'current_price': p.base_price,
-                'has_discount': getattr(p, 'has_discount', False),
-                'discounted_price': getattr(p, 'current_price', p.base_price),
-            })
-        rows.sort(key=lambda r: ((r['product'].name or '').lower(), r['variant_name']))
+        if start < total_variants:
+            variant_slice = variants_queryset[start:start + page_size]
+            for v in variant_slice:
+                rows.append({
+                    'kind': 'variant',
+                    'uid': f'v{v.id}',
+                    'product': v.product,
+                    'variant_name': v.name,
+                    'sku': v.sku,
+                    'stock_quantity': v.stock_quantity,
+                    'current_price': v.variant_base_price,
+                    'has_discount': getattr(v, 'has_discount', False),
+                    'discounted_price': v.current_price,
+                })
 
-        # تقسيم الصفحات
-        paginator = Paginator(rows, 50)
-        page_number = request.GET.get('page', 1)
-        page_rows = paginator.get_page(page_number)
+        remaining = page_size - len(rows)
+        if remaining > 0:
+            product_start = max(0, start - total_variants)
+            product_slice = products_without_variants_qs[product_start:product_start + remaining]
+            for p in product_slice:
+                rows.append({
+                    'kind': 'product',
+                    'uid': f'p{p.id}',
+                    'product': p,
+                    'variant_name': '',
+                    'sku': p.sku,
+                    'stock_quantity': p.stock_quantity,
+                    'current_price': p.base_price,
+                    'has_discount': getattr(p, 'has_discount', False),
+                    'discounted_price': getattr(p, 'current_price', p.base_price),
+                })
 
-        total_products = len({r['product'].id for r in rows})
-        total_variants = sum(1 for r in rows if r['kind'] == 'variant')
-        total_simple_products = sum(1 for r in rows if r['kind'] == 'product')
+        # Build a simple page object for template compatibility
+        import math
+        total_pages = math.ceil(total_count / page_size) if total_count else 1
+        class SimplePage:
+            def __init__(self, items, number, total_pages, total_count):
+                self.object_list = items
+                self.number = number
+                self.num_pages = total_pages
+                self.paginator = type('P', (), {'num_pages': total_pages, 'count': total_count, 'page_range': range(1, total_pages + 1)})()
+                self._total_count = total_count
+            def __iter__(self):
+                return iter(self.object_list)
+            def __len__(self):
+                return len(self.object_list)
+            def has_previous(self):
+                return self.number > 1
+            def has_next(self):
+                return self.number < self.num_pages
+            def has_other_pages(self):
+                return self.num_pages > 1
+            def previous_page_number(self):
+                return self.number - 1
+            def next_page_number(self):
+                return self.number + 1
+            @property
+            def start_index(self):
+                return (self.number - 1) * page_size + 1
+            @property
+            def end_index(self):
+                return min(self.number * page_size, self._total_count)
+        page_rows = SimplePage(rows, page_number, total_pages, total_count)
 
         context = {
             'variants': page_rows,  # احتفظنا بالاسم لتوافق القالب
