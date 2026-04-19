@@ -68,20 +68,18 @@ class SiteSettingsView( SuperuserRequiredMixin, UpdateView):
         response = super().form_valid(form)
 
         # معالجة الشعار (تغيير الحجم)
-        if self.object.logo and self.object.logo != old_logo:
+        if self.object.logo and self.object.logo != old_logo and os.path.isfile(self.object.logo.path):
             try:
                 img = Image.open(self.object.logo.path)
-                # الحد الأقصى للأبعاد هو 300×100 بكسل
                 img.thumbnail((300, 100), Image.LANCZOS)
                 img.save(self.object.logo.path)
             except Exception as e:
                 messages.warning(self.request, _("تعذر معالجة الشعار: %s") % str(e))
 
         # معالجة الأيقونة المفضلة (favicon)
-        if self.object.favicon and self.object.favicon != old_favicon:
+        if self.object.favicon and self.object.favicon != old_favicon and os.path.isfile(self.object.favicon.path):
             try:
                 img = Image.open(self.object.favicon.path)
-                # الأيقونة المفضلة يجب أن تكون 32×32 بكسل
                 img = img.resize((32, 32), Image.LANCZOS)
                 img.save(self.object.favicon.path)
             except Exception as e:

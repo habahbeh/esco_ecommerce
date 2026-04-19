@@ -311,6 +311,7 @@
         cursor: pointer;
         box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         transition: all 0.3s ease;
+        background: #0357b5;
     }
 
     .category-card:hover {
@@ -342,6 +343,13 @@
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
+        {% if LANGUAGE_CODE == 'ar' %}
+        text-align: right;
+        direction: rtl;
+        {% else %}
+        text-align: left;
+        direction: ltr;
+        {% endif %}
         padding: 2rem;
         color: white;
     }
@@ -350,36 +358,52 @@
         font-size: 1.75rem;
         font-weight: 700;
         margin-bottom: 0.5rem;
-        transform: translateY(20px);
-        opacity: 0;
-        animation: fadeInUp 0.5s ease forwards;
+        width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    .category-bottom {
+        position: relative;
+        width: 100%;
+        height: 2.5rem;
     }
 
     .category-count {
         font-size: 1rem;
         opacity: 0.8;
-        transform: translateY(20px);
-        opacity: 0;
-        animation: fadeInUp 0.5s ease forwards;
-        animation-delay: 0.1s;
+        width: 100%;
+        position: absolute;
+        top: 0;
+        transition: opacity 0.3s ease;
     }
 
     .category-btn {
-        position: absolute;
-        bottom: -60px;
-        left: 2rem;
-        right: 2rem;
+        display: block;
         background: var(--bs-primary);
         color: white;
-        padding: 1rem;
+        padding: 0.5rem 1.5rem;
         border-radius: 10px;
         text-align: center;
         font-weight: 600;
-        transition: all 0.3s ease;
+        text-decoration: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .category-card:hover .category-count {
+        opacity: 0;
     }
 
     .category-card:hover .category-btn {
-        bottom: 2rem;
+        opacity: 1;
     }
 
     /* Products Section */
@@ -1017,16 +1041,17 @@
             {% for category in main_categories|slice:":6" %}
                 <div class="category-card" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
                     {% if category.image %}
-                        <img src="{{ category.image.url }}" class="category-image" alt="{% if LANGUAGE_CODE == 'en' %}{{ category.name_en|default:category.name }}{% else %}{{ category.name }}{% endif %}">
-                    {% else %}
-{#                        <img src="{% static 'images/category-default.jpg' %}" class="category-image" alt="{{ category.name }}">#}
+                        <img src="{{ category.image.url }}" class="category-image" alt="{% if LANGUAGE_CODE == 'en' %}{{ category.name_en|default:category.name }}{% else %}{{ category.name }}{% endif %}"
+                             onerror="this.style.display='none'">
                     {% endif %}
                     <div class="category-overlay">
                         <h3 class="category-name">{% if LANGUAGE_CODE == 'en' %}{{ category.name_en|default:category.name }}{% else %}{{ category.name }}{% endif %}</h3>
-                        <p class="category-count">{{ category.products.count }} {% trans "منتج" %}</p>
-                        <a href="{% url 'products:category_products' category.slug %}" class="category-btn" style="color: white">
-                            {% trans "استكشف المنتجات" %} <i class="fas fa-arrow-right ms-2"></i>
-                        </a>
+                        <div class="category-bottom">
+                            <p class="category-count">{{ category.products.count }} {% trans "منتج" %}</p>
+                            <a href="{% url 'products:category_products' category.slug %}" class="category-btn" style="color: white">
+                                {% trans "استكشف المنتجات" %} <i class="fas fa-arrow-right ms-2"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>
             {% endfor %}
