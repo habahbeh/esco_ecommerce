@@ -36,11 +36,19 @@
                 {{ about_content.get_content|safe }}
 
                 <!-- إضافة زر البروفايل هنا -->
+                {% if CURRENT_LANGUAGE == 'en' and site_settings.company_profile_en %}
                 <div class="mt-4">
-                    <a href="{% if CURRENT_LANGUAGE == 'en' %}/media/pdf/ESCO-Profile-English.pdf{% else %}/media/pdf/ESCO-Profile-Arabic.pdf{% endif %}" target="_blank" class="btn btn-primary">
+                    <a href="{{ site_settings.company_profile_en.url }}" target="_blank" class="btn btn-primary">
                         <i class="fas fa-file-pdf me-2"></i>{% trans "تحميل البروفايل" %}
                     </a>
                 </div>
+                {% elif site_settings.company_profile_ar %}
+                <div class="mt-4">
+                    <a href="{{ site_settings.company_profile_ar.url }}" target="_blank" class="btn btn-primary">
+                        <i class="fas fa-file-pdf me-2"></i>{% trans "تحميل البروفايل" %}
+                    </a>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>

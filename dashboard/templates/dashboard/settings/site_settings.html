@@ -377,6 +377,44 @@
                             </div>
                         </div>
 
+                            <hr>
+                            <h6 class="text-primary mb-3">
+                                <i class="fa fa-building me-1"></i> {% trans "بروفايل الشركة" %}
+                                <small class="text-muted ms-2">— {% trans "PDF، حد أقصى 100 ميجابايت" %}</small>
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="id_company_profile_ar" class="form-label">{% trans "بروفايل الشركة (عربي)" %}</label>
+                                        <input type="file" name="company_profile_ar" id="id_company_profile_ar" class="form-control" accept="application/pdf,.pdf">
+                                        {% if form.company_profile_ar.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.company_profile_ar.errors }}</div>
+                                        {% endif %}
+                                        {% if object.company_profile_ar %}
+                                        <small class="d-block mt-1">
+                                            <i class="fa fa-file-pdf text-danger"></i>
+                                            <a href="{{ object.company_profile_ar.url }}" target="_blank">{% trans "الملف الحالي" %}</a>
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="id_company_profile_en" class="form-label">{% trans "Company Profile (English)" %}</label>
+                                        <input type="file" name="company_profile_en" id="id_company_profile_en" class="form-control" accept="application/pdf,.pdf">
+                                        {% if form.company_profile_en.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.company_profile_en.errors }}</div>
+                                        {% endif %}
+                                        {% if object.company_profile_en %}
+                                        <small class="d-block mt-1">
+                                            <i class="fa fa-file-pdf text-danger"></i>
+                                            <a href="{{ object.company_profile_en.url }}" target="_blank">{% trans "الملف الحالي" %}</a>
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
                         <!-- المظهر والألوان -->
                         <div class="tab-pane fade" id="appearance" role="tabpanel">
                             <div class="row">

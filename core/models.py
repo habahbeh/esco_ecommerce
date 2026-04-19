@@ -14,6 +14,8 @@ class SiteSettings(models.Model):
     favicon = models.ImageField(_("أيقونة الموقع"), upload_to='site/', null=True, blank=True)
     catalog_ar = models.FileField(_("الكتالوج (عربي)"), upload_to='catalogs/', null=True, blank=True)
     catalog_en = models.FileField(_("Catalog (English)"), upload_to='catalogs/', null=True, blank=True)
+    company_profile_ar = models.FileField(_("بروفايل الشركة (عربي)"), upload_to='profiles/', null=True, blank=True)
+    company_profile_en = models.FileField(_("Company Profile (English)"), upload_to='profiles/', null=True, blank=True)
     email = models.EmailField(_("البريد الإلكتروني"), blank=True)
     phone = models.CharField(_("رقم الهاتف"), max_length=20, blank=True)
     phone_whatsapp = models.CharField(_("رقم الهاتف واتساب"), max_length=20, blank=True)

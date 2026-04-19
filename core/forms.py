@@ -1,5 +1,12 @@
 from django import forms
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 from .models import SiteSettings
+
+
+def validate_file_size_100mb(value):
+    if value.size > 100 * 1024 * 1024:
+        raise ValidationError(_('حجم الملف يجب أن لا يتجاوز 100 ميجابايت'))
 
 
 class SiteSettingsForm(forms.ModelForm):
@@ -12,6 +19,8 @@ class SiteSettingsForm(forms.ModelForm):
         model = SiteSettings
         fields = [
             'site_name', 'site_description', 'logo', 'favicon',
+            'catalog_ar', 'catalog_en',
+            'company_profile_ar', 'company_profile_en',
             'email', 'phone', 'address',
             'facebook', 'twitter', 'instagram', 'linkedin',
             'primary_color', 'enable_dark_mode', 'default_dark_mode'
@@ -58,3 +67,7 @@ class SiteSettingsForm(forms.ModelForm):
         for field_name, placeholder in placeholders.items():
             if field_name in self.fields:
                 self.fields[field_name].widget.attrs['placeholder'] = placeholder
+
+        for field_name in ['catalog_ar', 'catalog_en', 'company_profile_ar', 'company_profile_en']:
+            if field_name in self.fields:
+                self.fields[field_name].validators.append(validate_file_size_100mb)
