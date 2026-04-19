@@ -14,28 +14,24 @@ from core.models import SiteSettings
 
 
 MAX_CATALOG_SIZE = 25 * 1024 * 1024  # 25 MB
+MAX_PROFILE_SIZE = 100 * 1024 * 1024  # 100 MB
 ALLOWED_CATALOG_MIME = {'application/pdf'}
 PDF_MAGIC = b'%PDF-'
 
 
-def _validate_catalog_pdf(uploaded_file):
-    """تحقق من حجم وامتداد ونوع MIME وتوقيع الملف للكتالوج."""
+def _validate_pdf(uploaded_file, max_size=MAX_CATALOG_SIZE, size_label='25'):
     if uploaded_file is None:
         return uploaded_file
-    # الحجم
-    if uploaded_file.size > MAX_CATALOG_SIZE:
+    if uploaded_file.size > max_size:
         raise forms.ValidationError(
-            _("حجم الملف يتجاوز الحد المسموح به (25 ميجابايت).")
+            _("حجم الملف يتجاوز الحد المسموح به (%s ميجابايت).") % size_label
         )
-    # الامتداد
     name = (getattr(uploaded_file, 'name', '') or '').lower()
     if not name.endswith('.pdf'):
         raise forms.ValidationError(_("يجب أن يكون الملف بصيغة PDF فقط."))
-    # نوع MIME (يأتي من المتصفح، فحص ابتدائي)
     content_type = getattr(uploaded_file, 'content_type', '') or ''
     if content_type and content_type not in ALLOWED_CATALOG_MIME:
         raise forms.ValidationError(_("نوع الملف غير مدعوم. الرجاء رفع ملف PDF صالح."))
-    # توقيع الملف (magic bytes) — أكثر أمانًا من content_type
     try:
         pos = uploaded_file.tell()
         head = uploaded_file.read(5)
@@ -47,6 +43,10 @@ def _validate_catalog_pdf(uploaded_file):
     return uploaded_file
 
 
+def _validate_catalog_pdf(uploaded_file):
+    return _validate_pdf(uploaded_file, MAX_CATALOG_SIZE, '25')
+
+
 
 
 class SiteSettingsForm(forms.ModelForm):
@@ -56,6 +56,7 @@ class SiteSettingsForm(forms.ModelForm):
         fields = [
             'site_name', 'site_description', 'logo', 'favicon',
             'catalog_ar', 'catalog_en',
+            'company_profile_ar', 'company_profile_en',
             'email', 'phone', 'address',
             'facebook', 'twitter', 'instagram', 'linkedin','whatsapp',
             'primary_color', 'enable_dark_mode', 'default_dark_mode'
@@ -79,6 +80,12 @@ class SiteSettingsForm(forms.ModelForm):
 
     def clean_catalog_en(self):
         return _validate_catalog_pdf(self.cleaned_data.get('catalog_en'))
+
+    def clean_company_profile_ar(self):
+        return _validate_pdf(self.cleaned_data.get('company_profile_ar'), MAX_PROFILE_SIZE, '100')
+
+    def clean_company_profile_en(self):
+        return _validate_pdf(self.cleaned_data.get('company_profile_en'), MAX_PROFILE_SIZE, '100')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
