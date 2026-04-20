@@ -1,0 +1,209 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "إعدادات التسويق" %} - {% trans "لوحة التحكم" %}{% endblock %}
+{% block page_title %}{% trans "إعدادات التسويق" %}{% endblock %}
+{% block current_page %}{% trans "إعدادات التسويق" %}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_home' %}">{% trans "لوحة التحكم" %}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:marketing_dashboard' %}">{% trans "التسويق" %}</a></li>
+<li class="breadcrumb-item active">{% trans "الإعدادات" %}</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- API Key Settings -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-key me-2"></i>{% trans "إعدادات OpenRouter API" %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        {% trans "للحصول على مفتاح API مجاني من OpenRouter:" %}
+                        <ol class="mb-0 mt-2">
+                            <li>{% trans "اذهب إلى" %} <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a></li>
+                            <li>{% trans "سجل الدخول أو أنشئ حساباً مجانياً" %}</li>
+                            <li>{% trans 'اضغط على "Create Key"' %}</li>
+                            <li>{% trans "انسخ المفتاح والصقه هنا" %}</li>
+                        </ol>
+                    </div>
+
+                    <form id="settingsForm">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">{% trans "مفتاح OpenRouter API" %}</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" name="api_key" id="apiKeyInput"
+                                    value="{{ api_key }}"
+                                    placeholder="sk-or-v1-..."
+                                    dir="ltr">
+                                <button class="btn btn-outline-secondary" type="button" id="toggleKey">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            {% if api_key_masked %}
+                            <small class="text-muted mt-1 d-block">{% trans "المفتاح الحالي:" %} {{ api_key_masked }}</small>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">{% trans "النموذج الافتراضي" %}</label>
+                            <select class="form-select" name="marketing_model" id="modelSelect">
+                                {% for model in free_models %}
+                                <option value="{{ model.id }}" {% if model.id == current_model %}selected{% endif %}>{{ model.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted mt-1 d-block">{% trans "جميع النماذج المتاحة مجانية. يمكن تغيير النموذج عند إنشاء المحتوى أيضاً." %}</small>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary" id="saveBtn">
+                                <i class="fas fa-save me-2"></i>{% trans "حفظ" %}
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="testBtn">
+                                <i class="fas fa-flask me-2"></i>{% trans "اختبار الاتصال" %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Usage Info -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>{% trans "معلومات الاستخدام" %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <div class="border rounded p-3 text-center">
+                                <i class="fas fa-robot fa-2x text-primary mb-2"></i>
+                                <h6>{% trans "النماذج" %}</h6>
+                                <p class="mb-0 text-muted small">{{ free_models|length }} {% trans "نموذج مجاني" %}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3 text-center">
+                                <i class="fas fa-bolt fa-2x text-warning mb-2"></i>
+                                <h6>{% trans "التكلفة" %}</h6>
+                                <p class="mb-0 text-muted small">{% trans "مجاني بالكامل" %}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3 text-center">
+                                <i class="fas fa-language fa-2x text-info mb-2"></i>
+                                <h6>{% trans "اللغات" %}</h6>
+                                <p class="mb-0 text-muted small">{% trans "العربية والإنجليزية" %}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3 text-center">
+                                <i class="fas fa-share-alt fa-2x text-success mb-2"></i>
+                                <h6>{% trans "المنصات" %}</h6>
+                                <p class="mb-0 text-muted small">Facebook, Instagram,<br>LinkedIn, X, WhatsApp</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('toggleKey').addEventListener('click', function() {
+        const input = document.getElementById('apiKeyInput');
+        const icon = this.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'fas fa-eye-slash';
+        } else {
+            input.type = 'password';
+            icon.className = 'fas fa-eye';
+        }
+    });
+
+    document.getElementById('settingsForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('saveBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>{% trans "جاري الحفظ..." %}';
+
+        const formData = new FormData(this);
+        fetch('{% url "dashboard:marketing_settings" %}', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(r => r.json())
+        .then(data => {
+            btn.disabled = false;
+            if (data.success) {
+                btn.innerHTML = '<i class="fas fa-check me-2"></i>{% trans "تم الحفظ" %}';
+                btn.className = 'btn btn-success';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-save me-2"></i>{% trans "حفظ" %}';
+                    btn.className = 'btn btn-primary';
+                }, 2000);
+            } else {
+                alert(data.error);
+                btn.innerHTML = '<i class="fas fa-save me-2"></i>{% trans "حفظ" %}';
+            }
+        });
+    });
+
+    document.getElementById('testBtn').addEventListener('click', function() {
+        const apiKey = document.getElementById('apiKeyInput').value.trim();
+        if (!apiKey) {
+            alert('{% trans "يرجى إدخال مفتاح API أولاً" %}');
+            return;
+        }
+
+        const model = document.getElementById('modelSelect').value;
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>{% trans "جاري الاختبار..." %}';
+
+        const formData = new FormData();
+        formData.append('api_key', apiKey);
+        formData.append('model', model);
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+        fetch('{% url "dashboard:marketing_test_connection" %}', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                btn.innerHTML = '<i class="fas fa-check-circle me-2"></i>{% trans "الاتصال ناجح!" %}';
+                btn.className = 'btn btn-success';
+            } else {
+                btn.innerHTML = '<i class="fas fa-times-circle me-2"></i>{% trans "فشل الاتصال" %}';
+                btn.className = 'btn btn-danger';
+                alert(data.error);
+            }
+        })
+        .catch(err => {
+            btn.innerHTML = '<i class="fas fa-times-circle me-2"></i>{% trans "فشل الاتصال" %}';
+            btn.className = 'btn btn-danger';
+            alert(err.message);
+        })
+        .finally(() => {
+            btn.disabled = false;
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fas fa-flask me-2"></i>{% trans "اختبار الاتصال" %}';
+                btn.className = 'btn btn-outline-secondary';
+            }, 3000);
+        });
+    });
+});
+</script>
+{% endblock %}

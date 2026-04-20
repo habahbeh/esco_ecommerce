@@ -290,6 +290,13 @@ urlpatterns = [
     path('settings/newsletters/<int:pk>/toggle-verify/', views.dashboard_newsletter_toggle_verify, name='dashboard_newsletter_toggle_verify'),
     path('settings/newsletters/send/', views.dashboard_newsletter_send, name='dashboard_newsletter_send'),
 
+    # ========================= التسويق =========================
+    path('marketing/', views.MarketingDashboardView.as_view(), name='marketing_dashboard'),
+    path('marketing/generate/', views.MarketingGenerateView.as_view(), name='marketing_generate'),
+    path('marketing/settings/', views.MarketingSettingsView.as_view(), name='marketing_settings'),
+    path('marketing/test-connection/', views.MarketingTestConnectionView.as_view(), name='marketing_test_connection'),
+    path('marketing/product-search/', views.MarketingProductSearchView.as_view(), name='marketing_product_search'),
+
     # ========================= واجهات برمجة التطبيقات API =========================
     path('api/stats/', views.DashboardStatsAPIView.as_view(), name='dashboard_stats_api'),
     path('api/chart-data/', views.ChartDataAPIView.as_view(), name='dashboard_chart_data'),

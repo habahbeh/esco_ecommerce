@@ -13,3 +13,4 @@ from .api import *
 from .sliders import *
 from .events import *
 from .newsletters import *
+from .marketing import *

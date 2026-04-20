@@ -27,6 +27,10 @@ class SiteSettings(models.Model):
     whatsapp = models.URLField(_("واتساب"), blank=True)
 
 
+    # إعدادات التسويق - Marketing Settings
+    gemini_api_key = models.CharField(_("مفتاح OpenRouter API"), max_length=255, blank=True, default='')
+    marketing_model = models.CharField(_("نموذج الذكاء الاصطناعي"), max_length=100, blank=True, default='openrouter/free')
+
     # إعدادات المظهر - Appearance settings
     PRIMARY_COLOR_CHOICES = [
         ('#1e88e5', _('أزرق')),  # Blue

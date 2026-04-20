@@ -1,0 +1,556 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "التسويق" %} - {% trans "لوحة التحكم" %}{% endblock %}
+{% block page_title %}{% trans "مولد المحتوى التسويقي" %}{% endblock %}
+{% block current_page %}{% trans "التسويق" %}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_home' %}">{% trans "لوحة التحكم" %}</a></li>
+<li class="breadcrumb-item active">{% trans "التسويق" %}</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    {% if not has_api_key %}
+    <div class="alert alert-warning d-flex align-items-center mb-4">
+        <i class="fas fa-exclamation-triangle me-3 fa-2x"></i>
+        <div>
+            <strong>{% trans "مفتاح API غير مُعد" %}</strong><br>
+            {% trans "يرجى إضافة مفتاح OpenRouter API من" %}
+            <a href="{% url 'dashboard:marketing_settings' %}">{% trans "إعدادات التسويق" %}</a>
+            {% trans "للبدء في إنشاء المحتوى." %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Generator Panel -->
+        <div class="col-lg-5 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-magic me-2"></i>{% trans "إنشاء محتوى تسويقي" %}</h5>
+                </div>
+                <div class="card-body">
+                    <form id="marketingForm">
+                        {% csrf_token %}
+
+                        <!-- Item Type -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">{% trans "نوع العنصر" %}</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="item_type" id="type_product" value="product" checked>
+                                <label class="btn btn-outline-primary" for="type_product">
+                                    <i class="fas fa-box me-1"></i>{% trans "منتج" %}
+                                </label>
+                                <input type="radio" class="btn-check" name="item_type" id="type_category" value="category">
+                                <label class="btn btn-outline-primary" for="type_category">
+                                    <i class="fas fa-folder me-1"></i>{% trans "فئة" %}
+                                </label>
+                                <input type="radio" class="btn-check" name="item_type" id="type_brand" value="brand">
+                                <label class="btn btn-outline-primary" for="type_brand">
+                                    <i class="fas fa-tag me-1"></i>{% trans "علامة تجارية" %}
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Product Selector -->
+                        <div class="mb-3" id="productSelector">
+                            <label class="form-label fw-bold">{% trans "اختر المنتج" %}</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="productSearch" placeholder="{% trans 'ابحث عن منتج...' %}" autocomplete="off">
+                            </div>
+                            <div id="searchResults" class="list-group mt-1 position-absolute w-100" style="z-index: 1050; display: none;"></div>
+                            <input type="hidden" name="item_id" id="selectedItemId">
+                            <div id="selectedItem" class="mt-2" style="display: none;">
+                                <div class="d-flex align-items-center p-2 bg-light rounded">
+                                    <img id="selectedItemImg" src="" class="rounded me-2" width="40" height="40" style="object-fit: cover; display: none;">
+                                    <div class="flex-grow-1">
+                                        <strong id="selectedItemName"></strong>
+                                        <small class="text-muted d-block" id="selectedItemMeta"></small>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" id="clearSelection">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Category Selector -->
+                        <div class="mb-3" id="categorySelector" style="display: none;">
+                            <label class="form-label fw-bold">{% trans "اختر الفئة" %}</label>
+                            <select class="form-select" id="categorySelect">
+                                <option value="">{% trans "اختر فئة..." %}</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.pk }}">{{ cat.name }} {% if cat.name_en %}({{ cat.name_en }}){% endif %}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Brand Selector -->
+                        <div class="mb-3" id="brandSelector" style="display: none;">
+                            <label class="form-label fw-bold">{% trans "اختر العلامة التجارية" %}</label>
+                            <select class="form-select" id="brandSelect">
+                                <option value="">{% trans "اختر علامة تجارية..." %}</option>
+                                {% for brand in brands %}
+                                <option value="{{ brand.pk }}">{{ brand.name }} {% if brand.name_en %}({{ brand.name_en }}){% endif %}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <hr>
+
+                        <!-- Platform -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">{% trans "المنصة" %}</label>
+                            <div class="row g-2">
+                                <div class="col-4">
+                                    <input type="radio" class="btn-check" name="platform" id="p_facebook" value="facebook" checked>
+                                    <label class="btn btn-outline-primary w-100 d-flex align-items-center justify-content-center gap-2 py-2" for="p_facebook">
+                                        <i class="fa-brands fa-facebook-f"></i> Facebook
+                                    </label>
+                                </div>
+                                <div class="col-4">
+                                    <input type="radio" class="btn-check" name="platform" id="p_instagram" value="instagram">
+                                    <label class="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2 py-2" for="p_instagram">
+                                        <i class="fa-brands fa-instagram"></i> Instagram
+                                    </label>
+                                </div>
+                                <div class="col-4">
+                                    <input type="radio" class="btn-check" name="platform" id="p_linkedin" value="linkedin">
+                                    <label class="btn btn-outline-info w-100 d-flex align-items-center justify-content-center gap-2 py-2" for="p_linkedin">
+                                        <i class="fa-brands fa-linkedin-in"></i> LinkedIn
+                                    </label>
+                                </div>
+                                <div class="col-6">
+                                    <input type="radio" class="btn-check" name="platform" id="p_twitter" value="twitter">
+                                    <label class="btn btn-outline-dark w-100 d-flex align-items-center justify-content-center gap-2 py-2" for="p_twitter">
+                                        <i class="fa-brands fa-x-twitter"></i> X
+                                    </label>
+                                </div>
+                                <div class="col-6">
+                                    <input type="radio" class="btn-check" name="platform" id="p_whatsapp" value="whatsapp">
+                                    <label class="btn btn-outline-success w-100 d-flex align-items-center justify-content-center gap-2 py-2" for="p_whatsapp">
+                                        <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Content Type -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">{% trans "نوع المحتوى" %}</label>
+                            <select class="form-select" name="content_type" id="contentType">
+                                <option value="promotion">{% trans "عرض ترويجي" %}</option>
+                                <option value="new_arrival">{% trans "وصول جديد" %}</option>
+                                <option value="feature">{% trans "مميزات المنتج" %}</option>
+                                <option value="testimonial">{% trans "شهادة عميل" %}</option>
+                                <option value="educational">{% trans "محتوى تعليمي" %}</option>
+                                <option value="brand_story">{% trans "قصة العلامة التجارية" %}</option>
+                            </select>
+                        </div>
+
+                        <!-- Language -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">{% trans "اللغة" %}</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="language" id="lang_ar" value="ar" checked>
+                                <label class="btn btn-outline-primary" for="lang_ar">
+                                    <img src="{% static 'images/flags/ar.png' %}" width="20" class="me-1" onerror="this.style.display='none'">
+                                    {% trans "العربية" %}
+                                </label>
+                                <input type="radio" class="btn-check" name="language" id="lang_en" value="en">
+                                <label class="btn btn-outline-primary" for="lang_en">
+                                    <img src="{% static 'images/flags/en.png' %}" width="20" class="me-1" onerror="this.style.display='none'">
+                                    {% trans "English" %}
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- AI Model -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">{% trans "نموذج الذكاء الاصطناعي" %}</label>
+                            <select class="form-select" name="model" id="modelSelect">
+                                {% for model in free_models %}
+                                <option value="{{ model.id }}" {% if model.id == current_model %}selected{% endif %}>{{ model.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Custom Instructions -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">{% trans "تعليمات إضافية" %} <small class="text-muted">({% trans "اختياري" %})</small></label>
+                            <textarea class="form-control" name="custom_instructions" id="customInstructions" rows="2"
+                                placeholder="{% trans 'مثال: ركز على السعر التنافسي، اذكر التوصيل المجاني...' %}"></textarea>
+                        </div>
+
+                        <!-- Include Image Toggle -->
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="includeImage" checked>
+                            <label class="form-check-label" for="includeImage">{% trans "عرض صورة المنتج مع المحتوى" %}</label>
+                        </div>
+
+                        <!-- Generate Button -->
+                        <button type="submit" class="btn btn-primary w-100 py-2" id="generateBtn" {% if not has_api_key %}disabled{% endif %}>
+                            <i class="fas fa-magic me-2"></i>{% trans "إنشاء المحتوى" %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Panel -->
+        <div class="col-lg-7 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>{% trans "المحتوى المُنشأ" %}</h5>
+                    <div id="resultActions" style="display: none;">
+                        <button class="btn btn-sm btn-outline-primary me-1" id="copyBtn" title="{% trans 'نسخ' %}">
+                            <i class="fas fa-copy me-1"></i>{% trans "نسخ" %}
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" id="regenerateBtn" title="{% trans 'إعادة إنشاء' %}">
+                            <i class="fas fa-redo me-1"></i>{% trans "إعادة" %}
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Loading State -->
+                    <div id="loadingState" style="display: none;" class="text-center py-5">
+                        <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="text-muted">{% trans "جاري إنشاء المحتوى التسويقي..." %}</p>
+                        <small class="text-muted">{% trans "قد يستغرق هذا بضع ثوانٍ" %}</small>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="emptyState" class="text-center py-5">
+                        <i class="fas fa-bullhorn fa-4x text-muted mb-3"></i>
+                        <h5 class="text-muted">{% trans "ابدأ بإنشاء محتوى تسويقي" %}</h5>
+                        <p class="text-muted">{% trans "اختر منتجاً أو فئة أو علامة تجارية، حدد المنصة ونوع المحتوى، ثم اضغط إنشاء" %}</p>
+                    </div>
+
+                    <!-- Result Content -->
+                    <div id="resultContent" style="display: none;">
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="badge bg-primary me-2" id="resultPlatform"></span>
+                            <span class="badge bg-secondary me-2" id="resultType"></span>
+                            <span class="badge bg-info" id="resultLang"></span>
+                        </div>
+                        <div id="resultImageWrap" class="text-center mb-3" style="display: none;">
+                            <img id="resultImage" src="" class="rounded border shadow-sm" style="max-height: 300px; max-width: 100%; object-fit: contain;" onerror="this.parentElement.style.display='none'">
+                            <div class="mt-1"><small class="text-muted" id="resultItemName"></small></div>
+                        </div>
+                        <div id="generatedContent" class="p-3 bg-light rounded border" style="white-space: pre-wrap; font-size: 1rem; line-height: 1.8; min-height: 200px;"></div>
+                        <div class="mt-3 d-flex justify-content-between align-items-center">
+                            <small class="text-muted"><i class="fas fa-robot me-1"></i><span id="resultModel">{% trans "تم الإنشاء بواسطة AI" %}</span></small>
+                            <small class="text-muted" id="charCount"></small>
+                        </div>
+                    </div>
+
+                    <!-- Error State -->
+                    <div id="errorState" style="display: none;" class="text-center py-5">
+                        <i class="fas fa-exclamation-circle fa-3x text-danger mb-3"></i>
+                        <h5 class="text-danger" id="errorMessage"></h5>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History -->
+            <div class="card shadow-sm mt-4" id="historyCard" style="display: none;">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="fas fa-history me-2"></i>{% trans "المحتوى السابق" %}</h6>
+                    <button class="btn btn-sm btn-outline-danger" id="clearHistory">
+                        <i class="fas fa-trash me-1"></i>{% trans "مسح" %}
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div id="historyList" class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('marketingForm');
+    const generateBtn = document.getElementById('generateBtn');
+    const searchInput = document.getElementById('productSearch');
+    const searchResults = document.getElementById('searchResults');
+    const selectedItemId = document.getElementById('selectedItemId');
+    let searchTimeout = null;
+    let history = [];
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Item type switching
+    document.querySelectorAll('input[name="item_type"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.getElementById('productSelector').style.display = this.value === 'product' ? '' : 'none';
+            document.getElementById('categorySelector').style.display = this.value === 'category' ? '' : 'none';
+            document.getElementById('brandSelector').style.display = this.value === 'brand' ? '' : 'none';
+            selectedItemId.value = '';
+            document.getElementById('selectedItem').style.display = 'none';
+            searchInput.value = '';
+        });
+    });
+
+    // Product search
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const q = this.value.trim();
+        if (q.length < 2) {
+            searchResults.style.display = 'none';
+            return;
+        }
+        searchTimeout = setTimeout(() => {
+            fetch(`{% url 'dashboard:marketing_product_search' %}?q=${encodeURIComponent(q)}`)
+                .then(r => r.json())
+                .then(data => {
+                    searchResults.innerHTML = '';
+                    if (data.results.length === 0) {
+                        searchResults.innerHTML = '<div class="list-group-item text-muted">{% trans "لا توجد نتائج" %}</div>';
+                    } else {
+                        data.results.forEach(p => {
+                            const item = document.createElement('a');
+                            item.href = '#';
+                            item.className = 'list-group-item list-group-item-action d-flex align-items-center';
+                            const imgHtml = p.image ? `<img src="${escapeHtml(p.image)}" class="rounded me-2" width="32" height="32" style="object-fit:cover">` : '<i class="fas fa-box me-2 text-muted"></i>';
+                            item.innerHTML = `
+                                ${imgHtml}
+                                <div>
+                                    <strong>${escapeHtml(p.name)}</strong>
+                                    ${p.name_en ? `<small class="text-muted"> - ${escapeHtml(p.name_en)}</small>` : ''}
+                                    <br><small class="text-muted">${escapeHtml(p.sku)} | ${escapeHtml(p.category)} ${p.brand ? '| ' + escapeHtml(p.brand) : ''}</small>
+                                </div>
+                            `;
+                            item.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                selectProduct(p);
+                            });
+                            searchResults.appendChild(item);
+                        });
+                    }
+                    searchResults.style.display = '';
+                });
+        }, 300);
+    });
+
+    function selectProduct(p) {
+        selectedItemId.value = p.id;
+        document.getElementById('selectedItemName').textContent = p.name + (p.name_en ? ' - ' + p.name_en : '');
+        document.getElementById('selectedItemMeta').textContent = `${p.sku} | ${p.category} ${p.brand ? '| ' + p.brand : ''}`;
+        const img = document.getElementById('selectedItemImg');
+        if (p.image) {
+            img.src = p.image;
+            img.style.display = '';
+        } else {
+            img.style.display = 'none';
+        }
+        document.getElementById('selectedItem').style.display = '';
+        searchResults.style.display = 'none';
+        searchInput.value = '';
+    }
+
+    document.getElementById('clearSelection').addEventListener('click', () => {
+        selectedItemId.value = '';
+        document.getElementById('selectedItem').style.display = 'none';
+    });
+
+    // Category/Brand select → set item_id
+    document.getElementById('categorySelect').addEventListener('change', function() {
+        selectedItemId.value = this.value;
+    });
+    document.getElementById('brandSelect').addEventListener('change', function() {
+        selectedItemId.value = this.value;
+    });
+
+    // Close search on click outside
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.style.display = 'none';
+        }
+    });
+
+    // Form submit
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        generateContent();
+    });
+
+    document.getElementById('regenerateBtn').addEventListener('click', generateContent);
+
+    function generateContent() {
+        const itemType = document.querySelector('input[name="item_type"]:checked').value;
+        const itemId = selectedItemId.value;
+
+        if (!itemId) {
+            alert('{% trans "يرجى اختيار عنصر أولاً" %}');
+            return;
+        }
+
+        const platform = document.querySelector('input[name="platform"]:checked').value;
+        const contentType = document.getElementById('contentType').value;
+        const language = document.querySelector('input[name="language"]:checked').value;
+        const customInstructions = document.getElementById('customInstructions').value;
+        const model = document.getElementById('modelSelect').value;
+        const modelName = document.getElementById('modelSelect').selectedOptions[0].text;
+
+        // Show loading
+        document.getElementById('emptyState').style.display = 'none';
+        document.getElementById('resultContent').style.display = 'none';
+        document.getElementById('errorState').style.display = 'none';
+        document.getElementById('loadingState').style.display = '';
+        document.getElementById('resultActions').style.display = 'none';
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>{% trans "جاري الإنشاء..." %}';
+
+        const formData = new FormData();
+        formData.append('item_type', itemType);
+        formData.append('item_id', itemId);
+        formData.append('platform', platform);
+        formData.append('content_type', contentType);
+        formData.append('language', language);
+        formData.append('custom_instructions', customInstructions);
+        formData.append('model', model);
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+        fetch('{% url "dashboard:marketing_generate" %}', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('loadingState').style.display = 'none';
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = '<i class="fas fa-magic me-2"></i>{% trans "إنشاء المحتوى" %}';
+
+            if (data.success) {
+                document.getElementById('resultContent').style.display = '';
+                document.getElementById('resultActions').style.display = '';
+                document.getElementById('generatedContent').textContent = data.content;
+                document.getElementById('resultPlatform').textContent = platform;
+                document.getElementById('resultType').textContent = contentType;
+                document.getElementById('resultLang').textContent = language === 'ar' ? 'العربية' : 'English';
+                document.getElementById('charCount').textContent = data.content.length + ' {% trans "حرف" %}';
+                document.getElementById('resultModel').textContent = modelName;
+                const contentDiv = document.getElementById('generatedContent');
+                contentDiv.dir = language === 'ar' ? 'rtl' : 'ltr';
+                contentDiv.style.textAlign = language === 'ar' ? 'right' : 'left';
+
+                const imgWrap = document.getElementById('resultImageWrap');
+                const showImage = document.getElementById('includeImage').checked;
+                if (showImage && data.image_url) {
+                    const imgEl = document.getElementById('resultImage');
+                    imgEl.style.display = '';
+                    imgEl.src = data.image_url;
+                    document.getElementById('resultItemName').textContent = data.item_name || '';
+                    imgWrap.style.display = '';
+                } else {
+                    imgWrap.style.display = 'none';
+                }
+
+                // Add to history
+                addToHistory(platform, contentType, language, data.content, modelName, data.image_url, data.item_name);
+            } else {
+                document.getElementById('errorState').style.display = '';
+                document.getElementById('errorMessage').textContent = data.error;
+            }
+        })
+        .catch(err => {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('errorState').style.display = '';
+            document.getElementById('errorMessage').textContent = '{% trans "حدث خطأ غير متوقع" %}';
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = '<i class="fas fa-magic me-2"></i>{% trans "إنشاء المحتوى" %}';
+        });
+    }
+
+    // Copy
+    document.getElementById('copyBtn').addEventListener('click', function() {
+        const text = document.getElementById('generatedContent').textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            this.innerHTML = '<i class="fas fa-check me-1"></i>{% trans "تم النسخ" %}';
+            setTimeout(() => {
+                this.innerHTML = '<i class="fas fa-copy me-1"></i>{% trans "نسخ" %}';
+            }, 2000);
+        });
+    });
+
+    // History
+    function addToHistory(platform, type, lang, content, modelName, imageUrl, itemName) {
+        history.unshift({ platform, type, lang, content, modelName, imageUrl, itemName, time: new Date().toLocaleTimeString() });
+        if (history.length > 10) history.pop();
+        renderHistory();
+    }
+
+    function renderHistory() {
+        const list = document.getElementById('historyList');
+        const card = document.getElementById('historyCard');
+        if (history.length === 0) {
+            card.style.display = 'none';
+            return;
+        }
+        card.style.display = '';
+        list.innerHTML = history.map((h, i) => `
+            <a href="#" class="list-group-item list-group-item-action history-item" data-index="${i}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge bg-primary me-1">${escapeHtml(h.platform)}</span>
+                        <span class="badge bg-secondary me-1">${escapeHtml(h.type)}</span>
+                        <span class="badge bg-info">${h.lang === 'ar' ? 'عربي' : 'EN'}</span>
+                    </div>
+                    <small class="text-muted">${escapeHtml(h.time)}</small>
+                </div>
+                <small class="text-muted mt-1 d-block text-truncate">${escapeHtml(h.content.substring(0, 80))}...</small>
+            </a>
+        `).join('');
+
+        list.querySelectorAll('.history-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const idx = parseInt(this.dataset.index);
+                const h = history[idx];
+                document.getElementById('emptyState').style.display = 'none';
+                document.getElementById('errorState').style.display = 'none';
+                document.getElementById('resultContent').style.display = '';
+                document.getElementById('resultActions').style.display = '';
+                document.getElementById('generatedContent').textContent = h.content;
+                document.getElementById('resultPlatform').textContent = h.platform;
+                document.getElementById('resultType').textContent = h.type;
+                document.getElementById('resultLang').textContent = h.lang === 'ar' ? 'العربية' : 'English';
+                document.getElementById('charCount').textContent = h.content.length + ' {% trans "حرف" %}';
+                document.getElementById('resultModel').textContent = h.modelName || 'AI';
+                const cDiv = document.getElementById('generatedContent');
+                cDiv.dir = h.lang === 'ar' ? 'rtl' : 'ltr';
+                cDiv.style.textAlign = h.lang === 'ar' ? 'right' : 'left';
+                const hImgWrap = document.getElementById('resultImageWrap');
+                if (h.imageUrl) {
+                    const hImgEl = document.getElementById('resultImage');
+                    hImgEl.style.display = '';
+                    hImgEl.src = h.imageUrl;
+                    document.getElementById('resultItemName').textContent = h.itemName || '';
+                    hImgWrap.style.display = '';
+                } else {
+                    hImgWrap.style.display = 'none';
+                }
+            });
+        });
+    }
+
+    document.getElementById('clearHistory').addEventListener('click', function() {
+        history = [];
+        renderHistory();
+    });
+});
+</script>
+{% endblock %}

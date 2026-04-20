@@ -312,6 +312,23 @@
                         </li>
                         {% endif %}
 
+                        <!-- Marketing Section -->
+                        {% if request.user.is_superuser %}
+                        <li class="menu-item-section">
+                            <span>{% trans "التسويق" %}</span>
+                        </li>
+                        <li class="menu-item {% if 'marketing' in request.path %}active{% endif %}">
+                            <a href="{% url 'dashboard:marketing_dashboard' %}">
+                                <i class="fas fa-bullhorn"></i>
+                                <span>{% trans "التسويق" %}</span>
+                            </a>
+                            <ul class="submenu">
+                                <li><a href="{% url 'dashboard:marketing_dashboard' %}">{% trans "مولد المحتوى" %}</a></li>
+                                <li><a href="{% url 'dashboard:marketing_settings' %}">{% trans "إعدادات التسويق" %}</a></li>
+                            </ul>
+                        </li>
+                        {% endif %}
+
                         <!-- Settings Section -->
                         {% if perms.core.view_sitesettings or request.user.is_superuser %}
                         <li class="menu-item-section">
