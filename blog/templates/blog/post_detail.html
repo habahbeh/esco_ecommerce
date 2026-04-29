@@ -1,0 +1,340 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load i18n %}
+{% load seo_tags %}
+
+{% block title %}{% if post.meta_title %}{{ post.meta_title }}{% elif LANGUAGE_CODE == 'en' and post.title_en %}{{ post.title_en }}{% else %}{{ post.title }}{% endif %} | {{ site_settings.site_name|default:"ESCO" }}{% endblock %}
+{% block meta_description %}{% if post.meta_description %}{{ post.meta_description }}{% elif LANGUAGE_CODE == 'en' and post.excerpt_en %}{{ post.excerpt_en }}{% else %}{{ post.excerpt }}{% endif %}{% endblock %}
+{% block meta_keywords %}{{ post.meta_keywords }}{% endblock %}
+
+{% block og_tags %}
+<meta property="og:type" content="article">
+<meta property="og:title" content="{% if LANGUAGE_CODE == 'en' and post.title_en %}{{ post.title_en }}{% else %}{{ post.title }}{% endif %}">
+<meta property="og:description" content="{% if LANGUAGE_CODE == 'en' and post.excerpt_en %}{{ post.excerpt_en }}{% else %}{{ post.excerpt }}{% endif %}">
+{% if post.featured_image %}<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ post.featured_image.url }}">{% endif %}
+<meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{{ post.get_absolute_url }}">
+<meta property="article:published_time" content="{{ post.published_at|date:'c' }}">
+<meta property="article:modified_time" content="{{ post.updated_at|date:'c' }}">
+{% if post.author %}<meta property="article:author" content="{{ post.author.get_full_name|default:post.author.username }}">{% endif %}
+{% if post.category %}<meta property="article:section" content="{{ post.category.name }}">{% endif %}
+{% for tag in post.tags.all %}<meta property="article:tag" content="{{ tag.name }}">{% endfor %}
+{% endblock %}
+
+{% block structured_data %}
+{% include 'blog/includes/_post_schema.html' %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .blog-detail-hero {
+        background: linear-gradient(135deg, var(--bs-primary) 0%, #0056b3 100%);
+        color: white; padding: 2rem 0;
+        position: relative; overflow: hidden;
+    }
+    .blog-detail-hero::before {
+        content:''; position:absolute; top:0; left:0; width:100%; height:100%;
+        background: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+        background-size: 22px 22px; pointer-events: none;
+    }
+    .blog-content { font-size: 1.1rem; line-height: 1.9; }
+    .blog-content h2, .blog-content h3 { margin-top: 2rem; margin-bottom: 1rem; font-weight: 700; }
+    .blog-content img { max-width: 100%; height: auto; border-radius: 8px; margin: 1.5rem 0; }
+    .blog-content ul, .blog-content ol { padding-right: 1.5rem; margin-bottom: 1rem; }
+    html[dir="ltr"] .blog-content ul, html[dir="ltr"] .blog-content ol { padding-right: 0; padding-left: 1.5rem; }
+    .blog-content blockquote {
+        border-right: 4px solid var(--bs-primary); padding: 1rem 1.5rem;
+        background: #f8f9fa; border-radius: 0 8px 8px 0; margin: 1.5rem 0;
+    }
+    html[dir="ltr"] .blog-content blockquote {
+        border-right: none; border-left: 4px solid var(--bs-primary);
+        border-radius: 8px 0 0 8px;
+    }
+    /* Share buttons */
+    .share-btn {
+        width: 40px; height: 40px; display: inline-flex; align-items: center;
+        justify-content: center; border-radius: 50%; color: white; font-size: 1rem;
+        transition: transform .25s ease, box-shadow .25s ease;
+    }
+    .share-btn:hover {
+        transform: scale(1.15) translateY(-2px); color: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,.25);
+    }
+    /* Related products */
+    .related-product-card {
+        transition: transform .25s ease, box-shadow .25s ease;
+    }
+    .related-product-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 6px 16px rgba(0,0,0,.1);
+    }
+    /* Detail tags */
+    .detail-tag {
+        transition: all .2s ease;
+    }
+    .detail-tag:hover {
+        background: var(--bs-primary) !important;
+        color: #fff !important;
+        border-color: var(--bs-primary) !important;
+        transform: translateY(-1px);
+    }
+    /* Sidebar widget styles */
+    .widget-title { font-weight: 700; padding-bottom: .75rem; border-bottom: 3px solid var(--bs-primary); margin-bottom: 1rem; }
+    .blog-sidebar-widget .category-link { text-decoration: none; color: #374151; padding: .1rem .4rem; border-radius: 6px; transition: all .2s ease; }
+    .blog-sidebar-widget .category-link:hover { color: var(--bs-primary); background: rgba(37,99,235,.06); padding-inline-start: .7rem; }
+    .blog-sidebar-widget .cat-count { transition: all .2s ease; }
+    .blog-sidebar-widget li:hover .cat-count { background: var(--bs-primary) !important; color: #fff !important; transform: scale(1.1); }
+    .recent-post-item { padding: .5rem; border-radius: 8px; transition: all .2s ease; }
+    .recent-post-item:hover { background: rgba(37,99,235,.04); transform: translateX(4px); }
+    html[dir="rtl"] .recent-post-item:hover { transform: translateX(-4px); }
+    .recent-post-item:hover a { color: var(--bs-primary) !important; }
+    .tag-badge { display: inline-block; padding: .45rem .9rem; border-radius: 20px; font-size: .82rem; font-weight: 500; text-decoration: none; color: #4b5563; background: #f3f4f6; border: 1px solid #e5e7eb; transition: all .25s ease; }
+    .tag-badge:hover { background: var(--bs-primary); color: #fff !important; border-color: var(--bs-primary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(37,99,235,.25); }
+    /* Dark mode */
+    [data-bs-theme="dark"] .blog-content { color: #e5e7eb; }
+    [data-bs-theme="dark"] .blog-content blockquote { background: rgba(255,255,255,.05); }
+    [data-bs-theme="dark"] .detail-tag { color: #d1d5db !important; background: rgba(255,255,255,.08) !important; border-color: rgba(255,255,255,.12) !important; }
+    [data-bs-theme="dark"] .detail-tag:hover { background: var(--bs-primary) !important; color: #fff !important; }
+    [data-bs-theme="dark"] .blog-sidebar-widget .category-link { color: #d1d5db; }
+    [data-bs-theme="dark"] .blog-sidebar-widget .category-link:hover { color: #60a5fa; background: rgba(96,165,250,.1); }
+    [data-bs-theme="dark"] .recent-post-item:hover { background: rgba(96,165,250,.08); }
+    [data-bs-theme="dark"] .tag-badge { color: #d1d5db; background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.12); }
+    [data-bs-theme="dark"] .tag-badge:hover { background: var(--bs-primary); color: #fff !important; border-color: var(--bs-primary); }
+    [data-bs-theme="dark"] .widget-title { color: #e5e7eb; }
+    [data-bs-theme="dark"] .related-product-card { border-color: rgba(255,255,255,.1); }
+    /* FAQ Section */
+    .faq-header-icon {
+        width: 48px; height: 48px; border-radius: 12px;
+        background: linear-gradient(135deg, var(--bs-primary), #0056b3);
+        color: #fff; display: flex; align-items: center; justify-content: center;
+        font-size: 1.2rem; flex-shrink: 0;
+    }
+    .faq-item {
+        border: 1px solid #e9ecef; border-radius: 12px; margin-bottom: 12px;
+        overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s; background: var(--bs-body-bg);
+    }
+    .faq-item:hover {
+        border-color: rgba(var(--bs-primary-rgb), 0.3);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .faq-question {
+        width: 100%; display: flex; align-items: center; gap: 14px;
+        padding: 16px 20px; background: none; border: none; cursor: pointer;
+        text-align: start; font-size: 0.95rem; font-weight: 600;
+        color: var(--bs-body-color); transition: color 0.2s;
+    }
+    .faq-question:hover { color: var(--bs-primary); }
+    .faq-question:not(.collapsed) {
+        color: var(--bs-primary); background: rgba(var(--bs-primary-rgb), 0.03);
+    }
+    .faq-num {
+        width: 32px; height: 32px; border-radius: 50%;
+        background: rgba(var(--bs-primary-rgb), 0.1); color: var(--bs-primary);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.85rem; font-weight: 700; flex-shrink: 0; transition: all 0.2s;
+    }
+    .faq-question:not(.collapsed) .faq-num { background: var(--bs-primary); color: #fff; }
+    .faq-text { flex: 1; }
+    .faq-toggle {
+        width: 28px; height: 28px; border-radius: 50%; background: #f0f0f0;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.7rem; color: #999; flex-shrink: 0; transition: all 0.3s;
+    }
+    .faq-question:not(.collapsed) .faq-toggle {
+        background: var(--bs-primary); color: #fff; transform: rotate(45deg);
+    }
+    .faq-answer {
+        padding: 0 20px 20px; padding-inline-start: 66px;
+        color: #6c757d; line-height: 1.9; font-size: 0.9rem;
+    }
+    [data-bs-theme="dark"] .faq-item { border-color: var(--bs-border-color); background: var(--bs-body-bg); }
+    [data-bs-theme="dark"] .faq-toggle { background: var(--bs-tertiary-bg); }
+    [data-bs-theme="dark"] .faq-item:hover { border-color: rgba(var(--bs-primary-rgb), 0.4); }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb Hero -->
+<section class="blog-detail-hero">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0" style="--bs-breadcrumb-divider-color:rgba(255,255,255,0.6);">
+                <li class="breadcrumb-item"><a href="{% url 'core:home' %}" class="text-white-50 text-decoration-none">{% trans "الرئيسية" %}</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'blog:post_list' %}" class="text-white-50 text-decoration-none">{% trans "المدونة" %}</a></li>
+                {% if post.category %}
+                <li class="breadcrumb-item"><a href="{{ post.category.get_absolute_url }}" class="text-white-50 text-decoration-none">{% if LANGUAGE_CODE == 'en' and post.category.name_en %}{{ post.category.name_en }}{% else %}{{ post.category.name }}{% endif %}</a></li>
+                {% endif %}
+                <li class="breadcrumb-item active text-white" aria-current="page">
+                    {% if LANGUAGE_CODE == 'en' and post.title_en %}{{ post.title_en|truncatewords:6 }}{% else %}{{ post.title|truncatewords:6 }}{% endif %}
+                </li>
+            </ol>
+        </nav>
+    </div>
+</section>
+
+<div class="container my-4">
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <article class="bg-body rounded shadow-sm p-4 mb-4">
+                <!-- Featured Image -->
+                {% if post.featured_image %}
+                <img src="{{ post.featured_image.url }}"
+                     alt="{% if LANGUAGE_CODE == 'en' and post.featured_image_alt_en %}{{ post.featured_image_alt_en }}{% else %}{{ post.featured_image_alt|default:post.title }}{% endif %}"
+                     class="w-100 rounded mb-4" style="max-height:400px;object-fit:cover;">
+                {% endif %}
+
+                <!-- Meta -->
+                <div class="d-flex flex-wrap align-items-center gap-3 text-muted small mb-3">
+                    {% if post.category %}
+                    <a href="{{ post.category.get_absolute_url }}" class="badge bg-primary text-decoration-none">
+                        {% if LANGUAGE_CODE == 'en' and post.category.name_en %}{{ post.category.name_en }}{% else %}{{ post.category.name }}{% endif %}
+                    </a>
+                    {% endif %}
+                    <span><i class="far fa-calendar-alt me-1" style="color:#2563eb;"></i>{{ post.published_at|date:"Y/m/d" }}</span>
+                    {% if post.author %}<span><i class="far fa-user me-1" style="color:#059669;"></i>{{ post.author.get_full_name|default:post.author.username }}</span>{% endif %}
+                    <span><i class="far fa-clock me-1" style="color:#d97706;"></i>{{ post.reading_time }} {% trans "دقائق قراءة" %}</span>
+                    <span><i class="far fa-eye me-1" style="color:#7c3aed;"></i>{{ post.views_count }} {% trans "مشاهدة" %}</span>
+                </div>
+
+                <!-- Title -->
+                <h1 class="fw-bold mb-4">
+                    {% if LANGUAGE_CODE == 'en' and post.title_en %}{{ post.title_en }}{% else %}{{ post.title }}{% endif %}
+                </h1>
+
+                <!-- Content -->
+                <div class="blog-content">
+                    {% if LANGUAGE_CODE == 'en' and post.content_en %}
+                        {{ post.content_en|safe }}
+                    {% else %}
+                        {{ post.content|safe }}
+                    {% endif %}
+                </div>
+
+                <!-- Tags -->
+                {% if post.tags.all %}
+                <div class="mt-4 pt-3 border-top">
+                    <i class="fas fa-tags me-2 text-muted"></i>
+                    {% for tag in post.tags.all %}
+                    <a href="{{ tag.get_absolute_url }}" class="badge bg-body-secondary text-body border text-decoration-none me-1 detail-tag">
+                        {% if LANGUAGE_CODE == 'en' and tag.name_en %}{{ tag.name_en }}{% else %}{{ tag.name }}{% endif %}
+                    </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Share Buttons -->
+                <div class="mt-4 pt-3 border-top">
+                    <span class="fw-bold me-3">{% trans "شارك المقال:" %}</span>
+                    <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" target="_blank" rel="noopener" class="share-btn" style="background:#1877F2;"><i class="fab fa-facebook-f"></i></a>
+                    <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri }}&text={% if LANGUAGE_CODE == 'en' and post.title_en %}{{ post.title_en }}{% else %}{{ post.title }}{% endif %}" target="_blank" rel="noopener" class="share-btn" style="background:#1DA1F2;"><i class="fab fa-twitter"></i></a>
+                    <a href="https://wa.me/?text={% if LANGUAGE_CODE == 'en' and post.title_en %}{{ post.title_en }}{% else %}{{ post.title }}{% endif %}%20{{ request.build_absolute_uri }}" target="_blank" rel="noopener" class="share-btn" style="background:#25D366;"><i class="fab fa-whatsapp"></i></a>
+                    <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ request.build_absolute_uri }}&title={% if LANGUAGE_CODE == 'en' and post.title_en %}{{ post.title_en }}{% else %}{{ post.title }}{% endif %}" target="_blank" rel="noopener" class="share-btn" style="background:#0077B5;"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+            </article>
+
+            <!-- Post FAQs -->
+            {% if post_faqs %}
+            <div class="faq-section mb-4" id="postFaqAccordion">
+                <div class="faq-header d-flex align-items-center mb-4">
+                    <div class="faq-header-icon">
+                        <i class="fas fa-question"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h2 class="h5 fw-bold mb-1">{% trans "الأسئلة الشائعة" %}</h2>
+                        <p class="text-muted small mb-0">{% trans "إجابات على أكثر الأسئلة شيوعاً حول هذا المقال" %}</p>
+                    </div>
+                </div>
+                <div class="accordion" id="faqAccordionInner">
+                    {% for faq in post_faqs %}
+                    <div class="faq-item">
+                        <button class="faq-question collapsed"
+                                type="button" data-bs-toggle="collapse" data-bs-target="#blogfaq{{ faq.id }}"
+                                aria-expanded="false">
+                            <span class="faq-num">{{ forloop.counter }}</span>
+                            <span class="faq-text">{% if LANGUAGE_CODE == 'en' and faq.question_en %}{{ faq.question_en }}{% else %}{{ faq.question }}{% endif %}</span>
+                            <span class="faq-toggle"><i class="fas fa-plus"></i></span>
+                        </button>
+                        <div id="blogfaq{{ faq.id }}" class="collapse" data-bs-parent="#faqAccordionInner">
+                            <div class="faq-answer">
+                                {% if LANGUAGE_CODE == 'en' and faq.answer_en %}{{ faq.answer_en }}{% else %}{{ faq.answer }}{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- FAQ Schema Markup -->
+            <script type="application/ld+json">
+            {
+                "@context": "https://schema.org",
+                "@type": "FAQPage",
+                "mainEntity": [
+                    {% for faq in post_faqs %}
+                    {
+                        "@type": "Question",
+                        "name": "{% if LANGUAGE_CODE == 'en' and faq.question_en %}{{ faq.question_en }}{% else %}{{ faq.question }}{% endif %}",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "{% if LANGUAGE_CODE == 'en' and faq.answer_en %}{{ faq.answer_en }}{% else %}{{ faq.answer }}{% endif %}"
+                        }
+                    }{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ]
+            }
+            </script>
+            {% endif %}
+
+            <!-- Related Products -->
+            {% if post.related_products.all %}
+            <div class="bg-body rounded shadow-sm p-4 mb-4">
+                <h3 class="fw-bold mb-3"><i class="fas fa-box-open me-2"></i>{% trans "منتجات ذات صلة" %}</h3>
+                <div class="row">
+                    {% for product in post.related_products.all|slice:":4" %}
+                    <div class="col-6 col-md-3 mb-3">
+                        <a href="{{ product.get_absolute_url }}" class="text-decoration-none d-block related-product-card bg-light rounded p-2 text-center">
+                            {% if product.default_image and product.default_image.image %}
+                            <img src="{{ product.default_image.image.url }}" alt="{{ product.name }}" class="mb-2" style="height:80px;object-fit:contain;">
+                            {% endif %}
+                            <p class="small fw-bold text-body mb-0">
+                                {% if LANGUAGE_CODE == 'en' and product.name_en %}{{ product.name_en|truncatewords:5 }}{% else %}{{ product.name|truncatewords:5 }}{% endif %}
+                            </p>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Related Posts -->
+            {% if related_posts %}
+            <div class="bg-body rounded shadow-sm p-4 mb-4">
+                <h3 class="fw-bold mb-3"><i class="fas fa-newspaper me-2"></i>{% trans "مقالات ذات صلة" %}</h3>
+                <div class="row">
+                    {% for rpost in related_posts %}
+                    <div class="col-md-6 mb-3">
+                        <div class="d-flex align-items-start">
+                            {% if rpost.featured_image %}
+                            <img src="{{ rpost.featured_image.url }}" alt="{{ rpost.title }}" class="rounded me-3" style="width:80px;height:80px;object-fit:cover;" loading="lazy">
+                            {% endif %}
+                            <div>
+                                <a href="{{ rpost.get_absolute_url }}" class="text-decoration-none fw-bold d-block">
+                                    {% if LANGUAGE_CODE == 'en' and rpost.title_en %}{{ rpost.title_en }}{% else %}{{ rpost.title }}{% endif %}
+                                </a>
+                                <small class="text-muted">{{ rpost.published_at|date:"Y/m/d" }} · {{ rpost.reading_time }} {% trans "دقائق" %}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            {% include 'blog/includes/_sidebar.html' %}
+        </div>
+    </div>
+</div>
+{% endblock %}

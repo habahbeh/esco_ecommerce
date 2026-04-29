@@ -27,7 +27,8 @@ from decimal import Decimal, InvalidOperation
 from products.models import (
     Product, Category, Brand, Tag, ProductImage,
     ProductVariant, ProductAttribute, ProductAttributeValue,
-    ProductReview, ProductDiscount
+    ProductReview, ProductDiscount,
+    CategoryFAQ, CategoryLandingContent
 )
 from .dashboard import DashboardAccessMixin
 
@@ -1297,8 +1298,7 @@ class ProductDataTableView(DashboardAccessMixin, View):
         brand_filter = request.POST.get('brand', '')
         status_filter = request.POST.get('status', '')
 
-        # بناء الاستعلام
-        queryset = Product.objects.select_related('category', 'brand')
+        queryset = Product.objects.select_related('category', 'brand').prefetch_related('images')
 
         # تطبيق البحث
         if search_value:
@@ -1475,13 +1475,12 @@ class ProductListView(DashboardAccessMixin, View):
         categories = Category.objects.filter(level=0)  # الفئات الرئيسية فقط
         brands = Brand.objects.all().order_by('name')
 
-        # الإحصائيات
-        stats = {
-            'total': Product.objects.count(),
-            'active': Product.objects.filter(is_active=True).count(),
-            'out_of_stock': Product.objects.filter(stock_status='out_of_stock').count(),
-            'featured': Product.objects.filter(is_featured=True).count(),
-        }
+        stats = Product.objects.aggregate(
+            total=Count('id'),
+            active=Count('id', filter=Q(is_active=True)),
+            out_of_stock=Count('id', filter=Q(stock_status='out_of_stock')),
+            featured=Count('id', filter=Q(is_featured=True)),
+        )
 
         context = {
             'products': products_page,
@@ -1611,6 +1610,12 @@ class ProductFormView(DashboardAccessMixin, View):
             product_attributes = []
 
         # تحميل البيانات اللازمة للقالب
+        all_cats = Category.objects.filter(is_active=True).order_by('tree_id', 'lft')
+        category_tree = []
+        for cat in all_cats:
+            cat.indent = '    ' * cat.level
+            category_tree.append(cat)
+
         context = {
             'form': form,
             'product': product,
@@ -1620,7 +1625,8 @@ class ProductFormView(DashboardAccessMixin, View):
             'upsell_products': upsell_products,
             'product_variants': product_variants,
             'variants_json': variants_json,
-            'product_attributes': product_attributes,  # إضافة صفات المنتج إلى السياق
+            'product_attributes': product_attributes,
+            'category_tree': category_tree,
             'status_choices': Product.STATUS_CHOICES,
             'stock_status_choices': Product.STOCK_STATUS_CHOICES,
             'condition_choices': Product.CONDITION_CHOICES,
@@ -2069,10 +2075,10 @@ class CategoryListView(DashboardAccessMixin, View):
             'view_mode': view_mode,
         }
 
+        from django.db.models import Q
+
         if query:
             # في حالة البحث
-            from django.db.models import Q
-
             if view_mode == 'grid':
                 # للعرض الشبكي، نعرض فقط الفئات التي تطابق معايير البحث
                 categories = Category.objects.filter(
@@ -2108,12 +2114,12 @@ class CategoryListView(DashboardAccessMixin, View):
             categories = Category.objects.all().order_by('tree_id', 'lft')
 
         # الإحصائيات
-        stats = {
-            'total': Category.objects.count(),
-            'active': Category.objects.filter(is_active=True).count(),
-            'featured': Category.objects.filter(is_featured=True).count(),
-            'root_categories': Category.objects.filter(level=0).count(),
-        }
+        stats = Category.objects.aggregate(
+            total=Count('id'),
+            active=Count('id', filter=Q(is_active=True)),
+            featured=Count('id', filter=Q(is_featured=True)),
+            root_categories=Count('id', filter=Q(level=0)),
+        )
 
         # تحديث context بباقي البيانات
         context.update({
@@ -2132,17 +2138,34 @@ class CategoryFormView(DashboardAccessMixin, View):
         if category_id:
             category = get_object_or_404(Category, id=category_id)
             form_title = 'تحديث الفئة'
+            faqs = category.faqs.all().order_by('sort_order')
+            faqs_json = json.dumps([{
+                'id': faq.id,
+                'question': faq.question,
+                'question_en': faq.question_en,
+                'answer': faq.answer,
+                'answer_en': faq.answer_en,
+                'sort_order': faq.sort_order,
+                'is_active': faq.is_active,
+            } for faq in faqs])
+            try:
+                landing_content = category.landing_content
+            except CategoryLandingContent.DoesNotExist:
+                landing_content = None
         else:
             category = None
             form_title = 'إنشاء فئة جديدة'
+            faqs_json = '[]'
+            landing_content = None
 
-        # الحصول على قائمة الفئات للاختيار كأب
         parent_categories = Category.objects.exclude(id=category_id if category_id else None)
 
         context = {
             'category': category,
             'form_title': form_title,
             'parent_categories': parent_categories,
+            'faqs_json': faqs_json,
+            'landing_content': landing_content,
         }
 
         return render(request, 'dashboard/products/category_form.html', context)
@@ -2219,6 +2242,8 @@ class CategoryFormView(DashboardAccessMixin, View):
                 'parent_categories': parent_categories,
                 'form_data': form_data,
                 'form_files': form_files,
+                'faqs_json': form_data.get('category_faqs_json', '[]'),
+                'landing_content': None,
             }
 
             return render(request, 'dashboard/products/category_form.html', context)
@@ -2283,6 +2308,8 @@ class CategoryFormView(DashboardAccessMixin, View):
                     category.banner_image = banner_image
 
                 category.save()
+                self._save_faqs(request, category)
+                self._save_landing_content(request, category)
                 messages.success(request, _('تم تحديث الفئة بنجاح'))
             else:
                 # إنشاء سلج من الاسم
@@ -2318,8 +2345,9 @@ class CategoryFormView(DashboardAccessMixin, View):
 
                     # حفظ الفئة
                     category.save()
+                    self._save_faqs(request, category)
+                    self._save_landing_content(request, category)
 
-                    # طباعة رسالة تأكيد في سجل التطبيق
                     print(f"تم إنشاء الفئة بنجاح: {category.id} - {category.name}")
 
                 except Exception as creation_error:
@@ -2330,6 +2358,7 @@ class CategoryFormView(DashboardAccessMixin, View):
                 messages.success(request, _('تم إنشاء الفئة بنجاح'))
 
             # تحديد ما إذا كان يجب الاستمرار في التحرير أم العودة إلى صفحة القائمة
+
             if 'save_and_continue' in form_data:
                 return redirect('dashboard:dashboard_category_edit', category_id=str(category.id))
             else:
@@ -2349,9 +2378,66 @@ class CategoryFormView(DashboardAccessMixin, View):
                 'parent_categories': parent_categories,
                 'form_data': form_data,
                 'form_files': form_files,
+                'faqs_json': form_data.get('category_faqs_json', '[]'),
+                'landing_content': None,
             }
 
             return render(request, 'dashboard/products/category_form.html', context)
+
+    def _save_faqs(self, request, category):
+        faqs_json_str = request.POST.get('category_faqs_json', '[]')
+        deleted_json_str = request.POST.get('deleted_faqs_json', '[]')
+        try:
+            faqs_data = json.loads(faqs_json_str) if faqs_json_str.strip() else []
+            deleted_ids = json.loads(deleted_json_str) if deleted_json_str.strip() else []
+
+            if deleted_ids:
+                CategoryFAQ.objects.filter(id__in=deleted_ids, category=category).delete()
+
+            for faq_data in faqs_data:
+                question = faq_data.get('question', '').strip()
+                if not question:
+                    continue
+
+                faq_id = faq_data.get('id')
+                defaults = {
+                    'question': question,
+                    'question_en': faq_data.get('question_en', '').strip(),
+                    'answer': faq_data.get('answer', '').strip(),
+                    'answer_en': faq_data.get('answer_en', '').strip(),
+                    'sort_order': faq_data.get('sort_order', 0),
+                    'is_active': faq_data.get('is_active', True),
+                }
+
+                if faq_id and int(faq_id) > 0:
+                    CategoryFAQ.objects.filter(id=faq_id, category=category).update(**defaults)
+                else:
+                    CategoryFAQ.objects.create(category=category, **defaults)
+
+        except (json.JSONDecodeError, ValueError, TypeError):
+            messages.warning(request, _('حدث خطأ في معالجة بيانات الأسئلة الشائعة'))
+
+    def _save_landing_content(self, request, category):
+        fields = {
+            'hero_title': request.POST.get('landing_hero_title', '').strip(),
+            'hero_title_en': request.POST.get('landing_hero_title_en', '').strip(),
+            'hero_description': request.POST.get('landing_hero_description', '').strip(),
+            'hero_description_en': request.POST.get('landing_hero_description_en', '').strip(),
+            'long_description': request.POST.get('landing_long_description', '').strip(),
+            'long_description_en': request.POST.get('landing_long_description_en', '').strip(),
+            'buying_guide': request.POST.get('landing_buying_guide', '').strip(),
+            'buying_guide_en': request.POST.get('landing_buying_guide_en', '').strip(),
+            'local_keywords': request.POST.get('landing_local_keywords', '').strip(),
+            'local_keywords_en': request.POST.get('landing_local_keywords_en', '').strip(),
+        }
+
+        if any(fields.values()):
+            landing, _ = CategoryLandingContent.objects.get_or_create(category=category)
+            for attr, val in fields.items():
+                setattr(landing, attr, val)
+            landing.save()
+        else:
+            CategoryLandingContent.objects.filter(category=category).delete()
 
 
 @method_decorator(permission_required('products.delete_category'), name='dispatch')
@@ -2409,11 +2495,11 @@ class BrandListView(DashboardAccessMixin, View):
         brands_page = paginator.get_page(page)
 
         # الإحصائيات
-        stats = {
-            'total': Brand.objects.count(),
-            'featured': Brand.objects.filter(is_featured=True).count(),
-            'verified': Brand.objects.filter(is_verified=True).count(),
-        }
+        stats = Brand.objects.aggregate(
+            total=Count('id'),
+            featured=Count('id', filter=Q(is_featured=True)),
+            verified=Count('id', filter=Q(is_verified=True)),
+        )
 
         context = {
             'brands': brands_page,
@@ -2632,12 +2718,11 @@ class DiscountListView(DashboardAccessMixin, View):
         page = request.GET.get('page', 1)
         discounts_page = paginator.get_page(page)
 
-        # الإحصائيات
-        stats = {
-            'total': ProductDiscount.objects.count(),
-            'active': ProductDiscount.objects.filter(is_active=True).count(),
-            'expired': ProductDiscount.objects.filter(end_date__lt=timezone.now()).count(),
-        }
+        stats = ProductDiscount.objects.aggregate(
+            total=Count('id'),
+            active=Count('id', filter=Q(is_active=True)),
+            expired=Count('id', filter=Q(end_date__lt=timezone.now())),
+        )
 
         context = {
             'discounts': discounts_page,
@@ -2872,12 +2957,12 @@ class ReviewListView(DashboardAccessMixin, View):
         reviews_page = paginator.get_page(page)
 
         # الإحصائيات
-        stats = {
-            'total': ProductReview.objects.count(),
-            'approved': ProductReview.objects.filter(is_approved=True).count(),
-            'pending': ProductReview.objects.filter(is_approved=False).count(),
-            'reported': ProductReview.objects.filter(report_count__gt=0).count(),
-        }
+        stats = ProductReview.objects.aggregate(
+            total=Count('id'),
+            approved=Count('id', filter=Q(is_approved=True)),
+            pending=Count('id', filter=Q(is_approved=False)),
+            reported=Count('id', filter=Q(report_count__gt=0)),
+        )
 
         context = {
             'reviews': reviews_page,
@@ -2975,11 +3060,12 @@ class TagListView(DashboardAccessMixin, View):
             tags = tags.filter(name__icontains=query)
 
         # الإحصائيات
-        stats = {
-            'total': Tag.objects.count(),
-            'featured': Tag.objects.filter(is_featured=True).count(),
-            'most_used': Tag.objects.order_by('-usage_count').first(),
-        }
+        most_used = Tag.objects.order_by('-usage_count').first()
+        stats = Tag.objects.aggregate(
+            total=Count('id'),
+            featured=Count('id', filter=Q(is_featured=True)),
+        )
+        stats['most_used'] = most_used
 
         context = {
             'tags': tags,
@@ -3547,10 +3633,29 @@ class BulkPriceEditorView(DashboardAccessMixin, View):
 
         return render(request, self.template_name, context)
 
+    def _build_filter_redirect(self, request):
+        from django.urls import reverse
+        from urllib.parse import urlencode
+        params = {}
+        for field, param in [('filter_category', 'category'), ('filter_brand', 'brand'), ('filter_page', 'page')]:
+            val = request.POST.get(field, '').strip()
+            if val:
+                try:
+                    params[param] = str(int(val))
+                except ValueError:
+                    pass
+        if request.POST.get('filter_q', '').strip():
+            params['q'] = request.POST['filter_q'].strip()[:200]
+        if request.POST.get('filter_products', '').strip():
+            params['products'] = request.POST['filter_products'].strip()[:500]
+        url = reverse('dashboard:bulk_price_editor')
+        if params:
+            url += '?' + urlencode(params)
+        return redirect(url)
+
     def post(self, request):
         """حفظ تعديلات الأسعار - يدعم المتغيرات (price_v<id>) والمنتجات بدون متغيرات (price_p<id>)"""
         try:
-            # استخراج الأسعار المرسلة مع التفرقة بين المتغير والمنتج
             variant_prices = {}
             product_prices = {}
             for key, value in request.POST.items():
@@ -3563,19 +3668,18 @@ class BulkPriceEditorView(DashboardAccessMixin, View):
                     price = Decimal(value.strip())
                 except InvalidOperation:
                     messages.error(request, _('قيمة السعر غير صالحة (%s)') % raw_id)
-                    return redirect(request.META.get('HTTP_REFERER', 'dashboard:bulk_price_editor'))
+                    return self._build_filter_redirect(request)
 
                 if raw_id.startswith('v'):
                     variant_prices[raw_id[1:]] = price
                 elif raw_id.startswith('p'):
                     product_prices[raw_id[1:]] = price
                 else:
-                    # توافق رجعي: مفاتيح قديمة بدون بادئة تُعامل كمتغيرات
                     variant_prices[raw_id] = price
 
             if not variant_prices and not product_prices:
                 messages.warning(request, _('لم يتم إدخال أي تغييرات على الأسعار'))
-                return redirect(request.META.get('HTTP_REFERER', 'dashboard:bulk_price_editor'))
+                return self._build_filter_redirect(request)
 
             updated_variants = 0
             updated_products = 0
@@ -3609,12 +3713,11 @@ class BulkPriceEditorView(DashboardAccessMixin, View):
             else:
                 messages.info(request, _('لم يتم تغيير أي أسعار'))
 
-            # إعادة التوجيه مع الاحتفاظ بالفلاتر
-            return redirect(request.META.get('HTTP_REFERER', 'dashboard:bulk_price_editor'))
+            return self._build_filter_redirect(request)
 
         except Exception as e:
             messages.error(request, _('حدث خطأ أثناء تحديث الأسعار: %s') % str(e))
-            return redirect('dashboard:bulk_price_editor')
+            return self._build_filter_redirect(request)
 
 
 @method_decorator(permission_required('products.change_product'), name='dispatch')

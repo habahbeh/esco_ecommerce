@@ -16,7 +16,6 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
 <style>
     .price-input {
-        max-width: 120px;
         text-align: left;
         direction: ltr;
     }
@@ -605,6 +604,11 @@
         {% if variants %}
         <form method="post" id="bulk-price-form">
             {% csrf_token %}
+            {% if selected_category %}<input type="hidden" name="filter_category" value="{{ selected_category }}">{% endif %}
+            {% if selected_brand %}<input type="hidden" name="filter_brand" value="{{ selected_brand }}">{% endif %}
+            {% if search_query %}<input type="hidden" name="filter_q" value="{{ search_query }}">{% endif %}
+            {% if product_ids %}<input type="hidden" name="filter_products" value="{{ product_ids }}">{% endif %}
+            <input type="hidden" name="filter_page" value="{{ variants.number }}">
 
             <div class="table-responsive">
                 <table class="table table-hover table-striped sticky-header mb-0">
@@ -623,9 +627,9 @@
                             <th width="80">{% trans 'المخزون' %}</th>
                             <th>{% trans 'السعر الحالي' %}</th>
                             <th width="140">{% trans 'السعر الجديد' %}</th>
-                            <th width="100">{% trans 'التغيير' %}</th>
-                            <th width="80">{% trans 'السعر' %}</th>
-                            <th width="60">{% trans 'عرض' %}</th>
+                            <th width="70">{% trans 'التغيير' %}</th>
+                            <th width="50">{% trans 'السعر' %}</th>
+                            <th width="50">{% trans 'عرض' %}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -693,19 +697,16 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <div class="input-group input-group-sm">
-                                    <input type="number"
-                                           name="price_{{ row.uid }}"
-                                           id="price_{{ row.uid }}"
-                                           class="form-control price-input"
-                                           step="0.01"
-                                           min="0.01"
-                                           placeholder="{{ row.current_price|floatformat:2 }}"
-                                           data-original-price="{{ row.current_price }}"
-                                           tabindex="{{ forloop.counter }}"
-                                           oninput="handlePriceInput(this)">
-                                    <span class="input-group-text">{% trans 'د.أ' %}</span>
-                                </div>
+                                <input type="number"
+                                       name="price_{{ row.uid }}"
+                                       id="price_{{ row.uid }}"
+                                       class="form-control form-control-sm price-input"
+                                       step="0.01"
+                                       min="0.01"
+                                       placeholder="{{ row.current_price|floatformat:2 }}"
+                                       data-original-price="{{ row.current_price }}"
+                                       tabindex="{{ forloop.counter }}"
+                                       oninput="handlePriceInput(this)">
                             </td>
                             <td class="text-center">
                                 <span id="change-display-{{ row.uid }}" class="change-percentage d-none">

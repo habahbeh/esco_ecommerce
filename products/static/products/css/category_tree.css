@@ -1,452 +1,538 @@
-/* أنماط شجرة الفئات باستخدام أكورديون بوتستراب - محسنة */
+/* ===== Category Sidebar Container ===== */
+.category-sidebar {
+    position: relative;
+    top: 0;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+    overflow: visible;
+    margin-bottom: 1rem;
+}
 
-/* تخصيص الأكورديون الرئيسي */
-.category-accordion {
-    --bs-accordion-btn-padding-x: 1rem;
-    --bs-accordion-btn-padding-y: 0.75rem;
-    --bs-accordion-active-bg: rgba(var(--bs-primary-rgb), 0.08);
-    --bs-accordion-active-color: var(--bs-primary);
-    --bs-accordion-btn-focus-box-shadow: none;
-    border-radius: var(--bs-border-radius);
+.category-sidebar .card {
+    border: none;
+    border-radius: 14px;
     overflow: hidden;
 }
 
+.category-sidebar .card-header {
+    background: linear-gradient(135deg, #0077c8 0%, #005a9e 100%);
+    padding: 1rem 1.25rem;
+    border: none;
+}
+
+.category-sidebar .card-header h5 {
+    margin: 0;
+    color: #fff;
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: 0.2px;
+}
+
+.category-sidebar .card-header h5 i {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.category-sidebar .card-body {
+    padding: 0.5rem 0;
+}
+
+/* ===== Accordion Reset ===== */
+.category-accordion {
+    border: none;
+}
+
 .category-accordion .accordion-item {
-    border-color: rgba(0, 0, 0, 0.08);
+    border: none;
 }
 
-.category-accordion .accordion-item:first-of-type {
-    border-top-left-radius: var(--bs-border-radius);
-    border-top-right-radius: var(--bs-border-radius);
+/* ===== Parent Category (Top Level) ===== */
+.category-accordion > .category-item {
+    margin: 2px 0.5rem;
+    border-radius: 8px;
+    transition: background 0.2s;
 }
 
-.category-accordion .accordion-item:last-of-type {
-    border-bottom-left-radius: var(--bs-border-radius);
-    border-bottom-right-radius: var(--bs-border-radius);
+.category-accordion > .category-item:hover {
+    background: #f6f9fc;
 }
 
-/* تصميم زر الأكورديون */
-.category-accordion .accordion-button {
-    font-weight: 500;
-    font-size: 0.95rem;
-    color: #333;
-    background-color: #fff;
-    box-shadow: none;
-    padding: var(--bs-accordion-btn-padding-y) var(--bs-accordion-btn-padding-x);
-}
-
-.category-accordion .accordion-button:hover {
-    background-color: rgba(var(--bs-primary-rgb), 0.03);
-}
-
-.category-accordion .accordion-button:not(.collapsed) {
-    color: var(--bs-primary);
-    background-color: rgba(var(--bs-primary-rgb), 0.08);
-    box-shadow: none;
+/* ===== Toggle Button ===== */
+.category-toggle-btn {
+    width: 100%;
+    padding: 0.7rem 0.9rem;
     font-weight: 600;
+    font-size: 0.88rem;
+    color: #2c3e50;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
 }
 
-.category-accordion .accordion-button:focus {
+.category-toggle-btn:not(.collapsed) {
+    color: #0077c8;
+    background: linear-gradient(135deg, rgba(0, 119, 200, 0.08), rgba(0, 90, 158, 0.04));
+    font-weight: 700;
+}
+
+.category-toggle-btn:hover {
+    background: rgba(0, 119, 200, 0.05);
+}
+
+.category-toggle-btn:focus {
+    outline: none;
     box-shadow: none;
-    border-color: rgba(var(--bs-primary-rgb), 0.2);
-    z-index: 1;
 }
 
-/* تخصيص أيقونة التوسيع */
-.category-accordion .accordion-button::after {
-    width: 1rem;
-    height: 1rem;
-    background-size: 1rem;
-    opacity: 0.6;
-    margin-left: 0.5rem;
+/* ===== Expand / Collapse Icon (+/-) ===== */
+.expand-icon {
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    flex-shrink: 0;
+    background: #eef2f7;
+    color: #7a8a9e;
+    transition: all 0.25s ease;
 }
 
-.category-accordion .accordion-button:not(.collapsed)::after {
-    opacity: 1;
+.category-toggle-btn:not(.collapsed) .expand-icon {
+    background: rgba(0, 119, 200, 0.12);
+    color: #0077c8;
+    transform: rotate(0deg);
 }
 
-/* الفئات التي تحتوي على منتجات وتلك التي لا تحتوي */
-.category-accordion .has-products .accordion-button {
-    border-left: 3px solid var(--bs-primary);
+.category-toggle-btn:hover .expand-icon {
+    background: rgba(0, 119, 200, 0.1);
+    color: #0077c8;
 }
 
-.category-accordion .no-products .accordion-button {
-    border-left: 3px solid transparent;
-    opacity: 0.85;
-}
-
-/* تمييز شارات المنتجات */
-.badge-has-products {
-    background-color: rgba(var(--bs-primary-rgb), 0.1);
-    color: var(--bs-primary);
-    font-weight: 600;
-}
-
-.badge-empty {
-    background-color: rgba(0, 0, 0, 0.05);
-    color: #888;
-}
-
-/* الشارات في أزرار الأكورديون */
-.category-accordion .accordion-button .badge {
-    font-size: 0.75rem;
-    padding: 0.35em 0.65em;
-    margin-left: 0.5rem;
-    min-width: 1.5rem;
-    text-align: center;
-}
-
-.category-accordion .accordion-button:not(.collapsed) .badge {
-    background-color: rgba(var(--bs-primary-rgb), 0.15);
-    color: var(--bs-primary);
-}
-
-/* محتوى الأكورديون */
-.category-accordion .accordion-body {
-    padding: 0;
-    background-color: rgba(0, 0, 0, 0.01);
-}
-
-/* تخصيص رابط الفئة داخل زر الأكورديون */
+/* ===== Category Link inside button ===== */
 .category-link-btn {
     color: inherit;
     text-decoration: none;
-    padding: 0.25rem 0.5rem;
-    margin-left: 0.5rem;
-    margin-right: 0.5rem;
-    border-radius: 0.25rem;
-    transition: all 0.2s ease;
     flex-grow: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0;
+    transition: color 0.15s;
 }
 
 .category-link-btn:hover {
-    background-color: rgba(var(--bs-primary-rgb), 0.08);
-    color: var(--bs-primary);
+    color: #0077c8;
 }
 
-/* أكورديون الفئات الفرعية */
+.category-link-btn .cat-icon {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    background: rgba(0, 119, 200, 0.08);
+    color: #0077c8;
+}
+
+.category-toggle-btn:not(.collapsed) .category-link-btn .cat-icon {
+    transform: scale(1.05);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.category-link-btn .category-name {
+    line-height: 1.35;
+}
+
+/* ===== Product Count Badge ===== */
+.badge-has-products {
+    background: rgba(0, 119, 200, 0.08);
+    color: #0077c8;
+    font-weight: 600;
+    font-size: 0.7rem;
+    padding: 0.25em 0.55em;
+    min-width: 1.5rem;
+    text-align: center;
+    border-radius: 6px;
+}
+
+.badge-empty {
+    background: #f3f3f3;
+    color: #bbb;
+    font-size: 0.7rem;
+    padding: 0.25em 0.55em;
+    min-width: 1.5rem;
+    text-align: center;
+    border-radius: 6px;
+}
+
+.category-toggle-btn .badge {
+    flex-shrink: 0;
+    margin-inline-start: auto;
+}
+
+.category-toggle-btn:not(.collapsed) .badge-has-products {
+    background: rgba(0, 119, 200, 0.15);
+    color: #005a9e;
+}
+
+/* ===== Custom Collapse ===== */
+.category-collapse {
+    display: none;
+    overflow: hidden;
+}
+
+.category-collapse.show {
+    display: block;
+}
+
+/* ===== Subcategory Panel ===== */
+.category-accordion .accordion-body {
+    padding: 0;
+}
+
 .subcategory-accordion {
-    --bs-accordion-border-width: 0;
-    --bs-accordion-btn-padding-x: 1rem;
-    --bs-accordion-btn-padding-y: 0.6rem;
+    border: none;
+    padding: 0.15rem 0 0.3rem;
 }
 
-.subcategory-accordion .accordion-item {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-    margin-left: 0.75rem;
+/* ===== Subcategory Items ===== */
+.subcategory-accordion .accordion-item,
+.subcategory-accordion .category-item {
+    border: none;
     position: relative;
+    margin: 0;
 }
 
-/* خط عمودي يوضح التسلسل الهرمي للفئات الفرعية */
-.subcategory-accordion .accordion-item::before {
+/* Tree connector - vertical line */
+.subcategory-accordion > .accordion-item::before,
+.subcategory-accordion > .category-item::before,
+.subcategory-accordion > .accordion-item > .accordion-item-simple::before {
     content: '';
     position: absolute;
-    left: -0.5rem;
     top: 0;
     height: 100%;
-    width: 1px;
-    background-color: rgba(0, 0, 0, 0.1);
+    width: 1.5px;
+    background: var(--tree-line-color, #d5e3f0);
 }
 
-.subcategory-accordion .accordion-item:last-child {
-    border-bottom: none;
+/* Last item - shorten the vertical line */
+.subcategory-accordion > .accordion-item:last-child::before,
+.subcategory-accordion > .category-item:last-child::before {
+    height: 50%;
 }
 
-.subcategory-accordion .accordion-button {
-    font-size: 0.9rem;
-    padding-left: 1.25rem;
-}
-
-.subcategory-accordion .accordion-button::before {
+/* Tree connector - horizontal branch */
+.subcategory-accordion > .accordion-item > .accordion-header > .category-toggle-btn::before,
+.subcategory-accordion > .category-item > .accordion-header > .category-toggle-btn::before {
     content: '';
     position: absolute;
-    left: -0.5rem;
     top: 50%;
-    width: 0.5rem;
-    height: 1px;
-    background-color: rgba(0, 0, 0, 0.1);
+    width: 14px;
+    height: 1.5px;
+    background: var(--tree-line-color, #d5e3f0);
 }
 
-.subcategory-accordion .accordion-button::after {
-    width: 0.85rem;
-    height: 0.85rem;
-    background-size: 0.85rem;
+/* LTR tree positions */
+.subcategory-accordion > .accordion-item::before,
+.subcategory-accordion > .category-item::before,
+.subcategory-accordion > .accordion-item > .accordion-item-simple::before {
+    left: 1.2rem;
 }
 
-/* زيادة المسافة البادئة للمستويات المتداخلة */
-.subcategory-accordion .subcategory-accordion .accordion-item {
-    margin-left: 1rem;
+.subcategory-accordion > .accordion-item > .accordion-header > .category-toggle-btn::before,
+.subcategory-accordion > .category-item > .accordion-header > .category-toggle-btn::before {
+    left: 1.2rem;
 }
 
-.subcategory-accordion .subcategory-accordion .accordion-button {
+/* Subcategory toggle buttons */
+.subcategory-accordion .category-toggle-btn {
     font-size: 0.85rem;
+    font-weight: 500;
+    color: #4a5568;
+    padding: 0.55rem 0.75rem 0.55rem 2.8rem;
+    background: transparent;
+    border-radius: 6px;
+    margin: 1px 0.5rem;
+    transition: background 0.15s, color 0.15s;
 }
 
-/* تنسيق العناصر البسيطة (بدون أطفال) */
+.subcategory-accordion .category-toggle-btn:hover {
+    background: rgba(0, 119, 200, 0.04);
+    color: #0077c8;
+}
+
+.subcategory-accordion .category-toggle-btn:not(.collapsed) {
+    color: #0077c8;
+    background: rgba(0, 119, 200, 0.06);
+    font-weight: 600;
+}
+
+.subcategory-accordion .expand-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 0.55rem;
+    border-radius: 5px;
+}
+
+/* ===== Leaf Items (no children) ===== */
 .accordion-item-simple {
     padding: 0;
     position: relative;
 }
 
+/* Vertical line for leaf items */
 .subcategory-accordion .accordion-item-simple::before {
     content: '';
     position: absolute;
-    left: -0.5rem;
     top: 0;
     height: 100%;
-    width: 1px;
-    background-color: rgba(0, 0, 0, 0.1);
+    width: 1.5px;
+    background: var(--tree-line-color, #d5e3f0);
+    left: 1.2rem;
 }
 
+/* Last leaf - shorten */
+.subcategory-accordion .accordion-item:last-child > .accordion-item-simple::before,
+.subcategory-accordion .category-item:last-child > .accordion-item-simple::before {
+    height: 50%;
+}
+
+/* Horizontal connector for leaf */
 .subcategory-accordion .accordion-item-simple::after {
     content: '';
     position: absolute;
-    left: -0.5rem;
     top: 50%;
-    width: 0.5rem;
-    height: 1px;
-    background-color: rgba(0, 0, 0, 0.1);
+    width: 14px;
+    height: 1.5px;
+    background: var(--tree-line-color, #d5e3f0);
+    left: 1.2rem;
 }
 
 .category-link {
     display: flex;
     align-items: center;
-    padding: var(--bs-accordion-btn-padding-y) var(--bs-accordion-btn-padding-x);
-    padding-left: 1.25rem;
+    gap: 0.4rem;
+    padding: 0.5rem 0.75rem 0.5rem 2.8rem;
+    margin: 1px 0.5rem;
     text-decoration: none;
-    color: #333;
-    font-weight: 500;
-    font-size: 0.9rem;
-    transition: all 0.2s ease;
+    color: #5a6a7a;
+    font-weight: 400;
+    font-size: 0.84rem;
+    transition: all 0.15s ease;
     position: relative;
+    border-radius: 6px;
 }
 
 .category-link:hover {
-    background-color: rgba(var(--bs-primary-rgb), 0.03);
-    color: var(--bs-primary);
+    background: rgba(0, 119, 200, 0.04);
+    color: #0077c8;
+    font-weight: 500;
 }
 
 .category-link.active {
-    background-color: rgba(var(--bs-primary-rgb), 0.08);
-    color: var(--bs-primary);
+    background: rgba(0, 119, 200, 0.08);
+    color: #0077c8;
     font-weight: 600;
 }
 
-/* حالة عدم وجود فئات */
-.no-categories-message {
-    display: flex;
-    flex-direction: column;
+.category-link .leaf-icon {
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 2rem 1rem;
-    text-align: center;
-    color: #888;
+    border-radius: 5px;
+    font-size: 0.55rem;
+    flex-shrink: 0;
+    transition: all 0.2s;
 }
 
-.no-categories-message i {
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
-    opacity: 0.3;
+.category-link:hover .leaf-icon {
+    transform: scale(1.15);
+    filter: brightness(0.9);
 }
 
-.no-categories-message p {
-    margin-bottom: 0;
+.category-link.active .leaf-icon {
+    transform: scale(1.1);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
 
-/* دعم RTL */
-[dir="rtl"] .category-accordion .accordion-button::after {
-    margin-right: 0.5rem;
-    margin-left: 0;
+.category-link .badge {
+    flex-shrink: 0;
+    margin-inline-start: auto;
 }
 
-[dir="rtl"] .category-accordion .accordion-button .badge {
-    margin-right: auto;
-    margin-left: 0;
+/* ===== Deeper nesting (level 3+) ===== */
+.subcategory-accordion .subcategory-accordion > .accordion-item::before,
+.subcategory-accordion .subcategory-accordion > .category-item::before {
+    left: 2rem;
 }
 
-[dir="rtl"] .category-accordion .has-products .accordion-button {
-    border-left: none;
-    border-right: 3px solid var(--bs-primary);
+.subcategory-accordion .subcategory-accordion .category-toggle-btn {
+    padding-left: 3.8rem;
+    font-size: 0.82rem;
 }
 
-[dir="rtl"] .category-accordion .no-products .accordion-button {
-    border-left: none;
-    border-right: 3px solid transparent;
+.subcategory-accordion .subcategory-accordion .accordion-item-simple::before,
+.subcategory-accordion .subcategory-accordion .accordion-item-simple::after {
+    left: 2rem;
 }
 
-[dir="rtl"] .category-link-btn {
-    margin-left: 0.5rem;
-    margin-right: 0.5rem;
+.subcategory-accordion .subcategory-accordion .category-link {
+    padding-left: 3.8rem;
+    font-size: 0.82rem;
 }
 
-[dir="rtl"] .subcategory-accordion .accordion-item {
-    margin-left: 0;
-    margin-right: 0.75rem;
-}
-
-[dir="rtl"] .subcategory-accordion .accordion-item::before {
+/* ===== RTL Support ===== */
+[dir="rtl"] .subcategory-accordion > .accordion-item::before,
+[dir="rtl"] .subcategory-accordion > .category-item::before,
+[dir="rtl"] .subcategory-accordion > .accordion-item > .accordion-item-simple::before {
     left: auto;
-    right: -0.5rem;
+    right: 1.2rem;
 }
 
-[dir="rtl"] .subcategory-accordion .accordion-button {
-    padding-left: var(--bs-accordion-btn-padding-x);
-    padding-right: 1.25rem;
-}
-
-[dir="rtl"] .subcategory-accordion .accordion-button::before {
+[dir="rtl"] .subcategory-accordion > .accordion-item > .accordion-header > .category-toggle-btn::before,
+[dir="rtl"] .subcategory-accordion > .category-item > .accordion-header > .category-toggle-btn::before {
     left: auto;
-    right: -0.5rem;
+    right: 1.2rem;
 }
 
-[dir="rtl"] .subcategory-accordion .subcategory-accordion .accordion-item {
-    margin-left: 0;
-    margin-right: 1rem;
+[dir="rtl"] .subcategory-accordion .category-toggle-btn {
+    padding-left: 0.75rem;
+    padding-right: 2.8rem;
 }
 
 [dir="rtl"] .subcategory-accordion .accordion-item-simple::before,
 [dir="rtl"] .subcategory-accordion .accordion-item-simple::after {
     left: auto;
-    right: -0.5rem;
+    right: 1.2rem;
 }
 
 [dir="rtl"] .category-link {
-    padding-left: var(--bs-accordion-btn-padding-x);
-    padding-right: 1.25rem;
+    padding-left: 0.75rem;
+    padding-right: 2.8rem;
 }
 
-/* تخصيصات الجوال */
-@media (max-width: 991.98px) {
-    .categories-collapse-btn {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        width: 100%;
-        padding: 0.75rem 1rem;
-        background-color: white;
-        border: 1px solid rgba(0, 0, 0, 0.08);
-        border-radius: 0.375rem;
-        margin-bottom: 1rem;
-        font-weight: 500;
-        color: #333;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    }
-
-    .categories-collapse-btn .toggle-icon {
-        transition: transform 0.2s ease;
-    }
-
-    .categories-collapse-btn[aria-expanded="true"] .toggle-icon {
-        transform: rotate(180deg);
-    }
-
-    .category-sidebar {
-        margin-bottom: 1.5rem;
-    }
+[dir="rtl"] .subcategory-accordion .subcategory-accordion > .accordion-item::before,
+[dir="rtl"] .subcategory-accordion .subcategory-accordion > .category-item::before {
+    left: auto;
+    right: 2rem;
 }
 
-/* تصميم شريط الفئات */
-
-
-.category-accordion .accordion-item {
-    border-left: 0;
-    border-right: 0;
-    border-radius: 0;
+[dir="rtl"] .subcategory-accordion .subcategory-accordion .category-toggle-btn {
+    padding-left: 0.75rem;
+    padding-right: 3.8rem;
 }
 
-.category-accordion .accordion-item:first-child {
-    border-top: 0;
+[dir="rtl"] .subcategory-accordion .subcategory-accordion .accordion-item-simple::before,
+[dir="rtl"] .subcategory-accordion .subcategory-accordion .accordion-item-simple::after {
+    left: auto;
+    right: 2rem;
 }
 
-.category-accordion .accordion-item:last-child {
-    border-bottom: 0;
+[dir="rtl"] .subcategory-accordion .subcategory-accordion .category-link {
+    padding-left: 0.75rem;
+    padding-right: 3.8rem;
 }
 
-.category-accordion .accordion-button {
-    padding: 0.75rem 1rem;
-    font-weight: 500;
-    color: #333;
+[dir="rtl"] .category-accordion .has-products > .accordion-header > .category-toggle-btn {
+    border-left: none;
+    border-right: 3px solid #0077c8;
 }
 
-.category-accordion .accordion-button:not(.collapsed) {
-    color: var(--bs-primary);
-    background-color: rgba(var(--bs-primary-rgb), 0.05);
-    box-shadow: none;
+[dir="rtl"] .category-accordion .no-products > .accordion-header > .category-toggle-btn {
+    border-left: none;
+    border-right: 3px solid transparent;
 }
 
-.category-accordion .accordion-button:focus {
-    box-shadow: none;
-    border-color: rgba(var(--bs-primary-rgb), 0.25);
-}
-
-.category-accordion .accordion-body {
-    padding: 0.5rem 1rem 0.5rem 2rem;
-}
-
-.category-link {
-    display: block;
-    padding: 0.5rem 0;
-    color: #555;
-    text-decoration: none;
-    transition: all 0.2s;
-}
-
-.category-link:hover, .category-link.active {
-    color: var(--bs-primary);
-    font-weight: 500;
-}
-
+/* ===== No Categories ===== */
 .no-categories-message {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 2rem;
-    color: #6c757d;
+    padding: 2.5rem 1rem;
     text-align: center;
+    color: #999;
 }
 
 .no-categories-message i {
-    font-size: 2rem;
-    margin-bottom: 1rem;
-    opacity: 0.6;
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+    opacity: 0.3;
 }
 
-/* زر فتح الفئات في الشاشات الصغيرة */
+.no-categories-message p {
+    margin-bottom: 0;
+    font-size: 0.9rem;
+}
+
+/* ===== Mobile ===== */
 .categories-collapse-btn {
     width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 15px;
-    background: white;
-    border: 1px solid #ddd;
+    padding: 0.75rem 1rem;
+    background: #fff;
+    border: 1px solid #e0e0e0;
     border-radius: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 1rem;
     font-weight: 500;
+    color: #333;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .categories-collapse-btn:hover {
-    background-color: #f8f9fa;
+    background: #f8f9fa;
 }
 
 .toggle-icon {
     transition: transform 0.3s;
 }
 
+.categories-collapse-btn[aria-expanded="true"] .toggle-icon {
+    transform: rotate(180deg);
+}
+
+/* ===== Scrollbar ===== */
+.category-sidebar::-webkit-scrollbar {
+    width: 3px;
+}
+
+.category-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.category-sidebar::-webkit-scrollbar-thumb {
+    background: #ddd;
+    border-radius: 3px;
+}
+
+.category-sidebar::-webkit-scrollbar-thumb:hover {
+    background: #bbb;
+}
+
+/* ===== Responsive ===== */
 @media (max-width: 991px) {
     .category-sidebar {
-        margin-bottom: 30px;
         position: relative;
         top: 0;
+        margin-bottom: 1.5rem;
+        max-height: none;
     }
 }
 
 @media (max-width: 767px) {
-    .categories-collapse-btn {
-        display: flex;
-    }
-
     .category-sidebar {
         display: none;
     }
@@ -455,27 +541,3 @@
         display: block;
     }
 }
-
-/* شجرة الفئات */
-    .category-sidebar {
-        position: sticky;
-        top: 100px;
-        background: white;
-        border-radius: 15px;
-        padding: 20px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
-        max-height: calc(100vh - 120px);
-        overflow-y: auto;
-    }
-
-    .category-sidebar h5 {
-        margin-bottom: 1.5rem;
-        font-weight: 600;
-        color: var(--bs-primary);
-        display: flex;
-        align-items: center;
-    }
-
-    .category-sidebar h5 i {
-        margin-right: 0.5rem;
-    }

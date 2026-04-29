@@ -67,7 +67,7 @@ class WishlistView(ListView, OptimizedQueryMixin, PaginationMixin, WishlistMixin
     def get_optimized_product_images(self):
         """Get optimized product images queryset"""
         from ..models import ProductImage
-        return ProductImage.objects.filter(is_primary=True).order_by('order')
+        return ProductImage.objects.filter(is_primary=True).order_by('sort_order')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

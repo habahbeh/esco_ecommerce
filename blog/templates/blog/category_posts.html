@@ -1,0 +1,115 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load i18n %}
+{% load seo_tags %}
+
+{% block title %}{% if category.meta_title %}{{ category.meta_title }}{% elif LANGUAGE_CODE == 'en' and category.name_en %}{{ category.name_en }}{% else %}{{ category.name }}{% endif %} - {% trans "المدونة" %} | {{ site_settings.site_name|default:"ESCO" }}{% endblock %}
+{% block meta_description %}{% if category.meta_description %}{{ category.meta_description }}{% elif LANGUAGE_CODE == 'en' and category.description_en %}{{ category.description_en|truncatewords:25 }}{% else %}{{ category.description|truncatewords:25 }}{% endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .category-hero {
+        background: linear-gradient(135deg, var(--bs-primary) 0%, #0056b3 100%);
+        color: white; padding: 2.5rem 0; margin-bottom: 2rem;
+        position: relative; overflow: hidden;
+    }
+    .category-hero::before {
+        content:''; position:absolute; top:0; left:0; width:100%; height:100%;
+        background: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+        background-size: 22px 22px; pointer-events: none;
+    }
+    .blog-card { transition: transform .3s ease, box-shadow .3s ease; border: 1px solid rgba(0,0,0,.06); }
+    .blog-card:hover { transform: translateY(-6px); box-shadow: 0 12px 32px rgba(37,99,235,.15) !important; border-color: rgba(37,99,235,.18); }
+    .blog-card:hover img { transform: scale(1.07); }
+    .card-icon-area { position: relative; }
+    .card-icon-circle { width:80px; height:80px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.8rem; transition: transform .3s ease, box-shadow .3s ease; position:relative; z-index:1; }
+    .blog-card:hover .card-icon-circle { transform: scale(1.12); box-shadow: 0 8px 24px rgba(0,0,0,.1); }
+    .blog-card .btn-outline-primary { transition: all .25s ease; }
+    .blog-card:hover .btn-outline-primary { background: var(--bs-primary); color: #fff; box-shadow: 0 4px 12px rgba(37,99,235,.3); }
+    .widget-title { font-weight: 700; padding-bottom: .75rem; border-bottom: 3px solid var(--bs-primary); margin-bottom: 1rem; }
+    .blog-sidebar-widget .category-link { text-decoration: none; color: #374151; padding: .1rem .4rem; border-radius: 6px; transition: all .2s ease; }
+    .blog-sidebar-widget .category-link:hover { color: var(--bs-primary); background: rgba(37,99,235,.06); padding-inline-start: .7rem; }
+    .blog-sidebar-widget .cat-count { transition: all .2s ease; }
+    .blog-sidebar-widget li:hover .cat-count { background: var(--bs-primary) !important; color: #fff !important; transform: scale(1.1); }
+    .recent-post-item { padding: .5rem; border-radius: 8px; transition: all .2s ease; }
+    .recent-post-item:hover { background: rgba(37,99,235,.04); transform: translateX(4px); }
+    html[dir="rtl"] .recent-post-item:hover { transform: translateX(-4px); }
+    .recent-post-item:hover a { color: var(--bs-primary) !important; }
+    .tag-badge { display: inline-block; padding: .45rem .9rem; border-radius: 20px; font-size: .82rem; font-weight: 500; text-decoration: none; color: #4b5563; background: #f3f4f6; border: 1px solid #e5e7eb; transition: all .25s ease; }
+    .tag-badge:hover { background: var(--bs-primary); color: #fff !important; border-color: var(--bs-primary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(37,99,235,.25); }
+    .pagination .page-link { border-radius: 8px !important; margin: 0 2px; transition: all .2s ease; }
+    .pagination .page-link:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(37,99,235,.2); }
+    [data-bs-theme="dark"] .blog-card { border-color: rgba(255,255,255,.08); }
+    [data-bs-theme="dark"] .blog-card:hover { box-shadow: 0 12px 32px rgba(37,99,235,.25) !important; border-color: rgba(37,99,235,.3); }
+    [data-bs-theme="dark"] .blog-sidebar-widget .category-link { color: #d1d5db; }
+    [data-bs-theme="dark"] .blog-sidebar-widget .category-link:hover { color: #60a5fa; background: rgba(96,165,250,.1); }
+    [data-bs-theme="dark"] .recent-post-item:hover { background: rgba(96,165,250,.08); }
+    [data-bs-theme="dark"] .tag-badge { color: #d1d5db; background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.12); }
+    [data-bs-theme="dark"] .tag-badge:hover { background: var(--bs-primary); color: #fff !important; border-color: var(--bs-primary); }
+    [data-bs-theme="dark"] .widget-title { color: #e5e7eb; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="category-hero">
+    <div class="container">
+        <nav aria-label="breadcrumb" class="mb-2">
+            <ol class="breadcrumb mb-0" style="--bs-breadcrumb-divider-color:rgba(255,255,255,0.6);">
+                <li class="breadcrumb-item"><a href="{% url 'core:home' %}" class="text-white-50 text-decoration-none">{% trans "الرئيسية" %}</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'blog:post_list' %}" class="text-white-50 text-decoration-none">{% trans "المدونة" %}</a></li>
+                <li class="breadcrumb-item active text-white" aria-current="page">
+                    {% if LANGUAGE_CODE == 'en' and category.name_en %}{{ category.name_en }}{% else %}{{ category.name }}{% endif %}
+                </li>
+            </ol>
+        </nav>
+        <h1 class="fw-bold mb-1">
+            {% if category.icon %}<i class="fas {{ category.icon }} me-2"></i>{% endif %}
+            {% if LANGUAGE_CODE == 'en' and category.name_en %}{{ category.name_en }}{% else %}{{ category.name }}{% endif %}
+        </h1>
+        {% if category.description %}
+        <p class="mb-0 opacity-75">
+            {% if LANGUAGE_CODE == 'en' and category.description_en %}{{ category.description_en }}{% else %}{{ category.description }}{% endif %}
+        </p>
+        {% endif %}
+    </div>
+</section>
+
+<div class="container mb-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="row">
+                {% for post in posts %}
+                    {% include 'blog/includes/_post_card.html' with post=post %}
+                {% empty %}
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
+                    <h3>{% trans "لا توجد مقالات في هذا التصنيف" %}</h3>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if posts.has_other_pages %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if posts.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ posts.previous_page_number }}"><i class="fas {% if LANGUAGE_CODE == 'en' %}fa-chevron-left{% else %}fa-chevron-right{% endif %}"></i></a></li>
+                    {% endif %}
+                    {% for num in posts.paginator.page_range %}
+                    <li class="page-item {% if posts.number == num %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endfor %}
+                    {% if posts.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ posts.next_page_number }}"><i class="fas {% if LANGUAGE_CODE == 'en' %}fa-chevron-right{% else %}fa-chevron-left{% endif %}"></i></a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            {% include 'blog/includes/_sidebar.html' %}
+        </div>
+    </div>
+</div>
+{% endblock %}

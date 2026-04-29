@@ -1,0 +1,909 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_home' %}">{% trans "الرئيسية" %}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_blog_posts' %}">{% trans "المقالات" %}</a></li>
+{% endblock %}
+{% block current_page %}{{ current_page }}{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
+<style>
+    .content-tabs .nav-link { border: 1px solid #dee2e6; border-bottom: none; margin-right: 5px; }
+    .content-tabs .nav-link.active { background-color: #f8f9fa; border-bottom: 1px solid #f8f9fa; }
+    .tab-content { border: 1px solid #dee2e6; border-top: none; padding: 20px; background-color: #f8f9fa; overflow: visible; }
+    .form-label.required:after { content: " *"; color: #dc3545; }
+
+    /* Summernote full width — override everything */
+    .note-editor,
+    .note-editor.note-frame,
+    .note-editor.note-airframe {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 100% !important;
+        box-sizing: border-box !important;
+        border: 1px solid #ced4da !important;
+        border-radius: .375rem;
+        display: block !important;
+        float: none !important;
+    }
+    .note-editor *,
+    .note-editor *::before,
+    .note-editor *::after { box-sizing: border-box !important; }
+    .note-editor .note-toolbar-wrapper,
+    .note-editor .note-toolbar,
+    .note-editor .note-editing-area,
+    .note-editor .note-editing-area .note-editable,
+    .note-editor .note-editing-area .note-codable,
+    .note-editor .note-statusbar { width: 100% !important; max-width: 100% !important; }
+    .note-editor .note-editing-area .note-editable { min-height: 280px; }
+    .field-hint { font-size: 0.78rem; color: #6b7280; margin-top: 3px; display: flex; align-items: flex-start; gap: 4px; }
+    .field-hint i { margin-top: 2px; font-size: 0.68rem; color: #9ca3af; }
+
+    /* Example guide */
+    .example-guide { background: linear-gradient(135deg, #f0f9ff, #eff6ff); border: 1px solid #bfdbfe; border-radius: 10px; }
+    .example-guide .card-header { background: transparent; border-bottom: 1px solid #bfdbfe; cursor: pointer; }
+    .example-guide .card-header:hover { background: rgba(59,130,246,0.05); }
+    .example-item { padding: 8px 12px; border-radius: 8px; background: white; border: 1px solid #e5e7eb; margin-bottom: 6px; }
+    .example-item:last-child { margin-bottom: 0; }
+    .example-label { font-weight: 600; color: #374151; font-size: 0.8rem; margin-bottom: 2px; }
+    .example-value { color: #6b7280; font-size: 0.8rem; direction: ltr; text-align: left; }
+    .example-value.ar { direction: rtl; text-align: right; }
+
+    /* Quick settings bar */
+    .quick-settings { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 1rem 1.25rem; }
+    .quick-settings .form-group { margin-bottom: 0; }
+    .quick-settings .form-label { font-size: 0.8rem; font-weight: 600; color: #374151; margin-bottom: .3rem; }
+    .quick-settings .form-control, .quick-settings .form-select { font-size: 0.88rem; }
+
+    /* Collapsible section header */
+    .section-toggle { cursor: pointer; user-select: none; }
+    .section-toggle:hover { background: rgba(0,0,0,.02); }
+    .section-toggle .chevron { transition: transform .3s; font-size: .75rem; }
+    .section-toggle[aria-expanded="true"] .chevron { transform: rotate(180deg); }
+
+    /* Icon Picker — modal grid */
+    .blog-icon-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+        gap: 8px;
+    }
+    .blog-icon-grid-item {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        padding: 12px 4px 8px; border: 1px solid #e9ecef; border-radius: 8px;
+        cursor: pointer; transition: all 0.15s; text-align: center;
+    }
+    .blog-icon-grid-item:hover {
+        border-color: var(--bs-primary); background: rgba(var(--bs-primary-rgb), 0.05);
+        transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .blog-icon-grid-item.selected { border-color: var(--bs-primary); background: var(--bs-primary); color: #fff; }
+    .blog-icon-grid-item i { font-size: 1.4rem; margin-bottom: 4px; }
+    .blog-icon-grid-item .icon-name { font-size: 0.6rem; color: #999; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+    .blog-icon-grid-item.selected .icon-name { color: rgba(255,255,255,0.8); }
+    #blogIconCategoryBtns .btn { margin: 2px; border-radius: 20px !important; font-size: 0.78rem; }
+    .icon-preview-box { font-size: 1.2rem; min-width: 45px; justify-content: center; }
+    .color-quick-pick {
+        display: inline-block; width: 28px; height: 28px; border-radius: 50%;
+        cursor: pointer; border: 3px solid transparent; transition: all 0.15s; vertical-align: middle;
+    }
+    .color-quick-pick:hover { transform: scale(1.2); }
+    .color-quick-pick.active { border-color: var(--bs-body-color); box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--bs-body-color); }
+
+    /* Sticky save bar */
+    .sticky-save-bar {
+        position: sticky; bottom: 0; z-index: 100;
+        background: #fff; border-top: 2px solid #e5e7eb;
+        padding: .75rem 1.25rem; margin: 0 -1.25rem -1.25rem;
+        border-radius: 0 0 .5rem .5rem;
+        box-shadow: 0 -4px 16px rgba(0,0,0,.06);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Collapsible Example Guide -->
+<div class="example-guide card mb-3">
+    <div class="card-header py-2 d-flex align-items-center justify-content-between" data-bs-toggle="collapse" data-bs-target="#exampleGuide" aria-expanded="false">
+        <div class="d-flex align-items-center gap-2">
+            <i class="fas fa-lightbulb text-warning"></i>
+            <strong style="font-size:0.9rem;">{% trans "دليل كتابة المقال" %} — {% trans "مثال تطبيقي كامل" %}</strong>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-info bg-opacity-10 text-info" style="font-size:0.72rem;">{% trans "اضغط للتوسيع" %}</span>
+            <i class="fas fa-chevron-down text-muted chevron"></i>
+        </div>
+    </div>
+    <div class="collapse" id="exampleGuide">
+        <div class="card-body pt-3 pb-2">
+            <div class="row">
+                <div class="col-md-6 mb-2">
+                    <h6 class="fw-bold mb-2" style="font-size:.85rem;"><i class="fas fa-pen-alt me-1 text-primary"></i> {% trans "المحتوى العربي" %}</h6>
+                    <div class="example-item"><div class="example-label">{% trans "عنوان المقال" %}</div><div class="example-value ar">دليل شامل لاختيار المثقاب الكهربائي المناسب</div></div>
+                    <div class="example-item"><div class="example-label">{% trans "المقتطف" %}</div><div class="example-value ar">تعرف على أهم المعايير لاختيار المثقاب المناسب لمشاريعك.</div></div>
+                </div>
+                <div class="col-md-6 mb-2">
+                    <h6 class="fw-bold mb-2" style="font-size:.85rem;"><i class="fas fa-globe me-1 text-success"></i> {% trans "المحتوى الإنجليزي" %}</h6>
+                    <div class="example-item"><div class="example-label">Title</div><div class="example-value">Complete Guide to Choosing the Right Power Drill</div></div>
+                    <div class="example-item"><div class="example-label">Excerpt</div><div class="example-value">Learn the key factors for choosing the right drill for your projects.</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="post" enctype="multipart/form-data" id="blogForm">
+    {% csrf_token %}
+
+    {% if form.errors %}
+    <div class="alert alert-danger mb-3 py-2">
+        <i class="fa fa-exclamation-triangle"></i> {% trans "يرجى تصحيح الأخطاء أدناه" %}
+        <ul class="mb-0 mt-1 small">
+            {% for field, errors in form.errors.items %}
+            {% for error in errors %}<li>{{ field }}: {{ error }}</li>{% endfor %}
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <!-- ═══ 1. Quick Settings Bar ═══ -->
+    <div class="quick-settings mb-3">
+        <div class="row g-3 align-items-end">
+            <div class="col-sm-6 col-lg-2">
+                <div class="form-group">
+                    <label for="{{ form.status.id_for_label }}" class="form-label"><i class="fas fa-circle-dot me-1 text-primary"></i>{% trans "الحالة" %}</label>
+                    {{ form.status }}
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="form-group">
+                    <label for="{{ form.category.id_for_label }}" class="form-label"><i class="fas fa-folder me-1 text-warning"></i>{% trans "التصنيف" %}</label>
+                    {{ form.category }}
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-2">
+                <div class="form-group">
+                    <label for="{{ form.author.id_for_label }}" class="form-label"><i class="fas fa-user me-1 text-info"></i>{% trans "الكاتب" %}</label>
+                    {{ form.author }}
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="form-group">
+                    <label for="{{ form.published_at.id_for_label }}" class="form-label"><i class="fas fa-calendar me-1 text-success"></i>{% trans "تاريخ النشر" %}</label>
+                    {{ form.published_at }}
+                </div>
+            </div>
+            <div class="col-sm-12 col-lg-2">
+                <div class="d-flex gap-3">
+                    <div class="form-check">
+                        {{ form.is_featured }}
+                        <label class="form-check-label small" for="{{ form.is_featured.id_for_label }}">{% trans "مقال مميز" %}</label>
+                    </div>
+                    <div class="form-check">
+                        {{ form.allow_comments }}
+                        <label class="form-check-label small" for="{{ form.allow_comments.id_for_label }}">{% trans "السماح بالتعليقات" %}</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ 2. Content (main work area) ═══ -->
+    <div class="card mb-3">
+        <div class="card-header bg-primary text-white py-2">
+            <h6 class="card-title mb-0"><i class="fas fa-edit me-2"></i>{% trans "المحتوى" %}</h6>
+        </div>
+        <div class="card-body">
+            <ul class="nav nav-tabs content-tabs mb-3" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#arabic-content" type="button">{% trans "المحتوى العربي" %}</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#english-content" type="button">{% trans "المحتوى الإنجليزي" %}</button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <!-- Arabic -->
+                <div class="tab-pane fade show active" id="arabic-content">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label required">{% trans "عنوان المقال" %}</label>
+                        {{ form.title }}
+                        {% if form.title.errors %}<div class="invalid-feedback d-block">{{ form.title.errors }}</div>{% endif %}
+                        <div class="field-hint"><i class="fas fa-info-circle"></i> {% trans "عنوان واضح وجذاب يصف محتوى المقال. مثال: دليل شامل لاختيار المثقاب الكهربائي" %}</div>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="{{ form.excerpt.id_for_label }}" class="form-label">{% trans "المقتطف" %}</label>
+                        {{ form.excerpt }}
+                        <div class="field-hint"><i class="fas fa-info-circle"></i> {% trans "ملخص قصير (1-2 جملة) يظهر في قائمة المقالات ونتائج البحث. اتركه فارغاً لاستخدام أول جزء من المحتوى." %}</div>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="{{ form.content.id_for_label }}" class="form-label required">{% trans "المحتوى" %}</label>
+                        {{ form.content }}
+                        {% if form.content.errors %}<div class="invalid-feedback d-block">{{ form.content.errors }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <!-- English -->
+                <div class="tab-pane fade" id="english-content">
+                    <div class="alert alert-info small py-2 mb-3">
+                        <i class="fas fa-language me-1"></i> {% trans "المحتوى الإنجليزي اختياري. إذا تُرك فارغاً سيظهر المحتوى العربي للزوار الإنجليز." %}
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="{{ form.title_en.id_for_label }}" class="form-label">{% trans "العنوان بالإنجليزية" %}</label>
+                        {{ form.title_en }}
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="{{ form.excerpt_en.id_for_label }}" class="form-label">{% trans "المقتطف بالإنجليزية" %}</label>
+                        {{ form.excerpt_en }}
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="{{ form.content_en.id_for_label }}" class="form-label">{% trans "المحتوى بالإنجليزية" %}</label>
+                        {{ form.content_en }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ 3. Media & Appearance Row ═══ -->
+    <div class="row mb-3">
+        <!-- Image + Tags -->
+        <div class="col-lg-7">
+            <div class="card h-100">
+                <div class="card-header py-2">
+                    <h6 class="card-title mb-0"><i class="fas fa-image me-2 text-muted"></i>{% trans "الصورة الرئيسية" %} &amp; {% trans "الوسوم" %}</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            {% if post and post.featured_image %}
+                            <div class="mb-2">
+                                <img src="{{ post.featured_image.url }}" alt="" class="img-thumbnail w-100" style="max-height:140px;object-fit:cover;">
+                            </div>
+                            {% endif %}
+                            <div class="form-group mb-2">
+                                {{ form.featured_image }}
+                                <div class="field-hint"><i class="fas fa-info-circle"></i> {% trans "الحجم المثالي: 1200×630 بكسل. الصيغ المدعومة: JPG, PNG, WebP. يفضل أقل من 200KB." %}</div>
+                            </div>
+                            <div class="form-group mb-2">
+                                <label for="{{ form.featured_image_alt.id_for_label }}" class="form-label small">{% trans "وصف الصورة" %}</label>
+                                {{ form.featured_image_alt }}
+                            </div>
+                            <div class="form-group">
+                                <label for="{{ form.featured_image_alt_en.id_for_label }}" class="form-label small">{% trans "وصف الصورة بالإنجليزية" %}</label>
+                                {{ form.featured_image_alt_en }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.tags.id_for_label }}" class="form-label small">{% trans "الوسوم" %}</label>
+                                {{ form.tags }}
+                                <div class="field-hint"><i class="fas fa-info-circle"></i> {% trans "اضغط Ctrl للاختيار المتعدد. الوسوم تساعد في ربط المقالات المشابهة." %}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card Icon & Color Picker -->
+        <div class="col-lg-5">
+            <div class="card h-100">
+                <div class="card-header py-2">
+                    <h6 class="card-title mb-0"><i class="fas fa-palette me-2 text-muted"></i>{% trans "أيقونة البطاقة" %}</h6>
+                </div>
+                <div class="card-body">
+                    <div class="field-hint mb-3"><i class="fas fa-info-circle"></i> {% trans "اختر أيقونة ولوناً يظهران على بطاقة المقال عندما لا تكون هناك صورة رئيسية." %}</div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">{% trans "الأيقونة" %}</label>
+                        <div class="input-group">
+                            <span class="input-group-text icon-preview-box" id="blogIconPreviewBox">
+                                <i class="fas {{ form.card_icon.value|default:'fa-newspaper' }}" id="blogIconPreviewIcon"></i>
+                            </span>
+                            <input type="text" class="form-control" id="blogIconTextInput"
+                                   value="{{ form.card_icon.value|default:'' }}"
+                                   placeholder="fas fa-newspaper" dir="ltr">
+                        </div>
+                        <div class="mt-2">
+                            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#blogIconPickerModal">
+                                <i class="fas fa-th me-1"></i> {% trans "تصفح الأيقونات" %}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">{% trans "لون الأيقونة" %}</label>
+                        <div class="input-group">
+                            <input type="color" class="form-control form-control-color" id="blogColorPicker"
+                                   value="{{ form.card_icon_color.value|default:'#2563eb' }}" style="width: 50px; padding: 4px;">
+                            <input type="text" class="form-control" id="blogColorTextInput"
+                                   value="{{ form.card_icon_color.value|default:'' }}"
+                                   placeholder="#2563eb" dir="ltr" maxlength="7">
+                        </div>
+                        <div class="mt-2">
+                            <span class="color-quick-pick me-1 mb-1" data-color="#2563eb" style="background:#2563eb;" title="Blue"></span>
+                            <span class="color-quick-pick me-1 mb-1" data-color="#1d4ed8" style="background:#1d4ed8;" title="Dark Blue"></span>
+                            <span class="color-quick-pick me-1 mb-1" data-color="#0ea5e9" style="background:#0ea5e9;" title="Sky Blue"></span>
+                            <span class="color-quick-pick me-1 mb-1" data-color="#0891b2" style="background:#0891b2;" title="Cyan"></span>
+                            <span class="color-quick-pick me-1 mb-1" data-color="#16a34a" style="background:#16a34a;" title="Green"></span>
+                            <span class="color-quick-pick me-1 mb-1" data-color="#059669" style="background:#059669;" title="Emerald"></span>
+                            <span class="color-quick-pick me-1 mb-1" data-color="#ca8a04" style="background:#ca8a04;" title="Gold"></span>
+                            <span class="color-quick-pick me-1 mb-1" data-color="#d97706" style="background:#d97706;" title="Orange"></span>
+                            <span class="color-quick-pick me-1 mb-1" data-color="#dc2626" style="background:#dc2626;" title="Red"></span>
+                            <span class="color-quick-pick me-1 mb-1" data-color="#e11d48" style="background:#e11d48;" title="Pink"></span>
+                            <span class="color-quick-pick me-1 mb-1" data-color="#9333ea" style="background:#9333ea;" title="Purple"></span>
+                            <span class="color-quick-pick me-1 mb-1" data-color="#4f46e5" style="background:#4f46e5;" title="Indigo"></span>
+                        </div>
+                    </div>
+
+                    {{ form.card_icon }}
+                    {{ form.card_icon_color }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Blog Icon Picker Modal -->
+    <div class="modal fade" id="blogIconPickerModal" tabindex="-1" aria-labelledby="blogIconPickerLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="blogIconPickerLabel"><i class="fas fa-icons me-2"></i>{% trans "اختيار أيقونة" %}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="blogIconSearchInput" placeholder="{% trans "ابحث عن أيقونة..." %}" dir="ltr">
+                    </div>
+                    <div class="mb-3">
+                        <div class="btn-group flex-wrap" role="group" id="blogIconCategoryBtns">
+                            <button type="button" class="btn btn-sm btn-outline-primary active" data-cat="all">{% trans "الكل" %}</button>
+                        </div>
+                    </div>
+                    <div id="blogIconGrid" class="blog-icon-grid"></div>
+                    <div id="blogIconEmpty" class="text-center text-muted py-4 d-none">
+                        <i class="fas fa-search fa-2x mb-2 d-block opacity-25"></i>
+                        {% trans "لا توجد نتائج" %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ 4. SEO (collapsible) ═══ -->
+    <div class="card mb-3">
+        <div class="card-header py-2 section-toggle d-flex align-items-center justify-content-between"
+             data-bs-toggle="collapse" data-bs-target="#seoSection" aria-expanded="false">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fas fa-search text-muted"></i>
+                <h6 class="mb-0" style="font-size:.9rem;">{% trans "SEO" %}</h6>
+                <span class="badge bg-warning bg-opacity-10 text-warning" style="font-size:.68rem;">{% trans "مهم لمحركات البحث" %}</span>
+            </div>
+            <i class="fas fa-chevron-down text-muted chevron"></i>
+        </div>
+        <div class="collapse" id="seoSection">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="{{ form.slug.id_for_label }}" class="form-label small">{% trans "الرابط" %} (Slug)</label>
+                            {{ form.slug }}
+                            <div class="field-hint"><i class="fas fa-info-circle"></i> {% trans "الجزء الذي يظهر في رابط المقال. اتركه فارغاً لإنشائه تلقائياً. مثال: guide-choosing-power-drill" %}</div>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="{{ form.meta_title.id_for_label }}" class="form-label small">{% trans "عنوان SEO" %}</label>
+                            {{ form.meta_title }}
+                            <div class="field-hint"><i class="fas fa-info-circle"></i> {% trans "العنوان الذي يظهر في نتائج Google. يفضل أن يكون 50-60 حرف. مثال: أفضل مثقاب كهربائي 2026 | ESCO الأردن" %}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="{{ form.meta_description.id_for_label }}" class="form-label small">{% trans "وصف SEO" %}</label>
+                            {{ form.meta_description }}
+                            <div class="field-hint"><i class="fas fa-info-circle"></i> {% trans "الوصف الذي يظهر تحت العنوان في Google. يفضل أن يكون 150-160 حرف ويحتوي الكلمات المفتاحية." %}</div>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="{{ form.meta_keywords.id_for_label }}" class="form-label small">{% trans "كلمات مفتاحية" %}</label>
+                            {{ form.meta_keywords }}
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="{{ form.canonical_url.id_for_label }}" class="form-label small">{% trans "الرابط الأساسي" %}</label>
+                            {{ form.canonical_url }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ 5. Related (collapsible) ═══ -->
+    <div class="card mb-3">
+        <div class="card-header py-2 section-toggle d-flex align-items-center justify-content-between"
+             data-bs-toggle="collapse" data-bs-target="#relatedSection" aria-expanded="false">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fas fa-link text-muted"></i>
+                <h6 class="mb-0" style="font-size:.9rem;">{% trans "الربط الداخلي" %}</h6>
+            </div>
+            <i class="fas fa-chevron-down text-muted chevron"></i>
+        </div>
+        <div class="collapse" id="relatedSection">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="{{ form.related_products.id_for_label }}" class="form-label small">{% trans "منتجات ذات صلة" %}</label>
+                            {{ form.related_products }}
+                            <div class="field-hint"><i class="fas fa-info-circle"></i> {% trans "اختر المنتجات المرتبطة بالمقال لعرضها أسفل المحتوى (اضغط Ctrl للاختيار المتعدد). هذا يساعد في ربط المقال بالمنتجات وزيادة المبيعات." %}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="{{ form.related_categories.id_for_label }}" class="form-label small">{% trans "فئات ذات صلة" %}</label>
+                            {{ form.related_categories }}
+                            <div class="field-hint"><i class="fas fa-info-circle"></i> {% trans "فئات المنتجات المرتبطة بموضوع المقال." %}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ 6. FAQ Section (collapsible) ═══ -->
+    <div class="card mb-3">
+        <div class="card-header py-2 section-toggle d-flex align-items-center justify-content-between"
+             data-bs-toggle="collapse" data-bs-target="#faqSection" aria-expanded="false">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fas fa-question-circle text-muted"></i>
+                <h6 class="mb-0" style="font-size:.9rem;">{% trans "الأسئلة الشائعة" %}</h6>
+                <span class="badge bg-success bg-opacity-10 text-success" style="font-size:.68rem;">{% trans "مهم لـ SEO" %}</span>
+            </div>
+            <i class="fas fa-chevron-down text-muted chevron"></i>
+        </div>
+        <div class="collapse" id="faqSection">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <p class="text-muted small mb-0">{% trans "تظهر في صفحة المقال وتساعد في تحسين SEO عبر FAQ Schema" %}</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        {% if post %}
+                        <a href="{{ post.get_absolute_url }}#postFaqAccordion" target="_blank" class="btn btn-outline-info btn-sm">
+                            <i class="fa fa-external-link-alt me-1"></i> {% trans "عرض في الموقع" %}
+                        </a>
+                        {% endif %}
+                        <button type="button" id="add-blog-faq-btn" class="btn btn-primary btn-sm">
+                            <i class="fa fa-plus me-1"></i> {% trans "إضافة سؤال" %}
+                        </button>
+                    </div>
+                </div>
+
+                <div id="blog-faqs-container"></div>
+
+                <div id="blog-faqs-empty" class="text-center py-5 text-muted" style="display:none;">
+                    <i class="fa fa-question-circle fa-3x mb-3 d-block opacity-25"></i>
+                    <p>{% trans "لا توجد أسئلة شائعة بعد. أضف سؤالاً جديداً للبدء." %}</p>
+                </div>
+
+                <input type="hidden" name="blog_faqs_json" id="blog_faqs_json" value="">
+                <script>var initialBlogFaqsData = {{ faqs_json|default:"[]"|safe }};</script>
+                <input type="hidden" name="deleted_blog_faqs_json" id="deleted_blog_faqs_json" value="[]">
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ 7. Sticky Save Bar ═══ -->
+    <div class="sticky-save-bar">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <button type="submit" class="btn btn-primary px-4">
+                    <i class="fa fa-save me-1"></i> {% trans "حفظ" %}
+                </button>
+                <a href="{% url 'dashboard:dashboard_blog_posts' %}" class="btn btn-outline-secondary px-3">{% trans "إلغاء" %}</a>
+            </div>
+            <div class="d-flex align-items-center gap-3 text-muted small d-none d-md-flex">
+                <span id="statusLabel">
+                    <i class="fas fa-circle-dot me-1"></i>
+                    <span id="statusText"></span>
+                </span>
+                {% if post %}
+                <span><i class="far fa-eye me-1"></i>{{ post.views_count }} {% trans "مشاهدة" %}</span>
+                <a href="{{ post.get_absolute_url }}" target="_blank" class="text-primary text-decoration-none">
+                    <i class="fas fa-external-link-alt me-1"></i>{% trans "معاينة" %}
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
+<script>
+$(document).ready(function() {
+    var snToolbar = [
+        ['style', ['style']],
+        ['font', ['bold', 'italic', 'underline', 'clear']],
+        ['color', ['color']],
+        ['para', ['ul', 'ol', 'paragraph']],
+        ['table', ['table']],
+        ['insert', ['link', 'picture']],
+        ['view', ['fullscreen', 'codeview']]
+    ];
+    // Ensure textareas are full width before Summernote reads them
+    $('#{{ form.content.id_for_label }}, #{{ form.content_en.id_for_label }}').css('width', '100%');
+    $('#{{ form.content.id_for_label }}').summernote({ height: 300, toolbar: snToolbar, lang: 'ar-AR' });
+    $('#{{ form.content_en.id_for_label }}').summernote({ height: 300, toolbar: snToolbar, lang: 'en-US' });
+
+    // Strip inline width from Summernote editors
+    function fixSummernoteWidth() {
+        document.querySelectorAll('.note-editor').forEach(function(el) {
+            el.style.removeProperty('width');
+            el.style.removeProperty('min-width');
+            el.style.removeProperty('max-width');
+        });
+    }
+    fixSummernoteWidth();
+
+    $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function() {
+        setTimeout(fixSummernoteWidth, 0);
+    });
+
+    // Auto-generate slug from title
+    $('#{{ form.title.id_for_label }}').on('keyup', function() {
+        if (!$('#{{ form.slug.id_for_label }}').val()) {
+            let slug = $(this).val()
+                .toLowerCase()
+                .replace(/\s+/g, '-')
+                .replace(/[^ء-ي٠-٩a-z0-9-]/g, '');
+            $('#{{ form.slug.id_for_label }}').val(slug);
+        }
+    });
+
+    // Chevron rotation for collapsible sections
+    document.querySelectorAll('.section-toggle, [data-bs-target="#exampleGuide"]').forEach(function(el) {
+        var target = document.querySelector(el.getAttribute('data-bs-target'));
+        if (target) {
+            target.addEventListener('show.bs.collapse', function() { el.setAttribute('aria-expanded', 'true'); });
+            target.addEventListener('hide.bs.collapse', function() { el.setAttribute('aria-expanded', 'false'); });
+        }
+    });
+
+    // Status label sync in save bar
+    var statusSel = document.getElementById('{{ form.status.id_for_label }}');
+    var statusText = document.getElementById('statusText');
+    function syncStatus() {
+        if (statusSel && statusText) {
+            var opt = statusSel.options[statusSel.selectedIndex];
+            statusText.textContent = opt ? opt.text : '';
+        }
+    }
+    if (statusSel) { statusSel.addEventListener('change', syncStatus); syncStatus(); }
+
+    // ── Icon Picker Modal ──
+    var blogIconInput = document.getElementById('blogIconTextInput');
+    var blogIconHidden = document.getElementById('{{ form.card_icon.id_for_label }}');
+    var blogIconPreview = document.getElementById('blogIconPreviewIcon');
+    var blogColorHidden = document.getElementById('{{ form.card_icon_color.id_for_label }}');
+    var blogColorText = document.getElementById('blogColorTextInput');
+    var blogColorPicker = document.getElementById('blogColorPicker');
+
+    var blogIconData = {
+        "Tools & Hardware": [
+            "fas fa-tools","fas fa-wrench","fas fa-hammer","fas fa-screwdriver","fas fa-toolbox",
+            "fas fa-hard-hat","fas fa-ruler","fas fa-ruler-combined","fas fa-ruler-horizontal",
+            "fas fa-ruler-vertical","fas fa-drafting-compass","fas fa-pencil-ruler","fas fa-tape",
+            "fas fa-paint-roller","fas fa-paint-brush","fas fa-brush","fas fa-fill-drip",
+            "fas fa-palette","fas fa-cut","fas fa-scissors"
+        ],
+        "Electrical": [
+            "fas fa-bolt","fas fa-plug","fas fa-lightbulb","fas fa-charging-station","fas fa-car-battery",
+            "fas fa-battery-full","fas fa-battery-half","fas fa-solar-panel","fas fa-broadcast-tower",
+            "fas fa-satellite-dish","fas fa-power-off","fas fa-toggle-on","fas fa-toggle-off"
+        ],
+        "Plumbing & Water": [
+            "fas fa-water","fas fa-faucet","fas fa-shower","fas fa-bath","fas fa-swimming-pool",
+            "fas fa-tint","fas fa-hot-tub","fas fa-toilet","fas fa-sink","fas fa-pump-soap"
+        ],
+        "Building & Construction": [
+            "fas fa-building","fas fa-home","fas fa-house-damage","fas fa-warehouse","fas fa-store",
+            "fas fa-city","fas fa-industry","fas fa-monument","fas fa-archway","fas fa-door-open",
+            "fas fa-door-closed","fas fa-window-maximize","fas fa-dungeon"
+        ],
+        "Vehicles & Transport": [
+            "fas fa-truck","fas fa-truck-pickup","fas fa-truck-moving","fas fa-car","fas fa-car-side",
+            "fas fa-bus","fas fa-shuttle-van","fas fa-motorcycle","fas fa-bicycle","fas fa-tractor",
+            "fas fa-trailer","fas fa-gas-pump","fas fa-shipping-fast"
+        ],
+        "Safety & Security": [
+            "fas fa-shield-alt","fas fa-lock","fas fa-unlock","fas fa-key","fas fa-fire-extinguisher",
+            "fas fa-fire","fas fa-first-aid","fas fa-exclamation-triangle","fas fa-hard-hat",
+            "fas fa-user-shield","fas fa-mask","fas fa-eye","fas fa-eye-slash"
+        ],
+        "Machines & Equipment": [
+            "fas fa-cog","fas fa-cogs","fas fa-fan","fas fa-blender","fas fa-snowplow",
+            "fas fa-compact-disc","fas fa-microchip","fas fa-memory","fas fa-server",
+            "fas fa-hdd","fas fa-print","fas fa-fax","fas fa-calculator"
+        ],
+        "Packaging & Storage": [
+            "fas fa-box","fas fa-box-open","fas fa-boxes","fas fa-archive","fas fa-pallet",
+            "fas fa-dolly","fas fa-dolly-flatbed","fas fa-clipboard","fas fa-clipboard-list",
+            "fas fa-clipboard-check","fas fa-folder","fas fa-folder-open"
+        ],
+        "Nature & Garden": [
+            "fas fa-leaf","fas fa-tree","fas fa-seedling","fas fa-spa","fas fa-cannabis",
+            "fas fa-cloud","fas fa-cloud-sun","fas fa-sun","fas fa-moon","fas fa-snowflake",
+            "fas fa-wind","fas fa-umbrella","fas fa-mountain"
+        ],
+        "Arrows & Directions": [
+            "fas fa-arrow-up","fas fa-arrow-down","fas fa-arrow-left","fas fa-arrow-right",
+            "fas fa-arrows-alt","fas fa-expand","fas fa-compress","fas fa-exchange-alt",
+            "fas fa-sync","fas fa-redo","fas fa-undo","fas fa-random","fas fa-sort"
+        ],
+        "General": [
+            "fas fa-newspaper","fas fa-tag","fas fa-tags","fas fa-star","fas fa-heart","fas fa-thumbs-up",
+            "fas fa-check","fas fa-check-circle","fas fa-times","fas fa-plus","fas fa-minus",
+            "fas fa-info-circle","fas fa-question-circle","fas fa-exclamation-circle",
+            "fas fa-bell","fas fa-flag","fas fa-trophy","fas fa-award","fas fa-medal",
+            "fas fa-crown","fas fa-gem","fas fa-gift","fas fa-shopping-cart","fas fa-shopping-bag",
+            "fas fa-store-alt","fas fa-receipt","fas fa-barcode","fas fa-qrcode",
+            "fas fa-chart-bar","fas fa-chart-line","fas fa-chart-pie","fas fa-percentage",
+            "fas fa-dollar-sign","fas fa-coins","fas fa-money-bill","fas fa-credit-card",
+            "fas fa-handshake","fas fa-users","fas fa-user","fas fa-user-tie",
+            "fas fa-phone","fas fa-envelope","fas fa-globe","fas fa-map-marker-alt",
+            "fas fa-clock","fas fa-calendar","fas fa-search","fas fa-link","fas fa-paperclip",
+            "fas fa-th","fas fa-th-large","fas fa-th-list","fas fa-list","fas fa-grip-horizontal",
+            "fas fa-layer-group","fas fa-cube","fas fa-cubes","fas fa-shapes",
+            "fas fa-magic","fas fa-broom","fas fa-trash",
+            "fas fa-download","fas fa-upload","fas fa-share","fas fa-external-link-alt",
+            "fas fa-book","fas fa-recycle","fas fa-hand-holding-usd","fas fa-calendar-check"
+        ]
+    };
+
+    function buildBlogIconGrid(filter, category) {
+        var grid = document.getElementById('blogIconGrid');
+        var empty = document.getElementById('blogIconEmpty');
+        var html = '';
+        var count = 0;
+        var currentVal = blogIconInput ? blogIconInput.value : '';
+        var lowerFilter = filter ? filter.toLowerCase() : '';
+
+        Object.keys(blogIconData).forEach(function(cat) {
+            if (category && category !== 'all' && cat !== category) return;
+            blogIconData[cat].forEach(function(cls) {
+                var name = cls.replace('fas fa-', '');
+                if (lowerFilter && name.indexOf(lowerFilter) === -1 && cls.indexOf(lowerFilter) === -1) return;
+                var sel = (cls === currentVal) ? ' selected' : '';
+                html += '<div class="blog-icon-grid-item' + sel + '" data-icon="' + cls + '" title="' + cls + '">';
+                html += '<i class="' + cls + '"></i>';
+                html += '<span class="icon-name">' + name + '</span></div>';
+                count++;
+            });
+        });
+
+        grid.innerHTML = html;
+        empty.classList.toggle('d-none', count > 0);
+
+        grid.querySelectorAll('.blog-icon-grid-item').forEach(function(item) {
+            item.addEventListener('click', function() {
+                var val = this.getAttribute('data-icon');
+                blogIconInput.value = val;
+                if (blogIconHidden) blogIconHidden.value = val;
+                blogIconPreview.className = val;
+                var colorVal = blogColorText.value;
+                if (colorVal) blogIconPreview.style.color = colorVal;
+                var modal = bootstrap.Modal.getInstance(document.getElementById('blogIconPickerModal'));
+                if (modal) modal.hide();
+            });
+        });
+    }
+
+    // Build category filter buttons
+    var blogCatBtns = document.getElementById('blogIconCategoryBtns');
+    if (blogCatBtns) {
+        Object.keys(blogIconData).forEach(function(cat) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn btn-sm btn-outline-primary';
+            btn.setAttribute('data-cat', cat);
+            btn.textContent = cat;
+            btn.addEventListener('click', function() {
+                blogCatBtns.querySelectorAll('.btn').forEach(function(b) { b.classList.remove('active'); });
+                this.classList.add('active');
+                buildBlogIconGrid(document.getElementById('blogIconSearchInput').value, cat);
+            });
+            blogCatBtns.appendChild(btn);
+        });
+    }
+
+    // Search
+    var blogIconSearch = document.getElementById('blogIconSearchInput');
+    if (blogIconSearch) {
+        blogIconSearch.addEventListener('input', function() {
+            var activeCat = blogCatBtns.querySelector('.btn.active');
+            var cat = activeCat ? activeCat.getAttribute('data-cat') : 'all';
+            buildBlogIconGrid(this.value, cat);
+        });
+    }
+
+    // Build grid on modal open
+    var blogIconModal = document.getElementById('blogIconPickerModal');
+    if (blogIconModal) {
+        blogIconModal.addEventListener('shown.bs.modal', function() {
+            buildBlogIconGrid('', 'all');
+            blogIconSearch.value = '';
+            blogCatBtns.querySelectorAll('.btn').forEach(function(b) { b.classList.remove('active'); });
+            blogCatBtns.querySelector('[data-cat="all"]').classList.add('active');
+            blogIconSearch.focus();
+        });
+    }
+
+    // Live preview from text input
+    if (blogIconInput) {
+        blogIconInput.addEventListener('input', function() {
+            var val = this.value || 'fas fa-newspaper';
+            blogIconPreview.className = val;
+            if (blogIconHidden) blogIconHidden.value = this.value;
+        });
+    }
+
+    // === Color Picker ===
+    if (blogColorText && blogColorPicker) {
+        blogColorPicker.addEventListener('input', function() {
+            blogColorText.value = this.value;
+            if (blogColorHidden) blogColorHidden.value = this.value;
+            if (blogIconPreview) blogIconPreview.style.color = this.value;
+            document.querySelectorAll('.color-quick-pick').forEach(function(b) { b.classList.remove('active'); });
+        });
+        blogColorText.addEventListener('input', function() {
+            if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
+                blogColorPicker.value = this.value;
+                if (blogColorHidden) blogColorHidden.value = this.value;
+                if (blogIconPreview) blogIconPreview.style.color = this.value;
+            }
+            document.querySelectorAll('.color-quick-pick').forEach(function(b) { b.classList.remove('active'); });
+        });
+        document.querySelectorAll('.color-quick-pick').forEach(function(btn) {
+            if (btn.getAttribute('data-color') === blogColorText.value) btn.classList.add('active');
+            btn.addEventListener('click', function() {
+                var val = this.getAttribute('data-color');
+                blogColorText.value = val;
+                blogColorPicker.value = val;
+                if (blogColorHidden) blogColorHidden.value = val;
+                if (blogIconPreview) blogIconPreview.style.color = val;
+                document.querySelectorAll('.color-quick-pick').forEach(function(b) { b.classList.remove('active'); });
+                this.classList.add('active');
+            });
+        });
+        if (blogColorText.value) {
+            blogIconPreview.style.color = blogColorText.value;
+        }
+    }
+
+    // ── Blog FAQ Management ──
+    var blogFaqsData = (typeof initialBlogFaqsData !== 'undefined') ? initialBlogFaqsData : [];
+    var deletedBlogFaqs = [];
+    var blogFaqTempId = -1;
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(text));
+        return div.innerHTML;
+    }
+
+    function renderBlogFaqs() {
+        var container = $('#blog-faqs-container');
+        container.empty();
+
+        if (blogFaqsData.length === 0) {
+            $('#blog-faqs-empty').show();
+        } else {
+            $('#blog-faqs-empty').hide();
+        }
+
+        blogFaqsData.forEach(function(faq, index) {
+            var checked = faq.is_active !== false ? 'checked' : '';
+            var card = '<div class="card mb-3 blog-faq-item border" data-index="' + index + '">' +
+                '<div class="card-header bg-light d-flex justify-content-between align-items-center py-2">' +
+                    '<span class="fw-bold small"><i class="fa fa-grip-vertical text-muted me-2"></i>{% trans "سؤال" %} #' + (index + 1) + '</span>' +
+                    '<div class="d-flex align-items-center gap-2">' +
+                        '<div class="form-check form-switch mb-0">' +
+                            '<input class="form-check-input blog-faq-is-active" type="checkbox" data-index="' + index + '" ' + checked + '>' +
+                            '<label class="form-check-label small">{% trans "نشط" %}</label>' +
+                        '</div>' +
+                        '<button type="button" class="btn btn-sm btn-outline-danger btn-remove-blog-faq" data-index="' + index + '">' +
+                            '<i class="fa fa-trash-alt"></i>' +
+                        '</button>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="card-body py-3">' +
+                    '<div class="row g-3">' +
+                        '<div class="col-md-6">' +
+                            '<label class="form-label small fw-bold">{% trans "السؤال (عربي)" %} <span class="text-danger">*</span></label>' +
+                            '<input type="text" class="form-control form-control-sm blog-faq-question" data-index="' + index + '" value="' + escapeHtml(faq.question) + '">' +
+                        '</div>' +
+                        '<div class="col-md-6">' +
+                            '<label class="form-label small fw-bold">{% trans "السؤال (إنجليزي)" %}</label>' +
+                            '<input type="text" class="form-control form-control-sm blog-faq-question-en" data-index="' + index + '" value="' + escapeHtml(faq.question_en) + '" dir="ltr">' +
+                        '</div>' +
+                        '<div class="col-md-6">' +
+                            '<label class="form-label small fw-bold">{% trans "الإجابة (عربي)" %} <span class="text-danger">*</span></label>' +
+                            '<textarea class="form-control form-control-sm blog-faq-answer" data-index="' + index + '" rows="3">' + escapeHtml(faq.answer) + '</textarea>' +
+                        '</div>' +
+                        '<div class="col-md-6">' +
+                            '<label class="form-label small fw-bold">{% trans "الإجابة (إنجليزي)" %}</label>' +
+                            '<textarea class="form-control form-control-sm blog-faq-answer-en" data-index="' + index + '" rows="3" dir="ltr">' + escapeHtml(faq.answer_en) + '</textarea>' +
+                        '</div>' +
+                        '<div class="col-md-3">' +
+                            '<label class="form-label small fw-bold">{% trans "الترتيب" %}</label>' +
+                            '<input type="number" class="form-control form-control-sm blog-faq-sort-order" data-index="' + index + '" value="' + (faq.sort_order || 0) + '" min="0">' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+            container.append(card);
+        });
+    }
+
+    function updateBlogFaqsJson() {
+        blogFaqsData.forEach(function(faq, index) {
+            var q = $('.blog-faq-question[data-index="' + index + '"]');
+            if (q.length) {
+                faq.question = q.val() || '';
+                faq.question_en = $('.blog-faq-question-en[data-index="' + index + '"]').val() || '';
+                faq.answer = $('.blog-faq-answer[data-index="' + index + '"]').val() || '';
+                faq.answer_en = $('.blog-faq-answer-en[data-index="' + index + '"]').val() || '';
+                faq.sort_order = parseInt($('.blog-faq-sort-order[data-index="' + index + '"]').val()) || 0;
+                faq.is_active = $('.blog-faq-is-active[data-index="' + index + '"]').is(':checked');
+            }
+        });
+        $('#blog_faqs_json').val(JSON.stringify(blogFaqsData));
+        $('#deleted_blog_faqs_json').val(JSON.stringify(deletedBlogFaqs));
+    }
+
+    $('#add-blog-faq-btn').click(function() {
+        updateBlogFaqsJson();
+        blogFaqsData.push({
+            id: blogFaqTempId--,
+            question: '',
+            question_en: '',
+            answer: '',
+            answer_en: '',
+            sort_order: blogFaqsData.length,
+            is_active: true
+        });
+        renderBlogFaqs();
+        var lastCard = $('#blog-faqs-container .blog-faq-item:last');
+        if (lastCard.length) {
+            $('html, body').animate({ scrollTop: lastCard.offset().top - 100 }, 300);
+            lastCard.find('.blog-faq-question').focus();
+        }
+    });
+
+    $(document).on('click', '.btn-remove-blog-faq', function() {
+        updateBlogFaqsJson();
+        var index = parseInt($(this).data('index'));
+        var faq = blogFaqsData[index];
+        if (faq && faq.id && faq.id > 0) {
+            deletedBlogFaqs.push(faq.id);
+        }
+        blogFaqsData.splice(index, 1);
+        renderBlogFaqs();
+    });
+
+    $('#blogForm').on('submit', function() {
+        updateBlogFaqsJson();
+    });
+
+    renderBlogFaqs();
+});
+</script>
+{% endblock %}

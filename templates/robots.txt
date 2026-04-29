@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /cart/
+Disallow: /checkout/
+Disallow: /accounts/
+Disallow: /api/
+Disallow: /payment/
+Disallow: /orders/
+Disallow: /static/
+Disallow: /media/
+
+# Sitemaps
+Sitemap: {% if site_settings.canonical_domain %}{{ site_settings.canonical_domain }}{% else %}{{ request.scheme }}://{{ request.get_host }}{% endif %}/sitemap.xml

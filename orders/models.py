@@ -3,6 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 from cart.models import Cart
 import uuid
+from decimal import Decimal
 from model_utils import FieldTracker
 
 
@@ -46,6 +47,20 @@ class Order(models.Model):
     shipping_country = models.CharField(_("الدولة"), max_length=100)
     shipping_postal_code = models.CharField(_("الرمز البريدي"), max_length=20, blank=True)
 
+    DELIVERY_METHOD_CHOICES = [
+        ('delivery', _('توصيل')),
+        ('pickup', _('استلام من الفرع')),
+    ]
+    delivery_method = models.CharField(
+        _("طريقة الاستلام"), max_length=20,
+        choices=DELIVERY_METHOD_CHOICES, default='delivery'
+    )
+    pickup_branch = models.ForeignKey(
+        'core.Branch', on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='orders', verbose_name=_("فرع الاستلام")
+    )
+
     # معلومات الدفع - Payment information
     total_price = models.DecimalField(_("السعر الإجمالي"), max_digits=10, decimal_places=2)
     shipping_cost = models.DecimalField(_("تكلفة الشحن"), max_digits=10, decimal_places=2, default=0)
@@ -87,11 +102,7 @@ class Order(models.Model):
             self.order_number = self._generate_order_number()
 
         # حساب المجموع الكلي - Calculate grand total
-        # self.grand_total = self.total_price + self.shipping_cost + self.tax_amount
-        self.grand_total = self.total_price + self.shipping_cost
-
-        # self.grand_total = self.total_price + self.shipping_cost + self.tax_amount - self.discount_amount
-        self.grand_total = self.total_price + self.shipping_cost  - self.discount_amount
+        self.grand_total = self.total_price + self.shipping_cost - self.discount_amount
 
         super().save(*args, **kwargs)
 

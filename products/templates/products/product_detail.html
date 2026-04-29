@@ -1,42 +1,33 @@
 {% extends 'core/base.html' %}
 {% load static %}
 {% load i18n %}
+{% load seo_tags %}
 
-{% block title %}{% if LANGUAGE_CODE == 'en' %}{{ product.name_en }}{% else %}{{ product.name }}{% endif %} | {{ site_settings.site_name|default:"ESCO" }}{% endblock %}
+{% block title %}{% if product.meta_title %}{{ product.meta_title }}{% elif LANGUAGE_CODE == 'en' %}{{ product.name_en }}{% else %}{{ product.name }}{% endif %} | {{ site_settings.site_name|default:"ESCO" }}{% endblock %}
 
-{% block extra_meta %}
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="product">
-    <meta property="og:url" content="{{ request.build_absolute_uri }}">
-    <meta property="og:title" content="{% if LANGUAGE_CODE == 'en' %}{{ product.name_en }}{% else %}{{ product.name }}{% endif %}">
-    <meta property="og:description" content="{% if LANGUAGE_CODE == 'en' %}{{ product.description_en|striptags|truncatewords:30 }}{% else %}{{ product.description|striptags|truncatewords:30 }}{% endif %}">
+{% block meta_description %}{% if product.meta_description %}{{ product.meta_description }}{% elif LANGUAGE_CODE == 'en' %}{{ product.description_en|striptags|truncatewords:30 }}{% else %}{{ product.description|striptags|truncatewords:30 }}{% endif %}{% endblock %}
+
+{% block meta_keywords %}{% if product.meta_keywords %}{{ product.meta_keywords }}{% else %}{{ product.name }}, {{ product.category.name|default:"" }}, {{ product.brand.name|default:"" }}, ESCO{% endif %}{% endblock %}
+
+{% block og_tags %}
+    {% og_meta_tags title=product.name description=product.description|striptags|truncatewords:30 obj_type="product" %}
     {% if product.default_image %}
     <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.default_image.image.url }}">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="{% if LANGUAGE_CODE == 'en' %}{{ product.name_en }}{% else %}{{ product.name }}{% endif %}">
     {% endif %}
-    <meta property="og:site_name" content="{{ site_settings.site_name|default:'ESCO' }}">
     {% if product.is_price_visible %}
     <meta property="product:price:amount" content="{{ product.current_price }}">
     <meta property="product:price:currency" content="JOD">
     {% endif %}
+{% endblock %}
 
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="{{ request.build_absolute_uri }}">
-    <meta name="twitter:title" content="{% if LANGUAGE_CODE == 'en' %}{{ product.name_en }}{% else %}{{ product.name }}{% endif %}">
-    <meta name="twitter:description" content="{% if LANGUAGE_CODE == 'en' %}{{ product.description_en|striptags|truncatewords:30 }}{% else %}{{ product.description|striptags|truncatewords:30 }}{% endif %}">
-    {% if product.default_image %}
-    <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.default_image.image.url }}">
-    {% endif %}
-
-    <!-- WhatsApp (uses Open Graph) -->
-    <meta property="og:locale" content="{% if LANGUAGE_CODE == 'en' %}en_US{% else %}ar_AR{% endif %}">
+{% block structured_data %}
+    {% jsonld_product product %}
+    {% jsonld_breadcrumb breadcrumbs %}
 {% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'products/css/category_tree.css' %}">
+    <link rel="stylesheet" href="{% static 'products/css/category_tree.css' %}?v=6">
     <link rel="stylesheet" href="{% static 'products/css/product_detail.css' %}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/magnific-popup.js/1.1.0/magnific-popup.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.6.1/nouislider.min.css">
@@ -106,28 +97,21 @@
                             {% if product.images.all %}
                                 {% for image in product.images.all %}
                                     <div class="thumbnail-item {% if forloop.first %}active{% endif %}" data-image-id="{{ image.id }}">
-                                        <img src="{{ image.image.url }}" alt="{% if LANGUAGE_CODE == 'en' %}
-                            {{ product.name_en }}
-                        {% else %}
-                            {{ product.name }}
-                        {% endif %} - {% trans 'صورة' %} {{ forloop.counter }}">
+                                        <img src="{{ image.image.url }}"
+                                             onerror="this.onerror=null;this.src='{% static 'images/no-image.svg' %}';"
+                                             alt="{% if LANGUAGE_CODE == 'en' %}{{ product.name_en }}{% else %}{{ product.name }}{% endif %} - {% trans 'صورة' %} {{ forloop.counter }}">
                                     </div>
                                 {% endfor %}
                             {% elif product.default_image %}
                                 <div class="thumbnail-item active">
-                                    <img src="{{ product.default_image.image.url }}" alt="{% if LANGUAGE_CODE == 'en' %}
-                            {{ product.name_en }}
-                        {% else %}
-                            {{ product.name }}
-                        {% endif %}">
+                                    <img src="{{ product.default_image.image.url }}"
+                                         onerror="this.onerror=null;this.src='{% static 'images/no-image.svg' %}';"
+                                         alt="{% if LANGUAGE_CODE == 'en' %}{{ product.name_en }}{% else %}{{ product.name }}{% endif %}">
                                 </div>
                             {% else %}
                                 <div class="thumbnail-item active">
-                                    <img src="{% static 'products/images/no-image.png' %}" alt="{% if LANGUAGE_CODE == 'en' %}
-                            {{ product.name_en }}
-                        {% else %}
-                            {{ product.name }}
-                        {% endif %}">
+                                    <img src="{% static 'images/no-image.svg' %}"
+                                         alt="{% if LANGUAGE_CODE == 'en' %}{{ product.name_en }}{% else %}{{ product.name }}{% endif %}">
                                 </div>
                             {% endif %}
                         </div>
@@ -135,23 +119,19 @@
                         <!-- صورة العرض الرئيسية -->
                         <div class="main-image-container" style="position: relative; overflow: hidden; height: 500px; border: 1px solid #eee; border-radius: 8px;">
     {% if product.images.all %}
-        <img src="{{ product.images.first.image.url }}" alt="{% if LANGUAGE_CODE == 'en' %}
-                            {{ product.name_en }}
-                        {% else %}
-                            {{ product.name }}
-                        {% endif %}" style="width: 100%; height: 100%; object-fit: contain;">
+        <img src="{{ product.images.first.image.url }}"
+             onerror="this.onerror=null;this.src='{% static 'images/no-image.svg' %}';"
+             alt="{% if LANGUAGE_CODE == 'en' %}{{ product.name_en }}{% else %}{{ product.name }}{% endif %}"
+             style="width: 100%; height: 100%; object-fit: contain;">
     {% elif product.default_image %}
-        <img src="{{ product.default_image.image.url }}" alt="{% if LANGUAGE_CODE == 'en' %}
-                            {{ product.name_en }}
-                        {% else %}
-                            {{ product.name }}
-                        {% endif %}" style="width: 100%; height: 100%; object-fit: contain;">
+        <img src="{{ product.default_image.image.url }}"
+             onerror="this.onerror=null;this.src='{% static 'images/no-image.svg' %}';"
+             alt="{% if LANGUAGE_CODE == 'en' %}{{ product.name_en }}{% else %}{{ product.name }}{% endif %}"
+             style="width: 100%; height: 100%; object-fit: contain;">
     {% else %}
-        <img src="{% static 'products/images/no-image.png' %}" alt="{% if LANGUAGE_CODE == 'en' %}
-                            {{ product.name_en }}
-                        {% else %}
-                            {{ product.name }}
-                        {% endif %}" style="width: 100%; height: 100%; object-fit: contain;">
+        <img src="{% static 'images/no-image.svg' %}"
+             alt="{% if LANGUAGE_CODE == 'en' %}{{ product.name_en }}{% else %}{{ product.name }}{% endif %}"
+             style="width: 100%; height: 100%; object-fit: contain;">
     {% endif %}
 </div>
                     </div>
@@ -661,7 +641,7 @@
 
 {% block extra_js %}
 
-<script src="{% static 'products/js/category_tree.js' %}"></script>
+<script src="{% static 'products/js/category_tree.js' %}?v=6"></script>
 <script src="{% static 'products/js/product_detail.js' %}"></script>
     <script src="{% static 'products/js/product_zoom_simple.js' %}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.6.1/nouislider.min.js"></script>

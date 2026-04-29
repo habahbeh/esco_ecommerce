@@ -1,0 +1,75 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "إدارة الفروع" %}{% endblock %}
+{% block page_title %}{% trans "إدارة الفروع" %}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_home' %}">{% trans "الرئيسية" %}</a></li>
+{% endblock %}
+{% block current_page %}{% trans "إدارة الفروع" %}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">{% trans "الفروع" %}</h5>
+        <a href="{% url 'dashboard:dashboard_branch_create' %}" class="btn btn-primary btn-sm">
+            <i class="fa fa-plus"></i> {% trans "إضافة فرع جديد" %}
+        </a>
+    </div>
+    <div class="card-body">
+        {% if branches %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>{% trans "الاسم" %}</th>
+                        <th>{% trans "الاسم (إنجليزي)" %}</th>
+                        <th>{% trans "العنوان" %}</th>
+                        <th>{% trans "الهاتف" %}</th>
+                        <th>{% trans "ساعات العمل" %}</th>
+                        <th>{% trans "الحالة" %}</th>
+                        <th>{% trans "الترتيب" %}</th>
+                        <th>{% trans "الإجراءات" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for branch in branches %}
+                    <tr>
+                        <td>{{ branch.name }}</td>
+                        <td>{{ branch.name_en|default:"-" }}</td>
+                        <td><small>{{ branch.address|truncatewords:8 }}</small></td>
+                        <td>{{ branch.phone|default:"-" }}</td>
+                        <td><small>{{ branch.working_hours|default:"-" }}</small></td>
+                        <td>
+                            <span class="badge {% if branch.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                {% if branch.is_active %}{% trans "نشط" %}{% else %}{% trans "غير نشط" %}{% endif %}
+                            </span>
+                        </td>
+                        <td>{{ branch.sort_order }}</td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{% url 'dashboard:dashboard_branch_edit' branch.id %}"
+                                   class="btn btn-sm btn-info">
+                                    <i class="fa fa-edit"></i>
+                                </a>
+                                <a href="{% url 'dashboard:dashboard_branch_delete' branch.id %}"
+                                   class="btn btn-sm btn-danger">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            {% trans "لا توجد فروع حالياً." %} <a href="{% url 'dashboard:dashboard_branch_create' %}">{% trans "إضافة فرع جديد" %}</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'checkout',
     'payment',
     'events',
+    'blog.apps.BlogConfig',
 
     # تطبيقات Django المدمجة - Django built-in apps
     'django.contrib.admin',
@@ -55,6 +56,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sitemaps',
     'widget_tweaks',
 
     # تطبيقات خارجية - Third-party apps
@@ -83,13 +85,17 @@ REST_FRAMEWORK = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'django.middleware.cache.UpdateCacheMiddleware',
+    'django.middleware.gzip.GZipMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.locale.LocaleMiddleware',  # لدعم الترجمة - For translation support
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.cache.FetchFromCacheMiddleware',
+    'core.middleware.AgentReadyMiddleware',
 ]
 
 ROOT_URLCONF = 'esco_project.urls'
@@ -105,14 +111,16 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'django.template.context_processors.i18n',  # لدعم الترجمة - For translation support
-                'core.context_processors.site_settings',  # معالج إعدادات الموقع - Site settings processor
-                'cart.context_processors.cart_context',  # Full cart context
-                'cart.context_processors.cart_preview_context',  # Lightweight preview
+                'django.template.context_processors.i18n',
+                'core.context_processors.site_settings',
+                'cart.context_processors.cart_context',
+                'cart.context_processors.cart_preview_context',
             ],
             'loaders': [
-                'django.template.loaders.filesystem.Loader',
-                'django.template.loaders.app_directories.Loader',
+                ('django.template.loaders.cached.Loader', [
+                    'django.template.loaders.filesystem.Loader',
+                    'django.template.loaders.app_directories.Loader',
+                ]),
             ],
         },
     },
@@ -130,14 +138,14 @@ WSGI_APPLICATION = 'esco_project.wsgi.application'
 try:
     from .settings_local import DATABASES
 except ImportError:
-    # Fallback to SQLite for development if settings_local.py doesn't exist
-    # الرجوع إلى SQLite للتطوير إذا لم يكن settings_local.py موجوداً
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
+DATABASES['default']['CONN_MAX_AGE'] = 600
 
 
 
@@ -171,7 +179,9 @@ LOGOUT_REDIRECT_URL = 'core:home'
 LANGUAGE_CODE = 'ar'
 TIME_ZONE = 'Asia/Amman'
 USE_I18N = True
+USE_L10N = True
 USE_TZ = True
+FORMAT_MODULE_PATH = ['esco_project.formats']
 
 # اللغات المتاحة
 LANGUAGES = [
@@ -222,6 +232,7 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 # إعدادات البريد الإلكتروني - مستوردة من settings_local.py (ليست في git)
 # =============================================================================
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_TIMEOUT = 10
 try:
     from .settings_local import EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD, DEFAULT_FROM_EMAIL
     try:
@@ -259,35 +270,27 @@ LOGGING = {
     'disable_existing_loggers': False,
     'handlers': {
         'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
+            'level': 'WARNING',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': 'django.log',
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 3,
         },
         'console': {
-            'level': 'INFO',
+            'level': 'WARNING',
             'class': 'logging.StreamHandler',
         },
     },
     'loggers': {
         'django': {
             'handlers': ['file', 'console'],
-            'level': 'INFO',
-            'propagate': True,
+            'level': 'WARNING',
+            'propagate': False,
         },
-        'products': {
-            'handlers': ['file', 'console'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-        'dashboard': {
-            'handlers': ['file', 'console'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-        'cart': {
-            'handlers': ['file', 'console'],
-            'level': 'INFO',
-            'propagate': True,
+        'django.request': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': False,
         },
     },
 }
@@ -315,26 +318,31 @@ MAX_CART_QUANTITY_PER_ITEM = 10
 
 
 
-# CACHES = {
-#     'default': {
-#         'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-#         'LOCATION': os.path.join(BASE_DIR, 'django_cache'),
-#         'TIMEOUT': 3600,  # ساعة واحدة
-#         'OPTIONS': {
-#             'MAX_ENTRIES': 1000
-#         }
-#     }
-# }
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': os.path.join(BASE_DIR, 'django_cache'),
+        'TIMEOUT': 3600,
+        'OPTIONS': {
+            'MAX_ENTRIES': 5000
+        }
     }
 }
-# CACHES = {
-#     'default': {
-#         'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
-#     }
-# }
+
+CACHE_MIDDLEWARE_SECONDS = 120
+CACHE_MIDDLEWARE_KEY_PREFIX = 'esco'
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
+
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 
 

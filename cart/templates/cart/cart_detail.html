@@ -141,9 +141,9 @@
                                             </td>
                                             <td class="text-nowrap">
                                                 {% if item.has_automatic_discount %}
-                                                <span class="text-muted text-decoration-line-through me-2" style="font-size: 0.9rem;">{{ item.original_price|without_tax|floatformat:2 }}</span>
+                                                <span class="text-muted text-decoration-line-through me-2" style="font-size: 0.9rem;">{{ item.original_price|without_tax|floatformat:4 }}</span>
                                                 {% endif %}
-                                                <span class="fw-semibold">{{ item.price|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                                                <span class="fw-semibold">{{ item.price|without_tax|floatformat:4 }} {% trans "د.أ" %}</span>
                                             </td>
                                           <td>
     <div class="quantity-selector" data-item-id="{{ item.id }}">
@@ -164,15 +164,15 @@
 </td>
                                             <td class="text-nowrap">
                                                 {% if item.coupon_eligible and item.coupon_discount > 0 %}
-                                                <span class="text-muted text-decoration-line-through me-2" style="font-size: 0.9rem;">{{ item.subtotal|without_tax|floatformat:2 }}</span>
-                                                <span class="fw-bold text-primary">{{ item.subtotal_after_coupon|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
-                                                <span class="badge bg-success ms-1" style="font-size: 0.7rem;">-{{ item.coupon_discount|without_tax|floatformat:2 }}</span>
+                                                <span class="text-muted text-decoration-line-through me-2" style="font-size: 0.9rem;">{{ item.subtotal|without_tax|floatformat:4 }}</span>
+                                                <span class="fw-bold text-primary">{{ item.subtotal_after_coupon|without_tax|floatformat:4 }} {% trans "د.أ" %}</span>
+                                                <span class="badge bg-success ms-1" style="font-size: 0.7rem;">-{{ item.coupon_discount|without_tax|floatformat:4 }}</span>
                                                 {% elif item.has_automatic_discount %}
-                                                <span class="text-muted text-decoration-line-through me-2" style="font-size: 0.9rem;">{{ item.original_subtotal|without_tax|floatformat:2 }}</span>
-                                                <span class="fw-bold text-primary">{{ item.subtotal|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
-                                                <span class="badge bg-success ms-1" style="font-size: 0.7rem;">-{{ item.savings|without_tax|floatformat:2 }}</span>
+                                                <span class="text-muted text-decoration-line-through me-2" style="font-size: 0.9rem;">{{ item.original_subtotal|without_tax|floatformat:4 }}</span>
+                                                <span class="fw-bold text-primary">{{ item.subtotal|without_tax|floatformat:4 }} {% trans "د.أ" %}</span>
+                                                <span class="badge bg-success ms-1" style="font-size: 0.7rem;">-{{ item.savings|without_tax|floatformat:4 }}</span>
                                                 {% else %}
-                                                <span class="fw-semibold">{{ item.subtotal|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                                                <span class="fw-semibold">{{ item.subtotal|without_tax|floatformat:4 }} {% trans "د.أ" %}</span>
                                                 {% endif %}
                                             </td>
                                             <td>
@@ -242,22 +242,22 @@
                                     <!-- الكمية × السعر -->
                                     <small class="text-muted">
                                         <span class="item-quantity">{{ item.quantity }}</span> ×
-                                        <span class="item-price">{{ item.price|without_tax|floatformat:2 }}</span>
+                                        <span class="item-price">{{ item.price|without_tax|floatformat:4 }}</span>
                                         {% if item.has_automatic_discount %}
-                                        <span class="text-decoration-line-through ms-1">{{ item.original_price|without_tax|floatformat:2 }}</span>
+                                        <span class="text-decoration-line-through ms-1">{{ item.original_price|without_tax|floatformat:4 }}</span>
                                         {% endif %}
                                     </small>
                                 </div>
                                 <div class="text-end">
                                     <!-- المجموع -->
                                     {% if item.coupon_eligible and item.coupon_discount > 0 %}
-                                    <small class="text-decoration-line-through text-muted d-block">{{ item.subtotal|without_tax|floatformat:2 }}</small>
-                                    <span class="item-subtotal fw-bold">{{ item.subtotal_after_coupon|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                                    <small class="text-decoration-line-through text-muted d-block">{{ item.subtotal|without_tax|floatformat:4 }}</small>
+                                    <span class="item-subtotal fw-bold">{{ item.subtotal_after_coupon|without_tax|floatformat:4 }} {% trans "د.أ" %}</span>
                                     {% elif item.has_automatic_discount %}
-                                    <small class="text-decoration-line-through text-muted d-block">{{ item.original_subtotal|without_tax|floatformat:2 }}</small>
-                                    <span class="item-subtotal fw-bold text-success">{{ item.subtotal|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                                    <small class="text-decoration-line-through text-muted d-block">{{ item.original_subtotal|without_tax|floatformat:4 }}</small>
+                                    <span class="item-subtotal fw-bold text-success">{{ item.subtotal|without_tax|floatformat:4 }} {% trans "د.أ" %}</span>
                                     {% else %}
-                                    <span class="item-subtotal fw-semibold">{{ item.subtotal|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                                    <span class="item-subtotal fw-semibold">{{ item.subtotal|without_tax|floatformat:4 }} {% trans "د.أ" %}</span>
                                     {% endif %}
                                 </div>
                             </div>
@@ -266,14 +266,14 @@
                             {% if item.has_automatic_discount and item.savings > 0 %}
                             <div class="mt-1">
                                 <small class="text-success">
-                                    {% trans "وفرت" %} {{ item.savings|without_tax|floatformat:2 }} {% trans "د.أ" %}
+                                    {% trans "وفرت" %} {{ item.savings|without_tax|floatformat:4 }} {% trans "د.أ" %}
                                 </small>
                             </div>
                             {% endif %}
                             {% if item.coupon_eligible and item.coupon_discount > 0 %}
                             <div class="mt-1">
                                 <small class="text-success">
-                                    {% trans "خصم الكوبون" %} {{ item.coupon_discount|without_tax|floatformat:2 }} {% trans "د.أ" %}
+                                    {% trans "خصم الكوبون" %} {{ item.coupon_discount|without_tax|floatformat:4 }} {% trans "د.أ" %}
                                 </small>
                             </div>
                             {% endif %}
@@ -335,7 +335,7 @@
                 <!-- 1. السعر الأصلي (قبل الخصم) - Original Price -->
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">{% trans "السعر الأصلي" %}</span>
-                    <span class="cart-original-subtotal text-muted">{{ cart_original_subtotal|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                    <span class="cart-original-subtotal text-muted">{{ cart_original_subtotal|without_tax|floatformat:4 }} {% trans "د.أ" %}</span>
                 </div>
 
                 <!-- 2. الخصم (إذا وجد) - Discount -->
@@ -343,10 +343,10 @@
                 <div class="d-flex justify-content-between mb-2 text-success automatic-discount-line">
                     <span>{% trans "الخصم" %}
                         {% if automatic_discount_info %}
-                            {% if automatic_discount_info.type == 'percentage' %}({{ automatic_discount_info.value|floatformat:0 }}%){% elif automatic_discount_info.type == 'fixed_amount' %}({{ automatic_discount_info.value|without_tax|floatformat:2 }} {% trans "د.أ" %}/{% trans "قطعة" %}){% endif %}
+                            {% if automatic_discount_info.type == 'percentage' %}({{ automatic_discount_info.value|floatformat:0 }}%){% elif automatic_discount_info.type == 'fixed_amount' %}({{ automatic_discount_info.value|without_tax|floatformat:4 }} {% trans "د.أ" %}/{% trans "قطعة" %}){% endif %}
                         {% endif %}
                     </span>
-                    <span class="automatic-discount">-{{ automatic_discount_savings|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                    <span class="automatic-discount">-{{ automatic_discount_savings|without_tax|floatformat:4 }} {% trans "د.أ" %}</span>
                 </div>
                 {% endif %}
 
@@ -354,11 +354,11 @@
                 {% if coupon_discount and coupon_discount > 0 %}
                 <div class="d-flex justify-content-between mb-2 text-success coupon-discount-line">
                     <span>{% trans "خصم الكوبون" %} ({{ applied_coupon.code }}){% if max_discount_applied %} <small class="text-muted">({% trans "الحد الأقصى" %})</small>{% endif %}</span>
-                    <span class="coupon-discount">-{{ coupon_discount|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                    <span class="coupon-discount">-{{ coupon_discount|without_tax|floatformat:4 }} {% trans "د.أ" %}</span>
                 </div>
                 {% if max_discount_applied and applied_coupon.max_discount_amount %}
                 <div class="mb-2">
-                    <small class="text-muted"><i class="fas fa-info-circle me-1"></i>{% trans "تم تطبيق الحد الأقصى للخصم" %}: {{ applied_coupon.max_discount_amount|without_tax|floatformat:2 }} {% trans "د.أ" %}</small>
+                    <small class="text-muted"><i class="fas fa-info-circle me-1"></i>{% trans "تم تطبيق الحد الأقصى للخصم" %}: {{ applied_coupon.max_discount_amount|without_tax|floatformat:4 }} {% trans "د.أ" %}</small>
                 </div>
                 {% endif %}
                 {% endif %}
@@ -368,17 +368,53 @@
                 <!-- 4. المجموع الفرعي (بعد الخصم، قبل الضريبة) - Subtotal -->
                 <div class="d-flex justify-content-between mb-2">
                     <span>{% trans "المجموع الفرعي" %}</span>
-                    <span class="cart-subtotal fw-semibold">{{ cart_subtotal_after_coupon|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                    <span class="cart-subtotal fw-semibold">{{ cart_subtotal_after_coupon|without_tax|floatformat:4 }} {% trans "د.أ" %}</span>
                 </div>
 
                 <!-- 5. الضريبة - Tax -->
                 <div class="d-flex justify-content-between mb-2">
                     <span>{% trans "الضريبة" %} (16%)</span>
-                    <span class="cart-tax">{{ cart_tax_after_coupon|floatformat:2 }} {% trans "د.أ" %}</span>
+                    <span class="cart-tax">{{ cart_tax_after_coupon|floatformat:4 }} {% trans "د.أ" %}</span>
                 </div>
 
-                <!-- 6. أجور النقل - Shipping -->
-                {% if shipping_enabled and cart_has_physical %}
+                <!-- 6. طريقة الاستلام - Delivery Method -->
+                {% if pickup_enabled and cart_has_physical %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold mb-2">{% trans "طريقة الاستلام" %}</label>
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="delivery_method" id="dm-delivery"
+                               value="delivery" {% if delivery_method == 'delivery' %}checked{% endif %}>
+                        <label class="btn btn-outline-primary btn-sm" for="dm-delivery">
+                            <i class="fas fa-truck me-1"></i>{% trans "توصيل" %}
+                        </label>
+                        <input type="radio" class="btn-check" name="delivery_method" id="dm-pickup"
+                               value="pickup" {% if delivery_method == 'pickup' %}checked{% endif %}>
+                        <label class="btn btn-outline-primary btn-sm" for="dm-pickup">
+                            <i class="fas fa-store me-1"></i>{% trans "استلام من الفرع" %}
+                        </label>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- أجور النقل - Shipping -->
+                {% if delivery_method == 'pickup' %}
+                <div class="d-flex justify-content-between mb-2">
+                    <span>{% trans "أجور النقل" %}</span>
+                    <span class="cart-shipping text-success">{% trans "مجاني" %} ({% trans "استلام من الفرع" %})</span>
+                </div>
+                <div class="mb-3" id="branch-selector">
+                    <select class="form-select form-select-sm" id="pickup-branch-select">
+                        <option value="">{% trans "اختر الفرع" %}</option>
+                        {% load branch_tags %}
+                        {% get_active_branches as branches %}
+                        {% for branch in branches %}
+                        <option value="{{ branch.id }}" {% if pickup_branch_id == branch.id %}selected{% endif %}>
+                            {% if LANGUAGE_CODE == 'en' and branch.name_en %}{{ branch.name_en }}{% else %}{{ branch.name }}{% endif %}{% if LANGUAGE_CODE == 'en' and branch.address_en %} - {{ branch.address_en }}{% elif branch.address %} - {{ branch.address }}{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% elif shipping_enabled and cart_has_physical %}
                 <div class="d-flex justify-content-between mb-2">
                     <span>
                         {% trans "أجور النقل" %}
@@ -387,7 +423,7 @@
                         </small>
                     </span>
                     {% if cart_shipping > 0 %}
-                    <span class="cart-shipping">{{ cart_shipping|floatformat:2 }} {% trans "د.أ" %}</span>
+                    <span class="cart-shipping">{{ cart_shipping|floatformat:4 }} {% trans "د.أ" %}</span>
                     {% else %}
                     <span class="cart-shipping text-success">{% trans "مجاني" %}</span>
                     {% endif %}
@@ -395,8 +431,8 @@
                 <!-- اختيار المنطقة -->
                 <div class="mb-3">
                     <select class="form-select form-select-sm" id="shipping-city-select">
-                        <option value="amman" {% if selected_shipping_city == 'amman' %}selected{% endif %}>{% trans "عمان" %} ({{ shipping_fee_amman|floatformat:2 }} {% trans "د.أ" %})</option>
-                        <option value="other" {% if selected_shipping_city == 'other' %}selected{% endif %}>{% trans "باقي المحافظات" %} ({{ shipping_fee_other|floatformat:2 }} {% trans "د.أ" %})</option>
+                        <option value="amman" {% if selected_shipping_city == 'amman' %}selected{% endif %}>{% trans "عمان" %} ({{ shipping_fee_amman|floatformat:4 }} {% trans "د.أ" %})</option>
+                        <option value="other" {% if selected_shipping_city == 'other' %}selected{% endif %}>{% trans "باقي المحافظات" %} ({{ shipping_fee_other|floatformat:4 }} {% trans "د.أ" %})</option>
                     </select>
                 </div>
                 {% endif %}
@@ -406,7 +442,7 @@
                 <!-- 7. المجموع الكلي - Total -->
                 <div class="d-flex justify-content-between mb-3">
                     <strong class="fs-5">{% trans "المجموع الكلي" %}</strong>
-                    <strong class="cart-total fs-5 text-primary">{{ cart_total|floatformat:2 }} {% trans "د.أ" %}</strong>
+                    <strong class="cart-total fs-5 text-primary">{{ cart_total|floatformat:4 }} {% trans "د.أ" %}</strong>
                 </div>
             </div>
 
@@ -601,8 +637,8 @@
             if (data.automatic_discount_info.type === 'percentage') {
                 discountLabel += ' (' + parseFloat(data.automatic_discount_info.value).toFixed(0) + '%)';
             } else if (data.automatic_discount_info.type === 'fixed_amount') {
-                // Apply without_tax to fixed amount: value * 0.84
-                var valueWithoutTax = (parseFloat(data.automatic_discount_info.value) * 0.84).toFixed(2);
+                // Extract pre-tax from tax-inclusive amount: value / 1.16
+                var valueWithoutTax = (parseFloat(data.automatic_discount_info.value) / 1.16).toFixed(4);
                 discountLabel += ' (' + valueWithoutTax + ' د.أ/قطعة)';
             }
         }
@@ -730,6 +766,44 @@
         if (e.which == 13) {
             $('#apply-coupon-btn').click();
         }
+    });
+
+    // تحديث طريقة الاستلام
+    $('input[name="delivery_method"]').change(function() {
+        var method = $(this).val();
+        var branchId = $('#pickup-branch-select').val() || '';
+
+        $.ajax({
+            url: '{% url "cart:update_delivery_method" %}',
+            type: 'POST',
+            data: {
+                'delivery_method': method,
+                'branch_id': branchId,
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            headers: {'X-Requested-With': 'XMLHttpRequest'},
+            success: function(response) {
+                if (response.success) { location.reload(); }
+            }
+        });
+    });
+
+    // تحديث الفرع المختار
+    $('#pickup-branch-select').change(function() {
+        var branchId = $(this).val();
+        $.ajax({
+            url: '{% url "cart:update_delivery_method" %}',
+            type: 'POST',
+            data: {
+                'delivery_method': 'pickup',
+                'branch_id': branchId,
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            headers: {'X-Requested-With': 'XMLHttpRequest'},
+            success: function(response) {
+                if (response.success) { location.reload(); }
+            }
+        });
     });
 
     // تحديث منطقة الشحن

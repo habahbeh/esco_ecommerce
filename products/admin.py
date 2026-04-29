@@ -22,7 +22,8 @@ from .models import (
     Category, Brand, Product, ProductImage, ProductVariant,
     Tag, ProductReview, Wishlist, ProductComparison, ProductViewHistory,
     ProductAttribute, ProductAttributeValue, ProductQuestion,
-    ProductSubscription, ProductDiscount, DiscountUsage
+    ProductSubscription, ProductDiscount, DiscountUsage,
+    CategoryFAQ, CategoryLandingContent
 )
 
 
@@ -248,6 +249,29 @@ class SubCategoryInline(admin.TabularInline):
     show_change_link = True
 
 
+class CategoryFAQInline(admin.TabularInline):
+    model = CategoryFAQ
+    extra = 1
+    fields = ['question', 'question_en', 'answer', 'answer_en', 'sort_order', 'is_active']
+
+
+class CategoryLandingContentInline(admin.StackedInline):
+    model = CategoryLandingContent
+    extra = 0
+    max_num = 1
+    fieldsets = (
+        (_('محتوى صفحة الفئة'), {
+            'fields': (
+                ('hero_title', 'hero_title_en'),
+                ('hero_description', 'hero_description_en'),
+                ('long_description', 'long_description_en'),
+                ('buying_guide', 'buying_guide_en'),
+                ('local_keywords', 'local_keywords_en'),
+            ),
+        }),
+    )
+
+
 # ==================== MAIN ADMIN CLASSES ====================
 
 @admin.register(Category)
@@ -269,7 +293,7 @@ class CategoryAdmin(admin.ModelAdmin):
     ordering = ['level', 'sort_order', 'name']
     list_editable = ['sort_order', 'is_active', 'is_featured']
     list_per_page = 50
-    inlines = [SubCategoryInline]
+    inlines = [SubCategoryInline, CategoryFAQInline, CategoryLandingContentInline]
 
     fieldsets = (
         (_('المعلومات الأساسية'), {

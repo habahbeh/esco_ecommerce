@@ -1,0 +1,148 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "إدارة المقالات" %}{% endblock %}
+{% block page_title %}{% trans "إدارة المقالات" %}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_home' %}">{% trans "الرئيسية" %}</a></li>
+{% endblock %}
+{% block current_page %}{% trans "المقالات" %}{% endblock %}
+
+{% block content %}
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body py-3">
+                <h3 class="mb-1">{{ stats.total }}</h3>
+                <small class="text-muted">{% trans "إجمالي المقالات" %}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body py-3">
+                <h3 class="mb-1 text-success">{{ stats.published }}</h3>
+                <small class="text-muted">{% trans "منشور" %}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body py-3">
+                <h3 class="mb-1 text-warning">{{ stats.draft }}</h3>
+                <small class="text-muted">{% trans "مسودة" %}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body py-3">
+                <h3 class="mb-1 text-info">{{ stats.total_views }}</h3>
+                <small class="text-muted">{% trans "إجمالي المشاهدات" %}</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h5 class="card-title mb-0">{% trans "المقالات" %}</h5>
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+            <!-- Search -->
+            <form method="get" class="d-flex">
+                <input type="text" name="q" value="{{ search_query }}" class="form-control form-control-sm" placeholder="{% trans 'بحث...' %}" style="width:180px;">
+                {% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}">{% endif %}
+                <button type="submit" class="btn btn-sm btn-outline-secondary ms-1"><i class="fa fa-search"></i></button>
+            </form>
+            <!-- Filter -->
+            <div class="btn-group btn-group-sm">
+                <a href="{% url 'dashboard:dashboard_blog_posts' %}" class="btn {% if not status_filter %}btn-primary{% else %}btn-outline-secondary{% endif %}">{% trans "الكل" %}</a>
+                <a href="?status=published" class="btn {% if status_filter == 'published' %}btn-primary{% else %}btn-outline-secondary{% endif %}">{% trans "منشور" %}</a>
+                <a href="?status=draft" class="btn {% if status_filter == 'draft' %}btn-primary{% else %}btn-outline-secondary{% endif %}">{% trans "مسودة" %}</a>
+            </div>
+            <a href="{% url 'dashboard:dashboard_blog_post_create' %}" class="btn btn-primary btn-sm">
+                <i class="fa fa-plus"></i> {% trans "إضافة مقال" %}
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if posts %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th style="width:60px;">{% trans "الصورة" %}</th>
+                        <th>{% trans "عنوان المقال" %}</th>
+                        <th>{% trans "التصنيف" %}</th>
+                        <th>{% trans "الكاتب" %}</th>
+                        <th>{% trans "الحالة" %}</th>
+                        <th>{% trans "المشاهدات" %}</th>
+                        <th>{% trans "التاريخ" %}</th>
+                        <th>{% trans "الإجراءات" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for post in posts %}
+                    <tr>
+                        <td>
+                            {% if post.featured_image %}
+                            <img src="{{ post.featured_image.url }}" alt="" class="rounded" style="width:50px;height:50px;object-fit:cover;">
+                            {% else %}
+                            <div class="rounded d-flex align-items-center justify-content-center" style="width:50px;height:50px;background:{{ post.card_icon_color|default:'#2563eb' }}15;">
+                                <i class="fas {{ post.card_icon|default:'fa-newspaper' }}" style="color:{{ post.card_icon_color|default:'#2563eb' }};font-size:1.2rem;"></i>
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <strong>{% if LANGUAGE_CODE == 'en' and post.title_en %}{{ post.title_en }}{% else %}{{ post.title }}{% endif %}</strong>
+                            {% if post.is_featured %}<span class="badge bg-warning text-dark ms-1">{% trans "مميز" %}</span>{% endif %}
+                            {% if LANGUAGE_CODE == 'en' and post.title %}
+                            <br><small class="text-muted">{{ post.title|truncatewords:8 }}</small>
+                            {% elif LANGUAGE_CODE == 'ar' and post.title_en %}
+                            <br><small class="text-muted">{{ post.title_en|truncatewords:8 }}</small>
+                            {% endif %}
+                        </td>
+                        <td>{% if post.category %}{% if LANGUAGE_CODE == 'en' and post.category.name_en %}{{ post.category.name_en }}{% else %}{{ post.category.name }}{% endif %}{% else %}-{% endif %}</td>
+                        <td>{{ post.author.get_full_name|default:post.author.username|default:"-" }}</td>
+                        <td>
+                            {% if post.status == 'published' %}
+                            <span class="badge bg-success">{% trans "منشور" %}</span>
+                            {% elif post.status == 'draft' %}
+                            <span class="badge bg-warning text-dark">{% trans "مسودة" %}</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{% trans "مؤرشف" %}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ post.views_count }}</td>
+                        <td>
+                            <small>{{ post.created_at|date:"Y/m/d" }}</small>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ post.get_absolute_url }}" target="_blank" class="btn btn-outline-secondary" title="{% trans 'معاينة' %}">
+                                    <i class="fa fa-eye"></i>
+                                </a>
+                                <a href="{% url 'dashboard:dashboard_blog_post_edit' post.pk %}" class="btn btn-outline-info" title="{% trans 'تعديل' %}">
+                                    <i class="fa fa-edit"></i>
+                                </a>
+                                <a href="{% url 'dashboard:dashboard_blog_post_delete' post.pk %}" class="btn btn-outline-danger" title="{% trans 'حذف' %}">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            {% trans "لا توجد مقالات." %} <a href="{% url 'dashboard:dashboard_blog_post_create' %}">{% trans "إضافة مقال جديد" %}</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

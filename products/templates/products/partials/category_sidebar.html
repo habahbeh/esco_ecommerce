@@ -3,7 +3,7 @@
 
 <div class="category-sidebar collapse d-lg-block" id="categorySidebar" style="position: static;">
     <div class="card">
-        <div class="card-header bg-white">
+        <div class="card-header bg-body">
             <h5 class="mb-0 d-flex align-items-center">
                 <i class="fas fa-th-list me-2 text-primary"></i>
                 {% trans "فئات المنتجات" %}
@@ -11,7 +11,7 @@
         </div>
         <div class="card-body p-0">
             <!-- أكورديون الفئات -->
-            <div class="accordion category-accordion" id="categoryAccordion">
+            <div class="category-accordion" id="categoryAccordion">
                 {% if category_tree %}
                     {% include 'products/partials/category_tree_items.html' with categories=category_tree %}
                 {% else %}
@@ -29,7 +29,7 @@
     {% if show_related_products and related_products %}
     <!-- منتجات ذات صلة مصغرة -->
     <div class="card mt-4 related-products-mini">
-        <div class="card-header bg-white">
+        <div class="card-header bg-body">
             <h5 class="mb-0 d-flex align-items-center">
                 <i class="fas fa-exchange-alt me-2 text-primary"></i>
                 {% trans "منتجات مشابهة" %}
@@ -43,7 +43,7 @@
                             {% if related.default_image %}
                                 <img src="{{ related.default_image.image.url }}" alt="{{ related.name }}" class="img-fluid rounded">
                             {% else %}
-                                <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <div class="bg-body-secondary rounded d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
                                     <i class="fas fa-image text-muted"></i>
                                 </div>
                             {% endif %}

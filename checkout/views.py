@@ -12,11 +12,13 @@ from django.urls import reverse
 from .models import CheckoutSession, PaymentMethod, ShippingMethod
 from cart.models import Cart
 from orders.models import Order
-from orders.utils import send_order_confirmation_email
+from orders.utils import send_order_confirmation_email, send_new_order_notification_email
 from payment.models import Payment, Transaction
+from django.db import transaction
 import uuid
 import os
 import logging
+import threading
 from decimal import Decimal
 
 logger = logging.getLogger(__name__)
@@ -62,6 +64,19 @@ class CheckoutView(LoginRequiredMixin, VerifiedUserRequiredMixin, View):
             messages.warning(request, _('لا يوجد منتجات في سلة التسوق'))
             return redirect('cart:cart_detail')
 
+        # التحقق من اختيار الفرع في حالة الاستلام
+        delivery_method_check = request.session.get('delivery_method', 'pickup')
+        if delivery_method_check == 'pickup':
+            pickup_branch_id = request.session.get('pickup_branch_id')
+            if not pickup_branch_id:
+                messages.warning(request, _('الرجاء اختيار فرع الاستلام أولاً'))
+                return redirect('cart:cart_detail')
+            from core.models import Branch
+            if not Branch.objects.filter(id=pickup_branch_id, is_active=True).exists():
+                request.session.pop('pickup_branch_id', None)
+                messages.warning(request, _('الفرع المختار غير متاح، الرجاء اختيار فرع آخر'))
+                return redirect('cart:cart_detail')
+
         # الحصول على طرق الشحن
         shipping_methods = ShippingMethod.objects.filter(is_active=True).order_by('sort_order')
 
@@ -96,9 +111,19 @@ class CheckoutView(LoginRequiredMixin, VerifiedUserRequiredMixin, View):
             # في حالة عدم وجود عناوين للمستخدم، نستخدم المعلومات الأساسية المذكورة سابقًا
             pass
 
+        delivery_method = request.session.get('delivery_method', 'pickup')
+        pickup_branch = None
+        if delivery_method == 'pickup':
+            pickup_branch_id = request.session.get('pickup_branch_id')
+            if pickup_branch_id:
+                from core.models import Branch
+                pickup_branch = Branch.objects.filter(id=pickup_branch_id).first()
+
         return render(request, self.template_name, {
             'shipping_methods': shipping_methods,
             'user_data': user_data,
+            'delivery_method': delivery_method,
+            'pickup_branch': pickup_branch,
         })
 
     def post(self, request):
@@ -115,21 +140,27 @@ class CheckoutView(LoginRequiredMixin, VerifiedUserRequiredMixin, View):
         shipping_method_id = request.POST.get('shipping_method')
 
         # التحقق من البيانات المطلوبة
-        if not all([full_name, email, phone, address, city, state]):
-            messages.error(request, _('الرجاء إدخال جميع البيانات المطلوبة'))
-            return redirect('checkout:checkout')
+        delivery_method = request.session.get('delivery_method', 'pickup')
+        if delivery_method == 'pickup':
+            if not all([full_name, email, phone]):
+                messages.error(request, _('الرجاء إدخال جميع البيانات المطلوبة'))
+                return redirect('checkout:checkout')
+        else:
+            if not all([full_name, email, phone, address, city, state]):
+                messages.error(request, _('الرجاء إدخال جميع البيانات المطلوبة'))
+                return redirect('checkout:checkout')
 
         # حفظ البيانات في الجلسة
         request.session['checkout_data'] = {
             'full_name': full_name,
             'email': email,
             'phone': phone,
-            'address': address,
-            'city': city,
-            'state': state,
-            'country': country,
-            'postal_code': postal_code,
-            'notes': notes,
+            'address': address or '',
+            'city': city or '',
+            'state': state or '',
+            'country': country or 'الأردن',
+            'postal_code': postal_code or '',
+            'notes': notes or '',
             'shipping_method_id': shipping_method_id,
         }
 
@@ -219,10 +250,11 @@ class PaymentConfirmationView(LoginRequiredMixin, VerifiedUserRequiredMixin, Vie
                 'total': item_total,
             })
 
-        # إضافة تكاليف الشحن والضريبة
-        shipping_cost = Decimal('0.00')  # تكلفة افتراضية، يمكن جلبها من طريقة الشحن
-        tax_amount = total * Decimal('0.16')  # 16% ضريبة القيمة المضافة
-        grand_total = total + shipping_cost + tax_amount
+        # إضافة تكاليف الشحن والضريبة (الأسعار شاملة الضريبة)
+        shipping_cost = Decimal('0.00')
+        tax_rate = Decimal(getattr(settings, 'DEFAULT_TAX_RATE', '0.16'))
+        tax_amount = total - (total / (1 + tax_rate))
+        grand_total = total + shipping_cost
 
         context = {
             'payment_method': payment_method,
@@ -285,7 +317,7 @@ class PaymentConfirmationView(LoginRequiredMixin, VerifiedUserRequiredMixin, Vie
             )
 
         # إنشاء الطلب
-        order = Order.objects.create(
+        order_kwargs = dict(
             user=user,
             cart=cart,
             full_name=checkout_data.get('full_name', ''),
@@ -296,15 +328,28 @@ class PaymentConfirmationView(LoginRequiredMixin, VerifiedUserRequiredMixin, Vie
             shipping_state=checkout_data.get('state', ''),
             shipping_country=checkout_data.get('country', 'الأردن'),
             shipping_postal_code=checkout_data.get('postal_code', ''),
-            total_price=Decimal('0.00'),  # سيتم تحديثه لاحقًا
-            shipping_cost=Decimal('0.00'),  # تكلفة افتراضية
-            tax_amount=Decimal('0.00'),  # سيتم حسابه
-            grand_total=Decimal('0.00'),  # سيتم حسابه
+            total_price=Decimal('0.00'),
+            shipping_cost=Decimal('0.00'),
+            tax_amount=Decimal('0.00'),
+            grand_total=Decimal('0.00'),
             payment_method=payment_method.name,
             status='pending',
             payment_status='pending',
-            notes=checkout_data.get('notes', '')
+            notes=checkout_data.get('notes', ''),
         )
+
+        delivery_method = request.session.get('delivery_method', 'pickup')
+        order_kwargs['delivery_method'] = delivery_method
+        if delivery_method == 'pickup':
+            pickup_branch_id = request.session.get('pickup_branch_id')
+            if pickup_branch_id:
+                from core.models import Branch
+                try:
+                    order_kwargs['pickup_branch'] = Branch.objects.get(id=pickup_branch_id)
+                except Branch.DoesNotExist:
+                    pass
+
+        order = Order.objects.create(**order_kwargs)
 
         # حساب المبالغ وإضافة عناصر الطلب
         total = Decimal('0.00')
@@ -347,21 +392,24 @@ class PaymentConfirmationView(LoginRequiredMixin, VerifiedUserRequiredMixin, Vie
             except Product.DoesNotExist:
                 continue
 
-        # تحديث مبالغ الطلب
-        shipping_cost = Decimal('0.00')  # تكلفة افتراضية
-        tax_amount = total * Decimal('0.16')  # 16% ضريبة القيمة المضافة
-        grand_total = total + shipping_cost + tax_amount
+        # تحديث مبالغ الطلب باستخدام بيانات السلة الفعلية
+        from cart.context_processors import cart_context
+        cart_ctx = cart_context(request)
+        shipping_cost = cart_ctx.get('cart_shipping', Decimal('0.00'))
+        tax_rate = Decimal(getattr(settings, 'DEFAULT_TAX_RATE', '0.16'))
+        tax_amount = total - (total / (1 + tax_rate))
 
         order.total_price = total
+        order.shipping_cost = shipping_cost
         order.tax_amount = tax_amount
-        order.grand_total = grand_total
+        order.grand_total = total + shipping_cost - order.discount_amount
         order.save()
 
         # إنشاء معاملة دفع
         transaction = Transaction.objects.create(
             user=user,
             order=order,
-            amount=grand_total,
+            amount=order.grand_total,
             currency='JOD',
             transaction_type='payment',
             status='pending',
@@ -376,7 +424,7 @@ class PaymentConfirmationView(LoginRequiredMixin, VerifiedUserRequiredMixin, Vie
             user=user,
             order=order,
             transaction=transaction,
-            amount=grand_total,
+            amount=order.grand_total,
             currency='JOD',
             payment_method=payment_method.payment_type,
             status='pending',
@@ -399,20 +447,31 @@ class PaymentConfirmationView(LoginRequiredMixin, VerifiedUserRequiredMixin, Vie
             cart.save()
 
         # مسح بيانات السلة والدفع من الجلسة
-        if 'cart' in request.session:
-            del request.session['cart']
-        if 'checkout_data' in request.session:
-            del request.session['checkout_data']
+        for key in ['cart', 'checkout_data', 'delivery_method', 'pickup_branch_id', 'coupon_code', 'coupon_discount_id', 'shipping_city']:
+            request.session.pop(key, None)
 
         request.session.modified = True
 
-        # إرسال بريد إلكتروني لتأكيد الطلب
-        try:
-            send_order_confirmation_email(order)
-            logger.info(f'Order confirmation email sent for order #{order.order_number}')
-        except Exception as e:
-            # لا نوقف العملية إذا فشل إرسال البريد
-            logger.error(f'Failed to send order confirmation email for order #{order.order_number}: {str(e)}')
+        # إرسال الإيميلات في الخلفية بعد اكتمال المعاملة
+        order_id = order.id
+        def _send_emails():
+            from django.db import connection
+            try:
+                o = Order.objects.get(id=order_id)
+                send_order_confirmation_email(o)
+                logger.info(f'Order confirmation email sent for order #{o.order_number}')
+            except Exception as e:
+                logger.error(f'Failed to send order confirmation email: {str(e)}')
+            try:
+                o = Order.objects.get(id=order_id)
+                send_new_order_notification_email(o)
+                logger.info(f'Owner notification email sent for order #{o.order_number}')
+            except Exception as e:
+                logger.error(f'Failed to send owner notification email: {str(e)}')
+            finally:
+                connection.close()
+
+        transaction.on_commit(lambda: threading.Thread(target=_send_emails, daemon=True).start())
 
         # توجيه المستخدم إلى صفحة نجاح الطلب
         return redirect('checkout:order_success', order_id=order.id)

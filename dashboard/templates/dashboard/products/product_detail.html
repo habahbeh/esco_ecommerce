@@ -545,6 +545,23 @@
                                     {% endif %}
                                 </td>
                             </tr>
+                            <tr>
+                                <th>{% trans 'الكلمات المفتاحية' %}</th>
+                                <td>
+                                    {% if product.meta_keywords %}
+                                    <div class="d-flex flex-wrap gap-1">
+                                        {% for kw in product.meta_keywords_list %}
+                                        <span class="badge bg-light text-dark border">{{ kw }}</span>
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                                    <span class="text-muted">{% trans 'لا توجد كلمات مفتاحية' %}</span>
+                                    <a href="{% url 'dashboard:seo_auto_tag' %}" class="btn btn-sm btn-outline-primary ms-2">
+                                        <i class="fa fa-magic me-1"></i>{% trans 'توسيم تلقائي' %}
+                                    </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
                             <tr hidden>
                                 <th>{% trans 'الشحن' %}</th>
                                 <td>

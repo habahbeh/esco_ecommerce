@@ -271,9 +271,9 @@ class UpdateCartItemView(CartMixin, View):
                 cart_context = self.get_cart_context(request)
 
                 # تحديث بيانات الاستجابة بالقيم الجديدة
-                # Helper: remove 16% tax = price - (price * 0.16) = price * 0.84
+                # Extract pre-tax price: price_before_tax = price / 1.16
                 def without_tax(value):
-                    return round(value * Decimal('0.84'), 2)
+                    return round(value / Decimal('1.16'), 4)
 
                 response_data.update({
                     'cart_count': cart_context['cart_count'],
@@ -347,9 +347,9 @@ class UpdateCartItemView(CartMixin, View):
             # تحديث بيانات الاستجابة بالقيم الحالية
             response_data.update({
                 'cart_count': cart_context['cart_count'],
-                'cart_subtotal': str(round(cart_context['cart_subtotal'] / Decimal('1.16'),2)),
-                'cart_tax': str(round(cart_context['cart_tax'],2)),
-                'cart_total': str(round(cart_context['cart_total'] / Decimal('1.16'),2)),
+                'cart_subtotal': str(round(cart_context['cart_subtotal'] / Decimal('1.16'), 4)),
+                'cart_tax': str(round(cart_context['cart_tax'], 4)),
+                'cart_total': str(cart_context['cart_total']),
             })
 
         # للطلبات من نوع AJAX
@@ -401,6 +401,8 @@ class ClearCartView(CartMixin, View):
     """
     def post(self, request):
         request.session['cart'] = {}
+        for key in ['delivery_method', 'pickup_branch_id', 'coupon_code', 'coupon_discount_id', 'shipping_city']:
+            request.session.pop(key, None)
         request.session.modified = True
         messages.success(request, _('تم إفراغ السلة'))
         
@@ -486,7 +488,7 @@ class ApplyCouponView(CartMixin, View):
             # رسالة الحد الأقصى للخصم
             max_discount_message = ''
             if max_discount_applied and discount.max_discount_amount:
-                max_discount_message = _('تم تطبيق الحد الأقصى للخصم: {} د.أ').format(round(float(discount.max_discount_amount) * 0.84, 2))
+                max_discount_message = _('تم تطبيق الحد الأقصى للخصم: {} د.أ').format(round(float(discount.max_discount_amount) / 1.16, 2))
 
             if is_ajax:
                 if meets_min_purchase:
@@ -582,5 +584,39 @@ class UpdateShippingCityView(CartMixin, View):
                 'city': city
             })
 
+        return redirect('cart:cart_detail')
+
+
+class UpdateDeliveryMethodView(CartMixin, View):
+    def post(self, request):
+        from core.models import Branch
+
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        method = request.POST.get('delivery_method', 'pickup')
+        branch_id = request.POST.get('branch_id', '')
+
+        if method not in ['delivery', 'pickup']:
+            method = 'pickup'
+
+        request.session['delivery_method'] = method
+        if method == 'pickup' and branch_id:
+            try:
+                branch = Branch.objects.get(id=int(branch_id), is_active=True)
+                request.session['pickup_branch_id'] = branch.id
+            except (Branch.DoesNotExist, ValueError, TypeError):
+                request.session.pop('pickup_branch_id', None)
+        else:
+            request.session.pop('pickup_branch_id', None)
+        request.session.modified = True
+
+        if is_ajax:
+            from .context_processors import cart_context
+            cart_ctx = cart_context(request)
+            return JsonResponse({
+                'success': True,
+                'shipping_fee': str(cart_ctx.get('cart_shipping', 0)),
+                'cart_total': str(cart_ctx.get('cart_total', 0)),
+                'delivery_method': method,
+            })
         return redirect('cart:cart_detail')
 

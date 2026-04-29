@@ -78,18 +78,20 @@
                 <img src="{{ product.images.first.image.url }}"
                      class="product-main-image"
                      alt="{{ product.name }}"
-                     loading="lazy">
+                     loading="lazy"
+                     onerror="this.onerror=null;this.src='{% static 'images/no-image.svg' %}';">
                 {% if product.images.count > 1 %}
                     <img src="{{ product.images.all.1.image.url }}"
                          class="product-hover-image"
                          alt="{{ product.name }}"
-                         loading="lazy">
+                         loading="lazy"
+                         onerror="this.onerror=null;this.src='{% static 'images/no-image.svg' %}';">
                 {% endif %}
             {% else %}
-                <div class="product-placeholder">
-                    <i class="fas fa-image fa-3x text-muted"></i>
-                    <p class="mt-2 text-muted">{% trans "لا توجد صورة" %}</p>
-                </div>
+                <img src="{% static 'images/no-image.svg' %}"
+                     class="product-main-image"
+                     alt="{{ product.name }}"
+                     loading="lazy">
             {% endif %}
         </a>
 

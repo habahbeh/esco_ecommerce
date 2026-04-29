@@ -4,6 +4,7 @@ from django.conf import settings
 from django.utils.translation import get_language
 from django.db.models import Q
 from django.utils import timezone
+from django.core.cache import cache
 from products.models import Product, Category
 from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import redirect
@@ -11,7 +12,7 @@ from django.shortcuts import redirect
 from .models import SiteSettings, Newsletter, SliderItem, StaticContent
 from .forms import SiteSettingsForm
 from events.models import Event
-from django.utils import timezone
+from blog.models import BlogPost
 from django.contrib import messages
 from django.utils.translation import gettext as _
 
@@ -26,50 +27,63 @@ class HomeView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # إضافة عناصر السلايدر النشطة للسياق
+        lang = get_language() or 'ar'
+        cache_key = f'home_context_{lang}'
+        cached = cache.get(cache_key)
+
+        if cached:
+            context.update(cached)
+            return context
+
+        now = timezone.now()
+
         context['slider_items'] = SliderItem.objects.filter(is_active=True).order_by('order')
 
-        # الحصول على المنتجات المميزة - Get featured products
-        context['featured_products'] = Product.objects.filter(
-            is_featured=True,
-            status='published',
-            is_active=True
-        ).select_related('category', 'brand').prefetch_related('images').order_by('-published_at')[:8]
+        base_products = Product.objects.filter(
+            status='published', is_active=True
+        ).select_related('category', 'brand').prefetch_related('images')
 
-        # الحصول على أحدث المنتجات - Get latest products
-        context['latest_products'] = Product.objects.filter(
-            status='published',
-            is_active=True
-        ).select_related('category', 'brand').prefetch_related('images').order_by('-published_at')[:12]
+        context['featured_products'] = base_products.filter(
+            is_featured=True
+        ).order_by('-published_at')[:8]
 
-        # الحصول على الفئات الرئيسية - Get main categories
-        # تغيير من level=1 إلى parent=None للحصول على الفئات الجذر
+        context['latest_products'] = base_products.order_by('-published_at')[:12]
+
         context['main_categories'] = Category.objects.filter(
-            parent=None,  # الفئات التي ليس لها أب (الفئات الرئيسية)
-            is_active=True
-        ).order_by('sort_order', 'name')  # استخدام sort_order أولاً ثم name
+            parent=None, is_active=True
+        ).order_by('sort_order', 'name')
 
-        # الحصول على المنتجات التي عليها خصم - Get discounted products (محسن)
-        now = timezone.now()
-        context['discounted_products'] = Product.objects.filter(
-            status='published',
-            is_active=True
-        ).filter(
+        context['discounted_products'] = base_products.filter(
             Q(discount_percentage__gt=0) | Q(discount_amount__gt=0)
         ).filter(
             Q(discount_start__isnull=True) | Q(discount_start__lte=now)
         ).filter(
             Q(discount_end__isnull=True) | Q(discount_end__gte=now)
-        ).select_related('category', 'brand').prefetch_related('images').order_by('-discount_percentage')[:8]
+        ).order_by('-discount_percentage')[:8]
 
-        now = timezone.now()
+        context['bestseller_products'] = base_products.order_by('-views_count', '-published_at')[:8]
 
-        # الفعاليات للعرض في معرض الشرائح
+        from products.models import Brand
+        context['brands'] = Brand.objects.filter(is_active=True).order_by('sort_order', 'name')[:20]
+
         context['slider_events'] = Event.objects.filter(
             is_active=True,
             display_in__in=['slider', 'both'],
             end_date__gte=now
         ).order_by('order', 'start_date')
+
+        context['latest_blog_posts'] = BlogPost.published().select_related(
+            'category', 'author'
+        ).only(
+            'title', 'title_en', 'slug', 'excerpt', 'excerpt_en',
+            'featured_image', 'card_icon', 'card_icon_color',
+            'published_at', 'reading_time', 'views_count',
+            'category__name', 'category__name_en', 'category__slug',
+            'author__first_name', 'author__last_name', 'author__username',
+        )[:6]
+
+        home_data = {k: v for k, v in context.items() if k not in ('view',)}
+        cache.set(cache_key, home_data, 180)
 
         return context
 

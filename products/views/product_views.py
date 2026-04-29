@@ -401,6 +401,13 @@ class ProductListView(BaseProductListView):
                 current = current.parent
             context['current_category_path'] = current_category_path
 
+            # FAQs and landing content for enhanced category pages
+            context['category_faqs'] = self.category.faqs.filter(is_active=True)
+            try:
+                context['landing_content'] = self.category.landing_content
+            except Exception:
+                context['landing_content'] = None
+
         # Get available brands with product counts for filtering
         context['brands'] = Brand.objects.filter(
             is_active=True,

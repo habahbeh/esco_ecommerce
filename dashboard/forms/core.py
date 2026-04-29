@@ -59,7 +59,11 @@ class SiteSettingsForm(forms.ModelForm):
             'company_profile_ar', 'company_profile_en',
             'email', 'phone', 'address',
             'facebook', 'twitter', 'instagram', 'linkedin','whatsapp',
-            'primary_color', 'enable_dark_mode', 'default_dark_mode'
+            'primary_color', 'enable_dark_mode', 'default_dark_mode',
+            'show_announcement_banner', 'announcement_bg_color',
+            'announcement_icon_1', 'announcement_text_1_ar', 'announcement_text_1_en',
+            'announcement_icon_2', 'announcement_text_2_ar', 'announcement_text_2_en',
+            'announcement_icon_3', 'announcement_text_3_ar', 'announcement_text_3_en',
         ]
         widgets = {
             'site_name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -73,6 +77,16 @@ class SiteSettingsForm(forms.ModelForm):
             'linkedin': forms.URLInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
             'whatsapp': forms.URLInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
             'primary_color': forms.Select(attrs={'class': 'form-select color-picker'}),
+            'announcement_bg_color': forms.TextInput(attrs={'class': 'form-control', 'type': 'color', 'style': 'width:80px;height:38px;padding:2px;'}),
+            'announcement_icon_1': forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr', 'placeholder': 'fas fa-truck-fast'}),
+            'announcement_text_1_ar': forms.TextInput(attrs={'class': 'form-control', 'dir': 'rtl'}),
+            'announcement_text_1_en': forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
+            'announcement_icon_2': forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr', 'placeholder': 'fas fa-shield-check'}),
+            'announcement_text_2_ar': forms.TextInput(attrs={'class': 'form-control', 'dir': 'rtl'}),
+            'announcement_text_2_en': forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
+            'announcement_icon_3': forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr', 'placeholder': 'fas fa-rotate-left'}),
+            'announcement_text_3_ar': forms.TextInput(attrs={'class': 'form-control', 'dir': 'rtl'}),
+            'announcement_text_3_en': forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
         }
 
     def clean_catalog_ar(self):

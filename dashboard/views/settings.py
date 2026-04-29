@@ -281,9 +281,12 @@ class ShippingSettingsView( SuperuserRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
+        from core.models import Branch
+
         # الحصول على إعدادات الموقع (تتضمن إعدادات الشحن)
         site_settings = SiteSettings.get_settings()
         context['site_settings'] = site_settings
+        context['branch_count'] = Branch.objects.filter(is_active=True).count()
 
         return context
 
@@ -298,6 +301,7 @@ class ShippingSettingsView( SuperuserRequiredMixin, TemplateView):
         site_settings.shipping_fee_amman = Decimal(request.POST.get('shipping_fee_amman', '2.00') or '2.00')
         site_settings.shipping_fee_other = Decimal(request.POST.get('shipping_fee_other', '3.00') or '3.00')
         site_settings.free_shipping_threshold = Decimal(request.POST.get('free_shipping_threshold', '0.00') or '0.00')
+        site_settings.pickup_enabled = request.POST.get('pickup_enabled') == 'on'
 
         site_settings.save()
 

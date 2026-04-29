@@ -1,0 +1,32 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "حذف المقال" %}{% endblock %}
+{% block page_title %}{% trans "حذف المقال" %}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_home' %}">{% trans "الرئيسية" %}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_blog_posts' %}">{% trans "المقالات" %}</a></li>
+{% endblock %}
+{% block current_page %}{% trans "حذف المقال" %}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="fa fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+        <h4>{% trans "هل أنت متأكد من حذف هذا المقال؟" %}</h4>
+        <p class="text-muted mb-4">
+            <strong>{{ post.title }}</strong>
+            <br>
+            <small>{% trans "المشاهدات:" %} {{ post.views_count }} | {% trans "الحالة:" %} {{ post.get_status_display }}</small>
+        </p>
+        <form method="post">
+            {% csrf_token %}
+            <a href="{% url 'dashboard:dashboard_blog_posts' %}" class="btn btn-secondary me-2">{% trans "إلغاء" %}</a>
+            <button type="submit" class="btn btn-danger">
+                <i class="fa fa-trash"></i> {% trans "نعم، حذف المقال" %}
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

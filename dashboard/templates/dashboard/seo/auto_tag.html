@@ -1,0 +1,299 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "التوسيم التلقائي" %}{% endblock %}
+{% block page_title %}{% trans "التوسيم التلقائي للمنتجات" %}{% endblock %}
+{% block current_page %}{% trans "التوسيم التلقائي" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auto-tag-card { border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: none; }
+    .auto-tag-card .card-header { background: linear-gradient(135deg, #0077c8, #005a9e); color: #fff; border-radius: 12px 12px 0 0 !important; padding: 1rem 1.25rem; }
+    .auto-tag-card .card-body { padding: 1.5rem; }
+    .stats-row { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-box { flex: 1; text-align: center; padding: 1.25rem; border-radius: 10px; background: #f8f9fa; }
+    .stat-box .num { font-size: 2rem; font-weight: 700; color: #0077c8; }
+    .stat-box .lbl { font-size: 0.85rem; color: #6c757d; }
+    .progress { height: 22px; border-radius: 6px; background: #e9ecef; }
+    .progress-bar { font-size: 0.8rem; font-weight: 600; line-height: 22px; transition: width 0.3s; }
+    #logArea { max-height: 350px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 0.78rem; background: #1e1e2e; color: #cdd6f4; border-radius: 8px; padding: 0.75rem; direction: ltr; text-align: left; }
+    #logArea .log-ok { color: #a6e3a1; }
+    #logArea .log-err { color: #f38ba8; }
+    #logArea .log-info { color: #89b4fa; }
+    #logArea .log-dim { color: #6c7086; }
+    .filter-card { border-radius: 10px; border: 1px solid #dee2e6; }
+    .filter-card .card-body { padding: 1rem 1.25rem; }
+    .summary-table td { padding: 0.35rem 0.5rem; font-size: 0.85rem; }
+    .summary-table .kw { color: #0077c8; font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <div class="stats-row">
+        <div class="stat-box">
+            <div class="num">{{ total_products }}</div>
+            <div class="lbl">{% trans "إجمالي المنتجات" %}</div>
+        </div>
+        <div class="stat-box">
+            <div class="num">{{ tagged_products }}</div>
+            <div class="lbl">{% trans "منتجات بكلمات مفتاحية" %}</div>
+        </div>
+        <div class="stat-box">
+            <div class="num">{{ untagged_products }}</div>
+            <div class="lbl">{% trans "بحاجة لتوسيم" %}</div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Filter / Scope -->
+            <div class="card filter-card mb-3">
+                <div class="card-body">
+                    <h6 class="mb-3"><i class="fas fa-filter me-2"></i>{% trans "نطاق التوسيم" %}</h6>
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">{% trans "النطاق" %}</label>
+                            <select id="scopeSelect" class="form-select form-select-sm">
+                                <option value="all">{% trans "جميع المنتجات" %}</option>
+                                <option value="category">{% trans "حسب الفئة" %}</option>
+                                <option value="brand">{% trans "حسب العلامة التجارية" %}</option>
+                                <option value="untagged">{% trans "غير الموسومة فقط" %}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-5" id="filterValueCol" style="display:none">
+                            <label class="form-label small fw-bold" id="filterValueLabel">{% trans "الفئة" %}</label>
+                            <select id="filterValueSelect" class="form-select form-select-sm">
+                                <option value="">{% trans "اختر..." %}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-primary btn-sm w-100" id="startBtn">
+                                <i class="fas fa-play me-2"></i>{% trans "ابدأ" %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress -->
+            <div class="card auto-tag-card mb-3" id="progressCard" style="display:none">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-cogs me-2"></i><span id="progressTitle">{% trans "جاري المعالجة..." %}</span></h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span id="progressLabel" class="small fw-bold">0 / 0</span>
+                        <span id="progressEta" class="small text-muted"></span>
+                    </div>
+                    <div class="progress mb-3">
+                        <div class="progress-bar bg-primary" id="progressBar" role="progressbar" style="width:0%">0%</div>
+                    </div>
+                    <div id="logArea"></div>
+                </div>
+            </div>
+
+            <!-- Result -->
+            <div class="card auto-tag-card" id="resultCard" style="display:none">
+                <div class="card-header" style="background:linear-gradient(135deg,#198754,#157347)">
+                    <h5 class="mb-0"><i class="fas fa-check-circle me-2"></i>{% trans "اكتمل التوسيم" %}</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm summary-table mb-0">
+                        <tr><td>{% trans "إجمالي المعالجة" %}</td><td class="kw" id="sumTotal">0</td></tr>
+                        <tr><td>{% trans "تم توسيمها" %}</td><td class="kw" id="sumTagged">0</td></tr>
+                        <tr><td>{% trans "الوقت المستغرق" %}</td><td class="kw" id="sumTime">0s</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card auto-tag-card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>{% trans "كيف يعمل؟" %}</h5>
+                </div>
+                <div class="card-body">
+                    <ol class="mb-0">
+                        <li class="mb-2">{% trans "يقرأ اسم ووصف كل منتج (عربي + إنجليزي)" %}</li>
+                        <li class="mb-2">{% trans "يزيل كلمات التوقف والرموز الخاصة" %}</li>
+                        <li class="mb-2">{% trans "يحسب تكرار وأهمية كل كلمة" %}</li>
+                        <li class="mb-2">{% trans "يضيف اسم الفئة والعلامة التجارية" %}</li>
+                        <li class="mb-0">{% trans "يحفظ أهم 15 كلمة مفتاحية لكل منتج" %}</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    var categories = {{ categories_json|safe }};
+    var brands = {{ brands_json|safe }};
+    var csrfToken = '{{ csrf_token }}';
+    var actionUrl = '{% url "dashboard:seo_auto_tag" %}';
+
+    var scopeSel = document.getElementById('scopeSelect');
+    var filterCol = document.getElementById('filterValueCol');
+    var filterLabel = document.getElementById('filterValueLabel');
+    var filterSel = document.getElementById('filterValueSelect');
+    var startBtn = document.getElementById('startBtn');
+    var progressCard = document.getElementById('progressCard');
+    var resultCard = document.getElementById('resultCard');
+    var progressBar = document.getElementById('progressBar');
+    var progressLabel = document.getElementById('progressLabel');
+    var progressEta = document.getElementById('progressEta');
+    var progressTitle = document.getElementById('progressTitle');
+    var logArea = document.getElementById('logArea');
+
+    var running = false;
+    var totalTagged = 0;
+    var startTime = 0;
+
+    scopeSel.addEventListener('change', function() {
+        var v = this.value;
+        if (v === 'category') {
+            filterCol.style.display = '';
+            filterLabel.textContent = '{% trans "الفئة" %}';
+            populateSelect(categories);
+        } else if (v === 'brand') {
+            filterCol.style.display = '';
+            filterLabel.textContent = '{% trans "العلامة التجارية" %}';
+            populateSelect(brands);
+        } else {
+            filterCol.style.display = 'none';
+        }
+    });
+
+    function populateSelect(items) {
+        filterSel.innerHTML = '<option value="">{% trans "اختر..." %}</option>';
+        items.forEach(function(item) {
+            var o = document.createElement('option');
+            o.value = item.id;
+            o.textContent = item.name;
+            filterSel.appendChild(o);
+        });
+    }
+
+    function log(msg, cls) {
+        var d = document.createElement('div');
+        d.className = cls || '';
+        d.textContent = msg;
+        logArea.appendChild(d);
+        logArea.scrollTop = logArea.scrollHeight;
+    }
+
+    function formatTime(sec) {
+        if (sec < 60) return Math.round(sec) + 's';
+        var m = Math.floor(sec / 60), s = Math.round(sec % 60);
+        return m + 'm ' + s + 's';
+    }
+
+    function processBatch(offset) {
+        if (!running) return;
+
+        var body = new FormData();
+        body.append('offset', offset);
+        body.append('batch_size', 50);
+        body.append('scope', scopeSel.value);
+        if (scopeSel.value === 'category' || scopeSel.value === 'brand') {
+            body.append('filter_value', filterSel.value);
+        }
+
+        fetch(actionUrl, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken, 'X-Requested-With': 'XMLHttpRequest' },
+            body: body
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            totalTagged += data.batch_tagged;
+
+            data.log.forEach(function(entry) {
+                var cls = entry.keywords > 0 ? 'log-ok' : 'log-err';
+                var line = '[' + data.total_processed + '/' + data.total + '] #' + entry.id + ' ' + entry.name;
+                if (entry.keywords > 0) {
+                    line += '  →  ' + entry.keywords + ' keywords: ' + entry.sample;
+                } else {
+                    line += '  →  ' + entry.sample;
+                }
+                log(line, cls);
+            });
+
+            var pct = data.percent;
+            progressBar.style.width = pct + '%';
+            progressBar.textContent = pct + '%';
+            progressLabel.textContent = data.total_processed + ' / ' + data.total;
+
+            var elapsed = (Date.now() - startTime) / 1000;
+            if (pct > 0 && pct < 100) {
+                var eta = (elapsed / pct) * (100 - pct);
+                progressEta.textContent = '{% trans "الوقت المتبقي" %}: ~' + formatTime(eta);
+            }
+
+            if (data.has_more) {
+                processBatch(data.next_offset);
+            } else {
+                running = false;
+                var totalTime = (Date.now() - startTime) / 1000;
+                progressBar.classList.remove('progress-bar-animated', 'progress-bar-striped');
+                progressBar.classList.add('bg-success');
+                progressTitle.textContent = '{% trans "اكتمل التوسيم" %}';
+                progressEta.textContent = '';
+                log('', '');
+                log('✓ Done! ' + totalTagged + ' products tagged in ' + formatTime(totalTime), 'log-info');
+
+                document.getElementById('sumTotal').textContent = data.total;
+                document.getElementById('sumTagged').textContent = totalTagged;
+                document.getElementById('sumTime').textContent = formatTime(totalTime);
+                resultCard.style.display = '';
+
+                startBtn.disabled = false;
+                startBtn.innerHTML = '<i class="fas fa-redo me-2"></i>{% trans "إعادة التوسيم" %}';
+            }
+        })
+        .catch(function(err) {
+            log('ERROR: ' + err.message, 'log-err');
+            running = false;
+            startBtn.disabled = false;
+            startBtn.innerHTML = '<i class="fas fa-play me-2"></i>{% trans "ابدأ" %}';
+        });
+    }
+
+    startBtn.addEventListener('click', function() {
+        var scope = scopeSel.value;
+        if ((scope === 'category' || scope === 'brand') && !filterSel.value) {
+            alert('{% trans "يرجى اختيار القيمة" %}');
+            return;
+        }
+        running = true;
+        totalTagged = 0;
+        startTime = Date.now();
+
+        startBtn.disabled = true;
+        startBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{% trans "جاري المعالجة..." %}';
+        progressCard.style.display = '';
+        resultCard.style.display = 'none';
+        progressBar.style.width = '0%';
+        progressBar.textContent = '0%';
+        progressBar.className = 'progress-bar bg-primary progress-bar-striped progress-bar-animated';
+        progressTitle.textContent = '{% trans "جاري المعالجة..." %}';
+        logArea.innerHTML = '';
+
+        var scopeLabel = scopeSel.options[scopeSel.selectedIndex].text;
+        if (filterSel.value) {
+            scopeLabel += ': ' + filterSel.options[filterSel.selectedIndex].text;
+        }
+        log('Starting auto-tagging — scope: ' + scopeLabel, 'log-info');
+        log('', '');
+
+        processBatch(0);
+    });
+})();
+</script>
+{% endblock %}

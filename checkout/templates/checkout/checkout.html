@@ -13,12 +13,22 @@
         <div class="col-lg-8">
             <div class="card">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">{% trans "معلومات الشحن" %}</h5>
+                    <h5 class="mb-0">{% if delivery_method == 'pickup' %}{% trans "معلومات التواصل" %}{% else %}{% trans "معلومات الشحن" %}{% endif %}</h5>
                 </div>
                 <div class="card-body">
+                    {% if delivery_method == 'pickup' and pickup_branch %}
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-store me-2"></i>
+                        <strong>{% trans "استلام من الفرع" %}:</strong>
+                        {% if LANGUAGE_CODE == 'en' and pickup_branch.name_en %}{{ pickup_branch.name_en }}{% else %}{{ pickup_branch.name }}{% endif %}
+                        {% if LANGUAGE_CODE == 'en' and pickup_branch.address_en %}<br><small>{{ pickup_branch.address_en }}</small>{% elif pickup_branch.address %}<br><small>{{ pickup_branch.address }}</small>{% endif %}
+                        {% if pickup_branch.working_hours %}<br><small><i class="fas fa-clock me-1"></i>{% if LANGUAGE_CODE == 'en' and pickup_branch.working_hours_en %}{{ pickup_branch.working_hours_en }}{% else %}{{ pickup_branch.working_hours }}{% endif %}</small>{% endif %}
+                    </div>
+                    {% endif %}
+
                     <form method="post" action="{% url 'checkout:checkout' %}">
                         {% csrf_token %}
-                        
+
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="full_name" class="form-label">{% trans "الاسم الكامل" %} *</label>
@@ -38,6 +48,7 @@
                                    value="{{ user_data.phone }}" required>
                         </div>
 
+                        {% if delivery_method != 'pickup' %}
                         <div class="mb-3">
                             <label for="address" class="form-label">{% trans "العنوان" %} *</label>
                             <input type="text" class="form-control" id="address" name="address"
@@ -69,6 +80,7 @@
                                        value="{{ user_data.postal_code }}">
                             </div>
                         </div>
+                        {% endif %}
 
 {#                        <div class="mb-3" hidden>#}
 {#                            <label for="shipping_method" class="form-label">{% trans "طريقة الشحن" %} *</label>#}
@@ -140,9 +152,9 @@
                                             {% endif %}
                                         </div>
                                         <small class="text-muted d-block">{{ item.quantity }}
-                                            × {{ item.price|without_tax|floatformat:2 }}</small>
+                                            × {{ item.price|without_tax|floatformat:4 }}</small>
                                     </div>
-<span>{{ item.subtotal|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+<span>{{ item.subtotal|without_tax|floatformat:4 }} {% trans "د.أ" %}</span>
                                 </div>
                             {% endfor %}
                         </div>
@@ -151,22 +163,22 @@
                         
                         <div class="d-flex justify-content-between mb-2">
                             <span>{% trans "المجموع الفرعي" %}</span>
-                            <span>{{ cart_subtotal|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                            <span>{{ cart_subtotal|without_tax|floatformat:4 }} {% trans "د.أ" %}</span>
                         </div>
 {#                        <div class="d-flex justify-content-between mb-2">#}
 {#                            <span>{% trans "الشحن" %}</span>#}
-{#                            <span>{{ cart_shipping|floatformat:2 }} {% trans "د.أ" %}</span>#}
+{#                            <span>{{ cart_shipping|floatformat:4 }} {% trans "د.أ" %}</span>#}
 {#                        </div>#}
                         <div class="d-flex justify-content-between mb-2">
                             <span>{% trans "الضريبة" %}</span>
-                            <span>{{ cart_tax|without_tax|floatformat:2 }} {% trans "د.أ" %}</span>
+                            <span>{{ cart_tax|floatformat:4 }} {% trans "د.أ" %}</span>
                         </div>
-                        
+
                         <hr>
-                        
+
                         <div class="d-flex justify-content-between mb-2">
                             <strong>{% trans "المجموع" %}</strong>
-                            <strong>{{ cart_total|without_tax|floatformat:2 }} {% trans "د.أ" %}</strong>
+                            <strong>{{ cart_total|floatformat:4 }} {% trans "د.أ" %}</strong>
                         </div>
                     {% else %}
                         <div class="text-center py-3">

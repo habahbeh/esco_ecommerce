@@ -33,6 +33,14 @@ from .views.review_views import (
     DeleteReviewView,
 )
 
+from .views.wishlist_views import (
+    WishlistView,
+    AddToWishlistView,
+    RemoveFromWishlistView,
+    ToggleWishlistView,
+    WishlistStatusView,
+)
+
 
 #  imports api
 from .api.chat_views import ProductChatView, ProductWebhookView
@@ -143,10 +151,6 @@ urlpatterns = [
     re_path(r'brand/(?P<brand_slug>[-\w\u0600-\u06FF]+)/', BrandProductsView.as_view(), name='brand_products'),
     path('tag/<slug:tag_slug>/', TagProductsView.as_view(), name='tag_products'),
 
-    # تفاصيل المنتج
-    # path('<slug:slug>/', ProductDetailView.as_view(), name='product_detail'),
-    re_path(r'(?P<slug>[-\w\u0600-\u06FF]+)/$', ProductDetailView.as_view(), name='product_detail'),
-
     path('variant/<int:variant_id>/', ProductVariantDetailView.as_view(), name='variant_detail'),
 
     # URLs التقييمات
@@ -161,9 +165,21 @@ urlpatterns = [
 
     path('chat/', ProductChatPageView.as_view(), name='product_chat_page'),
 
+    # Wishlist
+    path('wishlist/', WishlistView.as_view(), name='wishlist'),
+
+    # Wishlist API endpoints
+    path('api/wishlist/add/<int:product_id>/', AddToWishlistView.as_view(), name='wishlist_add'),
+    path('api/wishlist/remove/<int:product_id>/', RemoveFromWishlistView.as_view(), name='wishlist_remove'),
+    path('api/wishlist/toggle/<int:product_id>/', ToggleWishlistView.as_view(), name='wishlist_toggle'),
+    path('api/wishlist/status/', WishlistStatusView.as_view(), name='wishlist_status'),
+
     # API endpoints
     path('api/chat/', ProductChatView.as_view(), name='product_chat'),
     path('api/webhook/', ProductWebhookView.as_view(), name='product_webhook'),
+    # Product detail (catch-all - must be last)
+    re_path(r'(?P<slug>[-\w؀-ۿ]+)/$', ProductDetailView.as_view(), name='product_detail'),
+
 ]
 
 

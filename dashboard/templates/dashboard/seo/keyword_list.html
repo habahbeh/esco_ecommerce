@@ -1,0 +1,199 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "إدارة الكلمات المفتاحية" %}{% endblock %}
+{% block page_title %}{% trans "إدارة الكلمات المفتاحية SEO" %}{% endblock %}
+{% block current_page %}{% trans "الكلمات المفتاحية" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .keyword-card {
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        border: none;
+    }
+    .keyword-card .card-header {
+        background: linear-gradient(135deg, #0077c8, #005a9e);
+        color: #fff;
+        border-radius: 12px 12px 0 0 !important;
+        padding: 1rem 1.25rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .keyword-stats {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .keyword-stat {
+        text-align: center;
+        padding: 1rem;
+        border-radius: 8px;
+        background: #f8f9fa;
+        flex: 1;
+    }
+    .keyword-stat .num { font-size: 1.5rem; font-weight: 700; color: #0077c8; }
+    .keyword-stat .lbl { font-size: 0.8rem; color: #6c757d; }
+    .filter-bar {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+        align-items: center;
+    }
+    .filter-bar .form-select, .filter-bar .form-control { max-width: 200px; }
+    .badge-level { font-size: 0.75rem; padding: 0.35rem 0.65rem; }
+    .competition-low { color: #28a745; }
+    .competition-medium { color: #ffc107; }
+    .competition-high { color: #dc3545; }
+    .table th { font-weight: 600; white-space: nowrap; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Stats -->
+    <div class="keyword-stats">
+        <div class="keyword-stat">
+            <div class="num">{{ total_keywords }}</div>
+            <div class="lbl">{% trans "إجمالي الكلمات" %}</div>
+        </div>
+        <div class="keyword-stat">
+            <div class="num">{{ active_keywords }}</div>
+            <div class="lbl">{% trans "نشطة" %}</div>
+        </div>
+        <div class="keyword-stat">
+            <div class="num">{{ competitor_count }}</div>
+            <div class="lbl">{% trans "كلمات المنافسين" %}</div>
+        </div>
+    </div>
+
+    <div class="card keyword-card">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-key me-2"></i>{% trans "الكلمات المفتاحية" %}</h5>
+            <a href="{% url 'dashboard:seo_keyword_create' %}" class="btn btn-light btn-sm">
+                <i class="fas fa-plus me-1"></i>{% trans "إضافة كلمة" %}
+            </a>
+        </div>
+        <div class="card-body">
+            <!-- Filters -->
+            <form method="get" class="filter-bar">
+                <input type="text" name="q" class="form-control" placeholder="{% trans 'بحث...' %}" value="{{ search_query }}">
+                <select name="level" class="form-select">
+                    <option value="">{% trans "جميع المستويات" %}</option>
+                    <option value="site" {% if current_level == 'site' %}selected{% endif %}>{% trans "مستوى الموقع" %}</option>
+                    <option value="category" {% if current_level == 'category' %}selected{% endif %}>{% trans "مستوى الفئة" %}</option>
+                    <option value="product" {% if current_level == 'product' %}selected{% endif %}>{% trans "مستوى المنتج" %}</option>
+                    <option value="competitor" {% if current_level == 'competitor' %}selected{% endif %}>{% trans "منافس" %}</option>
+                </select>
+                <select name="competition" class="form-select">
+                    <option value="">{% trans "جميع المنافسات" %}</option>
+                    <option value="low" {% if current_competition == 'low' %}selected{% endif %}>{% trans "منخفض" %}</option>
+                    <option value="medium" {% if current_competition == 'medium' %}selected{% endif %}>{% trans "متوسط" %}</option>
+                    <option value="high" {% if current_competition == 'high' %}selected{% endif %}>{% trans "عالي" %}</option>
+                </select>
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="fas fa-filter me-1"></i>{% trans "تصفية" %}
+                </button>
+                {% if search_query or current_level or current_competition %}
+                <a href="{% url 'dashboard:seo_keywords' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-times me-1"></i>{% trans "إعادة تعيين" %}
+                </a>
+                {% endif %}
+            </form>
+
+            <!-- Table -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>{% trans "الكلمة المفتاحية" %}</th>
+                            <th>{% trans "المستوى" %}</th>
+                            <th>{% trans "حجم البحث" %}</th>
+                            <th>{% trans "المنافسة" %}</th>
+                            <th>{% trans "مرتبط بـ" %}</th>
+                            <th>{% trans "الحالة" %}</th>
+                            <th>{% trans "إجراءات" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for kw in keywords %}
+                        <tr>
+                            <td>
+                                <strong>{{ kw.keyword }}</strong>
+                                {% if kw.keyword_en %}<br><small class="text-muted" dir="ltr">{{ kw.keyword_en }}</small>{% endif %}
+                                {% if kw.is_competitor %}<span class="badge bg-warning text-dark ms-1">{% trans "منافس" %}</span>{% endif %}
+                            </td>
+                            <td>
+                                <span class="badge badge-level {% if kw.level == 'site' %}bg-primary{% elif kw.level == 'category' %}bg-info{% elif kw.level == 'product' %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ kw.get_level_display }}
+                                </span>
+                            </td>
+                            <td>{{ kw.search_volume|default:"-" }}</td>
+                            <td>
+                                <span class="competition-{{ kw.competition }}">
+                                    <i class="fas fa-circle fa-xs me-1"></i>{{ kw.get_competition_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if kw.category %}{{ kw.category.name }}{% elif kw.product %}{{ kw.product.name|truncatewords:4 }}{% else %}-{% endif %}
+                            </td>
+                            <td>
+                                {% if kw.is_active %}
+                                <span class="badge bg-success">{% trans "نشط" %}</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{% trans "معطل" %}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'dashboard:seo_keyword_edit' kw.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'تعديل' %}">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form method="post" action="{% url 'dashboard:seo_keyword_delete' kw.pk %}" style="display:inline" onsubmit="return confirm('{% trans "هل أنت متأكد من حذف هذه الكلمة المفتاحية؟" %}')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="{% trans 'حذف' %}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                <i class="fas fa-key fa-2x mb-2 d-block"></i>
+                                {% trans "لا توجد كلمات مفتاحية بعد" %}
+                                <br>
+                                <a href="{% url 'dashboard:seo_keyword_create' %}" class="btn btn-primary btn-sm mt-2">
+                                    <i class="fas fa-plus me-1"></i>{% trans "إضافة أول كلمة مفتاحية" %}
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <nav>
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a></li>
+                    {% endif %}
+                    {% for num in page_obj.paginator.page_range %}
+                    <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo;</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

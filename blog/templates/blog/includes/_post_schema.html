@@ -1,0 +1,74 @@
+{% load i18n %}
+{% spaceless %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "{% if LANGUAGE_CODE == 'en' and post.title_en %}{{ post.title_en }}{% else %}{{ post.title }}{% endif %}",
+    "description": "{% if post.meta_description %}{{ post.meta_description }}{% elif LANGUAGE_CODE == 'en' and post.excerpt_en %}{{ post.excerpt_en }}{% else %}{{ post.excerpt }}{% endif %}",
+    {% if post.featured_image %}"image": "{{ request.scheme }}://{{ request.get_host }}{{ post.featured_image.url }}",{% endif %}
+    "url": "{{ request.scheme }}://{{ request.get_host }}{{ post.get_absolute_url }}",
+    "datePublished": "{{ post.published_at|date:'c' }}",
+    "dateModified": "{{ post.updated_at|date:'c' }}",
+    "author": {
+        "@type": "Person",
+        "name": "{% if post.author %}{{ post.author.get_full_name|default:post.author.username }}{% else %}ESCO{% endif %}"
+    },
+    "publisher": {
+        "@type": "Organization",
+        "name": "{{ site_settings.site_name|default:'ESCO' }}"{% if site_settings.logo %},
+        "logo": {
+            "@type": "ImageObject",
+            "url": "{{ request.scheme }}://{{ request.get_host }}{{ site_settings.logo.url }}"
+        }{% endif %}
+    },
+    "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "{{ request.scheme }}://{{ request.get_host }}{{ post.get_absolute_url }}"
+    },
+    "wordCount": "{{ post.content|striptags|wordcount }}",
+    "inLanguage": "{{ LANGUAGE_CODE }}"{% if post.category %},
+    "articleSection": "{% if LANGUAGE_CODE == 'en' and post.category.name_en %}{{ post.category.name_en }}{% else %}{{ post.category.name }}{% endif %}"{% endif %}{% if post.tags.all %},
+    "keywords": "{% for tag in post.tags.all %}{% if LANGUAGE_CODE == 'en' and tag.name_en %}{{ tag.name_en }}{% else %}{{ tag.name }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}"{% endif %}
+}
+</script>
+
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "{% trans 'الرئيسية' %}",
+            "item": "{{ request.scheme }}://{{ request.get_host }}/"
+        },
+        {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "{% trans 'المدونة' %}",
+            "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'blog:post_list' %}"
+        }{% if post.category %},
+        {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "{% if LANGUAGE_CODE == 'en' and post.category.name_en %}{{ post.category.name_en }}{% else %}{{ post.category.name }}{% endif %}",
+            "item": "{{ request.scheme }}://{{ request.get_host }}{{ post.category.get_absolute_url }}"
+        },
+        {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "{% if LANGUAGE_CODE == 'en' and post.title_en %}{{ post.title_en }}{% else %}{{ post.title }}{% endif %}",
+            "item": "{{ request.scheme }}://{{ request.get_host }}{{ post.get_absolute_url }}"
+        }{% else %},
+        {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "{% if LANGUAGE_CODE == 'en' and post.title_en %}{{ post.title_en }}{% else %}{{ post.title }}{% endif %}",
+            "item": "{{ request.scheme }}://{{ request.get_host }}{{ post.get_absolute_url }}"
+        }{% endif %}
+    ]
+}
+</script>
+{% endspaceless %}

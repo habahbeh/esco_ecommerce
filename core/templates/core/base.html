@@ -1,6 +1,7 @@
 {% load static %}
 {% load i18n %}
 {% load color_filters %}
+{% load seo_tags %}
 
 
 <!DOCTYPE html>
@@ -8,35 +9,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <meta name="description" content="{{ site_settings.site_description|default:'ESCO - توريد المعدات الصناعية في الأردن والشرق الأوسط' }}">
-    <meta name="keywords" content="معدات صناعية, توريد, ESCO, الأردن, الشرق الأوسط">
+    <meta name="description" content="{% block meta_description %}{{ site_settings.seo_description|default:site_settings.site_description|default:'شركة المخازن الهندسية ESCO - أكبر متجر للعدد الصناعية والأدوات الهندسية في الأردن' }}{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}{{ site_settings.seo_keywords|default:'المخازن الهندسية, شركة المخازن الهندسية, العدد الصناعية, أدوات هندسية, ESCO, معدات صناعية, الأردن' }}{% endblock %}">
     <meta name="author" content="ESCO">
     <meta name="theme-color" content="{{ site_settings.primary_color|default:'#1e88e5' }}">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-    <!-- Extra Meta Tags (Open Graph, Twitter Cards, etc.) -->
+    <!-- Google Search Console -->
+    {% google_search_console %}
+
+    <!-- Canonical & Hreflang -->
+    {% canonical_url %}
+    {% hreflang_tags %}
+
+    <!-- Open Graph & Twitter Cards -->
+    {% block og_tags %}{% og_meta_tags %}{% endblock %}
+
+    <!-- Extra Meta Tags -->
     {% block extra_meta %}{% endblock %}
 
-    <title>{% block title %}{% if site_settings.site_name %}{{ site_settings.site_name }}{% else %}ESCO{% endif %}{% endblock %}</title>
+    <title>{% block title %}{% if site_settings.seo_title %}{{ site_settings.seo_title }}{% elif site_settings.site_name %}{{ site_settings.site_name }}{% else %}ESCO{% endif %}{% endblock %}</title>
 
     <!-- Favicon -->
-    {% if site_settings.favicon %}
-        <link rel="icon" href="{{ site_settings.favicon.url }}" type="image/x-icon">
-        <link rel="apple-touch-icon" href="{{ site_settings.favicon.url }}">
-    {% else %}
-        <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
-        <link rel="apple-touch-icon" href="{% static 'images/favicon.ico' %}">
-    {% endif %}
+    <link rel="icon" href="{% static 'images/favicon.ico' %}" sizes="48x48" type="image/x-icon">
+    <link rel="icon" href="{% static 'images/favicon-32.png' %}" sizes="32x32" type="image/png">
+    <link rel="icon" href="{% static 'images/favicon-192.png' %}" sizes="192x192" type="image/png">
+    <link rel="apple-touch-icon" href="{% static 'images/apple-touch-icon.png' %}" sizes="180x180">
 
     <!-- DNS Prefetch & Preconnect -->
     <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
     <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="//code.jquery.com">
+    <link rel="dns-prefetch" href="//unpkg.com">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://code.jquery.com" crossorigin>
+    <link rel="preconnect" href="https://unpkg.com" crossorigin>
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
@@ -47,8 +59,9 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
 
-    <!-- AOS Animation Library -->
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <!-- AOS Animation Library (deferred - not needed for initial render) -->
+    <link rel="preload" href="https://unpkg.com/aos@2.3.1/dist/aos.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet"></noscript>
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
@@ -64,15 +77,21 @@
     <link rel="stylesheet" href="{% static 'css/enhanced-components.css' %}">
 
     <!-- Base CSS -->
-    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}?v=12">
 
-    <link rel="stylesheet" href="{% static 'css/events.css' %}">
+    <link rel="preload" href="{% static 'css/events.css' %}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{% static 'css/events.css' %}"></noscript>
 
     {% block extra_css %}{% endblock %}
 
-<!-- Meta tags ديناميكية -->
-<meta name="description" content="{{ site_settings.site_description }}">
+<!-- JSON-LD Structured Data -->
+{% jsonld_organization %}
+{% jsonld_website %}
+{% jsonld_local_business %}
+{% block structured_data %}{% endblock %}
 
+<!-- Google Analytics -->
+{% google_analytics %}
 
 <style>
     /* Dynamic CSS from Site Settings */
@@ -85,6 +104,7 @@
         --bs-link-color: {{ site_settings.primary_color }};
         --bs-link-hover-color: {{ site_settings.primary_color }};
         --bs-btn-focus-shadow-rgb: {{ site_settings.primary_color_rgb }};
+        --announcement-bg: {{ site_settings.announcement_bg_color|default:'#1b5e20' }};
     }
 
     /* تطبيق اللون على العناصر الأساسية */
@@ -199,14 +219,159 @@
     ::-webkit-scrollbar-thumb:hover {
         background-color: rgba({{ site_settings.primary_color_rgb }}, 0.8);
     }
+
+    /* Free Shipping Banner */
+    .free-shipping-banner {
+        background: linear-gradient(90deg, var(--announcement-bg, #1b5e20), #388e3c);
+        color: white;
+        padding: 0.5rem 0;
+        font-size: 0.875rem;
+        font-weight: 600;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1050;
+        text-align: center;
+        letter-spacing: 0.3px;
+    }
+    .free-shipping-banner i {
+        margin-inline-end: 0.25rem;
+    }
+    .shipping-divider {
+        opacity: 0.5;
+        margin: 0 0.5rem;
+    }
+    .shipping-banner-close {
+        position: absolute;
+        top: 50%;
+        inset-inline-end: 1rem;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: rgba(255,255,255,0.7);
+        cursor: pointer;
+        padding: 0.25rem;
+        font-size: 0.75rem;
+        transition: color 0.2s;
+    }
+    .shipping-banner-close:hover {
+        color: white;
+    }
+
+    /* Push header below fixed banner */
+    .has-announcement .modern-header {
+        top: 36px;
+    }
+    .has-announcement .header-wrapper {
+        min-height: calc(var(--header-height) + 36px);
+    }
+    @media (max-width: 991.98px) {
+        .has-announcement .header-wrapper {
+            min-height: calc(var(--mobile-nav-height) + 36px);
+        }
+    }
+
+    /* Floating WhatsApp Button */
+    .whatsapp-float {
+        position: fixed;
+        bottom: 90px;
+        inset-inline-end: 24px;
+        width: 60px;
+        height: 60px;
+        background: #25d366;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
+        z-index: 1040;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+    .whatsapp-float:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 30px rgba(37, 211, 102, 0.6);
+        color: white;
+    }
+    .whatsapp-float:hover .whatsapp-tooltip {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(0);
+    }
+    .whatsapp-tooltip {
+        position: absolute;
+        inset-inline-end: 72px;
+        background: #333;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateX(10px);
+        transition: all 0.3s ease;
+        pointer-events: none;
+    }
+    .whatsapp-tooltip::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        inset-inline-start: 100%;
+        transform: translateY(-50%);
+        border: 6px solid transparent;
+        border-inline-start-color: #333;
+    }
+    @media (max-width: 767.98px) {
+        .whatsapp-float {
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            bottom: 80px;
+            inset-inline-end: 16px;
+        }
+        .whatsapp-tooltip { display: none; }
+    }
 </style>
 </head>
-<body>
+<body{% if site_settings.show_announcement_banner %} class="has-announcement"{% endif %}>
     {% include 'core/includes/event_banner.html' %}
-    <!-- Page Loader -->
-{#    <div class="page-loader" id="pageLoader">#}
-{#        <div class="loader-spinner"></div>#}
-{#    </div>#}
+
+    <!-- Announcement Banner (Dashboard Controlled) -->
+    {% if site_settings.show_announcement_banner %}
+    <div class="free-shipping-banner" id="freeShippingBanner">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-center gap-2 flex-wrap">
+                {% if site_settings.announcement_text_1_ar or site_settings.announcement_text_1_en %}
+                <span>
+                    <i class="{{ site_settings.announcement_icon_1|default:'fas fa-truck-fast' }}"></i>
+                    {% if LANGUAGE_CODE == 'en' %}{{ site_settings.announcement_text_1_en|default:site_settings.announcement_text_1_ar }}{% else %}{{ site_settings.announcement_text_1_ar }}{% endif %}
+                </span>
+                {% endif %}
+                {% if site_settings.announcement_text_2_ar or site_settings.announcement_text_2_en %}
+                <span class="shipping-divider d-none d-md-inline">|</span>
+                <span class="d-none d-md-inline">
+                    <i class="{{ site_settings.announcement_icon_2|default:'fas fa-shield-check' }}"></i>
+                    {% if LANGUAGE_CODE == 'en' %}{{ site_settings.announcement_text_2_en|default:site_settings.announcement_text_2_ar }}{% else %}{{ site_settings.announcement_text_2_ar }}{% endif %}
+                </span>
+                {% endif %}
+                {% if site_settings.announcement_text_3_ar or site_settings.announcement_text_3_en %}
+                <span class="shipping-divider d-none d-lg-inline">|</span>
+                <span class="d-none d-lg-inline">
+                    <i class="{{ site_settings.announcement_icon_3|default:'fas fa-rotate-left' }}"></i>
+                    {% if LANGUAGE_CODE == 'en' %}{{ site_settings.announcement_text_3_en|default:site_settings.announcement_text_3_ar }}{% else %}{{ site_settings.announcement_text_3_ar }}{% endif %}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        <button class="shipping-banner-close" onclick="document.getElementById('freeShippingBanner').style.display='none';document.body.classList.remove('has-announcement');" aria-label="{% trans 'إغلاق' %}">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    {% endif %}
 
     <!-- Accessibility Skip Link -->
     <a href="#main-content" class="skip-link">{% trans "تخطي إلى المحتوى الرئيسي" %}</a>
@@ -235,6 +400,14 @@
 
     {% include 'core/includes/footer.html' %}
 
+    <!-- Floating WhatsApp Button -->
+    {% if site_settings.phone_whatsapp or site_settings.phone %}
+    <a href="https://wa.me/962{{ site_settings.phone_whatsapp|default:site_settings.phone|cut:'0' }}" class="whatsapp-float" target="_blank" rel="noopener" aria-label="{% trans 'تواصل عبر واتساب' %}" title="{% trans 'تواصل معنا عبر واتساب' %}">
+        <i class="fab fa-whatsapp"></i>
+        <span class="whatsapp-tooltip">{% trans "محتاج مساعدة؟" %}</span>
+    </a>
+    {% endif %}
+
     <!-- Scroll to Top -->
     <button class="scroll-to-top" id="scrollToTop" aria-label="{% trans 'الرجوع للأعلى' %}">
         <i class="fas fa-arrow-up"></i>
@@ -245,10 +418,13 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 
+    <!-- Auth state for JS -->
+    <script>window.userAuthenticated = {{ user.is_authenticated|yesno:"true,false" }};</script>
+
     <!-- Custom JavaScript -->
-    <script src="{% static 'js/main.js' %}" defer></script>
-    <script src="{% static 'js/base.js' %}" defer></script>
-    <script src="{% static 'js/events.js' %}"></script>
+    <script src="{% static 'js/main.js' %}?v=2" defer></script>
+    <script src="{% static 'js/base.js' %}?v=2" defer></script>
+    <script src="{% static 'js/events.js' %}?v=2" defer></script>
 
     {% block extra_js %}
         <script>

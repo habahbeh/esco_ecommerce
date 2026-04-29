@@ -66,7 +66,7 @@
         statusElement.className = 'event-banner-status ' + event.status;
 
         // عرض الشريط بتأثير حركي
-        banner.style.display = 'block';
+        banner.classList.remove('d-none');
         setTimeout(() => {
             banner.classList.add('show');
 
@@ -93,7 +93,7 @@
 
         // إزالة الهوامش والتنسيقات
         setTimeout(() => {
-            banner.style.display = 'none';
+            banner.classList.add('d-none');
             document.body.style.paddingTop = '';
 
             // إعادة موضع الهيدر

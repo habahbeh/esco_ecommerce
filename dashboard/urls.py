@@ -67,6 +67,14 @@ urlpatterns = [
     path('accounts/roles/<str:role_id>/delete/', views.RoleDeleteView.as_view(), name='dashboard_role_delete'),
 
     # ========================= إدارة المنتجات =========================
+    # متتبع المنتجات
+    path('products/tracker/', views.ProductTrackerView.as_view(), name='product_tracker'),
+    path('products/tracker/search/', views.ProductSearchAPIView.as_view(), name='product_tracker_search'),
+    path('products/tracker/notes/add/', views.ProductNoteCreateView.as_view(), name='product_note_add'),
+    path('products/tracker/notes/<int:pk>/resolve/', views.ProductNoteResolveView.as_view(), name='product_note_resolve'),
+    path('products/tracker/notes/<int:pk>/delete/', views.ProductNoteDeleteView.as_view(), name='product_note_delete'),
+    path('products/tracker/notes/<int:product_id>/', views.ProductNotesListView.as_view(), name='product_notes_list'),
+
     # قائمة المنتجات
     path('products/', views.ProductListView.as_view(), name='dashboard_products'),
     path('products/create/', views.ProductFormView.as_view(), name='dashboard_product_create'),
@@ -264,6 +272,12 @@ urlpatterns = [
     path('settings/widgets/', views.WidgetSettingsView.as_view(), name='dashboard_widget_settings'),
 
 
+    # ========================= مسارات إدارة الفروع =========================
+    path('branches/', views.dashboard_branches, name='dashboard_branches'),
+    path('branches/create/', views.dashboard_branch_create, name='dashboard_branch_create'),
+    path('branches/<int:pk>/edit/', views.dashboard_branch_edit, name='dashboard_branch_edit'),
+    path('branches/<int:pk>/delete/', views.dashboard_branch_delete, name='dashboard_branch_delete'),
+
     # ========================= مسارات إدارة الفعاليات =========================
     path('events/', views.dashboard_events, name='dashboard_events'),
     path('events/create/', views.dashboard_event_create, name='dashboard_event_create'),
@@ -296,6 +310,30 @@ urlpatterns = [
     path('marketing/settings/', views.MarketingSettingsView.as_view(), name='marketing_settings'),
     path('marketing/test-connection/', views.MarketingTestConnectionView.as_view(), name='marketing_test_connection'),
     path('marketing/product-search/', views.MarketingProductSearchView.as_view(), name='marketing_product_search'),
+
+    # ========================= مسارات إدارة المدونة =========================
+    path('blog/', views.dashboard_blog_posts, name='dashboard_blog_posts'),
+    path('blog/create/', views.dashboard_blog_post_create, name='dashboard_blog_post_create'),
+    path('blog/<int:pk>/edit/', views.dashboard_blog_post_edit, name='dashboard_blog_post_edit'),
+    path('blog/<int:pk>/delete/', views.dashboard_blog_post_delete, name='dashboard_blog_post_delete'),
+
+    path('blog/categories/', views.dashboard_blog_categories, name='dashboard_blog_categories'),
+    path('blog/categories/create/', views.dashboard_blog_category_create, name='dashboard_blog_category_create'),
+    path('blog/categories/<int:pk>/edit/', views.dashboard_blog_category_edit, name='dashboard_blog_category_edit'),
+    path('blog/categories/<int:pk>/delete/', views.dashboard_blog_category_delete, name='dashboard_blog_category_delete'),
+
+    path('blog/tags/', views.dashboard_blog_tags, name='dashboard_blog_tags'),
+    path('blog/tags/create/', views.dashboard_blog_tag_create, name='dashboard_blog_tag_create'),
+    path('blog/tags/<int:pk>/edit/', views.dashboard_blog_tag_edit, name='dashboard_blog_tag_edit'),
+    path('blog/tags/<int:pk>/delete/', views.dashboard_blog_tag_delete, name='dashboard_blog_tag_delete'),
+
+    # ========================= SEO =========================
+    path('seo/', views.SEOSettingsView.as_view(), name='seo_settings'),
+    path('seo/keywords/', views.SEOKeywordListView.as_view(), name='seo_keywords'),
+    path('seo/keywords/create/', views.SEOKeywordCreateView.as_view(), name='seo_keyword_create'),
+    path('seo/keywords/<int:pk>/edit/', views.SEOKeywordEditView.as_view(), name='seo_keyword_edit'),
+    path('seo/keywords/<int:pk>/delete/', views.SEOKeywordDeleteView.as_view(), name='seo_keyword_delete'),
+    path('seo/auto-tag/', views.AutoTagView.as_view(), name='seo_auto_tag'),
 
     # ========================= واجهات برمجة التطبيقات API =========================
     path('api/stats/', views.DashboardStatsAPIView.as_view(), name='dashboard_stats_api'),

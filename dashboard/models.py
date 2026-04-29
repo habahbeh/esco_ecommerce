@@ -560,3 +560,86 @@ class DashboardUserSettings(TimeStampedModel):
 
     def __str__(self):
         return f"إعدادات {self.user.username}"
+
+
+class ProductNote(TimeStampedModel):
+    product = models.ForeignKey(
+        'products.Product',
+        on_delete=models.CASCADE,
+        related_name='admin_notes',
+        verbose_name=_("المنتج")
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name=_("المستخدم")
+    )
+    NOTE_TYPE_CHOICES = [
+        ('general', _('ملاحظة عامة')),
+        ('price', _('تسعير')),
+        ('stock', _('مخزون')),
+        ('quality', _('جودة')),
+        ('supplier', _('مورد')),
+        ('todo', _('مهمة')),
+    ]
+    note_type = models.CharField(
+        _("نوع الملاحظة"),
+        max_length=20,
+        choices=NOTE_TYPE_CHOICES,
+        default='general'
+    )
+    content = models.TextField(_("المحتوى"))
+    is_resolved = models.BooleanField(_("تم الحل"), default=False)
+
+    class Meta:
+        verbose_name = _("ملاحظة منتج")
+        verbose_name_plural = _("ملاحظات المنتجات")
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['product', '-created_at']),
+            models.Index(fields=['is_resolved', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.product.name} - {self.get_note_type_display()}"
+
+
+class ProductActivityLog(models.Model):
+    product = models.ForeignKey(
+        'products.Product',
+        on_delete=models.CASCADE,
+        related_name='activity_logs',
+        verbose_name=_("المنتج")
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name=_("المستخدم")
+    )
+    ACTION_CHOICES = [
+        ('created', _('إنشاء')),
+        ('price_changed', _('تغيير السعر')),
+        ('stock_changed', _('تغيير المخزون')),
+        ('status_changed', _('تغيير الحالة')),
+        ('updated', _('تحديث')),
+    ]
+    action = models.CharField(_("الإجراء"), max_length=30, choices=ACTION_CHOICES, db_index=True)
+    field_name = models.CharField(_("الحقل"), max_length=50, blank=True)
+    old_value = models.CharField(_("القيمة القديمة"), max_length=255, blank=True)
+    new_value = models.CharField(_("القيمة الجديدة"), max_length=255, blank=True)
+    timestamp = models.DateTimeField(_("التاريخ"), auto_now_add=True, db_index=True)
+
+    class Meta:
+        verbose_name = _("سجل نشاط المنتج")
+        verbose_name_plural = _("سجلات نشاط المنتجات")
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['action', '-timestamp']),
+            models.Index(fields=['product', '-timestamp']),
+        ]
+
+    def __str__(self):
+        return f"{self.product.name} - {self.get_action_display()}"

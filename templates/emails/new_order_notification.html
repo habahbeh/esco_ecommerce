@@ -1,0 +1,162 @@
+{% extends "emails/base_email.html" %}
+{% load i18n %}
+
+{% block title %}New Order #{{ order.order_number }}{% endblock %}
+
+{% block header_text %}New Order Received! | تم استلام طلب جديد!{% endblock %}
+
+{% block content %}
+<div style="direction: ltr; text-align: left;">
+    <h2 style="color: #0077c8; font-size: 22px; margin: 0 0 20px 0; text-align: center;">
+        New Order #{{ order.order_number }}
+    </h2>
+
+    <p style="font-size: 15px; color: #555; line-height: 1.8; margin-bottom: 20px;">
+        A new order has been placed on <strong style="color: #0077c8;">ESCO</strong> and is awaiting processing.
+    </p>
+
+    <!-- Customer Info -->
+    <div style="background-color: #e3f2fd; border-radius: 12px; padding: 20px; margin: 20px 0; border-left: 4px solid #0077c8;">
+        <h3 style="color: #0077c8; font-size: 16px; margin: 0 0 12px 0;">
+            Customer Information
+        </h3>
+        <table style="width: 100%; font-size: 14px; color: #444;">
+            <tr>
+                <td style="padding: 6px 0; font-weight: bold; width: 35%;">Name:</td>
+                <td style="padding: 6px 0;">{{ order.full_name }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 6px 0; font-weight: bold;">Email:</td>
+                <td style="padding: 6px 0;"><a href="mailto:{{ order.email }}" style="color: #0077c8;">{{ order.email }}</a></td>
+            </tr>
+            <tr>
+                <td style="padding: 6px 0; font-weight: bold;">Phone:</td>
+                <td style="padding: 6px 0;"><a href="tel:{{ order.phone }}" style="color: #0077c8;">{{ order.phone }}</a></td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Order Details -->
+    <div style="background-color: #f8f9fa; border-radius: 12px; padding: 25px; margin: 20px 0; border: 1px solid #e9ecef;">
+        <h3 style="color: #0077c8; font-size: 18px; margin: 0 0 20px 0; border-bottom: 2px solid #0077c8; padding-bottom: 10px;">
+            Order Details
+        </h3>
+
+        <table style="width: 100%; font-size: 14px; color: #444;">
+            <tr>
+                <td style="padding: 10px 0; font-weight: bold; width: 40%;">Order Number:</td>
+                <td style="padding: 10px 0; color: #0077c8; font-weight: bold; font-size: 16px;">{{ order.order_number }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 0; font-weight: bold;">Order Date:</td>
+                <td style="padding: 10px 0;">{{ order.created_at|date:"Y/m/d - H:i" }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 0; font-weight: bold;">Payment Method:</td>
+                <td style="padding: 10px 0;">{{ order.payment_method|default:"Cash on Delivery" }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 0; font-weight: bold;">Delivery Method:</td>
+                <td style="padding: 10px 0;">
+                    {% if order.delivery_method == 'pickup' %}
+                        Pickup from Branch
+                        {% if order.pickup_branch %} - {{ order.pickup_branch.name_en|default:order.pickup_branch.name }}{% endif %}
+                    {% else %}
+                        Delivery
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Order Items -->
+    <div style="background-color: #fff; border-radius: 12px; padding: 20px; margin: 20px 0; border: 1px solid #e9ecef;">
+        <h3 style="color: #333; font-size: 16px; margin: 0 0 15px 0;">
+            Ordered Products
+        </h3>
+
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+            <thead>
+                <tr style="background-color: #f8f9fa;">
+                    <th style="padding: 12px 10px; text-align: left; border-bottom: 2px solid #dee2e6; color: #555;">Product</th>
+                    <th style="padding: 12px 10px; text-align: center; border-bottom: 2px solid #dee2e6; color: #555;">Qty</th>
+                    <th style="padding: 12px 10px; text-align: right; border-bottom: 2px solid #dee2e6; color: #555;">Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order.items.all %}
+                <tr>
+                    <td style="padding: 12px 10px; border-bottom: 1px solid #eee;">
+                        <strong>{{ item.product_name }}</strong>
+                        {% if item.variant_name %}<br><small style="color: #888;">{{ item.variant_name }}</small>{% endif %}
+                    </td>
+                    <td style="padding: 12px 10px; text-align: center; border-bottom: 1px solid #eee;">{{ item.quantity }}</td>
+                    <td style="padding: 12px 10px; text-align: right; border-bottom: 1px solid #eee;">{{ item.total_price }} JOD</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Totals -->
+        <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid #e9ecef;">
+            <table style="width: 100%; font-size: 14px;">
+                <tr>
+                    <td style="padding: 8px 0; color: #666;">Subtotal:</td>
+                    <td style="padding: 8px 0; text-align: right;">{{ order.total_price }} JOD</td>
+                </tr>
+                {% if order.discount_amount > 0 %}
+                <tr>
+                    <td style="padding: 8px 0; color: #28a745;">Discount:</td>
+                    <td style="padding: 8px 0; text-align: right; color: #28a745;">- {{ order.discount_amount }} JOD</td>
+                </tr>
+                {% endif %}
+                <tr>
+                    <td style="padding: 8px 0; color: #666;">Shipping:</td>
+                    <td style="padding: 8px 0; text-align: right;">{% if order.shipping_cost > 0 %}{{ order.shipping_cost }} JOD{% else %}Free{% endif %}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: #666;">Tax:</td>
+                    <td style="padding: 8px 0; text-align: right;">{{ order.tax_amount }} JOD</td>
+                </tr>
+                <tr style="font-size: 18px; font-weight: bold;">
+                    <td style="padding: 15px 0; color: #0077c8; border-top: 2px solid #0077c8;">Total:</td>
+                    <td style="padding: 15px 0; text-align: right; color: #0077c8; border-top: 2px solid #0077c8;">{{ order.grand_total }} JOD</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Shipping Address -->
+    {% if order.delivery_method == 'delivery' %}
+    <div style="background-color: #e3f2fd; border-radius: 12px; padding: 20px; margin: 20px 0; border-left: 4px solid #0077c8;">
+        <h3 style="color: #0077c8; font-size: 16px; margin: 0 0 12px 0;">
+            Shipping Address
+        </h3>
+        <p style="margin: 0; color: #444; line-height: 1.8; font-size: 14px;">
+            {{ order.shipping_address }}<br>
+            {{ order.shipping_city }}{% if order.shipping_state %}, {{ order.shipping_state }}{% endif %}<br>
+            {{ order.shipping_country }}
+            {% if order.shipping_postal_code %}<br>Postal Code: {{ order.shipping_postal_code }}{% endif %}
+        </p>
+    </div>
+    {% endif %}
+
+    {% if order.notes %}
+    <div style="background-color: #fff8e1; border-radius: 12px; padding: 20px; margin: 20px 0; border-left: 4px solid #ffc107;">
+        <h3 style="color: #f57c00; font-size: 16px; margin: 0 0 12px 0;">
+            Customer Notes
+        </h3>
+        <p style="margin: 0; color: #444; line-height: 1.8; font-size: 14px;">{{ order.notes }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Dashboard Link -->
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 30px 0;">
+        <tr>
+            <td align="center">
+                <a href="{{ site_url }}/dashboard/orders/{{ order.id }}/" target="_blank" style="background-color:#0077c8; border:1px solid #0077c8; border-radius:8px; color:#ffffff; display:inline-block; font-family:Arial,sans-serif; font-size:16px; font-weight:bold; line-height:50px; text-align:center; text-decoration:none; width:250px; -webkit-text-size-adjust:none;">View in Dashboard</a>
+            </td>
+        </tr>
+    </table>
+</div>
+{% endblock %}

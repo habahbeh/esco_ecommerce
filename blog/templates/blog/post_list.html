@@ -1,0 +1,338 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load i18n %}
+{% load seo_tags %}
+
+{% block title %}{% trans "المدونة" %} - {% trans "أدلة ومقالات تقنية" %} | {{ site_settings.site_name|default:"ESCO" }}{% endblock %}
+{% block meta_description %}{% trans "مدونة ESCO - أدلة شراء الأدوات الصناعية، مقارنات المنتجات، نصائح الصيانة، ومقالات تقنية متخصصة في العدد والمعدات الهندسية في الأردن" %}{% endblock %}
+{% block meta_keywords %}{% trans "مدونة أدوات, أدلة شراء, مقارنات أدوات, صيانة معدات, أدوات صناعية الأردن, ESCO blog" %}{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    "name": "{% trans 'مدونة ESCO' %}",
+    "description": "{% trans 'أدلة ومقالات تقنية حول الأدوات الصناعية والمعدات الهندسية' %}",
+    "url": "{{ request.scheme }}://{{ request.get_host }}{% url 'blog:post_list' %}",
+    "publisher": {
+        "@type": "Organization",
+        "name": "{{ site_settings.site_name|default:'ESCO' }}"
+    },
+    "inLanguage": ["ar", "en"]
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ── Hero ── */
+    .blog-hero {
+        background: linear-gradient(135deg, var(--bs-primary) 0%, #0056b3 100%);
+        color: white;
+        padding: 3rem 0 2.5rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .blog-hero::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+        background-size: 22px 22px;
+        pointer-events: none;
+    }
+    .blog-search-form .form-control {
+        border-radius: 25px 0 0 25px; border: none; padding: .6rem 1.2rem;
+    }
+    html[dir="rtl"] .blog-search-form .form-control { border-radius: 0 25px 25px 0; }
+    .blog-search-form .btn {
+        border-radius: 0 25px 25px 0; border: none; padding: .6rem 1rem;
+    }
+    html[dir="rtl"] .blog-search-form .btn { border-radius: 25px 0 0 25px; }
+
+    /* ── Blog Cards ── */
+    .blog-card {
+        transition: transform .3s ease, box-shadow .3s ease;
+        border: 1px solid rgba(0,0,0,.06);
+    }
+    .blog-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 32px rgba(37,99,235,.15) !important;
+        border-color: rgba(37,99,235,.18);
+    }
+    .blog-card:hover img { transform: scale(1.07); }
+    /* Card icon area (no image) */
+    .card-icon-area { position: relative; }
+    .card-icon-circle {
+        width: 80px; height: 80px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.8rem;
+        transition: transform .3s ease, box-shadow .3s ease;
+        position: relative; z-index: 1;
+    }
+    .blog-card:hover .card-icon-circle {
+        transform: scale(1.12);
+        box-shadow: 0 8px 24px rgba(0,0,0,.1);
+    }
+    .blog-card .btn-outline-primary {
+        transition: all .25s ease;
+    }
+    .blog-card:hover .btn-outline-primary {
+        background: var(--bs-primary); color: #fff;
+        box-shadow: 0 4px 12px rgba(37,99,235,.3);
+    }
+
+    /* ── Featured Posts ── */
+    .featured-post-card {
+        position: relative; border-radius: 12px; overflow: hidden; height: 280px;
+        transition: transform .3s ease, box-shadow .3s ease;
+    }
+    .featured-post-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(0,0,0,.2) !important;
+    }
+    .featured-post-card img {
+        width: 100%; height: 100%; object-fit: cover;
+        transition: transform .4s ease;
+    }
+    .featured-post-card:hover img { transform: scale(1.06); }
+    .featured-post-overlay {
+        position: absolute; bottom: 0; left: 0; right: 0;
+        background: linear-gradient(transparent, rgba(0,0,0,.85));
+        padding: 2rem 1.5rem 1.5rem; color: white;
+    }
+
+    /* ── Sidebar Widgets ── */
+    .widget-title {
+        font-weight: 700; padding-bottom: .75rem;
+        border-bottom: 3px solid var(--bs-primary);
+        margin-bottom: 1rem;
+    }
+    /* Category links */
+    .blog-sidebar-widget .category-link {
+        text-decoration: none; color: #374151;
+        padding: .1rem .4rem; border-radius: 6px;
+        transition: all .2s ease;
+    }
+    .blog-sidebar-widget .category-link:hover {
+        color: var(--bs-primary);
+        background: rgba(37,99,235,.06);
+        padding-inline-start: .7rem;
+    }
+    .blog-sidebar-widget .category-link i {
+        transition: color .2s ease;
+    }
+    .blog-sidebar-widget .category-link:hover i {
+        color: var(--bs-primary) !important;
+    }
+    /* Category count badge */
+    .blog-sidebar-widget .cat-count {
+        transition: all .2s ease;
+    }
+    .blog-sidebar-widget li:hover .cat-count {
+        background: var(--bs-primary) !important;
+        color: #fff !important;
+        transform: scale(1.1);
+    }
+    /* Recent post items */
+    .recent-post-item {
+        padding: .5rem; border-radius: 8px;
+        transition: all .2s ease; cursor: pointer;
+    }
+    .recent-post-item:hover {
+        background: rgba(37,99,235,.04);
+        transform: translateX(4px);
+    }
+    html[dir="rtl"] .recent-post-item:hover {
+        transform: translateX(-4px);
+    }
+    .recent-post-item a {
+        transition: color .2s ease;
+    }
+    .recent-post-item:hover a {
+        color: var(--bs-primary) !important;
+    }
+    /* Tag cloud */
+    .tag-badge {
+        display: inline-block;
+        padding: .45rem .9rem;
+        border-radius: 20px;
+        font-size: .82rem;
+        font-weight: 500;
+        text-decoration: none;
+        color: #4b5563;
+        background: #f3f4f6;
+        border: 1px solid #e5e7eb;
+        transition: all .25s ease;
+    }
+    .tag-badge:hover {
+        background: var(--bs-primary);
+        color: #fff !important;
+        border-color: var(--bs-primary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(37,99,235,.25);
+    }
+
+    /* ── Pagination ── */
+    .pagination .page-link {
+        border-radius: 8px !important;
+        margin: 0 2px;
+        transition: all .2s ease;
+    }
+    .pagination .page-link:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(37,99,235,.2);
+    }
+
+    /* ── Dark Mode ── */
+    [data-bs-theme="dark"] .blog-card {
+        border-color: rgba(255,255,255,.08);
+    }
+    [data-bs-theme="dark"] .blog-card:hover {
+        box-shadow: 0 12px 32px rgba(37,99,235,.25) !important;
+        border-color: rgba(37,99,235,.3);
+    }
+    [data-bs-theme="dark"] .featured-post-card {
+        border: 1px solid rgba(255,255,255,.1);
+    }
+    [data-bs-theme="dark"] .blog-sidebar-widget .category-link {
+        color: #d1d5db;
+    }
+    [data-bs-theme="dark"] .blog-sidebar-widget .category-link:hover {
+        color: #60a5fa;
+        background: rgba(96,165,250,.1);
+    }
+    [data-bs-theme="dark"] .recent-post-item:hover {
+        background: rgba(96,165,250,.08);
+    }
+    [data-bs-theme="dark"] .tag-badge {
+        color: #d1d5db;
+        background: rgba(255,255,255,.08);
+        border-color: rgba(255,255,255,.12);
+    }
+    [data-bs-theme="dark"] .tag-badge:hover {
+        background: var(--bs-primary);
+        color: #fff !important;
+        border-color: var(--bs-primary);
+    }
+    [data-bs-theme="dark"] .widget-title {
+        color: #e5e7eb;
+    }
+    [data-bs-theme="dark"] .blog-card .btn-outline-primary:hover {
+        box-shadow: 0 4px 12px rgba(37,99,235,.4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="blog-hero">
+    <div class="container position-relative">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="fw-bold mb-2"><i class="fas fa-blog me-2"></i>{% trans "المدونة" %}</h1>
+                <p class="mb-0 opacity-75">{% trans "أدلة شراء، مقارنات أدوات، ونصائح تقنية من خبراء ESCO" %}</p>
+            </div>
+            <div class="col-lg-4 mt-3 mt-lg-0">
+                <form method="get" action="{% url 'blog:post_list' %}" class="blog-search-form d-flex">
+                    <input type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="{% trans 'ابحث في المقالات...' %}">
+                    <button type="submit" class="btn btn-light"><i class="fas fa-search"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container mb-5">
+    <!-- Featured Posts -->
+    {% if featured_posts and not search_query %}
+    <div class="row mb-4">
+        {% for fpost in featured_posts %}
+        <div class="col-md-4 mb-3">
+            <a href="{{ fpost.get_absolute_url }}" class="text-decoration-none">
+                <div class="featured-post-card shadow">
+                    {% if fpost.featured_image %}
+                    <img src="{{ fpost.featured_image.url }}" alt="{% if LANGUAGE_CODE == 'en' and fpost.featured_image_alt_en %}{{ fpost.featured_image_alt_en }}{% elif fpost.featured_image_alt %}{{ fpost.featured_image_alt }}{% else %}{{ fpost.title }}{% endif %}" loading="lazy">
+                    {% else %}
+                    <div class="w-100 h-100 d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, {{ fpost.card_icon_color|default:'#2563eb' }}, {{ fpost.card_icon_color|default:'#2563eb' }}dd);">
+                        <i class="fas {{ fpost.card_icon|default:'fa-newspaper' }} fa-4x text-white opacity-50"></i>
+                    </div>
+                    {% endif %}
+                    <div class="featured-post-overlay">
+                        {% if fpost.category %}
+                        <span class="badge bg-primary mb-2">
+                            {% if LANGUAGE_CODE == 'en' and fpost.category.name_en %}{{ fpost.category.name_en }}{% else %}{{ fpost.category.name }}{% endif %}
+                        </span>
+                        {% endif %}
+                        <h3 class="h6 fw-bold mb-1">
+                            {% if LANGUAGE_CODE == 'en' and fpost.title_en %}{{ fpost.title_en }}{% else %}{{ fpost.title }}{% endif %}
+                        </h3>
+                        <small class="opacity-75">{{ fpost.published_at|date:"Y/m/d" }}</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if search_query %}
+    <div class="alert alert-info mb-4">
+        <i class="fas fa-search me-2"></i>
+        {% trans "نتائج البحث عن:" %} <strong>"{{ search_query }}"</strong>
+        — {{ posts.paginator.count }} {% trans "مقال" %}
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <div class="row">
+                {% for post in posts %}
+                    {% include 'blog/includes/_post_card.html' with post=post %}
+                {% empty %}
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-newspaper fa-4x text-muted mb-3"></i>
+                    <h3>{% trans "لا توجد مقالات بعد" %}</h3>
+                    <p class="text-muted">{% trans "ترقبوا مقالاتنا القادمة حول الأدوات والمعدات الهندسية" %}</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if posts.has_other_pages %}
+            <nav aria-label="{% trans 'التنقل بين الصفحات' %}" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if posts.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ posts.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}">
+                            <i class="fas {% if LANGUAGE_CODE == 'en' %}fa-chevron-left{% else %}fa-chevron-right{% endif %}"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% for num in posts.paginator.page_range %}
+                    <li class="page-item {% if posts.number == num %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}">{{ num }}</a>
+                    </li>
+                    {% endfor %}
+                    {% if posts.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ posts.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}">
+                            <i class="fas {% if LANGUAGE_CODE == 'en' %}fa-chevron-right{% else %}fa-chevron-left{% endif %}"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            {% include 'blog/includes/_sidebar.html' %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -140,6 +140,7 @@
         cursor: pointer;
         transition: all 0.3s ease;
         text-decoration: none;
+        outline: none;
     }
 
     .filter-tab:hover {
@@ -655,6 +656,91 @@
             width: 100%;
         }
     }
+
+    /* ===== Dark Mode ===== */
+    [data-bs-theme="dark"] .offers-section {
+        background: var(--bs-body-bg);
+    }
+    [data-bs-theme="dark"] .timer-banner {
+        background: rgba(255, 243, 205, 0.08);
+        border-color: rgba(255, 234, 167, 0.15);
+    }
+    [data-bs-theme="dark"] .timer-title {
+        color: #ffc107;
+    }
+    [data-bs-theme="dark"] .timer-label {
+        color: var(--bs-secondary-color);
+    }
+    [data-bs-theme="dark"] .filter-tab {
+        background: var(--bs-tertiary-bg);
+        color: var(--bs-body-color);
+    }
+    [data-bs-theme="dark"] .filter-tab:hover {
+        border-color: var(--bs-primary);
+        color: var(--bs-primary);
+    }
+    [data-bs-theme="dark"] .filter-tab.active {
+        background: var(--bs-primary);
+        color: white;
+    }
+    [data-bs-theme="dark"] .offer-card {
+        background: var(--bs-body-bg);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    [data-bs-theme="dark"] .offer-card:hover {
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+    }
+    [data-bs-theme="dark"] .offer-image {
+        background: var(--bs-tertiary-bg);
+    }
+    [data-bs-theme="dark"] .offer-image .no-image {
+        background-color: var(--bs-tertiary-bg);
+    }
+    [data-bs-theme="dark"] .offer-name {
+        color: var(--bs-body-color);
+    }
+    [data-bs-theme="dark"] .offer-category {
+        color: var(--bs-secondary-color);
+    }
+    [data-bs-theme="dark"] .savings-info {
+        background: rgba(46, 125, 50, 0.15);
+        color: #66bb6a;
+    }
+    [data-bs-theme="dark"] .savings-badge {
+        background: #2e7d32;
+    }
+    [data-bs-theme="dark"] .low-stock-alert {
+        background: rgba(255, 243, 205, 0.1);
+        color: #ffc107;
+    }
+    [data-bs-theme="dark"] .progress {
+        background: rgba(255, 255, 255, 0.1);
+    }
+    [data-bs-theme="dark"] .offer-sections-banner {
+        background: var(--bs-body-bg);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+    }
+    [data-bs-theme="dark"] .section-title {
+        color: var(--bs-body-color);
+    }
+    [data-bs-theme="dark"] .offer-type-badge.all {
+        background: rgba(var(--bs-primary-rgb), 0.15);
+    }
+    [data-bs-theme="dark"] .offer-type-badge.high-discount {
+        background: rgba(194, 24, 91, 0.15);
+        color: #f48fb1;
+    }
+    [data-bs-theme="dark"] .offer-type-badge.ending-soon {
+        background: rgba(245, 124, 0, 0.15);
+        color: #ffb74d;
+    }
+    [data-bs-theme="dark"] .offer-type-badge.ending-today {
+        background: rgba(211, 47, 47, 0.15);
+        color: #ef9a9a;
+    }
+    [data-bs-theme="dark"] .filter-category-labels .offer-type-badge {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
 </style>
 {% endblock %}
 
@@ -728,7 +814,7 @@
 {% endif %}
 
 <!-- Offers Section -->
-<section class="offers-section">
+<section class="offers-section" id="offers-section">
     <div class="container">
         <!-- Filter Tabs -->
         <div class="filter-tabs" data-aos="fade-up">
@@ -784,7 +870,7 @@
                         <div class="offer-info">
                             <p class="offer-category">{{ product.category.name }}</p>
                             <h3 class="offer-name">
-                                <a href="{% url 'products:product_detail' product.slug %}" class="text-decoration-none text-dark">
+                                <a href="{% url 'products:product_detail' product.slug %}" class="text-decoration-none text-body">
                                     {{ product.name }}
                                 </a>
                             </h3>
@@ -938,6 +1024,19 @@
         once: true,
         offset: 50
     });
+
+    // Scroll to offers section when a filter or page is applied
+    (function() {
+        var params = new URLSearchParams(window.location.search);
+        if (params.has('filter') || params.has('page')) {
+            var target = document.getElementById('offers-section');
+            if (target) {
+                setTimeout(function() {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
+        }
+    })();
 
     // كود العداد التنازلي المحسّن (يتعامل مع العروض بشكل صحيح)
 function startCountdown() {

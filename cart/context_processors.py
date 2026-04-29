@@ -209,10 +209,10 @@ def cart_context(request):
             logger.error(f"Error processing cart item {item_id}: {str(e)}")
             continue
 
-    # Calculate tax (if applicable)
+    # Calculate tax (extract from tax-inclusive prices)
     tax_rate = Decimal(getattr(settings, 'DEFAULT_TAX_RATE', '0.16'))  # 16% default
     if cart_subtotal > 0 and not has_digital:  # No tax on digital products
-        cart_tax = cart_subtotal * tax_rate
+        cart_tax = cart_subtotal - (cart_subtotal / (1 + tax_rate))
 
     # Get shipping settings from database
     try:
@@ -221,18 +221,34 @@ def cart_context(request):
         shipping_fee_amman = site_settings.shipping_fee_amman
         shipping_fee_other = site_settings.shipping_fee_other
         free_shipping_threshold = site_settings.free_shipping_threshold
+        pickup_enabled = getattr(site_settings, 'pickup_enabled', False)
     except Exception:
         # Fallback to defaults if settings not available
         shipping_enabled = True
         shipping_fee_amman = Decimal('2.00')
         shipping_fee_other = Decimal('3.00')
         free_shipping_threshold = Decimal('0.00')
+        pickup_enabled = False
 
-    # Get selected city from session (default to Amman)
+    # Get delivery method and selected city from session
+    delivery_method = request.session.get('delivery_method', 'pickup')
     selected_city = request.session.get('shipping_city', 'amman')
 
+    # Auto-select first branch if pickup and no branch chosen
+    if delivery_method == 'pickup' and not request.session.get('pickup_branch_id'):
+        try:
+            from core.models import Branch
+            first_branch = Branch.objects.filter(is_active=True).first()
+            if first_branch:
+                request.session['pickup_branch_id'] = first_branch.id
+                request.session.modified = True
+        except Exception:
+            pass
+
     # Calculate shipping
-    if has_physical and cart_subtotal > 0 and shipping_enabled:
+    if delivery_method == 'pickup':
+        cart_shipping = Decimal('0.00')
+    elif has_physical and cart_subtotal > 0 and shipping_enabled:
         # Check free shipping threshold
         if free_shipping_threshold > 0 and cart_subtotal >= free_shipping_threshold:
             cart_shipping = Decimal('0.00')
@@ -375,8 +391,8 @@ def cart_context(request):
     # Calculate subtotal after coupon (for display)
     cart_subtotal_after_coupon = cart_subtotal - coupon_discount
 
-    # Recalculate tax after coupon discount
-    cart_tax_after_coupon = cart_subtotal_after_coupon * tax_rate if cart_subtotal_after_coupon > 0 and not has_digital else Decimal('0.00')
+    # Recalculate tax after coupon discount (extract from tax-inclusive amount)
+    cart_tax_after_coupon = (cart_subtotal_after_coupon - (cart_subtotal_after_coupon / (1 + tax_rate))) if cart_subtotal_after_coupon > 0 and not has_digital else Decimal('0.00')
 
     # Prepare summary data
     cart_summary = {
@@ -441,6 +457,11 @@ def cart_context(request):
         'shipping_fee_other': shipping_fee_other,
         'selected_shipping_city': selected_city,
         'free_shipping_threshold': free_shipping_threshold,
+
+        # Pickup info
+        'pickup_enabled': pickup_enabled,
+        'delivery_method': delivery_method,
+        'pickup_branch_id': request.session.get('pickup_branch_id'),
 
         # Messages for UI
         'cart_messages': {

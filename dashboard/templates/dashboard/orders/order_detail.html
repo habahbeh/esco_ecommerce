@@ -77,8 +77,21 @@
                 {% endif %}
             </div>
 
-            <!-- عنوان الشحن -->
+            <!-- عنوان الشحن / الاستلام -->
             <div class="col-md-3">
+                {% if order.delivery_method == 'pickup' %}
+                <h6 class="text-primary mb-3"><i class="fas fa-store me-1"></i> {% trans 'استلام من الفرع' %}</h6>
+                {% if order.pickup_branch %}
+                <address class="mb-0">
+                    <i class="fas fa-building text-muted me-1"></i><strong>{% if LANGUAGE_CODE == 'en' and order.pickup_branch.name_en %}{{ order.pickup_branch.name_en }}{% else %}{{ order.pickup_branch.name }}{% endif %}</strong><br>
+                    {% if order.pickup_branch.address %}<i class="fas fa-map-marker-alt text-muted me-1"></i>{% if LANGUAGE_CODE == 'en' and order.pickup_branch.address_en %}{{ order.pickup_branch.address_en }}{% else %}{{ order.pickup_branch.address }}{% endif %}<br>{% endif %}
+                    {% if order.pickup_branch.phone %}<i class="fas fa-phone text-muted me-1"></i>{{ order.pickup_branch.phone }}<br>{% endif %}
+                    {% if order.pickup_branch.working_hours %}<i class="fas fa-clock text-muted me-1"></i>{% if LANGUAGE_CODE == 'en' and order.pickup_branch.working_hours_en %}{{ order.pickup_branch.working_hours_en }}{% else %}{{ order.pickup_branch.working_hours }}{% endif %}{% endif %}
+                </address>
+                {% else %}
+                <span class="text-muted">{% trans 'لم يتم تحديد الفرع' %}</span>
+                {% endif %}
+                {% else %}
                 <h6 class="text-primary mb-3"><i class="fas fa-truck me-1"></i> {% trans 'عنوان الشحن' %}</h6>
                 <address class="mb-0">
                     <i class="fas fa-map-marker-alt text-muted me-1"></i>{{ order.shipping_address }}<br>
@@ -86,6 +99,7 @@
                     <i class="fas fa-globe text-muted me-1"></i>{{ order.shipping_country }}
                     {% if order.shipping_postal_code %}<br><i class="fas fa-envelope text-muted me-1"></i>{{ order.shipping_postal_code }}{% endif %}
                 </address>
+                {% endif %}
             </div>
 
             <!-- معلومات الدفع -->

@@ -3,12 +3,13 @@
 {% load i18n %}
 {#{% get_current_language as CURRENT_LANGUAGE %}#}
 {% get_current_language as LANGUAGE_CODE %}
-                   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.11.0/css/flag-icons.min.css"/>
+                   <link rel="preload" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.11.0/css/flag-icons.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'"/>
+                   <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.11.0/css/flag-icons.min.css"/></noscript>
 
 <!-- Modern Header -->
 <header class="modern-header" id="header">
     <div class="header-wrapper " >
-        <div class="container" style="padding-bottom: 10px;">
+        <div class="container pb-2">
 
 
             <div class="nav-container ">
@@ -39,7 +40,7 @@
                 <div class="header-actions">
                     <!-- Account Dropdown -->
                     <div class="dropdown">
-                        <a href="#" class="action-btn" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a href="#" class="action-btn" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="{% trans 'الحساب' %}">
                             <i class="fas fa-user"></i>
                             <span>
                                 {% if user.is_authenticated %}
@@ -69,7 +70,7 @@
 
                     <!-- Cart -->
                     <div class="cart-widget" >
-                        <a href="{% url 'cart:cart_detail' %}" class="action-btn cart-btn">
+                        <a href="{% url 'cart:cart_detail' %}" class="action-btn cart-btn" aria-label="{% trans 'السلة' %}">
                             <i class="fas fa-shopping-cart"></i>
                             <span>{% trans "السلة" %}</span>
                             {% if cart_count > 0 %}
@@ -130,7 +131,7 @@
 {#                                {% if CURRENT_LANGUAGE == 'ar' %}العربية{% else %}English{% endif %}#}
 {#                            </span>#}
 {#                        </button>#}
-                    <button class="action-btn lang-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <button class="action-btn lang-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="{% trans 'تغيير اللغة' %}">
     <span class="language-icon">
         {% get_current_language as CURRENT_LANGUAGE %}
         {% if CURRENT_LANGUAGE == 'ar' %}
@@ -145,13 +146,13 @@
     <!-- أيقونة سهم للإشارة إلى القائمة المنسدلة - تظهر فقط في الموبايل -->
     <i class="fas fa-globe d-inline d-md-none ms-1"></i>
 </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
+                        <ul class="dropdown-menu dropdown-menu-end" style="z-index:1060;">
                             {% get_current_language as CURRENT_LANGUAGE %}
                             {% get_available_languages as AVAILABLE_LANGUAGES %}
                             {% get_language_info_list for AVAILABLE_LANGUAGES as languages %}
                             {% for language in languages %}
                                 <li>
-                                    <form action="{% url 'set_language' %}" method="post" style="display: inline;">
+                                    <form action="{% url 'set_language' %}" method="post" class="d-inline">
                                         {% csrf_token %}
                                         <!-- الحل: استخدام template logic لتنظيف المسار -->
                                         {% if request.path|slice:":3" == "/ar" %}
@@ -204,7 +205,7 @@
 
         <!-- Desktop Navigation -->
         <nav class="main-nav d-none d-lg-block">
-            <div class="container">
+            <div class="container-fluid px-3">
                 <ul class="nav-menu">
                     <li><a href="{% url 'core:home' %}" class="{% if request.path == '/' %}active{% endif %}"><i class="fas fa-home me-2"></i>{% trans "الرئيسية" %}</a></li>
                     <li><a href="{% url 'products:category_list' %}" class="{% if '/categories/' in request.path %}active{% endif %}"><i class="fas fa-th-large me-2"></i>{% trans "التصنيفات" %}</a></li>
@@ -212,6 +213,7 @@
                     <li><a href="{% url 'products:product_list' %}" class="{% if request.path == '/products/' or request.path == '/products' %}active{% endif %}"><i class="fas fa-th-large me-2"></i>{% trans "المنتجات" %}</a></li>
                     <li><a href="{% url 'products:special_offers' %}" class="{% if '/products/offers/' in request.path %}active{% endif %}"><i class="fas fa-tags me-2"></i>{% trans "العروض الخاصة" %}</a></li>
                     <li><a href="{% url 'events:event_list' %}" class="{% if '/events/' in request.path %}active{% endif %}"><i class="fas fa-calendar-alt me-2"></i>{% trans "الفعاليات" %}</a></li>
+                    <li><a href="{% url 'blog:post_list' %}" class="{% if '/blog/' in request.path %}active{% endif %}"><i class="fas fa-blog me-2"></i>{% trans "المدونة" %}</a></li>
                     <li>
                         <a href="{% if CURRENT_LANGUAGE == 'en' %}{% if site_settings.catalog_en %}{{ site_settings.catalog_en.url }}{% else %}/media/pdf/ESCO-Catalog-English.pdf{% endif %}{% else %}{% if site_settings.catalog_ar %}{{ site_settings.catalog_ar.url }}{% else %}/media/pdf/ESCO-Catalog-Arabic.pdf{% endif %}{% endif %}"
                            target="_blank">
@@ -264,6 +266,7 @@
         <li><a href="{% url 'products:special_offers' %}"><i class="fas fa-tags"></i>{% trans "العروض الخاصة" %}</a>
         </li>
         <li><a href="{% url 'events:event_list' %}"><i class="fas fa-calendar-alt"></i>{% trans "الفعاليات" %}</a></li>
+        <li><a href="{% url 'blog:post_list' %}"><i class="fas fa-blog"></i>{% trans "المدونة" %}</a></li>
         <li>
             <a href="{% if CURRENT_LANGUAGE == 'en' %}{% if site_settings.catalog_en %}{{ site_settings.catalog_en.url }}{% else %}/media/pdf/ESCO-Catalog-English.pdf{% endif %}{% else %}{% if site_settings.catalog_ar %}{{ site_settings.catalog_ar.url }}{% else %}/media/pdf/ESCO-Catalog-Arabic.pdf{% endif %}{% endif %}"
                target="_blank">
@@ -453,17 +456,30 @@ html[dir="rtl"] .cart-dropdown::before {
 
     .logo-wrapper1 {
     position: absolute;
-    top: 30%;
+    top: 50%;
     left: 20px;
     transform: translateY(-50%);
     z-index: 1045;
-    {#padding: 12px;#}
-    border-radius: 8px ;
-    min-width: 160px;
+    padding: 10px 16px;
+    border-radius: 12px;
     display: flex;
+    align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
-    border: 1px solid var(--bs-primary);
+    background: #fff;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.06);
+}
+    .logo-wrapper1:hover {
+    box-shadow: 0 6px 28px rgba(0,0,0,0.14), 0 2px 6px rgba(0,0,0,0.08);
+}
+    .logo-wrapper1 img {
+    max-height: 70px;
+    width: auto;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+    .logo-wrapper1:hover img {
+    transform: scale(1.03);
 }
     html[dir="rtl"] .logo-wrapper1 {
     left: auto;
@@ -471,38 +487,33 @@ html[dir="rtl"] .cart-dropdown::before {
 }
 
     .nav-container {
-    padding-left: 180px;
+    padding-left: 200px;
 }
 
 html[dir="rtl"] .nav-container {
     padding-left: 0;
-    padding-right: 180px;
+    padding-right: 200px;
 }
 
 /* Responsive adjustments */
 @media (max-width: 991.98px) {
     .logo-wrapper1 {
-        padding: 12px;
+        padding: 6px 10px;
         left: 10px;
-        min-width: auto;
-        top: 45%;
+        border-radius: 10px;
     }
-
+    .logo-wrapper1 img {
+        max-height: 48px;
+    }
     html[dir="rtl"] .logo-wrapper1 {
         right: 10px;
     }
-
     .nav-container {
-        padding-left: 90px;
+        padding-left: 100px;
     }
-
     html[dir="rtl"] .nav-container {
         padding-left: 0;
-        padding-right: 90px;
-    }
-
-    .logo-wrapper1 img {
-        height: 80px;
+        padding-right: 100px;
     }
 }
 
@@ -510,65 +521,44 @@ html[dir="rtl"] .nav-container {
     .logo-wrapper1 {
         left: 40px;
     }
-
     html[dir="rtl"] .logo-wrapper1 {
         right: 40px;
     }
-
     .nav-container {
-        padding-left: 200px;
+        padding-left: 220px;
     }
-
     html[dir="rtl"] .nav-container {
         padding-left: 0;
-        padding-right: 200px;
+        padding-right: 220px;
     }
 }
 
-
-    /* iPhone and small mobile devices */
+/* iPhone and small mobile devices */
 @media screen and (max-width: 576px) {
     .logo-wrapper1 {
-        left: 10px;
-        padding: 5px;
-       /* max-width: 80px;*/
+        left: 8px;
+        padding: 4px 8px;
+        border-radius: 8px;
     }
-
-    html[dir="rtl"] .logo-wrapper1 {
-        right: 10px;
-    }
-
     .logo-wrapper1 img {
         max-height: 35px;
     }
-
-    .nav-container {
-        padding-left: 100px;
+    html[dir="rtl"] .logo-wrapper1 {
+        right: 8px;
     }
-
+    .nav-container {
+        padding-left: 90px;
+    }
     html[dir="rtl"] .nav-container {
         padding-left: 0;
-        padding-right: 100px;
+        padding-right: 90px;
     }
 }
 
-/* Medium mobile devices (iPhone Plus sizes) */
+/* Medium mobile devices */
 @media screen and (min-width: 577px) and (max-width: 767px) {
-    .logo-wrapper1 {
-        {#max-width: 100px;#}
-    }
-
     .logo-wrapper1 img {
-        max-height: 50px;
-    }
-}
-
-/* Fix for iOS Safari specific issues */
-@supports (-webkit-touch-callout: none) {
-    .logo-wrapper1 {
-        /* iOS Safari specific fixes */
-        transform: translateY(-50%) translateZ(0);
-        -webkit-transform: translateY(-50%) translateZ(0);
+        max-height: 42px;
     }
 }
 

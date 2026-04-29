@@ -1,0 +1,28 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "حذف الفرع" %}{% endblock %}
+{% block page_title %}{% trans "حذف الفرع" %}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_home' %}">{% trans "الرئيسية" %}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_branches' %}">{% trans "إدارة الفروع" %}</a></li>
+{% endblock %}
+{% block current_page %}{% trans "حذف الفرع" %}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
+        <h4>{% trans "هل أنت متأكد من حذف هذا الفرع؟" %}</h4>
+        <p class="text-muted mb-4">{{ branch.name }} {% if branch.name_en %}({{ branch.name_en }}){% endif %}</p>
+
+        <form method="post">
+            {% csrf_token %}
+            <a href="{% url 'dashboard:dashboard_branches' %}" class="btn btn-secondary me-2">{% trans "إلغاء" %}</a>
+            <button type="submit" class="btn btn-danger">{% trans "حذف" %}</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

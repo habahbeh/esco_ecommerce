@@ -1,8 +1,23 @@
 {% extends 'core/base.html' %}
 {% load static %}
 {% load i18n %}
+{% load seo_tags %}
 
-{% block title %}{{ site_settings.site_name|default:"ESCO" }} - {% trans "معدات صناعية عالية الجودة" %}{% endblock %}
+{% block title %}{{ site_settings.site_name|default:"ESCO" }} | {% trans "المخازن الهندسية - أكبر متجر عدد صناعية وأدوات هندسية في الأردن" %}{% endblock %}
+
+{% block meta_description %}{% trans "شركة المخازن الهندسية (ESCO) أكبر متجر للعدد الصناعية والأدوات الهندسية في الأردن. توتال، بوش، ماكيتا، ديوالت. شحن سريع وأسعار منافسة." %}{% endblock %}
+
+{% block meta_keywords %}المخازن الهندسية, شركة المخازن الهندسية, العدد الصناعية, العدد الصناعية الأردن, أدوات هندسية, عدد صناعية الأردن, أدوات يدوية عمان, معدات بناء, دريل شحن, صاروخ كهربائي, أدوات كهربائية, معدات لحام, أدوات سباكة, عدد نجارة, معدات سلامة, إنارة LED, مضخة مياه, ESCO, Engineering Stores, power tools jordan, hand tools amman, TOTAL, Bosch, Makita, DeWalt, Milwaukee{% endblock %}
+
+{% block og_tags %}
+{% og_meta_tags title="المخازن الهندسية ESCO | أكبر متجر عدد صناعية في الأردن" description="شركة المخازن الهندسية (ESCO) - أكبر متجر للعدد الصناعية والأدوات الهندسية في الأردن. توتال، بوش، ماكيتا، ديوالت. شحن سريع وأسعار منافسة." %}
+{% endblock %}
+
+{% block extra_meta %}
+{% if slider_items %}
+<link rel="preload" as="image" href="{{ slider_items.0.image.url }}" fetchpriority="high">
+{% endif %}
+{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -844,6 +859,31 @@
         transform: scale(1.1);
     }
 
+    .partner-name-text {
+        display: inline-block;
+        padding: 0.5rem 1.5rem;
+        background: #f0f0f0;
+        border-radius: 8px;
+        font-weight: 600;
+        color: #555;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+    .partner-name-text:hover {
+        background: var(--bs-primary);
+        color: white;
+    }
+
+    .product-brand-tag {
+        font-size: 0.8rem;
+        color: var(--bs-primary);
+        margin-bottom: 0.5rem;
+    }
+    .product-brand-tag i {
+        margin-inline-end: 0.25rem;
+        font-size: 0.7rem;
+    }
+
     /* Animations */
     @keyframes fadeInUp {
         to {
@@ -873,6 +913,13 @@
     padding: 20px;
     border-radius: 5px;
     bottom: 20%;
+    color: #fff;
+}
+
+.carousel-caption h2,
+.carousel-caption h3,
+.carousel-caption p {
+    color: #fff;
 }
 
 .slider-buttons {
@@ -882,10 +929,123 @@
 .slider-buttons .btn {
     margin: 0 5px;
 }
+
+.offers-section {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+}
+.offers-title, .offers-subtitle {
+    color: #bf360c;
+}
+.offers-price {
+    color: #bf360c;
+}
+.offers-cart-icon {
+    background: #bf360c;
+}
+.offers-view-all {
+    background: #bf360c;
+    color: white;
+    border-radius: 50px;
+    padding: 0.75rem 2.5rem;
+}
+.offers-view-all:hover {
+    background: #9c2a06;
+    color: white;
+}
+.category-btn-white {
+    color: white;
+}
+
+/* ===== Dark Mode ===== */
+[data-bs-theme="dark"] .features-section {
+    background: linear-gradient(135deg, var(--bs-body-bg) 0%, var(--bs-tertiary-bg) 100%);
+}
+[data-bs-theme="dark"] .feature-box {
+    background: var(--bs-body-bg);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+[data-bs-theme="dark"] .feature-box:hover {
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+[data-bs-theme="dark"] .feature-title {
+    color: var(--bs-body-color);
+}
+[data-bs-theme="dark"] .feature-description {
+    color: var(--bs-secondary-color);
+}
+[data-bs-theme="dark"] .products-section {
+    background: var(--bs-tertiary-bg);
+}
+[data-bs-theme="dark"] .product-tab {
+    background: var(--bs-body-bg);
+    color: var(--bs-body-color);
+}
+[data-bs-theme="dark"] .product-tab:hover {
+    border-color: var(--bs-primary);
+    color: var(--bs-primary);
+}
+[data-bs-theme="dark"] .product-tab.active {
+    background: var(--bs-primary);
+    color: white;
+}
+[data-bs-theme="dark"] .product-card-enhanced {
+    background: var(--bs-body-bg);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+}
+[data-bs-theme="dark"] .product-card-enhanced:hover {
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+}
+[data-bs-theme="dark"] .product-image-wrapper {
+    background: var(--bs-tertiary-bg);
+}
+[data-bs-theme="dark"] .product-name {
+    color: var(--bs-body-color);
+}
+[data-bs-theme="dark"] .product-wishlist {
+    background: var(--bs-tertiary-bg);
+    color: var(--bs-body-color);
+}
+[data-bs-theme="dark"] .quick-action-btn {
+    background: var(--bs-tertiary-bg);
+    color: var(--bs-body-color);
+}
+[data-bs-theme="dark"] .quick-action-btn:hover {
+    background: var(--bs-primary);
+    color: white;
+}
+[data-bs-theme="dark"] .testimonials-section {
+    background: var(--bs-tertiary-bg);
+}
+[data-bs-theme="dark"] .testimonial-card {
+    background: var(--bs-body-bg);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+[data-bs-theme="dark"] .testimonial-text {
+    color: var(--bs-secondary-color);
+}
+[data-bs-theme="dark"] .author-name {
+    color: var(--bs-body-color);
+}
+[data-bs-theme="dark"] .partners-section {
+    background: var(--bs-body-bg);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+[data-bs-theme="dark"] .partner-name-text {
+    background: var(--bs-tertiary-bg);
+    color: var(--bs-body-color);
+}
+[data-bs-theme="dark"] .offers-section {
+    background: linear-gradient(135deg, rgba(255, 243, 224, 0.08) 0%, rgba(255, 224, 178, 0.08) 100%);
+}
+[data-bs-theme="dark"] .categories-section {
+    background: var(--bs-body-bg);
+}
 </style>
 {% endblock %}
 
 {% block content %}
+<h1 class="visually-hidden">{% trans "المخازن الهندسية ESCO - أكبر متجر عدد صناعية وأدوات هندسية في الأردن" %}</h1>
+
 <!-- Hero Section -->
 <section class="hero-carousel">
 
@@ -904,10 +1064,10 @@
     <div class="carousel-inner" >
         {% for item in slider_items %}
         <div class="carousel-item {% if forloop.first %}active{% endif %}">
-            <img src="{{ item.image.url }}" class="d-block w-100" alt="{% if LANGUAGE_CODE == 'en' %}{{ item.title_en|default:item.title }}{% else %}{{ item.title }}{% endif %}">
+            <img src="{{ item.image.url }}" class="d-block w-100" alt="{% if LANGUAGE_CODE == 'en' %}{{ item.title_en|default:item.title }}{% else %}{{ item.title }}{% endif %}" width="1920" height="600" {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>
             <div class="carousel-caption">
                 <h2>{% if LANGUAGE_CODE == 'en' %}{{ item.title_en|default:item.title }}{% else %}{{ item.title }}{% endif %}</h2>
-                <h5>{% if LANGUAGE_CODE == 'en' %}{{ item.subtitle_en|default:item.subtitle }}{% else %}{{ item.subtitle }}{% endif %}</h5>
+                <h3>{% if LANGUAGE_CODE == 'en' %}{{ item.subtitle_en|default:item.subtitle }}{% else %}{{ item.subtitle }}{% endif %}</h3>
                 <p>{% if LANGUAGE_CODE == 'en' %}{{ item.description_en|default:item.description }}{% else %}{{ item.description }}{% endif %}</p>
                 <div class="slider-buttons">
                     <a href="{{ item.primary_button_url }}" class="btn btn-primary">{{ item.primary_button_text }}</a>
@@ -1042,13 +1202,13 @@
                 <div class="category-card" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
                     {% if category.image %}
                         <img src="{{ category.image.url }}" class="category-image" alt="{% if LANGUAGE_CODE == 'en' %}{{ category.name_en|default:category.name }}{% else %}{{ category.name }}{% endif %}"
-                             onerror="this.style.display='none'">
+                             width="400" height="300" loading="lazy" onerror="this.style.display='none'">
                     {% endif %}
                     <div class="category-overlay">
                         <h3 class="category-name">{% if LANGUAGE_CODE == 'en' %}{{ category.name_en|default:category.name }}{% else %}{{ category.name }}{% endif %}</h3>
                         <div class="category-bottom">
                             <p class="category-count">{{ category.products.count }} {% trans "منتج" %}</p>
-                            <a href="{% url 'products:category_products' category.slug %}" class="category-btn" style="color: white">
+                            <a href="{% url 'products:category_products' category.slug %}" class="category-btn category-btn-white">
                                 {% trans "استكشف المنتجات" %} <i class="fas fa-arrow-right ms-2"></i>
                             </a>
                         </div>
@@ -1065,72 +1225,41 @@
     </div>
 </section>
 
-<!-- Products Section -->
-<section class="products-section" hidden>
+<!-- New Arrivals Section -->
+{% if latest_products %}
+<section class="products-section" id="new-arrivals">
     <div class="container">
         <div class="section-title text-center mb-4" data-aos="fade-up">
-            <h2 class="display-4 fw-bold mb-3">{% trans "المنتجات المميزة" %}</h2>
-            <p class="lead text-muted">{% trans "اختيارات مميزة من أفضل المنتجات لدينا" %}</p>
+            <h2 class="display-4 fw-bold mb-3">{% trans "وصل حديثاً" %}</h2>
+            <p class="lead text-muted">{% trans "أحدث العدد والأدوات الصناعية واليدوية في الأردن" %}</p>
         </div>
 
-        <!-- Product Tabs -->
-        <div class="product-tabs" data-aos="fade-up">
-            <button class="product-tab active" data-category="featured">{% trans "الأكثر مبيعاً" %}</button>
-            <button class="product-tab" data-category="new">{% trans "وصل حديثاً" %}</button>
-            <button class="product-tab" data-category="offers">{% trans "عروض خاصة" %}</button>
-        </div>
-
-        <!-- Products Grid -->
         <div class="products-grid">
-            {% for product in featured_products|slice:":8" %}
+            {% for product in latest_products|slice:":8" %}
                 <div class="product-card-enhanced" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
                     <div class="product-badges">
-                        {% if product.has_discount %}
-                            <span class="product-badge">{{ product.discount_percentage }}% {% trans "خصم" %}</span>
-                        {% elif product.is_new %}
-                            <span class="product-badge bg-success">{% trans "جديد" %}</span>
-                        {% endif %}
-                        <button class="product-wishlist wishlist-btn" data-product-id="{{ product.id }}">
+                        <span class="product-badge bg-success">{% trans "جديد" %}</span>
+                        <button class="product-wishlist wishlist-btn" data-product-id="{{ product.id }}" aria-label="{% trans 'أضف للمفضلة' %}">
                             <i class="far fa-heart"></i>
                         </button>
                     </div>
-
-                    <div class="product-image-wrapper">
-                        {% if product.images.exists %}
-                            <img src="{{ product.images.first.image.url }}" class="product-main-image" alt="{{ product.name }}">
-                        {% else %}
-                            <img src="{{ product.default_image.url }}" class="product-main-image" alt="{{ product.name }}">
+                    <a href="{% url 'products:product_detail' product.slug %}" class="product-image-wrapper d-block">
+                        {% if product.default_image %}
+                            <img src="{{ product.default_image.image.url }}" class="product-main-image" width="300" height="300" alt="{{ product.name }} - {% trans 'عدد وأدوات في الأردن' %}" loading="lazy">
                         {% endif %}
-
-                        <div class="product-quick-actions">
-                            <button class="quick-action-btn quick-view-btn" data-product-id="{{ product.id }}">
-                                <i class="fas fa-eye me-2"></i> {% trans "عرض سريع" %}
-                            </button>
-                            <button class="quick-action-btn compare-btn" data-product-id="{{ product.id }}">
-                                <i class="fas fa-exchange-alt me-2"></i> {% trans "مقارنة" %}
-                            </button>
-                        </div>
-                    </div>
-
+                    </a>
                     <div class="product-details">
+                        {% if product.category %}
                         <p class="product-category">{% if LANGUAGE_CODE == 'en' %}{{ product.category.name_en|default:product.category.name }}{% else %}{{ product.category.name }}{% endif %}</p>
+                        {% endif %}
                         <h4 class="product-name">
-                            <a href="{% url 'products:product_detail' product.slug %}" class="text-dark text-decoration-none">
+                            <a href="{% url 'products:product_detail' product.slug %}" class="text-body text-decoration-none">
                                 {{ product.name|truncatechars:50 }}
                             </a>
                         </h4>
-
-                        <div class="product-rating">
-                            <div class="stars">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star-half-alt"></i>
-                            </div>
-                            <span class="rating-count">(125)</span>
-                        </div>
-
+                        {% if product.brand %}
+                        <p class="product-brand-tag"><i class="fas fa-tag"></i> {{ product.brand.name }}</p>
+                        {% endif %}
                         <div class="product-price-wrapper">
                             <div class="product-price">
                                 {% if product.is_price_visible %}
@@ -1142,24 +1271,167 @@
                                     <span class="current-price">{% trans "اتصل للسعر" %}</span>
                                 {% endif %}
                             </div>
-
-                            <button class="add-to-cart-icon" onclick="addToCart({{ product.id }})">
-                                <i class="fas fa-shopping-cart"></i>
-                            </button>
+                            <a href="{% url 'products:product_detail' product.slug %}" class="add-to-cart-icon" aria-label="{% trans 'عرض المنتج' %}">
+                                <i class="fas fa-eye"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
             {% endfor %}
         </div>
 
-        <div class="text-center mt-5">
-            <a href="{% url 'products:product_list' %}" class="btn btn-outline-primary btn-lg">
-                {% trans "عرض جميع المنتجات" %} <i class="fas fa-arrow-right ms-2"></i>
+        <div class="text-center mt-4">
+            <a href="{% url 'products:new_products' %}" class="btn btn-outline-primary btn-lg">
+                {% trans "عرض جميع المنتجات الجديدة" %} <i class="fas fa-arrow-left ms-2"></i>
             </a>
         </div>
     </div>
 </section>
+{% endif %}
 
+<!-- Best Sellers Section -->
+{% if bestseller_products %}
+<section class="products-section bg-body" id="bestsellers">
+    <div class="container">
+        <div class="section-title text-center mb-4" data-aos="fade-up">
+            <h2 class="display-4 fw-bold mb-3">{% trans "الأكثر مبيعاً" %}</h2>
+            <p class="lead text-muted">{% trans "أدوات ومعدات احترافية يثق بها عملاؤنا في عمان والأردن" %}</p>
+        </div>
+
+        <div class="products-grid">
+            {% for product in bestseller_products|slice:":8" %}
+                <div class="product-card-enhanced" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
+                    <div class="product-badges">
+                        {% if product.has_discount %}
+                            <span class="product-badge">{{ product.discount_percentage }}% {% trans "خصم" %}</span>
+                        {% endif %}
+                        <button class="product-wishlist wishlist-btn" data-product-id="{{ product.id }}" aria-label="{% trans 'أضف للمفضلة' %}">
+                            <i class="far fa-heart"></i>
+                        </button>
+                    </div>
+                    <a href="{% url 'products:product_detail' product.slug %}" class="product-image-wrapper d-block">
+                        {% if product.default_image %}
+                            <img src="{{ product.default_image.image.url }}" class="product-main-image" width="300" height="300" alt="{{ product.name }} - {% trans 'شراء أونلاين الأردن' %}" loading="lazy">
+                        {% endif %}
+                    </a>
+                    <div class="product-details">
+                        {% if product.category %}
+                        <p class="product-category">{% if LANGUAGE_CODE == 'en' %}{{ product.category.name_en|default:product.category.name }}{% else %}{{ product.category.name }}{% endif %}</p>
+                        {% endif %}
+                        <h4 class="product-name">
+                            <a href="{% url 'products:product_detail' product.slug %}" class="text-body text-decoration-none">
+                                {{ product.name|truncatechars:50 }}
+                            </a>
+                        </h4>
+                        {% if product.brand %}
+                        <p class="product-brand-tag"><i class="fas fa-tag"></i> {{ product.brand.name }}</p>
+                        {% endif %}
+                        <div class="product-price-wrapper">
+                            <div class="product-price">
+                                {% if product.is_price_visible %}
+                                    <span class="current-price">{{ product.current_price|floatformat:2 }} {% trans "د.أ" %}</span>
+                                    {% if product.has_discount %}
+                                        <span class="original-price">{{ product.base_price|floatformat:2 }}</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="current-price">{% trans "اتصل للسعر" %}</span>
+                                {% endif %}
+                            </div>
+                            <a href="{% url 'products:product_detail' product.slug %}" class="add-to-cart-icon" aria-label="{% trans 'عرض المنتج' %}">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="{% url 'products:best_sellers' %}" class="btn btn-outline-primary btn-lg">
+                {% trans "عرض الأكثر مبيعاً" %} <i class="fas fa-arrow-left ms-2"></i>
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Special Offers Section -->
+{% if discounted_products %}
+<section class="products-section offers-section" id="special-offers">
+    <div class="container">
+        <div class="section-title text-center mb-4" data-aos="fade-up">
+            <h2 class="display-4 fw-bold mb-3 offers-title">{% trans "عروض وخصومات" %}</h2>
+            <p class="lead offers-subtitle">{% trans "أفضل الأسعار على العدد والأدوات الصناعية - وفّر أكثر مع إسكو" %}</p>
+        </div>
+
+        <div class="products-grid">
+            {% for product in discounted_products|slice:":8" %}
+                <div class="product-card-enhanced" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
+                    <div class="product-badges">
+                        <span class="product-badge bg-danger">{{ product.discount_percentage|floatformat:0 }}% {% trans "خصم" %}</span>
+                        <button class="product-wishlist wishlist-btn" data-product-id="{{ product.id }}" aria-label="{% trans 'أضف للمفضلة' %}">
+                            <i class="far fa-heart"></i>
+                        </button>
+                    </div>
+                    <a href="{% url 'products:product_detail' product.slug %}" class="product-image-wrapper d-block">
+                        {% if product.default_image %}
+                            <img src="{{ product.default_image.image.url }}" class="product-main-image" width="300" height="300" alt="{{ product.name }} - {% trans 'عروض أدوات الأردن' %}" loading="lazy">
+                        {% endif %}
+                    </a>
+                    <div class="product-details">
+                        {% if product.category %}
+                        <p class="product-category">{% if LANGUAGE_CODE == 'en' %}{{ product.category.name_en|default:product.category.name }}{% else %}{{ product.category.name }}{% endif %}</p>
+                        {% endif %}
+                        <h4 class="product-name">
+                            <a href="{% url 'products:product_detail' product.slug %}" class="text-body text-decoration-none">
+                                {{ product.name|truncatechars:50 }}
+                            </a>
+                        </h4>
+                        <div class="product-price-wrapper">
+                            <div class="product-price">
+                                <span class="current-price offers-price">{{ product.current_price|floatformat:2 }} {% trans "د.أ" %}</span>
+                                <span class="original-price">{{ product.base_price|floatformat:2 }}</span>
+                            </div>
+                            <a href="{% url 'products:product_detail' product.slug %}" class="add-to-cart-icon offers-cart-icon" aria-label="{% trans 'عرض المنتج' %}">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="{% url 'products:special_offers' %}" class="btn btn-lg offers-view-all">
+                {% trans "عرض جميع العروض" %} <i class="fas fa-arrow-left ms-2"></i>
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Brands Section -->
+{% if brands %}
+<section class="partners-section" id="brands">
+    <div class="container">
+        <div class="section-title text-center mb-4" data-aos="fade-up">
+            <h2 class="fw-bold mb-2">{% trans "تسوق حسب العلامة التجارية" %}</h2>
+            <p class="text-muted">{% trans "وكلاء معتمدون لأفضل العلامات التجارية العالمية في الأردن" %}</p>
+        </div>
+        <div class="partners-slider" data-aos="fade-up">
+            {% for brand in brands %}
+                <a href="{% url 'products:brand_products' brand.slug %}" title="{{ brand.name }} - {% trans 'عدد وأدوات' %}">
+                    {% if brand.logo %}
+                        <img src="{{ brand.logo.url }}" class="partner-logo" alt="{{ brand.name }}" width="120" height="60" loading="lazy">
+                    {% else %}
+                        <span class="partner-name-text">{{ brand.name }}</span>
+                    {% endif %}
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
 
 <!-- Stats Section -->
 <section class="stats-section" hidden>
@@ -1200,7 +1472,65 @@
     </div>
 </section>
 
+<!-- Latest Blog Articles -->
+{% if latest_blog_posts %}
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-4">
+            <h2 class="fw-bold"><i class="fas fa-blog me-2 text-primary"></i>{% trans "أحدث المقالات والأدلة التقنية" %}</h2>
+            <p class="text-muted">{% trans "أدلة شراء العدد الصناعية، مقارنات المنتجات، ونصائح من خبراء ESCO" %}</p>
+        </div>
+        <div class="row g-4">
+            {% for post in latest_blog_posts %}
+            <div class="col-md-6 col-lg-4">
+                <a href="{{ post.get_absolute_url }}" class="text-decoration-none">
+                    <div class="card h-100 border-0 shadow-sm" style="transition:transform .3s,box-shadow .3s;">
+                        {% if post.featured_image %}
+                        <img src="{{ post.featured_image.url }}" class="card-img-top" style="height:180px;object-fit:cover;" alt="{% if LANGUAGE_CODE == 'en' and post.title_en %}{{ post.title_en }}{% else %}{{ post.title }}{% endif %}" loading="lazy">
+                        {% else %}
+                        <div class="card-img-top d-flex align-items-center justify-content-center" style="height:180px;background:linear-gradient(135deg,{{ post.card_icon_color|default:'#2563eb' }},{{ post.card_icon_color|default:'#2563eb' }}cc);">
+                            <i class="fas {{ post.card_icon|default:'fa-newspaper' }} fa-3x text-white opacity-75"></i>
+                        </div>
+                        {% endif %}
+                        <div class="card-body">
+                            {% if post.category %}
+                            <span class="badge bg-primary mb-2" style="font-size:.75rem;">{% if LANGUAGE_CODE == 'en' and post.category.name_en %}{{ post.category.name_en }}{% else %}{{ post.category.name }}{% endif %}</span>
+                            {% endif %}
+                            <h3 class="card-title h6 fw-bold text-body">{% if LANGUAGE_CODE == 'en' and post.title_en %}{{ post.title_en }}{% else %}{{ post.title }}{% endif %}</h3>
+                            <p class="card-text small text-muted mb-0">{% if LANGUAGE_CODE == 'en' and post.excerpt_en %}{{ post.excerpt_en|truncatewords:15 }}{% else %}{{ post.excerpt|truncatewords:15 }}{% endif %}</p>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0 small text-muted">
+                            <i class="far fa-calendar-alt me-1"></i>{{ post.published_at|date:"Y/m/d" }}
+                            <span class="mx-2">·</span>
+                            <i class="far fa-clock me-1"></i>{{ post.reading_time }} {% trans "دقائق" %}
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-4">
+            <a href="{% url 'blog:post_list' %}" class="btn btn-outline-primary px-4">
+                <i class="fas fa-arrow-left me-2"></i>{% trans "عرض جميع المقالات" %}
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
 
+<!-- SEO Content Section -->
+<section class="py-5 bg-body-secondary">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <h2 class="fw-bold mb-4">{% trans "شركة المخازن الهندسية - متجر العدد الصناعية والأدوات الهندسية في الأردن" %}</h2>
+                <p>{% trans "شركة المخازن الهندسية للتجارة والصناعة (ESCO) هي وجهتك الأولى لشراء العدد الصناعية والأدوات الهندسية في الأردن. تأسست عام 1994 في عمّان، ونوفر لك مجموعة واسعة من المنتجات الأصلية من أشهر العلامات التجارية العالمية مثل توتال (TOTAL)، بوش (Bosch)، ماكيتا (Makita)، ديوالت (DeWalt)، وميلووكي (Milwaukee)." %}</p>
+                <p>{% trans "سواء كنت تبحث عن دريل شحن، صاروخ كهربائي، أدوات لحام، معدات سلامة، خراطيم، أو أدوات سباكة ونجارة - ستجد كل ما تحتاجه من العدد الصناعية في المخازن الهندسية بأسعار منافسة وضمان على جميع المنتجات." %}</p>
+                <p>{% trans "المخازن الهندسية تقدم خدمة شحن سريع لجميع مناطق المملكة الأردنية الهاشمية مع إمكانية الدفع عند الاستلام. تصفح أقسامنا المتنوعة واستفد من العروض والخصومات المستمرة على أفضل العدد الصناعية والأدوات الهندسية." %}</p>
+            </div>
+        </div>
+    </div>
+</section>
 
 {% endblock %}
 

@@ -720,15 +720,16 @@
 
         initWishlist: function() {
             document.addEventListener('click', function(e) {
-                if (e.target.matches('.wishlist-btn')) {
+                const button = e.target.closest('.wishlist-btn');
+                if (button) {
                     e.preventDefault();
-                    const productId = e.target.dataset.productId;
-                    const isActive = e.target.classList.contains('active');
+                    const productId = button.dataset.productId;
+                    const isActive = button.classList.contains('active');
 
                     if (isActive) {
-                        ProductModule.removeFromWishlist(productId, e.target);
+                        ProductModule.removeFromWishlist(productId, button);
                     } else {
-                        ProductModule.addToWishlist(productId, e.target);
+                        ProductModule.addToWishlist(productId, button);
                     }
                 }
             });
@@ -736,20 +737,23 @@
 
         addToWishlist: async function(productId, button) {
             try {
-                const response = await fetch('/api/wishlist/add/', {
+                const response = await fetch(`/products/api/wishlist/add/${productId}/`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': this.getCSRFToken()
-                    },
-                    body: JSON.stringify({ product_id: productId })
+                    }
                 });
 
                 const data = await response.json();
 
                 if (data.success) {
                     button.classList.add('active');
-                    this.showNotification('تمت الإضافة إلى قائمة الأمنيات', 'success');
+                    const icon = button.querySelector('i');
+                    if (icon) { icon.classList.replace('far', 'fas'); }
+                    this.showNotification(data.message || 'تمت الإضافة إلى قائمة الأمنيات', 'success');
+                } else {
+                    this.showNotification(data.message || data.error || 'حدث خطأ', 'error');
                 }
             } catch (error) {
                 this.showNotification('حدث خطأ', 'error');
@@ -758,20 +762,23 @@
 
         removeFromWishlist: async function(productId, button) {
             try {
-                const response = await fetch('/api/wishlist/remove/', {
+                const response = await fetch(`/products/api/wishlist/remove/${productId}/`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': this.getCSRFToken()
-                    },
-                    body: JSON.stringify({ product_id: productId })
+                    }
                 });
 
                 const data = await response.json();
 
                 if (data.success) {
                     button.classList.remove('active');
-                    this.showNotification('تمت الإزالة من قائمة الأمنيات', 'info');
+                    const icon = button.querySelector('i');
+                    if (icon) { icon.classList.replace('fas', 'far'); }
+                    this.showNotification(data.message || 'تمت الإزالة من قائمة الأمنيات', 'info');
+                } else {
+                    this.showNotification(data.message || data.error || 'حدث خطأ', 'error');
                 }
             } catch (error) {
                 this.showNotification('حدث خطأ', 'error');

@@ -69,6 +69,43 @@ def send_order_confirmation_email(order):
         return False
 
 
+OWNER_NOTIFICATION_EMAIL = 'contact@esco.jo'
+
+
+def send_new_order_notification_email(order):
+    """
+    Send new order notification email to the company owner
+    إرسال بريد إلكتروني لإشعار صاحب الشركة بالطلب الجديد
+    """
+    try:
+        context = {
+            'order': order,
+            'site_url': get_site_url(),
+            'year': timezone.now().year,
+        }
+
+        html_content = render_to_string('emails/new_order_notification.html', context)
+        text_content = strip_tags(html_content)
+
+        subject = f'🛒 New Order #{order.order_number} - {order.full_name} - {order.grand_total} JOD'
+
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body=text_content,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[OWNER_NOTIFICATION_EMAIL],
+        )
+        email.attach_alternative(html_content, "text/html")
+        email.send(fail_silently=False)
+
+        logger.info(f'New order notification email sent to {OWNER_NOTIFICATION_EMAIL} for order #{order.order_number}')
+        return True
+
+    except Exception as e:
+        logger.error(f'Failed to send new order notification email for order #{order.order_number}: {str(e)}')
+        return False
+
+
 def send_order_status_update_email(order, old_status=None):
     """
     Send order status update email to customer

@@ -4,6 +4,10 @@
 
 {% block account_title %}{% trans "تسجيل الدخول" %}{% endblock %}
 
+{% block extra_css %}
+{{ block.super }}
+{% endblock %}
+
 {% block account_content %}
 <div class="auth-container">
     <div class="auth-header">
@@ -20,58 +24,69 @@
 
     <form method="post" class="auth-form needs-validation" novalidate>
         {% csrf_token %}
-        
+
         {% if form.non_field_errors %}
-            <div class="alert alert-danger">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>
                 {% for error in form.non_field_errors %}
                     {{ error }}
                 {% endfor %}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         {% endif %}
 
         <div class="mb-3">
-            <label for="id_username" class="form-label">{% trans "اسم المستخدم أو البريد الإلكتروني" %} *</label>
-            <input type="text" name="username" id="id_username" class="form-control" required
-                   placeholder="{% trans 'اسم المستخدم أو البريد الإلكتروني' %}" value="{{ form.username.value|default:'' }}">
+            <label for="id_username" class="form-label">
+                <i class="fas fa-user me-1 text-muted"></i>{% trans "اسم المستخدم أو البريد الإلكتروني" %} <span class="text-danger">*</span>
+            </label>
+            <input type="text" name="username" id="id_username"
+                   class="form-control {% if form.username.errors %}is-invalid{% endif %}"
+                   required autofocus
+                   placeholder="{% trans 'أدخل اسم المستخدم أو البريد الإلكتروني' %}"
+                   value="{{ form.username.value|default:'' }}">
+            {% if form.username.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.username.errors %}{{ error }}{% endfor %}
+            </div>
+            {% else %}
             <div class="invalid-feedback">
                 {% trans "يرجى إدخال اسم المستخدم أو البريد الإلكتروني" %}
             </div>
-            {% if form.username.errors %}
-            <div class="text-danger mt-1">
-                {% for error in form.username.errors %}{{ error }}{% endfor %}
-            </div>
             {% endif %}
         </div>
 
-        <div class="mb-3 position-relative">
-            <label for="id_password" class="form-label">{% trans "كلمة المرور" %} *</label>
-            <div class="input-group">
-                <input type="password" name="password" id="id_password" class="form-control" required
-                       placeholder="{% trans 'كلمة المرور' %}">
-                <button type="button" class="btn btn-outline-secondary toggle-password" data-target="id_password">
-                    <i class="fas fa-eye"></i>
-                </button>
-            </div>
-            <div class="invalid-feedback">
-                {% trans "يرجى إدخال كلمة المرور" %}
-            </div>
-            {% if form.password.errors %}
-            <div class="text-danger mt-1">
-                {% for error in form.password.errors %}{{ error }}{% endfor %}
-            </div>
-            {% endif %}
-            <div class="d-flex justify-content-end mt-2">
-                <a href="{% url 'accounts:password_reset' %}" class="text-decoration-none small">
+        <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <label for="id_password" class="form-label mb-0">
+                    <i class="fas fa-lock me-1 text-muted"></i>{% trans "كلمة المرور" %} <span class="text-danger">*</span>
+                </label>
+                <a href="{% url 'accounts:password_reset' %}" class="text-decoration-none small text-primary">
                     {% trans "نسيت كلمة المرور؟" %}
                 </a>
             </div>
+            <div class="password-wrapper mt-2">
+                <input type="password" name="password" id="id_password"
+                       class="form-control {% if form.password.errors %}is-invalid{% endif %}"
+                       required
+                       placeholder="{% trans 'أدخل كلمة المرور' %}">
+                <button type="button" class="password-toggle" data-target="id_password" aria-label="{% trans 'إظهار كلمة المرور' %}">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+            {% if form.password.errors %}
+            <div class="text-danger small mt-1">
+                {% for error in form.password.errors %}{{ error }}{% endfor %}
+            </div>
+            {% endif %}
         </div>
 
-        <div class="form-check mb-4">
-            <input class="form-check-input" type="checkbox" name="remember_me" id="id_remember_me">
-            <label class="form-check-label" for="id_remember_me">
-                {% trans "تذكرني" %}
-            </label>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="remember_me" id="id_remember_me">
+                <label class="form-check-label" for="id_remember_me">
+                    {% trans "تذكرني" %}
+                </label>
+            </div>
         </div>
 
         <button type="submit" class="btn btn-primary">

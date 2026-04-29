@@ -1,0 +1,59 @@
+{% load i18n %}
+
+<!-- Blog Categories -->
+<div class="blog-sidebar-widget mb-4 bg-body rounded shadow-sm p-3">
+    <h5 class="widget-title">
+        <i class="fas fa-folder-open me-2 text-primary"></i>{% trans "التصنيفات" %}
+    </h5>
+    <ul class="list-unstyled mb-0">
+        {% for cat in blog_categories %}
+        <li class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+            <a href="{{ cat.get_absolute_url }}" class="category-link text-decoration-none">
+                {% if cat.icon %}<i class="fas {{ cat.icon }} me-1 text-muted"></i>{% endif %}
+                {% if LANGUAGE_CODE == 'en' and cat.name_en %}{{ cat.name_en }}{% else %}{{ cat.name }}{% endif %}
+            </a>
+            <span class="badge bg-body-secondary text-body border cat-count rounded-pill">{{ cat.post_count }}</span>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+
+<!-- Recent Posts -->
+<div class="blog-sidebar-widget mb-4 bg-body rounded shadow-sm p-3">
+    <h5 class="widget-title">
+        <i class="fas fa-clock me-2 text-primary"></i>{% trans "أحدث المقالات" %}
+    </h5>
+    {% for rpost in recent_posts %}
+    <div class="d-flex align-items-start mb-2 recent-post-item">
+        {% if rpost.featured_image %}
+        <img src="{{ rpost.featured_image.url }}" alt="{{ rpost.get_display_title }}" class="rounded me-3" style="width:56px;height:56px;object-fit:cover;flex-shrink:0;">
+        {% else %}
+        <div class="rounded me-3 d-flex align-items-center justify-content-center" style="width:56px;height:56px;min-width:56px;background:{{ rpost.card_icon_color|default:'#6b7280' }}12;">
+            <i class="fas {{ rpost.card_icon|default:'fa-newspaper' }}" style="color:{{ rpost.card_icon_color|default:'#6b7280' }};"></i>
+        </div>
+        {% endif %}
+        <div>
+            <a href="{{ rpost.get_absolute_url }}" class="text-decoration-none fw-bold d-block small text-body">
+                {% if LANGUAGE_CODE == 'en' and rpost.title_en %}{{ rpost.title_en }}{% else %}{{ rpost.title }}{% endif %}
+            </a>
+            <small class="text-muted"><i class="far fa-calendar-alt me-1"></i>{{ rpost.published_at|date:"Y/m/d" }}</small>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Tags Cloud -->
+{% if popular_tags %}
+<div class="blog-sidebar-widget mb-4 bg-body rounded shadow-sm p-3">
+    <h5 class="widget-title">
+        <i class="fas fa-tags me-2 text-primary"></i>{% trans "الوسوم" %}
+    </h5>
+    <div class="d-flex flex-wrap gap-2">
+        {% for tag in popular_tags %}
+        <a href="{{ tag.get_absolute_url }}" class="tag-badge">
+            {% if LANGUAGE_CODE == 'en' and tag.name_en %}{{ tag.name_en }}{% else %}{{ tag.name }}{% endif %}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}

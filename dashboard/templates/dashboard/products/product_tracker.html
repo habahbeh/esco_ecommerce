@@ -1,0 +1,680 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "متتبع المنتجات" %}{% endblock %}
+{% block page_title %}{% trans "متتبع المنتجات" %}{% endblock %}
+{% block current_page %}{% trans "متتبع المنتجات" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tracker-stat { text-align:center; padding:1.25rem; border-radius:10px; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.06); transition:all .2s; cursor:pointer; text-decoration:none; display:block; border:2px solid transparent; }
+    .tracker-stat:hover { transform:translateY(-2px); box-shadow:0 4px 16px rgba(0,0,0,.12); }
+    .tracker-stat .num { font-size:1.8rem; font-weight:700; }
+    .tracker-stat .lbl { font-size:.82rem; color:#6c757d; margin-top:.25rem; }
+    .tracker-stat.primary .num { color:#0077c8; }
+    .tracker-stat.success .num { color:#198754; }
+    .tracker-stat.warning .num { color:#fd7e14; }
+    .tracker-stat.danger .num { color:#dc3545; }
+    .tracker-stat.info .num { color:#0dcaf0; }
+    .tracker-stat.active.primary { border-color:#0077c8; background:#f0f7ff; }
+    .tracker-stat.active.success { border-color:#198754; background:#f0fdf4; }
+    .tracker-stat.active.warning { border-color:#fd7e14; background:#fff8f0; }
+    .tracker-stat.active.danger { border-color:#dc3545; background:#fdf0f0; }
+    .tracker-stat.active.info { border-color:#0dcaf0; background:#f0fcff; }
+
+    .main-card { border-radius:10px; border:none; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+    .main-card .card-header { background:linear-gradient(135deg,#0077c8,#005a9e); color:#fff; border-radius:10px 10px 0 0 !important; }
+    .product-table th { font-size:.82rem; font-weight:600; color:#495057; border-bottom:2px solid #dee2e6; white-space:nowrap; }
+    .product-table td { font-size:.88rem; vertical-align:middle; }
+    .product-table tbody tr:hover { background:#f8f9fa; }
+    .product-name-link { font-weight:600; color:#333; text-decoration:none; }
+    .product-name-link:hover { color:#0077c8; }
+    .stock-ok { color:#198754; font-weight:600; }
+    .stock-low { color:#fd7e14; font-weight:600; }
+    .stock-out { color:#dc3545; font-weight:600; }
+
+    .filter-bar { background:#fff; border-radius:10px; padding:1rem 1.25rem; box-shadow:0 2px 8px rgba(0,0,0,.06); margin-bottom:1.5rem; }
+
+    .note-card { border-radius:10px; border:none; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+    .note-card .card-header { background:linear-gradient(135deg,#198754,#157347); color:#fff; border-radius:10px 10px 0 0 !important; }
+    .note-item { padding:.75rem 1rem; border-bottom:1px solid #f0f0f0; }
+    .note-item:last-child { border-bottom:none; }
+    .note-badge { font-size:.7rem; padding:.2em .5em; }
+    .note-content { font-size:.88rem; margin:.25rem 0; }
+    .note-meta { font-size:.75rem; color:#6c757d; }
+    .note-actions { display:flex; gap:.25rem; }
+    .note-actions .btn { padding:.15rem .4rem; font-size:.72rem; }
+
+    .add-note-form { background:#f8f9fa; border-radius:8px; padding:1rem; }
+    .product-search-result { padding:.5rem .75rem; cursor:pointer; border-bottom:1px solid #eee; }
+    .product-search-result:hover { background:#f0f7ff; }
+    #productSearchResults { max-height:200px; overflow-y:auto; border:1px solid #dee2e6; border-radius:6px; display:none; position:absolute; z-index:100; background:#fff; width:100%; }
+
+    .history-card .card-header { background:linear-gradient(135deg,#6f42c1,#5a32a3); color:#fff; border-radius:10px 10px 0 0 !important; }
+    .history-note-item { padding:.75rem 1rem; border-bottom:1px solid #f0f0f0; }
+    .history-note-item:last-child { border-bottom:none; }
+    .history-note-item.resolved { opacity:.6; }
+    .history-note-type { display:inline-flex; align-items:center; gap:.3rem; font-size:.72rem; padding:.2em .6em; border-radius:4px; font-weight:600; }
+    .history-note-type.general { background:#e9ecef; color:#495057; }
+    .history-note-type.price { background:#fff3cd; color:#856404; }
+    .history-note-type.stock { background:#cce5ff; color:#004085; }
+    .history-note-type.quality { background:#f8d7da; color:#721c24; }
+    .history-note-type.supplier { background:#e2e3e5; color:#383d41; }
+    .history-note-type.todo { background:#cce5ff; color:#004085; }
+    .history-note-content { font-size:.88rem; margin:.4rem 0 .2rem; line-height:1.5; }
+    .history-note-footer { display:flex; justify-content:space-between; align-items:center; }
+    .history-note-meta { font-size:.75rem; color:#6c757d; }
+    .history-resolved-badge { font-size:.68rem; padding:.15em .5em; background:#d4edda; color:#155724; border-radius:3px; }
+    .selected-product-name { font-weight:600; font-size:.95rem; }
+    .note-type-icon { width:14px; text-align:center; }
+
+    .changes-card .card-header { background:linear-gradient(135deg,#495057,#343a40); color:#fff; border-radius:10px 10px 0 0 !important; }
+
+    .timeline { position:relative; padding:1rem 1rem 1rem 2.5rem; }
+    .timeline::before { content:''; position:absolute; right:auto; left:1.1rem; top:0; bottom:0; width:2px; background:linear-gradient(to bottom,#dee2e6,#e9ecef); }
+    [dir="rtl"] .timeline { padding:1rem 2.5rem 1rem 1rem; }
+    [dir="rtl"] .timeline::before { left:auto; right:1.1rem; }
+
+    .timeline-item { position:relative; margin-bottom:1.25rem; }
+    .timeline-item:last-child { margin-bottom:0; }
+
+    .timeline-dot { position:absolute; right:auto; left:-1.85rem; top:.15rem; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.72rem; border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.12); z-index:1; }
+    [dir="rtl"] .timeline-dot { left:auto; right:-1.85rem; }
+    .timeline-dot.price { background:#fff3cd; color:#e67e00; }
+    .timeline-dot.stock { background:#d1ecf1; color:#0a7c8c; }
+    .timeline-dot.status { background:#d4edda; color:#0f5132; }
+    .timeline-dot.created { background:#cce5ff; color:#0056b3; }
+
+    .timeline-content { background:#fff; border:1px solid #eee; border-radius:8px; padding:.65rem .85rem; transition:box-shadow .2s; }
+    .timeline-content:hover { box-shadow:0 2px 8px rgba(0,0,0,.08); }
+
+    .timeline-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:.25rem; }
+    .timeline-product { font-weight:600; font-size:.85rem; color:#333; text-decoration:none; }
+    .timeline-product:hover { color:#0077c8; }
+    .timeline-time { font-size:.72rem; color:#6c757d; white-space:nowrap; }
+    .timeline-field { font-size:.78rem; color:#6c757d; margin-bottom:.2rem; }
+    .timeline-values { display:flex; align-items:center; gap:.4rem; font-size:.82rem; flex-wrap:wrap; }
+    .timeline-old { background:#fde8e8; color:#dc3545; padding:.1em .45em; border-radius:4px; text-decoration:line-through; font-size:.78rem; }
+    .timeline-new { background:#d4edda; color:#0f5132; padding:.1em .45em; border-radius:4px; font-weight:600; font-size:.78rem; }
+    .timeline-arrow { color:#6c757d; font-size:.7rem; }
+    .timeline-action-badge { font-size:.68rem; padding:.15em .45em; border-radius:4px; font-weight:600; }
+    .timeline-action-badge.price { background:#fff3cd; color:#856404; }
+    .timeline-action-badge.stock { background:#d1ecf1; color:#0a7c8c; }
+    .timeline-action-badge.status { background:#d4edda; color:#0f5132; }
+    .timeline-action-badge.created { background:#cce5ff; color:#0056b3; }
+    .timeline-user { font-size:.72rem; color:#999; }
+
+    .guide-banner { background:linear-gradient(135deg,#e8f4fd,#d6eaf8); border:1px solid #b8daff; border-radius:10px; padding:1rem 1.25rem; margin-bottom:1.5rem; }
+    .guide-banner h6 { color:#004085; }
+    .guide-banner ul { margin-bottom:0; padding-right:1.2rem; }
+    .guide-banner li { margin-bottom:.25rem; font-size:.85rem; color:#004085; }
+    .guide-banner .badge { font-size:.68rem; }
+
+    .btn-note-action { width:30px; height:30px; padding:0; display:inline-flex; align-items:center; justify-content:center; border-radius:50%; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Guide Banner -->
+    <div class="guide-banner" id="guideBanner">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h6 class="fw-bold mb-2"><i class="fas fa-lightbulb me-2"></i>{% trans "كيفية استخدام متتبع المنتجات" %}</h6>
+                <ul class="small">
+                    <li><strong>{% trans "البطاقات الإحصائية" %}:</strong> {% trans "اضغط على أي بطاقة لتصفية المنتجات حسب حالتها" %} <span class="badge bg-warning text-dark">{% trans "مثال" %}: {% trans "اضغط 'مسودة' لعرض 9 منتجات مسودة فقط" %}</span></li>
+                    <li><strong>{% trans "البحث" %}:</strong> {% trans "اكتب اسم المنتج أو رقم SKU في خانة البحث بشريط التصفية" %} <span class="badge bg-info text-dark">{% trans "مثال" %}: {% trans "اكتب 'كليبر' أو '2689'" %}</span></li>
+                    <li><strong>{% trans "الملاحظات" %}:</strong> {% trans "اضغط زر" %} <i class="fas fa-sticky-note text-primary"></i> {% trans "بجانب أي منتج لإضافة ملاحظة أو عرض سجل الملاحظات" %}</li>
+                    <li><strong>{% trans "التتبع التلقائي" %}:</strong> {% trans "يتم تسجيل جميع تغييرات الأسعار والمخزون والحالة تلقائياً في قسم 'آخر التغييرات'" %}</li>
+                </ul>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="this.closest('.guide-banner').style.display='none'" title="{% trans 'إخفاء' %}">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="row g-3 mb-4">
+        <div class="col">
+            <a href="?{{ card_filter_only }}" class="tracker-stat primary {% if not current_product_status %}active{% endif %}">
+                <div class="num">{{ stats.total }}</div>
+                <div class="lbl">{% trans "إجمالي المنتجات" %}</div>
+            </a>
+        </div>
+        <div class="col">
+            <a href="?product_status=published{{ card_filter_base }}" class="tracker-stat success {% if current_product_status == 'published' %}active{% endif %}">
+                <div class="num">{{ stats.published }}</div>
+                <div class="lbl">{% trans "منشور" %}</div>
+            </a>
+        </div>
+        <div class="col">
+            <a href="?product_status=draft{{ card_filter_base }}" class="tracker-stat warning {% if current_product_status == 'draft' %}active{% endif %}">
+                <div class="num">{{ stats.draft }}</div>
+                <div class="lbl">{% trans "مسودة" %}</div>
+            </a>
+        </div>
+        <div class="col">
+            <a href="?product_status=out_of_stock{{ card_filter_base }}" class="tracker-stat danger {% if current_product_status == 'out_of_stock' %}active{% endif %}">
+                <div class="num">{{ stats.out_of_stock }}</div>
+                <div class="lbl">{% trans "نفذت الكمية" %}</div>
+            </a>
+        </div>
+        <div class="col">
+            <a href="?product_status=low_stock{{ card_filter_base }}" class="tracker-stat info {% if current_product_status == 'low_stock' %}active{% endif %}">
+                <div class="num">{{ stats.low_stock }}</div>
+                <div class="lbl">{% trans "مخزون منخفض" %}</div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-auto">
+            <span class="badge bg-warning text-dark fs-6 px-3 py-2">
+                <i class="fas fa-tag me-1"></i> {% trans "تغييرات أسعار اليوم" %}: {{ price_changes_today }}
+            </span>
+        </div>
+        <div class="col-auto">
+            <span class="badge bg-info text-dark fs-6 px-3 py-2">
+                <i class="fas fa-boxes-stacked me-1"></i> {% trans "تغييرات مخزون اليوم" %}: {{ stock_changes_today }}
+            </span>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Product Grid -->
+        <div class="col-lg-8">
+            <!-- Filter Bar -->
+            <div class="filter-bar">
+                <form method="get" class="row g-2 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold">{% trans "حالة المنتج" %}</label>
+                        <select name="product_status" class="form-select form-select-sm">
+                            <option value="">{% trans "الكل" %}</option>
+                            <option value="published" {% if current_product_status == 'published' %}selected{% endif %}>{% trans "منشور" %}</option>
+                            <option value="draft" {% if current_product_status == 'draft' %}selected{% endif %}>{% trans "مسودة" %}</option>
+                            <option value="out_of_stock" {% if current_product_status == 'out_of_stock' %}selected{% endif %}>{% trans "نفذت الكمية" %}</option>
+                            <option value="low_stock" {% if current_product_status == 'low_stock' %}selected{% endif %}>{% trans "مخزون منخفض" %}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">{% trans "بحث" %}</label>
+                        <input type="text" name="q" class="form-control form-control-sm" placeholder="{% trans 'اسم المنتج أو رقم SKU...' %}" value="{{ current_search }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold">{% trans "ترتيب" %}</label>
+                        <select name="sort" class="form-select form-select-sm">
+                            <option value="-updated_at" {% if current_sort == '-updated_at' %}selected{% endif %}>{% trans "الأحدث أولاً" %}</option>
+                            <option value="name" {% if current_sort == 'name' %}selected{% endif %}>{% trans "الاسم (أ-ي)" %}</option>
+                            <option value="base_price" {% if current_sort == 'base_price' %}selected{% endif %}>{% trans "السعر (الأقل)" %}</option>
+                            <option value="-base_price" {% if current_sort == '-base_price' %}selected{% endif %}>{% trans "السعر (الأعلى)" %}</option>
+                            <option value="stock_quantity" {% if current_sort == 'stock_quantity' %}selected{% endif %}>{% trans "المخزون (الأقل)" %}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex gap-1">
+                        <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+                            <i class="fas fa-filter me-1"></i>{% trans "تصفية" %}
+                        </button>
+                        <a href="?" class="btn btn-outline-secondary btn-sm" title="{% trans 'إعادة تعيين' %}">
+                            <i class="fas fa-undo"></i>
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Product Table -->
+            <div class="card main-card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-boxes-stacked me-2"></i>{% trans "المنتجات" %}</h5>
+                    <span class="badge bg-light text-dark">{{ page_obj.paginator.count }} {% trans "منتج" %}</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover product-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "المنتج" %}</th>
+                                    <th>SKU</th>
+                                    <th>{% trans "الحالة" %}</th>
+                                    <th>{% trans "المخزون" %}</th>
+                                    <th>{% trans "السعر" %}</th>
+                                    <th>{% trans "آخر تحديث" %}</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in products %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'dashboard:dashboard_product_detail' product_id=product.id %}" class="product-name-link">
+                                            {{ product.name|truncatechars:40 }}
+                                        </a>
+                                    </td>
+                                    <td><code class="small">{{ product.sku|default:"-" }}</code></td>
+                                    <td>
+                                        {% if product.status == 'published' %}
+                                            <span class="badge bg-success">{% trans "منشور" %}</span>
+                                        {% elif product.status == 'draft' %}
+                                            <span class="badge bg-warning text-dark">{% trans "مسودة" %}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ product.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if product.stock_status == 'out_of_stock' %}
+                                            <span class="stock-out"><i class="fas fa-times-circle me-1"></i>{% trans "نفذت" %}</span>
+                                        {% elif product.is_low_stock %}
+                                            <span class="stock-low"><i class="fas fa-exclamation-triangle me-1"></i>{{ product.stock_quantity }}</span>
+                                        {% else %}
+                                            <span class="stock-ok">{{ product.stock_quantity }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ product.base_price }}</td>
+                                    <td class="text-muted small">{{ product.updated_at|date:"Y/m/d" }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary btn-note-action product-note-btn"
+                                                data-id="{{ product.id }}"
+                                                data-name="{{ product.name }}"
+                                                title="{% trans 'ملاحظات' %}">
+                                            <i class="fas fa-sticky-note"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-5 text-muted">
+                                        <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                        {% trans "لا توجد منتجات مطابقة للتصفية" %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% if page_obj.has_other_pages %}
+                <div class="card-footer">
+                    <nav>
+                        <ul class="pagination pagination-sm justify-content-center mb-0">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if filter_params %}&{{ filter_params }}{% endif %}">&laquo;</a></li>
+                            {% endif %}
+                            <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+                            {% if page_obj.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if filter_params %}&{{ filter_params }}{% endif %}">&raquo;</a></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Recent Changes Timeline -->
+            {% if recent_changes %}
+            <div class="card main-card changes-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="fas fa-history me-2"></i>{% trans "آخر التغييرات" %}</h6>
+                    <span class="badge bg-light text-dark">{% trans "آخر" %} {{ recent_changes|length }}</span>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% for change in recent_changes %}
+                        <div class="timeline-item">
+                            <div class="timeline-dot {% if change.action == 'price_changed' %}price{% elif change.action == 'stock_changed' %}stock{% elif change.action == 'status_changed' %}status{% else %}created{% endif %}">
+                                {% if change.action == 'price_changed' %}<i class="fas fa-tag"></i>
+                                {% elif change.action == 'stock_changed' %}<i class="fas fa-boxes-stacked"></i>
+                                {% elif change.action == 'status_changed' %}<i class="fas fa-toggle-on"></i>
+                                {% else %}<i class="fas fa-plus"></i>{% endif %}
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-header">
+                                    <a href="{% url 'dashboard:dashboard_product_detail' product_id=change.product_id %}" class="timeline-product">{{ change.product.name|truncatechars:35 }}</a>
+                                    <span class="timeline-time"><i class="fas fa-clock me-1"></i>{{ change.timestamp|date:"Y/m/d H:i" }}</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <span class="timeline-action-badge {% if change.action == 'price_changed' %}price{% elif change.action == 'stock_changed' %}stock{% elif change.action == 'status_changed' %}status{% else %}created{% endif %}">
+                                        {{ change.get_action_display }}
+                                    </span>
+                                    {% if change.field_name %}
+                                    <span class="timeline-field mb-0">{{ change.field_name }}</span>
+                                    {% endif %}
+                                </div>
+                                {% if change.old_value and change.new_value %}
+                                <div class="timeline-values mt-1">
+                                    <span class="timeline-old">{{ change.old_value }}</span>
+                                    <span class="timeline-arrow"><i class="fas fa-arrow-left"></i></span>
+                                    <span class="timeline-new">{{ change.new_value }}</span>
+                                </div>
+                                {% elif change.new_value %}
+                                <div class="timeline-values mt-1">
+                                    <span class="timeline-new">{{ change.new_value }}</span>
+                                </div>
+                                {% endif %}
+                                {% if change.user %}
+                                <div class="timeline-user mt-1"><i class="fas fa-user me-1"></i>{{ change.user.get_full_name|default:change.user.username }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Notes Panel -->
+        <div class="col-lg-4">
+            <!-- Add Note -->
+            <div class="card note-card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-sticky-note me-2"></i>{% trans "إضافة ملاحظة" %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="add-note-form">
+                        <div class="mb-2 position-relative">
+                            <input type="text" id="noteProductSearch" class="form-control form-control-sm" placeholder="{% trans 'اسم المنتج أو رقم SKU...' %}" autocomplete="off">
+                            <input type="hidden" id="noteProductId">
+                            <div id="productSearchResults"></div>
+                        </div>
+                        <div class="mb-2">
+                            <select id="noteType" class="form-select form-select-sm">
+                                <option value="general">{% trans "ملاحظة عامة" %}</option>
+                                <option value="price">{% trans "تسعير" %}</option>
+                                <option value="stock">{% trans "مخزون" %}</option>
+                                <option value="quality">{% trans "جودة" %}</option>
+                                <option value="supplier">{% trans "مورد" %}</option>
+                                <option value="todo">{% trans "مهمة" %}</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <textarea id="noteContent" class="form-control form-control-sm" rows="3" placeholder="{% trans 'اكتب ملاحظتك هنا...' %}"></textarea>
+                        </div>
+                        <button type="button" id="addNoteBtn" class="btn btn-success btn-sm w-100">
+                            <i class="fas fa-plus me-1"></i>{% trans "إضافة" %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Notes History -->
+            <div class="card note-card history-card mb-3" id="productHistoryCard" style="display:none;">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-clock-rotate-left me-2"></i>{% trans "سجل ملاحظات المنتج" %}</h5>
+                    <button type="button" class="btn btn-sm btn-light" id="closeHistoryBtn" title="{% trans 'إغلاق' %}"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="px-3 py-2 border-bottom bg-light">
+                        <span class="selected-product-name" id="historyProductName"></span>
+                    </div>
+                    <div id="productHistoryList"></div>
+                </div>
+            </div>
+
+            <!-- Open Notes -->
+            <div class="card note-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>{% trans "ملاحظات مفتوحة" %}</h5>
+                    <span class="badge bg-light text-dark">{{ recent_notes|length }}</span>
+                </div>
+                <div class="card-body p-0" id="notesList">
+                    {% for note in recent_notes %}
+                    <div class="note-item" id="note-{{ note.id }}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <span class="badge note-badge bg-{% if note.note_type == 'price' %}warning{% elif note.note_type == 'stock' %}info{% elif note.note_type == 'quality' %}danger{% elif note.note_type == 'todo' %}primary{% elif note.note_type == 'supplier' %}secondary{% else %}light text-dark{% endif %}">
+                                    {{ note.get_note_type_display }}
+                                </span>
+                                <a href="{% url 'dashboard:dashboard_product_detail' product_id=note.product_id %}" class="small text-decoration-none fw-bold ms-1">{{ note.product.name|truncatechars:30 }}</a>
+                            </div>
+                            <div class="note-actions">
+                                <button class="btn btn-outline-success resolve-note" data-id="{{ note.id }}" title="{% trans 'تم الحل' %}"><i class="fas fa-check"></i></button>
+                                <button class="btn btn-outline-danger delete-note" data-id="{{ note.id }}" title="{% trans 'حذف' %}"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                        <div class="note-content">{{ note.content }}</div>
+                        <div class="note-meta">{{ note.user.get_full_name|default:note.user.username }} &bull; {{ note.created_at|date:"Y/m/d H:i" }}</div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4 text-muted" id="noNotesMsg">
+                        <i class="fas fa-check-circle fa-2x mb-2"></i>
+                        <p class="mb-0">{% trans "لا توجد ملاحظات مفتوحة" %}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    var csrfToken = '{{ csrf_token }}';
+    var searchTimer = null;
+    var notesBaseUrl = '{% url "dashboard:product_notes_list" product_id=0 %}'.replace('/0/', '/{id}/');
+
+    var NOTE_TYPE_CONFIG = {
+        'general':  { icon: 'fa-comment',       cls: 'general',  label: '{% trans "عامة" %}' },
+        'price':    { icon: 'fa-tag',            cls: 'price',    label: '{% trans "تسعير" %}' },
+        'stock':    { icon: 'fa-boxes-stacked',  cls: 'stock',    label: '{% trans "مخزون" %}' },
+        'quality':  { icon: 'fa-star',           cls: 'quality',  label: '{% trans "جودة" %}' },
+        'supplier': { icon: 'fa-truck',          cls: 'supplier', label: '{% trans "مورد" %}' },
+        'todo':     { icon: 'fa-list-check',     cls: 'todo',     label: '{% trans "مهمة" %}' }
+    };
+
+    // ===== Product Search (Notes Form) =====
+    var searchInput = document.getElementById('noteProductSearch');
+    var searchResults = document.getElementById('productSearchResults');
+    var productIdInput = document.getElementById('noteProductId');
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimer);
+        var q = this.value.trim();
+        if (q.length < 2) { searchResults.style.display = 'none'; return; }
+
+        searchTimer = setTimeout(function() {
+            fetch('{% url "dashboard:product_tracker_search" %}?q=' + encodeURIComponent(q), {credentials: 'same-origin'})
+            .then(function(r) {
+                if (!r.ok) throw new Error(r.status);
+                return r.json();
+            })
+            .then(function(data) {
+                searchResults.innerHTML = '';
+                var items = data.results || [];
+                if (items.length === 0) {
+                    searchResults.innerHTML = '<div class="p-2 text-muted small">{% trans "لا توجد نتائج — جرب اسم منتج أو رقم SKU" %}</div>';
+                }
+                items.forEach(function(item) {
+                    var div = document.createElement('div');
+                    div.className = 'product-search-result';
+                    div.textContent = item.name + (item.sku ? ' (' + item.sku + ')' : '');
+                    div.dataset.id = item.id;
+                    div.dataset.name = item.name;
+                    div.addEventListener('click', function() {
+                        selectProduct(this.dataset.id, this.dataset.name, this.textContent);
+                    });
+                    searchResults.appendChild(div);
+                });
+                searchResults.style.display = '';
+            })
+            .catch(function() {
+                searchResults.innerHTML = '<div class="p-2 text-danger small">{% trans "حدث خطأ في البحث" %}</div>';
+                searchResults.style.display = '';
+            });
+        }, 300);
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!searchResults.contains(e.target) && e.target !== searchInput) {
+            searchResults.style.display = 'none';
+        }
+    });
+
+    function selectProduct(id, name, displayText) {
+        productIdInput.value = id;
+        searchInput.value = displayText || name;
+        searchResults.style.display = 'none';
+        loadProductHistory(id, name);
+    }
+
+    // ===== Product Note Button (from table rows) =====
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('.product-note-btn');
+        if (btn) {
+            var id = btn.dataset.id;
+            var name = btn.dataset.name;
+            selectProduct(id, name, name);
+            document.getElementById('noteContent').focus();
+        }
+    });
+
+    // ===== Product Notes History =====
+    var historyCard = document.getElementById('productHistoryCard');
+    var historyList = document.getElementById('productHistoryList');
+    var historyProductName = document.getElementById('historyProductName');
+
+    document.getElementById('closeHistoryBtn').addEventListener('click', function() {
+        historyCard.style.display = 'none';
+    });
+
+    function loadProductHistory(productId, productName) {
+        historyCard.style.display = '';
+        historyProductName.textContent = productName;
+        historyList.innerHTML = '<div class="text-center py-4 text-muted"><i class="fas fa-spinner fa-spin fa-2x mb-2"></i><p class="mb-0">{% trans "جاري التحميل..." %}</p></div>';
+
+        fetch(notesBaseUrl.replace('{id}', productId), {credentials: 'same-origin'})
+        .then(function(r) {
+            if (!r.ok) throw new Error(r.status);
+            return r.json();
+        })
+        .then(function(data) {
+            var notes = data.notes || [];
+            if (notes.length === 0) {
+                historyList.innerHTML = '<div class="text-center py-4 text-muted"><i class="fas fa-file-circle-xmark fa-2x mb-2"></i><p class="mb-0">{% trans "لا توجد ملاحظات لهذا المنتج" %}</p></div>';
+                return;
+            }
+            historyList.innerHTML = '';
+            notes.forEach(function(note) {
+                var cfg = NOTE_TYPE_CONFIG[note.note_type_key] || NOTE_TYPE_CONFIG['general'];
+                var div = document.createElement('div');
+                div.className = 'history-note-item' + (note.is_resolved ? ' resolved' : '');
+                var resolvedBadge = note.is_resolved
+                    ? '<span class="history-resolved-badge"><i class="fas fa-check me-1"></i>{% trans "تم الحل" %}</span>'
+                    : '';
+                div.innerHTML =
+                    '<div class="d-flex justify-content-between align-items-center mb-1">' +
+                        '<span class="history-note-type ' + cfg.cls + '"><i class="fas ' + cfg.icon + ' note-type-icon"></i> ' + cfg.label + '</span>' +
+                        resolvedBadge +
+                    '</div>' +
+                    '<div class="history-note-content">' + escapeHtml(note.content) + '</div>' +
+                    '<div class="history-note-footer">' +
+                        '<span class="history-note-meta"><i class="fas fa-user me-1"></i>' + escapeHtml(note.user) + '</span>' +
+                        '<span class="history-note-meta"><i class="fas fa-calendar me-1"></i>' + escapeHtml(note.created_at) + '</span>' +
+                    '</div>';
+                historyList.appendChild(div);
+            });
+        })
+        .catch(function() {
+            historyList.innerHTML = '<div class="text-center py-3 text-danger small">{% trans "حدث خطأ في التحميل" %}</div>';
+        });
+    }
+
+    function escapeHtml(text) {
+        var d = document.createElement('div');
+        d.textContent = text || '';
+        return d.innerHTML;
+    }
+
+    // ===== Add Note =====
+    document.getElementById('addNoteBtn').addEventListener('click', function() {
+        var productId = productIdInput.value;
+        var content = document.getElementById('noteContent').value.trim();
+        var noteType = document.getElementById('noteType').value;
+
+        if (!productId) { alert('{% trans "اختر منتج أولاً من البحث أو من الجدول" %}'); return; }
+        if (!content) { alert('{% trans "اكتب محتوى الملاحظة" %}'); return; }
+
+        var body = new FormData();
+        body.append('product_id', productId);
+        body.append('content', content);
+        body.append('note_type', noteType);
+
+        fetch('{% url "dashboard:product_note_add" %}', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken },
+            body: body,
+            credentials: 'same-origin'
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.status === 'success') {
+                document.getElementById('noteContent').value = '';
+                loadProductHistory(productId, historyProductName.textContent || searchInput.value);
+                appendNoteToList(data.note, searchInput.value);
+            } else {
+                alert(data.message || 'Error');
+            }
+        })
+        .catch(function() {
+            alert('{% trans "حدث خطأ أثناء حفظ الملاحظة" %}');
+        });
+    });
+
+    function appendNoteToList(note, productName) {
+        var noMsg = document.getElementById('noNotesMsg');
+        if (noMsg) noMsg.remove();
+        var notesList = document.getElementById('notesList');
+        var countBadge = notesList.closest('.card').querySelector('.badge.bg-light');
+        if (countBadge) {
+            countBadge.textContent = (parseInt(countBadge.textContent) || 0) + 1;
+        }
+        var div = document.createElement('div');
+        div.className = 'note-item';
+        div.id = 'note-' + note.id;
+        div.innerHTML =
+            '<div class="d-flex justify-content-between align-items-start">' +
+                '<div><span class="badge note-badge bg-light text-dark">' + escapeHtml(note.note_type) + '</span> ' +
+                '<span class="small fw-bold ms-1">' + escapeHtml(productName) + '</span></div>' +
+                '<div class="note-actions">' +
+                    '<button class="btn btn-outline-success resolve-note" data-id="' + note.id + '" title="{% trans "تم الحل" %}"><i class="fas fa-check"></i></button>' +
+                    '<button class="btn btn-outline-danger delete-note" data-id="' + note.id + '" title="{% trans "حذف" %}"><i class="fas fa-trash"></i></button>' +
+                '</div>' +
+            '</div>' +
+            '<div class="note-content">' + escapeHtml(note.content) + '</div>' +
+            '<div class="note-meta">' + escapeHtml(note.user) + ' &bull; ' + escapeHtml(note.created_at) + '</div>';
+        notesList.insertBefore(div, notesList.firstChild);
+    }
+
+    // ===== Resolve / Delete Note =====
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('.resolve-note');
+        if (btn) {
+            var id = btn.dataset.id;
+            fetch('{% url "dashboard:product_note_resolve" pk=0 %}'.replace('/0/', '/' + id + '/'), {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken },
+                credentials: 'same-origin'
+            }).then(function() {
+                document.getElementById('note-' + id).remove();
+            });
+        }
+
+        btn = e.target.closest('.delete-note');
+        if (btn) {
+            if (!confirm('{% trans "هل أنت متأكد؟" %}')) return;
+            var id = btn.dataset.id;
+            fetch('{% url "dashboard:product_note_delete" pk=0 %}'.replace('/0/', '/' + id + '/'), {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken },
+                credentials: 'same-origin'
+            }).then(function() {
+                document.getElementById('note-' + id).remove();
+            });
+        }
+    });
+})();
+</script>
+{% endblock %}

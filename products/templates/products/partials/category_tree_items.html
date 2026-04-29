@@ -5,24 +5,30 @@
     <div class="accordion-item category-item {% if category.products_count > 0 %}has-products{% else %}no-products{% endif %}" data-category-id="{{ category.id }}">
         {% if category.has_children %}
         <h2 class="accordion-header" id="category-heading-{{ category.id }}">
-            <button class="accordion-button collapsed d-flex align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#category-collapse-{{ category.id }}" aria-expanded="false" aria-controls="category-collapse-{{ category.id }}">
-                <a href="{% url 'products:category_products' category.slug %}" class="category-link-btn" onclick="event.stopPropagation();">
+            <button class="category-toggle-btn collapsed d-flex align-items-center" type="button" data-collapse-target="#category-collapse-{{ category.id }}" aria-expanded="false">
+                <span class="expand-icon"><i class="fas fa-plus"></i></span>
+                <span class="category-link-btn">
+                    <span class="cat-icon" data-cat-id="{{ category.id }}"{% if category.color %} style="color: {{ category.color }}"{% endif %}>
+                        <i class="{{ category.icon|default:'fas fa-folder' }}"></i>
+                    </span>
                     <span class="category-name">
-                    {% if LANGUAGE_CODE == 'en' %}
+                    {% if LANGUAGE_CODE == 'en' and category.name_en %}
                         {{ category.name_en }}
                     {% else %}
                         {{ category.name }}
                     {% endif %}
                     </span>
-                </a>
-                <span class="badge rounded-pill ms-auto {% if category.products_count > 0 %}badge-has-products{% else %}badge-empty{% endif %} text-black">
+                </span>
+                {% if category.products_count > 0 %}
+                <span class="badge rounded-pill badge-has-products">
                     {{ category.products_count }}
                 </span>
+                {% endif %}
             </button>
         </h2>
-        <div id="category-collapse-{{ category.id }}" class="accordion-collapse collapse" aria-labelledby="category-heading-{{ category.id }}">
+        <div id="category-collapse-{{ category.id }}" class="category-collapse" aria-labelledby="category-heading-{{ category.id }}">
             <div class="accordion-body p-0">
-                <div class="accordion accordion-flush subcategory-accordion">
+                <div class="subcategory-accordion">
                     {% include 'products/partials/category_tree_items.html' with categories=category.children %}
                 </div>
             </div>
@@ -30,16 +36,19 @@
         {% else %}
         <div class="accordion-item-simple">
             <a href="{% url 'products:category_products' category.slug %}" class="category-link">
+                <span class="leaf-icon" data-cat-id="{{ category.id }}"{% if category.color %} style="color: {{ category.color }}"{% endif %}><i class="{{ category.icon|default:'fas fa-tag' }}"></i></span>
                 <span class="category-name">
-                {% if LANGUAGE_CODE == 'en' %}
-                        {{ category.name_en }}
-                    {% else %}
-                        {{ category.name }}
-                    {% endif %}
+                {% if LANGUAGE_CODE == 'en' and category.name_en %}
+                    {{ category.name_en }}
+                {% else %}
+                    {{ category.name }}
+                {% endif %}
                 </span>
-                <span class="badge rounded-pill ms-auto {% if category.products_count > 0 %}badge-has-products{% else %}badge-empty{% endif %} text-black">
+                {% if category.products_count > 0 %}
+                <span class="badge rounded-pill badge-has-products">
                     {{ category.products_count }}
                 </span>
+                {% endif %}
             </a>
         </div>
         {% endif %}

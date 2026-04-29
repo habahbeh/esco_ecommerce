@@ -247,8 +247,8 @@ class Category(MPTTModel, TimeStampedModel, SEOModel):
         unique_together = [['parent', 'name']]
         indexes = [
             models.Index(fields=['slug']),
-            # models.Index(fields=['parent', 'is_active']),
-            # models.Index(fields=['is_active', 'is_featured']),
+            models.Index(fields=['parent', 'is_active']),
+            models.Index(fields=['is_active', 'is_featured']),
             models.Index(fields=['level']),
             models.Index(fields=['sort_order']),
             models.Index(fields=['created_at']),
@@ -540,7 +540,7 @@ class Brand(TimeStampedModel, SEOModel):
         ordering = ['sort_order', 'name']
         indexes = [
             models.Index(fields=['slug']),
-        #     models.Index(fields=['is_active', 'is_featured']),
+            models.Index(fields=['is_active', 'is_featured']),
             models.Index(fields=['country']),
             models.Index(fields=['rating']),
         ]
@@ -627,7 +627,7 @@ class Tag(TimeStampedModel):
         ordering = ['-usage_count', 'name']
         indexes = [
             models.Index(fields=['slug']),
-        #     models.Index(fields=['is_active', 'is_featured']),
+            models.Index(fields=['is_active', 'is_featured']),
             models.Index(fields=['usage_count']),
         ]
 
@@ -907,7 +907,7 @@ class Product(TimeStampedModel, SEOModel):
 
     # Features & Flags
     is_featured = models.BooleanField(_("منتج مميز"), default=False)
-    is_new = models.BooleanField(_("منتج جديد"), default=True)
+    is_new = models.BooleanField(_("منتج جديد"), default=False)
     is_best_seller = models.BooleanField(_("الأكثر مبيعاً"), default=False)
     is_digital = models.BooleanField(_("منتج رقمي"), default=False)
     requires_shipping = models.BooleanField(_("يتطلب شحن"), default=True)
@@ -938,7 +938,7 @@ class Product(TimeStampedModel, SEOModel):
         default='draft'
     )
     is_active = models.BooleanField(_("نشط"), default=True)
-    show_price = models.BooleanField(_("عرض السعر"), default=False)
+    show_price = models.BooleanField(_("عرض السعر"), default=True)
     allow_reviews = models.BooleanField(_("السماح بالتقييمات"), default=True)
 
     # Related products
@@ -1021,14 +1021,17 @@ class Product(TimeStampedModel, SEOModel):
         indexes = [
             models.Index(fields=['slug']),
             models.Index(fields=['sku']),
-            # models.Index(fields=['status', 'is_active']),
-            # models.Index(fields=['category', 'brand']),
+            models.Index(fields=['status', 'is_active']),
+            models.Index(fields=['category', 'brand']),
             models.Index(fields=['-sales_count']),
             models.Index(fields=['-views_count']),
             models.Index(fields=['barcode']),
             models.Index(fields=['created_at']),
-            # models.Index(fields=['is_featured', 'featured_until']),
+            models.Index(fields=['is_featured', 'featured_until']),
             models.Index(fields=['stock_status']),
+            models.Index(fields=['-updated_at']),
+            models.Index(fields=['stock_quantity']),
+            models.Index(fields=['status', 'is_active', '-published_at']),
         ]
         constraints = [
             # models.CheckConstraint(
@@ -1048,6 +1051,11 @@ class Product(TimeStampedModel, SEOModel):
     def __str__(self):
         return self.name
 
+    @property
+    def meta_keywords_list(self):
+        if self.meta_keywords:
+            return [kw.strip() for kw in self.meta_keywords.split(',') if kw.strip()]
+        return []
 
     def clean(self):
         """Enhanced validation"""
@@ -1085,7 +1093,15 @@ class Product(TimeStampedModel, SEOModel):
             self.track_inventory = False
 
     def save(self, *args, **kwargs):
+        update_fields = kwargs.get('update_fields')
+        price_only_fields = {'base_price', 'compare_price', 'cost', 'discount_percentage',
+                             'discount_amount', 'discount_start', 'discount_end', 'updated_at'}
+        is_price_only = update_fields and set(update_fields).issubset(price_only_fields)
 
+        if is_price_only:
+            super().save(*args, **kwargs)
+            self.clear_cache()
+            return
 
         # Generate slug if not exists
         if not self.slug:
@@ -1725,7 +1741,7 @@ class ProductImage(TimeStampedModel):
         verbose_name_plural = _("صور المنتجات")
         ordering = ['sort_order', '-is_primary']
         indexes = [
-        #     models.Index(fields=['product', 'is_primary']),
+            models.Index(fields=['product', 'is_primary']),
             models.Index(fields=['variant']),
             models.Index(fields=['sort_order']),
         ]
@@ -1925,7 +1941,7 @@ class ProductVariant(TimeStampedModel):
         ordering = ['sort_order', 'name']
         unique_together = [['product', 'name']]
         indexes = [
-        #     models.Index(fields=['product', 'is_active']),
+            models.Index(fields=['product', 'is_active']),
             models.Index(fields=['sku']),
         ]
 
@@ -2032,7 +2048,7 @@ class Wishlist(TimeStampedModel):
         unique_together = [['user', 'product']]
         ordering = ['-created_at']
         indexes = [
-        #     models.Index(fields=['user', 'created_at']),
+            models.Index(fields=['user', 'created_at']),
             models.Index(fields=['product']),
         ]
 
@@ -2121,8 +2137,8 @@ class ProductViewHistory(TimeStampedModel):
         verbose_name_plural = _("تاريخ المشاهدات")
         ordering = ['-created_at']
         indexes = [
-        #     models.Index(fields=['user', 'created_at']),
-        #     models.Index(fields=['session_key', 'created_at']),
+            models.Index(fields=['user', 'created_at']),
+            models.Index(fields=['session_key', 'created_at']),
             models.Index(fields=['product']),
         ]
 
@@ -2222,10 +2238,9 @@ class ProductAttributeValue(TimeStampedModel):
         verbose_name = _("قيمة خاصية منتج")
         verbose_name_plural = _("قيم خصائص المنتجات")
         unique_together = [['product', 'attribute']]
-        # indexes = [
-        #     models.Index(fields=['product', 'attribute']),
-        #     models.Index(fields=['attribute', 'value']),
-        # ]
+        indexes = [
+            models.Index(fields=['product', 'attribute']),
+        ]
 
     def __str__(self):
         return f"{self.product.name} - {self.attribute.name}: {self.value}"
@@ -2282,7 +2297,7 @@ class ProductQuestion(TimeStampedModel):
         verbose_name_plural = _("أسئلة المنتجات")
         ordering = ['-created_at']
         indexes = [
-        #     models.Index(fields=['product', 'is_public']),
+            models.Index(fields=['product', 'is_public']),
             models.Index(fields=['user']),
             models.Index(fields=['is_answered']),
         ]
@@ -2346,10 +2361,10 @@ class ProductSubscription(TimeStampedModel):
         verbose_name_plural = _("اشتراكات المنتجات")
         unique_together = [['user', 'product', 'subscription_type']]
         ordering = ['-created_at']
-        # indexes = [
-        #     models.Index(fields=['user', 'is_active']),
-        #     models.Index(fields=['product', 'subscription_type']),
-        # ]
+        indexes = [
+            models.Index(fields=['user', 'is_active']),
+            models.Index(fields=['product', 'subscription_type']),
+        ]
 
     def __str__(self):
         return f"{self.user.username} - {self.product.name} ({self.get_subscription_type_display()})"
@@ -2468,10 +2483,10 @@ class ProductReview(TimeStampedModel):
         ordering = ['-created_at']
         unique_together = [['product', 'user']]  # مراجعة واحدة لكل مستخدم لكل منتج
         indexes = [
-        #     models.Index(fields=['product', 'is_approved']),
+            models.Index(fields=['product', 'is_approved']),
             models.Index(fields=['user']),
             models.Index(fields=['rating']),
-        #     models.Index(fields=['is_approved', 'created_at']),
+            models.Index(fields=['is_approved', 'created_at']),
             models.Index(fields=['helpful_votes']),
         ]
 
@@ -3147,3 +3162,48 @@ class ReviewImage(TimeStampedModel):
             import logging
             logger = logging.getLogger(__name__)
             logger.warning(f"Failed to optimize review image {self.id}: {e}")
+
+
+class CategoryFAQ(models.Model):
+    category = models.ForeignKey(
+        Category, on_delete=models.CASCADE,
+        related_name='faqs', verbose_name=_("الفئة")
+    )
+    question = models.CharField(_("السؤال"), max_length=300)
+    question_en = models.CharField(_("Question"), max_length=300, blank=True)
+    answer = models.TextField(_("الإجابة"))
+    answer_en = models.TextField(_("Answer"), blank=True)
+    sort_order = models.PositiveIntegerField(_("الترتيب"), default=0)
+    is_active = models.BooleanField(_("نشط"), default=True)
+
+    class Meta:
+        verbose_name = _("سؤال شائع للفئة")
+        verbose_name_plural = _("الأسئلة الشائعة للفئات")
+        ordering = ['sort_order']
+
+    def __str__(self):
+        return f"{self.category.name}: {self.question[:50]}"
+
+
+class CategoryLandingContent(models.Model):
+    category = models.OneToOneField(
+        Category, on_delete=models.CASCADE,
+        related_name='landing_content', verbose_name=_("الفئة")
+    )
+    hero_title = models.CharField(_("عنوان البطل"), max_length=200, blank=True)
+    hero_title_en = models.CharField(_("Hero Title"), max_length=200, blank=True)
+    hero_description = models.TextField(_("وصف البطل"), blank=True)
+    hero_description_en = models.TextField(_("Hero Description"), blank=True)
+    long_description = models.TextField(_("وصف مطول"), blank=True, help_text=_("محتوى غني للصفحة يساعد في SEO"))
+    long_description_en = models.TextField(_("Long Description"), blank=True)
+    buying_guide = models.TextField(_("دليل الشراء"), blank=True)
+    buying_guide_en = models.TextField(_("Buying Guide"), blank=True)
+    local_keywords = models.CharField(_("كلمات محلية"), max_length=300, blank=True, help_text=_("مثال: أدوات كهربائية الأردن, عمان"))
+    local_keywords_en = models.CharField(_("Local Keywords"), max_length=300, blank=True)
+
+    class Meta:
+        verbose_name = _("محتوى صفحة الفئة")
+        verbose_name_plural = _("محتويات صفحات الفئات")
+
+    def __str__(self):
+        return f"Landing: {self.category.name}"

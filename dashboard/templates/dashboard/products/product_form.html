@@ -39,6 +39,14 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.20/summernote-bs5.min.css">
 <link rel="stylesheet" href="{% static 'dashboard/css/product.css' %}">
+<style>
+    .tracked-badge { display:inline-flex; align-items:center; gap:.25rem; font-size:.68rem; padding:.15em .5em; border-radius:4px; background:#fff3cd; color:#856404; font-weight:600; vertical-align:middle; }
+    .tracked-badge i { font-size:.6rem; }
+    .tracking-info-card { border:1px solid #fff3cd; border-radius:10px; background:linear-gradient(135deg,#fffbeb,#fef9e7); }
+    .tracking-info-card .card-header { background:#fff3cd; border-radius:10px 10px 0 0 !important; border-bottom:1px solid #ffe69c; }
+    .tracking-info-card .tracking-field-item { padding:.35rem 0; font-size:.82rem; display:flex; align-items:center; gap:.4rem; }
+    .tracking-info-card .tracking-field-item i { width:16px; text-align:center; color:#856404; font-size:.75rem; }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -135,7 +143,7 @@
                                 <i class="fa fa-cogs me-1"></i> {% trans 'إعدادات متقدمة' %}
                             </a>
                         </li>
-                        <li class="nav-item" role="presentation" hidden>
+                        <li class="nav-item" role="presentation">
                             <a class="nav-link" id="seo-tab" data-bs-toggle="tab" href="#seo" role="tab" aria-controls="seo" aria-selected="false">
                                 <i class="fa fa-search me-1"></i> {% trans 'SEO' %}
                             </a>
@@ -189,25 +197,11 @@
                                                 id="{{ form.category.id_for_label }}"
                                                 class="form-select select2-with-search" required>
                                             <option value="">{% trans 'اختر الفئة...' %}</option>
-                                            {% for category in form.category.field.queryset %}
-                                                {% if category.level == 0 %}
-                                                    <option value="{{ category.id }}"
-                                                            {% if form.category.value|stringformat:'s' == category.id|stringformat:'s' %}selected{% endif %}>
-                                                        {{ category.name }}
-                                                    </option>
-                                                    {% for child in category.get_children %}
-                                                        <option value="{{ child.id }}"
-                                                                {% if form.category.value|stringformat:'s' == child.id|stringformat:'s' %}selected{% endif %}>
-                                                            &nbsp;&nbsp;&nbsp;&nbsp;{{ child.name }}
-                                                        </option>
-                                                        {% for grandchild in child.get_children %}
-                                                            <option value="{{ grandchild.id }}"
-                                                                    {% if form.category.value|stringformat:'s' == grandchild.id|stringformat:'s' %}selected{% endif %}>
-                                                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ grandchild.name }}
-                                                            </option>
-                                                        {% endfor %}
-                                                    {% endfor %}
-                                                {% endif %}
+                                            {% for cat in category_tree %}
+                                                <option value="{{ cat.id }}"
+                                                        {% if form.category.value|stringformat:'s' == cat.id|stringformat:'s' %}selected{% endif %}>
+                                                    {{ cat.indent }}{{ cat.name }}
+                                                </option>
                                             {% endfor %}
                                         </select>
                                         <div class="form-text">{% trans 'اختر الفئة المناسبة للمنتج' %}</div>
@@ -266,7 +260,7 @@
                                             {% endfor %}
                                         </select>
                                         <div class="form-text">
-                                            {% trans 'المنتجات المنشورة ستظهر مباشرةً في الموقع' %}
+                                            {% trans 'المنتجات المنشورة ستظهر مباشرةً في الموقع' %} <span class="tracked-badge" title="{% trans 'يتم تتبع تغييرات هذا الحقل تلقائياً في متتبع المنتجات' %}"><i class="fas fa-satellite-dish"></i> {% trans 'متتبع' %}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -283,7 +277,7 @@
                     <label class="form-check-label"
                            for="{{ form.is_active.id_for_label }}">
                         <i class="feature-icon fas fa-check-circle text-success"></i>
-                        <span class="feature-text">{% trans 'نشط' %}</span>
+                        <span class="feature-text">{% trans 'نشط' %}</span> <span class="tracked-badge" title="{% trans 'يتم تتبع تغييرات هذا الحقل تلقائياً في متتبع المنتجات' %}"><i class="fas fa-satellite-dish"></i></span>
                     </label>
                 </div>
             </div>
@@ -438,7 +432,7 @@
                             {{ form.base_price }}
                             <span class="input-group-text">{% trans "د.ا" %}</span>
                         </div>
-                        <div class="form-text">{% trans 'السعر الحالي للمنتج' %}</div>
+                        <div class="form-text">{% trans 'السعر الحالي للمنتج' %} <span class="tracked-badge" title="{% trans 'يتم تتبع تغييرات هذا الحقل تلقائياً في متتبع المنتجات' %}"><i class="fas fa-satellite-dish"></i> {% trans 'متتبع' %}</span></div>
                         {% if form.base_price.errors %}
                         <div class="invalid-feedback d-block">
                             {{ form.base_price.errors }}
@@ -460,7 +454,7 @@
                             {{ form.cost }}
                             <span class="input-group-text">{% trans "د.ا" %}</span>
                         </div>
-                        <div class="form-text">{% trans 'تكلفة المنتج (للاستخدام الداخلي)' %}</div>
+                        <div class="form-text">{% trans 'تكلفة المنتج (للاستخدام الداخلي)' %} <span class="tracked-badge" title="{% trans 'يتم تتبع تغييرات هذا الحقل تلقائياً في متتبع المنتجات' %}"><i class="fas fa-satellite-dish"></i> {% trans 'متتبع' %}</span></div>
                     </div>
                 </div>
             </div>
@@ -477,7 +471,7 @@
                     <div class="inventory-card-content">
                         {{ form.stock_quantity.label_tag }}
                         {{ form.stock_quantity }}
-                        <div class="form-text">{% trans 'الكمية المتوفرة في المخزون' %}</div>
+                        <div class="form-text">{% trans 'الكمية المتوفرة في المخزون' %} <span class="tracked-badge" title="{% trans 'يتم تتبع تغييرات هذا الحقل تلقائياً في متتبع المنتجات' %}"><i class="fas fa-satellite-dish"></i> {% trans 'متتبع' %}</span></div>
                     </div>
                 </div>
             </div>
@@ -498,7 +492,7 @@
                 </option>
                 {% endfor %}
             </select>
-            <div class="form-text">{% trans 'حالة توفر المنتج' %}</div>
+            <div class="form-text">{% trans 'حالة توفر المنتج' %} <span class="tracked-badge" title="{% trans 'يتم تتبع تغييرات هذا الحقل تلقائياً في متتبع المنتجات' %}"><i class="fas fa-satellite-dish"></i> {% trans 'متتبع' %}</span></div>
         </div>
     </div>
 </div>
@@ -540,7 +534,7 @@
                                                    oninput="if(this.value === '') this.value = 0;">
                                             <span class="input-group-text">%</span>
                                         </div>
-                                        <div class="form-text">{% trans 'نسبة الخصم من 0 إلى 100%' %}</div>
+                                        <div class="form-text">{% trans 'نسبة الخصم من 0 إلى 100%' %} <span class="tracked-badge" title="{% trans 'يتم تتبع تغييرات هذا الحقل تلقائياً في متتبع المنتجات' %}"><i class="fas fa-satellite-dish"></i> {% trans 'متتبع' %}</span></div>
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label for="id_discount_amount">{% trans 'مبلغ الخصم' %}</label>
@@ -551,7 +545,7 @@
                                                    oninput="if(this.value === '') this.value = 0;">
                                             <span class="input-group-text">{% trans "د.ا" %}</span>
                                         </div>
-                                        <div class="form-text">{% trans 'مبلغ الخصم الثابت' %}</div>
+                                        <div class="form-text">{% trans 'مبلغ الخصم الثابت' %} <span class="tracked-badge" title="{% trans 'يتم تتبع تغييرات هذا الحقل تلقائياً في متتبع المنتجات' %}"><i class="fas fa-satellite-dish"></i> {% trans 'متتبع' %}</span></div>
                                     </div>
                                 </div>
 
@@ -978,6 +972,11 @@
                                     {{ form.meta_keywords }}
                                     <div class="form-text">{% trans 'الكلمات المفتاحية مفصولة بفواصل' %}</div>
                                 </div>
+                                <div class="mb-3">
+                                    {{ form.search_keywords.label_tag }}
+                                    {{ form.search_keywords }}
+                                    <div class="form-text">{% trans 'كلمات مفتاحية تساعد في ظهور المنتج في نتائج البحث (مفصولة بفواصل أو مسافات)' %}</div>
+                                </div>
 
                                 <div class="seo-preview">
                                     <h6>{% trans 'معاينة ظهور الصفحة في محركات البحث:' %}</h6>
@@ -1124,6 +1123,27 @@
                 </div>
             </div>
         {% endif %}
+        {% if product %}
+            <!-- معلومات التتبع التلقائي -->
+            <div class="card shadow-sm mb-4 tracking-info-card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-satellite-dish me-2"></i>{% trans 'التتبع التلقائي' %}</h5>
+                </div>
+                <div class="card-body py-2">
+                    <p class="small text-muted mb-2">{% trans 'يتم تسجيل تغييرات الحقول التالية تلقائياً في' %} <a href="{% url 'dashboard:product_tracker' %}" target="_blank">{% trans 'متتبع المنتجات' %}</a></p>
+                    <div class="tracking-field-item"><i class="fas fa-tag"></i> {% trans 'السعر الأساسي' %}</div>
+                    <div class="tracking-field-item"><i class="fas fa-tag"></i> {% trans 'سعر المقارنة' %}</div>
+                    <div class="tracking-field-item"><i class="fas fa-money-bill"></i> {% trans 'التكلفة' %}</div>
+                    <div class="tracking-field-item"><i class="fas fa-percent"></i> {% trans 'نسبة الخصم' %}</div>
+                    <div class="tracking-field-item"><i class="fas fa-percent"></i> {% trans 'مبلغ الخصم' %}</div>
+                    <div class="tracking-field-item"><i class="fas fa-boxes-stacked"></i> {% trans 'الكمية' %}</div>
+                    <div class="tracking-field-item"><i class="fas fa-warehouse"></i> {% trans 'حالة المخزون' %}</div>
+                    <div class="tracking-field-item"><i class="fas fa-toggle-on"></i> {% trans 'الحالة (منشور/مسودة)' %}</div>
+                    <div class="tracking-field-item"><i class="fas fa-check-circle"></i> {% trans 'نشط/غير نشط' %}</div>
+                </div>
+            </div>
+        {% endif %}
+
             <!-- إحصائيات المنتج -->
             <div class="card shadow-sm mb-4" hidden>
                 <div class="card-header bg-light">

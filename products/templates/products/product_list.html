@@ -1,80 +1,38 @@
 {% extends 'core/base.html' %}
 {% load static %}
 {% load i18n %}
+{% load seo_tags %}
 
 {% block title %}
     {% if category %}
-        {% if LANGUAGE_CODE == 'en' %}
-            {{ category.name_en }}
-        {% else %}
-            {{ category.name }}
-        {% endif %} - {% trans "المنتجات" %}
+        {% if category.meta_title %}{{ category.meta_title }}{% elif LANGUAGE_CODE == 'en' %}{{ category.name_en }}{% else %}{{ category.name }}{% endif %} - {% trans "المنتجات" %}
     {% elif brand %}
-        {% if LANGUAGE_CODE == 'en' and brand.name_en %}
-            {{ brand.name_en }}
-        {% else %}
-            {{ brand.name }}
-        {% endif %} - {% trans "المنتجات" %}
+        {% if brand.meta_title %}{{ brand.meta_title }}{% elif LANGUAGE_CODE == 'en' and brand.name_en %}{{ brand.name_en }}{% else %}{{ brand.name }}{% endif %} - {% trans "المنتجات" %}
     {% else %}
-        {% trans "جميع المنتجات" %}
+        {% trans "جميع المنتجات" %} | {{ site_settings.site_name|default:"ESCO" }}
     {% endif %}
 {% endblock %}
 
-{% block extra_meta %}
-<!-- Open Graph Meta Tags for Social Media Sharing -->
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="{{ site_settings.site_name|default:'ESCO' }}">
-{% if category %}
-<meta property="og:title" content="{% if LANGUAGE_CODE == 'en' and category.name_en %}{{ category.name_en }}{% else %}{{ category.name }}{% endif %} - {{ site_settings.site_name|default:'ESCO' }}">
-<meta property="og:description" content="{% if LANGUAGE_CODE == 'en' and category.description_en %}{{ category.description_en|truncatewords:30 }}{% else %}{{ category.description|truncatewords:30 }}{% endif %}">
-{% if category.image %}
-<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ category.image.url }}">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-{% elif site_settings.logo %}
-<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ site_settings.logo.url }}">
-{% endif %}
-<meta property="og:url" content="{{ request.build_absolute_uri }}">
-{% elif brand %}
-<meta property="og:title" content="{% if LANGUAGE_CODE == 'en' and brand.name_en %}{{ brand.name_en }}{% else %}{{ brand.name }}{% endif %} - {{ site_settings.site_name|default:'ESCO' }}">
-<meta property="og:description" content="{% trans 'تصفح منتجات' %} {% if LANGUAGE_CODE == 'en' and brand.name_en %}{{ brand.name_en }}{% else %}{{ brand.name }}{% endif %}">
-{% if brand.logo %}
-<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ brand.logo.url }}">
-{% elif site_settings.logo %}
-<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ site_settings.logo.url }}">
-{% endif %}
-<meta property="og:url" content="{{ request.build_absolute_uri }}">
-{% else %}
-<meta property="og:title" content="{% trans 'جميع المنتجات' %} - {{ site_settings.site_name|default:'ESCO' }}">
-<meta property="og:description" content="{{ site_settings.site_description|default:'تصفح جميع المنتجات' }}">
-{% if site_settings.logo %}
-<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ site_settings.logo.url }}">
-{% endif %}
-<meta property="og:url" content="{{ request.build_absolute_uri }}">
-{% endif %}
+{% block meta_description %}{% if category and category.meta_description %}{{ category.meta_description }}{% elif brand and brand.meta_description %}{{ brand.meta_description }}{% elif category %}{{ category.description|striptags|truncatewords:30 }}{% elif brand %}{{ brand.description|striptags|truncatewords:30 }}{% endif %}{% endblock %}
 
-<!-- Twitter Card Meta Tags -->
-<meta name="twitter:card" content="summary_large_image">
+{% block meta_keywords %}{% if category and category.meta_keywords %}{{ category.meta_keywords }}{% elif brand and brand.meta_keywords %}{{ brand.meta_keywords }}{% endif %}{% endblock %}
+
+{% block og_tags %}
 {% if category %}
-<meta name="twitter:title" content="{% if LANGUAGE_CODE == 'en' and category.name_en %}{{ category.name_en }}{% else %}{{ category.name }}{% endif %}">
-<meta name="twitter:description" content="{% if LANGUAGE_CODE == 'en' and category.description_en %}{{ category.description_en|truncatewords:30 }}{% else %}{{ category.description|truncatewords:30 }}{% endif %}">
-{% if category.image %}
-<meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ category.image.url }}">
-{% endif %}
+    {% og_meta_tags title=category.name description=category.description|striptags|truncatewords:30 %}
 {% elif brand %}
-<meta name="twitter:title" content="{% if LANGUAGE_CODE == 'en' and brand.name_en %}{{ brand.name_en }}{% else %}{{ brand.name }}{% endif %} - {{ site_settings.site_name|default:'ESCO' }}">
-<meta name="twitter:description" content="{% trans 'تصفح منتجات' %} {% if LANGUAGE_CODE == 'en' and brand.name_en %}{{ brand.name_en }}{% else %}{{ brand.name }}{% endif %}">
-{% if brand.logo %}
-<meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ brand.logo.url }}">
-{% endif %}
+    {% og_meta_tags title=brand.name description=brand.description|striptags|truncatewords:30 %}
 {% else %}
-<meta name="twitter:title" content="{% trans 'جميع المنتجات' %} - {{ site_settings.site_name|default:'ESCO' }}">
-<meta name="twitter:description" content="{{ site_settings.site_description|default:'تصفح جميع المنتجات' }}">
+    {% og_meta_tags %}
 {% endif %}
 {% endblock %}
 
+{% block structured_data %}
+{% if breadcrumbs %}{% jsonld_breadcrumb breadcrumbs %}{% endif %}
+{% endblock %}
+
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'products/css/category_tree.css' %}">
+<link rel="stylesheet" href="{% static 'products/css/category_tree.css' %}?v=8">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/magnific-popup.js/1.1.0/magnific-popup.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.6.1/nouislider.min.css">
 {% get_current_language_bidi as LANGUAGE_BIDI %}
@@ -164,17 +122,121 @@
     }
 
     .sort-label {
-        margin-right: 10px;
+        margin-inline-end: 10px;
         color: #555;
         font-weight: 500;
+        white-space: nowrap;
     }
 
-    .sort-select {
-        padding: 8px 15px;
+    .sort-dropdown {
+        position: relative;
+    }
+
+    .sort-dropdown-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
         border-radius: 10px;
         border: 1px solid #ddd;
         background-color: #f8f9fa;
         font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+        color: #333;
+    }
+
+    .sort-dropdown-toggle:hover {
+        border-color: var(--bs-primary);
+        background-color: #fff;
+    }
+
+    .sort-dropdown-toggle .sort-icon {
+        color: var(--bs-primary);
+        font-size: 0.85rem;
+    }
+
+    .sort-dropdown-toggle .sort-chevron {
+        font-size: 0.7rem;
+        color: #999;
+        transition: transform 0.2s;
+        margin-inline-start: 4px;
+    }
+
+    .sort-dropdown.open .sort-dropdown-toggle .sort-chevron {
+        transform: rotate(180deg);
+    }
+
+    .sort-dropdown-menu {
+        position: absolute;
+        top: calc(100% + 6px);
+        inset-inline-end: 0;
+        min-width: 220px;
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        z-index: 100;
+        padding: 6px;
+        display: none;
+    }
+
+    .sort-dropdown.open .sort-dropdown-menu {
+        display: block;
+    }
+
+    .sort-dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.15s;
+        color: #555;
+        font-size: 0.9rem;
+    }
+
+    .sort-dropdown-item:hover {
+        background: #f0f4ff;
+        color: var(--bs-primary);
+    }
+
+    .sort-dropdown-item.active {
+        background: var(--bs-primary);
+        color: #fff;
+    }
+
+    .sort-dropdown-item.active i {
+        color: #fff;
+    }
+
+    .sort-dropdown-item i {
+        width: 18px;
+        text-align: center;
+        font-size: 0.85rem;
+        color: #adb5bd;
+    }
+
+    .sort-dropdown-item:hover i {
+        color: var(--bs-primary);
+    }
+
+    [data-bs-theme="dark"] .sort-dropdown-toggle {
+        background-color: var(--bs-tertiary-bg);
+        border-color: var(--bs-border-color);
+        color: var(--bs-body-color);
+    }
+
+    [data-bs-theme="dark"] .sort-dropdown-menu {
+        background: var(--bs-body-bg);
+        border-color: var(--bs-border-color);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+
+    [data-bs-theme="dark"] .sort-dropdown-item:hover {
+        background: rgba(var(--bs-primary-rgb), 0.15);
     }
 
     /* عرض المنتجات في شبكة */
@@ -320,6 +382,22 @@
         font-size: 1.2rem;
     }
 
+    /* حاوية الشريط الجانبي */
+    .sidebar-sticky-wrapper {
+        position: sticky;
+        top: 20px;
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+        scrollbar-width: thin;
+    }
+    .sidebar-sticky-wrapper::-webkit-scrollbar {
+        width: 4px;
+    }
+    .sidebar-sticky-wrapper::-webkit-scrollbar-thumb {
+        background: rgba(0,0,0,0.15);
+        border-radius: 4px;
+    }
+
     /* أقسام المنتجات */
     .products-section {
         margin-bottom: 40px;
@@ -327,6 +405,15 @@
 
     .section-title {
         margin-bottom: 25px;
+    }
+
+    @media (max-width: 991px) {
+        .sidebar-sticky-wrapper {
+            position: relative;
+            top: 0;
+            max-height: none;
+            overflow-y: visible;
+        }
     }
 
     /* الشاشات الصغيرة */
@@ -347,6 +434,55 @@
             gap: 10px;
             align-items: flex-start;
         }
+    }
+
+    /* ── Dark Mode ── */
+    [data-bs-theme="dark"] .products-container {
+        background: var(--bs-body-bg);
+    }
+    [data-bs-theme="dark"] .products-header {
+        background: var(--bs-body-bg);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+    [data-bs-theme="dark"] .products-count {
+        color: var(--bs-body-color);
+    }
+    [data-bs-theme="dark"] .sort-label {
+        color: var(--bs-body-color);
+    }
+    [data-bs-theme="dark"] .sort-select {
+        background-color: var(--bs-tertiary-bg);
+        border-color: rgba(255,255,255,0.15);
+        color: var(--bs-body-color);
+    }
+    [data-bs-theme="dark"] .breadcrumb {
+        background-color: var(--bs-tertiary-bg);
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+    [data-bs-theme="dark"] .breadcrumb-item + .breadcrumb-item::before {
+        color: var(--bs-secondary-color);
+    }
+    [data-bs-theme="dark"] .breadcrumb-item.active {
+        color: var(--bs-secondary-color);
+    }
+    [data-bs-theme="dark"] .product-card {
+        background: var(--bs-body-bg);
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    [data-bs-theme="dark"] .product-card:hover {
+        box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+        border-color: rgba(37,99,235,0.3);
+    }
+    [data-bs-theme="dark"] .product-info {
+        color: var(--bs-secondary-color);
+    }
+    [data-bs-theme="dark"] .product-card .card-body {
+        background: var(--bs-body-bg);
+    }
+    [data-bs-theme="dark"] .product-card .card-img-top {
+        border-bottom: 1px solid rgba(255,255,255,0.06);
     }
 </style>
 {% endblock %}
@@ -458,10 +594,11 @@
                     <i class="fas fa-chevron-down toggle-icon"></i>
                 </button>
 
-                <!-- شريط الفئات -->
-                {% include 'products/partials/category_sidebar.html' with show_related_products=False %}
+                <div class="sidebar-sticky-wrapper">
+                    <!-- شريط الفئات -->
+                    {% include 'products/partials/category_sidebar.html' with show_related_products=False %}
 
-                <div class="filters-sidebar-sticky">
+                    <!-- فلاتر المنتجات -->
                     {% include 'products/partials/advanced_filters.html' %}
                 </div>
             </div>
@@ -477,24 +614,31 @@
                         {% endif %}
                     </div>
                     <div class="sort-options">
-                        <label class="sort-label">{% trans "ترتيب حسب:" %}</label>
-                        <select class="sort-select" id="sortSelect" onchange="this.form.submit()">
-                            <option value="newest" {% if request.GET.sort == 'newest' or not request.GET.sort %}selected{% endif %}>
-                                {% trans "الأحدث" %}
-                            </option>
-                            <option value="price_low" {% if request.GET.sort == 'price_low' %}selected{% endif %}>
-                                {% trans "السعر: من الأقل للأعلى" %}
-                            </option>
-                            <option value="price_high" {% if request.GET.sort == 'price_high' %}selected{% endif %}>
-                                {% trans "السعر: من الأعلى للأقل" %}
-                            </option>
-                            <option value="name_az" {% if request.GET.sort == 'name_az' %}selected{% endif %}>
-                                {% trans "الاسم: أ-ي" %}
-                            </option>
-                            <option value="best_rated" {% if request.GET.sort == 'best_rated' %}selected{% endif %}>
-                                {% trans "الأعلى تقييماً" %}
-                            </option>
-                        </select>
+                        <label class="sort-label"><i class="fas fa-sort-amount-down me-1"></i>{% trans "ترتيب حسب:" %}</label>
+                        <div class="sort-dropdown" id="sortDropdown">
+                            <button type="button" class="sort-dropdown-toggle" onclick="document.getElementById('sortDropdown').classList.toggle('open')">
+                                <i class="sort-icon fas fa-{% if request.GET.sort == 'price_low' %}arrow-up{% elif request.GET.sort == 'price_high' %}arrow-down{% elif request.GET.sort == 'name_az' %}font{% elif request.GET.sort == 'best_rated' %}star{% else %}clock{% endif %}"></i>
+                                <span>{% if request.GET.sort == 'price_low' %}{% trans "السعر: من الأقل للأعلى" %}{% elif request.GET.sort == 'price_high' %}{% trans "السعر: من الأعلى للأقل" %}{% elif request.GET.sort == 'name_az' %}{% trans "الاسم: أ-ي" %}{% elif request.GET.sort == 'best_rated' %}{% trans "الأعلى تقييماً" %}{% else %}{% trans "الأحدث" %}{% endif %}</span>
+                                <i class="fas fa-chevron-down sort-chevron"></i>
+                            </button>
+                            <div class="sort-dropdown-menu">
+                                <div class="sort-dropdown-item {% if request.GET.sort == 'newest' or not request.GET.sort %}active{% endif %}" data-value="newest">
+                                    <i class="fas fa-clock"></i> {% trans "الأحدث" %}
+                                </div>
+                                <div class="sort-dropdown-item {% if request.GET.sort == 'price_low' %}active{% endif %}" data-value="price_low">
+                                    <i class="fas fa-arrow-up"></i> {% trans "السعر: من الأقل للأعلى" %}
+                                </div>
+                                <div class="sort-dropdown-item {% if request.GET.sort == 'price_high' %}active{% endif %}" data-value="price_high">
+                                    <i class="fas fa-arrow-down"></i> {% trans "السعر: من الأعلى للأقل" %}
+                                </div>
+                                <div class="sort-dropdown-item {% if request.GET.sort == 'name_az' %}active{% endif %}" data-value="name_az">
+                                    <i class="fas fa-font"></i> {% trans "الاسم: أ-ي" %}
+                                </div>
+                                <div class="sort-dropdown-item {% if request.GET.sort == 'best_rated' %}active{% endif %}" data-value="best_rated">
+                                    <i class="fas fa-star"></i> {% trans "الأعلى تقييماً" %}
+                                </div>
+                            </div>
+                        </div>
                         <form id="sortForm" method="get">
                             <input type="hidden" name="sort" id="sort">
                             <!-- حفظ الفلاتر الأخرى -->
@@ -621,6 +765,90 @@
                     </nav>
                 </div>
                 {% endif %}
+
+                {% if category %}
+                <!-- Category Landing Content -->
+                {% if landing_content and landing_content.long_description %}
+                <div class="landing-content-section mt-4">
+                    <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+                        {% if landing_content.hero_title %}
+                        <div class="card-header bg-primary bg-opacity-10 border-0 p-4">
+                            <h2 class="h4 fw-bold mb-0 text-primary">
+                                <i class="fas fa-info-circle me-2"></i>
+                                {% if LANGUAGE_CODE == 'en' and landing_content.hero_title_en %}{{ landing_content.hero_title_en }}{% else %}{{ landing_content.hero_title }}{% endif %}
+                            </h2>
+                        </div>
+                        {% endif %}
+                        <div class="card-body p-4">
+                            <div class="text-muted" style="line-height: 1.9; overflow-wrap: break-word;">
+                                {% if LANGUAGE_CODE == 'en' and landing_content.long_description_en %}{{ landing_content.long_description_en|safe }}{% else %}{{ landing_content.long_description|safe }}{% endif %}
+                            </div>
+                            {% if landing_content.buying_guide %}
+                            <div class="mt-4 p-4 rounded-3" style="background: linear-gradient(135deg, var(--bs-primary) 0%, #0056b3 100%);">
+                                <h3 class="h5 fw-bold mb-3 text-white"><i class="fas fa-book-open me-2"></i>{% trans "دليل الشراء" %}</h3>
+                                <div class="text-white" style="opacity: 0.9; line-height: 1.9; overflow-wrap: break-word;">
+                                    {% if LANGUAGE_CODE == 'en' and landing_content.buying_guide_en %}{{ landing_content.buying_guide_en|safe }}{% else %}{{ landing_content.buying_guide|safe }}{% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Category FAQs -->
+                {% if category_faqs %}
+                <div class="faq-section mt-5 mb-3" id="categoryFaqAccordion">
+                    <div class="faq-header d-flex align-items-center mb-4">
+                        <div class="faq-header-icon">
+                            <i class="fas fa-question"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h2 class="h5 fw-bold mb-1">{% trans "الأسئلة الشائعة" %}</h2>
+                            <p class="text-muted small mb-0">{% trans "إجابات على أكثر الأسئلة شيوعاً حول منتجاتنا" %}</p>
+                        </div>
+                    </div>
+                    <div class="accordion" id="faqAccordionInner">
+                        {% for faq in category_faqs %}
+                        <div class="faq-item">
+                            <button class="faq-question collapsed"
+                                    type="button" data-bs-toggle="collapse" data-bs-target="#faq{{ faq.id }}"
+                                    aria-expanded="false">
+                                <span class="faq-num">{{ forloop.counter }}</span>
+                                <span class="faq-text">{% if LANGUAGE_CODE == 'en' and faq.question_en %}{{ faq.question_en }}{% else %}{{ faq.question }}{% endif %}</span>
+                                <span class="faq-toggle"><i class="fas fa-plus"></i></span>
+                            </button>
+                            <div id="faq{{ faq.id }}" class="collapse" data-bs-parent="#faqAccordionInner">
+                                <div class="faq-answer">
+                                    {% if LANGUAGE_CODE == 'en' and faq.answer_en %}{{ faq.answer_en }}{% else %}{{ faq.answer }}{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- FAQ Schema Markup -->
+                <script type="application/ld+json">
+                {
+                    "@context": "https://schema.org",
+                    "@type": "FAQPage",
+                    "mainEntity": [
+                        {% for faq in category_faqs %}
+                        {
+                            "@type": "Question",
+                            "name": "{% if LANGUAGE_CODE == 'en' and faq.question_en %}{{ faq.question_en }}{% else %}{{ faq.question }}{% endif %}",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "{% if LANGUAGE_CODE == 'en' and faq.answer_en %}{{ faq.answer_en }}{% else %}{{ faq.answer }}{% endif %}"
+                            }
+                        }{% if not forloop.last %},{% endif %}
+                        {% endfor %}
+                    ]
+                }
+                </script>
+                {% endif %}
+                {% endif %}
             </div>
 
             <!-- العمود الأيسر: الفلاتر المتطورة -->
@@ -642,10 +870,109 @@
 <div class="filters-sidebar-container d-lg-none">
     {% include 'products/partials/advanced_filters.html' %}
 </div>
+
+<style>
+    .faq-header-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--bs-primary), #0056b3);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+    .faq-item {
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        margin-bottom: 12px;
+        overflow: hidden;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        background: var(--bs-body-bg);
+    }
+    .faq-item:hover {
+        border-color: rgba(var(--bs-primary-rgb), 0.3);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .faq-question {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 20px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        text-align: start;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--bs-body-color);
+        transition: color 0.2s;
+    }
+    .faq-question:hover { color: var(--bs-primary); }
+    .faq-question:not(.collapsed) {
+        color: var(--bs-primary);
+        background: rgba(var(--bs-primary-rgb), 0.03);
+    }
+    .faq-num {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: rgba(var(--bs-primary-rgb), 0.1);
+        color: var(--bs-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        font-weight: 700;
+        flex-shrink: 0;
+        transition: all 0.2s;
+    }
+    .faq-question:not(.collapsed) .faq-num {
+        background: var(--bs-primary);
+        color: #fff;
+    }
+    .faq-text { flex: 1; }
+    .faq-toggle {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #f0f0f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        color: #999;
+        flex-shrink: 0;
+        transition: all 0.3s;
+    }
+    .faq-question:not(.collapsed) .faq-toggle {
+        background: var(--bs-primary);
+        color: #fff;
+        transform: rotate(45deg);
+    }
+    .faq-answer {
+        padding: 0 20px 20px;
+        padding-inline-start: 66px;
+        color: #6c757d;
+        line-height: 1.9;
+        font-size: 0.9rem;
+    }
+    [data-bs-theme="dark"] .faq-item {
+        border-color: var(--bs-border-color);
+        background: var(--bs-body-bg);
+    }
+    [data-bs-theme="dark"] .faq-toggle { background: var(--bs-tertiary-bg); }
+    [data-bs-theme="dark"] .faq-item:hover {
+        border-color: rgba(var(--bs-primary-rgb), 0.4);
+    }
+</style>
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'products/js/category_tree.js' %}"></script>
+<script src="{% static 'products/js/category_tree.js' %}?v=6"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.6.1/nouislider.min.js"></script>
 {#<script src="{% static 'products/js/advanced_filters.js' %}"></script>#}
 <script>
@@ -654,10 +981,19 @@
 
     // دالة للعثور على الفئة النشطة وفتحها
     document.addEventListener('DOMContentLoaded', function() {
-        // ترتيب المنتجات
-        document.getElementById('sortSelect').addEventListener('change', function() {
-            document.getElementById('sort').value = this.value;
-            document.getElementById('sortForm').submit();
+        // ترتيب المنتجات - Custom dropdown
+        document.querySelectorAll('.sort-dropdown-item').forEach(function(item) {
+            item.addEventListener('click', function() {
+                document.getElementById('sort').value = this.getAttribute('data-value');
+                document.getElementById('sortForm').submit();
+            });
+        });
+        // Close dropdown on outside click
+        document.addEventListener('click', function(e) {
+            var dd = document.getElementById('sortDropdown');
+            if (dd && !dd.contains(e.target)) {
+                dd.classList.remove('open');
+            }
         });
     });
 </script>

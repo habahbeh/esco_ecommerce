@@ -9,6 +9,7 @@ from .views import (
     ApplyCouponView,
     RemoveCouponView,
     UpdateShippingCityView,
+    UpdateDeliveryMethodView,
 )
 
 app_name = 'cart'
@@ -27,5 +28,6 @@ urlpatterns = [
 
     # Shipping views
     path('update-shipping-city/', UpdateShippingCityView.as_view(), name='update_shipping_city'),
+    path('update-delivery-method/', UpdateDeliveryMethodView.as_view(), name='update_delivery_method'),
 
 ]

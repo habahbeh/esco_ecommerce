@@ -151,7 +151,7 @@
                                                 {{ product.category.name }}
                                             </p>
                                             <h5 class="product-title">
-                                                <a href="{{ product.get_absolute_url }}" class="text-dark text-decoration-none">
+                                                <a href="{{ product.get_absolute_url }}" class="text-body text-decoration-none">
                                                     {{ product.name }}
                                                 </a>
                                             </h5>
@@ -321,7 +321,7 @@
                                 <div class="product-details">
                                     <p class="product-category">{{ product.category.name }}</p>
                                     <h5 class="product-name">
-                                        <a href="{{ product.get_absolute_url }}" class="text-dark text-decoration-none">
+                                        <a href="{{ product.get_absolute_url }}" class="text-body text-decoration-none">
                                             {{ product.name|truncatechars:50 }}
                                         </a>
                                     </h5>
@@ -504,7 +504,8 @@
 }
 
 .product-card-list {
-    background: white;
+    background: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
     border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
@@ -523,7 +524,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f8f9fa;
+    background: var(--bs-tertiary-bg);
     border-radius: 8px;
     overflow: hidden;
 }

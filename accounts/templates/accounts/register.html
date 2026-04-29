@@ -23,7 +23,7 @@
         
         <div class="row">
             <div class="col-md-6 mb-3">
-                <label for="id_first_name" class="form-label">{% trans "الاسم الأول" %} *</label>
+                <label for="id_first_name" class="form-label">{% trans "الاسم الأول" %} <span class="text-danger">*</span></label>
                 <input type="text" name="first_name" id="id_first_name" class="form-control" required
                        placeholder="{% trans 'الاسم الأول' %}" value="{{ form.first_name.value|default:'' }}">
                 <div class="invalid-feedback">
@@ -37,7 +37,7 @@
             </div>
             
             <div class="col-md-6 mb-3">
-                <label for="id_last_name" class="form-label">{% trans "اسم العائلة" %} *</label>
+                <label for="id_last_name" class="form-label">{% trans "اسم العائلة" %} <span class="text-danger">*</span></label>
                 <input type="text" name="last_name" id="id_last_name" class="form-control" required
                        placeholder="{% trans 'اسم العائلة' %}" value="{{ form.last_name.value|default:'' }}">
                 <div class="invalid-feedback">
@@ -52,7 +52,7 @@
         </div>
 
         <div class="mb-3">
-            <label for="id_username" class="form-label">{% trans "اسم المستخدم" %} *</label>
+            <label for="id_username" class="form-label">{% trans "اسم المستخدم" %} <span class="text-danger">*</span></label>
             <input type="text" name="username" id="id_username" class="form-control" required
                    placeholder="{% trans 'اسم المستخدم' %}" value="{{ form.username.value|default:'' }}">
             <div class="invalid-feedback">
@@ -66,7 +66,7 @@
         </div>
 
         <div class="mb-3">
-            <label for="id_email" class="form-label">{% trans "البريد الإلكتروني" %} *</label>
+            <label for="id_email" class="form-label">{% trans "البريد الإلكتروني" %} <span class="text-danger">*</span></label>
             <input type="email" name="email" id="id_email" class="form-control" required
                    placeholder="{% trans 'البريد الإلكتروني' %}" value="{{ form.email.value|default:'' }}">
             <div class="invalid-feedback">
@@ -80,9 +80,12 @@
         </div>
 
         <div class="mb-3">
-            <label for="id_phone_number" class="form-label">{% trans "رقم الهاتف" %}</label>
-            <input type="tel" name="phone_number" id="id_phone_number" class="form-control"
-                   placeholder="{% trans 'رقم الهاتف (اختياري)' %}" value="{{ form.phone_number.value|default:'' }}">
+            <label for="id_phone_number" class="form-label">{% trans "رقم الهاتف" %} <span class="text-danger">*</span></label>
+            <input type="text" inputmode="tel" name="phone_number" id="id_phone_number" class="form-control" required
+                   placeholder="{% trans 'رقم الهاتف' %}" value="{{ form.phone_number.value|default:'' }}">
+            <div class="invalid-feedback">
+                {% trans "يرجى إدخال رقم الهاتف" %}
+            </div>
             {% if form.phone_number.errors %}
             <div class="text-danger mt-1">
                 {% for error in form.phone_number.errors %}{{ error }}{% endfor %}
@@ -90,51 +93,59 @@
             {% endif %}
         </div>
 
-        <div class="mb-3 position-relative">
-            <label for="id_password1" class="form-label">{% trans "كلمة المرور" %} *</label>
-            <div class="input-group">
-                <input type="password" name="password1" id="id_password1" class="form-control" required
-                       placeholder="{% trans 'كلمة المرور' %}">
-                <button type="button" class="btn btn-outline-secondary toggle-password" data-target="id_password1">
+        <div class="mb-3">
+            <label for="id_password1" class="form-label">
+                <i class="fas fa-lock me-1 text-muted"></i>{% trans "كلمة المرور" %} <span class="text-danger">*</span>
+            </label>
+            <div class="password-wrapper">
+                <input type="password" name="password1" id="id_password1"
+                       class="form-control {% if form.password1.errors %}is-invalid{% endif %}" required
+                       placeholder="{% trans 'أدخل كلمة المرور' %}">
+                <button type="button" class="password-toggle" data-target="id_password1" aria-label="{% trans 'إظهار كلمة المرور' %}">
                     <i class="fas fa-eye"></i>
                 </button>
+                {% if form.password1.errors %}
+                <div class="invalid-feedback">
+                    {% for error in form.password1.errors %}{{ error }}{% endfor %}
+                </div>
+                {% else %}
+                <div class="invalid-feedback">
+                    {% trans "يرجى إدخال كلمة المرور" %}
+                </div>
+                {% endif %}
             </div>
-            <div class="invalid-feedback">
-                {% trans "يرجى إدخال كلمة المرور" %}
-            </div>
-            {% if form.password1.errors %}
-            <div class="text-danger mt-1">
-                {% for error in form.password1.errors %}{{ error }}{% endfor %}
-            </div>
-            {% endif %}
             <small class="form-text text-muted">
                 {% trans "كلمة المرور يجب أن تتكون من 8 أحرف على الأقل وتحتوي على أرقام وأحرف" %}
             </small>
         </div>
 
-        <div class="mb-4 position-relative">
-            <label for="id_password2" class="form-label">{% trans "تأكيد كلمة المرور" %} *</label>
-            <div class="input-group">
-                <input type="password" name="password2" id="id_password2" class="form-control" required
-                       placeholder="{% trans 'تأكيد كلمة المرور' %}">
-                <button type="button" class="btn btn-outline-secondary toggle-password" data-target="id_password2">
+        <div class="mb-4">
+            <label for="id_password2" class="form-label">
+                <i class="fas fa-lock me-1 text-muted"></i>{% trans "تأكيد كلمة المرور" %} <span class="text-danger">*</span>
+            </label>
+            <div class="password-wrapper">
+                <input type="password" name="password2" id="id_password2"
+                       class="form-control {% if form.password2.errors %}is-invalid{% endif %}" required
+                       placeholder="{% trans 'أعد إدخال كلمة المرور' %}">
+                <button type="button" class="password-toggle" data-target="id_password2" aria-label="{% trans 'إظهار كلمة المرور' %}">
                     <i class="fas fa-eye"></i>
                 </button>
+                {% if form.password2.errors %}
+                <div class="invalid-feedback">
+                    {% for error in form.password2.errors %}{{ error }}{% endfor %}
+                </div>
+                {% else %}
+                <div class="invalid-feedback">
+                    {% trans "يرجى تأكيد كلمة المرور" %}
+                </div>
+                {% endif %}
             </div>
-            <div class="invalid-feedback">
-                {% trans "يرجى تأكيد كلمة المرور" %}
-            </div>
-            {% if form.password2.errors %}
-            <div class="text-danger mt-1">
-                {% for error in form.password2.errors %}{{ error }}{% endfor %}
-            </div>
-            {% endif %}
         </div>
 
         <div class="form-check mb-2">
             <input class="form-check-input" type="checkbox" name="accept_terms" id="id_accept_terms" required>
             <label class="form-check-label" for="id_accept_terms">
-                {% trans "أوافق على" %} <a href="{% url 'core:terms' %}" target="_blank">{% trans "الشروط والأحكام" %}</a> *
+                {% trans "أوافق على" %} <a href="{% url 'core:terms' %}" target="_blank">{% trans "الشروط والأحكام" %}</a> <span class="text-danger">*</span>
             </label>
             <div class="invalid-feedback">
                 {% trans "يجب الموافقة على الشروط والأحكام للمتابعة" %}

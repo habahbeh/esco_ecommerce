@@ -1,108 +1,237 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // تفعيل الفئات في المسار النشط
+    initCategoryToggle();
+    applyCategoryIcons();
     activateCategoryPath();
 });
 
-function activateCategoryPath() {
-    // الحصول على مسار الفئة الحالي
-    const currentCategoryPath = window.currentCategoryPath || [];
+var CATEGORY_ICON_MAP = {
+    375: 'fas fa-faucet',
+    3:   'fas fa-wind',
+    6:   'fas fa-ring',
+    14:  'fas fa-o',
+    47:  'fas fa-industry',
+    1:   'fas fa-wrench',
+    7:   'fas fa-tachometer-alt',
+    10:  'fas fa-hard-hat',
+    12:  'fas fa-scroll',
+    5:   'fas fa-grip-lines',
+    16:  'fas fa-dolly',
+    48:  'fas fa-water',
+    46:  'fas fa-magnet',
+    24:  'fas fa-tape',
+    17:  'fas fa-cogs',
+    26:  'fas fa-paint-roller',
+    21:  'fas fa-fire',
+    19:  'fas fa-pen-ruler',
+    255: 'fas fa-spray-can',
+    13:  'fas fa-bolt',
+    18:  'fas fa-screwdriver',
+};
 
-    if (!currentCategoryPath.length) return;
+var KEYWORD_ICON_MAP = [
+    { kw: ['drill', 'درل', 'ثقب'],           icon: 'fas fa-compact-disc' },
+    { kw: ['saw', 'منشار', 'قص'],            icon: 'fas fa-cut' },
+    { kw: ['pump', 'مضخ', 'طلمب'],           icon: 'fas fa-water' },
+    { kw: ['valve', 'صمام', 'محبس'],         icon: 'fas fa-valve' },
+    { kw: ['pipe', 'بربيش', 'خرطوم', 'ماسورة'], icon: 'fas fa-grip-lines' },
+    { kw: ['wire', 'سلك', 'كيبل'],           icon: 'fas fa-ethernet' },
+    { kw: ['tape', 'لاصق', 'تيب', 'شريط'],   icon: 'fas fa-tape' },
+    { kw: ['lock', 'قفل'],                   icon: 'fas fa-lock' },
+    { kw: ['light', 'إضاء', 'اضاء', 'لمبة'], icon: 'fas fa-lightbulb' },
+    { kw: ['motor', 'موتور', 'محرك'],        icon: 'fas fa-fan' },
+    { kw: ['wheel', 'عجل', 'دولاب'],         icon: 'fas fa-circle-notch' },
+    { kw: ['brush', 'فرشا'],                 icon: 'fas fa-paint-brush' },
+    { kw: ['glove', 'قفاز', 'كف'],           icon: 'fas fa-mitten' },
+    { kw: ['glass', 'نظار'],                 icon: 'fas fa-glasses' },
+    { kw: ['helmet', 'خوذ'],                 icon: 'fas fa-hard-hat' },
+    { kw: ['gauge', 'ساعة', 'مقياس'],        icon: 'fas fa-tachometer-alt' },
+    { kw: ['bearing', 'بلي', 'رولمان'],      icon: 'fas fa-circle' },
+    { kw: ['chain', 'سلسل', 'جنزير'],        icon: 'fas fa-link' },
+    { kw: ['spray', 'بخاخ', 'رش'],           icon: 'fas fa-spray-can' },
+    { kw: ['key', 'مفتاح', 'مفك'],           icon: 'fas fa-key' },
+    { kw: ['hammer', 'مطرق', 'شاكوش'],       icon: 'fas fa-hammer' },
+    { kw: ['measure', 'قياس', 'متر', 'ميزان'], icon: 'fas fa-ruler' },
+    { kw: ['clamp', 'مشبك', 'كلامب'],        icon: 'fas fa-compress-alt' },
+    { kw: ['weld', 'لحام', 'لحم'],           icon: 'fas fa-fire' },
+    { kw: ['screw', 'براغي', 'مسمار', 'صمولة'], icon: 'fas fa-screwdriver' },
+    { kw: ['paint', 'دهان', 'طلاء'],         icon: 'fas fa-fill-drip' },
+    { kw: ['seal', 'اورنج', 'حلق'],          icon: 'fas fa-ring' },
+    { kw: ['hose', 'هوز'],                   icon: 'fas fa-grip-lines' },
+    { kw: ['nozzle', 'بشبوري', 'فوهة'],      icon: 'fas fa-pen-nib' },
+    { kw: ['filter', 'فلتر'],                icon: 'fas fa-filter' },
+    { kw: ['jack', 'جك', 'رافع'],            icon: 'fas fa-arrows-alt-v' },
+];
 
-    // تفعيل الفئات في المسار
-    currentCategoryPath.forEach(categoryId => {
-        // العثور على عنصر الفئة
-        const categoryItem = document.querySelector(`.category-item[data-category-id="${categoryId}"]`);
-        if (!categoryItem) return;
+function getIconClass(catId, catName) {
+    if (CATEGORY_ICON_MAP[catId]) return CATEGORY_ICON_MAP[catId];
 
-        // إذا كانت فئة بسيطة، قم بتفعيل الرابط
-        const simpleLink = categoryItem.querySelector('.category-link');
-        if (simpleLink) {
-            simpleLink.classList.add('active');
-            simpleLink.style.color = 'var(--bs-primary)';
-            simpleLink.style.fontWeight = '600';
-            simpleLink.style.backgroundColor = 'rgba(var(--bs-primary-rgb), 0.05)';
-            return;
-        }
-
-        // إذا كانت فئة لها أطفال، افتح الأكورديون
-        const accordionButton = categoryItem.querySelector('.accordion-button');
-        const accordionCollapse = categoryItem.querySelector('.accordion-collapse');
-
-        if (accordionButton && accordionCollapse) {
-            // إزالة فئة collapsed من الزر
-            accordionButton.classList.remove('collapsed');
-            // تعيين سمة aria-expanded إلى true
-            accordionButton.setAttribute('aria-expanded', 'true');
-            // إضافة فئة show إلى العنصر القابل للطي
-            accordionCollapse.classList.add('show');
-        }
-
-        // افتح جميع الفئات الأب
-        let parentAccordion = categoryItem.closest('.accordion-collapse');
-        while (parentAccordion) {
-            // إضافة فئة show
-            parentAccordion.classList.add('show');
-
-            // تحديث حالة الزر
-            const parentButton = document.querySelector(`[data-bs-target="#${parentAccordion.id}"]`);
-            if (parentButton) {
-                parentButton.classList.remove('collapsed');
-                parentButton.setAttribute('aria-expanded', 'true');
+    var nameLower = (catName || '').toLowerCase();
+    for (var i = 0; i < KEYWORD_ICON_MAP.length; i++) {
+        var entry = KEYWORD_ICON_MAP[i];
+        for (var j = 0; j < entry.kw.length; j++) {
+            if (nameLower.indexOf(entry.kw[j].toLowerCase()) !== -1) {
+                return entry.icon;
             }
+        }
+    }
+    return 'fas fa-folder';
+}
 
-            // الانتقال إلى المستوى التالي
-            const parentItem = parentAccordion.closest('.accordion-item');
-            if (parentItem) {
-                parentAccordion = parentItem.closest('.accordion-collapse');
-            } else {
+function generateSectionColor(index) {
+    var hue = (index * 137.508) % 360;
+    return {
+        bg: 'hsl(' + hue + ', 78%, 93%)',
+        color: 'hsl(' + hue + ', 55%, 33%)',
+        line: 'hsl(' + hue + ', 40%, 82%)'
+    };
+}
+
+function getNameFromIcon(iconEl) {
+    var linkBtn = iconEl.closest('.category-link-btn');
+    if (linkBtn) {
+        var nameSpan = linkBtn.querySelector('.category-name');
+        if (nameSpan) return nameSpan.textContent.trim();
+    }
+    return '';
+}
+
+// Custom collapse toggle - no Bootstrap dependency
+function initCategoryToggle() {
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('button[data-collapse-target]');
+        if (!btn) return;
+
+        var targetSelector = btn.getAttribute('data-collapse-target');
+        var target = document.querySelector(targetSelector);
+        if (!target) return;
+
+        var icon = btn.querySelector('.expand-icon i');
+        if (target.classList.contains('show')) {
+            target.classList.remove('show');
+            btn.classList.add('collapsed');
+            btn.setAttribute('aria-expanded', 'false');
+            if (icon) icon.className = 'fas fa-plus';
+        } else {
+            target.classList.add('show');
+            btn.classList.remove('collapsed');
+            btn.setAttribute('aria-expanded', 'true');
+            if (icon) icon.className = 'fas fa-minus';
+        }
+    });
+}
+
+function applyCategoryIcons() {
+    var accordion = document.getElementById('categoryAccordion');
+    if (!accordion) return;
+
+    var topItems = [];
+    var children = accordion.children;
+    for (var i = 0; i < children.length; i++) {
+        if (children[i].classList.contains('category-item')) {
+            topItems.push(children[i]);
+        }
+    }
+
+    for (var idx = 0; idx < topItems.length; idx++) {
+        var item = topItems[idx];
+        var section = generateSectionColor(idx);
+
+        var header = null;
+        var itemChildren = item.children;
+        for (var c = 0; c < itemChildren.length; c++) {
+            if (itemChildren[c].tagName === 'H2' || itemChildren[c].classList.contains('accordion-header')) {
+                header = itemChildren[c];
                 break;
             }
         }
-    });
-}
 
-// دالة لتهيئة شجرة الفئات
-function initCategoryTree() {
-    // التعامل مع أزرار الفتح والإغلاق
-    document.addEventListener('DOMContentLoaded', function() {
-        // فتح الفئة النشطة وآبائها في شجرة الفئات
-        if (typeof currentCategoryPath !== 'undefined' && currentCategoryPath.length > 0) {
-            currentCategoryPath.forEach(function(categoryId) {
-                const categoryItem = document.querySelector(`.category-item[data-category-id="${categoryId}"]`);
-                if (categoryItem) {
-                    // إضافة الفئة النشطة
-                    const categoryLink = categoryItem.querySelector('.category-link');
-                    if (categoryLink) {
-                        categoryLink.classList.add('active');
-                    }
-
-                    // فتح القائمة الفرعية
-                    let parent = categoryItem.closest('.accordion-collapse');
-                    while (parent) {
-                        if (!parent.classList.contains('show')) {
-                            parent.classList.add('show');
-
-                            // تغيير حالة الزر
-                            const button = document.querySelector(`[data-bs-target="#${parent.id}"]`);
-                            if (button) {
-                                button.classList.remove('collapsed');
-                            }
-                        }
-
-                        // الانتقال للأب التالي
-                        const parentItem = parent.closest('.accordion-item');
-                        if (parentItem) {
-                            parent = parentItem.closest('.accordion-collapse');
-                        } else {
-                            parent = null;
-                        }
-                    }
-                }
-            });
+        if (header) {
+            var catIcon = header.querySelector('.cat-icon[data-cat-id]');
+            if (catIcon) {
+                var catId = parseInt(catIcon.getAttribute('data-cat-id'));
+                var catName = getNameFromIcon(catIcon);
+                catIcon.style.background = section.bg;
+                catIcon.style.color = section.color;
+                var iconEl = catIcon.querySelector('i');
+                if (iconEl) iconEl.className = getIconClass(catId, catName);
+            }
         }
-    });
+
+        var subIcons = item.querySelectorAll('.subcategory-accordion .cat-icon[data-cat-id]');
+        for (var s = 0; s < subIcons.length; s++) {
+            var el = subIcons[s];
+            var subId = parseInt(el.getAttribute('data-cat-id'));
+            var subName = getNameFromIcon(el);
+            el.style.background = section.bg;
+            el.style.color = section.color;
+            var ic = el.querySelector('i');
+            if (ic) ic.className = getIconClass(subId, subName);
+        }
+
+        var leafIcons = item.querySelectorAll('.leaf-icon[data-cat-id]');
+        for (var l = 0; l < leafIcons.length; l++) {
+            leafIcons[l].style.color = section.color;
+            leafIcons[l].style.background = section.bg;
+        }
+
+        var subAccordions = item.querySelectorAll('.subcategory-accordion');
+        for (var a = 0; a < subAccordions.length; a++) {
+            subAccordions[a].style.setProperty('--tree-line-color', section.line);
+        }
+    }
 }
 
-// تنفيذ دالة تهيئة شجرة الفئات
-initCategoryTree();
+function activateCategoryPath() {
+    var currentCategoryPath = window.currentCategoryPath || [];
+    if (!currentCategoryPath.length) return;
+
+    for (var p = 0; p < currentCategoryPath.length; p++) {
+        var categoryId = currentCategoryPath[p];
+        var categoryItem = document.querySelector('.category-item[data-category-id="' + categoryId + '"]');
+        if (!categoryItem) continue;
+
+        // Mark leaf link as active
+        var simpleLink = categoryItem.querySelector('.category-link');
+        if (simpleLink) {
+            simpleLink.classList.add('active');
+        }
+
+        // Expand this item if it has children
+        var btn = categoryItem.querySelector('button[data-collapse-target]');
+        var collapse = categoryItem.querySelector('.category-collapse');
+        if (btn && collapse) {
+            btn.classList.remove('collapsed');
+            btn.setAttribute('aria-expanded', 'true');
+            collapse.classList.add('show');
+            var icon = btn.querySelector('.expand-icon i');
+            if (icon) icon.className = 'fas fa-minus';
+        }
+
+        // Open ALL parent collapses up the tree
+        var el = categoryItem;
+        while (el) {
+            var parentCollapse = el.parentElement ? el.parentElement.closest('.category-collapse') : null;
+            if (!parentCollapse) break;
+            parentCollapse.classList.add('show');
+            var parentBtn = document.querySelector('[data-collapse-target="#' + parentCollapse.id + '"]');
+            if (parentBtn) {
+                parentBtn.classList.remove('collapsed');
+                parentBtn.setAttribute('aria-expanded', 'true');
+                var pIcon = parentBtn.querySelector('.expand-icon i');
+                if (pIcon) pIcon.className = 'fas fa-minus';
+            }
+            el = parentCollapse;
+        }
+    }
+
+    // Scroll the active item into view within the sidebar
+    var activeLink = document.querySelector('.category-link.active');
+    if (activeLink) {
+        var sidebar = activeLink.closest('.category-sidebar');
+        if (sidebar) {
+            setTimeout(function() {
+                activeLink.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            }, 100);
+        }
+    }
+}

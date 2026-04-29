@@ -11,7 +11,7 @@
 {% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'products/css/category_tree.css' %}">
+<link rel="stylesheet" href="{% static 'products/css/category_tree.css' %}?v=6">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.6.1/nouislider.min.css">
 {% get_current_language_bidi as LANGUAGE_BIDI %}
 {% if LANGUAGE_BIDI %}
@@ -873,7 +873,7 @@
                                             {% for suggestion in search_suggestions %}
                                                 <a
                                                     href="?q={{ suggestion|urlencode }}"
-                                                    class="suggestion-tag bg-light text-dark"
+                                                    class="suggestion-tag bg-body-secondary text-body"
                                                 >
                                                     {{ suggestion }}
                                                 </a>
@@ -883,7 +883,7 @@
                                 {% endif %}
 
                                 <!-- نصائح البحث -->
-                                <div class="card bg-light mb-4">
+                                <div class="card bg-body-secondary mb-4">
                                     <div class="card-body">
                                         <p class="fw-bold mb-2">{% trans "جرب ما يلي:" %}</p>
                                         <ul class="search-tip-list mb-0">

@@ -150,6 +150,108 @@
 }
 
 
+    .card-body .form-check.form-switch {
+        padding-block: 0.6rem;
+        padding-inline-start: 3.5rem;
+        border-bottom: 1px solid #eee;
+    }
+    .card-body .form-check.form-switch:last-child {
+        border-bottom: none;
+    }
+    .card-body .form-check.form-switch .form-check-input {
+        width: 2.75rem;
+        height: 1.4rem;
+        margin-inline-start: -3.5rem;
+    }
+    .card-body .form-check.form-switch .form-check-label {
+        padding-inline-start: 0.5rem;
+        font-weight: 500;
+    }
+
+    .icon-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+        gap: 8px;
+    }
+    .icon-grid-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 4px 8px;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.15s;
+        text-align: center;
+    }
+    .icon-grid-item:hover {
+        border-color: var(--bs-primary);
+        background: rgba(var(--bs-primary-rgb), 0.05);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .icon-grid-item.selected {
+        border-color: var(--bs-primary);
+        background: var(--bs-primary);
+        color: #fff;
+    }
+    .icon-grid-item i {
+        font-size: 1.4rem;
+        margin-bottom: 4px;
+    }
+    .icon-grid-item .icon-name {
+        font-size: 0.6rem;
+        color: #999;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 100%;
+    }
+    .icon-grid-item.selected .icon-name {
+        color: rgba(255,255,255,0.8);
+    }
+    #iconCategoryBtns .btn {
+        margin: 2px;
+        border-radius: 20px !important;
+        font-size: 0.78rem;
+    }
+    .icon-preview-box {
+        font-size: 1.2rem;
+        min-width: 45px;
+        justify-content: center;
+    }
+    .icon-quick-pick {
+        cursor: pointer;
+        padding: 6px 10px !important;
+        font-size: 1rem;
+        transition: all 0.15s;
+    }
+    .icon-quick-pick:hover, .icon-quick-pick.active {
+        background-color: var(--bs-primary) !important;
+        color: #fff !important;
+        border-color: var(--bs-primary) !important;
+    }
+    .icon-quick-pick.active i {
+        color: #fff;
+    }
+    .color-quick-pick {
+        display: inline-block;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 3px solid transparent;
+        transition: all 0.15s;
+        vertical-align: middle;
+    }
+    .color-quick-pick:hover {
+        transform: scale(1.2);
+    }
+    .color-quick-pick.active {
+        border-color: var(--bs-body-color);
+        box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--bs-body-color);
+    }
 </style>
 {% endblock %}
 
@@ -171,6 +273,16 @@
                         <li class="nav-item" role="presentation">
                             <a class="nav-link" id="display-tab" data-bs-toggle="tab" href="#display" role="tab" aria-controls="display" aria-selected="false">
                                 <i class="fa fa-eye me-1"></i> {% trans 'العرض والمظهر' %}
+                            </a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="landing-tab" data-bs-toggle="tab" href="#landing" role="tab" aria-controls="landing" aria-selected="false">
+                                <i class="fa fa-file-alt me-1"></i> {% trans 'محتوى الصفحة' %}
+                            </a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="faq-tab" data-bs-toggle="tab" href="#faq" role="tab" aria-controls="faq" aria-selected="false">
+                                <i class="fa fa-question-circle me-1"></i> {% trans 'الأسئلة الشائعة' %}
                             </a>
                         </li>
                     </ul>
@@ -266,6 +378,54 @@
                                     </div>
                                 </div>
                                 <div class="form-section">
+                                    <h5 class="form-section-title"><i class="fa fa-palette me-2 text-primary"></i>{% trans 'أيقونة ولون الفئة' %}</h5>
+                                    <p class="text-muted small mb-3">{% trans 'تظهر الأيقونة واللون في شجرة الفئات والقوائم' %}</p>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="icon" class="form-label">{% trans 'الأيقونة' %}</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text icon-preview-box" id="iconPreviewBox">
+                                                    <i class="{{ category.icon|default:'fas fa-folder' }}" id="iconPreviewIcon"></i>
+                                                </span>
+                                                <input type="text" class="form-control" id="icon" name="icon"
+                                                       value="{{ category.icon|default:'' }}"
+                                                       placeholder="fas fa-tools" dir="ltr">
+                                            </div>
+                                            <div class="mt-2">
+                                                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#iconPickerModal">
+                                                    <i class="fas fa-th me-1"></i> {% trans 'تصفح الأيقونات' %}
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="color" class="form-label">{% trans 'اللون' %}</label>
+                                            <div class="input-group">
+                                                <input type="color" class="form-control form-control-color" id="colorPicker"
+                                                       value="{{ category.color|default:'#0077c8' }}" style="width: 50px; padding: 4px;">
+                                                <input type="text" class="form-control" id="color" name="color"
+                                                       value="{{ category.color|default:'' }}"
+                                                       placeholder="#0077c8" dir="ltr" maxlength="7">
+                                            </div>
+                                            <div class="form-text">{% trans 'لون الأيقونة بصيغة HEX مثل:' %} <code>#0077c8</code></div>
+                                            <div class="mt-2">
+                                                <span class="color-quick-pick me-1 mb-1" data-color="#0077c8" style="background:#0077c8;" title="Blue"></span>
+                                                <span class="color-quick-pick me-1 mb-1" data-color="#dc3545" style="background:#dc3545;" title="Red"></span>
+                                                <span class="color-quick-pick me-1 mb-1" data-color="#28a745" style="background:#28a745;" title="Green"></span>
+                                                <span class="color-quick-pick me-1 mb-1" data-color="#ffc107" style="background:#ffc107;" title="Yellow"></span>
+                                                <span class="color-quick-pick me-1 mb-1" data-color="#6f42c1" style="background:#6f42c1;" title="Purple"></span>
+                                                <span class="color-quick-pick me-1 mb-1" data-color="#fd7e14" style="background:#fd7e14;" title="Orange"></span>
+                                                <span class="color-quick-pick me-1 mb-1" data-color="#20c997" style="background:#20c997;" title="Teal"></span>
+                                                <span class="color-quick-pick me-1 mb-1" data-color="#e83e8c" style="background:#e83e8c;" title="Pink"></span>
+                                                <span class="color-quick-pick me-1 mb-1" data-color="#17a2b8" style="background:#17a2b8;" title="Cyan"></span>
+                                                <span class="color-quick-pick me-1 mb-1" data-color="#6c757d" style="background:#6c757d;" title="Gray"></span>
+                                                <span class="color-quick-pick me-1 mb-1" data-color="#343a40" style="background:#343a40;" title="Dark"></span>
+                                                <span class="color-quick-pick me-1 mb-1" data-color="#795548" style="background:#795548;" title="Brown"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
                                     <h5 class="form-section-title">{% trans 'ترتيب وإعدادات العرض' %}</h5>
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
@@ -276,6 +436,126 @@
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- محتوى صفحة الفئة -->
+                        <div class="tab-pane fade" id="landing" role="tabpanel" aria-labelledby="landing-tab">
+                            <div class="p-4">
+                                <div class="form-section">
+                                    <h5 class="form-section-title"><i class="fa fa-heading me-2 text-primary"></i>{% trans 'عنوان ووصف البطل' %}</h5>
+                                    <p class="text-muted small mb-3">{% trans 'يظهر في أعلى صفحة الفئة كقسم تعريفي بارز' %}</p>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="landing_hero_title" class="form-label">{% trans 'عنوان البطل (عربي)' %}</label>
+                                            <input type="text" class="form-control" id="landing_hero_title" name="landing_hero_title"
+                                                   value="{{ landing_content.hero_title|default:'' }}">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="landing_hero_title_en" class="form-label">{% trans 'عنوان البطل (إنجليزي)' %}</label>
+                                            <input type="text" class="form-control" id="landing_hero_title_en" name="landing_hero_title_en"
+                                                   value="{{ landing_content.hero_title_en|default:'' }}" dir="ltr">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="landing_hero_description" class="form-label">{% trans 'وصف البطل (عربي)' %}</label>
+                                            <textarea class="form-control" id="landing_hero_description" name="landing_hero_description"
+                                                      rows="3">{{ landing_content.hero_description|default:'' }}</textarea>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="landing_hero_description_en" class="form-label">{% trans 'وصف البطل (إنجليزي)' %}</label>
+                                            <textarea class="form-control" id="landing_hero_description_en" name="landing_hero_description_en"
+                                                      rows="3" dir="ltr">{{ landing_content.hero_description_en|default:'' }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <h5 class="form-section-title"><i class="fa fa-align-left me-2 text-primary"></i>{% trans 'الوصف المطول' %}</h5>
+                                    <p class="text-muted small mb-3">{% trans 'محتوى غني يساعد في تحسين ترتيب الصفحة في محركات البحث (SEO)' %}</p>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="landing_long_description" class="form-label">{% trans 'الوصف المطول (عربي)' %}</label>
+                                            <textarea class="form-control" id="landing_long_description" name="landing_long_description"
+                                                      rows="6">{{ landing_content.long_description|default:'' }}</textarea>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="landing_long_description_en" class="form-label">{% trans 'الوصف المطول (إنجليزي)' %}</label>
+                                            <textarea class="form-control" id="landing_long_description_en" name="landing_long_description_en"
+                                                      rows="6" dir="ltr">{{ landing_content.long_description_en|default:'' }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <h5 class="form-section-title"><i class="fa fa-book me-2 text-primary"></i>{% trans 'دليل الشراء' %}</h5>
+                                    <p class="text-muted small mb-3">{% trans 'نصائح وإرشادات للعملاء تساعدهم في اختيار المنتج المناسب' %}</p>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="landing_buying_guide" class="form-label">{% trans 'دليل الشراء (عربي)' %}</label>
+                                            <textarea class="form-control" id="landing_buying_guide" name="landing_buying_guide"
+                                                      rows="6">{{ landing_content.buying_guide|default:'' }}</textarea>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="landing_buying_guide_en" class="form-label">{% trans 'دليل الشراء (إنجليزي)' %}</label>
+                                            <textarea class="form-control" id="landing_buying_guide_en" name="landing_buying_guide_en"
+                                                      rows="6" dir="ltr">{{ landing_content.buying_guide_en|default:'' }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <h5 class="form-section-title"><i class="fa fa-key me-2 text-primary"></i>{% trans 'كلمات محلية (SEO)' %}</h5>
+                                    <p class="text-muted small mb-3">{% trans 'كلمات مفتاحية محلية تساعد في ظهور الصفحة في نتائج البحث المحلية' %}</p>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="landing_local_keywords" class="form-label">{% trans 'كلمات محلية (عربي)' %}</label>
+                                            <input type="text" class="form-control" id="landing_local_keywords" name="landing_local_keywords"
+                                                   value="{{ landing_content.local_keywords|default:'' }}">
+                                            <div class="form-text">{% trans 'مثال: أدوات كهربائية الأردن, عمان' %}</div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="landing_local_keywords_en" class="form-label">{% trans 'كلمات محلية (إنجليزي)' %}</label>
+                                            <input type="text" class="form-control" id="landing_local_keywords_en" name="landing_local_keywords_en"
+                                                   value="{{ landing_content.local_keywords_en|default:'' }}" dir="ltr">
+                                            <div class="form-text">{% trans 'Example: power tools Jordan, Amman' %}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- الأسئلة الشائعة -->
+                        <div class="tab-pane fade" id="faq" role="tabpanel" aria-labelledby="faq-tab">
+                            <div class="p-4">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div>
+                                        <h5 class="form-section-title mb-1"><i class="fa fa-question-circle me-2 text-primary"></i>{% trans 'الأسئلة الشائعة للفئة' %}</h5>
+                                        <p class="text-muted small mb-0">{% trans 'تظهر في صفحة الفئة وتساعد في تحسين SEO عبر FAQ Schema' %}</p>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        {% if category %}
+                                        <a href="{% url 'products:category_products' category_slug=category.slug %}#categoryFaqAccordion" target="_blank" class="btn btn-outline-info btn-sm">
+                                            <i class="fa fa-external-link-alt me-1"></i> {% trans 'عرض في الموقع' %}
+                                        </a>
+                                        {% endif %}
+                                        <button type="button" id="add-faq-btn" class="btn btn-primary btn-sm">
+                                            <i class="fa fa-plus me-1"></i> {% trans 'إضافة سؤال' %}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div id="faqs-container"></div>
+
+                                <div id="faqs-empty" class="text-center py-5 text-muted" style="display:none;">
+                                    <i class="fa fa-question-circle fa-3x mb-3 d-block opacity-25"></i>
+                                    <p>{% trans 'لا توجد أسئلة شائعة بعد. أضف سؤالاً جديداً للبدء.' %}</p>
+                                </div>
+
+                                <input type="hidden" name="category_faqs_json" id="category_faqs_json" value="">
+                                <script>var initialFaqsData = {{ faqs_json|default:"[]"|safe }};</script>
+                                <input type="hidden" name="deleted_faqs_json" id="deleted_faqs_json" value="[]">
                             </div>
                         </div>
                     </div>
@@ -369,6 +649,33 @@
         </div>
     </div>
 </form>
+
+<!-- Icon Picker Modal -->
+<div class="modal fade" id="iconPickerModal" tabindex="-1" aria-labelledby="iconPickerLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="iconPickerLabel"><i class="fas fa-icons me-2"></i>{% trans 'اختيار أيقونة' %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="iconSearchInput" placeholder="{% trans 'ابحث عن أيقونة...' %}" dir="ltr">
+                </div>
+                <div class="mb-3">
+                    <div class="btn-group flex-wrap" role="group" id="iconCategoryBtns">
+                        <button type="button" class="btn btn-sm btn-outline-primary active" data-cat="all">{% trans 'الكل' %}</button>
+                    </div>
+                </div>
+                <div id="iconGrid" class="icon-grid"></div>
+                <div id="iconEmpty" class="text-center text-muted py-4 d-none">
+                    <i class="fas fa-search fa-2x mb-2 d-block opacity-25"></i>
+                    {% trans 'لا توجد نتائج' %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -451,6 +758,199 @@ $('.select2').select2({
             }
         });
 
+        // === Icon Picker Modal ===
+        var iconInput = document.getElementById('icon');
+        var iconPreview = document.getElementById('iconPreviewIcon');
+
+        var iconData = {
+            "Tools & Hardware": [
+                "fas fa-tools","fas fa-wrench","fas fa-hammer","fas fa-screwdriver","fas fa-toolbox",
+                "fas fa-hard-hat","fas fa-ruler","fas fa-ruler-combined","fas fa-ruler-horizontal",
+                "fas fa-ruler-vertical","fas fa-drafting-compass","fas fa-pencil-ruler","fas fa-tape",
+                "fas fa-paint-roller","fas fa-paint-brush","fas fa-brush","fas fa-fill-drip",
+                "fas fa-palette","fas fa-cut","fas fa-scissors"
+            ],
+            "Electrical": [
+                "fas fa-bolt","fas fa-plug","fas fa-lightbulb","fas fa-charging-station","fas fa-car-battery",
+                "fas fa-battery-full","fas fa-battery-half","fas fa-solar-panel","fas fa-broadcast-tower",
+                "fas fa-satellite-dish","fas fa-power-off","fas fa-toggle-on","fas fa-toggle-off"
+            ],
+            "Plumbing & Water": [
+                "fas fa-water","fas fa-faucet","fas fa-shower","fas fa-bath","fas fa-swimming-pool",
+                "fas fa-tint","fas fa-hot-tub","fas fa-toilet","fas fa-sink","fas fa-pump-soap"
+            ],
+            "Building & Construction": [
+                "fas fa-building","fas fa-home","fas fa-house-damage","fas fa-warehouse","fas fa-store",
+                "fas fa-city","fas fa-industry","fas fa-monument","fas fa-archway","fas fa-door-open",
+                "fas fa-door-closed","fas fa-window-maximize","fas fa-dungeon"
+            ],
+            "Vehicles & Transport": [
+                "fas fa-truck","fas fa-truck-pickup","fas fa-truck-moving","fas fa-car","fas fa-car-side",
+                "fas fa-bus","fas fa-shuttle-van","fas fa-motorcycle","fas fa-bicycle","fas fa-tractor",
+                "fas fa-trailer","fas fa-gas-pump","fas fa-shipping-fast"
+            ],
+            "Safety & Security": [
+                "fas fa-shield-alt","fas fa-lock","fas fa-unlock","fas fa-key","fas fa-fire-extinguisher",
+                "fas fa-fire","fas fa-first-aid","fas fa-exclamation-triangle","fas fa-hard-hat",
+                "fas fa-user-shield","fas fa-mask","fas fa-eye","fas fa-eye-slash"
+            ],
+            "Machines & Equipment": [
+                "fas fa-cog","fas fa-cogs","fas fa-fan","fas fa-blender","fas fa-snowplow",
+                "fas fa-compact-disc","fas fa-microchip","fas fa-memory","fas fa-server",
+                "fas fa-hdd","fas fa-print","fas fa-fax","fas fa-calculator"
+            ],
+            "Packaging & Storage": [
+                "fas fa-box","fas fa-box-open","fas fa-boxes","fas fa-archive","fas fa-pallet",
+                "fas fa-dolly","fas fa-dolly-flatbed","fas fa-clipboard","fas fa-clipboard-list",
+                "fas fa-clipboard-check","fas fa-folder","fas fa-folder-open"
+            ],
+            "Nature & Garden": [
+                "fas fa-leaf","fas fa-tree","fas fa-seedling","fas fa-spa","fas fa-cannabis",
+                "fas fa-cloud","fas fa-cloud-sun","fas fa-sun","fas fa-moon","fas fa-snowflake",
+                "fas fa-wind","fas fa-umbrella","fas fa-mountain"
+            ],
+            "Arrows & Directions": [
+                "fas fa-arrow-up","fas fa-arrow-down","fas fa-arrow-left","fas fa-arrow-right",
+                "fas fa-arrows-alt","fas fa-expand","fas fa-compress","fas fa-exchange-alt",
+                "fas fa-sync","fas fa-redo","fas fa-undo","fas fa-random","fas fa-sort"
+            ],
+            "General": [
+                "fas fa-tag","fas fa-tags","fas fa-star","fas fa-heart","fas fa-thumbs-up",
+                "fas fa-check","fas fa-check-circle","fas fa-times","fas fa-plus","fas fa-minus",
+                "fas fa-info-circle","fas fa-question-circle","fas fa-exclamation-circle",
+                "fas fa-bell","fas fa-flag","fas fa-trophy","fas fa-award","fas fa-medal",
+                "fas fa-crown","fas fa-gem","fas fa-gift","fas fa-shopping-cart","fas fa-shopping-bag",
+                "fas fa-store-alt","fas fa-receipt","fas fa-barcode","fas fa-qrcode",
+                "fas fa-chart-bar","fas fa-chart-line","fas fa-chart-pie","fas fa-percentage",
+                "fas fa-dollar-sign","fas fa-coins","fas fa-money-bill","fas fa-credit-card",
+                "fas fa-handshake","fas fa-users","fas fa-user","fas fa-user-tie",
+                "fas fa-phone","fas fa-envelope","fas fa-globe","fas fa-map-marker-alt",
+                "fas fa-clock","fas fa-calendar","fas fa-search","fas fa-link","fas fa-paperclip",
+                "fas fa-th","fas fa-th-large","fas fa-th-list","fas fa-list","fas fa-grip-horizontal",
+                "fas fa-layer-group","fas fa-cube","fas fa-cubes","fas fa-shapes",
+                "fas fa-magic","fas fa-wand-magic-sparkles","fas fa-broom","fas fa-trash",
+                "fas fa-download","fas fa-upload","fas fa-share","fas fa-external-link-alt"
+            ]
+        };
+
+        function buildIconGrid(filter, category) {
+            var grid = document.getElementById('iconGrid');
+            var empty = document.getElementById('iconEmpty');
+            var html = '';
+            var count = 0;
+            var currentVal = iconInput ? iconInput.value : '';
+            var lowerFilter = filter ? filter.toLowerCase() : '';
+
+            Object.keys(iconData).forEach(function(cat) {
+                if (category && category !== 'all' && cat !== category) return;
+                iconData[cat].forEach(function(cls) {
+                    var name = cls.replace('fas fa-', '');
+                    if (lowerFilter && name.indexOf(lowerFilter) === -1 && cls.indexOf(lowerFilter) === -1) return;
+                    var sel = (cls === currentVal) ? ' selected' : '';
+                    html += '<div class="icon-grid-item' + sel + '" data-icon="' + cls + '" title="' + cls + '">';
+                    html += '<i class="' + cls + '"></i>';
+                    html += '<span class="icon-name">' + name + '</span></div>';
+                    count++;
+                });
+            });
+
+            grid.innerHTML = html;
+            empty.classList.toggle('d-none', count > 0);
+
+            grid.querySelectorAll('.icon-grid-item').forEach(function(item) {
+                item.addEventListener('click', function() {
+                    var val = this.getAttribute('data-icon');
+                    iconInput.value = val;
+                    iconPreview.className = val;
+                    if (iconInput.style) {
+                        var colorVal = document.getElementById('color').value;
+                        if (colorVal) iconPreview.style.color = colorVal;
+                    }
+                    var modal = bootstrap.Modal.getInstance(document.getElementById('iconPickerModal'));
+                    if (modal) modal.hide();
+                });
+            });
+        }
+
+        // Build category filter buttons
+        var catBtns = document.getElementById('iconCategoryBtns');
+        if (catBtns) {
+            Object.keys(iconData).forEach(function(cat) {
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn btn-sm btn-outline-primary';
+                btn.setAttribute('data-cat', cat);
+                btn.textContent = cat;
+                btn.addEventListener('click', function() {
+                    catBtns.querySelectorAll('.btn').forEach(function(b) { b.classList.remove('active'); });
+                    this.classList.add('active');
+                    buildIconGrid(document.getElementById('iconSearchInput').value, cat);
+                });
+                catBtns.appendChild(btn);
+            });
+        }
+
+        // Search
+        var iconSearch = document.getElementById('iconSearchInput');
+        if (iconSearch) {
+            iconSearch.addEventListener('input', function() {
+                var activeCat = catBtns.querySelector('.btn.active');
+                var cat = activeCat ? activeCat.getAttribute('data-cat') : 'all';
+                buildIconGrid(this.value, cat);
+            });
+        }
+
+        // Build grid on modal open
+        var iconModal = document.getElementById('iconPickerModal');
+        if (iconModal) {
+            iconModal.addEventListener('shown.bs.modal', function() {
+                buildIconGrid('', 'all');
+                iconSearch.value = '';
+                catBtns.querySelectorAll('.btn').forEach(function(b) { b.classList.remove('active'); });
+                catBtns.querySelector('[data-cat="all"]').classList.add('active');
+                iconSearch.focus();
+            });
+        }
+
+        // Live preview from text input
+        if (iconInput) {
+            iconInput.addEventListener('input', function() {
+                iconPreview.className = this.value || 'fas fa-folder';
+            });
+        }
+
+        // === Color Picker ===
+        var colorInput = document.getElementById('color');
+        var colorPicker = document.getElementById('colorPicker');
+        if (colorInput && colorPicker) {
+            colorPicker.addEventListener('input', function() {
+                colorInput.value = this.value;
+                if (iconPreview) iconPreview.style.color = this.value;
+                document.querySelectorAll('.color-quick-pick').forEach(function(b) { b.classList.remove('active'); });
+            });
+            colorInput.addEventListener('input', function() {
+                if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
+                    colorPicker.value = this.value;
+                    if (iconPreview) iconPreview.style.color = this.value;
+                }
+                document.querySelectorAll('.color-quick-pick').forEach(function(b) { b.classList.remove('active'); });
+            });
+            document.querySelectorAll('.color-quick-pick').forEach(function(btn) {
+                if (btn.getAttribute('data-color') === colorInput.value) btn.classList.add('active');
+                btn.addEventListener('click', function() {
+                    var val = this.getAttribute('data-color');
+                    colorInput.value = val;
+                    colorPicker.value = val;
+                    if (iconPreview) iconPreview.style.color = val;
+                    document.querySelectorAll('.color-quick-pick').forEach(function(b) { b.classList.remove('active'); });
+                    this.classList.add('active');
+                });
+            });
+            if (colorInput.value) {
+                iconPreview.style.color = colorInput.value;
+            }
+        }
+
         // تأكيد مغادرة الصفحة إذا كانت هناك تغييرات غير محفوظة
         let formChanged = false;
 
@@ -465,8 +965,123 @@ $('.select2').select2({
         });
 
         $('#category-form').submit(function() {
+            updateFaqsJson();
             formChanged = false;
         });
+
+        // ===== FAQ Management =====
+        var faqsData = (typeof initialFaqsData !== 'undefined') ? initialFaqsData : [];
+        var deletedFaqs = [];
+        var faqTempId = -1;
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            var div = document.createElement('div');
+            div.appendChild(document.createTextNode(text));
+            return div.innerHTML;
+        }
+
+        function renderFaqs() {
+            var container = $('#faqs-container');
+            container.empty();
+
+            if (faqsData.length === 0) {
+                $('#faqs-empty').show();
+            } else {
+                $('#faqs-empty').hide();
+            }
+
+            faqsData.forEach(function(faq, index) {
+                var checked = faq.is_active !== false ? 'checked' : '';
+                var card = '<div class="card mb-3 faq-item border" data-index="' + index + '">' +
+                    '<div class="card-header bg-light d-flex justify-content-between align-items-center py-2">' +
+                        '<span class="fw-bold small"><i class="fa fa-grip-vertical text-muted me-2"></i>{% trans "سؤال" %} #' + (index + 1) + '</span>' +
+                        '<div class="d-flex align-items-center gap-2">' +
+                            '<div class="form-check form-switch mb-0">' +
+                                '<input class="form-check-input faq-is-active" type="checkbox" data-index="' + index + '" ' + checked + '>' +
+                                '<label class="form-check-label small">{% trans "نشط" %}</label>' +
+                            '</div>' +
+                            '<button type="button" class="btn btn-sm btn-outline-danger btn-remove-faq" data-index="' + index + '">' +
+                                '<i class="fa fa-trash-alt"></i>' +
+                            '</button>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="card-body py-3">' +
+                        '<div class="row g-3">' +
+                            '<div class="col-md-6">' +
+                                '<label class="form-label small fw-bold">{% trans "السؤال (عربي)" %} <span class="text-danger">*</span></label>' +
+                                '<input type="text" class="form-control form-control-sm faq-question" data-index="' + index + '" value="' + escapeHtml(faq.question) + '">' +
+                            '</div>' +
+                            '<div class="col-md-6">' +
+                                '<label class="form-label small fw-bold">{% trans "السؤال (إنجليزي)" %}</label>' +
+                                '<input type="text" class="form-control form-control-sm faq-question-en" data-index="' + index + '" value="' + escapeHtml(faq.question_en) + '" dir="ltr">' +
+                            '</div>' +
+                            '<div class="col-md-6">' +
+                                '<label class="form-label small fw-bold">{% trans "الإجابة (عربي)" %} <span class="text-danger">*</span></label>' +
+                                '<textarea class="form-control form-control-sm faq-answer" data-index="' + index + '" rows="3">' + escapeHtml(faq.answer) + '</textarea>' +
+                            '</div>' +
+                            '<div class="col-md-6">' +
+                                '<label class="form-label small fw-bold">{% trans "الإجابة (إنجليزي)" %}</label>' +
+                                '<textarea class="form-control form-control-sm faq-answer-en" data-index="' + index + '" rows="3" dir="ltr">' + escapeHtml(faq.answer_en) + '</textarea>' +
+                            '</div>' +
+                            '<div class="col-md-3">' +
+                                '<label class="form-label small fw-bold">{% trans "الترتيب" %}</label>' +
+                                '<input type="number" class="form-control form-control-sm faq-sort-order" data-index="' + index + '" value="' + (faq.sort_order || 0) + '" min="0">' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+                container.append(card);
+            });
+        }
+
+        function updateFaqsJson() {
+            faqsData.forEach(function(faq, index) {
+                var q = $('.faq-question[data-index="' + index + '"]');
+                if (q.length) {
+                    faq.question = q.val() || '';
+                    faq.question_en = $('.faq-question-en[data-index="' + index + '"]').val() || '';
+                    faq.answer = $('.faq-answer[data-index="' + index + '"]').val() || '';
+                    faq.answer_en = $('.faq-answer-en[data-index="' + index + '"]').val() || '';
+                    faq.sort_order = parseInt($('.faq-sort-order[data-index="' + index + '"]').val()) || 0;
+                    faq.is_active = $('.faq-is-active[data-index="' + index + '"]').is(':checked');
+                }
+            });
+            $('#category_faqs_json').val(JSON.stringify(faqsData));
+            $('#deleted_faqs_json').val(JSON.stringify(deletedFaqs));
+        }
+
+        $('#add-faq-btn').click(function() {
+            updateFaqsJson();
+            faqsData.push({
+                id: faqTempId--,
+                question: '',
+                question_en: '',
+                answer: '',
+                answer_en: '',
+                sort_order: faqsData.length,
+                is_active: true
+            });
+            renderFaqs();
+            var lastCard = $('#faqs-container .faq-item:last');
+            if (lastCard.length) {
+                $('html, body').animate({ scrollTop: lastCard.offset().top - 100 }, 300);
+                lastCard.find('.faq-question').focus();
+            }
+        });
+
+        $(document).on('click', '.btn-remove-faq', function() {
+            updateFaqsJson();
+            var index = parseInt($(this).data('index'));
+            var faq = faqsData[index];
+            if (faq && faq.id && faq.id > 0) {
+                deletedFaqs.push(faq.id);
+            }
+            faqsData.splice(index, 1);
+            renderFaqs();
+        });
+
+        renderFaqs();
     });
 </script>
 {% endblock %}

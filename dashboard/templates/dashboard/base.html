@@ -38,11 +38,11 @@
     <link rel="stylesheet" href="{% static 'dashboard/css/flag-icons.css' %}">
 
     <!-- Custom Dashboard CSS -->
-    <link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}?v=8">
 
     <!-- RTL/LTR Specific Styles -->
     {% if LANGUAGE_BIDI %}
-    <link rel="stylesheet" href="{% static 'dashboard/css/dashboard-rtl.css' %}">
+    <link rel="stylesheet" href="{% static 'dashboard/css/dashboard-rtl.css' %}?v=2">
     {% else %}
     <link rel="stylesheet" href="{% static 'dashboard/css/dashboard-ltr.css' %}">
     {% endif %}
@@ -68,6 +68,7 @@
                 height: 100vh;
                 z-index: 1050;
                 transition: all 0.3s ease;
+                overflow-x: hidden;
                 overflow-y: auto;
                 box-shadow: none;
             }
@@ -121,7 +122,7 @@
     <div class="dashboard-wrapper">
 
         <!-- Sidebar -->
-        <nav id="sidebar" class="sidebar-wrapper" >
+        <nav id="sidebar" class="sidebar-wrapper">
             <div class="sidebar-content">
                 <!-- Sidebar Header -->
                 <div class="sidebar-header">
@@ -138,7 +139,11 @@
                 <div class="sidebar-user-info">
                     <div class="user-avatar">
                         {% if request.user.avatar %}
-                        <img src="{{ request.user.avatar.url }}" alt="{{ request.user.get_full_name }}" class="rounded-circle">
+                        <img src="{{ request.user.avatar.url }}" alt="{{ request.user.get_full_name }}" class="rounded-circle"
+                             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                        <div class="avatar-placeholder rounded-circle bg-primary" style="display:none;">
+                            {{ request.user.get_initials }}
+                        </div>
                         {% else %}
                         <div class="avatar-placeholder rounded-circle bg-primary">
                             {{ request.user.get_initials }}
@@ -192,6 +197,10 @@
                                 {% if perms.products.view_productdiscount or request.user.is_superuser %}
                                 <li><a href="{% url 'dashboard:dashboard_discounts' %}">{% trans "خصومات المنتجات" %}</a></li>
                                 {% endif %}
+
+                                {% if request.user.is_superuser %}
+                                <li><a href="{% url 'dashboard:product_tracker' %}">{% trans "متتبع المنتجات" %}</a></li>
+                                {% endif %}
                             </ul>
                         </li>
                         {% endif %}
@@ -218,6 +227,25 @@
                         </li>
                         {% endif %}
 
+
+                        <!-- قسم المدونة -->
+                        {% if request.user.is_staff %}
+                            <li class="menu-item-section">
+                                <span>{% trans "المدونة" %}</span>
+                            </li>
+                            <li class="menu-item {% if '/blog' in request.path %}active{% endif %}">
+                                <a href="{% url 'dashboard:dashboard_blog_posts' %}">
+                                    <i class="fa fa-newspaper"></i>
+                                    <span>{% trans "إدارة المدونة" %}</span>
+                                </a>
+                                <ul class="submenu">
+                                    <li><a href="{% url 'dashboard:dashboard_blog_posts' %}">{% trans "المقالات" %}</a></li>
+                                    <li><a href="{% url 'dashboard:dashboard_blog_post_create' %}">{% trans "إضافة مقال" %}</a></li>
+                                    <li><a href="{% url 'dashboard:dashboard_blog_categories' %}">{% trans "التصنيفات" %}</a></li>
+                                    <li><a href="{% url 'dashboard:dashboard_blog_tags' %}">{% trans "الوسوم" %}</a></li>
+                                </ul>
+                            </li>
+                        {% endif %}
 
                         <!-- قسم الفعاليات والمعارض -->
                         {% if perms.events.view_event or request.user.is_superuser %}
@@ -329,6 +357,24 @@
                         </li>
                         {% endif %}
 
+                        <!-- SEO Section -->
+                        {% if request.user.is_superuser %}
+                        <li class="menu-item-section">
+                            <span>{% trans "تحسين محركات البحث" %}</span>
+                        </li>
+                        <li class="menu-item {% if 'seo' in request.path %}active{% endif %}">
+                            <a href="{% url 'dashboard:seo_settings' %}">
+                                <i class="fa fa-search"></i>
+                                <span>{% trans "SEO" %}</span>
+                            </a>
+                            <ul class="submenu">
+                                <li><a href="{% url 'dashboard:seo_settings' %}">{% trans "إعدادات SEO" %}</a></li>
+                                <li><a href="{% url 'dashboard:seo_keywords' %}">{% trans "الكلمات المفتاحية" %}</a></li>
+                                <li><a href="{% url 'dashboard:seo_auto_tag' %}">{% trans "التوسيم التلقائي" %}</a></li>
+                            </ul>
+                        </li>
+                        {% endif %}
+
                         <!-- Settings Section -->
                         {% if perms.core.view_sitesettings or request.user.is_superuser %}
                         <li class="menu-item-section">
@@ -346,6 +392,7 @@
 
                                 {% if request.user.is_superuser %}
                                     <li><a href="{% url 'dashboard:dashboard_shipping_settings' %}">{% trans "إعدادات الشحن" %}</a></li>
+                                    <li><a href="{% url 'dashboard:dashboard_branches' %}">{% trans "إدارة الفروع" %}</a></li>
                                 {% endif %}
 
                                 {% if perms.core.view_slideritem or request.user.is_superuser %}
@@ -446,18 +493,10 @@
                             </div>
                         </li>
 
-                        <!-- Language Switcher -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button"
-                               data-bs-toggle="dropdown" aria-expanded="false">
-                                {% if LANGUAGE_CODE == 'ar' %}
-                                    <i class="flag-icon flag-icon-jo"></i> العربية
-                                {% else %}
-                                    <i class="flag-icon flag-icon-us"></i> English
-                                {% endif %}
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
-                                <form action="{% url 'set_language' %}" method="post">
+                        <!-- Language Toggle -->
+                        <li class="nav-item d-flex align-items-center mx-2">
+                            <div class="lang-switch">
+                                <form action="{% url 'set_language' %}" method="post" id="langSwitchForm">
                                     {% csrf_token %}
                                     {% if request.path|slice:":4" == "/en/" %}
                                         <input name="next" type="hidden" value="{{ request.path|slice:'3:' }}">
@@ -466,47 +505,75 @@
                                     {% else %}
                                         <input name="next" type="hidden" value="{{ request.path }}">
                                     {% endif %}
-                                    <button type="submit" name="language" value="ar"
-                                            class="dropdown-item {% if LANGUAGE_CODE == 'ar' %}active{% endif %}">
-                                        <i class="flag-icon flag-icon-jo me-2"></i> العربية
-                                    </button>
-                                    <button type="submit" name="language" value="en"
-                                            class="dropdown-item {% if LANGUAGE_CODE == 'en' %}active{% endif %}">
-                                        <i class="flag-icon flag-icon-us me-2"></i> English
-                                    </button>
+                                    <input name="language" type="hidden" id="langInput" value="{% if LANGUAGE_CODE == 'ar' %}en{% else %}ar{% endif %}">
                                 </form>
+                                <button type="button" class="lang-seg {% if LANGUAGE_CODE == 'ar' %}lang-seg--active{% endif %}" onclick="document.getElementById('langInput').value='ar';document.getElementById('langSwitchForm').submit();">
+                                    <i class="flag-icon flag-icon-jo"></i>
+                                    <span>AR</span>
+                                </button>
+                                <button type="button" class="lang-seg {% if LANGUAGE_CODE == 'en' %}lang-seg--active{% endif %}" onclick="document.getElementById('langInput').value='en';document.getElementById('langSwitchForm').submit();">
+                                    <i class="flag-icon flag-icon-us"></i>
+                                    <span>EN</span>
+                                </button>
                             </div>
                         </li>
 
                         <!-- User Profile Dropdown -->
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <span class="d-none d-md-inline">{{ request.user.get_full_name }}</span>
+                            <a class="nav-link dropdown-toggle p-0 d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="gap:10px;">
                                 {% if request.user.avatar %}
-                                <img src="{{ request.user.avatar.url }}" alt="{{ request.user.get_full_name }}" class="avatar-sm rounded-circle ms-2">
+                                <img src="{{ request.user.avatar.url }}" alt="{{ request.user.get_full_name }}" class="rounded-circle"
+                                     style="width:36px;height:36px;object-fit:cover;border:2px solid #e2e8f0;"
+                                     onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';">
+                                <div class="rounded-circle bg-primary d-none align-items-center justify-content-center" style="width:36px;height:36px;font-size:14px;color:#fff;border:2px solid #e2e8f0;">
+                                    {{ request.user.get_initials }}
+                                </div>
                                 {% else %}
-                                <div class="avatar-sm avatar-placeholder rounded-circle bg-primary ms-2">
+                                <div class="rounded-circle bg-primary d-inline-flex align-items-center justify-content-center" style="width:36px;height:36px;font-size:14px;color:#fff;border:2px solid #e2e8f0;">
                                     {{ request.user.get_initials }}
                                 </div>
                                 {% endif %}
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                <div class="dropdown-header">
-                                    <div class="user-info">
-                                        <div class="user-name">{{ request.user.get_full_name }}</div>
-                                        <div class="user-email">{{ request.user.email }}</div>
-                                    </div>
+                                <div class="d-none d-md-block lh-1">
+                                    <span class="fw-semibold" style="font-size:0.88rem;">{{ request.user.get_full_name }}</span>
+                                    <small class="d-block text-muted" style="font-size:0.72rem;">{{ request.user.role.name|default:"Admin" }}</small>
                                 </div>
-                                <a class="dropdown-item" href="{% url 'dashboard:dashboard_user_detail' request.user.id %}">
-                                    <i class="fa fa-user me-2"></i> {% trans "الملف الشخصي" %}
-                                </a>
-                                <a class="dropdown-item" href="{% url 'dashboard:dashboard_site_settings' %}">
-                                    <i class="fa fa-cog me-2"></i> {% trans "الإعدادات" %}
-                                </a>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="{% url 'dashboard:logout' %}">
-                                    <i class="fa fa-sign-out-alt me-2"></i> {% trans "تسجيل الخروج" %}
-                                </a>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 py-0" aria-labelledby="userDropdown" style="min-width:260px;border-radius:12px;overflow:hidden;">
+                                <div class="px-3 py-3 text-center" style="background:linear-gradient(135deg,var(--primary-color),#1a4971);">
+                                    {% if request.user.avatar %}
+                                    <img src="{{ request.user.avatar.url }}" class="rounded-circle mb-2" style="width:56px;height:56px;object-fit:cover;border:3px solid rgba(255,255,255,0.3);"
+                                         onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';">
+                                    <div class="rounded-circle bg-white d-none align-items-center justify-content-center mx-auto mb-2" style="width:56px;height:56px;font-size:20px;color:var(--primary-color);font-weight:700;">
+                                        {{ request.user.get_initials }}
+                                    </div>
+                                    {% else %}
+                                    <div class="rounded-circle bg-white d-inline-flex align-items-center justify-content-center mb-2" style="width:56px;height:56px;font-size:20px;color:var(--primary-color);font-weight:700;">
+                                        {{ request.user.get_initials }}
+                                    </div>
+                                    {% endif %}
+                                    <div class="text-white fw-semibold">{{ request.user.get_full_name }}</div>
+                                    <small class="text-white-50">{{ request.user.email }}</small>
+                                </div>
+                                <div class="py-2">
+                                    <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="{% url 'dashboard:dashboard_user_detail' request.user.id %}">
+                                        <span class="d-inline-flex align-items-center justify-content-center rounded me-2" style="width:32px;height:32px;background:#eef2ff;color:var(--primary-color);"><i class="fa fa-user" style="font-size:0.85rem;"></i></span>
+                                        {% trans "الملف الشخصي" %}
+                                    </a>
+                                    <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="{% url 'dashboard:dashboard_site_settings' %}">
+                                        <span class="d-inline-flex align-items-center justify-content-center rounded me-2" style="width:32px;height:32px;background:#f0fdf4;color:#16a34a;"><i class="fa fa-cog" style="font-size:0.85rem;"></i></span>
+                                        {% trans "الإعدادات" %}
+                                    </a>
+                                    <a class="dropdown-item py-2 px-3 d-flex align-items-center" href="{% url 'core:home' %}" target="_blank">
+                                        <span class="d-inline-flex align-items-center justify-content-center rounded me-2" style="width:32px;height:32px;background:#fef3c7;color:#d97706;"><i class="fa fa-globe" style="font-size:0.85rem;"></i></span>
+                                        {% trans "عرض الموقع" %}
+                                    </a>
+                                </div>
+                                <div class="border-top px-2 py-2">
+                                    <a class="dropdown-item py-2 px-3 d-flex align-items-center rounded text-danger" href="{% url 'dashboard:logout' %}">
+                                        <span class="d-inline-flex align-items-center justify-content-center rounded me-2" style="width:32px;height:32px;background:#fef2f2;color:#dc2626;"><i class="fa fa-sign-out-alt" style="font-size:0.85rem;"></i></span>
+                                        {% trans "تسجيل الخروج" %}
+                                    </a>
+                                </div>
                             </div>
                         </li>
                     </ul>

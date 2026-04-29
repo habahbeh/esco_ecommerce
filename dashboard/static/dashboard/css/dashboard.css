@@ -110,23 +110,7 @@ a:hover {
   position: fixed;
   top: 0;
   bottom: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-}
-
-.sidebar-wrapper::-webkit-scrollbar {
-  width: 5px;
-}
-
-.sidebar-wrapper::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.sidebar-wrapper::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
+  overflow: hidden;
 }
 
 .sidebar-collapsed .sidebar-wrapper {
@@ -137,7 +121,23 @@ a:hover {
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.sidebar-content::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sidebar-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
 }
 
 /* ===== رأس الشريط الجانبي ===== */
@@ -154,12 +154,12 @@ a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow: visible;
   transition: all var(--transition-speed) ease;
 }
 
 .logo {
-  max-height: 40px;
+  max-height: 48px;
   max-width: 180px;
   object-fit: contain;
   transition: all var(--transition-speed) ease;
@@ -267,12 +267,14 @@ a:hover {
 .sidebar-menu {
   padding: 1rem 0;
   flex: 1;
+  overflow-x: hidden;
 }
 
 .menu-items {
   list-style: none;
   padding: 0;
   margin: 0;
+  overflow-x: hidden;
 }
 
 .menu-item-section {
@@ -672,6 +674,8 @@ a:hover {
   font-family: "Font Awesome 6 Free";
   font-weight: 900;
   content: "\f105";
+  padding-inline-end: 0.5rem;
+  padding-inline-start: 0.5rem;
 }
 
 .breadcrumb-item.active {
@@ -1103,6 +1107,56 @@ a:hover {
     max-width: 180px;
     max-height: 40px;
   }
+}
+
+/* ===== مبدل اللغة ===== */
+.lang-switch {
+  display: inline-flex;
+  background: #f1f5f9;
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid #e2e8f0;
+}
+
+.lang-seg {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.lang-seg .flag-icon {
+  width: 16px;
+  height: 12px;
+  border-radius: 2px;
+  box-shadow: 0 0 0 0.5px rgba(0,0,0,0.1);
+}
+
+.lang-seg:hover:not(.lang-seg--active) {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.lang-seg--active {
+  background: var(--primary-color);
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(43, 108, 176, 0.4);
+  cursor: default;
+}
+
+.lang-seg--active .flag-icon {
+  box-shadow: 0 0 0 0.5px rgba(255,255,255,0.3);
 }
 
 /* ===== تصميم الطباعة ===== */

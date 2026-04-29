@@ -1,0 +1,109 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_home' %}">{% trans "الرئيسية" %}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_blog_posts' %}">{% trans "المقالات" %}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_blog_categories' %}">{% trans "التصنيفات" %}</a></li>
+{% endblock %}
+{% block current_page %}{{ current_page }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">{{ page_title }}</h5>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+
+            {% if form.errors %}
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    {% for field, errors in form.errors.items %}
+                    {% for error in errors %}<li>{{ field }}: {{ error }}</li>{% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.name.id_for_label }}" class="form-label">{% trans "الاسم بالعربية" %} *</label>
+                        {{ form.name }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.name_en.id_for_label }}" class="form-label">{% trans "الاسم بالإنجليزية" %}</label>
+                        {{ form.name_en }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="{{ form.slug.id_for_label }}" class="form-label">{% trans "الرابط" %} (Slug)</label>
+                {{ form.slug }}
+                <small class="text-muted">{% trans "اتركه فارغاً لإنشاء رابط تلقائي" %}</small>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">{% trans "الوصف بالعربية" %}</label>
+                        {{ form.description }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.description_en.id_for_label }}" class="form-label">{% trans "الوصف بالإنجليزية" %}</label>
+                        {{ form.description_en }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.icon.id_for_label }}" class="form-label">{% trans "الأيقونة" %}</label>
+                        {{ form.icon }}
+                        <small class="text-muted">{% trans "مثل: fa-tools, fa-wrench" %}</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group mb-3">
+                        <label for="{{ form.sort_order.id_for_label }}" class="form-label">{% trans "الترتيب" %}</label>
+                        {{ form.sort_order }}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check mt-4">
+                        {{ form.is_active }}
+                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">{% trans "نشط" %}</label>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+            <h6 class="fw-bold mb-3">{% trans "SEO" %}</h6>
+            <div class="form-group mb-3">
+                <label for="{{ form.meta_title.id_for_label }}" class="form-label">{% trans "عنوان SEO" %}</label>
+                {{ form.meta_title }}
+            </div>
+            <div class="form-group mb-3">
+                <label for="{{ form.meta_description.id_for_label }}" class="form-label">{% trans "وصف SEO" %}</label>
+                {{ form.meta_description }}
+            </div>
+
+            <div class="form-group text-end">
+                <a href="{% url 'dashboard:dashboard_blog_categories' %}" class="btn btn-secondary">{% trans "إلغاء" %}</a>
+                <button type="submit" class="btn btn-primary">{% trans "حفظ" %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

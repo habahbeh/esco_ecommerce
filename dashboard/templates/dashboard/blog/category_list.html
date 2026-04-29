@@ -1,0 +1,77 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "تصنيفات المدونة" %}{% endblock %}
+{% block page_title %}{% trans "تصنيفات المدونة" %}{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_home' %}">{% trans "الرئيسية" %}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'dashboard:dashboard_blog_posts' %}">{% trans "المقالات" %}</a></li>
+{% endblock %}
+{% block current_page %}{% trans "التصنيفات" %}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">{% trans "تصنيفات المدونة" %}</h5>
+        <a href="{% url 'dashboard:dashboard_blog_category_create' %}" class="btn btn-primary btn-sm">
+            <i class="fa fa-plus"></i> {% trans "إضافة تصنيف" %}
+        </a>
+    </div>
+    <div class="card-body">
+        {% if categories %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>{% trans "الاسم" %}</th>
+                        <th>{% trans "الاسم بالإنجليزية" %}</th>
+                        <th>{% trans "الرابط" %}</th>
+                        <th>{% trans "عدد المقالات" %}</th>
+                        <th>{% trans "الترتيب" %}</th>
+                        <th>{% trans "الحالة" %}</th>
+                        <th>{% trans "الإجراءات" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for category in categories %}
+                    <tr>
+                        <td>
+                            {% if category.icon %}<i class="fas {{ category.icon }} me-1"></i>{% endif %}
+                            {{ category.name }}
+                        </td>
+                        <td>{{ category.name_en|default:"-" }}</td>
+                        <td><code>{{ category.slug }}</code></td>
+                        <td><span class="badge bg-primary">{{ category.post_count }}</span></td>
+                        <td>{{ category.sort_order }}</td>
+                        <td>
+                            {% if category.is_active %}
+                            <span class="badge bg-success">{% trans "نشط" %}</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{% trans "غير نشط" %}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'dashboard:dashboard_blog_category_edit' category.pk %}" class="btn btn-outline-info">
+                                    <i class="fa fa-edit"></i>
+                                </a>
+                                <a href="{% url 'dashboard:dashboard_blog_category_delete' category.pk %}" class="btn btn-outline-danger">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            {% trans "لا توجد تصنيفات." %} <a href="{% url 'dashboard:dashboard_blog_category_create' %}">{% trans "إضافة تصنيف جديد" %}</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

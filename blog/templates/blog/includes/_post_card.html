@@ -1,0 +1,47 @@
+{% load i18n %}
+
+<div class="col-md-6 col-lg-4 mb-4">
+    <article class="blog-card h-100 shadow-sm rounded overflow-hidden bg-body">
+        <a href="{{ post.get_absolute_url }}" class="d-block position-relative overflow-hidden" style="height:200px;">
+            {% if post.featured_image %}
+            <img src="{{ post.featured_image.url }}"
+                 alt="{% if LANGUAGE_CODE == 'en' and post.featured_image_alt_en %}{{ post.featured_image_alt_en }}{% else %}{{ post.featured_image_alt|default:post.title }}{% endif %}"
+                 class="w-100 h-100" style="object-fit:cover;transition:transform 0.3s;" loading="lazy">
+            {% else %}
+            <div class="card-icon-area w-100 h-100 d-flex align-items-center justify-content-center"
+                 style="background: linear-gradient(135deg, {{ post.card_icon_color|default:'#2563eb' }}18, {{ post.card_icon_color|default:'#2563eb' }}08);">
+                <div class="card-icon-circle" style="background: {{ post.card_icon_color|default:'#2563eb' }}15; border: 2px solid {{ post.card_icon_color|default:'#2563eb' }}20;">
+                    <i class="fas {{ post.card_icon|default:'fa-newspaper' }}" style="color:{{ post.card_icon_color|default:'#2563eb' }};"></i>
+                </div>
+            </div>
+            {% endif %}
+            {% if post.category %}
+            <span class="position-absolute top-0 start-0 m-2 badge" style="background:{{ post.card_icon_color|default:'var(--bs-primary)' }};font-size:.72rem;">
+                {% if LANGUAGE_CODE == 'en' and post.category.name_en %}{{ post.category.name_en }}{% else %}{{ post.category.name }}{% endif %}
+            </span>
+            {% endif %}
+        </a>
+        <div class="p-3">
+            <div class="d-flex align-items-center text-muted small mb-2">
+                <span><i class="far fa-calendar-alt me-1" style="color:#2563eb;"></i>{{ post.published_at|date:"Y/m/d" }}</span>
+                <span class="mx-2">&middot;</span>
+                <span><i class="far fa-clock me-1" style="color:#d97706;"></i>{{ post.reading_time }} {% trans "دقائق" %}</span>
+                <span class="mx-2">&middot;</span>
+                <span><i class="far fa-eye me-1" style="color:#7c3aed;"></i>{{ post.views_count }}</span>
+            </div>
+            <h3 class="h6 fw-bold mb-2" style="line-height:1.5;">
+                <a href="{{ post.get_absolute_url }}" class="text-body text-decoration-none">
+                    {% if LANGUAGE_CODE == 'en' and post.title_en %}{{ post.title_en }}{% else %}{{ post.title }}{% endif %}
+                </a>
+            </h3>
+            <p class="text-muted small mb-0" style="line-height:1.6;">
+                {% if LANGUAGE_CODE == 'en' and post.excerpt_en %}{{ post.excerpt_en|truncatewords:20 }}{% else %}{{ post.excerpt|truncatewords:20 }}{% endif %}
+            </p>
+        </div>
+        <div class="p-3 pt-0 mt-auto">
+            <a href="{{ post.get_absolute_url }}" class="btn btn-outline-primary btn-sm w-100">
+                {% trans "اقرأ المزيد" %} <i class="fas {% if LANGUAGE_CODE == 'en' %}fa-arrow-right{% else %}fa-arrow-left{% endif %} ms-1"></i>
+            </a>
+        </div>
+    </article>
+</div>

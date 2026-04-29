@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 from ckeditor.fields import RichTextField
 
 
@@ -86,6 +87,135 @@ class SiteSettings(models.Model):
         _("تفعيل أجور الشحن"),
         default=True,
         help_text=_("تفعيل أو إلغاء تفعيل أجور الشحن")
+    )
+    pickup_enabled = models.BooleanField(
+        _("تفعيل الاستلام من الفرع"),
+        default=False,
+        help_text=_("تفعيل خيار الاستلام من الفرع للعملاء")
+    )
+
+    # =================== Announcement Banner ===================
+    show_announcement_banner = models.BooleanField(
+        _("إظهار شريط الإعلانات"),
+        default=True,
+        help_text=_("إظهار أو إخفاء شريط الإعلانات أعلى الموقع")
+    )
+    announcement_bg_color = models.CharField(
+        _("لون خلفية الشريط"),
+        max_length=7,
+        default='#1b5e20',
+        blank=True,
+        help_text=_("لون الخلفية بصيغة HEX مثل #1b5e20")
+    )
+    announcement_icon_1 = models.CharField(
+        _("أيقونة 1"),
+        max_length=50,
+        default='fas fa-truck-fast',
+        blank=True,
+        help_text=_("كلاس أيقونة Font Awesome مثل fas fa-truck-fast")
+    )
+    announcement_text_1_ar = models.CharField(
+        _("نص 1 (عربي)"),
+        max_length=100,
+        default='شحن مجاني للطلبات فوق 200 د.أ',
+        blank=True,
+    )
+    announcement_text_1_en = models.CharField(
+        _("نص 1 (إنجليزي)"),
+        max_length=100,
+        default='Free shipping on orders over 200 JOD',
+        blank=True,
+    )
+    announcement_icon_2 = models.CharField(
+        _("أيقونة 2"),
+        max_length=50,
+        default='fas fa-shield-check',
+        blank=True,
+        help_text=_("كلاس أيقونة Font Awesome")
+    )
+    announcement_text_2_ar = models.CharField(
+        _("نص 2 (عربي)"),
+        max_length=100,
+        default='منتجات أصلية 100% مع ضمان',
+        blank=True,
+    )
+    announcement_text_2_en = models.CharField(
+        _("نص 2 (إنجليزي)"),
+        max_length=100,
+        default='100% Original products with warranty',
+        blank=True,
+    )
+    announcement_icon_3 = models.CharField(
+        _("أيقونة 3"),
+        max_length=50,
+        default='fas fa-rotate-left',
+        blank=True,
+        help_text=_("كلاس أيقونة Font Awesome")
+    )
+    announcement_text_3_ar = models.CharField(
+        _("نص 3 (عربي)"),
+        max_length=100,
+        default='إرجاع سهل',
+        blank=True,
+    )
+    announcement_text_3_en = models.CharField(
+        _("نص 3 (إنجليزي)"),
+        max_length=100,
+        default='Easy returns',
+        blank=True,
+    )
+
+    # =================== SEO Settings ===================
+    seo_title = models.CharField(
+        _("عنوان SEO للموقع"),
+        max_length=200,
+        blank=True,
+        help_text=_("العنوان الذي يظهر في نتائج محركات البحث")
+    )
+    seo_description = models.TextField(
+        _("وصف SEO للموقع"),
+        max_length=160,
+        blank=True,
+        help_text=_("الوصف الذي يظهر تحت العنوان في نتائج البحث (150-160 حرف)")
+    )
+    seo_keywords = models.TextField(
+        _("الكلمات المفتاحية العامة"),
+        blank=True,
+        help_text=_("كلمات مفتاحية مفصولة بفواصل تصف نشاط الموقع")
+    )
+    google_analytics_id = models.CharField(
+        _("معرف Google Analytics"),
+        max_length=30,
+        blank=True,
+        help_text=_("مثال: G-XXXXXXXXXX أو UA-XXXXXXXX-X")
+    )
+    google_search_console_code = models.CharField(
+        _("رمز تحقق Google Search Console"),
+        max_length=100,
+        blank=True,
+        help_text=_("رمز التحقق من ملكية الموقع في Google Search Console")
+    )
+    og_image = models.ImageField(
+        _("صورة المشاركة الافتراضية"),
+        upload_to='seo/',
+        null=True,
+        blank=True,
+        help_text=_("الصورة التي تظهر عند مشاركة الموقع على وسائل التواصل (1200x630 بيكسل)")
+    )
+    enable_structured_data = models.BooleanField(
+        _("تفعيل البيانات المنظمة"),
+        default=True,
+        help_text=_("إضافة بيانات JSON-LD لمحركات البحث (Schema.org)")
+    )
+    enable_sitemap = models.BooleanField(
+        _("تفعيل خريطة الموقع"),
+        default=True,
+        help_text=_("إنشاء ملف sitemap.xml تلقائياً")
+    )
+    canonical_domain = models.URLField(
+        _("النطاق الأساسي"),
+        blank=True,
+        help_text=_("النطاق الرئيسي للموقع مثل https://www.example.com")
     )
 
     class Meta:
@@ -234,3 +364,69 @@ class StaticContent(models.Model):
         if lang_code == 'en':
             return self.content_en
         return self.content_ar
+
+
+class Branch(models.Model):
+    name = models.CharField(_("اسم الفرع"), max_length=150)
+    name_en = models.CharField(_("Branch Name"), max_length=150, blank=True)
+    address = models.TextField(_("العنوان"))
+    address_en = models.TextField(_("Address"), blank=True)
+    phone = models.CharField(_("رقم الهاتف"), max_length=20, blank=True)
+    working_hours = models.CharField(_("ساعات العمل"), max_length=200, blank=True)
+    working_hours_en = models.CharField(_("Working Hours"), max_length=200, blank=True)
+    is_active = models.BooleanField(_("نشط"), default=True)
+    sort_order = models.PositiveIntegerField(_("الترتيب"), default=0)
+
+    class Meta:
+        app_label = 'core'
+        verbose_name = _("فرع")
+        verbose_name_plural = _("الفروع")
+        ordering = ['sort_order']
+
+    def __str__(self):
+        return self.name
+
+
+class SEOKeyword(models.Model):
+    LEVEL_CHOICES = [
+        ('site', _('مستوى الموقع')),
+        ('category', _('مستوى الفئة')),
+        ('product', _('مستوى المنتج')),
+        ('competitor', _('منافس')),
+    ]
+    keyword = models.CharField(_("الكلمة المفتاحية"), max_length=200)
+    keyword_en = models.CharField(_("Keyword (English)"), max_length=200, blank=True)
+    level = models.CharField(_("المستوى"), max_length=20, choices=LEVEL_CHOICES, default='site')
+    category = models.ForeignKey(
+        'products.Category', on_delete=models.CASCADE,
+        null=True, blank=True, related_name='seo_keywords',
+        verbose_name=_("الفئة")
+    )
+    product = models.ForeignKey(
+        'products.Product', on_delete=models.CASCADE,
+        null=True, blank=True, related_name='seo_keywords',
+        verbose_name=_("المنتج")
+    )
+    search_volume = models.PositiveIntegerField(_("حجم البحث الشهري"), default=0, blank=True)
+    competition = models.CharField(
+        _("مستوى المنافسة"),
+        max_length=10,
+        choices=[('low', _('منخفض')), ('medium', _('متوسط')), ('high', _('عالي'))],
+        default='medium'
+    )
+    is_competitor = models.BooleanField(_("كلمة منافس"), default=False)
+    competitor_url = models.URLField(_("رابط المنافس"), blank=True)
+    notes = models.TextField(_("ملاحظات"), blank=True)
+    is_active = models.BooleanField(_("نشط"), default=True)
+    created_at = models.DateTimeField(_("تاريخ الإنشاء"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("تاريخ التحديث"), auto_now=True)
+
+    class Meta:
+        app_label = 'core'
+        verbose_name = _("كلمة مفتاحية SEO")
+        verbose_name_plural = _("كلمات مفتاحية SEO")
+        ordering = ['-search_volume', 'keyword']
+        unique_together = [('keyword', 'level', 'category', 'product')]
+
+    def __str__(self):
+        return f"{self.keyword} ({self.get_level_display()})"

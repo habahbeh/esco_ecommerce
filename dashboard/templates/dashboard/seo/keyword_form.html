@@ -1,0 +1,162 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% if is_edit %}{% trans "تعديل كلمة مفتاحية" %}{% else %}{% trans "إضافة كلمة مفتاحية" %}{% endif %}{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+{% block current_page %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .keyword-form-card {
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        border: none;
+    }
+    .keyword-form-card .card-header {
+        background: linear-gradient(135deg, #0077c8, #005a9e);
+        color: #fff;
+        border-radius: 12px 12px 0 0 !important;
+        padding: 1rem 1.25rem;
+    }
+    .keyword-form-card .card-body { padding: 1.5rem; }
+    .conditional-field { display: none; }
+    .conditional-field.show { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card keyword-form-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-{% if is_edit %}edit{% else %}plus{% endif %} me-2"></i>{{ page_title }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            {% trans "يرجى تصحيح الأخطاء التالية:" %}
+                            <ul class="mb-0 mt-2">
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                    <li>{{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">{% trans "الكلمة المفتاحية (عربي)" %} <span class="text-danger">*</span></label>
+                                {{ form.keyword }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">{% trans "الكلمة المفتاحية (إنجليزي)" %}</label>
+                                {{ form.keyword_en }}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">{% trans "المستوى" %} <span class="text-danger">*</span></label>
+                                {{ form.level }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">{% trans "مستوى المنافسة" %}</label>
+                                {{ form.competition }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3 conditional-field" id="categoryField">
+                            <label class="form-label fw-bold">{% trans "الفئة" %}</label>
+                            {{ form.category }}
+                        </div>
+
+                        <div class="mb-3 conditional-field" id="productField">
+                            <label class="form-label fw-bold">{% trans "المنتج" %}</label>
+                            {{ form.product }}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">{% trans "حجم البحث الشهري" %}</label>
+                                {{ form.search_volume }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check mt-4">
+                                    {{ form.is_competitor }}
+                                    <label class="form-check-label" for="{{ form.is_competitor.id_for_label }}">
+                                        {% trans "كلمة منافس" %}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 conditional-field" id="competitorField">
+                            <label class="form-label fw-bold">{% trans "رابط المنافس" %}</label>
+                            {{ form.competitor_url }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">{% trans "ملاحظات" %}</label>
+                            {{ form.notes }}
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    {% trans "نشط" %}
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>{% if is_edit %}{% trans "تحديث" %}{% else %}{% trans "إضافة" %}{% endif %}
+                            </button>
+                            <a href="{% url 'dashboard:seo_keywords' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-right me-1"></i>{% trans "رجوع" %}
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var levelSelect = document.getElementById('{{ form.level.id_for_label }}');
+    var competitorCheck = document.getElementById('{{ form.is_competitor.id_for_label }}');
+    var categoryField = document.getElementById('categoryField');
+    var productField = document.getElementById('productField');
+    var competitorField = document.getElementById('competitorField');
+
+    function toggleFields() {
+        var level = levelSelect ? levelSelect.value : '';
+        if (categoryField) categoryField.className = 'mb-3 conditional-field' + (level === 'category' ? ' show' : '');
+        if (productField) productField.className = 'mb-3 conditional-field' + (level === 'product' ? ' show' : '');
+    }
+    function toggleCompetitor() {
+        var checked = competitorCheck ? competitorCheck.checked : false;
+        if (competitorField) competitorField.className = 'mb-3 conditional-field' + (checked ? ' show' : '');
+    }
+    if (levelSelect) levelSelect.addEventListener('change', toggleFields);
+    if (competitorCheck) competitorCheck.addEventListener('change', toggleCompetitor);
+    toggleFields();
+    toggleCompetitor();
+});
+</script>
+{% endblock %}

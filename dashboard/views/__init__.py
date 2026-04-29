@@ -14,3 +14,7 @@ from .sliders import *
 from .events import *
 from .newsletters import *
 from .marketing import *
+from .branches import *
+from .seo import *
+from .product_tracker import *
+from .blog import *

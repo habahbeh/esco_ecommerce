@@ -52,10 +52,10 @@ class CustomUserCreationForm(UserCreationForm):
     phone_number = forms.CharField(
         label=_("رقم الهاتف"),
         max_length=20,
-        required=False,
+        required=True,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': _('رقم الهاتف (اختياري)')
+            'placeholder': _('رقم الهاتف')
         })
     )
 

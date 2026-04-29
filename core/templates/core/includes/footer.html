@@ -8,8 +8,8 @@
             <!-- About -->
             <div class="col-lg-4 col-md-6">
                 <div class="footer-widget">
-                    <h5>{% trans "عن ESCO" %}</h5>
-                    <p>{% trans "شركة رائدة في توريد المعدات الصناعية في الأردن والشرق الأوسط. نلتزم بتقديم منتجات عالية الجودة وخدمة عملاء متميزة." %}</p>
+                    <h5>{% trans "عن المخازن الهندسية" %}</h5>
+                    <p>{% trans "شركة المخازن الهندسية للتجارة والصناعة (ESCO) - شركة أردنية رائدة في توريد العدد الصناعية والأدوات الهندسية منذ عام 1994. نلتزم بتقديم منتجات أصلية عالية الجودة وخدمة عملاء متميزة." %}</p>
                     <div class="social-links">
                         {% if site_settings.facebook %}
                             <a href="{{ site_settings.facebook }}" class="social-link" target="_blank" rel="noopener" aria-label="Facebook">
@@ -43,6 +43,7 @@
                         <li><a href="{% url 'core:home' %}"><i class="fas fa-chevron-right me-2"></i>{% trans "الرئيسية" %}</a></li>
                         <li><a href="{% url 'products:product_list' %}"><i class="fas fa-chevron-right me-2"></i>{% trans "المنتجات" %}</a></li>
                         <li><a href="{% url 'products:special_offers' %}"><i class="fas fa-chevron-right me-2"></i>{% trans "العروض" %}</a></li>
+                        <li><a href="{% url 'blog:post_list' %}"><i class="fas fa-chevron-right me-2"></i>{% trans "المدونة" %}</a></li>
                         <li><a href="{% url 'core:about' %}"><i class="fas fa-chevron-right me-2"></i>{% trans "من نحن" %}</a></li>
                         <li><a href="{% url 'core:contact' %}"><i class="fas fa-chevron-right me-2"></i>{% trans "اتصل بنا" %}</a></li>
                     </ul>
@@ -98,7 +99,7 @@
 
         <!-- Copyright -->
         <div class="border-top border-secondary pt-4 mt-5 text-center">
-            <p class="mb-0">&copy; {% now "Y" %} {{ site_settings.site_name|default:"ESCO" }}. {% trans "جميع الحقوق محفوظة." %}</p>
+            <p class="mb-0">&copy; {% now "Y" %} {{ site_settings.site_name|default:"ESCO" }} - {% trans "شركة المخازن الهندسية للتجارة والصناعة" %}. {% trans "جميع الحقوق محفوظة." %}</p>
         </div>
     </div>
 </footer>

@@ -279,6 +279,11 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" id="banner-tab" data-bs-toggle="tab" href="#banner" role="tab">
+                                <i class="fa fa-bullhorn"></i> {% trans "شريط الإعلانات" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" id="about-tab" data-bs-toggle="tab" href="#about" role="tab">
                                 <i class="fa fa-info"></i> {% trans "نبذة عن الشركة" %}
                             </a>
@@ -524,6 +529,107 @@
                                 <div class="input-group">
                                     <span class="input-group-text bg-light"><i class="fab fa-whatsapp-in text-primary"></i></span>
                                     <input type="url" name="whatsapp" id="id_whatsapp" class="form-control" value="{{ object.whatsapp }}" dir="ltr" placeholder="https://whatsapp.com/">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- شريط الإعلانات -->
+                        <div class="tab-pane fade" id="banner" role="tabpanel">
+                            <div class="alert alert-info mb-4">
+                                <i class="fa fa-info-circle me-1"></i>
+                                {% trans "تحكم بشريط الإعلانات الذي يظهر أعلى الموقع. يمكنك تعديل النصوص والأيقونات بالعربية والإنجليزية." %}
+                            </div>
+
+                            <!-- Toggle + Color -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="show_announcement_banner" id="id_show_announcement_banner" {% if object.show_announcement_banner %}checked{% endif %}>
+                                        <label class="form-check-label fw-bold" for="id_show_announcement_banner">
+                                            <i class="fa fa-eye me-1"></i> {% trans "إظهار شريط الإعلانات" %}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="id_announcement_bg_color" class="form-label">{% trans "لون الخلفية" %}</label>
+                                    <input type="color" name="announcement_bg_color" id="id_announcement_bg_color" class="form-control form-control-color" value="{{ object.announcement_bg_color|default:'#1b5e20' }}" style="width:80px;height:38px;">
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <!-- Item 1 -->
+                            <h6 class="fw-bold mb-3"><i class="fa fa-1 me-1 text-primary"></i> {% trans "العنصر الأول" %}</h6>
+                            <div class="row mb-4">
+                                <div class="col-md-4">
+                                    <label class="form-label">{% trans "الأيقونة" %}</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text" id="iconPreview1"><i class="{{ object.announcement_icon_1|default:'fas fa-truck-fast' }}"></i></span>
+                                        <input type="text" name="announcement_icon_1" class="form-control" dir="ltr" value="{{ object.announcement_icon_1|default:'fas fa-truck-fast' }}" placeholder="fas fa-truck-fast">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">{% trans "النص بالعربي" %}</label>
+                                    <input type="text" name="announcement_text_1_ar" class="form-control" dir="rtl" value="{{ object.announcement_text_1_ar|default:'شحن مجاني للطلبات فوق 200 د.أ' }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">{% trans "النص بالإنجليزي" %}</label>
+                                    <input type="text" name="announcement_text_1_en" class="form-control" dir="ltr" value="{{ object.announcement_text_1_en|default:'Free shipping on orders over 200 JOD' }}">
+                                </div>
+                            </div>
+
+                            <!-- Item 2 -->
+                            <h6 class="fw-bold mb-3"><i class="fa fa-2 me-1 text-primary"></i> {% trans "العنصر الثاني" %}</h6>
+                            <div class="row mb-4">
+                                <div class="col-md-4">
+                                    <label class="form-label">{% trans "الأيقونة" %}</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="{{ object.announcement_icon_2|default:'fas fa-shield-check' }}"></i></span>
+                                        <input type="text" name="announcement_icon_2" class="form-control" dir="ltr" value="{{ object.announcement_icon_2|default:'fas fa-shield-check' }}" placeholder="fas fa-shield-check">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">{% trans "النص بالعربي" %}</label>
+                                    <input type="text" name="announcement_text_2_ar" class="form-control" dir="rtl" value="{{ object.announcement_text_2_ar|default:'منتجات أصلية 100% مع ضمان' }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">{% trans "النص بالإنجليزي" %}</label>
+                                    <input type="text" name="announcement_text_2_en" class="form-control" dir="ltr" value="{{ object.announcement_text_2_en|default:'100% Original products with warranty' }}">
+                                </div>
+                            </div>
+
+                            <!-- Item 3 -->
+                            <h6 class="fw-bold mb-3"><i class="fa fa-3 me-1 text-primary"></i> {% trans "العنصر الثالث" %}</h6>
+                            <div class="row mb-4">
+                                <div class="col-md-4">
+                                    <label class="form-label">{% trans "الأيقونة" %}</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="{{ object.announcement_icon_3|default:'fas fa-rotate-left' }}"></i></span>
+                                        <input type="text" name="announcement_icon_3" class="form-control" dir="ltr" value="{{ object.announcement_icon_3|default:'fas fa-rotate-left' }}" placeholder="fas fa-rotate-left">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">{% trans "النص بالعربي" %}</label>
+                                    <input type="text" name="announcement_text_3_ar" class="form-control" dir="rtl" value="{{ object.announcement_text_3_ar|default:'إرجاع سهل' }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">{% trans "النص بالإنجليزي" %}</label>
+                                    <input type="text" name="announcement_text_3_en" class="form-control" dir="ltr" value="{{ object.announcement_text_3_en|default:'Easy returns' }}">
+                                </div>
+                            </div>
+
+                            <!-- Live Preview -->
+                            <div class="mt-4">
+                                <label class="form-label fw-bold"><i class="fa fa-eye me-1"></i> {% trans "معاينة الشريط" %}</label>
+                                <div id="bannerPreview" style="background: linear-gradient(90deg, {{ object.announcement_bg_color|default:'#1b5e20' }}, #388e3c); color: white; padding: 0.6rem 1rem; border-radius: 8px; text-align: center; font-size: 0.875rem; font-weight: 600;" dir="{% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}">
+                                    <span id="bp-icon-1"><i class="{{ object.announcement_icon_1|default:'fas fa-truck-fast' }}"></i></span>
+                                    <span id="bp-text-1">{% if LANGUAGE_CODE == 'en' %}{{ object.announcement_text_1_en|default:'Free shipping on orders over 200 JOD' }}{% else %}{{ object.announcement_text_1_ar|default:'شحن مجاني للطلبات فوق 200 د.أ' }}{% endif %}</span>
+                                    &nbsp;|&nbsp;
+                                    <span id="bp-icon-2"><i class="{{ object.announcement_icon_2|default:'fas fa-shield-check' }}"></i></span>
+                                    <span id="bp-text-2">{% if LANGUAGE_CODE == 'en' %}{{ object.announcement_text_2_en|default:'100% Original products with warranty' }}{% else %}{{ object.announcement_text_2_ar|default:'منتجات أصلية 100% مع ضمان' }}{% endif %}</span>
+                                    &nbsp;|&nbsp;
+                                    <span id="bp-icon-3"><i class="{{ object.announcement_icon_3|default:'fas fa-rotate-left' }}"></i></span>
+                                    <span id="bp-text-3">{% if LANGUAGE_CODE == 'en' %}{{ object.announcement_text_3_en|default:'Easy returns' }}{% else %}{{ object.announcement_text_3_ar|default:'إرجاع سهل' }}{% endif %}</span>
                                 </div>
                             </div>
                         </div>
@@ -1047,6 +1153,19 @@
         // تفعيل السحب والإفلات
         setupDragAndDrop($('#logo-preview'), $('#id_logo'));
         setupDragAndDrop($('#favicon-preview'), $('#id_favicon'));
+
+        // Banner preview live update
+        var isEn = '{{ LANGUAGE_CODE }}' === 'en';
+        var textSuffix = isEn ? '_en' : '_ar';
+        $('input[name="announcement_text_1' + textSuffix + '"]').on('input', function() { $('#bp-text-1').text($(this).val()); });
+        $('input[name="announcement_text_2' + textSuffix + '"]').on('input', function() { $('#bp-text-2').text($(this).val()); });
+        $('input[name="announcement_text_3' + textSuffix + '"]').on('input', function() { $('#bp-text-3').text($(this).val()); });
+        $('input[name="announcement_icon_1"]').on('input', function() { $('#bp-icon-1').html('<i class="' + $(this).val() + '"></i>'); });
+        $('input[name="announcement_icon_2"]').on('input', function() { $('#bp-icon-2').html('<i class="' + $(this).val() + '"></i>'); });
+        $('input[name="announcement_icon_3"]').on('input', function() { $('#bp-icon-3').html('<i class="' + $(this).val() + '"></i>'); });
+        $('input[name="announcement_bg_color"]').on('input', function() {
+            $('#bannerPreview').css('background', 'linear-gradient(90deg, ' + $(this).val() + ', #388e3c)');
+        });
 
         // إرسال النموذج بواسطة AJAX (اختياري)
         $('#settingsForm').on('submit', function(e) {

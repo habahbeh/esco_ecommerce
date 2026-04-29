@@ -8,20 +8,26 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import HttpResponse
 from django.views.generic import TemplateView, RedirectView
 from django.contrib.sitemaps.views import sitemap
 # from django.views.i18n import set_language, JavaScriptCatalog
 from django.conf.urls.i18n import i18n_patterns
 
-# Sitemaps (يمكن تفعيلها لاحقاً)
-# from core.sitemaps import StaticViewSitemap
-# from products.sitemaps import ProductSitemap, CategorySitemap
+from core.sitemaps import StaticViewSitemap
+from core.agent_views import MCPServerCardView, A2AAgentCardView, AgentSkillsView, APICatalogView
+from core.llms_view import LlmsTxtView
+from products.sitemaps import ProductSitemap, CategorySitemap, BrandSitemap
+from blog.sitemaps import BlogPostSitemap, BlogCategorySitemap
 
-# sitemaps = {
-#     'static': StaticViewSitemap,
-#     'products': ProductSitemap,
-#     'categories': CategorySitemap,
-# }
+sitemaps = {
+    'static': StaticViewSitemap,
+    'products': ProductSitemap,
+    'categories': CategorySitemap,
+    'brands': BrandSitemap,
+    'blog_posts': BlogPostSitemap,
+    'blog_categories': BlogCategorySitemap,
+}
 
 # URLs التي لا تحتاج لغة (Language-independent URLs)
 urlpatterns = [
@@ -44,6 +50,12 @@ urlpatterns = [
         # path('accounts/', include('accounts.api_urls', namespace='accounts_api')),
     ])),
 
+    # Google Search Console verification
+    path('google54ee986151e326dc.html', TemplateView.as_view(
+        template_name='google54ee986151e326dc.html',
+        content_type='text/html'
+    ), name='google_verification'),
+
     # Health check and system endpoints
     path('health/', TemplateView.as_view(template_name='health.html'), name='health_check'),
     path('robots.txt', TemplateView.as_view(
@@ -51,8 +63,14 @@ urlpatterns = [
         content_type='text/plain'
     ), name='robots'),
 
+    # LLMs
+    path('llms.txt', LlmsTxtView.as_view(), name='llms-txt'),
+
+    # IndexNow verification key
+    path('a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6.txt', lambda r: HttpResponse('a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6', content_type='text/plain')),
+
     # Sitemap
-    # path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='sitemap'),
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='sitemap'),
 
     # Webhooks and external integrations (لا تحتاج ترجمة)
     path('webhooks/', include([
@@ -112,6 +130,9 @@ urlpatterns += i18n_patterns(
     path('checkout/', RedirectView.as_view(url='/payment/', permanent=True)),
     path('events/', include('events.urls', namespace='events')),
 
+    # Blog - المدونة
+    path('blog/', include('blog.urls', namespace='blog')),
+
     # Maintenance mode (يمكن تفعيلها عند الحاجة)
     # path('maintenance/', TemplateView.as_view(template_name='maintenance.html'), name='maintenance'),
 
@@ -157,15 +178,15 @@ admin.site.index_title = "مرحباً بك في لوحة تحكم ESCO"
 admin.site.site_url = "/"  # رابط للعودة للموقع الرئيسي
 
 # إعدادات إضافية للبيئة الإنتاجية
-if not settings.DEBUG:
-    # Security URLs for production
-    urlpatterns += [
-        # SSL and security
-        path('.well-known/', include([
-            # SSL certificate verification
-            # path('acme-challenge/', include('acme.urls')),
-        ])),
-    ]
+urlpatterns += [
+    path('.well-known/', include([
+        path('mcp.json', MCPServerCardView.as_view(), name='mcp-server-card'),
+        path('mcp/server-card.json', MCPServerCardView.as_view(), name='mcp-server-card-alt'),
+        path('agent-card.json', A2AAgentCardView.as_view(), name='a2a-agent-card'),
+        path('agent-skills/index.json', AgentSkillsView.as_view(), name='agent-skills'),
+        path('api-catalog', APICatalogView.as_view(), name='api-catalog'),
+    ])),
+]
 
 # URLs للتطبيقات الإضافية (يمكن تفعيلها لاحقاً)
 # Uncomment when ready to use
@@ -193,11 +214,7 @@ if not settings.DEBUG:
 #     path('discounts/', RedirectView.as_view(url='/coupons/', permanent=True)),
 # )
 
-# # Blog
-# urlpatterns += i18n_patterns(
-#     path('blog/', include('blog.urls', namespace='blog')),
-#     path('news/', RedirectView.as_view(url='/blog/', permanent=True)),
-# )
+# Blog is now active in the main urlpatterns above
 
 # # Notifications
 # urlpatterns += i18n_patterns(

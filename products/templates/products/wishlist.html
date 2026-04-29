@@ -411,8 +411,8 @@
         </nav>
         <h1 class="wishlist-title">{% trans "قائمة الأمنيات" %}</h1>
         <p class="wishlist-subtitle">
-            {% if wishlists %}
-                {% blocktrans count count=wishlists.count %}لديك {{ count }} منتج في قائمة أمنياتك{% endblocktrans %}
+            {% if wishlist_items %}
+                {% trans "منتجاتك المفضلة" %}
             {% else %}
                 {% trans "احفظ منتجاتك المفضلة هنا" %}
             {% endif %}
@@ -423,31 +423,31 @@
 <!-- Wishlist Content -->
 <section class="wishlist-section">
     <div class="container">
-        {% if wishlists %}
+        {% if wishlist_items %}
             <div class="wishlist-grid" id="wishlistGrid">
-                {% for item in wishlists %}
+                {% for item in wishlist_items %}
                     <div class="wishlist-item" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00" data-item-id="{{ item.id }}">
-                        <button class="remove-wishlist" 
+                        <button class="remove-wishlist"
                                 onclick="removeFromWishlist({{ item.product.id }}, {{ item.id }})"
                                 aria-label="{% trans 'إزالة من قائمة الأمنيات' %}">
                             <i class="fas fa-times"></i>
                         </button>
-                        
+
                         <div class="wishlist-image">
                             <a href="{% url 'products:product_detail' item.product.slug %}">
                                 {% if item.product.images.exists %}
-                                    <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.name }}">
+                                    <img src="{{ item.product.images.first.image.url }}" alt="{% if LANGUAGE_CODE == 'en' and item.product.name_en %}{{ item.product.name_en }}{% else %}{{ item.product.name }}{% endif %}">
                                 {% else %}
-                                    <img src="{{ item.product.default_image.url }}" alt="{{ item.product.name }}">
+                                    <img src="{{ item.product.default_image.url }}" alt="{% if LANGUAGE_CODE == 'en' and item.product.name_en %}{{ item.product.name_en }}{% else %}{{ item.product.name }}{% endif %}">
                                 {% endif %}
                             </a>
                         </div>
-                        
+
                         <div class="wishlist-info">
-                            <p class="wishlist-category">{{ item.product.category.name }}</p>
+                            <p class="wishlist-category">{% if LANGUAGE_CODE == 'en' and item.product.category.name_en %}{{ item.product.category.name_en }}{% else %}{{ item.product.category.name }}{% endif %}</p>
                             <h3 class="wishlist-name">
-                                <a href="{% url 'products:product_detail' item.product.slug %}" class="text-decoration-none text-dark">
-                                    {{ item.product.name }}
+                                <a href="{% url 'products:product_detail' item.product.slug %}" class="text-decoration-none text-body">
+                                    {% if LANGUAGE_CODE == 'en' and item.product.name_en %}{{ item.product.name_en }}{% else %}{{ item.product.name }}{% endif %}
                                 </a>
                             </h3>
                             
@@ -545,7 +545,7 @@
         item.style.opacity = '0.5';
         item.style.pointerEvents = 'none';
 
-        fetch(`{% url 'products:remove_from_wishlist' 0 %}`.replace('0', productId), {
+        fetch(`{% url 'products:wishlist_remove' 0 %}`.replace('0', productId), {
             method: 'POST',
             headers: {
                 'X-CSRFToken': getCookie('csrftoken'),
