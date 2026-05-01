@@ -1,0 +1,191 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "طلبات العملاء" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+.lead-stat-card {
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    transition: transform 0.2s;
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+}
+.lead-stat-card:hover { transform: translateY(-2px); }
+.lead-stat-card .stat-count { font-size: 28px; font-weight: 700; }
+.lead-stat-card .stat-label { font-size: 13px; margin-top: 4px; }
+.status-badge {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+}
+.status-pending { background: #fff3e0; color: #e65100; }
+.status-contacted { background: #e3f2fd; color: #1565c0; }
+.status-in_progress { background: #f3e5f5; color: #7b1fa2; }
+.status-completed { background: #e8f5e9; color: #2e7d32; }
+.status-cancelled { background: #fce4ec; color: #c62828; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4><i class="fas fa-clipboard-list me-2"></i>{% trans "طلبات العملاء" %}</h4>
+        <span class="badge bg-primary fs-6">{{ total }} {% trans "طلب" %}</span>
+    </div>
+
+    <!-- Status Cards -->
+    <div class="row mb-4 g-3">
+        <div class="col-6 col-md">
+            <a href="?status=" class="lead-stat-card bg-light border {% if not status_filter %}border-primary border-2{% endif %}">
+                <div class="stat-count text-primary">{{ total_count }}</div>
+                <div class="stat-label text-muted">{% trans "الكل" %}</div>
+            </a>
+        </div>
+        {% for value, label in status_choices %}
+        <div class="col-6 col-md">
+            <a href="?status={{ value }}" class="lead-stat-card bg-light border {% if status_filter == value %}border-primary border-2{% endif %}">
+                <div class="stat-count" id="stat-{{ value }}">0</div>
+                <div class="stat-label"><span class="status-badge status-{{ value }}">{{ label }}</span></div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Search & Filter -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold">{% trans "بحث" %}</label>
+                    <input type="text" name="q" class="form-control" placeholder="{% trans 'اسم، هاتف، منتج...' %}" value="{{ query }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">{% trans "الحالة" %}</label>
+                    <select name="status" class="form-select">
+                        <option value="">{% trans "الكل" %}</option>
+                        {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">{% trans "من تاريخ" %}</label>
+                    <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">{% trans "إلى تاريخ" %}</label>
+                    <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-1"></i>{% trans "بحث" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Leads Table -->
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>{% trans "العميل" %}</th>
+                        <th>{% trans "الهاتف" %}</th>
+                        <th>{% trans "العنوان" %}</th>
+                        <th>{% trans "المنتج / الاهتمام" %}</th>
+                        <th>{% trans "الحالة" %}</th>
+                        <th>{% trans "التاريخ" %}</th>
+                        <th>{% trans "المسؤول" %}</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lead in leads %}
+                    <tr>
+                        <td><strong>{{ lead.id }}</strong></td>
+                        <td>
+                            <div class="fw-bold">{{ lead.customer_name }}</div>
+                        </td>
+                        <td dir="ltr"><a href="tel:{{ lead.customer_phone }}">{{ lead.customer_phone }}</a></td>
+                        <td>
+                            {% if lead.customer_address %}
+                                <small><i class="fas fa-map-marker-alt text-danger me-1"></i>{{ lead.customer_address|truncatechars:35 }}</small>
+                            {% else %}
+                                <small class="text-muted">-</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ lead.product_interest|truncatechars:40|default:"-" }}</td>
+                        <td><span class="status-badge status-{{ lead.status }}">{{ lead.get_status_display }}</span></td>
+                        <td>
+                            <small>{{ lead.created_at|date:"Y/m/d" }}</small>
+                            <br><small class="text-muted">{{ lead.created_at|date:"H:i" }}</small>
+                        </td>
+                        <td>
+                            {% if lead.assigned_to %}
+                                <small>{{ lead.assigned_to.get_full_name|default:lead.assigned_to.username }}</small>
+                            {% else %}
+                                <small class="text-muted">-</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'dashboard:lead_request_detail' lead.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye me-1"></i>{% trans "عرض" %}
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-4 text-muted">
+                            <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                            {% trans "لا توجد طلبات" %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if total_pages > 1 %}
+        <div class="card-footer">
+            <nav>
+                <ul class="pagination pagination-sm justify-content-center mb-0">
+                    {% if page > 1 %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page|add:'-1' }}&q={{ query }}&status={{ status_filter }}">&laquo;</a></li>
+                    {% endif %}
+                    {% for p in page_range %}
+                    <li class="page-item {% if p == page %}active{% endif %}">
+                        <a class="page-link" href="?page={{ p }}&q={{ query }}&status={{ status_filter }}">{{ p }}</a>
+                    </li>
+                    {% endfor %}
+                    {% if page < total_pages %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page|add:'1' }}&q={{ query }}&status={{ status_filter }}">&raquo;</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+    var counts = {{ status_counts_json|safe }};
+    for(var k in counts){
+        var el = document.getElementById('stat-' + k);
+        if(el) el.textContent = counts[k];
+    }
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,289 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "طلب عميل" %} #{{ lead.id }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-block;
+}
+.status-pending { background: #fff3e0; color: #e65100; }
+.status-contacted { background: #e3f2fd; color: #1565c0; }
+.status-in_progress { background: #f3e5f5; color: #7b1fa2; }
+.status-completed { background: #e8f5e9; color: #2e7d32; }
+.status-cancelled { background: #fce4ec; color: #c62828; }
+.info-item { margin-bottom: 12px; }
+.info-item .info-label {
+    font-size: 12px;
+    color: #6c757d;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+.info-item .info-value {
+    font-size: 15px;
+    color: #333;
+}
+.comment-item {
+    padding: 12px;
+    border-radius: 8px;
+    background: #f8f9fa;
+    margin-bottom: 10px;
+    border-left: 3px solid var(--bs-primary);
+}
+[dir="rtl"] .comment-item {
+    border-left: none;
+    border-right: 3px solid var(--bs-primary);
+}
+.comment-item.status-change {
+    border-left-color: #ff9800;
+}
+[dir="rtl"] .comment-item.status-change {
+    border-right-color: #ff9800;
+}
+.comment-meta {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 4px;
+}
+.chat-msg {
+    padding: 8px 12px;
+    border-radius: 10px;
+    margin-bottom: 6px;
+    max-width: 85%;
+    font-size: 13px;
+    line-height: 1.5;
+}
+.chat-msg.user {
+    background: #e3f2fd;
+    margin-inline-start: auto;
+}
+.chat-msg.assistant {
+    background: #f5f5f5;
+    margin-inline-end: auto;
+}
+.chat-msg-role {
+    font-size: 10px;
+    font-weight: 700;
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <a href="{% url 'dashboard:lead_requests' %}" class="text-decoration-none text-muted">
+                <i class="fas fa-arrow-left me-1"></i>{% trans "العودة للقائمة" %}
+            </a>
+            <h4 class="mt-2 mb-0">
+                <i class="fas fa-clipboard-list me-2"></i>{% trans "طلب عميل" %} #{{ lead.id }}
+                <span class="status-badge status-{{ lead.status }} ms-2">{{ lead.get_status_display }}</span>
+            </h4>
+        </div>
+        {% if not lead.assigned_to %}
+        <form method="post" action="{% url 'dashboard:lead_request_assign' lead.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-primary">
+                <i class="fas fa-user-check me-1"></i>{% trans "تعيين لي" %}
+            </button>
+        </form>
+        {% endif %}
+    </div>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="row g-4">
+        <!-- Customer Info -->
+        <div class="col-md-5">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-user me-2"></i>{% trans "معلومات العميل" %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="info-item">
+                        <div class="info-label">{% trans "الاسم" %}</div>
+                        <div class="info-value fw-bold">{{ lead.customer_name }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">{% trans "رقم الهاتف" %}</div>
+                        <div class="info-value" dir="ltr">
+                            <a href="tel:{{ lead.customer_phone }}" class="text-decoration-none me-2">
+                                <i class="fas fa-phone me-1"></i>{{ lead.customer_phone }}
+                            </a>
+                            <a href="https://wa.me/{{ lead.customer_phone|cut:' '|cut:'-' }}" target="_blank" class="text-decoration-none text-success" title="WhatsApp">
+                                <i class="fab fa-whatsapp"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">{% trans "العنوان" %}</div>
+                        <div class="info-value">
+                            {% if lead.customer_address %}
+                            <i class="fas fa-map-marker-alt text-danger me-1"></i>{{ lead.customer_address }}
+                            {% else %}
+                            <span class="text-muted"><i class="fas fa-map-marker-alt me-1"></i>{% trans "لم يتم تحديد العنوان" %}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if lead.expected_date %}
+                    <div class="info-item">
+                        <div class="info-label">{% trans "التاريخ المتوقع" %}</div>
+                        <div class="info-value">{{ lead.expected_date }}</div>
+                    </div>
+                    {% endif %}
+                    {% if lead.product_interest %}
+                    <div class="info-item">
+                        <div class="info-label">{% trans "المنتج / الاهتمام" %}</div>
+                        <div class="info-value">{{ lead.product_interest }}</div>
+                    </div>
+                    {% endif %}
+                    {% if lead.notes %}
+                    <div class="info-item">
+                        <div class="info-label">{% trans "ملاحظات" %}</div>
+                        <div class="info-value">{{ lead.notes }}</div>
+                    </div>
+                    {% endif %}
+                    <hr>
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="info-item">
+                                <div class="info-label">{% trans "تاريخ الإنشاء" %}</div>
+                                <div class="info-value small">{{ lead.created_at|date:"Y/m/d H:i" }}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="info-item">
+                                <div class="info-label">{% trans "المسؤول" %}</div>
+                                <div class="info-value small">
+                                    {% if lead.assigned_to %}
+                                        {{ lead.assigned_to.get_full_name|default:lead.assigned_to.username }}
+                                    {% else %}
+                                        <span class="text-muted">{% trans "غير معيّن" %}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% if lead.page_url %}
+                    <div class="info-item">
+                        <div class="info-label">{% trans "صفحة المحادثة" %}</div>
+                        <div class="info-value small"><a href="{{ lead.page_url }}" target="_blank">{{ lead.page_url|truncatechars:50 }}</a></div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Status Update -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-warning bg-opacity-10">
+                    <h5 class="mb-0"><i class="fas fa-exchange-alt me-2"></i>{% trans "تغيير الحالة" %}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'dashboard:lead_request_status' lead.id %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <select name="status" class="form-select">
+                                {% for value, label in status_choices %}
+                                <option value="{{ value }}" {% if lead.status == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <textarea name="comment" class="form-control" rows="2" placeholder="{% trans 'أضف تعليقاً (اختياري)...' %}"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-warning w-100">
+                            <i class="fas fa-sync me-1"></i>{% trans "تحديث الحالة" %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comments & Chat History -->
+        <div class="col-md-7">
+            <!-- Add Comment -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success bg-opacity-10">
+                    <h5 class="mb-0"><i class="fas fa-comment me-2"></i>{% trans "إضافة تعليق" %}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'dashboard:lead_request_comment' lead.id %}">
+                        {% csrf_token %}
+                        <div class="d-flex gap-2">
+                            <textarea name="comment" class="form-control" rows="2" placeholder="{% trans 'اكتب تعليقك هنا...' %}" required></textarea>
+                            <button type="submit" class="btn btn-success align-self-end">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Comments Timeline -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>{% trans "سجل التعليقات" %} ({{ comments|length }})</h5>
+                </div>
+                <div class="card-body">
+                    {% for comment in comments %}
+                    <div class="comment-item {% if comment.new_status %}status-change{% endif %}">
+                        <div class="comment-meta">
+                            <strong>{{ comment.user.get_full_name|default:comment.user.username }}</strong>
+                            &middot; {{ comment.created_at|date:"Y/m/d H:i" }}
+                            {% if comment.old_status and comment.new_status %}
+                            &middot;
+                            <span class="status-badge status-{{ comment.old_status }}" style="font-size:10px;padding:1px 6px">{{ comment.old_status }}</span>
+                            <i class="fas fa-long-arrow-alt-right mx-1" style="font-size:10px"></i>
+                            <span class="status-badge status-{{ comment.new_status }}" style="font-size:10px;padding:1px 6px">{{ comment.new_status }}</span>
+                            {% endif %}
+                        </div>
+                        <div>{{ comment.content }}</div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-comment-slash d-block mb-2" style="font-size:24px"></i>
+                        {% trans "لا توجد تعليقات بعد" %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Chat History -->
+            {% if chat_messages %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-comments me-2"></i>{% trans "سجل المحادثة" %}</h5>
+                </div>
+                <div class="card-body" style="max-height:400px;overflow-y:auto">
+                    {% for msg in chat_messages %}
+                    <div class="chat-msg {{ msg.role }}">
+                        <div class="chat-msg-role">
+                            {% if msg.role == 'user' %}{% trans "العميل" %}{% else %}{% trans "البوت" %}{% endif %}
+                            &middot; {{ msg.created_at|date:"H:i" }}
+                        </div>
+                        {{ msg.content }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

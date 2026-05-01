@@ -327,6 +327,36 @@ urlpatterns = [
     path('blog/tags/<int:pk>/edit/', views.dashboard_blog_tag_edit, name='dashboard_blog_tag_edit'),
     path('blog/tags/<int:pk>/delete/', views.dashboard_blog_tag_delete, name='dashboard_blog_tag_delete'),
 
+    # ========================= الشات بوت =========================
+    path('chatbot/', views.ChatbotSettingsView.as_view(), name='chatbot_settings'),
+    path('chatbot/conversations/', views.ChatbotConversationListView.as_view(), name='chatbot_conversations'),
+    path('chatbot/conversations/<int:conversation_id>/', views.ChatbotConversationDetailView.as_view(), name='chatbot_conversation_detail'),
+    path('chatbot/conversations/<int:conversation_id>/delete/', views.ChatbotConversationDeleteView.as_view(), name='chatbot_conversation_delete'),
+    path('chatbot/custom-qa/', views.ChatbotCustomQAListView.as_view(), name='chatbot_custom_qa'),
+    path('chatbot/custom-qa/create/', views.ChatbotCustomQACreateView.as_view(), name='chatbot_custom_qa_create'),
+    path('chatbot/custom-qa/<int:qa_id>/edit/', views.ChatbotCustomQAEditView.as_view(), name='chatbot_custom_qa_edit'),
+    path('chatbot/custom-qa/<int:qa_id>/delete/', views.ChatbotCustomQADeleteView.as_view(), name='chatbot_custom_qa_delete'),
+    path('chatbot/suggested/create/', views.ChatbotSuggestedCreateView.as_view(), name='chatbot_suggested_create'),
+    path('chatbot/suggested/<int:suggestion_id>/delete/', views.ChatbotSuggestedDeleteView.as_view(), name='chatbot_suggested_delete'),
+    path('chatbot/test-connection/', views.ChatbotTestConnectionView.as_view(), name='chatbot_test_connection'),
+    path('chatbot/analytics/', views.ChatbotAnalyticsView.as_view(), name='chatbot_analytics'),
+
+    # ========================= إدارة العملاء =========================
+    path('customers/', views.CustomerListView.as_view(), name='customer_list'),
+    path('customers/export/', views.CustomerExportView.as_view(), name='customer_export'),
+    path('customers/<uuid:customer_id>/', views.CustomerDetailView.as_view(), name='customer_detail'),
+
+    # ========================= أداء الموظفين =========================
+    path('employees/performance/', views.EmployeePerformanceListView.as_view(), name='employee_performance'),
+    path('employees/performance/<uuid:user_id>/', views.EmployeePerformanceDetailView.as_view(), name='employee_performance_detail'),
+
+    # ========================= طلبات العملاء (Lead Requests) =========================
+    path('lead-requests/', views.LeadRequestListView.as_view(), name='lead_requests'),
+    path('lead-requests/<int:lead_id>/', views.LeadRequestDetailView.as_view(), name='lead_request_detail'),
+    path('lead-requests/<int:lead_id>/status/', views.LeadRequestUpdateStatusView.as_view(), name='lead_request_status'),
+    path('lead-requests/<int:lead_id>/comment/', views.LeadRequestAddCommentView.as_view(), name='lead_request_comment'),
+    path('lead-requests/<int:lead_id>/assign/', views.LeadRequestAssignView.as_view(), name='lead_request_assign'),
+
     # ========================= SEO =========================
     path('seo/', views.SEOSettingsView.as_view(), name='seo_settings'),
     path('seo/keywords/', views.SEOKeywordListView.as_view(), name='seo_keywords'),

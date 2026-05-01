@@ -16,7 +16,7 @@ import csv
 from decimal import Decimal
 from datetime import datetime, timedelta
 from orders.models import Order, OrderItem
-from accounts.models import User, UserAddress
+from accounts.models import User, UserAddress, UserActivity
 from products.models import Product, ProductVariant
 from .dashboard import DashboardAccessMixin
 from django.core.mail import send_mail
@@ -278,6 +278,15 @@ class OrderUpdateStatusView(DashboardAccessMixin, View):
                 messages.warning(request, _('تم تحديث حالة الطلب إلى %s ولكن فشل إرسال الإشعار للعميل') % dict(Order.STATUS_CHOICES)[new_status])
         else:
             messages.success(request, _('تم تحديث حالة الطلب إلى %s') % dict(Order.STATUS_CHOICES)[new_status])
+
+        UserActivity.objects.create(
+            user=request.user,
+            activity_type='order_status_update',
+            description=f'Updated order #{order.order_number} status from {old_status} to {new_status}',
+            object_id=str(order.id),
+            content_type='orders.order',
+            ip_address=request.META.get('REMOTE_ADDR'),
+        )
 
         return redirect('dashboard:dashboard_order_detail', order_id=order.id)
 

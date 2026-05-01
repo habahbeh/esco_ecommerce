@@ -43,6 +43,7 @@ urlpatterns = [
 
     # API endpoints (لا تحتاج ترجمة)
     path('api/', include([
+        path('chatbot/', include('chatbot.urls', namespace='chatbot')),
         # يمكنك تفعيل هذه عند إنشاء ملفات API المناسبة
         # path('products/', include('products.api_urls', namespace='products_api')),
         # path('cart/', include('cart.api_urls', namespace='cart_api')),

@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.utils.translation import gettext as _
 from events.models import Event, EventImage
 from dashboard.forms.event_forms import EventForm, EventImageForm
+from accounts.models import UserActivity
 
 
 @login_required
@@ -26,8 +27,16 @@ def dashboard_event_create(request):
     if request.method == 'POST':
         form = EventForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
+            event = form.save()
             messages.success(request, _('تم إضافة الفعالية بنجاح'))
+            UserActivity.objects.create(
+                user=request.user,
+                activity_type='event_create',
+                description=f'Created event: {event.title}',
+                object_id=str(event.pk),
+                content_type='events.event',
+                ip_address=request.META.get('REMOTE_ADDR'),
+            )
             return redirect('dashboard:dashboard_events')
     else:
         form = EventForm()
@@ -51,6 +60,14 @@ def dashboard_event_edit(request, pk):
         if form.is_valid():
             form.save()
             messages.success(request, _('تم تحديث الفعالية بنجاح'))
+            UserActivity.objects.create(
+                user=request.user,
+                activity_type='event_update',
+                description=f'Updated event: {event.title}',
+                object_id=str(event.pk),
+                content_type='events.event',
+                ip_address=request.META.get('REMOTE_ADDR'),
+            )
             return redirect('dashboard:dashboard_events')
     else:
         form = EventForm(instance=event)

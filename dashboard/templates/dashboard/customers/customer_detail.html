@@ -1,0 +1,133 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+{% load i18n %}
+{% load humanize %}
+
+{% block title %}{{ customer.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="mb-4">
+        <a href="{% url 'dashboard:customer_list' %}" class="text-decoration-none text-muted">
+            <i class="fas fa-arrow-left me-1"></i>{% trans "العودة للعملاء" %}
+        </a>
+        <h4 class="mt-2 mb-0">
+            <i class="fas fa-user me-2"></i>{{ customer.get_full_name }}
+        </h4>
+    </div>
+
+    <div class="row g-4">
+        <!-- Customer Info Card -->
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-id-card me-2"></i>{% trans "معلومات العميل" %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        {% if customer.avatar %}
+                        <img src="{{ customer.avatar.url }}" class="rounded-circle" width="80" height="80" alt="">
+                        {% else %}
+                        <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style="width:80px;height:80px;font-size:28px;font-weight:700">
+                            {{ customer.first_name|default:customer.username|truncatechars:1 }}
+                        </div>
+                        {% endif %}
+                        <h5 class="mt-2 mb-0">{{ customer.get_full_name }}</h5>
+                        <small class="text-muted">@{{ customer.username }}</small>
+                    </div>
+                    <hr>
+                    <div class="mb-2">
+                        <small class="text-muted d-block">{% trans "البريد الإلكتروني" %}</small>
+                        <span>{{ customer.email }}</span>
+                    </div>
+                    {% if customer.phone_number %}
+                    <div class="mb-2">
+                        <small class="text-muted d-block">{% trans "الهاتف" %}</small>
+                        <span dir="ltr">{{ customer.phone_number }}</span>
+                    </div>
+                    {% endif %}
+                    {% if customer.city %}
+                    <div class="mb-2">
+                        <small class="text-muted d-block">{% trans "المدينة" %}</small>
+                        <span>{{ customer.city }}</span>
+                    </div>
+                    {% endif %}
+                    {% if customer.address %}
+                    <div class="mb-2">
+                        <small class="text-muted d-block">{% trans "العنوان" %}</small>
+                        <span>{{ customer.address }}</span>
+                    </div>
+                    {% endif %}
+                    <hr>
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="text-primary fs-4 fw-bold">{{ orders_count }}</div>
+                            <small class="text-muted">{% trans "الطلبات" %}</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-success fs-4 fw-bold">{{ total_spent|floatformat:2 }}</div>
+                            <small class="text-muted">{% trans "إجمالي المشتريات" %} ({% trans "د.ا" %})</small>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="mb-2">
+                        <small class="text-muted d-block">{% trans "تاريخ التسجيل" %}</small>
+                        <span>{{ customer.date_joined|date:"Y/m/d H:i" }}</span>
+                    </div>
+                    <div class="mb-2">
+                        <small class="text-muted d-block">{% trans "آخر نشاط" %}</small>
+                        <span>{{ customer.last_activity|date:"Y/m/d H:i" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-shopping-bag me-2"></i>{% trans "طلبات العميل" %} ({{ orders_count }})</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>{% trans "رقم الطلب" %}</th>
+                                <th>{% trans "التاريخ" %}</th>
+                                <th>{% trans "الحالة" %}</th>
+                                <th>{% trans "المبلغ" %}</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr>
+                                <td><strong>#{{ order.order_number }}</strong></td>
+                                <td><small>{{ order.created_at|date:"Y/m/d H:i" }}</small></td>
+                                <td>
+                                    <span class="badge bg-{% if order.status == 'pending' %}secondary{% elif order.status == 'processing' %}info{% elif order.status == 'confirmed' %}warning{% elif order.status == 'closed' %}success{% elif order.status == 'cancelled' %}danger{% else %}secondary{% endif %}">
+                                        {{ order.get_status_display }}
+                                    </span>
+                                </td>
+                                <td class="fw-bold">{{ order.grand_total|floatformat:2 }} {% trans "د.ا" %}</td>
+                                <td>
+                                    <a href="{% url 'dashboard:dashboard_order_detail' order_id=order.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    {% trans "لا توجد طلبات" %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

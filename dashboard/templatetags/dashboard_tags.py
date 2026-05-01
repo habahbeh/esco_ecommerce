@@ -10,6 +10,8 @@ import re
 
 register = template.Library()
 
+_builtin_abs = abs
+
 
 @register.filter
 def abs(value):
@@ -18,7 +20,7 @@ def abs(value):
     مثال: {{ number|abs }}
     """
     try:
-        return abs(float(value))
+        return _builtin_abs(float(value))
     except (ValueError, TypeError):
         return value
 

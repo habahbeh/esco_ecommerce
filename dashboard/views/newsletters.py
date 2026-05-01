@@ -11,6 +11,7 @@ from django.http import JsonResponse
 from core.models import Newsletter, SiteSettings
 from products.models import Product, Brand
 from dashboard.forms.newsletter_forms import NewsletterForm
+from accounts.models import UserActivity
 import logging
 import traceback
 
@@ -48,8 +49,16 @@ def dashboard_newsletter_create(request):
     if request.method == 'POST':
         form = NewsletterForm(request.POST)
         if form.is_valid():
-            form.save()
+            newsletter = form.save()
             messages.success(request, _('تم إضافة الاشتراك بنجاح'))
+            UserActivity.objects.create(
+                user=request.user,
+                activity_type='newsletter_create',
+                description=f'Created newsletter subscription: {newsletter.email}',
+                object_id=str(newsletter.pk),
+                content_type='core.newsletter',
+                ip_address=request.META.get('REMOTE_ADDR'),
+            )
             return redirect('dashboard:dashboard_newsletters')
     else:
         form = NewsletterForm()
@@ -348,6 +357,14 @@ def dashboard_newsletter_send(request):
 
             if success_count > 0:
                 messages.success(request, _('تم إرسال النشرة البريدية بنجاح إلى %s مشترك') % success_count)
+                UserActivity.objects.create(
+                    user=request.user,
+                    activity_type='newsletter_send',
+                    description=f'Sent {email_type} newsletter to {success_count} subscribers',
+                    object_id='',
+                    content_type='core.newsletter',
+                    ip_address=request.META.get('REMOTE_ADDR'),
+                )
             if error_count > 0:
                 messages.warning(request, _('فشل إرسال %s رسالة') % error_count)
 

@@ -9,6 +9,7 @@ from django.db.models import Count, Q, Sum
 
 from blog.models import BlogPost, BlogCategory, BlogTag, BlogPostFAQ
 from dashboard.forms.blog_forms import BlogPostForm, BlogCategoryForm, BlogTagForm
+from accounts.models import UserActivity
 
 
 # ========================= Blog Posts =========================
@@ -61,6 +62,14 @@ def dashboard_blog_post_create(request):
             form.save_m2m()
             _save_blog_faqs(request, post)
             messages.success(request, _('تم إضافة المقال بنجاح'))
+            UserActivity.objects.create(
+                user=request.user,
+                activity_type='blog_create',
+                description=f'Created blog post: {post.title}',
+                object_id=str(post.pk),
+                content_type='blog.blogpost',
+                ip_address=request.META.get('REMOTE_ADDR'),
+            )
             return redirect('dashboard:dashboard_blog_posts')
     else:
         form = BlogPostForm()
@@ -84,6 +93,14 @@ def dashboard_blog_post_edit(request, pk):
             form.save()
             _save_blog_faqs(request, post)
             messages.success(request, _('تم تحديث المقال بنجاح'))
+            UserActivity.objects.create(
+                user=request.user,
+                activity_type='blog_update',
+                description=f'Updated blog post: {post.title}',
+                object_id=str(post.pk),
+                content_type='blog.blogpost',
+                ip_address=request.META.get('REMOTE_ADDR'),
+            )
             return redirect('dashboard:dashboard_blog_posts')
     else:
         form = BlogPostForm(instance=post)

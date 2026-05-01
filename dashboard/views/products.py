@@ -1688,6 +1688,16 @@ class ProductFormView(DashboardAccessMixin, View):
 
                 messages.success(request, _('تم حفظ المنتج بنجاح'))
 
+                from accounts.models import UserActivity
+                UserActivity.objects.create(
+                    user=request.user,
+                    activity_type='product_update' if product_id else 'product_create',
+                    description=f'{"تحديث" if product_id else "إضافة"} منتج: {product.name}',
+                    object_id=str(product.id),
+                    content_type='products.product',
+                    ip_address=request.META.get('REMOTE_ADDR'),
+                )
+
                 # تحديد ما إذا كان يجب الاستمرار في التحرير أم العودة إلى صفحة التفاصيل
                 if 'save_and_continue' in request.POST:
                     return redirect('dashboard:dashboard_product_edit', product_id=str(product.id))

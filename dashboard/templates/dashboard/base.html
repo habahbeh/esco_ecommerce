@@ -223,6 +223,8 @@
                                 {% if perms.orders.view_order %}
                                 <li><a href="{% url 'dashboard:dashboard_delivery_orders_report' %}">{% trans "الطلبات المنتظرة التوصيل" %}</a></li>
                                 {% endif %}
+                                <li><a href="{% url 'dashboard:customer_list' %}">{% trans "إدارة العملاء" %}</a></li>
+                                <li><a href="{% url 'dashboard:lead_requests' %}">{% trans "طلبات العملاء (الشات بوت)" %}</a></li>
                             </ul>
                         </li>
                         {% endif %}
@@ -312,6 +314,10 @@
                                 {% if perms.accounts.view_role %}
                                 <li><a href="{% url 'dashboard:dashboard_roles' %}">{% trans "الأدوار والصلاحيات" %}</a></li>
                                 {% endif %}
+
+                                {% if request.user.is_superuser %}
+                                <li><a href="{% url 'dashboard:employee_performance' %}">{% trans "أداء الموظفين" %}</a></li>
+                                {% endif %}
                             </ul>
                         </li>
                         {% endif %}
@@ -355,6 +361,26 @@
                                 <li><a href="{% url 'dashboard:marketing_settings' %}">{% trans "إعدادات التسويق" %}</a></li>
                             </ul>
                         </li>
+                        {% endif %}
+
+                        <!-- Chatbot Section -->
+                        {% if request.user.is_superuser %}
+                        <li class="menu-item-section">
+                            <span>{% trans "الشات بوت" %}</span>
+                        </li>
+                        <li class="menu-item {% if 'chatbot' in request.path %}active{% endif %}">
+                            <a href="{% url 'dashboard:chatbot_settings' %}">
+                                <i class="fas fa-robot"></i>
+                                <span>{% trans "الشات بوت" %}</span>
+                            </a>
+                            <ul class="submenu">
+                                <li><a href="{% url 'dashboard:chatbot_settings' %}">{% trans "الإعدادات" %}</a></li>
+                                <li><a href="{% url 'dashboard:chatbot_conversations' %}">{% trans "المحادثات" %}</a></li>
+                                <li><a href="{% url 'dashboard:chatbot_custom_qa' %}">{% trans "الأسئلة المخصصة" %}</a></li>
+                                <li><a href="{% url 'dashboard:chatbot_analytics' %}">{% trans "الإحصائيات" %}</a></li>
+                            </ul>
+                        </li>
+
                         {% endif %}
 
                         <!-- SEO Section -->

@@ -12,6 +12,7 @@ from django.views import View
 from core.models import SiteSettings, SEOKeyword
 from dashboard.forms.seo import SEOSettingsForm, SEOKeywordForm
 from dashboard.mixins import SuperuserRequiredMixin
+from accounts.models import UserActivity
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +83,14 @@ class SEOKeywordCreateView(SuperuserRequiredMixin, CreateView):
     def form_valid(self, form):
         response = super().form_valid(form)
         messages.success(self.request, _('تم إضافة الكلمة المفتاحية بنجاح'))
+        UserActivity.objects.create(
+            user=self.request.user,
+            activity_type='seo_keyword_create',
+            description=f'Created SEO keyword: {self.object.keyword}',
+            object_id=str(self.object.pk),
+            content_type='core.seokeyword',
+            ip_address=self.request.META.get('REMOTE_ADDR'),
+        )
         return response
 
     def get_context_data(self, **kwargs):
@@ -100,6 +109,14 @@ class SEOKeywordEditView(SuperuserRequiredMixin, UpdateView):
     def form_valid(self, form):
         response = super().form_valid(form)
         messages.success(self.request, _('تم تحديث الكلمة المفتاحية بنجاح'))
+        UserActivity.objects.create(
+            user=self.request.user,
+            activity_type='seo_keyword_update',
+            description=f'Updated SEO keyword: {self.object.keyword}',
+            object_id=str(self.object.pk),
+            content_type='core.seokeyword',
+            ip_address=self.request.META.get('REMOTE_ADDR'),
+        )
         return response
 
     def get_context_data(self, **kwargs):

@@ -1,0 +1,106 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "المحادثات" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4><i class="fas fa-comments me-2"></i>{% trans "المحادثات" %} <span class="badge bg-primary">{{ total }}</span></h4>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-md-5">
+                    <input type="text" name="q" class="form-control" placeholder="{% trans 'بحث في المحادثات...' %}" value="{{ query }}">
+                </div>
+                <div class="col-md-3">
+                    <select name="language" class="form-select">
+                        <option value="">{% trans "جميع اللغات" %}</option>
+                        <option value="ar" {% if lang_filter == 'ar' %}selected{% endif %}>{% trans "العربية" %}</option>
+                        <option value="en" {% if lang_filter == 'en' %}selected{% endif %}>{% trans "الإنجليزية" %}</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search me-1"></i>{% trans "بحث" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Conversations List -->
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>{% trans "المستخدم" %}</th>
+                        <th>{% trans "اللغة" %}</th>
+                        <th>{% trans "الرسائل" %}</th>
+                        <th>{% trans "الصفحة" %}</th>
+                        <th>{% trans "البداية" %}</th>
+                        <th>{% trans "آخر تحديث" %}</th>
+                        <th>{% trans "الإجراءات" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for conv in conversations %}
+                    <tr>
+                        <td>{{ conv.id }}</td>
+                        <td>
+                            {% if conv.user %}
+                                <i class="fas fa-user me-1"></i>{{ conv.user.get_full_name|default:conv.user.username }}
+                            {% else %}
+                                <i class="fas fa-user-secret me-1 text-muted"></i><span class="text-muted">{{ conv.session_key|truncatechars:12 }}</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="badge bg-info">{{ conv.language|upper }}</span></td>
+                        <td><span class="badge bg-secondary">{{ conv.message_count }}</span></td>
+                        <td><small class="text-muted">{{ conv.page_url|truncatechars:40 }}</small></td>
+                        <td><small>{{ conv.started_at|timesince }} {% trans "مضت" %}</small></td>
+                        <td><small>{{ conv.updated_at|timesince }} {% trans "مضت" %}</small></td>
+                        <td>
+                            <a href="{% url 'dashboard:chatbot_conversation_detail' conv.id %}" class="btn btn-sm btn-outline-primary" title="{% trans 'عرض' %}">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <form method="post" action="{% url 'dashboard:chatbot_conversation_delete' conv.id %}" class="d-inline" onsubmit="return confirm('{% trans 'هل أنت متأكد من حذف هذه المحادثة؟' %}')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="{% trans 'حذف' %}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-muted">
+                            <i class="fas fa-comments fa-2x mb-2 d-block"></i>
+                            {% trans "لا توجد محادثات بعد" %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <nav class="mt-3">
+        <ul class="pagination justify-content-center">
+            {% if page > 1 %}
+            <li class="page-item"><a class="page-link" href="?page={{ page|add:"-1" }}&q={{ query }}&language={{ lang_filter }}">{% trans "السابق" %}</a></li>
+            {% endif %}
+            <li class="page-item active"><span class="page-link">{{ page }} / {{ total_pages }}</span></li>
+            {% if page < total_pages %}
+            <li class="page-item"><a class="page-link" href="?page={{ page|add:"1" }}&q={{ query }}&language={{ lang_filter }}">{% trans "التالي" %}</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

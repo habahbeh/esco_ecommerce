@@ -220,73 +220,76 @@ class ChartDataAPIView( DashboardAccessMixin, View):
         return start_date, end_date, date_format
 
     def get_sales_chart_data(self, request, time_period):
-        """بيانات مبيعات الرسم البياني"""
-        start_date, end_date, date_format = self.get_date_range(time_period)
+        """بيانات مبيعات الرسم البياني — تُرجع المبيعات وعدد الطلبات معاً"""
+        today = timezone.now().date()
+        completed_statuses = ['confirmed', 'processing', 'closed']
 
-        # تحديد التجميع بناءً على الفترة الزمنية
-        if time_period == 'year':
-            # تجميع شهري
-            orders_data = Order.objects.filter(
-                created_at__gte=start_date,
-                created_at__lte=end_date
-            ).annotate(
-                date=F('created_at__month')
-            ).values('date').annotate(
-                count=Count('id'),
-                revenue=Sum('grand_total')
-            ).order_by('date')
+        labels = []
+        sales_values = []
+        orders_values = []
 
-            # تحويل رقم الشهر إلى اسم الشهر
-            months = ['يناير', 'فبراير', 'مارس', 'إبريل', 'مايو', 'يونيو',
-                      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
+        if time_period == '6months':
+            for i in range(5, -1, -1):
+                m = today.month - i
+                y = today.year
+                while m <= 0:
+                    m += 12
+                    y -= 1
+                m_start = datetime(y, m, 1).date()
+                m_end = datetime(y + (1 if m == 12 else 0), (m % 12) + 1, 1).date() - timedelta(days=1)
+                m_sales = Order.objects.filter(
+                    created_at__date__gte=m_start, created_at__date__lte=m_end,
+                    status__in=completed_statuses,
+                ).aggregate(total=Sum('grand_total'))['total'] or 0
+                m_orders = Order.objects.filter(
+                    created_at__date__gte=m_start, created_at__date__lte=m_end,
+                ).count()
+                labels.append(m_start.strftime('%b'))
+                sales_values.append(float(m_sales))
+                orders_values.append(m_orders)
 
-            labels = []
-            values = []
-
+        elif time_period == 'year':
+            now = timezone.now()
+            start_of_year = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+            months_ar = ['يناير','فبراير','مارس','إبريل','مايو','يونيو',
+                         'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر']
             for month_num in range(1, 13):
-                month_data = next((item for item in orders_data if item['date'] == month_num), None)
-                labels.append(months[month_num - 1])
-
-                if month_data:
-                    values.append(float(month_data['revenue']))
+                m_start = datetime(today.year, month_num, 1).date()
+                if month_num == 12:
+                    m_end = datetime(today.year + 1, 1, 1).date() - timedelta(days=1)
                 else:
-                    values.append(0)
+                    m_end = datetime(today.year, month_num + 1, 1).date() - timedelta(days=1)
+                m_sales = Order.objects.filter(
+                    created_at__date__gte=m_start, created_at__date__lte=m_end,
+                    status__in=completed_statuses,
+                ).aggregate(total=Sum('grand_total'))['total'] or 0
+                m_orders = Order.objects.filter(
+                    created_at__date__gte=m_start, created_at__date__lte=m_end,
+                ).count()
+                labels.append(months_ar[month_num - 1])
+                sales_values.append(float(m_sales))
+                orders_values.append(m_orders)
+
         else:
-            # تجميع يومي
-            orders_data = Order.objects.filter(
-                created_at__gte=start_date,
-                created_at__lte=end_date
-            ).annotate(
-                date=F('created_at__date')
-            ).values('date').annotate(
-                count=Count('id'),
-                revenue=Sum('grand_total')
-            ).order_by('date')
-
-            # إنشاء قاموس بالتواريخ لملء الأيام الفارغة
-            date_range = {}
-            current_date = start_date.date()
-            while current_date <= end_date.date():
-                date_range[current_date] = 0
-                current_date += timedelta(days=1)
-
-            # ملء البيانات
-            for item in orders_data:
-                date_range[item['date']] = float(item['revenue'])
-
-            # تحويل إلى قوائم للرسم البياني
-            labels = [date.strftime(date_format) for date in date_range.keys()]
-            values = list(date_range.values())
+            start_date = today - timedelta(days=29)
+            current = start_date
+            while current <= today:
+                day_sales = Order.objects.filter(
+                    created_at__date=current,
+                    status__in=completed_statuses,
+                ).aggregate(total=Sum('grand_total'))['total'] or 0
+                day_orders = Order.objects.filter(created_at__date=current).count()
+                labels.append(current.strftime('%m/%d'))
+                sales_values.append(float(day_sales))
+                orders_values.append(day_orders)
+                current += timedelta(days=1)
 
         return JsonResponse({
             'labels': labels,
-            'datasets': [{
-                'label': _('المبيعات'),
-                'data': values,
-                'backgroundColor': 'rgba(54, 162, 235, 0.2)',
-                'borderColor': 'rgba(54, 162, 235, 1)',
-                'borderWidth': 1
-            }]
+            'datasets': [
+                {'data': sales_values},
+                {'data': orders_values},
+            ]
         })
 
     def get_users_chart_data(self, request, time_period):

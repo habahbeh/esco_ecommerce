@@ -18,3 +18,7 @@ from .branches import *
 from .seo import *
 from .product_tracker import *
 from .blog import *
+from .chatbot import *
+from .lead_requests import *
+from .customers import *
+from .employee_performance import *

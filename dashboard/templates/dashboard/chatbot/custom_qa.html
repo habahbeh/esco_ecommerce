@@ -1,0 +1,190 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "الأسئلة المخصصة" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4><i class="fas fa-question-circle me-2"></i>{% trans "الأسئلة المخصصة والاقتراحات" %}</h4>
+    </div>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Suggested Questions -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>{% trans "الأسئلة المقترحة" %}</h5>
+            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addSuggestionModal">
+                <i class="fas fa-plus me-1"></i>{% trans "إضافة سؤال مقترح" %}
+            </button>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-3">{% trans "هذه الأسئلة تظهر كأزرار عند فتح المحادثة لمساعدة العميل في الوصول لما يبحث عنه بسرعة." %}</p>
+            <div class="row g-2">
+                {% for s in suggested_questions %}
+                <div class="col-md-4">
+                    <div class="border rounded p-2 d-flex align-items-center justify-content-between">
+                        <div>
+                            <i class="{{ s.icon }} me-1 text-primary"></i>
+                            {{ s.text_ar }}
+                            {% if s.text_en %}<br><small class="text-muted">{{ s.text_en }}</small>{% endif %}
+                        </div>
+                        <form method="post" action="{% url 'dashboard:chatbot_suggested_delete' s.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-times"></i></button>
+                        </form>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center text-muted py-3">
+                    {% trans "لا توجد أسئلة مقترحة بعد. أضف بعض الأسئلة لمساعدة العملاء!" %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Q&A -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-database me-2"></i>{% trans "أسئلة وأجوبة مخصصة" %} <span class="badge bg-primary">{{ qas|length }}</span></h5>
+            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addQAModal">
+                <i class="fas fa-plus me-1"></i>{% trans "إضافة سؤال وجواب" %}
+            </button>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-3">{% trans "الأسئلة المخصصة تُجيب مباشرة بدون الذكاء الاصطناعي. مثالية للأسئلة المتكررة مثل ساعات العمل والتوصيل." %}</p>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>{% trans "السؤال (عربي)" %}</th>
+                            <th>{% trans "الإجابة" %}</th>
+                            <th>{% trans "كلمات مفتاحية" %}</th>
+                            <th>{% trans "الأولوية" %}</th>
+                            <th>{% trans "الحالة" %}</th>
+                            <th>{% trans "الإجراءات" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for qa in qas %}
+                        <tr>
+                            <td>{{ qa.question_ar|truncatechars:50 }}</td>
+                            <td><small>{{ qa.answer_ar|truncatechars:80 }}</small></td>
+                            <td><small class="text-muted">{{ qa.keywords|truncatechars:40 }}</small></td>
+                            <td><span class="badge bg-info">{{ qa.priority }}</span></td>
+                            <td>
+                                {% if qa.is_active %}
+                                <span class="badge bg-success">{% trans "نشط" %}</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{% trans "معطل" %}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editQA{{ qa.id }}"><i class="fas fa-edit"></i></button>
+                                <form method="post" action="{% url 'dashboard:chatbot_custom_qa_delete' qa.id %}" class="d-inline" onsubmit="return confirm('{% trans 'هل أنت متأكد؟' %}')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+
+                        <!-- Edit Modal -->
+                        <div class="modal fade" id="editQA{{ qa.id }}" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <form method="post" action="{% url 'dashboard:chatbot_custom_qa_edit' qa.id %}">
+                                        {% csrf_token %}
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">{% trans "تعديل السؤال والجواب" %}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="row g-3">
+                                                <div class="col-md-6"><label class="form-label">{% trans "السؤال (عربي)" %}</label><input name="question_ar" class="form-control" value="{{ qa.question_ar }}" required></div>
+                                                <div class="col-md-6"><label class="form-label">{% trans "السؤال (إنجليزي)" %}</label><input name="question_en" class="form-control" value="{{ qa.question_en }}"></div>
+                                                <div class="col-md-6"><label class="form-label">{% trans "الإجابة (عربي)" %}</label><textarea name="answer_ar" class="form-control" rows="3" required>{{ qa.answer_ar }}</textarea></div>
+                                                <div class="col-md-6"><label class="form-label">{% trans "الإجابة (إنجليزي)" %}</label><textarea name="answer_en" class="form-control" rows="3">{{ qa.answer_en }}</textarea></div>
+                                                <div class="col-md-6"><label class="form-label">{% trans "كلمات مفتاحية" %}</label><input name="keywords" class="form-control" value="{{ qa.keywords }}"></div>
+                                                <div class="col-md-3"><label class="form-label">{% trans "الأولوية" %}</label><input type="number" name="priority" class="form-control" value="{{ qa.priority }}"></div>
+                                                <div class="col-md-3"><div class="form-check form-switch mt-4"><input class="form-check-input" type="checkbox" name="is_active" {% if qa.is_active %}checked{% endif %}><label class="form-check-label">{% trans "نشط" %}</label></div></div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="submit" class="btn btn-primary">{% trans "حفظ" %}</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Suggestion Modal -->
+<div class="modal fade" id="addSuggestionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{% url 'dashboard:chatbot_suggested_create' %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">{% trans "إضافة سؤال مقترح" %}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">{% trans "النص (عربي)" %}</label><input name="text_ar" class="form-control" required placeholder="{% trans 'مثال: ما هي أحدث العروض؟' %}"></div>
+                    <div class="mb-3"><label class="form-label">{% trans "النص (إنجليزي)" %}</label><input name="text_en" class="form-control" placeholder="Example: What are the latest offers?"></div>
+                    <div class="mb-3"><label class="form-label">{% trans "أيقونة Font Awesome" %}</label><input name="icon" class="form-control" value="fas fa-question-circle" placeholder="fas fa-question-circle"></div>
+                    <div class="mb-3"><label class="form-label">{% trans "الترتيب" %}</label><input type="number" name="order" class="form-control" value="0"></div>
+                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="is_active" checked><label class="form-check-label">{% trans "نشط" %}</label></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">{% trans "إضافة" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Q&A Modal -->
+<div class="modal fade" id="addQAModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" action="{% url 'dashboard:chatbot_custom_qa_create' %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">{% trans "إضافة سؤال وجواب مخصص" %}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label">{% trans "السؤال (عربي)" %}</label><input name="question_ar" class="form-control" required placeholder="{% trans 'مثال: ما هي ساعات العمل؟' %}"></div>
+                        <div class="col-md-6"><label class="form-label">{% trans "السؤال (إنجليزي)" %}</label><input name="question_en" class="form-control" placeholder="What are your working hours?"></div>
+                        <div class="col-md-6"><label class="form-label">{% trans "الإجابة (عربي)" %}</label><textarea name="answer_ar" class="form-control" rows="3" required></textarea></div>
+                        <div class="col-md-6"><label class="form-label">{% trans "الإجابة (إنجليزي)" %}</label><textarea name="answer_en" class="form-control" rows="3"></textarea></div>
+                        <div class="col-md-6"><label class="form-label">{% trans "كلمات مفتاحية" %}</label><input name="keywords" class="form-control" placeholder="{% trans 'مفصولة بفواصل: ساعات, دوام, عمل' %}"></div>
+                        <div class="col-md-3"><label class="form-label">{% trans "الأولوية" %}</label><input type="number" name="priority" class="form-control" value="0"></div>
+                        <div class="col-md-3"><div class="form-check form-switch mt-4"><input class="form-check-input" type="checkbox" name="is_active" checked><label class="form-check-label">{% trans "نشط" %}</label></div></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">{% trans "إضافة" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

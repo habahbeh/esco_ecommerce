@@ -9,487 +9,298 @@
 
 {% block extra_css %}
 <style>
-    /* أنماط خاصة بالصفحة الرئيسية */
-    .stat-card {
-        transition: all 0.3s ease;
-        position: relative;
+    .kpi-card {
+        border: none;
+        border-radius: 12px;
+        transition: transform 0.2s, box-shadow 0.2s;
         overflow: hidden;
     }
-
-    .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    .kpi-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
     }
-
-    .stat-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
-        background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 50%);
-        pointer-events: none;
+    .kpi-card .kpi-icon {
+        width: 48px; height: 48px;
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 20px;
     }
-
-    .stat-icon {
-        font-size: 2.5rem;
-        opacity: 0.8;
-        transition: all 0.3s ease;
-    }
-
-    .stat-card:hover .stat-icon {
-        transform: scale(1.1);
-    }
-
-    .percent-badge {
-        font-size: 0.8rem;
-        font-weight: 500;
-        padding: 0.25em 0.5em;
-        border-radius: 0.375rem;
-    }
-
-    .percent-up {
-        color: #28a745;
-    }
-
-    .percent-down {
-        color: #dc3545;
-    }
-
-    .chart-container {
-        position: relative;
-        height: 300px;
-    }
-
-    .latest-item {
-        transition: all 0.3s ease;
-        border-bottom: 1px solid rgba(0,0,0,0.05);
-    }
-
-    .latest-item:hover {
-        background-color: rgba(0,0,0,0.02);
-        transform: translateX(5px);
-    }
-
-    .dashboard-widget {
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .dashboard-widget .card-body {
-        flex: 1;
-    }
-
-    .status-badge {
-        padding: 0.35em 0.65em;
-        font-size: 0.75em;
-        font-weight: 500;
-        border-radius: 20px;
-        display: inline-flex;
-        align-items: center;
-    }
-
-    .status-badge i {
-        margin-right: 0.25rem;
-        font-size: 0.7rem;
-    }
-
-    [dir="rtl"] .status-badge i {
-        margin-right: 0;
-        margin-left: 0.25rem;
-    }
-
-    .product-image {
-        width: 40px;
-        height: 40px;
-        object-fit: cover;
-        border-radius: 4px;
-    }
-
-    .progress {
-        height: 8px;
-        border-radius: 4px;
-        overflow: hidden;
-    }
-
-    .quick-action-card {
-        transition: all 0.3s ease;
-        cursor: pointer;
-        height: 100%;
-    }
-
-    .quick-action-card:hover {
-        transform: translateY(-5px);
-    }
-
-    .quick-action-icon {
-        font-size: 2rem;
-        margin-bottom: 1rem;
-        transition: all 0.3s ease;
-        color: rgba(0,0,0,0.6);
-    }
-
-    .quick-action-card:hover .quick-action-icon {
-        transform: scale(1.2);
-    }
-
-    /* تنسيق الرسوم البيانية */
-    .chart-legend {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        margin-top: 1rem;
-    }
-
-    .chart-legend-item {
-        display: flex;
-        align-items: center;
-        margin: 0 0.75rem;
-        font-size: 0.85rem;
-    }
-
-    .chart-legend-color {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        margin-right: 0.5rem;
-    }
-
-    [dir="rtl"] .chart-legend-color {
-        margin-right: 0;
-        margin-left: 0.5rem;
-    }
-
-    /* تنسيق البطاقات الجديدة */
-    .revenue-stat {
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        padding: 1.5rem;
-        height: 100%;
-        background-color: #fff;
-        border-radius: 0.5rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        transition: all 0.3s ease;
-    }
-
-    .revenue-stat:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    }
-
-    .revenue-stat-icon {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        font-size: 1.5rem;
-        color: rgba(0, 0, 0, 0.1);
-    }
-
-    [dir="rtl"] .revenue-stat-icon {
-        right: auto;
-        left: 1rem;
-    }
-
-    .revenue-stat-title {
-        color: #6b7280;
-        font-size: 0.875rem;
-        margin-bottom: 0.5rem;
-    }
-
-    .revenue-stat-value {
-        font-size: 1.5rem;
+    .kpi-card .kpi-value {
+        font-size: 1.6rem;
         font-weight: 700;
-        margin-bottom: 0.5rem;
+        line-height: 1.2;
+    }
+    .kpi-card .kpi-label {
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin-bottom: 2px;
+    }
+    .kpi-card .kpi-change {
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .kpi-change.up { color: #10b981; }
+    .kpi-change.down { color: #ef4444; }
+
+    .chart-card {
+        border: none;
+        border-radius: 12px;
+    }
+    .chart-container { position: relative; height: 280px; }
+
+    .widget-card {
+        border: none;
+        border-radius: 12px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    .widget-card .card-body { flex: 1; }
+
+    .order-item {
+        padding: 12px 0;
+        border-bottom: 1px solid #f1f5f9;
+        transition: background 0.15s;
+    }
+    .order-item:last-child { border-bottom: none; }
+    .order-item:hover { background: #f8fafc; }
+
+    .status-dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        display: inline-block;
     }
 
-    .revenue-stat-percent {
+    .product-thumb {
+        width: 36px; height: 36px;
+        border-radius: 8px;
+        object-fit: cover;
+        background: #f1f5f9;
+    }
+
+    .revenue-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+    }
+    @media (max-width: 991px) { .revenue-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 575px) { .revenue-grid { grid-template-columns: 1fr; } }
+
+    .revenue-item {
+        background: #fff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        border-inline-start: 4px solid;
+    }
+    .revenue-item.daily { border-color: #3b82f6; }
+    .revenue-item.weekly { border-color: #8b5cf6; }
+    .revenue-item.monthly { border-color: #10b981; }
+    .revenue-item.avg { border-color: #f59e0b; }
+
+    .stock-alert-item {
         display: flex;
         align-items: center;
-        font-size: 0.875rem;
+        padding: 10px 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .stock-alert-item:last-child { border-bottom: none; }
+
+    .progress { height: 6px; border-radius: 3px; }
+
+    .alert-banner {
+        border-radius: 12px;
+        border: none;
+        background: linear-gradient(135deg, #fef3c7, #fde68a);
+        color: #92400e;
     }
 
-    .revenue-stat-percent i {
-        margin-right: 0.25rem;
+    .order-status-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+        text-align: center;
     }
-
-    [dir="rtl"] .revenue-stat-percent i {
-        margin-right: 0;
-        margin-left: 0.25rem;
+    @media (max-width: 767px) { .order-status-grid { grid-template-columns: repeat(3, 1fr); } }
+    .order-status-item {
+        padding: 12px 8px;
+        border-radius: 10px;
+        background: #f8fafc;
     }
-
-    .revenue-stat-positive {
-        color: #10b981;
+    .order-status-item .os-count {
+        font-size: 1.3rem;
+        font-weight: 700;
     }
-
-    .revenue-stat-negative {
-        color: #ef4444;
-    }
-
-    /* تحسين الرسوم البيانية الإضافية */
-    .mini-chart {
-        position: absolute;
-        bottom: 1rem;
-        right: 1rem;
-        width: 80px;
-        height: 30px;
-    }
-
-    [dir="rtl"] .mini-chart {
-        right: auto;
-        left: 1rem;
-    }
-
-    /* تنسيق البطاقات الجانبية */
-    .side-card {
-        position: relative;
-        overflow: hidden;
-        height: 100%;
-        transition: all 0.3s ease;
-    }
-
-    .side-card:hover {
-        transform: translateY(-5px);
-    }
-
-    .side-card::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 5px;
-        height: 100%;
-        background-color: var(--primary-color);
-        opacity: 0.5;
-    }
-
-    .side-card-header {
-        position: relative;
-        padding: 1.25rem 1.5rem;
-        border-bottom: 1px solid rgba(0,0,0,0.05);
-    }
-
-    .side-card-body {
-        padding: 1.25rem 1.5rem;
+    .order-status-item .os-label {
+        font-size: 0.7rem;
+        color: #64748b;
+        margin-top: 2px;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Quick Stats Overview -->
-<div class="row mb-4">
-    <!-- Total Sales -->
-    <div class="col-xl-4 col-md-6 mb-4">
-        <div class="card stat-card border-0 shadow-sm h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
+<!-- Pending Alerts -->
+{% if pending_leads > 0 %}
+<div class="alert alert-banner d-flex justify-content-between align-items-center mb-4 shadow-sm px-4 py-3">
+    <div>
+        <i class="fas fa-bell me-2"></i>
+        <strong>{{ pending_leads }}</strong> {% trans 'طلبات عملاء بانتظار المراجعة' %}
+    </div>
+    <a href="{% url 'dashboard:lead_requests' %}?status=pending" class="btn btn-sm btn-warning shadow-sm">
+        <i class="fas fa-eye me-1"></i>{% trans 'عرض الطلبات' %}
+    </a>
+</div>
+{% endif %}
+
+<!-- KPI Cards Row -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-sm-6">
+        <div class="card kpi-card shadow-sm h-100">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-start justify-content-between">
                     <div>
-                        <h6 class="text-muted mb-2">{% trans 'إجمالي المبيعات' %}</h6>
-                        <h3 class="mb-0">{{ total_sales|floatformat:2 }} {% trans "د.ا" %}</h3>
-                        <div class="mt-2">
-                            {% if monthly_sales_change > 0 %}
-                            <span class="badge bg-success-subtle text-success percent-badge">
-                                <i class="fas fa-arrow-up"></i> {{ monthly_sales_change|floatformat:1 }}%
-                            </span>
-                            {% else %}
-                            <span class="badge bg-danger-subtle text-danger percent-badge">
-                                <i class="fas fa-arrow-down"></i> {{ monthly_sales_change|abs|floatformat:1 }}%
-                            </span>
-                            {% endif %}
-                            <span class="ms-1 text-muted small">{% trans 'مقارنة بالشهر السابق' %}</span>
+                        <div class="kpi-label">{% trans 'إجمالي المبيعات' %}</div>
+                        <div class="kpi-value">{{ total_sales|floatformat:0|intcomma }}</div>
+                        <div class="kpi-change {% if monthly_sales_change >= 0 %}up{% else %}down{% endif %} mt-1">
+                            <i class="fas fa-arrow-{% if monthly_sales_change >= 0 %}up{% else %}down{% endif %} me-1"></i>{{ monthly_sales_change|abs|floatformat:1 }}%
+                            <span class="text-muted fw-normal ms-1">{% trans 'هذا الشهر' %}</span>
                         </div>
                     </div>
-                    <div class="stat-icon text-primary">
-                        <i class="fas fa-dollar-sign"></i>
+                    <div class="kpi-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="fas fa-coins"></i>
                     </div>
-                </div>
-                <div class="mini-chart">
-                    <canvas id="salesMiniChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Total Orders -->
-    <div class="col-xl-4 col-md-6 mb-4">
-        <div class="card stat-card border-0 shadow-sm h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
+    <div class="col-xl-3 col-sm-6">
+        <div class="card kpi-card shadow-sm h-100">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-start justify-content-between">
                     <div>
-                        <h6 class="text-muted mb-2">{% trans 'إجمالي الطلبات' %}</h6>
-                        <h3 class="mb-0">{{ total_orders|intcomma }}</h3>
-                        <div class="mt-2">
-                            {% if recent_orders_change > 0 %}
-                            <span class="badge bg-success-subtle text-success percent-badge">
-                                <i class="fas fa-arrow-up"></i> {{ recent_orders_change|floatformat:1 }}%
-                            </span>
-                            {% else %}
-                            <span class="badge bg-danger-subtle text-danger percent-badge">
-                                <i class="fas fa-arrow-down"></i> {{ recent_orders_change|abs|floatformat:1 }}%
-                            </span>
-                            {% endif %}
-                            <span class="ms-1 text-muted small">{% trans 'آخر 30 يوم' %}</span>
+                        <div class="kpi-label">{% trans 'إجمالي الطلبات' %}</div>
+                        <div class="kpi-value">{{ total_orders|intcomma }}</div>
+                        <div class="kpi-change {% if recent_orders_change >= 0 %}up{% else %}down{% endif %} mt-1">
+                            <i class="fas fa-arrow-{% if recent_orders_change >= 0 %}up{% else %}down{% endif %} me-1"></i>{{ recent_orders_change|abs|floatformat:1 }}%
+                            <span class="text-muted fw-normal ms-1">{% trans 'آخر 30 يوم' %}</span>
                         </div>
                     </div>
-                    <div class="stat-icon text-success">
-                        <i class="fas fa-shopping-cart"></i>
+                    <div class="kpi-icon bg-success bg-opacity-10 text-success">
+                        <i class="fas fa-shopping-bag"></i>
                     </div>
-                </div>
-                <div class="mini-chart">
-                    <canvas id="ordersMiniChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Total Products -->
-    <div class="col-xl-4 col-md-6 mb-4">
-        <div class="card stat-card border-0 shadow-sm h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
+    <div class="col-xl-3 col-sm-6">
+        <div class="card kpi-card shadow-sm h-100">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-start justify-content-between">
                     <div>
-                        <h6 class="text-muted mb-2">{% trans 'إجمالي المنتجات' %}</h6>
-                        <h3 class="mb-0">{{ total_products|intcomma }}</h3>
-                        <div class="mt-2">
-                            <span class="badge bg-info-subtle text-info percent-badge">
-                                {{ active_products }} {% trans 'منتج نشط' %}
-                            </span>
-                            <span class="ms-1 text-muted small">({{ active_products_percent|floatformat }}%)</span>
+                        <div class="kpi-label">{% trans 'المنتجات النشطة' %}</div>
+                        <div class="kpi-value">{{ active_products|intcomma }} <small class="text-muted fs-6">/ {{ total_products }}</small></div>
+                        <div class="mt-1">
+                            <div class="progress" style="width:100px">
+                                <div class="progress-bar bg-info" style="width:{{ active_products_percent }}%"></div>
+                            </div>
                         </div>
                     </div>
-                    <div class="stat-icon text-info">
-                        <i class="fas fa-box"></i>
+                    <div class="kpi-icon bg-info bg-opacity-10 text-info">
+                        <i class="fas fa-box-open"></i>
                     </div>
-                </div>
-                <div class="mini-chart">
-                    <canvas id="productsMiniChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Total Customers -->
-    <div class="col-xl-3 col-md-6 mb-4" hidden>
-        <div class="card stat-card border-0 shadow-sm h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
+    <div class="col-xl-3 col-sm-6">
+        <div class="card kpi-card shadow-sm h-100">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-start justify-content-between">
                     <div>
-                        <h6 class="text-muted mb-2">{% trans 'إجمالي العملاء' %}</h6>
-                        <h3 class="mb-0">{{ total_users|intcomma }}</h3>
-                        <div class="mt-2">
-                            <span class="badge bg-success-subtle text-success percent-badge">
-                                <i class="fas fa-arrow-up"></i> {{ new_users_month }}
-                            </span>
-                            <span class="ms-1 text-muted small">{% trans 'عميل جديد هذا الشهر' %}</span>
+                        <div class="kpi-label">{% trans 'المستخدمين' %}</div>
+                        <div class="kpi-value">{{ total_users|intcomma }}</div>
+                        <div class="kpi-change up mt-1">
+                            <i class="fas fa-user-plus me-1"></i>+{{ new_users_month }}
+                            <span class="text-muted fw-normal ms-1">{% trans 'هذا الشهر' %}</span>
                         </div>
                     </div>
-                    <div class="stat-icon text-warning">
+                    <div class="kpi-icon bg-warning bg-opacity-10 text-warning">
                         <i class="fas fa-users"></i>
                     </div>
                 </div>
-                <div class="mini-chart">
-                    <canvas id="usersMiniChart"></canvas>
-                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Quick Actions Row -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">{% trans 'إجراءات سريعة' %}</h5>
-            </div>
-            <div class="card-body py-2">
-                <div class="row">
-                    {% if perms.products.add_product %}
-                    <div class="col-md-4 col-sm-6 p-2">
-                        <a href="{% url 'dashboard:dashboard_product_create' %}" class="text-decoration-none">
-                            <div class="card quick-action-card border-0 shadow-sm">
-                                <div class="card-body text-center p-3">
-                                    <div class="quick-action-icon">
-                                        <i class="fas fa-plus-circle text-success"></i>
-                                    </div>
-                                    <h6 class="mb-0">{% trans 'إضافة منتج جديد' %}</h6>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                    {% endif %}
-
-                    {% if perms.orders.add_order %}
-                    <div class="col-md-4 col-sm-6 p-2">
-                        <a href="{% url 'dashboard:dashboard_order_create' %}" class="text-decoration-none">
-                            <div class="card quick-action-card border-0 shadow-sm">
-                                <div class="card-body text-center p-3">
-                                    <div class="quick-action-icon">
-                                        <i class="fas fa-shopping-cart text-primary"></i>
-                                    </div>
-                                    <h6 class="mb-0">{% trans 'إنشاء طلب جديد' %}</h6>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                    {% endif %}
-
-                    {% if perms.accounts.add_user %}
-                    <div class="col-md-4 col-sm-6 p-2">
-                        <a href="{% url 'dashboard:dashboard_user_create' %}" class="text-decoration-none">
-                            <div class="card quick-action-card border-0 shadow-sm">
-                                <div class="card-body text-center p-3">
-                                    <div class="quick-action-icon">
-                                        <i class="fas fa-user-plus text-info"></i>
-                                    </div>
-                                    <h6 class="mb-0">{% trans 'إضافة مستخدم جديد' %}</h6>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                    {% endif %}
-
-                    {% if perms.dashboard.view_reports %}
-                    <div class="col-md-3 col-sm-6 p-2" hidden>
-                        <a href="{% url 'dashboard:dashboard_export_report' %}" class="text-decoration-none">
-                            <div class="card quick-action-card border-0 shadow-sm">
-                                <div class="card-body text-center p-3">
-                                    <div class="quick-action-icon">
-                                        <i class="fas fa-file-export text-warning"></i>
-                                    </div>
-                                    <h6 class="mb-0">{% trans 'تصدير التقارير' %}</h6>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
+<!-- Revenue Breakdown -->
+<div class="revenue-grid mb-4">
+    <div class="revenue-item daily shadow-sm">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <small class="text-muted fw-bold">{% trans 'إيرادات اليوم' %}</small>
+            <i class="fas fa-sun text-primary opacity-25"></i>
+        </div>
+        <div class="fs-5 fw-bold">{{ daily_revenue|floatformat:2|intcomma }} <small class="text-muted fw-normal">{% trans "د.ا" %}</small></div>
+        <div class="kpi-change {% if daily_revenue_change >= 0 %}up{% else %}down{% endif %} mt-1" style="font-size:0.75rem">
+            <i class="fas fa-arrow-{% if daily_revenue_change >= 0 %}up{% else %}down{% endif %}"></i>
+            {{ daily_revenue_change|abs|floatformat:1 }}% {% trans 'عن الأمس' %}
+        </div>
+    </div>
+    <div class="revenue-item weekly shadow-sm">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <small class="text-muted fw-bold">{% trans 'إيرادات الأسبوع' %}</small>
+            <i class="fas fa-calendar-week text-purple opacity-25" style="color:#8b5cf6"></i>
+        </div>
+        <div class="fs-5 fw-bold">{{ weekly_revenue|floatformat:2|intcomma }} <small class="text-muted fw-normal">{% trans "د.ا" %}</small></div>
+        <div class="kpi-change {% if weekly_revenue_change >= 0 %}up{% else %}down{% endif %} mt-1" style="font-size:0.75rem">
+            <i class="fas fa-arrow-{% if weekly_revenue_change >= 0 %}up{% else %}down{% endif %}"></i>
+            {{ weekly_revenue_change|abs|floatformat:1 }}% {% trans 'عن الأسبوع الماضي' %}
+        </div>
+    </div>
+    <div class="revenue-item monthly shadow-sm">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <small class="text-muted fw-bold">{% trans 'إيرادات الشهر' %}</small>
+            <i class="fas fa-calendar-alt text-success opacity-25"></i>
+        </div>
+        <div class="fs-5 fw-bold">{{ monthly_revenue|floatformat:2|intcomma }} <small class="text-muted fw-normal">{% trans "د.ا" %}</small></div>
+        <div class="kpi-change {% if monthly_revenue_change >= 0 %}up{% else %}down{% endif %} mt-1" style="font-size:0.75rem">
+            <i class="fas fa-arrow-{% if monthly_revenue_change >= 0 %}up{% else %}down{% endif %}"></i>
+            {{ monthly_revenue_change|abs|floatformat:1 }}% {% trans 'عن الشهر الماضي' %}
+        </div>
+    </div>
+    <div class="revenue-item avg shadow-sm">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <small class="text-muted fw-bold">{% trans 'متوسط قيمة الطلب' %}</small>
+            <i class="fas fa-receipt text-warning opacity-25"></i>
+        </div>
+        <div class="fs-5 fw-bold">{{ average_order_value|floatformat:2|intcomma }} <small class="text-muted fw-normal">{% trans "د.ا" %}</small></div>
+        <div class="kpi-change {% if average_order_change >= 0 %}up{% else %}down{% endif %} mt-1" style="font-size:0.75rem">
+            <i class="fas fa-arrow-{% if average_order_change >= 0 %}up{% else %}down{% endif %}"></i>
+            {{ average_order_change|abs|floatformat:1 }}% {% trans 'عن الشهر الماضي' %}
         </div>
     </div>
 </div>
 
-<!-- Charts & Recent Data Row -->
-<div class="row mb-4">
+<!-- Charts Row -->
+<div class="row g-3 mb-4">
     <!-- Sales Chart -->
-    <div class="col-xl-8 col-lg-7 mb-4">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">{% trans 'المبيعات الشهرية' %}</h5>
+    <div class="col-lg-8">
+        <div class="card chart-card shadow-sm h-100">
+            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0 fw-bold">{% trans 'المبيعات والطلبات' %}</h6>
                 <div class="dropdown">
-                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="salesChartOptions" data-bs-toggle="dropdown" aria-expanded="false">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="salesChartOptions" data-bs-toggle="dropdown">
                         {% trans 'آخر 6 أشهر' %}
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="salesChartOptions">
+                    <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="#" data-period="month">{% trans 'آخر 30 يوم' %}</a></li>
                         <li><a class="dropdown-item active" href="#" data-period="6months">{% trans 'آخر 6 أشهر' %}</a></li>
                         <li><a class="dropdown-item" href="#" data-period="year">{% trans 'آخر سنة' %}</a></li>
                     </ul>
                 </div>
             </div>
-            <div class="card-body">
+            <div class="card-body pt-0">
                 <div class="chart-container">
                     <canvas id="salesChart"></canvas>
                 </div>
@@ -497,246 +308,246 @@
         </div>
     </div>
 
-    <!-- Latest Orders -->
-    <div class="col-xl-4 col-lg-5 mb-4">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">{% trans 'أحدث الطلبات' %}</h5>
-                <a href="{% url 'dashboard:dashboard_orders' %}" class="btn btn-sm btn-primary">{% trans 'عرض الكل' %}</a>
+    <!-- Order Status -->
+    <div class="col-lg-4">
+        <div class="card chart-card shadow-sm h-100">
+            <div class="card-header bg-transparent border-0 py-3">
+                <h6 class="mb-0 fw-bold">{% trans 'حالة الطلبات' %}</h6>
             </div>
-            <div class="card-body p-0">
-                <div class="list-group list-group-flush">
-                    {% for order in latest_orders %}
-                    <a href="{% url 'dashboard:dashboard_order_detail' order_id=order.id %}" class="list-group-item list-group-item-action latest-item py-3">
-                        <div class="d-flex w-100 justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-1">#{{ order.order_number }}</h6>
-                                <small class="text-muted">{{ order.full_name }}</small>
-                            </div>
-                            <div class="text-end">
-                                <div class="mb-1">{{ order.grand_total|floatformat:2 }} {% trans "د.ا" %}</div>
-                                <span class="status-badge bg-{{ order.status_badge_class }}-subtle text-{{ order.status_badge_class }}">
-                                    <i class="fas fa-circle"></i> {{ order.get_status_display }}
-                                </span>
-                            </div>
-                        </div>
-                    </a>
-                    {% empty %}
-                    <div class="list-group-item text-center py-4">
-                        <p class="text-muted mb-0">{% trans 'لا توجد طلبات حتى الآن' %}</p>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Revenue Stats Row -->
-<div class="row mb-4">
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="revenue-stat">
-            <div class="revenue-stat-icon">
-                <i class="fas fa-money-bill-wave"></i>
-            </div>
-            <div class="revenue-stat-title">{% trans 'إجمالي الإيرادات اليومية' %}</div>
-            <div class="revenue-stat-value">{{ daily_revenue|floatformat:2 }} {% trans "د.ا" %}</div>
-            <div class="revenue-stat-percent {% if daily_revenue_change > 0 %}revenue-stat-positive{% else %}revenue-stat-negative{% endif %}">
-                <i class="fas fa-{% if daily_revenue_change > 0 %}arrow-up{% else %}arrow-down{% endif %}"></i>
-                {{ daily_revenue_change|abs|floatformat:1 }}% {% trans 'مقارنة بالأمس' %}
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="revenue-stat">
-            <div class="revenue-stat-icon">
-                <i class="fas fa-calendar-week"></i>
-            </div>
-            <div class="revenue-stat-title">{% trans 'إجمالي الإيرادات الأسبوعية' %}</div>
-            <div class="revenue-stat-value">{{ weekly_revenue|floatformat:2 }} {% trans "د.ا" %}</div>
-            <div class="revenue-stat-percent {% if weekly_revenue_change > 0 %}revenue-stat-positive{% else %}revenue-stat-negative{% endif %}">
-                <i class="fas fa-{% if weekly_revenue_change > 0 %}arrow-up{% else %}arrow-down{% endif %}"></i>
-                {{ weekly_revenue_change|abs|floatformat:1 }}% {% trans 'مقارنة بالأسبوع الماضي' %}
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="revenue-stat">
-            <div class="revenue-stat-icon">
-                <i class="fas fa-calendar-alt"></i>
-            </div>
-            <div class="revenue-stat-title">{% trans 'إجمالي الإيرادات الشهرية' %}</div>
-            <div class="revenue-stat-value">{{ monthly_revenue|floatformat:2 }} {% trans "د.ا" %}</div>
-            <div class="revenue-stat-percent {% if monthly_revenue_change > 0 %}revenue-stat-positive{% else %}revenue-stat-negative{% endif %}">
-                <i class="fas fa-{% if monthly_revenue_change > 0 %}arrow-up{% else %}arrow-down{% endif %}"></i>
-                {{ monthly_revenue_change|abs|floatformat:1 }}% {% trans 'مقارنة بالشهر الماضي' %}
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="revenue-stat">
-            <div class="revenue-stat-icon">
-                <i class="fas fa-shopping-bag"></i>
-            </div>
-            <div class="revenue-stat-title">{% trans 'متوسط قيمة الطلب' %}</div>
-            <div class="revenue-stat-value">{{ average_order_value|floatformat:2 }} {% trans "د.ا" %}</div>
-            <div class="revenue-stat-percent {% if average_order_change > 0 %}revenue-stat-positive{% else %}revenue-stat-negative{% endif %}">
-                <i class="fas fa-{% if average_order_change > 0 %}arrow-up{% else %}arrow-down{% endif %}"></i>
-                {{ average_order_change|abs|floatformat:1 }}% {% trans 'مقارنة بالشهر الماضي' %}
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Additional Widgets Row -->
-<div class="row mb-4">
-    <!-- Top Products -->
-    <div class="col-xl-4 col-md-6 mb-4">
-        <div class="card border-0 shadow-sm dashboard-widget">
-            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">{% trans 'أفضل المنتجات مبيعاً' %}</h5>
-                <a href="{% url 'dashboard:dashboard_product_report' %}" class="btn btn-sm btn-outline-primary">{% trans 'التفاصيل' %}</a>
-            </div>
-            <div class="card-body p-0">
-                <div class="list-group list-group-flush">
-                    {% for product in top_products %}
-                    <a href="{% url 'dashboard:dashboard_product_detail' product_id=product.id %}" class="list-group-item list-group-item-action latest-item py-3">
-                        <div class="d-flex w-100 justify-content-between align-items-center">
-                            <div class="d-flex align-items-center">
-                                {% if product.default_image %}
-                                <img src="{{ product.default_image.image.url }}" alt="{{ product.name }}" class="product-image me-3">
-                                {% else %}
-                                <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center" style="width:40px;height:40px">
-                                    <i class="fas fa-box text-secondary"></i>
-                                </div>
-                                {% endif %}
-                                <div>
-                                    <h6 class="mb-1">{{ product.name }}</h6>
-                                    <small class="text-muted">{{ product.sku }}</small>
-                                </div>
-                            </div>
-                            <div class="text-end">
-                                <div class="mb-1">{{ product.sales_count }} {% trans 'مبيعات' %}</div>
-                                <div class="text-success">{{ product.current_price|floatformat:2 }} {% trans "د.ا" %}</div>
-                            </div>
-                        </div>
-                    </a>
-                    {% empty %}
-                    <div class="list-group-item text-center py-4">
-                        <p class="text-muted mb-0">{% trans 'لا توجد بيانات للمنتجات' %}</p>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Recent Users -->
-    <div class="col-xl-4 col-md-6 mb-4">
-        <div class="card border-0 shadow-sm dashboard-widget">
-            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">{% trans 'أحدث المستخدمين' %}</h5>
-                <a href="{% url 'dashboard:dashboard_users' %}" class="btn btn-sm btn-outline-primary">{% trans 'عرض الكل' %}</a>
-            </div>
-            <div class="card-body p-0">
-                <div class="list-group list-group-flush">
-                    {% for user in latest_users %}
-                    <a href="{% url 'dashboard:dashboard_user_detail' user_id=user.id %}" class="list-group-item list-group-item-action latest-item py-3">
-                        <div class="d-flex w-100 justify-content-between align-items-center">
-                            <div class="d-flex align-items-center">
-                                {% if user.avatar %}
-                                <img src="{{ user.avatar.url }}" alt="{{ user.get_full_name }}" class="rounded-circle me-3" width="40" height="40">
-                                {% else %}
-                                <div class="rounded-circle me-3 d-flex align-items-center justify-content-center bg-primary text-white" style="width:40px;height:40px">
-                                    {{ user.get_initials }}
-                                </div>
-                                {% endif %}
-                                <div>
-                                    <h6 class="mb-1">{{ user.get_full_name|default:user.username }}</h6>
-                                    <small class="text-muted">{{ user.email }}</small>
-                                </div>
-                            </div>
-                            <div class="text-end">
-                                <small class="text-muted">{{ user.date_joined|date:"Y/m/d" }}</small>
-                            </div>
-                        </div>
-                    </a>
-                    {% empty %}
-                    <div class="list-group-item text-center py-4">
-                        <p class="text-muted mb-0">{% trans 'لا يوجد مستخدمين حتى الآن' %}</p>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Order Status & Stock Status -->
-    <div class="col-xl-4 mb-4">
-        <div class="card border-0 shadow-sm side-card dashboard-widget">
-            <div class="side-card-header">
-                <h5 class="mb-0">{% trans 'إحصائيات الطلبات والمخزون' %}</h5>
-            </div>
-            <div class="side-card-body">
-                <!-- Order Status Donut Chart -->
-                <h6 class="text-muted mb-3">{% trans 'حالة الطلبات' %}</h6>
-                <div class="chart-container" style="height: 180px;">
+            <div class="card-body pt-0">
+                <div class="chart-container" style="height:200px">
                     <canvas id="orderStatusChart"></canvas>
                 </div>
-
-                <div class="chart-legend mb-4">
-                    <div class="chart-legend-item">
-                        <div class="chart-legend-color" style="background-color: #6c757d;"></div>
-                        <span>{% trans "جديد" %}</span>
+                <div class="order-status-grid mt-3">
+                    <div class="order-status-item">
+                        <div class="os-count" style="color:#6c757d">{{ pending_orders }}</div>
+                        <div class="os-label">{% trans "جديد" %}</div>
                     </div>
-                    <div class="chart-legend-item">
-                        <div class="chart-legend-color" style="background-color: #17a2b8;"></div>
-                        <span>{% trans "قيد المعالجة" %}</span>
+                    <div class="order-status-item">
+                        <div class="os-count" style="color:#17a2b8">{{ processing_orders }}</div>
+                        <div class="os-label">{% trans "قيد المعالجة" %}</div>
                     </div>
-                    <div class="chart-legend-item">
-                        <div class="chart-legend-color" style="background-color: #ffc107;"></div>
-                        <span>{% trans "تم الشحن" %}</span>
+                    <div class="order-status-item">
+                        <div class="os-count" style="color:#ffc107">{{ shipped_orders }}</div>
+                        <div class="os-label">{% trans "مؤكد" %}</div>
                     </div>
-                    <div class="chart-legend-item">
-                        <div class="chart-legend-color" style="background-color: #28a745;"></div>
-                        <span>{% trans "تم التسليم" %}</span>
+                    <div class="order-status-item">
+                        <div class="os-count" style="color:#28a745">{{ delivered_orders }}</div>
+                        <div class="os-label">{% trans "مغلق" %}</div>
                     </div>
-                    <div class="chart-legend-item">
-                        <div class="chart-legend-color" style="background-color: #dc3545;"></div>
-                        <span>{% trans "ملغي" %}</span>
+                    <div class="order-status-item">
+                        <div class="os-count" style="color:#dc3545">{{ cancelled_orders }}</div>
+                        <div class="os-label">{% trans "ملغي" %}</div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-                <hr class="my-4">
+<!-- Second Charts Row: Lead Status + New Users -->
+<div class="row g-3 mb-4">
+    <!-- Lead Requests by Status -->
+    <div class="col-lg-4">
+        <div class="card chart-card shadow-sm h-100">
+            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0 fw-bold">{% trans 'طلبات العملاء حسب الحالة' %}</h6>
+                <a href="{% url 'dashboard:lead_requests' %}" class="btn btn-sm btn-outline-primary">{% trans 'عرض' %}</a>
+            </div>
+            <div class="card-body pt-0">
+                <div class="chart-container" style="height:220px">
+                    <canvas id="leadStatusChart"></canvas>
+                </div>
+                <div class="d-flex flex-wrap justify-content-center gap-3 mt-2" style="font-size:0.75rem">
+                    <span><span class="status-dot me-1" style="background:#ff9800"></span>{% trans 'قيد المراجعة' %} ({{ lead_pending }})</span>
+                    <span><span class="status-dot me-1" style="background:#2196f3"></span>{% trans 'تم التواصل' %} ({{ lead_contacted }})</span>
+                    <span><span class="status-dot me-1" style="background:#9c27b0"></span>{% trans 'قيد المتابعة' %} ({{ lead_in_progress }})</span>
+                    <span><span class="status-dot me-1" style="background:#4caf50"></span>{% trans 'مكتمل' %} ({{ lead_completed }})</span>
+                    <span><span class="status-dot me-1" style="background:#f44336"></span>{% trans 'ملغي' %} ({{ lead_cancelled }})</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                <!-- Stock Status -->
-                <h6 class="text-muted mb-3">{% trans 'حالة المخزون' %}</h6>
-                <div class="d-flex justify-content-between mb-2">
-                    <span>{% trans 'متوفر' %}</span>
-                    <span class="text-success">{{ in_stock_count }} ({{ in_stock_percent|floatformat }}%)</span>
+    <!-- New Users (Last 7 Days) -->
+    <div class="col-lg-8">
+        <div class="card chart-card shadow-sm h-100">
+            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0 fw-bold">{% trans 'المستخدمين الجدد' %} <small class="text-muted fw-normal">({% trans 'آخر 7 أيام' %})</small></h6>
+                <a href="{% url 'dashboard:dashboard_users' %}" class="btn btn-sm btn-outline-primary">{% trans 'الكل' %}</a>
+            </div>
+            <div class="card-body pt-0">
+                <div class="chart-container" style="height:220px">
+                    <canvas id="newUsersChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bottom Row: Orders + Products + Stock -->
+<div class="row g-3 mb-4">
+    <!-- Latest Orders -->
+    <div class="col-xl-4 col-lg-6">
+        <div class="card widget-card shadow-sm">
+            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0 fw-bold">
+                    {% trans 'أحدث الطلبات' %}
+                    {% if today_orders > 0 %}
+                    <span class="badge bg-primary rounded-pill ms-1">{{ today_orders }} {% trans 'اليوم' %}</span>
+                    {% endif %}
+                </h6>
+                <a href="{% url 'dashboard:dashboard_orders' %}" class="btn btn-sm btn-outline-primary">{% trans 'الكل' %}</a>
+            </div>
+            <div class="card-body p-3 pt-0">
+                {% for order in latest_orders %}
+                <a href="{% url 'dashboard:dashboard_order_detail' order_id=order.id %}" class="order-item d-flex justify-content-between align-items-center text-decoration-none text-dark px-2">
+                    <div>
+                        <div class="fw-bold small">#{{ order.order_number }}</div>
+                        <div class="text-muted" style="font-size:0.75rem">{{ order.full_name }} &middot; {{ order.created_at|date:"m/d H:i" }}</div>
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-bold small">{{ order.grand_total|floatformat:2 }}</div>
+                        <span class="badge rounded-pill bg-{% if order.status == 'pending' %}secondary{% elif order.status == 'processing' %}info{% elif order.status == 'confirmed' %}warning{% elif order.status == 'closed' %}success{% elif order.status == 'cancelled' %}danger{% else %}secondary{% endif %}" style="font-size:0.65rem">
+                            {{ order.get_status_display }}
+                        </span>
+                    </div>
+                </a>
+                {% empty %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-inbox fa-2x mb-2 d-block opacity-25"></i>
+                    <small>{% trans 'لا توجد طلبات' %}</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Products -->
+    <div class="col-xl-4 col-lg-6">
+        <div class="card widget-card shadow-sm">
+            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0 fw-bold">{% trans 'الأكثر مبيعاً' %}</h6>
+                <a href="{% url 'dashboard:dashboard_products' %}" class="btn btn-sm btn-outline-primary">{% trans 'الكل' %}</a>
+            </div>
+            <div class="card-body p-3 pt-0">
+                {% for product in top_products %}
+                <a href="{% url 'dashboard:dashboard_product_detail' product_id=product.id %}" class="order-item d-flex align-items-center text-decoration-none text-dark px-2">
+                    {% if product.default_image %}
+                    <img src="{{ product.default_image.image.url }}" class="product-thumb me-3" alt="">
+                    {% else %}
+                    <div class="product-thumb me-3 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-box text-muted" style="font-size:14px"></i>
+                    </div>
+                    {% endif %}
+                    <div class="flex-grow-1 min-width-0">
+                        <div class="fw-bold small text-truncate">{{ product.name }}</div>
+                        <div class="text-muted" style="font-size:0.7rem">{{ product.sku|default:"-" }}</div>
+                    </div>
+                    <div class="text-end ms-2">
+                        <div class="fw-bold small text-success">{{ product.sales_count }}</div>
+                        <div class="text-muted" style="font-size:0.7rem">{{ product.current_price|floatformat:2 }} {% trans "د.ا" %}</div>
+                    </div>
+                </a>
+                {% empty %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-box fa-2x mb-2 d-block opacity-25"></i>
+                    <small>{% trans 'لا توجد بيانات' %}</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Stock Alerts + Quick Links -->
+    <div class="col-xl-4">
+        <!-- Stock Status -->
+        <div class="card widget-card shadow-sm mb-3">
+            <div class="card-header bg-transparent border-0 py-3">
+                <h6 class="mb-0 fw-bold">{% trans 'حالة المخزون' %}</h6>
+            </div>
+            <div class="card-body p-3 pt-0">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex align-items-center">
+                        <span class="status-dot bg-success me-2"></span>
+                        <small>{% trans 'متوفر' %}</small>
+                    </div>
+                    <small class="fw-bold text-success">{{ in_stock_count }}</small>
                 </div>
                 <div class="progress mb-3">
-                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ in_stock_percent }}%"></div>
+                    <div class="progress-bar bg-success" style="width:{{ in_stock_percent }}%"></div>
                 </div>
 
-                <div class="d-flex justify-content-between mb-2">
-                    <span>{% trans 'منخفض المخزون' %}</span>
-                    <span class="text-warning">{{ low_stock_count }} ({{ low_stock_percent|floatformat }}%)</span>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex align-items-center">
+                        <span class="status-dot bg-warning me-2"></span>
+                        <small>{% trans 'منخفض المخزون' %}</small>
+                    </div>
+                    <small class="fw-bold text-warning">{{ low_stock_count }}</small>
                 </div>
                 <div class="progress mb-3">
-                    <div class="progress-bar bg-warning" role="progressbar" style="width: {{ low_stock_percent }}%"></div>
+                    <div class="progress-bar bg-warning" style="width:{{ low_stock_percent }}%"></div>
                 </div>
 
-                <div class="d-flex justify-content-between mb-2">
-                    <span>{% trans 'نفذت الكمية' %}</span>
-                    <span class="text-danger">{{ out_of_stock_count }} ({{ out_of_stock_percent|floatformat }}%)</span>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex align-items-center">
+                        <span class="status-dot bg-danger me-2"></span>
+                        <small>{% trans 'نفذ المخزون' %}</small>
+                    </div>
+                    <small class="fw-bold text-danger">{{ out_of_stock_count }}</small>
                 </div>
                 <div class="progress">
-                    <div class="progress-bar bg-danger" role="progressbar" style="width: {{ out_of_stock_percent }}%"></div>
+                    <div class="progress-bar bg-danger" style="width:{{ out_of_stock_percent }}%"></div>
                 </div>
+
+                {% if low_stock_products %}
+                <hr class="my-3">
+                <small class="text-muted fw-bold d-block mb-2">{% trans 'تنبيهات المخزون' %}</small>
+                {% for p in low_stock_products %}
+                <div class="stock-alert-item">
+                    <i class="fas fa-exclamation-triangle text-warning me-2" style="font-size:12px"></i>
+                    <small class="flex-grow-1 text-truncate">{{ p.name }}</small>
+                    <span class="badge bg-warning text-dark ms-2">{{ p.stock_quantity }}</span>
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent Lead Requests -->
+        <div class="card widget-card shadow-sm">
+            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0 fw-bold">
+                    {% trans 'آخر طلبات العملاء' %}
+                    {% if leads_this_week > 0 %}
+                    <span class="badge bg-info rounded-pill ms-1">{{ leads_this_week }} {% trans 'هذا الأسبوع' %}</span>
+                    {% endif %}
+                </h6>
+                <a href="{% url 'dashboard:lead_requests' %}" class="btn btn-sm btn-outline-primary">{% trans 'الكل' %} ({{ total_leads }})</a>
+            </div>
+            <div class="card-body p-3 pt-0">
+                {% for lead in recent_leads %}
+                <a href="{% url 'dashboard:lead_request_detail' lead.id %}" class="order-item d-flex justify-content-between align-items-center text-decoration-none text-dark px-2">
+                    <div>
+                        <div class="fw-bold small">{{ lead.customer_name }}</div>
+                        <div class="text-muted" style="font-size:0.75rem">
+                            {{ lead.customer_phone }}
+                            {% if lead.product_interest %}&middot; {{ lead.product_interest|truncatechars:25 }}{% endif %}
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge rounded-pill bg-{% if lead.status == 'pending' %}warning text-dark{% elif lead.status == 'contacted' %}info{% elif lead.status == 'in_progress' %}primary{% elif lead.status == 'completed' %}success{% elif lead.status == 'cancelled' %}danger{% else %}secondary{% endif %}" style="font-size:0.65rem">
+                            {{ lead.get_status_display }}
+                        </span>
+                        <div class="text-muted" style="font-size:0.65rem">{{ lead.created_at|date:"m/d H:i" }}</div>
+                    </div>
+                </a>
+                {% empty %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-clipboard-list fa-2x mb-2 d-block opacity-25"></i>
+                    <small>{% trans 'لا توجد طلبات عملاء' %}</small>
+                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
@@ -745,238 +556,206 @@
 
 {% block extra_js %}
 <script>
-    // بيانات المخططات المصغرة
-    const miniChartOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: false
+(function(){
+    var jodFmt = new Intl.NumberFormat('ar-JO',{style:'currency',currency:'JOD',minimumFractionDigits:2});
+
+    // Sales & Orders Chart
+    var ctx = document.getElementById('salesChart');
+    if(ctx){
+        new Chart(ctx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: {{ labels|safe }},
+                datasets: [
+                    {
+                        label: '{% trans "المبيعات" %}',
+                        data: {{ sales_data|safe }},
+                        backgroundColor: 'rgba(59,130,246,0.15)',
+                        borderColor: 'rgba(59,130,246,1)',
+                        borderWidth: 2,
+                        borderRadius: 6,
+                        order: 2
+                    },
+                    {
+                        label: '{% trans "الطلبات" %}',
+                        data: {{ orders_data|safe }},
+                        type: 'line',
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16,185,129,0.08)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#10b981',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        fill: true,
+                        yAxisID: 'y1',
+                        order: 1
+                    }
+                ]
             },
-            tooltip: {
-                enabled: false
-            }
-        },
-        scales: {
-            x: {
-                display: false
-            },
-            y: {
-                display: false
-            }
-        },
-        elements: {
-            line: {
-                tension: 0.4,
-                borderWidth: 2
-            },
-            point: {
-                radius: 0
-            }
-        }
-    };
-
-    // المخطط المصغر للمبيعات
-    const salesMiniChartCtx = document.getElementById('salesMiniChart').getContext('2d');
-    const salesMiniChart = new Chart(salesMiniChartCtx, {
-        type: 'line',
-        data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-            datasets: [{
-                data: [50, 60, 45, 70, 65, 80, 95],
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                fill: true
-            }]
-        },
-        options: miniChartOptions
-    });
-
-    // المخطط المصغر للطلبات
-    const ordersMiniChartCtx = document.getElementById('ordersMiniChart').getContext('2d');
-    const ordersMiniChart = new Chart(ordersMiniChartCtx, {
-        type: 'line',
-        data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-            datasets: [{
-                data: [20, 25, 18, 30, 28, 35, 40],
-                backgroundColor: 'rgba(40, 167, 69, 0.2)',
-                borderColor: 'rgba(40, 167, 69, 1)',
-                fill: true
-            }]
-        },
-        options: miniChartOptions
-    });
-
-    // المخطط المصغر للمنتجات
-    const productsMiniChartCtx = document.getElementById('productsMiniChart').getContext('2d');
-    const productsMiniChart = new Chart(productsMiniChartCtx, {
-        type: 'line',
-        data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-            datasets: [{
-                data: [100, 110, 120, 125, 130, 140, 150],
-                backgroundColor: 'rgba(23, 162, 184, 0.2)',
-                borderColor: 'rgba(23, 162, 184, 1)',
-                fill: true
-            }]
-        },
-        options: miniChartOptions
-    });
-
-    // المخطط المصغر للمستخدمين
-    const usersMiniChartCtx = document.getElementById('usersMiniChart').getContext('2d');
-    const usersMiniChart = new Chart(usersMiniChartCtx, {
-        type: 'line',
-        data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-            datasets: [{
-                data: [80, 90, 95, 105, 115, 125, 140],
-                backgroundColor: 'rgba(255, 193, 7, 0.2)',
-                borderColor: 'rgba(255, 193, 7, 1)',
-                fill: true
-            }]
-        },
-        options: miniChartOptions
-    });
-
-    // مخطط المبيعات الرئيسي
-    const salesChartCtx = document.getElementById('salesChart').getContext('2d');
-    const salesChart = new Chart(salesChartCtx, {
-        type: 'line',
-        data: {
-            labels: {{ labels|safe }},
-            datasets: [{
-                label: '{% trans "المبيعات" %}',
-                data: {{ sales_data|safe }},
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 2,
-                tension: 0.3,
-                pointBackgroundColor: 'rgba(54, 162, 235, 1)',
-                pointBorderColor: '#fff',
-                pointRadius: 4,
-                pointHoverRadius: 6,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.dataset.label || '';
-                            if (label) {
-                                label += ': ';
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle', padding: 20, font: { size: 12 } } },
+                    tooltip: {
+                        rtl: true,
+                        textDirection: 'rtl',
+                        bodyFont: { size: 13 },
+                        padding: 10,
+                        boxPadding: 4,
+                        callbacks: {
+                            label: function(c) {
+                                if(c.datasetIndex === 0)
+                                    return ' {% trans "المبيعات" %}: ' + jodFmt.format(c.parsed.y);
+                                return ' {% trans "الطلبات" %}: ' + c.parsed.y + ' {% trans "طلب" %}';
                             }
-                            if (context.parsed.y !== null) {
-                                label += new Intl.NumberFormat('ar-SA', { style: 'currency', currency: 'SAR' }).format(context.parsed.y);
-                            }
-                            return label;
                         }
                     }
-                }
-            },
-            scales: {
-                x: {
-                    grid: {
-                        display: false
-                    }
                 },
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return value.toLocaleString() + ' {% trans "د.ا" %}';
+                scales: {
+                    x: { grid: { display: false }, ticks: { font: { size: 11 }, maxRotation: 45, minRotation: 0 } },
+                    y: {
+                        beginAtZero: true,
+                        position: 'left',
+                        title: { display: true, text: '{% trans "المبيعات" %} ({% trans "د.ا" %})', font: { size: 11 } },
+                        ticks: { callback: function(v){ return v.toLocaleString() + ' {% trans "د.ا" %}'; }, font: { size: 10 } },
+                        grid: { color: 'rgba(0,0,0,0.04)' }
+                    },
+                    y1: {
+                        beginAtZero: true,
+                        position: 'right',
+                        title: { display: true, text: '{% trans "عدد الطلبات" %}', font: { size: 11 } },
+                        grid: { display: false },
+                        ticks: { stepSize: 1, font: { size: 10 } }
+                    }
+                }
+            }
+        });
+    }
+
+    // Order Status Doughnut
+    var ctx2 = document.getElementById('orderStatusChart');
+    if(ctx2){
+        new Chart(ctx2.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['{% trans "جديد" %}','{% trans "قيد المعالجة" %}','{% trans "مؤكد" %}','{% trans "مغلق" %}','{% trans "ملغي" %}'],
+                datasets: [{
+                    data: [{{ pending_orders }}, {{ processing_orders }}, {{ shipped_orders }}, {{ delivered_orders }}, {{ cancelled_orders|default:0 }}],
+                    backgroundColor: ['#6c757d','#17a2b8','#ffc107','#28a745','#dc3545'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '72%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        rtl: true,
+                        callbacks: {
+                            label: function(c){ return ' ' + c.label + ': ' + c.parsed + ' {% trans "طلب" %}'; }
                         }
                     }
                 }
             }
-        }
-    });
+        });
+    }
 
-    // مخطط حالة الطلبات
-    const orderStatusCtx = document.getElementById('orderStatusChart').getContext('2d');
-    const orderStatusChart = new Chart(orderStatusCtx, {
-        type: 'doughnut',
-        data: {
-            labels: [
-                '{% trans "جديد" %}',
-                '{% trans "قيد المعالجة" %}',
-                '{% trans "تم الشحن" %}',
-                '{% trans "تم التسليم" %}',
-                '{% trans "ملغي" %}',
-            ],
-            datasets: [{
-                data: [
-                    {{ pending_orders }},
-                    {{ processing_orders }},
-                    {{ shipped_orders }},
-                    {{ delivered_orders }},
-                    {{ cancelled_orders|default:0 }}
-                ],
-                backgroundColor: [
-                    '#6c757d',
-                    '#17a2b8',
-                    '#ffc107',
-                    '#28a745',
-                    '#dc3545'
-                ],
-                borderWidth: 0,
-                hoverOffset: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
+    // Lead Requests by Status
+    var ctx3 = document.getElementById('leadStatusChart');
+    if(ctx3){
+        new Chart(ctx3.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['{% trans "قيد المراجعة" %}','{% trans "تم التواصل" %}','{% trans "قيد المتابعة" %}','{% trans "مكتمل" %}','{% trans "ملغي" %}'],
+                datasets: [{
+                    data: [{{ lead_pending }}, {{ lead_contacted }}, {{ lead_in_progress }}, {{ lead_completed }}, {{ lead_cancelled }}],
+                    backgroundColor: ['#ff9800','#2196f3','#9c27b0','#4caf50','#f44336'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
             },
-            cutout: '70%'
-        }
-    });
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        rtl: true,
+                        callbacks: {
+                            label: function(c){ return ' ' + c.label + ': ' + c.parsed; }
+                        }
+                    }
+                }
+            }
+        });
+    }
 
-    // تغيير فترة مخطط المبيعات
-    document.querySelectorAll('[data-period]').forEach(item => {
-        item.addEventListener('click', e => {
+    // New Users (Last 7 Days)
+    var ctx4 = document.getElementById('newUsersChart');
+    if(ctx4){
+        new Chart(ctx4.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: {{ new_users_labels|safe }},
+                datasets: [{
+                    label: '{% trans "مستخدمين جدد" %}',
+                    data: {{ new_users_data|safe }},
+                    backgroundColor: 'rgba(139,92,246,0.15)',
+                    borderColor: 'rgba(139,92,246,1)',
+                    borderWidth: 2,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        rtl: true,
+                        callbacks: {
+                            label: function(c){ return ' {% trans "مستخدمين جدد" %}: ' + c.parsed.y; }
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+                    y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.04)' } }
+                }
+            }
+        });
+    }
+
+    // Period switcher
+    document.querySelectorAll('[data-period]').forEach(function(item){
+        item.addEventListener('click', function(e){
             e.preventDefault();
-
-            // تحديث حالة النشاط في القائمة المنسدلة
-            document.querySelectorAll('[data-period]').forEach(el => {
-                el.classList.remove('active');
-            });
+            document.querySelectorAll('[data-period]').forEach(function(el){ el.classList.remove('active'); });
             e.target.classList.add('active');
-
-            // تحديث نص زر القائمة المنسدلة
             document.getElementById('salesChartOptions').innerText = e.target.innerText;
-
-            // الحصول على قيمة الفترة
-            const period = e.target.dataset.period;
-
-            // طلب AJAX للحصول على البيانات الجديدة
             $.ajax({
                 url: '{% url "dashboard:dashboard_chart_data" %}',
-                data: {
-                    'type': 'sales',
-                    'period': period
-                },
-                success: function(response) {
-                    // تحديث بيانات المخطط
-                    salesChart.data.labels = response.labels;
-                    salesChart.data.datasets[0].data = response.datasets[0].data;
-                    salesChart.update();
+                data: { type: 'sales', period: e.target.dataset.period },
+                success: function(resp){
+                    var chart = Chart.getChart('salesChart');
+                    if(chart){
+                        chart.data.labels = resp.labels;
+                        chart.data.datasets[0].data = resp.datasets[0].data;
+                        chart.data.datasets[1].data = resp.datasets[1].data;
+                        chart.update();
+                    }
                 }
             });
         });
     });
+})();
 </script>
 {% endblock %}

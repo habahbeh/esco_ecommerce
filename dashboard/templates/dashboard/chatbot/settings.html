@@ -1,0 +1,771 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "إعدادات الشات بوت" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+.chatbot-help {
+    font-size: 12px;
+    color: #6c757d;
+    margin-top: 4px;
+    line-height: 1.5;
+}
+.chatbot-help .example {
+    display: inline-block;
+    background: #f1f3f5;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 11px;
+    direction: ltr;
+}
+.icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+    gap: 6px;
+    max-height: 240px;
+    overflow-y: auto;
+    padding: 8px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: #f8f9fa;
+}
+.icon-grid-item {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    color: #495057;
+    background: #fff;
+    transition: all 0.15s;
+}
+.icon-grid-item:hover {
+    border-color: var(--bs-primary);
+    color: var(--bs-primary);
+    background: #e7f1ff;
+}
+.icon-grid-item.selected {
+    border-color: var(--bs-primary);
+    background: var(--bs-primary);
+    color: #fff;
+}
+.avatar-preview {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    border: 2px solid #dee2e6;
+    overflow: hidden;
+}
+.avatar-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.bubble-preview {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.card-header h5 { margin-bottom: 0; }
+.form-switch-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background: #fff;
+    transition: border-color 0.2s;
+}
+.form-switch-row:hover { border-color: var(--bs-primary); }
+.form-switch-row .form-check { margin: 0; padding-top: 2px; }
+.form-switch-row .switch-info { flex: 1; }
+.form-switch-row .switch-label { font-weight: 600; font-size: 14px; display: block; }
+.form-switch-row .switch-desc { font-size: 12px; color: #6c757d; margin-top: 2px; }
+.api-status-box {
+    padding: 12px 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.color-input-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.color-input-group input[type="color"] {
+    width: 40px;
+    height: 34px;
+    padding: 2px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    cursor: pointer;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4><i class="fas fa-robot me-2"></i>{% trans "إعدادات الشات بوت" %}</h4>
+        <div>
+            <span class="badge {% if settings.is_enabled %}bg-success{% else %}bg-secondary{% endif %} fs-6">
+                {% if settings.is_enabled %}{% trans "مفعل" %}{% else %}{% trans "معطل" %}{% endif %}
+            </span>
+        </div>
+    </div>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <!-- ====== 1. Basic Settings ====== -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5><i class="fas fa-cog me-2"></i>{% trans "الإعدادات الأساسية" %}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <!-- Enable toggle -->
+                    <div class="col-12">
+                        <div class="form-switch-row">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="is_enabled" id="is_enabled" {% if settings.is_enabled %}checked{% endif %}>
+                            </div>
+                            <div class="switch-info">
+                                <span class="switch-label">{% trans "تفعيل الشات بوت على الموقع" %}</span>
+                                <span class="switch-desc">{% trans "عند التفعيل، ستظهر فقاعة الشات في أسفل صفحات الموقع لجميع الزوار" %}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Provider -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{% trans "مزود الذكاء الاصطناعي" %}</label>
+                        <select name="provider" id="providerSelect" class="form-select">
+                            <option value="openrouter" {% if settings.provider == 'openrouter' %}selected{% endif %}>OpenRouter</option>
+                            <option value="openai" {% if settings.provider == 'openai' %}selected{% endif %}>OpenAI</option>
+                            <option value="anthropic" {% if settings.provider == 'anthropic' %}selected{% endif %}>Anthropic</option>
+                            <option value="google" {% if settings.provider == 'google' %}selected{% endif %}>Google Gemini</option>
+                        </select>
+                        <div class="chatbot-help">{% trans "اختر مزود خدمة الذكاء الاصطناعي" %}</div>
+                    </div>
+
+                    <!-- API Key -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{% trans "مفتاح API" %}</label>
+                        {% if api_key_set %}
+                        <div class="input-group">
+                            <input type="password" name="api_key" class="form-control" placeholder="{% trans 'اتركه فارغاً للإبقاء على المفتاح الحالي' %}" autocomplete="off">
+                            <span class="input-group-text text-success"><i class="fas fa-check-circle"></i></span>
+                        </div>
+                        <div class="chatbot-help text-success">
+                            {% trans "المفتاح الحالي:" %} <span class="example">{{ api_key_masked }}</span>
+                        </div>
+                        {% else %}
+                        <input type="password" name="api_key" class="form-control" placeholder="sk-..." autocomplete="off">
+                        <div class="chatbot-help text-warning">{% trans "أدخل مفتاح API الخاص بالشات بوت" %}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Model Selection -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{% trans "نموذج الذكاء الاصطناعي" %}</label>
+                        <select name="model_name" id="modelSelect" class="form-select">
+                            <option value="{{ settings.model_name }}">{{ settings.model_name }}</option>
+                        </select>
+                        <div class="chatbot-help">
+                            {% trans "اختر النموذج الذي سيستخدمه الشات بوت للرد على العملاء" %}
+                            — <span class="example">google/gemma-3-27b-it:free</span>
+                        </div>
+                    </div>
+
+                    <!-- Temperature -->
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">{% trans "درجة الإبداع" %} (0-1)</label>
+                        <input type="number" name="temperature" class="form-control" value="{{ settings.temperature }}" min="0" max="1" step="0.1">
+                        <div class="chatbot-help">
+                            {% trans "0 = ردود دقيقة، 1 = ردود إبداعية" %}
+                            — {% trans "الموصى به:" %} <span class="example">0.7</span>
+                        </div>
+                    </div>
+
+                    <!-- Max Tokens -->
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">{% trans "الحد الأقصى للتوكنات" %}</label>
+                        <input type="number" name="max_tokens" class="form-control" value="{{ settings.max_tokens }}" min="100" max="4096">
+                        <div class="chatbot-help">
+                            {% trans "الحد الأقصى لطول الرد (100 توكن ≈ 75 كلمة)" %}
+                            — {% trans "الموصى به:" %} <span class="example">1024</span>
+                        </div>
+                    </div>
+
+                    <!-- Test Connection -->
+                    <div class="col-12">
+                        <button type="button" id="testConnectionBtn" class="btn btn-outline-primary">
+                            <i class="fas fa-plug me-1"></i>{% trans "اختبار الاتصال" %}
+                        </button>
+                        <span id="testResult" class="ms-2"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== 2. Appearance ====== -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5><i class="fas fa-palette me-2"></i>{% trans "المظهر" %}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <!-- Colors -->
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">{% trans "اللون الرئيسي" %}</label>
+                        <div class="color-input-group">
+                            <input type="color" name="primary_color" id="primaryColor" value="{{ settings.primary_color }}">
+                            <input type="text" class="form-control form-control-sm" id="primaryColorText" value="{{ settings.primary_color }}" dir="ltr" style="max-width:90px;font-family:monospace">
+                        </div>
+                        <div class="chatbot-help">{% trans "لون العناصر الرئيسية والأزرار" %}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">{% trans "اللون الثانوي" %}</label>
+                        <div class="color-input-group">
+                            <input type="color" name="secondary_color" id="secondaryColor" value="{{ settings.secondary_color }}">
+                            <input type="text" class="form-control form-control-sm" id="secondaryColorText" value="{{ settings.secondary_color }}" dir="ltr" style="max-width:90px;font-family:monospace">
+                        </div>
+                        <div class="chatbot-help">{% trans "لون خلفية نافذة المحادثة" %}</div>
+                    </div>
+
+                    <!-- Position -->
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">{% trans "موقع الفقاعة" %}</label>
+                        <select name="position" class="form-select">
+                            <option value="bottom-right" {% if settings.position == 'bottom-right' %}selected{% endif %}>{% trans "أسفل اليمين" %}</option>
+                            <option value="bottom-left" {% if settings.position == 'bottom-left' %}selected{% endif %}>{% trans "أسفل اليسار" %}</option>
+                        </select>
+                        <div class="chatbot-help">{% trans "مكان ظهور زر الشات في الشاشة" %}</div>
+                    </div>
+
+                    <!-- Bubble Size -->
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">{% trans "حجم الفقاعة" %}</label>
+                        <select name="bubble_size" class="form-select">
+                            <option value="small" {% if settings.bubble_size == 'small' %}selected{% endif %}>{% trans "صغير" %}</option>
+                            <option value="medium" {% if settings.bubble_size == 'medium' %}selected{% endif %}>{% trans "متوسط" %}</option>
+                            <option value="large" {% if settings.bubble_size == 'large' %}selected{% endif %}>{% trans "كبير" %}</option>
+                        </select>
+                        <div class="chatbot-help">{% trans "حجم زر فقاعة الشات العائم" %}</div>
+                    </div>
+
+                    <!-- Show on mobile -->
+                    <div class="col-md-6">
+                        <div class="form-switch-row">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="show_on_mobile" id="show_on_mobile" {% if settings.show_on_mobile %}checked{% endif %}>
+                            </div>
+                            <div class="switch-info">
+                                <span class="switch-label">{% trans "إظهار على الجوال" %}</span>
+                                <span class="switch-desc">{% trans "إظهار الشات بوت على شاشات الجوال والأجهزة اللوحية" %}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ====== Bubble Icon & Color ====== -->
+                    <div class="col-12">
+                        <hr>
+                        <label class="form-label fw-bold">{% trans "أيقونة الفقاعة ولونها" %}</label>
+                        <div class="chatbot-help mb-2">{% trans "اختر شكل ولون أيقونة زر الشات العائم" %}</div>
+
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="bubble-preview" id="bubblePreview" style="background:{{ settings.bubble_bg_color|default:'#1e88e5' }};color:{{ settings.bubble_icon_color|default:'#ffffff' }}">
+                                <i class="{{ settings.bubble_icon|default:'fas fa-comments' }}"></i>
+                            </div>
+                            <div>
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <label class="form-label mb-0 small fw-bold" style="min-width:80px">{% trans "لون الخلفية" %}</label>
+                                    <div class="color-input-group">
+                                        <input type="color" name="bubble_bg_color" id="bubbleBgColor" value="{{ settings.bubble_bg_color|default:'#1e88e5' }}">
+                                        <input type="text" class="form-control form-control-sm" id="bubbleBgColorText" value="{{ settings.bubble_bg_color|default:'#1e88e5' }}" dir="ltr" style="max-width:80px;font-family:monospace;font-size:12px">
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <label class="form-label mb-0 small fw-bold" style="min-width:80px">{% trans "لون الأيقونة" %}</label>
+                                    <div class="color-input-group">
+                                        <input type="color" name="bubble_icon_color" id="bubbleIconColor" value="{{ settings.bubble_icon_color|default:'#ffffff' }}">
+                                        <input type="text" class="form-control form-control-sm" id="bubbleIconColorText" value="{{ settings.bubble_icon_color|default:'#ffffff' }}" dir="ltr" style="max-width:80px;font-family:monospace;font-size:12px">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <input type="hidden" name="bubble_icon" id="bubbleIconInput" value="{{ settings.bubble_icon|default:'fas fa-comments' }}">
+                        <div class="icon-grid" id="bubbleIconGrid"></div>
+                    </div>
+
+                    <!-- ====== Bot Avatar (Icon Picker + Upload) ====== -->
+                    <div class="col-12">
+                        <hr>
+                        <label class="form-label fw-bold">{% trans "أيقونة / صورة البوت" %}</label>
+                        <div class="chatbot-help mb-2">{% trans "اختر أيقونة أو ارفع صورة تظهر في رأس المحادثة وبجانب رسائل البوت" %}</div>
+
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="avatar-preview" id="avatarPreview" style="background:{{ settings.primary_color|default:'#1e88e5' }};color:{{ settings.avatar_icon_color|default:'#ffffff' }}">
+                                {% if settings.avatar %}
+                                    <img src="{{ settings.avatar.url }}" alt="avatar">
+                                {% else %}
+                                    <i class="{{ settings.avatar_icon|default:'fas fa-robot' }}"></i>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <div class="btn-group mb-2" role="group">
+                                    <input type="radio" class="btn-check" name="avatar_mode" id="avatarModeIcon" value="icon" {% if not settings.avatar %}checked{% endif %}>
+                                    <label class="btn btn-outline-primary btn-sm" for="avatarModeIcon"><i class="fas fa-icons me-1"></i>{% trans "أيقونة" %}</label>
+                                    <input type="radio" class="btn-check" name="avatar_mode" id="avatarModeUpload" value="upload" {% if settings.avatar %}checked{% endif %}>
+                                    <label class="btn btn-outline-primary btn-sm" for="avatarModeUpload"><i class="fas fa-upload me-1"></i>{% trans "صورة من الجهاز" %}</label>
+                                </div>
+                                <div class="d-flex align-items-center gap-2" id="avatarColorRow" {% if settings.avatar %}style="display:none !important"{% endif %}>
+                                    <label class="form-label mb-0 small fw-bold" style="min-width:80px">{% trans "لون الأيقونة" %}</label>
+                                    <div class="color-input-group">
+                                        <input type="color" name="avatar_icon_color" id="avatarIconColor" value="{{ settings.avatar_icon_color|default:'#ffffff' }}">
+                                        <input type="text" class="form-control form-control-sm" id="avatarIconColorText" value="{{ settings.avatar_icon_color|default:'#ffffff' }}" dir="ltr" style="max-width:80px;font-family:monospace;font-size:12px">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Icon picker panel -->
+                        <div id="iconPickerPanel" {% if settings.avatar %}style="display:none"{% endif %}>
+                            <input type="hidden" name="avatar_icon" id="avatarIconInput" value="{{ settings.avatar_icon|default:'fas fa-robot' }}">
+                            <div class="icon-grid" id="iconGrid"></div>
+                        </div>
+
+                        <!-- Upload panel -->
+                        <div id="uploadPanel" {% if not settings.avatar %}style="display:none"{% endif %}>
+                            <input type="file" name="avatar" class="form-control" accept="image/*" style="max-width:400px">
+                            {% if settings.avatar %}
+                            <div class="chatbot-help mt-1">{% trans "الصورة الحالية:" %} {{ settings.avatar.name }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Bot Names -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{% trans "اسم البوت (عربي)" %}</label>
+                        <input type="text" name="bot_name_ar" class="form-control" value="{{ settings.bot_name_ar }}">
+                        <div class="chatbot-help">{% trans "الاسم في رأس المحادثة للعملاء العرب" %} — <span class="example">مساعد ESCO</span></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{% trans "اسم البوت (إنجليزي)" %}</label>
+                        <input type="text" name="bot_name_en" class="form-control" value="{{ settings.bot_name_en }}">
+                        <div class="chatbot-help">{% trans "الاسم للعملاء الذين يتصفحون بالإنجليزية" %} — <span class="example">ESCO Assistant</span></div>
+                    </div>
+
+                    <!-- Welcome Messages -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{% trans "رسالة الترحيب (عربي)" %}</label>
+                        <textarea name="welcome_message_ar" class="form-control" rows="2">{{ settings.welcome_message_ar }}</textarea>
+                        <div class="chatbot-help">{% trans "أول رسالة عند فتح المحادثة" %} — <span class="example">مرحباً! كيف يمكنني مساعدتك؟</span></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{% trans "رسالة الترحيب (إنجليزي)" %}</label>
+                        <textarea name="welcome_message_en" class="form-control" rows="2">{{ settings.welcome_message_en }}</textarea>
+                        <div class="chatbot-help">{% trans "رسالة الترحيب للمتصفحين بالإنجليزية" %} — <span class="example">Hello! How can I help you?</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== 3. Behavior ====== -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5><i class="fas fa-brain me-2"></i>{% trans "السلوك" %}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <!-- System Prompts -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{% trans "تعليمات النظام (عربي) - اختياري" %}</label>
+                        <textarea name="system_prompt_ar" class="form-control" rows="4" placeholder="{% trans 'اتركه فارغاً لاستخدام التعليمات الافتراضية' %}">{{ settings.system_prompt_ar }}</textarea>
+                        <div class="chatbot-help">{% trans "تعليمات مخصصة تحدد شخصية البوت بالعربية. اتركه فارغاً للافتراضي." %}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{% trans "تعليمات النظام (إنجليزي) - اختياري" %}</label>
+                        <textarea name="system_prompt_en" class="form-control" rows="4" placeholder="{% trans 'اتركه فارغاً لاستخدام التعليمات الافتراضية' %}">{{ settings.system_prompt_en }}</textarea>
+                        <div class="chatbot-help">{% trans "نفس التعليمات باللغة الإنجليزية. اتركه فارغاً للافتراضي." %}</div>
+                    </div>
+
+                    <!-- Numeric settings -->
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">{% trans "عدد رسائل السياق" %}</label>
+                        <input type="number" name="max_history_messages" class="form-control" value="{{ settings.max_history_messages }}" min="2" max="50">
+                        <div class="chatbot-help">{% trans "عدد الرسائل التي يتذكرها البوت" %} — {% trans "الموصى به:" %} <span class="example">10</span></div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">{% trans "الحد الأقصى لرسائل الجلسة" %}</label>
+                        <input type="number" name="max_messages_per_session" class="form-control" value="{{ settings.max_messages_per_session }}" min="5" max="200">
+                        <div class="chatbot-help">{% trans "الحد الأقصى لعدد الرسائل في محادثة واحدة" %} — {% trans "الموصى به:" %} <span class="example">50</span></div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">{% trans "الحد الأقصى بالدقيقة" %}</label>
+                        <input type="number" name="rate_limit_per_minute" class="form-control" value="{{ settings.rate_limit_per_minute }}" min="1" max="60">
+                        <div class="chatbot-help">{% trans "الحد الأقصى للرسائل بالدقيقة لمنع الإساءة" %} — {% trans "الموصى به:" %} <span class="example">10</span></div>
+                    </div>
+
+                    <!-- Feature toggles -->
+                    <div class="col-12">
+                        <label class="form-label fw-bold mb-2">{% trans "الميزات" %}</label>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-switch-row">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="enable_product_search" id="enable_product_search" {% if settings.enable_product_search %}checked{% endif %}>
+                                    </div>
+                                    <div class="switch-info">
+                                        <span class="switch-label">{% trans "البحث في المنتجات" %}</span>
+                                        <span class="switch-desc">{% trans "يبحث البوت في المنتجات ويعرض بطاقات بالصور والأسعار" %}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-switch-row">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="enable_blog_search" id="enable_blog_search" {% if settings.enable_blog_search %}checked{% endif %}>
+                                    </div>
+                                    <div class="switch-info">
+                                        <span class="switch-label">{% trans "البحث في المدونة" %}</span>
+                                        <span class="switch-desc">{% trans "يبحث البوت في المقالات ويقترح مقالات ذات صلة" %}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-switch-row">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="enable_comparison" id="enable_comparison" {% if settings.enable_comparison %}checked{% endif %}>
+                                    </div>
+                                    <div class="switch-info">
+                                        <span class="switch-label">{% trans "مقارنة المنتجات" %}</span>
+                                        <span class="switch-desc">{% trans "يمكن للعميل طلب مقارنة بين المنتجات في جدول" %}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-switch-row">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="enable_suggestions" id="enable_suggestions" {% if settings.enable_suggestions %}checked{% endif %}>
+                                    </div>
+                                    <div class="switch-info">
+                                        <span class="switch-label">{% trans "الاقتراحات الذكية" %}</span>
+                                        <span class="switch-desc">{% trans "يقترح البوت أزرار ردود سريعة بعد كل رسالة" %}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== 4. Product Display Controls ====== -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5><i class="fas fa-boxes-stacked me-2"></i>{% trans "التحكم بعرض المنتجات" %}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <!-- Show categories in response -->
+                    <div class="col-md-6">
+                        <div class="form-switch-row">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="show_categories_in_response" id="show_categories_in_response" {% if settings.show_categories_in_response %}checked{% endif %}>
+                            </div>
+                            <div class="switch-info">
+                                <span class="switch-label">{% trans "عرض الأقسام في الرد" %}</span>
+                                <span class="switch-desc">{% trans "يقترح البوت أقسام المتجر عند الرد على العملاء" %}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Show price in response -->
+                    <div class="col-md-6">
+                        <div class="form-switch-row">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="show_price_in_response" id="show_price_in_response" {% if settings.show_price_in_response %}checked{% endif %}>
+                            </div>
+                            <div class="switch-info">
+                                <span class="switch-label">{% trans "عرض السعر في الرد" %}</span>
+                                <span class="switch-desc">{% trans "إظهار أسعار المنتجات في بطاقات المنتجات ونص الرد" %}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hide products without price -->
+                    <div class="col-md-6">
+                        <div class="form-switch-row">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="hide_products_without_price" id="hide_products_without_price" {% if settings.hide_products_without_price %}checked{% endif %}>
+                            </div>
+                            <div class="switch-info">
+                                <span class="switch-label">{% trans "إخفاء المنتجات بدون سعر" %}</span>
+                                <span class="switch-desc">{% trans "لا يعرض البوت المنتجات التي ليس لها سعر محدد" %}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hide out of stock -->
+                    <div class="col-md-6">
+                        <div class="form-switch-row">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="hide_out_of_stock" id="hide_out_of_stock" {% if settings.hide_out_of_stock %}checked{% endif %}>
+                            </div>
+                            <div class="switch-info">
+                                <span class="switch-label">{% trans "إخفاء المنتجات غير المتوفرة" %}</span>
+                                <span class="switch-desc">{% trans "لا يعرض البوت المنتجات التي نفد مخزونها" %}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Product status filter -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{% trans "فلتر حالة المنتج" %}</label>
+                        <select name="product_status_filter" class="form-select">
+                            <option value="published_only" {% if settings.product_status_filter == 'published_only' %}selected{% endif %}>{% trans "المنشورة فقط" %}</option>
+                            <option value="published_and_draft" {% if settings.product_status_filter == 'published_and_draft' %}selected{% endif %}>{% trans "المنشورة والمسودة" %}</option>
+                            <option value="all" {% if settings.product_status_filter == 'all' %}selected{% endif %}>{% trans "الكل" %}</option>
+                        </select>
+                        <div class="chatbot-help">{% trans "أي المنتجات يعرضها البوت حسب حالة النشر" %}</div>
+                    </div>
+
+                    <!-- Product sort order -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{% trans "ترتيب المنتجات" %}</label>
+                        <select name="product_sort_order" class="form-select">
+                            <option value="newest" {% if settings.product_sort_order == 'newest' %}selected{% endif %}>{% trans "الأحدث أولاً" %}</option>
+                            <option value="price_low" {% if settings.product_sort_order == 'price_low' %}selected{% endif %}>{% trans "السعر: من الأقل للأعلى" %}</option>
+                            <option value="price_high" {% if settings.product_sort_order == 'price_high' %}selected{% endif %}>{% trans "السعر: من الأعلى للأقل" %}</option>
+                            <option value="name" {% if settings.product_sort_order == 'name' %}selected{% endif %}>{% trans "الاسم أبجدياً" %}</option>
+                        </select>
+                        <div class="chatbot-help">{% trans "ترتيب المنتجات عند عرضها في الرد" %}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Save Button -->
+        <div class="d-flex justify-content-end gap-2 mb-4">
+            <button type="submit" class="btn btn-primary btn-lg px-5">
+                <i class="fas fa-save me-2"></i>{% trans "حفظ الإعدادات" %}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+(function(){
+    // ====== Model selection ======
+    var allModels = {{ all_models|safe }};
+    var modelSelect = document.getElementById('modelSelect');
+    var providerSelect = document.getElementById('providerSelect');
+    var currentModel = '{{ settings.model_name }}';
+
+    function updateModels(){
+        var provider = providerSelect.value;
+        var models = allModels[provider] || [];
+        modelSelect.innerHTML = '';
+        models.forEach(function(m){
+            var opt = document.createElement('option');
+            opt.value = m.id;
+            opt.textContent = m.name;
+            if(m.id === currentModel) opt.selected = true;
+            modelSelect.appendChild(opt);
+        });
+        if(!modelSelect.value && models.length > 0){
+            modelSelect.selectedIndex = 0;
+        }
+    }
+    providerSelect.addEventListener('change', updateModels);
+    updateModels();
+
+    // ====== Color sync helpers ======
+    function syncColors(colorEl, textEl){
+        colorEl.addEventListener('input', function(){ textEl.value = colorEl.value; });
+        textEl.addEventListener('input', function(){ colorEl.value = textEl.value; });
+    }
+    syncColors(document.getElementById('primaryColor'), document.getElementById('primaryColorText'));
+    syncColors(document.getElementById('secondaryColor'), document.getElementById('secondaryColorText'));
+
+    // ====== Bubble icon/color ======
+    var bubbleBgColor = document.getElementById('bubbleBgColor');
+    var bubbleBgColorText = document.getElementById('bubbleBgColorText');
+    var bubbleIconColor = document.getElementById('bubbleIconColor');
+    var bubbleIconColorText = document.getElementById('bubbleIconColorText');
+    var bubblePreview = document.getElementById('bubblePreview');
+    var bubbleIconInput = document.getElementById('bubbleIconInput');
+
+    syncColors(bubbleBgColor, bubbleBgColorText);
+    syncColors(bubbleIconColor, bubbleIconColorText);
+
+    function updateBubblePreview(){
+        bubblePreview.style.background = bubbleBgColor.value;
+        bubblePreview.style.color = bubbleIconColor.value;
+    }
+    bubbleBgColor.addEventListener('input', updateBubblePreview);
+    bubbleIconColor.addEventListener('input', updateBubblePreview);
+
+    // ====== Avatar icon color ======
+    var avatarIconColor = document.getElementById('avatarIconColor');
+    var avatarIconColorText = document.getElementById('avatarIconColorText');
+    var avatarColorRow = document.getElementById('avatarColorRow');
+    syncColors(avatarIconColor, avatarIconColorText);
+
+    avatarIconColor.addEventListener('input', function(){
+        var preview = document.getElementById('avatarPreview');
+        var icon = preview.querySelector('i');
+        if(icon) icon.style.color = avatarIconColor.value;
+    });
+
+    // ====== Avatar mode toggle ======
+    var iconRadio = document.getElementById('avatarModeIcon');
+    var uploadRadio = document.getElementById('avatarModeUpload');
+    var iconPanel = document.getElementById('iconPickerPanel');
+    var uploadPanel = document.getElementById('uploadPanel');
+    var preview = document.getElementById('avatarPreview');
+    var iconInput = document.getElementById('avatarIconInput');
+
+    iconRadio.addEventListener('change', function(){
+        iconPanel.style.display = '';
+        uploadPanel.style.display = 'none';
+        avatarColorRow.style.display = '';
+        updateAvatarPreviewIcon(iconInput.value);
+    });
+    uploadRadio.addEventListener('change', function(){
+        iconPanel.style.display = 'none';
+        uploadPanel.style.display = '';
+        avatarColorRow.style.display = 'none';
+    });
+
+    function updateAvatarPreviewIcon(cls){
+        preview.innerHTML = '<i class="'+cls+'" style="color:'+avatarIconColor.value+'"></i>';
+    }
+
+    // ====== Icon lists ======
+    var ICONS = [
+        'fas fa-robot','fas fa-headset','fas fa-comments','fas fa-comment-dots',
+        'fas fa-user-astronaut','fas fa-user-tie','fas fa-user-nurse','fas fa-user-secret',
+        'fas fa-brain','fas fa-microchip','fas fa-magic','fas fa-wand-magic-sparkles',
+        'fas fa-bolt','fas fa-star','fas fa-heart','fas fa-gem',
+        'fas fa-crown','fas fa-shield-halved','fas fa-rocket','fas fa-paper-plane',
+        'fas fa-globe','fas fa-store','fas fa-shopping-cart','fas fa-box-open',
+        'fas fa-truck','fas fa-tools','fas fa-wrench','fas fa-hammer',
+        'fas fa-screwdriver-wrench','fas fa-drill','fas fa-hard-hat','fas fa-industry',
+        'fas fa-cogs','fas fa-plug','fas fa-lightbulb','fas fa-fire',
+        'fas fa-sun','fas fa-moon','fas fa-cloud','fas fa-snowflake',
+        'fas fa-leaf','fas fa-seedling','fas fa-tree','fas fa-mountain',
+        'fas fa-water','fas fa-wind','fas fa-atom','fas fa-dna',
+        'fas fa-satellite','fas fa-satellite-dish','fas fa-wifi','fas fa-signal',
+        'fas fa-phone','fas fa-envelope','fas fa-at','fas fa-link',
+        'fas fa-thumbs-up','fas fa-handshake','fas fa-hands-helping','fas fa-life-ring',
+        'fas fa-info-circle','fas fa-question-circle','fas fa-exclamation-circle','fas fa-check-circle',
+        'fas fa-smile','fas fa-smile-beam','fas fa-laugh','fas fa-grin-stars',
+        'fas fa-cat','fas fa-dog','fas fa-dove','fas fa-dragon',
+        'fas fa-chess-knight','fas fa-chess-queen','fas fa-dice','fas fa-gamepad',
+        'fas fa-music','fas fa-headphones','fas fa-palette','fas fa-paint-brush',
+        'fas fa-camera','fas fa-video','fas fa-film','fas fa-tv',
+        'fas fa-laptop','fas fa-desktop','fas fa-mobile-alt','fas fa-tablet-alt',
+        'fab fa-android','fab fa-apple','fab fa-windows','fab fa-linux',
+        'fas fa-code','fas fa-terminal','fas fa-database','fas fa-server',
+        'fas fa-graduation-cap','fas fa-book','fas fa-award','fas fa-trophy',
+        'fas fa-medal','fas fa-certificate','fas fa-flag','fas fa-map-marker-alt',
+    ];
+
+    function buildIconGrid(gridEl, hiddenInput, selectedIcon, onSelect){
+        ICONS.forEach(function(ic){
+            var div = document.createElement('div');
+            div.className = 'icon-grid-item' + (ic === selectedIcon ? ' selected' : '');
+            div.innerHTML = '<i class="'+ic+'"></i>';
+            div.title = ic;
+            div.addEventListener('click', function(){
+                gridEl.querySelectorAll('.selected').forEach(function(el){ el.classList.remove('selected'); });
+                div.classList.add('selected');
+                hiddenInput.value = ic;
+                if(onSelect) onSelect(ic);
+            });
+            gridEl.appendChild(div);
+        });
+    }
+
+    // Avatar icon grid
+    buildIconGrid(
+        document.getElementById('iconGrid'),
+        iconInput,
+        iconInput.value || 'fas fa-robot',
+        function(ic){ updateAvatarPreviewIcon(ic); }
+    );
+
+    // Bubble icon grid
+    buildIconGrid(
+        document.getElementById('bubbleIconGrid'),
+        bubbleIconInput,
+        bubbleIconInput.value || 'fas fa-comments',
+        function(ic){ bubblePreview.innerHTML = '<i class="'+ic+'"></i>'; }
+    );
+
+    // ====== Test Connection ======
+    document.getElementById('testConnectionBtn').addEventListener('click', function(){
+        var btn = this;
+        var result = document.getElementById('testResult');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>{% trans "جاري الاختبار..." %}';
+        result.textContent = '';
+
+        fetch('{% url "dashboard:chatbot_test_connection" %}', {
+            method: 'POST',
+            headers: {'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json'},
+            credentials: 'same-origin'
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+            if(data.success){
+                result.innerHTML = '<span class="text-success"><i class="fas fa-check-circle me-1"></i>' + data.message + '</span>';
+            } else {
+                result.innerHTML = '<span class="text-danger"><i class="fas fa-times-circle me-1"></i>' + data.message + '</span>';
+            }
+        })
+        .catch(function(){
+            result.innerHTML = '<span class="text-danger"><i class="fas fa-times-circle me-1"></i>{% trans "خطأ في الاتصال" %}</span>';
+        })
+        .finally(function(){
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-plug me-1"></i>{% trans "اختبار الاتصال" %}';
+        });
+    });
+})();
+</script>
+{% endblock %}

@@ -26,16 +26,6 @@ def has_dashboard_access(user):
             hasattr(user, 'can_access_dashboard') and user.can_access_dashboard()))
 
 
-# Mixin للتحقق من صلاحيات الوصول للوحة التحكم
-# class DashboardAccessMixin:
-#     """Mixin للتحقق من صلاحيات الوصول للوحة التحكم"""
-#
-#     @method_decorator(login_required)
-#     def dispatch(self, request, *args, **kwargs):
-#         if not has_dashboard_access(request.user):
-#             return redirect('dashboard:dashboard_access_denied')
-#         return super().dispatch(request, *args, **kwargs)
-
 class DashboardAccessMixin:
     """Mixin للتحقق من صلاحيات الوصول للوحة التحكم"""
 
@@ -69,92 +59,229 @@ class DashboardAccessMixin:
         # إذا لم يكن لديه أي صلاحية، حوّله لصفحة رفض الوصول
         return redirect('dashboard:dashboard_access_denied')
 
-# الصفحة الرئيسية للوحة التحكم
 class DashboardHomeView(DashboardAccessMixin, View):
-    """عرض الصفحة الرئيسية للوحة التحكم"""
+
+    def _safe_change(self, current, previous):
+        if previous and previous > 0:
+            return round(((current - previous) / previous) * 100, 1)
+        return 0
 
     def get(self, request):
-        # الإحصائيات العامة
         today = timezone.now().date()
-        last_month = today - timedelta(days=30)
+        now = timezone.now()
 
-        # إحصائيات المستخدمين
+        completed_statuses = ['confirmed', 'processing', 'closed']
+
+        # --- Users ---
         total_users = User.objects.count()
-        new_users_month = User.objects.filter(date_joined__gte=last_month).count()
+        staff_count = User.objects.filter(is_staff=True).count()
+        new_users_month = User.objects.filter(date_joined__date__gte=today - timedelta(days=30)).count()
 
-        # إحصائيات المنتجات
+        # --- Products ---
         total_products = Product.objects.count()
         active_products = Product.objects.filter(is_active=True).count()
+        active_products_percent = round((active_products / total_products * 100), 1) if total_products else 0
 
-        # إحصائيات الطلبات
+        in_stock_count = Product.objects.filter(is_active=True, stock_quantity__gt=5).count()
+        low_stock_count = Product.objects.filter(is_active=True, stock_quantity__gt=0, stock_quantity__lte=5).count()
+        out_of_stock_count = Product.objects.filter(is_active=True, stock_quantity=0).count()
+        stock_total = in_stock_count + low_stock_count + out_of_stock_count or 1
+        in_stock_percent = round(in_stock_count / stock_total * 100, 1)
+        low_stock_percent = round(low_stock_count / stock_total * 100, 1)
+        out_of_stock_percent = round(out_of_stock_count / stock_total * 100, 1)
+
+        # --- Orders ---
         total_orders = Order.objects.count()
-        recent_orders = Order.objects.filter(created_at__gte=last_month).count()
+        recent_orders = Order.objects.filter(created_at__date__gte=today - timedelta(days=30)).count()
+        prev_month_orders = Order.objects.filter(
+            created_at__date__gte=today - timedelta(days=60),
+            created_at__date__lt=today - timedelta(days=30),
+        ).count()
+        recent_orders_change = self._safe_change(recent_orders, prev_month_orders)
 
-        # إجمالي المبيعات
+        pending_orders = Order.objects.filter(status='pending').count()
+        processing_orders = Order.objects.filter(status='processing').count()
+        shipped_orders = Order.objects.filter(status='confirmed').count()
+        delivered_orders = Order.objects.filter(status='closed').count()
+        cancelled_orders = Order.objects.filter(status='cancelled').count()
+
+        # --- Total Sales ---
         total_sales = Order.objects.filter(
-            status__in=['delivered', 'shipped']
+            status__in=completed_statuses
         ).aggregate(total=Sum('grand_total'))['total'] or 0
 
-        # مبيعات الشهر الحالي
+        # --- Monthly sales + change ---
+        this_month_start = today.replace(day=1)
         monthly_sales = Order.objects.filter(
-            created_at__gte=last_month,
-            status__in=['delivered', 'shipped', 'processing']
+            created_at__date__gte=this_month_start,
+            status__in=completed_statuses,
         ).aggregate(total=Sum('grand_total'))['total'] or 0
+        prev_month_end = this_month_start - timedelta(days=1)
+        prev_month_start = prev_month_end.replace(day=1)
+        prev_monthly_sales = Order.objects.filter(
+            created_at__date__gte=prev_month_start,
+            created_at__date__lte=prev_month_end,
+            status__in=completed_statuses,
+        ).aggregate(total=Sum('grand_total'))['total'] or 0
+        monthly_sales_change = self._safe_change(float(monthly_sales), float(prev_monthly_sales))
 
-        # أحدث الطلبات
-        latest_orders = Order.objects.order_by('-created_at')[:5]
+        # --- Daily revenue + change ---
+        daily_revenue = Order.objects.filter(
+            created_at__date=today,
+            status__in=completed_statuses,
+        ).aggregate(total=Sum('grand_total'))['total'] or 0
+        yesterday_revenue = Order.objects.filter(
+            created_at__date=today - timedelta(days=1),
+            status__in=completed_statuses,
+        ).aggregate(total=Sum('grand_total'))['total'] or 0
+        daily_revenue_change = self._safe_change(float(daily_revenue), float(yesterday_revenue))
 
-        # أحدث المستخدمين
+        # --- Weekly revenue + change ---
+        week_start = today - timedelta(days=today.weekday())
+        weekly_revenue = Order.objects.filter(
+            created_at__date__gte=week_start,
+            status__in=completed_statuses,
+        ).aggregate(total=Sum('grand_total'))['total'] or 0
+        prev_week_start = week_start - timedelta(days=7)
+        prev_weekly_revenue = Order.objects.filter(
+            created_at__date__gte=prev_week_start,
+            created_at__date__lt=week_start,
+            status__in=completed_statuses,
+        ).aggregate(total=Sum('grand_total'))['total'] or 0
+        weekly_revenue_change = self._safe_change(float(weekly_revenue), float(prev_weekly_revenue))
+
+        monthly_revenue = monthly_sales
+        monthly_revenue_change = monthly_sales_change
+
+        # --- Average order value + change ---
+        avg_data = Order.objects.filter(
+            created_at__date__gte=this_month_start,
+            status__in=completed_statuses,
+        ).aggregate(avg=Avg('grand_total'))
+        average_order_value = avg_data['avg'] or 0
+
+        prev_avg_data = Order.objects.filter(
+            created_at__date__gte=prev_month_start,
+            created_at__date__lte=prev_month_end,
+            status__in=completed_statuses,
+        ).aggregate(avg=Avg('grand_total'))
+        prev_avg = prev_avg_data['avg'] or 0
+        average_order_change = self._safe_change(float(average_order_value), float(prev_avg))
+
+        # --- Lead requests ---
+        from chatbot.models import LeadRequest
+        pending_leads = LeadRequest.objects.filter(status='pending').count()
+
+        # --- Top data ---
+        latest_orders = Order.objects.select_related('user').order_by('-created_at')[:5]
         latest_users = User.objects.order_by('-date_joined')[:5]
+        top_products = Product.objects.filter(is_active=True).order_by('-sales_count')[:5]
 
-        # أكثر المنتجات مبيعاً
-        top_products = Product.objects.order_by('-sales_count')[:5]
+        # --- Today's orders ---
+        today_orders = Order.objects.filter(created_at__date=today).count()
 
-        # بيانات للرسوم البيانية - المبيعات الشهرية
-        last_6_months = []
+        # --- Low stock products ---
+        low_stock_products = Product.objects.filter(
+            is_active=True, stock_quantity__gt=0, stock_quantity__lte=5
+        ).order_by('stock_quantity')[:5]
+
+        # --- Recent lead requests ---
+        recent_leads = LeadRequest.objects.select_related('assigned_to').order_by('-created_at')[:5]
+        total_leads = LeadRequest.objects.count()
+        leads_this_week = LeadRequest.objects.filter(created_at__date__gte=today - timedelta(days=7)).count()
+
+        # --- Lead requests by status ---
+        lead_pending = LeadRequest.objects.filter(status='pending').count()
+        lead_contacted = LeadRequest.objects.filter(status='contacted').count()
+        lead_in_progress = LeadRequest.objects.filter(status='in_progress').count()
+        lead_completed = LeadRequest.objects.filter(status='completed').count()
+        lead_cancelled = LeadRequest.objects.filter(status='cancelled').count()
+
+        # --- New users chart: last 7 days ---
+        new_users_labels = []
+        new_users_data = []
+        for i in range(6, -1, -1):
+            d = today - timedelta(days=i)
+            count = User.objects.filter(date_joined__date=d).count()
+            new_users_labels.append(d.strftime('%m/%d'))
+            new_users_data.append(count)
+
+        # --- Chart data: last 6 months ---
         labels = []
         sales_data = []
-
+        orders_data = []
         for i in range(5, -1, -1):
-            month = today.month - i
-            year = today.year
-            while month <= 0:
-                month += 12
-                year -= 1
-
-            month_start = datetime(year, month, 1).date()
-            if month == 12:
-                month_end = datetime(year + 1, 1, 1).date() - timedelta(days=1)
-            else:
-                month_end = datetime(year, month + 1, 1).date() - timedelta(days=1)
-
-            month_sales = Order.objects.filter(
-                created_at__date__gte=month_start,
-                created_at__date__lte=month_end,
-                status__in=['delivered', 'shipped', 'processing']
+            m = today.month - i
+            y = today.year
+            while m <= 0:
+                m += 12
+                y -= 1
+            m_start = datetime(y, m, 1).date()
+            m_end = datetime(y + (1 if m == 12 else 0), (m % 12) + 1, 1).date() - timedelta(days=1)
+            m_sales = Order.objects.filter(
+                created_at__date__gte=m_start,
+                created_at__date__lte=m_end,
+                status__in=completed_statuses,
             ).aggregate(total=Sum('grand_total'))['total'] or 0
-
-            last_6_months.append({
-                'month': month_start.strftime('%B'),
-                'sales': month_sales
-            })
-            labels.append(month_start.strftime('%b'))
-            sales_data.append(float(month_sales))
+            m_orders = Order.objects.filter(
+                created_at__date__gte=m_start,
+                created_at__date__lte=m_end,
+            ).count()
+            labels.append(m_start.strftime('%b'))
+            sales_data.append(float(m_sales))
+            orders_data.append(m_orders)
 
         context = {
             'total_users': total_users,
+            'staff_count': staff_count,
             'new_users_month': new_users_month,
             'total_products': total_products,
             'active_products': active_products,
+            'active_products_percent': active_products_percent,
             'total_orders': total_orders,
             'recent_orders': recent_orders,
+            'recent_orders_change': recent_orders_change,
             'total_sales': total_sales,
             'monthly_sales': monthly_sales,
+            'monthly_sales_change': monthly_sales_change,
+            'daily_revenue': daily_revenue,
+            'daily_revenue_change': daily_revenue_change,
+            'weekly_revenue': weekly_revenue,
+            'weekly_revenue_change': weekly_revenue_change,
+            'monthly_revenue': monthly_revenue,
+            'monthly_revenue_change': monthly_revenue_change,
+            'average_order_value': average_order_value,
+            'average_order_change': average_order_change,
+            'pending_orders': pending_orders,
+            'processing_orders': processing_orders,
+            'shipped_orders': shipped_orders,
+            'delivered_orders': delivered_orders,
+            'cancelled_orders': cancelled_orders,
+            'in_stock_count': in_stock_count,
+            'in_stock_percent': in_stock_percent,
+            'low_stock_count': low_stock_count,
+            'low_stock_percent': low_stock_percent,
+            'out_of_stock_count': out_of_stock_count,
+            'out_of_stock_percent': out_of_stock_percent,
+            'pending_leads': pending_leads,
             'latest_orders': latest_orders,
             'latest_users': latest_users,
             'top_products': top_products,
+            'today_orders': today_orders,
+            'low_stock_products': low_stock_products,
+            'recent_leads': recent_leads,
+            'total_leads': total_leads,
+            'leads_this_week': leads_this_week,
+            'lead_pending': lead_pending,
+            'lead_contacted': lead_contacted,
+            'lead_in_progress': lead_in_progress,
+            'lead_completed': lead_completed,
+            'lead_cancelled': lead_cancelled,
+            'new_users_labels': new_users_labels,
+            'new_users_data': new_users_data,
             'labels': labels,
             'sales_data': sales_data,
+            'orders_data': orders_data,
         }
 
         return render(request, 'dashboard/index.html', context)

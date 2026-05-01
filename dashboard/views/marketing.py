@@ -12,6 +12,7 @@ from django.conf import settings
 from dashboard.mixins import DashboardAccessMixin, SuperuserRequiredMixin
 from products.models import Product, Category, Brand
 from core.models import SiteSettings
+from accounts.models import UserActivity
 
 
 PLATFORM_PROMPTS = {
@@ -317,6 +318,14 @@ class MarketingGenerateView(DashboardAccessMixin, View):
             else:
                 result['image_url'] = ''
             result['item_name'] = item_name
+            UserActivity.objects.create(
+                user=request.user,
+                activity_type='marketing_generate',
+                description=f'Generated {content_type} content for {platform} - {item_type}: {item_name}',
+                object_id=str(item_id),
+                content_type=f'products.{item_type}',
+                ip_address=request.META.get('REMOTE_ADDR'),
+            )
         return JsonResponse(result)
 
 

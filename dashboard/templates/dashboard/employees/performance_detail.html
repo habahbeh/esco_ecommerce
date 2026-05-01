@@ -1,0 +1,181 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+{% load i18n %}
+{% load humanize %}
+
+{% block title %}{% trans "أداء" %} - {{ employee.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="mb-4">
+        <a href="{% url 'dashboard:employee_performance' %}" class="text-decoration-none text-muted">
+            <i class="fas fa-arrow-left me-1"></i>{% trans "العودة لقائمة الموظفين" %}
+        </a>
+        <h4 class="mt-2 mb-0">
+            <i class="fas fa-chart-line me-2"></i>{% trans "أداء" %} - {{ employee.get_full_name }}
+        </h4>
+    </div>
+
+    <!-- Date Filter -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">{% trans "من تاريخ" %}</label>
+                    <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">{% trans "إلى تاريخ" %}</label>
+                    <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-1"></i>{% trans "تصفية" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Employee Info + Category Stats -->
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-user me-2"></i>{% trans "معلومات الموظف" %}</h5>
+                </div>
+                <div class="card-body text-center">
+                    {% if employee.avatar %}
+                    <img src="{{ employee.avatar.url }}" class="rounded-circle mb-2" width="70" height="70" alt="">
+                    {% else %}
+                    <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-2" style="width:70px;height:70px;font-size:24px;font-weight:700">
+                        {{ employee.first_name|default:employee.username|truncatechars:1 }}
+                    </div>
+                    {% endif %}
+                    <h5 class="mb-0">{{ employee.get_full_name }}</h5>
+                    <small class="text-muted">{{ employee.email }}</small>
+                    <hr>
+                    <div class="fs-3 fw-bold text-primary">{{ total_activities }}</div>
+                    <small class="text-muted">{% trans "إجمالي العمليات" %}</small>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>{% trans "توزيع العمليات" %}</h5>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-box text-primary me-2"></i>{% trans "إضافة منتجات" %}</span>
+                            <span class="badge bg-primary rounded-pill">{{ category_counts.product_create }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-edit text-info me-2"></i>{% trans "تحديث منتجات" %}</span>
+                            <span class="badge bg-info rounded-pill">{{ category_counts.product_update }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-bullhorn text-warning me-2"></i>{% trans "التسويق" %}</span>
+                            <span class="badge bg-warning rounded-pill">{{ category_counts.marketing }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-search text-success me-2"></i>{% trans "SEO" %}</span>
+                            <span class="badge bg-success rounded-pill">{{ category_counts.seo }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-newspaper text-secondary me-2"></i>{% trans "المقالات" %}</span>
+                            <span class="badge bg-secondary rounded-pill">{{ category_counts.blog }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-calendar-alt text-danger me-2"></i>{% trans "الفعاليات" %}</span>
+                            <span class="badge bg-danger rounded-pill">{{ category_counts.event }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-envelope me-2" style="color:#7b1fa2"></i>{% trans "النشرات البريدية" %}</span>
+                            <span class="badge rounded-pill" style="background:#7b1fa2">{{ category_counts.newsletter }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-shopping-cart text-dark me-2"></i>{% trans "متابعة الطلبات" %}</span>
+                            <span class="badge bg-dark rounded-pill">{{ category_counts.order }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart + Activity Log -->
+        <div class="col-md-8">
+            <!-- Activity Chart -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-area me-2"></i>{% trans "النشاط اليومي (آخر 30 يوم)" %}</h5>
+                </div>
+                <div class="card-body">
+                    <div style="height:250px;">
+                        <canvas id="activityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activities -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>{% trans "آخر العمليات" %}</h5>
+                </div>
+                <div class="card-body p-0" style="max-height:450px;overflow-y:auto">
+                    <div class="list-group list-group-flush">
+                        {% for activity in recent_activities %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <span class="badge bg-light text-dark me-1">{{ activity.activity_type }}</span>
+                                    {{ activity.description }}
+                                </div>
+                                <small class="text-muted text-nowrap ms-2">{{ activity.timestamp|date:"Y/m/d H:i" }}</small>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="list-group-item text-center py-4 text-muted">
+                            <i class="fas fa-clipboard-check fa-2x mb-2 d-block"></i>
+                            {% trans "لا توجد عمليات مسجلة" %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+    var ctx = document.getElementById('activityChart');
+    if(!ctx) return;
+    new Chart(ctx.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: {{ daily_labels|safe }},
+            datasets: [{
+                label: '{% trans "العمليات" %}',
+                data: {{ daily_data|safe }},
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1,
+                borderRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false } },
+                y: { beginAtZero: true, ticks: { stepSize: 1 } }
+            }
+        }
+    });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,140 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+{% load i18n %}
+{% load humanize %}
+
+{% block title %}{% trans "أداء الموظفين" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+.perf-badge {
+    display: inline-block;
+    min-width: 28px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+}
+.perf-badge.has-activity { background: #e8f5e9; color: #2e7d32; }
+.perf-badge.no-activity { background: #f5f5f5; color: #999; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4><i class="fas fa-chart-bar me-2"></i>{% trans "أداء الموظفين" %}</h4>
+    </div>
+
+    <!-- Date Filter -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">{% trans "من تاريخ" %}</label>
+                    <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">{% trans "إلى تاريخ" %}</label>
+                    <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-1"></i>{% trans "تصفية" %}
+                    </button>
+                </div>
+                {% if date_from or date_to %}
+                <div class="col-md-2">
+                    <a href="{% url 'dashboard:employee_performance' %}" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-times me-1"></i>{% trans "مسح" %}
+                    </a>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    <!-- Performance Table -->
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>{% trans "الموظف" %}</th>
+                        <th class="text-center"><i class="fas fa-box text-primary" title="{% trans 'إضافة منتجات' %}"></i></th>
+                        <th class="text-center"><i class="fas fa-edit text-info" title="{% trans 'تحديث منتجات' %}"></i></th>
+                        <th class="text-center"><i class="fas fa-bullhorn text-warning" title="{% trans 'التسويق' %}"></i></th>
+                        <th class="text-center"><i class="fas fa-search text-success" title="{% trans 'SEO' %}"></i></th>
+                        <th class="text-center"><i class="fas fa-newspaper text-secondary" title="{% trans 'المقالات' %}"></i></th>
+                        <th class="text-center"><i class="fas fa-calendar-alt text-danger" title="{% trans 'الفعاليات' %}"></i></th>
+                        <th class="text-center"><i class="fas fa-envelope text-purple" title="{% trans 'النشرات البريدية' %}"></i></th>
+                        <th class="text-center"><i class="fas fa-shopping-cart text-dark" title="{% trans 'متابعة الطلبات' %}"></i></th>
+                        <th class="text-center">{% trans "الإجمالي" %}</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in employee_stats %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if s.employee.avatar %}
+                                <img src="{{ s.employee.avatar.url }}" class="rounded-circle me-2" width="36" height="36" alt="">
+                                {% else %}
+                                <div class="rounded-circle me-2 bg-primary text-white d-flex align-items-center justify-content-center" style="width:36px;height:36px;font-size:14px;font-weight:700">
+                                    {{ s.employee.first_name|default:s.employee.username|truncatechars:1 }}
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <div class="fw-bold">{{ s.employee.get_full_name }}</div>
+                                    <small class="text-muted">{{ s.employee.email }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-center"><span class="perf-badge {% if s.products_added > 0 %}has-activity{% else %}no-activity{% endif %}">{{ s.products_added }}</span></td>
+                        <td class="text-center"><span class="perf-badge {% if s.products_updated > 0 %}has-activity{% else %}no-activity{% endif %}">{{ s.products_updated }}</span></td>
+                        <td class="text-center"><span class="perf-badge {% if s.marketing > 0 %}has-activity{% else %}no-activity{% endif %}">{{ s.marketing }}</span></td>
+                        <td class="text-center"><span class="perf-badge {% if s.seo > 0 %}has-activity{% else %}no-activity{% endif %}">{{ s.seo }}</span></td>
+                        <td class="text-center"><span class="perf-badge {% if s.articles > 0 %}has-activity{% else %}no-activity{% endif %}">{{ s.articles }}</span></td>
+                        <td class="text-center"><span class="perf-badge {% if s.events > 0 %}has-activity{% else %}no-activity{% endif %}">{{ s.events }}</span></td>
+                        <td class="text-center"><span class="perf-badge {% if s.newsletters > 0 %}has-activity{% else %}no-activity{% endif %}">{{ s.newsletters }}</span></td>
+                        <td class="text-center"><span class="perf-badge {% if s.orders > 0 %}has-activity{% else %}no-activity{% endif %}">{{ s.orders }}</span></td>
+                        <td class="text-center"><strong>{{ s.total_activities }}</strong></td>
+                        <td>
+                            <a href="{% url 'dashboard:employee_performance_detail' s.employee.id %}{% if date_from or date_to %}?date_from={{ date_from }}&date_to={{ date_to }}{% endif %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-chart-line me-1"></i>{% trans "تفاصيل" %}
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="11" class="text-center py-4 text-muted">
+                            <i class="fas fa-user-tie fa-2x mb-2 d-block"></i>
+                            {% trans "لا يوجد موظفين" %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="card shadow-sm mt-3">
+        <div class="card-body py-2">
+            <small class="text-muted">
+                <i class="fas fa-info-circle me-1"></i>{% trans "دليل الأيقونات:" %}
+                <i class="fas fa-box text-primary ms-2"></i> {% trans "إضافة منتجات" %}
+                <i class="fas fa-edit text-info ms-2"></i> {% trans "تحديث منتجات" %}
+                <i class="fas fa-bullhorn text-warning ms-2"></i> {% trans "التسويق" %}
+                <i class="fas fa-search text-success ms-2"></i> {% trans "SEO" %}
+                <i class="fas fa-newspaper text-secondary ms-2"></i> {% trans "المقالات" %}
+                <i class="fas fa-calendar-alt text-danger ms-2"></i> {% trans "الفعاليات" %}
+                <i class="fas fa-envelope ms-2" style="color:#7b1fa2"></i> {% trans "النشرات البريدية" %}
+                <i class="fas fa-shopping-cart text-dark ms-2"></i> {% trans "متابعة الطلبات" %}
+            </small>
+        </div>
+    </div>
+</div>
+{% endblock %}

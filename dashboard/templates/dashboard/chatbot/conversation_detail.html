@@ -1,0 +1,68 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "تفاصيل المحادثة" %} #{{ conversation.id }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4>
+            <a href="{% url 'dashboard:chatbot_conversations' %}" class="text-decoration-none"><i class="fas fa-arrow-right me-2"></i></a>
+            {% trans "المحادثة" %} #{{ conversation.id }}
+        </h4>
+        <div>
+            <span class="badge bg-info">{{ conversation.language|upper }}</span>
+            <span class="badge bg-secondary">{{ chat_messages|length }} {% trans "رسالة" %}</span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-comments me-2"></i>{% trans "الرسائل" %}</h5>
+                </div>
+                <div class="card-body" style="max-height:600px;overflow-y:auto;background:#f8f9fa">
+                    {% for msg in chat_messages %}
+                    <div class="d-flex mb-3 {% if msg.role == 'user' %}justify-content-end{% endif %}">
+                        <div class="p-3 rounded-3" style="max-width:75%;{% if msg.role == 'user' %}background:var(--bs-primary);color:#fff{% else %}background:#fff;border:1px solid #e8e8e8{% endif %}">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                {% if msg.role == 'user' %}
+                                    <i class="fas fa-user"></i>
+                                    <small class="fw-bold">{% trans "المستخدم" %}</small>
+                                {% else %}
+                                    <i class="fas fa-robot"></i>
+                                    <small class="fw-bold">{% trans "المساعد" %}</small>
+                                    {% if msg.model_used %}<small class="opacity-75">({{ msg.model_used }})</small>{% endif %}
+                                {% endif %}
+                                <small class="{% if msg.role == 'user' %}text-white-50{% else %}text-muted{% endif %} ms-auto">{{ msg.created_at|time:"H:i" }}</small>
+                            </div>
+                            <div style="white-space:pre-wrap">{{ msg.content }}</div>
+                            {% if msg.role == 'assistant' and msg.response_time_ms %}
+                            <div class="mt-1"><small class="{% if msg.role == 'user' %}text-white-50{% else %}text-muted{% endif %}">{{ msg.response_time_ms }}ms | {{ msg.tokens_used }} tokens</small></div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>{% trans "معلومات" %}</h5></div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr><td>{% trans "المستخدم" %}</td><td>{% if conversation.user %}{{ conversation.user.get_full_name|default:conversation.user.username }}{% else %}{% trans "زائر" %}{% endif %}</td></tr>
+                        <tr><td>{% trans "الجلسة" %}</td><td><code>{{ conversation.session_key|truncatechars:16 }}</code></td></tr>
+                        <tr><td>{% trans "اللغة" %}</td><td>{{ conversation.language|upper }}</td></tr>
+                        <tr><td>{% trans "البداية" %}</td><td>{{ conversation.started_at }}</td></tr>
+                        <tr><td>{% trans "آخر تحديث" %}</td><td>{{ conversation.updated_at }}</td></tr>
+                        <tr><td>{% trans "الصفحة" %}</td><td><small>{{ conversation.page_url|default:"-" }}</small></td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'payment',
     'events',
     'blog.apps.BlogConfig',
+    'chatbot.apps.ChatbotConfig',
 
     # تطبيقات Django المدمجة - Django built-in apps
     'django.contrib.admin',
