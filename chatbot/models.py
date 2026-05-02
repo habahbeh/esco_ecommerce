@@ -37,6 +37,7 @@ class ChatbotSettings(models.Model):
         ('elevenlabs', 'ElevenLabs'),
         ('google', 'Google Cloud'),
         ('azure', 'Azure'),
+        ('custom', _('مخصص (أي منصة)')),
     ]
     VOICE_LANGUAGE_CHOICES = [
         ('ar-SA', _('العربية (السعودية)')),
@@ -94,6 +95,21 @@ class ChatbotSettings(models.Model):
     voice_id = models.CharField(_("معرّف الصوت"), max_length=200, blank=True, default='',
                                 help_text=_('معرّف الصوت لدى المزود (مثل: alloy لـ OpenAI أو معرّف ElevenLabs)'))
     auto_play_voice = models.BooleanField(_("تشغيل الصوت تلقائياً"), default=False)
+
+    custom_voice_tts_url = models.URLField(_("رابط API للنطق (TTS)"), max_length=500, blank=True, default='',
+                                           help_text=_('مثال: https://api.lahajati.ai/v1/tts'))
+    custom_voice_stt_url = models.URLField(_("رابط API للتعرف على الصوت (STT)"), max_length=500, blank=True, default='',
+                                           help_text=_('مثال: https://api.lahajati.ai/v1/stt'))
+    custom_voice_auth_header = models.CharField(_("اسم هيدر المصادقة"), max_length=100, blank=True, default='Authorization',
+                                                help_text=_('مثال: Authorization أو x-api-key أو xi-api-key'))
+    custom_voice_auth_prefix = models.CharField(_("بادئة المصادقة"), max_length=50, blank=True, default='Bearer',
+                                                help_text=_('مثال: Bearer أو Token أو اتركه فارغاً'))
+    custom_voice_tts_body = models.TextField(_("قالب Body للنطق (JSON)"), blank=True, default='',
+                                             help_text=_('JSON template — استخدم {text} و {voice_id} و {language} كمتغيرات'))
+    custom_voice_stt_field = models.CharField(_("اسم حقل الملف الصوتي"), max_length=50, blank=True, default='file',
+                                              help_text=_('اسم الحقل في multipart/form-data (مثال: file أو audio)'))
+    custom_voice_response_path = models.CharField(_("مسار النص في الرد"), max_length=200, blank=True, default='text',
+                                                   help_text=_('مسار JSON للنص المُحوَّل (مثال: text أو result.transcript أو data.text)'))
 
     max_messages_per_session = models.PositiveIntegerField(_("الحد الأقصى لرسائل الجلسة"), default=50)
     rate_limit_per_minute = models.PositiveIntegerField(_("الحد الأقصى للرسائل بالدقيقة"), default=10)

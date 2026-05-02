@@ -94,8 +94,18 @@ class ChatbotSettingsView(SuperuserRequiredMixin, View):
         if new_voice_api_key:
             settings.voice_api_key = new_voice_api_key
         settings.voice_language = request.POST.get('voice_language', 'ar-SA')
-        settings.voice_id = request.POST.get('voice_id', '')
+        voice_id = request.POST.get('voice_id', '')
+        voice_id_text = request.POST.get('voice_id_text', '')
+        settings.voice_id = voice_id_text if settings.voice_provider == 'custom' else voice_id
         settings.auto_play_voice = request.POST.get('auto_play_voice') == 'on'
+
+        settings.custom_voice_tts_url = request.POST.get('custom_voice_tts_url', '')
+        settings.custom_voice_stt_url = request.POST.get('custom_voice_stt_url', '')
+        settings.custom_voice_auth_header = request.POST.get('custom_voice_auth_header', 'Authorization')
+        settings.custom_voice_auth_prefix = request.POST.get('custom_voice_auth_prefix', 'Bearer')
+        settings.custom_voice_tts_body = request.POST.get('custom_voice_tts_body', '')
+        settings.custom_voice_stt_field = request.POST.get('custom_voice_stt_field', 'file')
+        settings.custom_voice_response_path = request.POST.get('custom_voice_response_path', 'text')
 
         settings.max_messages_per_session = request.POST.get('max_messages_per_session', 50)
         settings.rate_limit_per_minute = request.POST.get('rate_limit_per_minute', 10)

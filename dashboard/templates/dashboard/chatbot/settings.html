@@ -666,7 +666,65 @@
                         <select name="voice_id" id="voiceIdSelect" class="form-select">
                             <option value="">{% trans "افتراضي" %}</option>
                         </select>
+                        <input type="text" name="voice_id_text" id="voiceIdText" class="form-control mt-2" style="{% if settings.voice_provider != 'custom' %}display:none{% endif %}" placeholder="{% trans 'أدخل معرّف الصوت يدوياً' %}" value="{{ settings.voice_id }}">
                         <div class="chatbot-help">{% trans "اختر الصوت المراد استخدامه (يعتمد على المزود)" %}</div>
+                    </div>
+                </div>
+
+                <!-- Custom Provider Settings -->
+                <div id="customVoiceSettings" style="{% if settings.voice_provider != 'custom' %}display:none{% endif %}">
+                    <hr class="my-4">
+                    <h6 class="text-muted mb-3"><i class="fas fa-cog me-1"></i>{% trans "إعدادات المزود المخصص" %}</h6>
+                    <p class="text-muted small mb-3">{% trans "ادعم أي منصة صوتية (مثل Lahajati.ai, PlayHT, Murf, Resemble.ai) عبر إدخال روابط API الخاصة بها" %}</p>
+                    <div class="row g-3">
+                        <!-- TTS URL -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">{% trans "رابط API للنطق (TTS)" %}</label>
+                            <input type="url" name="custom_voice_tts_url" class="form-control" value="{{ settings.custom_voice_tts_url }}" placeholder="https://api.lahajati.ai/v1/tts">
+                            <div class="chatbot-help">{% trans "الرابط الذي يُرسَل إليه النص ويعود صوتاً" %}</div>
+                        </div>
+
+                        <!-- STT URL -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">{% trans "رابط API للتعرف على الصوت (STT)" %}</label>
+                            <input type="url" name="custom_voice_stt_url" class="form-control" value="{{ settings.custom_voice_stt_url }}" placeholder="https://api.lahajati.ai/v1/stt">
+                            <div class="chatbot-help">{% trans "الرابط الذي يُرسَل إليه الصوت ويعود نصاً" %}</div>
+                        </div>
+
+                        <!-- Auth header name -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">{% trans "اسم هيدر المصادقة" %}</label>
+                            <input type="text" name="custom_voice_auth_header" class="form-control" value="{{ settings.custom_voice_auth_header|default:'Authorization' }}" placeholder="Authorization">
+                            <div class="chatbot-help">{% trans "مثال: Authorization أو x-api-key" %}</div>
+                        </div>
+
+                        <!-- Auth prefix -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">{% trans "بادئة المصادقة" %}</label>
+                            <input type="text" name="custom_voice_auth_prefix" class="form-control" value="{{ settings.custom_voice_auth_prefix|default:'Bearer' }}" placeholder="Bearer">
+                            <div class="chatbot-help">{% trans "مثال: Bearer أو Token أو فارغ" %}</div>
+                        </div>
+
+                        <!-- STT file field name -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">{% trans "اسم حقل الملف الصوتي" %}</label>
+                            <input type="text" name="custom_voice_stt_field" class="form-control" value="{{ settings.custom_voice_stt_field|default:'file' }}" placeholder="file">
+                            <div class="chatbot-help">{% trans "اسم الحقل في طلب رفع الصوت" %}</div>
+                        </div>
+
+                        <!-- Response text path -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">{% trans "مسار النص في رد STT" %}</label>
+                            <input type="text" name="custom_voice_response_path" class="form-control" value="{{ settings.custom_voice_response_path|default:'text' }}" placeholder="text">
+                            <div class="chatbot-help">{% trans "مسار JSON (مثال: text أو result.transcript أو data.text)" %}</div>
+                        </div>
+
+                        <!-- TTS Body template -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">{% trans "قالب Body للنطق (JSON)" %}</label>
+                            <textarea name="custom_voice_tts_body" class="form-control" rows="3" placeholder='{"text": "{text}", "voice_id": "{voice_id}", "language": "{language}"}'>{{ settings.custom_voice_tts_body }}</textarea>
+                            <div class="chatbot-help">{% trans "استخدم {text} و {voice_id} و {language} كمتغيرات" %}</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -868,28 +926,47 @@
     var allVoices = {{ all_voices|safe }};
     var voiceProviderSelect = document.getElementById('voiceProviderSelect');
     var voiceIdSelect = document.getElementById('voiceIdSelect');
+    var voiceIdText = document.getElementById('voiceIdText');
     var voiceApiKeyGroup = document.getElementById('voiceApiKeyGroup');
     var voiceIdGroup = document.getElementById('voiceIdGroup');
+    var customVoiceSettings = document.getElementById('customVoiceSettings');
     var currentVoiceId = '{{ settings.voice_id }}';
 
     function updateVoiceUI(){
         var provider = voiceProviderSelect.value;
         var isBrowser = (provider === 'browser');
+        var isCustom = (provider === 'custom');
         voiceApiKeyGroup.style.display = isBrowser ? 'none' : '';
         voiceIdGroup.style.display = isBrowser ? 'none' : '';
+        customVoiceSettings.style.display = isCustom ? '' : 'none';
 
-        voiceIdSelect.innerHTML = '<option value="">{% trans "افتراضي" %}</option>';
-        var voices = allVoices[provider] || [];
-        voices.forEach(function(v){
-            var opt = document.createElement('option');
-            opt.value = v.id;
-            opt.textContent = v.name;
-            if(v.id === currentVoiceId) opt.selected = true;
-            voiceIdSelect.appendChild(opt);
-        });
+        // For custom provider, show text input instead of select
+        voiceIdSelect.style.display = isCustom ? 'none' : '';
+        voiceIdText.style.display = isCustom ? '' : 'none';
+
+        if(!isCustom){
+            voiceIdSelect.innerHTML = '<option value="">{% trans "افتراضي" %}</option>';
+            var voices = allVoices[provider] || [];
+            voices.forEach(function(v){
+                var opt = document.createElement('option');
+                opt.value = v.id;
+                opt.textContent = v.name;
+                if(v.id === currentVoiceId) opt.selected = true;
+                voiceIdSelect.appendChild(opt);
+            });
+        }
     }
     voiceProviderSelect.addEventListener('change', updateVoiceUI);
     updateVoiceUI();
+
+    // Sync voice_id from text input or select on form submit
+    var settingsForm = voiceProviderSelect.closest('form');
+    settingsForm.addEventListener('submit', function(){
+        var provider = voiceProviderSelect.value;
+        if(provider === 'custom'){
+            voiceIdSelect.innerHTML = '<option value="'+voiceIdText.value+'" selected>'+voiceIdText.value+'</option>';
+        }
+    });
 
     window.toggleVoiceKeyVisibility = function(btn){
         var input = btn.parentElement.querySelector('input');
