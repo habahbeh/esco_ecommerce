@@ -31,6 +31,21 @@ class ChatbotSettings(models.Model):
         ('price_high', _('السعر: من الأعلى للأقل')),
         ('name', _('الاسم أبجدياً')),
     ]
+    VOICE_PROVIDER_CHOICES = [
+        ('browser', _('متصفح (مجاني)')),
+        ('openai', 'OpenAI'),
+        ('elevenlabs', 'ElevenLabs'),
+        ('google', 'Google Cloud'),
+        ('azure', 'Azure'),
+    ]
+    VOICE_LANGUAGE_CHOICES = [
+        ('ar-SA', _('العربية (السعودية)')),
+        ('ar-JO', _('العربية (الأردن)')),
+        ('ar-EG', _('العربية (مصر)')),
+        ('ar-AE', _('العربية (الإمارات)')),
+        ('en-US', _('الإنجليزية (أمريكا)')),
+        ('en-GB', _('الإنجليزية (بريطانيا)')),
+    ]
 
     is_enabled = models.BooleanField(_("تفعيل الشات بوت"), default=False)
 
@@ -70,6 +85,15 @@ class ChatbotSettings(models.Model):
     hide_out_of_stock = models.BooleanField(_("إخفاء المنتجات غير المتوفرة"), default=False)
     show_price_in_response = models.BooleanField(_("عرض السعر في الرد"), default=True)
     product_sort_order = models.CharField(_("ترتيب المنتجات"), max_length=20, choices=PRODUCT_SORT_CHOICES, default='newest')
+
+    enable_voice_input = models.BooleanField(_("تفعيل الإدخال الصوتي"), default=False)
+    enable_voice_output = models.BooleanField(_("تفعيل الرد الصوتي"), default=False)
+    voice_provider = models.CharField(_("مزود الصوت"), max_length=20, choices=VOICE_PROVIDER_CHOICES, default='browser')
+    voice_api_key = models.CharField(_("مفتاح API للصوت"), max_length=500, blank=True, default='')
+    voice_language = models.CharField(_("لغة الصوت"), max_length=10, choices=VOICE_LANGUAGE_CHOICES, default='ar-SA')
+    voice_id = models.CharField(_("معرّف الصوت"), max_length=200, blank=True, default='',
+                                help_text=_('معرّف الصوت لدى المزود (مثل: alloy لـ OpenAI أو معرّف ElevenLabs)'))
+    auto_play_voice = models.BooleanField(_("تشغيل الصوت تلقائياً"), default=False)
 
     max_messages_per_session = models.PositiveIntegerField(_("الحد الأقصى لرسائل الجلسة"), default=50)
     rate_limit_per_minute = models.PositiveIntegerField(_("الحد الأقصى للرسائل بالدقيقة"), default=10)

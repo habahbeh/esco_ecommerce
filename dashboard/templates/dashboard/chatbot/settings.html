@@ -575,6 +575,103 @@
             </div>
         </div>
 
+        <!-- ====== 5. Voice Settings ====== -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0"><i class="fas fa-microphone me-2 text-primary"></i>{% trans "إعدادات الصوت" %}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <!-- Enable voice input -->
+                    <div class="col-md-6">
+                        <div class="form-switch-row">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="enable_voice_input" id="enable_voice_input" {% if settings.enable_voice_input %}checked{% endif %}>
+                            </div>
+                            <div class="switch-info">
+                                <span class="switch-label">{% trans "تفعيل الإدخال الصوتي" %}</span>
+                                <span class="switch-desc">{% trans "يسمح للعميل بإرسال رسائل صوتية بدلاً من الكتابة" %}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Enable voice output -->
+                    <div class="col-md-6">
+                        <div class="form-switch-row">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="enable_voice_output" id="enable_voice_output" {% if settings.enable_voice_output %}checked{% endif %}>
+                            </div>
+                            <div class="switch-info">
+                                <span class="switch-label">{% trans "تفعيل الرد الصوتي" %}</span>
+                                <span class="switch-desc">{% trans "يقرأ البوت الرد بصوت عالٍ للعميل" %}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Auto play voice -->
+                    <div class="col-md-6">
+                        <div class="form-switch-row">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="auto_play_voice" id="auto_play_voice" {% if settings.auto_play_voice %}checked{% endif %}>
+                            </div>
+                            <div class="switch-info">
+                                <span class="switch-label">{% trans "تشغيل الصوت تلقائياً" %}</span>
+                                <span class="switch-desc">{% trans "يبدأ تشغيل الرد الصوتي تلقائياً بدون ضغط زر" %}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Voice provider -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{% trans "مزود الصوت" %}</label>
+                        <select name="voice_provider" id="voiceProviderSelect" class="form-select">
+                            <option value="browser" {% if settings.voice_provider == 'browser' %}selected{% endif %}>{% trans "متصفح (مجاني)" %}</option>
+                            <option value="openai" {% if settings.voice_provider == 'openai' %}selected{% endif %}>OpenAI (Whisper + TTS)</option>
+                            <option value="elevenlabs" {% if settings.voice_provider == 'elevenlabs' %}selected{% endif %}>ElevenLabs</option>
+                            <option value="google" {% if settings.voice_provider == 'google' %}selected{% endif %}>Google Cloud</option>
+                            <option value="azure" {% if settings.voice_provider == 'azure' %}selected{% endif %}>Azure</option>
+                        </select>
+                        <div class="chatbot-help">{% trans "المتصفح مجاني ويدعم العربية. المزودون الآخرون يحتاجون مفتاح API" %}</div>
+                    </div>
+
+                    <!-- Voice language -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{% trans "لغة الصوت" %}</label>
+                        <select name="voice_language" class="form-select">
+                            <option value="ar-SA" {% if settings.voice_language == 'ar-SA' %}selected{% endif %}>{% trans "العربية (السعودية)" %}</option>
+                            <option value="ar-JO" {% if settings.voice_language == 'ar-JO' %}selected{% endif %}>{% trans "العربية (الأردن)" %}</option>
+                            <option value="ar-EG" {% if settings.voice_language == 'ar-EG' %}selected{% endif %}>{% trans "العربية (مصر)" %}</option>
+                            <option value="ar-AE" {% if settings.voice_language == 'ar-AE' %}selected{% endif %}>{% trans "العربية (الإمارات)" %}</option>
+                            <option value="en-US" {% if settings.voice_language == 'en-US' %}selected{% endif %}>{% trans "الإنجليزية (أمريكا)" %}</option>
+                            <option value="en-GB" {% if settings.voice_language == 'en-GB' %}selected{% endif %}>{% trans "الإنجليزية (بريطانيا)" %}</option>
+                        </select>
+                        <div class="chatbot-help">{% trans "اللغة واللهجة المستخدمة للتعرف على الصوت والنطق" %}</div>
+                    </div>
+
+                    <!-- Voice API Key (for paid providers) -->
+                    <div class="col-md-6" id="voiceApiKeyGroup" style="{% if settings.voice_provider == 'browser' %}display:none{% endif %}">
+                        <label class="form-label fw-bold">{% trans "مفتاح API للصوت" %}</label>
+                        <div class="input-group">
+                            <input type="password" name="voice_api_key" class="form-control" placeholder="{% if voice_api_key_set %}{{ voice_api_key_masked }}{% else %}sk-...{% endif %}">
+                            <button class="btn btn-outline-secondary" type="button" onclick="toggleVoiceKeyVisibility(this)">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="chatbot-help">{% trans "مفتاح API الخاص بمزود الصوت المحدد" %}</div>
+                    </div>
+
+                    <!-- Voice ID -->
+                    <div class="col-md-6" id="voiceIdGroup" style="{% if settings.voice_provider == 'browser' %}display:none{% endif %}">
+                        <label class="form-label fw-bold">{% trans "معرّف الصوت" %}</label>
+                        <select name="voice_id" id="voiceIdSelect" class="form-select">
+                            <option value="">{% trans "افتراضي" %}</option>
+                        </select>
+                        <div class="chatbot-help">{% trans "اختر الصوت المراد استخدامه (يعتمد على المزود)" %}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Save Button -->
         <div class="d-flex justify-content-end gap-2 mb-4">
             <button type="submit" class="btn btn-primary btn-lg px-5">
@@ -766,6 +863,44 @@
             btn.innerHTML = '<i class="fas fa-plug me-1"></i>{% trans "اختبار الاتصال" %}';
         });
     });
+
+    // ====== Voice provider settings ======
+    var allVoices = {{ all_voices|safe }};
+    var voiceProviderSelect = document.getElementById('voiceProviderSelect');
+    var voiceIdSelect = document.getElementById('voiceIdSelect');
+    var voiceApiKeyGroup = document.getElementById('voiceApiKeyGroup');
+    var voiceIdGroup = document.getElementById('voiceIdGroup');
+    var currentVoiceId = '{{ settings.voice_id }}';
+
+    function updateVoiceUI(){
+        var provider = voiceProviderSelect.value;
+        var isBrowser = (provider === 'browser');
+        voiceApiKeyGroup.style.display = isBrowser ? 'none' : '';
+        voiceIdGroup.style.display = isBrowser ? 'none' : '';
+
+        voiceIdSelect.innerHTML = '<option value="">{% trans "افتراضي" %}</option>';
+        var voices = allVoices[provider] || [];
+        voices.forEach(function(v){
+            var opt = document.createElement('option');
+            opt.value = v.id;
+            opt.textContent = v.name;
+            if(v.id === currentVoiceId) opt.selected = true;
+            voiceIdSelect.appendChild(opt);
+        });
+    }
+    voiceProviderSelect.addEventListener('change', updateVoiceUI);
+    updateVoiceUI();
+
+    window.toggleVoiceKeyVisibility = function(btn){
+        var input = btn.parentElement.querySelector('input');
+        if(input.type === 'password'){
+            input.type = 'text';
+            btn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+        } else {
+            input.type = 'password';
+            btn.innerHTML = '<i class="fas fa-eye"></i>';
+        }
+    };
 })();
 </script>
 {% endblock %}

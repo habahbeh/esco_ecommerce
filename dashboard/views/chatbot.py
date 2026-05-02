@@ -11,6 +11,7 @@ from datetime import timedelta
 from dashboard.mixins import DashboardAccessMixin, SuperuserRequiredMixin
 from chatbot.models import ChatbotSettings, Conversation, Message, CustomQA, SuggestedQuestion
 from chatbot.providers.registry import get_provider, get_all_providers_models
+from chatbot.voice_providers.registry import get_all_voice_providers_voices
 
 
 class ChatbotSettingsView(SuperuserRequiredMixin, View):
@@ -19,12 +20,17 @@ class ChatbotSettingsView(SuperuserRequiredMixin, View):
     def get(self, request):
         settings = ChatbotSettings.get_settings()
         all_models = get_all_providers_models()
+        all_voices = get_all_voice_providers_voices()
         api_key = settings.api_key or ''
+        voice_api_key = settings.voice_api_key or ''
         context = {
             'settings': settings,
             'all_models': json.dumps(all_models),
+            'all_voices': json.dumps(all_voices),
             'api_key_set': bool(api_key),
             'api_key_masked': (api_key[:8] + '...' + api_key[-4:]) if len(api_key) > 12 else '',
+            'voice_api_key_set': bool(voice_api_key),
+            'voice_api_key_masked': (voice_api_key[:8] + '...' + voice_api_key[-4:]) if len(voice_api_key) > 12 else '',
             'page_title': _('إعدادات الشات بوت'),
             'current_page': 'chatbot',
         }
@@ -80,6 +86,16 @@ class ChatbotSettingsView(SuperuserRequiredMixin, View):
         settings.hide_out_of_stock = request.POST.get('hide_out_of_stock') == 'on'
         settings.show_price_in_response = request.POST.get('show_price_in_response') == 'on'
         settings.product_sort_order = request.POST.get('product_sort_order', 'newest')
+
+        settings.enable_voice_input = request.POST.get('enable_voice_input') == 'on'
+        settings.enable_voice_output = request.POST.get('enable_voice_output') == 'on'
+        settings.voice_provider = request.POST.get('voice_provider', 'browser')
+        new_voice_api_key = request.POST.get('voice_api_key', '').strip()
+        if new_voice_api_key:
+            settings.voice_api_key = new_voice_api_key
+        settings.voice_language = request.POST.get('voice_language', 'ar-SA')
+        settings.voice_id = request.POST.get('voice_id', '')
+        settings.auto_play_voice = request.POST.get('auto_play_voice') == 'on'
 
         settings.max_messages_per_session = request.POST.get('max_messages_per_session', 50)
         settings.rate_limit_per_minute = request.POST.get('rate_limit_per_minute', 10)

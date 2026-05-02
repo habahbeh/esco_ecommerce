@@ -1,7 +1,7 @@
 import json
 import logging
 import time
-from django.http import JsonResponse, StreamingHttpResponse
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
@@ -50,6 +50,11 @@ class ChatbotConfigView(View):
             'enable_suggestions': settings.enable_suggestions,
             'suggested_questions': suggested,
             'csrf_token': get_token(request),
+            'voice_input_enabled': settings.enable_voice_input,
+            'voice_output_enabled': settings.enable_voice_output,
+            'voice_provider': settings.voice_provider,
+            'voice_language': settings.voice_language,
+            'auto_play_voice': settings.auto_play_voice,
         }
         return JsonResponse(config)
 
@@ -402,3 +407,70 @@ class ChatbotLeadRequestView(View):
             'message': msg,
             'lead_id': lead.id,
         })
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ChatbotVoiceTranscribeView(View):
+    def post(self, request):
+        settings = ChatbotSettings.get_settings()
+        if not settings.is_enabled or not settings.enable_voice_input:
+            return JsonResponse({'error': 'Voice input is disabled'}, status=403)
+
+        if settings.voice_provider == 'browser':
+            return JsonResponse({'error': 'Transcription handled client-side'}, status=400)
+
+        from .voice_providers.registry import get_voice_provider
+        provider = get_voice_provider(settings)
+        if not provider:
+            return JsonResponse({'error': 'Voice provider not configured'}, status=400)
+
+        audio_file = request.FILES.get('audio')
+        if not audio_file:
+            return JsonResponse({'error': 'No audio file provided'}, status=400)
+
+        audio_data = audio_file.read()
+        content_type = audio_file.content_type or 'audio/webm'
+
+        try:
+            text = provider.transcribe(audio_data, content_type)
+            return JsonResponse({'text': text})
+        except Exception as e:
+            logger.error(f'Voice transcription error: {e}')
+            return JsonResponse({'error': 'Transcription failed'}, status=500)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ChatbotVoiceSynthesizeView(View):
+    def post(self, request):
+        settings = ChatbotSettings.get_settings()
+        if not settings.is_enabled or not settings.enable_voice_output:
+            return JsonResponse({'error': 'Voice output is disabled'}, status=403)
+
+        if settings.voice_provider == 'browser':
+            return JsonResponse({'error': 'Synthesis handled client-side'}, status=400)
+
+        from .voice_providers.registry import get_voice_provider
+        provider = get_voice_provider(settings)
+        if not provider:
+            return JsonResponse({'error': 'Voice provider not configured'}, status=400)
+
+        try:
+            body = json.loads(request.body)
+        except (json.JSONDecodeError, ValueError):
+            return JsonResponse({'error': 'Invalid request'}, status=400)
+
+        text = body.get('text', '').strip()
+        if not text:
+            return JsonResponse({'error': 'No text provided'}, status=400)
+
+        if len(text) > 5000:
+            return JsonResponse({'error': 'Text too long'}, status=400)
+
+        try:
+            audio_data, content_type = provider.synthesize(text)
+            response = HttpResponse(audio_data, content_type=content_type)
+            response['Content-Disposition'] = 'inline; filename="speech.mp3"'
+            return response
+        except Exception as e:
+            logger.error(f'Voice synthesis error: {e}')
+            return JsonResponse({'error': 'Synthesis failed'}, status=500)

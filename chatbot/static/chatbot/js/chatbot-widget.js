@@ -10,6 +10,9 @@
     var conversationId = null;
     var isOpen = false;
     var isSending = false;
+    var isRecording = false;
+    var mediaRecorder = null;
+    var audioChunks = [];
 
     // Apply theme colors
     document.documentElement.style.setProperty('--chatbot-primary', CFG.primary_color || '#1e88e5');
@@ -52,6 +55,7 @@
             '</div>' +
             '<div class="esco-chatbot-messages" id="escoChatMessages"></div>' +
             '<div class="esco-chatbot-input-area">' +
+                (CFG.voice_input_enabled ? '<button class="esco-chatbot-voice-btn" id="escoChatVoice" title="'+(isAr?'إدخال صوتي':'Voice input')+'"><i class="fas fa-microphone"></i></button>' : '') +
                 '<input type="text" class="esco-chatbot-input" id="escoChatInput" placeholder="'+placeholderText+'" maxlength="2000" autocomplete="off">' +
                 '<button class="esco-chatbot-send-btn" id="escoChatSend"><i class="fas fa-paper-plane"></i></button>' +
             '</div>' +
@@ -224,6 +228,10 @@
         if(parsed.quick_replies && parsed.quick_replies.length){
             messagesEl.appendChild(renderQuickReplies(parsed.quick_replies));
         }
+        if(CFG.voice_output_enabled && parsed.text){
+            addSpeakerButton(bubbleDiv, parsed.text);
+            if(CFG.auto_play_voice) speakText(parsed.text, bubbleDiv);
+        }
         scrollToBottom();
     }
 
@@ -275,6 +283,12 @@
         // Quick replies
         if(quickReplies && quickReplies.length){
             messagesEl.appendChild(renderQuickReplies(quickReplies));
+        }
+
+        // Voice output
+        if(role === 'assistant' && CFG.voice_output_enabled && text){
+            addSpeakerButton(bubbleDiv, text);
+            if(CFG.auto_play_voice) speakText(text, bubbleDiv);
         }
 
         scrollToBottom();
@@ -637,6 +651,203 @@
         }
         flushList();
         return out.join('');
+    }
+
+    // ====== Voice Input (STT) ======
+    var voiceBtn = document.getElementById('escoChatVoice');
+    if(voiceBtn && CFG.voice_input_enabled){
+        voiceBtn.addEventListener('click', function(){
+            if(isRecording){
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        });
+    }
+
+    function startRecording(){
+        if(CFG.voice_provider === 'browser'){
+            startBrowserSTT();
+        } else {
+            startMediaRecording();
+        }
+    }
+
+    function stopRecording(){
+        if(CFG.voice_provider === 'browser'){
+            stopBrowserSTT();
+        } else {
+            stopMediaRecording();
+        }
+    }
+
+    // Browser Web Speech API (free)
+    var recognition = null;
+    function startBrowserSTT(){
+        var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if(!SpeechRecognition){
+            addMessage('assistant', isAr ? 'متصفحك لا يدعم الإدخال الصوتي. استخدم Chrome.' : 'Your browser does not support voice input. Use Chrome.');
+            return;
+        }
+        recognition = new SpeechRecognition();
+        recognition.lang = CFG.voice_language || 'ar-SA';
+        recognition.continuous = false;
+        recognition.interimResults = false;
+
+        recognition.onstart = function(){
+            isRecording = true;
+            voiceBtn.classList.add('recording');
+            voiceBtn.innerHTML = '<i class="fas fa-stop"></i>';
+        };
+        recognition.onresult = function(event){
+            var text = event.results[0][0].transcript;
+            if(text.trim()){
+                inputEl.value = text;
+                sendMessage();
+            }
+        };
+        recognition.onerror = function(event){
+            isRecording = false;
+            voiceBtn.classList.remove('recording');
+            voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+            if(event.error !== 'no-speech' && event.error !== 'aborted'){
+                addMessage('assistant', isAr ? 'خطأ في التعرف على الصوت. حاول مرة أخرى.' : 'Voice recognition error. Please try again.');
+            }
+        };
+        recognition.onend = function(){
+            isRecording = false;
+            voiceBtn.classList.remove('recording');
+            voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+        };
+        recognition.start();
+    }
+
+    function stopBrowserSTT(){
+        if(recognition){
+            recognition.stop();
+        }
+        isRecording = false;
+        voiceBtn.classList.remove('recording');
+        voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+    }
+
+    // Server-side STT (paid providers)
+    function startMediaRecording(){
+        navigator.mediaDevices.getUserMedia({audio: true})
+        .then(function(stream){
+            audioChunks = [];
+            mediaRecorder = new MediaRecorder(stream, {mimeType: 'audio/webm;codecs=opus'});
+            mediaRecorder.ondataavailable = function(e){
+                if(e.data.size > 0) audioChunks.push(e.data);
+            };
+            mediaRecorder.onstop = function(){
+                stream.getTracks().forEach(function(t){ t.stop(); });
+                var blob = new Blob(audioChunks, {type: 'audio/webm'});
+                sendAudioToServer(blob);
+            };
+            mediaRecorder.start();
+            isRecording = true;
+            voiceBtn.classList.add('recording');
+            voiceBtn.innerHTML = '<i class="fas fa-stop"></i>';
+        })
+        .catch(function(){
+            addMessage('assistant', isAr ? 'لم يتم السماح بالوصول للمايكروفون.' : 'Microphone access was denied.');
+        });
+    }
+
+    function stopMediaRecording(){
+        if(mediaRecorder && mediaRecorder.state === 'recording'){
+            mediaRecorder.stop();
+        }
+        isRecording = false;
+        voiceBtn.classList.remove('recording');
+        voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+    }
+
+    function sendAudioToServer(blob){
+        var formData = new FormData();
+        formData.append('audio', blob, 'recording.webm');
+        showTyping();
+        fetch('/api/chatbot/voice/transcribe/', {
+            method: 'POST',
+            headers: {'X-CSRFToken': CFG.csrf_token},
+            credentials: 'same-origin',
+            body: formData
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+            hideTyping();
+            if(data.text){
+                inputEl.value = data.text;
+                sendMessage();
+            } else if(data.error){
+                addMessage('assistant', data.error);
+            }
+        })
+        .catch(function(){
+            hideTyping();
+            addMessage('assistant', isAr ? 'خطأ في معالجة الصوت.' : 'Error processing audio.');
+        });
+    }
+
+    // ====== Voice Output (TTS) ======
+    function speakText(text, bubbleEl){
+        if(!CFG.voice_output_enabled || !text) return;
+        if(CFG.voice_provider === 'browser'){
+            speakBrowserTTS(text);
+        } else {
+            speakServerTTS(text, bubbleEl);
+        }
+    }
+
+    function speakBrowserTTS(text){
+        if(!window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
+        var utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = CFG.voice_language || 'ar-SA';
+        var voices = window.speechSynthesis.getVoices();
+        var lang = (CFG.voice_language || 'ar-SA').substring(0, 2);
+        for(var i = 0; i < voices.length; i++){
+            if(voices[i].lang.indexOf(lang) === 0){
+                utterance.voice = voices[i];
+                break;
+            }
+        }
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function speakServerTTS(text, bubbleEl){
+        fetch('/api/chatbot/voice/synthesize/', {
+            method: 'POST',
+            headers: {'X-CSRFToken': CFG.csrf_token, 'Content-Type': 'application/json'},
+            credentials: 'same-origin',
+            body: JSON.stringify({text: text})
+        })
+        .then(function(r){
+            if(!r.ok) throw new Error('TTS failed');
+            return r.blob();
+        })
+        .then(function(blob){
+            var url = URL.createObjectURL(blob);
+            var audio = new Audio(url);
+            audio.onended = function(){ URL.revokeObjectURL(url); };
+            audio.play();
+        })
+        .catch(function(){});
+    }
+
+    // Add speaker button to assistant messages
+    function addSpeakerButton(bubbleDiv, text){
+        if(!CFG.voice_output_enabled) return;
+        var btn = document.createElement('button');
+        btn.className = 'esco-chatbot-speak-btn';
+        btn.title = isAr ? 'استمع' : 'Listen';
+        btn.innerHTML = '<i class="fas fa-volume-up"></i>';
+        btn.addEventListener('click', function(e){
+            e.stopPropagation();
+            speakText(text, bubbleDiv);
+        });
+        bubbleDiv.appendChild(btn);
     }
 
 })();

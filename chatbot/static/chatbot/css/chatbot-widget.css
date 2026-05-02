@@ -629,6 +629,47 @@
     color: #fff;
 }
 
+/* Voice button */
+.esco-chatbot-voice-btn {
+    background: none;
+    border: none;
+    color: var(--chatbot-primary, #1e88e5);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: background 0.2s, color 0.2s;
+    flex-shrink: 0;
+}
+.esco-chatbot-voice-btn:hover {
+    background: rgba(0,0,0,0.05);
+}
+.esco-chatbot-voice-btn.recording {
+    color: #e53935;
+    animation: pulse-recording 1s infinite;
+}
+@keyframes pulse-recording {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+/* Speaker button on assistant messages */
+.esco-chatbot-speak-btn {
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-top: 4px;
+    display: inline-block;
+    transition: color 0.2s;
+}
+.esco-chatbot-speak-btn:hover {
+    color: var(--chatbot-primary, #1e88e5);
+}
+
 /* Mobile */
 @media (max-width: 480px) {
     .esco-chatbot-window {
