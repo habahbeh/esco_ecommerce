@@ -132,15 +132,6 @@
         </div>
     </div>
 
-    {% if messages %}
-    {% for message in messages %}
-    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
-        {{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    {% endfor %}
-    {% endif %}
-
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
 
@@ -625,13 +616,15 @@
                     <div class="col-md-6">
                         <label class="form-label fw-bold">{% trans "مزود الصوت" %}</label>
                         <select name="voice_provider" id="voiceProviderSelect" class="form-select">
-                            <option value="browser" {% if settings.voice_provider == 'browser' %}selected{% endif %}>{% trans "متصفح (مجاني)" %}</option>
+                            <option value="free" {% if settings.voice_provider == 'free' %}selected{% endif %}>{% trans "مجاني (يدعم العربية)" %} ⭐</option>
+                            <option value="browser" {% if settings.voice_provider == 'browser' %}selected{% endif %}>{% trans "متصفح فقط" %}</option>
                             <option value="openai" {% if settings.voice_provider == 'openai' %}selected{% endif %}>OpenAI (Whisper + TTS)</option>
                             <option value="elevenlabs" {% if settings.voice_provider == 'elevenlabs' %}selected{% endif %}>ElevenLabs</option>
                             <option value="google" {% if settings.voice_provider == 'google' %}selected{% endif %}>Google Cloud</option>
                             <option value="azure" {% if settings.voice_provider == 'azure' %}selected{% endif %}>Azure</option>
+                            <option value="custom" {% if settings.voice_provider == 'custom' %}selected{% endif %}>{% trans "مخصص (أي منصة)" %}</option>
                         </select>
-                        <div class="chatbot-help">{% trans "المتصفح مجاني ويدعم العربية. المزودون الآخرون يحتاجون مفتاح API" %}</div>
+                        <div class="chatbot-help">{% trans "المجاني يعمل على جميع الأجهزة ويدعم العربية بدون مفتاح API" %}</div>
                     </div>
 
                     <!-- Voice language -->
@@ -649,7 +642,7 @@
                     </div>
 
                     <!-- Voice API Key (for paid providers) -->
-                    <div class="col-md-6" id="voiceApiKeyGroup" style="{% if settings.voice_provider == 'browser' %}display:none{% endif %}">
+                    <div class="col-md-6" id="voiceApiKeyGroup" style="{% if settings.voice_provider == 'browser' or settings.voice_provider == 'free' %}display:none{% endif %}">
                         <label class="form-label fw-bold">{% trans "مفتاح API للصوت" %}</label>
                         <div class="input-group">
                             <input type="password" name="voice_api_key" class="form-control" placeholder="{% if voice_api_key_set %}{{ voice_api_key_masked }}{% else %}sk-...{% endif %}">
@@ -661,7 +654,7 @@
                     </div>
 
                     <!-- Voice ID -->
-                    <div class="col-md-6" id="voiceIdGroup" style="{% if settings.voice_provider == 'browser' %}display:none{% endif %}">
+                    <div class="col-md-6" id="voiceIdGroup" style="{% if settings.voice_provider == 'browser' or settings.voice_provider == 'free' %}display:none{% endif %}">
                         <label class="form-label fw-bold">{% trans "معرّف الصوت" %}</label>
                         <select name="voice_id" id="voiceIdSelect" class="form-select">
                             <option value="">{% trans "افتراضي" %}</option>
@@ -934,10 +927,10 @@
 
     function updateVoiceUI(){
         var provider = voiceProviderSelect.value;
-        var isBrowser = (provider === 'browser');
+        var isFreeOrBrowser = (provider === 'browser' || provider === 'free');
         var isCustom = (provider === 'custom');
-        voiceApiKeyGroup.style.display = isBrowser ? 'none' : '';
-        voiceIdGroup.style.display = isBrowser ? 'none' : '';
+        voiceApiKeyGroup.style.display = isFreeOrBrowser ? 'none' : '';
+        voiceIdGroup.style.display = isFreeOrBrowser ? 'none' : '';
         customVoiceSettings.style.display = isCustom ? '' : 'none';
 
         // For custom provider, show text input instead of select

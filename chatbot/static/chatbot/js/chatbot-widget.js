@@ -665,8 +665,12 @@
         });
     }
 
+    function usesBrowserSTT(){
+        return CFG.voice_provider === 'browser' || CFG.voice_provider === 'free';
+    }
+
     function startRecording(){
-        if(CFG.voice_provider === 'browser'){
+        if(usesBrowserSTT()){
             startBrowserSTT();
         } else {
             startMediaRecording();
@@ -674,7 +678,7 @@
     }
 
     function stopRecording(){
-        if(CFG.voice_provider === 'browser'){
+        if(usesBrowserSTT()){
             stopBrowserSTT();
         } else {
             stopMediaRecording();
@@ -800,20 +804,78 @@
         }
     }
 
+    function usesBrowserTTS(){
+        return CFG.voice_provider === 'browser';
+    }
+
+    var cachedVoices = [];
+    function loadVoices(){
+        if(!window.speechSynthesis) return;
+        cachedVoices = window.speechSynthesis.getVoices();
+    }
+    loadVoices();
+    if(window.speechSynthesis){
+        window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
+    }
+
     function speakBrowserTTS(text){
         if(!window.speechSynthesis) return;
         window.speechSynthesis.cancel();
-        var utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = CFG.voice_language || 'ar-SA';
-        var voices = window.speechSynthesis.getVoices();
-        var lang = (CFG.voice_language || 'ar-SA').substring(0, 2);
-        for(var i = 0; i < voices.length; i++){
-            if(voices[i].lang.indexOf(lang) === 0){
-                utterance.voice = voices[i];
-                break;
+
+        function doSpeak(voices){
+            var utterance = new SpeechSynthesisUtterance(text);
+            var langCode = CFG.voice_language || 'ar-SA';
+            var lang2 = langCode.substring(0, 2);
+
+            // Try exact match, then language prefix match
+            var matchedVoice = null;
+            for(var i = 0; i < voices.length; i++){
+                if(voices[i].lang === langCode){ matchedVoice = voices[i]; break; }
+            }
+            if(!matchedVoice){
+                for(var i = 0; i < voices.length; i++){
+                    if(voices[i].lang.indexOf(lang2) === 0){ matchedVoice = voices[i]; break; }
+                }
+            }
+            // Fallback: use any available voice if target language not installed
+            if(!matchedVoice && voices.length > 0){
+                matchedVoice = voices[0];
+            }
+
+            if(matchedVoice){
+                utterance.voice = matchedVoice;
+                utterance.lang = matchedVoice.lang;
+            } else {
+                utterance.lang = langCode;
+            }
+            utterance.rate = 1;
+            utterance.pitch = 1;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function trySpeak(){
+            loadVoices();
+            if(cachedVoices.length > 0){
+                doSpeak(cachedVoices);
+            } else {
+                // Wait for voices to load
+                var waited = false;
+                window.speechSynthesis.addEventListener('voiceschanged', function onV(){
+                    window.speechSynthesis.removeEventListener('voiceschanged', onV);
+                    waited = true;
+                    loadVoices();
+                    doSpeak(cachedVoices);
+                });
+                setTimeout(function(){
+                    if(!waited){
+                        loadVoices();
+                        doSpeak(cachedVoices);
+                    }
+                }, 1000);
             }
         }
-        window.speechSynthesis.speak(utterance);
+
+        trySpeak();
     }
 
     function speakServerTTS(text, bubbleEl){

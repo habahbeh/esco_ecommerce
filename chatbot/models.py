@@ -32,7 +32,8 @@ class ChatbotSettings(models.Model):
         ('name', _('الاسم أبجدياً')),
     ]
     VOICE_PROVIDER_CHOICES = [
-        ('browser', _('متصفح (مجاني)')),
+        ('free', _('مجاني (يدعم العربية)')),
+        ('browser', _('متصفح فقط')),
         ('openai', 'OpenAI'),
         ('elevenlabs', 'ElevenLabs'),
         ('google', 'Google Cloud'),

@@ -4,9 +4,11 @@ from .elevenlabs_voice import ElevenLabsVoiceProvider
 from .google_voice import GoogleVoiceProvider
 from .azure_voice import AzureVoiceProvider
 from .custom_voice import CustomVoiceProvider
+from .free_tts import FreeTTSProvider
 
 
 VOICE_PROVIDER_MAP = {
+    'free': FreeTTSProvider,
     'openai': OpenAIVoiceProvider,
     'elevenlabs': ElevenLabsVoiceProvider,
     'google': GoogleVoiceProvider,
@@ -19,6 +21,13 @@ def get_voice_provider(settings) -> AbstractVoiceProvider:
     provider_name = settings.voice_provider
     if provider_name == 'browser':
         return None
+
+    if provider_name == 'free':
+        return FreeTTSProvider(
+            api_key='',
+            language=settings.voice_language,
+            voice_id='',
+        )
 
     if provider_name == 'custom':
         return CustomVoiceProvider(
@@ -47,7 +56,7 @@ def get_voice_provider(settings) -> AbstractVoiceProvider:
 def get_all_voice_providers_voices():
     result = {}
     for name, cls in VOICE_PROVIDER_MAP.items():
-        if name == 'custom':
+        if name in ('custom', 'free'):
             continue
         result[name] = cls.get_available_voices()
     return result
