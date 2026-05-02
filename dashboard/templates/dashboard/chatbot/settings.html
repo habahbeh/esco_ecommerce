@@ -7,9 +7,9 @@
 {% block extra_css %}
 <style>
 .chatbot-help {
-    font-size: 12px;
-    color: #6c757d;
-    margin-top: 4px;
+    font-size: 0.85rem;
+    color: var(--secondary-color, #6c757d);
+    margin-top: 0.25rem;
     line-height: 1.5;
 }
 .chatbot-help .example {
@@ -17,8 +17,8 @@
     background: #f1f3f5;
     padding: 1px 6px;
     border-radius: 3px;
-    font-family: monospace;
-    font-size: 11px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
     direction: ltr;
 }
 .icon-grid {
@@ -96,8 +96,8 @@
 .form-switch-row:hover { border-color: var(--bs-primary); }
 .form-switch-row .form-check { margin: 0; padding-top: 2px; }
 .form-switch-row .switch-info { flex: 1; }
-.form-switch-row .switch-label { font-weight: 600; font-size: 14px; display: block; }
-.form-switch-row .switch-desc { font-size: 12px; color: #6c757d; margin-top: 2px; }
+.form-switch-row .switch-label { font-weight: 600; font-size: 0.95rem; display: block; }
+.form-switch-row .switch-desc { font-size: 0.85rem; color: var(--secondary-color, #6c757d); margin-top: 0.125rem; }
 .api-status-box {
     padding: 12px 16px;
     border-radius: 8px;
@@ -301,14 +301,14 @@
                                     <label class="form-label mb-0 small fw-bold" style="min-width:80px">{% trans "لون الخلفية" %}</label>
                                     <div class="color-input-group">
                                         <input type="color" name="bubble_bg_color" id="bubbleBgColor" value="{{ settings.bubble_bg_color|default:'#1e88e5' }}">
-                                        <input type="text" class="form-control form-control-sm" id="bubbleBgColorText" value="{{ settings.bubble_bg_color|default:'#1e88e5' }}" dir="ltr" style="max-width:80px;font-family:monospace;font-size:12px">
+                                        <input type="text" class="form-control form-control-sm" id="bubbleBgColorText" value="{{ settings.bubble_bg_color|default:'#1e88e5' }}" dir="ltr" style="max-width:80px;font-family:'Courier New',monospace;font-size:0.8rem">
                                     </div>
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
                                     <label class="form-label mb-0 small fw-bold" style="min-width:80px">{% trans "لون الأيقونة" %}</label>
                                     <div class="color-input-group">
                                         <input type="color" name="bubble_icon_color" id="bubbleIconColor" value="{{ settings.bubble_icon_color|default:'#ffffff' }}">
-                                        <input type="text" class="form-control form-control-sm" id="bubbleIconColorText" value="{{ settings.bubble_icon_color|default:'#ffffff' }}" dir="ltr" style="max-width:80px;font-family:monospace;font-size:12px">
+                                        <input type="text" class="form-control form-control-sm" id="bubbleIconColorText" value="{{ settings.bubble_icon_color|default:'#ffffff' }}" dir="ltr" style="max-width:80px;font-family:'Courier New',monospace;font-size:0.8rem">
                                     </div>
                                 </div>
                             </div>
@@ -343,7 +343,7 @@
                                     <label class="form-label mb-0 small fw-bold" style="min-width:80px">{% trans "لون الأيقونة" %}</label>
                                     <div class="color-input-group">
                                         <input type="color" name="avatar_icon_color" id="avatarIconColor" value="{{ settings.avatar_icon_color|default:'#ffffff' }}">
-                                        <input type="text" class="form-control form-control-sm" id="avatarIconColorText" value="{{ settings.avatar_icon_color|default:'#ffffff' }}" dir="ltr" style="max-width:80px;font-family:monospace;font-size:12px">
+                                        <input type="text" class="form-control form-control-sm" id="avatarIconColorText" value="{{ settings.avatar_icon_color|default:'#ffffff' }}" dir="ltr" style="max-width:80px;font-family:'Courier New',monospace;font-size:0.8rem">
                                     </div>
                                 </div>
                             </div>
@@ -723,6 +723,166 @@
             </div>
         </div>
 
+        <!-- ====== 6. Voice Agent Settings ====== -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0"><i class="fas fa-phone-volume me-2 text-success"></i>{% trans "الوكيل الصوتي (Voice Agent)" %}</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info small mb-3">
+                    <i class="fas fa-info-circle me-1"></i>
+                    {% trans "الوكيل الصوتي يتيح للعميل إجراء محادثة صوتية مباشرة مع ذكاء اصطناعي. مختلف عن الإدخال/الإخراج الصوتي (Voice Bot) — هنا المحادثة كاملة بالصوت عبر مزود متخصص." %}
+                </div>
+                <div class="row g-4">
+                    <!-- Enable voice agent -->
+                    <div class="col-md-6">
+                        <div class="form-switch-row">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="enable_voice_agent" id="enable_voice_agent" {% if settings.enable_voice_agent %}checked{% endif %}>
+                            </div>
+                            <div class="switch-info">
+                                <span class="switch-label">{% trans "تفعيل الوكيل الصوتي" %}</span>
+                                <span class="switch-desc">{% trans "إظهار زر المكالمة الصوتية للعملاء" %}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Voice agent provider -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{% trans "مزود الوكيل الصوتي" %}</label>
+                        <select name="voice_agent_provider" id="voiceAgentProviderSelect" class="form-select">
+                            <option value="vapi" {% if settings.voice_agent_provider == 'vapi' %}selected{% endif %}>Vapi.ai ({% trans "يدعم العربية" %})</option>
+                            <option value="bland" {% if settings.voice_agent_provider == 'bland' %}selected{% endif %}>Bland.ai</option>
+                            <option value="retell" {% if settings.voice_agent_provider == 'retell' %}selected{% endif %}>Retell.ai</option>
+                            <option value="voiceflow" {% if settings.voice_agent_provider == 'voiceflow' %}selected{% endif %}>Voiceflow</option>
+                            <option value="livekit" {% if settings.voice_agent_provider == 'livekit' %}selected{% endif %}>LiveKit</option>
+                            <option value="custom_agent" {% if settings.voice_agent_provider == 'custom_agent' %}selected{% endif %}>{% trans "مخصص (أي منصة)" %}</option>
+                        </select>
+                        <div class="chatbot-help">{% trans "اختر المزود المتخصص بالمكالمات الصوتية الذكية" %}</div>
+                    </div>
+
+                    <!-- Voice agent API key -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{% trans "مفتاح API للوكيل" %}</label>
+                        <div class="input-group">
+                            <input type="password" name="voice_agent_api_key" class="form-control" placeholder="{% if voice_agent_api_key_set %}{{ voice_agent_api_key_masked }}{% else %}sk-...{% endif %}">
+                            <button class="btn btn-outline-secondary" type="button" onclick="toggleVoiceAgentKeyVisibility(this)">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="chatbot-help">{% trans "مفتاح API من حسابك لدى المزود" %}</div>
+                    </div>
+
+                    <!-- Voice agent ID -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{% trans "معرّف الوكيل (Agent/Assistant ID)" %}</label>
+                        <input type="text" name="voice_agent_id" class="form-control" value="{{ settings.voice_agent_id }}" placeholder="{% trans 'مثال: asst_xxxx أو agent_xxxx' %}">
+                        <div class="chatbot-help">{% trans "المعرّف الفريد للوكيل المُنشأ لدى المزود" %}</div>
+                    </div>
+
+                    <!-- Voice agent phone number -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{% trans "رقم هاتف الوكيل (اختياري)" %}</label>
+                        <input type="text" name="voice_agent_phone_number" class="form-control" dir="ltr" value="{{ settings.voice_agent_phone_number }}" placeholder="+962...">
+                        <div class="chatbot-help">{% trans "رقم الهاتف المربوط بالوكيل (إن وُجد)" %}</div>
+                    </div>
+
+                    <!-- Trigger mode -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{% trans "طريقة تشغيل الوكيل" %}</label>
+                        <select name="voice_agent_trigger" class="form-select">
+                            <option value="floating_button" {% if settings.voice_agent_trigger == 'floating_button' %}selected{% endif %}>{% trans "زر عائم مستقل" %}</option>
+                            <option value="inside_chatbot" {% if settings.voice_agent_trigger == 'inside_chatbot' %}selected{% endif %}>{% trans "داخل نافذة الشات" %}</option>
+                            <option value="replace_chatbot" {% if settings.voice_agent_trigger == 'replace_chatbot' %}selected{% endif %}>{% trans "يحل محل الشات بوت" %}</option>
+                        </select>
+                        <div class="chatbot-help">{% trans "كيف يظهر زر الوكيل الصوتي في الموقع" %}</div>
+                    </div>
+
+                    <!-- Button appearance -->
+                    <div class="col-md-4" id="voiceAgentButtonAppearance">
+                        <label class="form-label fw-bold">{% trans "لون زر الوكيل" %}</label>
+                        <div class="d-flex gap-2">
+                            <input type="color" name="voice_agent_button_color" class="form-control form-control-color" value="{{ settings.voice_agent_button_color|default:'#4caf50' }}" style="width:50px">
+                            <input type="text" class="form-control" value="{{ settings.voice_agent_button_color|default:'#4caf50' }}" id="voiceAgentColorText" maxlength="7" style="max-width:100px">
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">{% trans "موقع الزر" %}</label>
+                        <select name="voice_agent_button_position" class="form-select">
+                            <option value="bottom-left" {% if settings.voice_agent_button_position == 'bottom-left' %}selected{% endif %}>{% trans "أسفل اليسار" %}</option>
+                            <option value="bottom-right" {% if settings.voice_agent_button_position == 'bottom-right' %}selected{% endif %}>{% trans "أسفل اليمين" %}</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">{% trans "أيقونة الزر" %}</label>
+                        <input type="text" name="voice_agent_button_icon" class="form-control" value="{{ settings.voice_agent_button_icon|default:'fas fa-phone-alt' }}" placeholder="fas fa-phone-alt">
+                    </div>
+
+                    <!-- Labels -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{% trans "نص الزر (عربي)" %}</label>
+                        <input type="text" name="voice_agent_label_ar" class="form-control" value="{{ settings.voice_agent_label_ar|default:'تحدث معنا' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{% trans "نص الزر (إنجليزي)" %}</label>
+                        <input type="text" name="voice_agent_label_en" class="form-control" value="{{ settings.voice_agent_label_en|default:'Talk to us' }}">
+                    </div>
+
+                    <!-- Embed code (for all providers as override) -->
+                    <div class="col-12">
+                        <label class="form-label fw-bold">{% trans "كود التضمين (اختياري)" %}</label>
+                        <textarea name="voice_agent_embed_code" class="form-control font-monospace" rows="4" dir="ltr" placeholder="{% trans 'كود HTML/JS مباشر من المزود — إن أُدخل سيُستخدم بدلاً من SDK' %}">{{ settings.voice_agent_embed_code }}</textarea>
+                        <div class="chatbot-help">{% trans "إذا أدخلت كود تضمين، سيُحقن مباشرة في الصفحة بدلاً من استخدام SDK المزود" %}</div>
+                    </div>
+
+                    <!-- Extra config JSON -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{% trans "إعدادات إضافية (JSON)" %}</label>
+                        <textarea name="voice_agent_extra_config" class="form-control font-monospace" rows="3" dir="ltr" placeholder='{"language": "ar", "firstMessage": "مرحباً"}'>{{ voice_agent_extra_config_json }}</textarea>
+                        <div class="chatbot-help">{% trans "إعدادات إضافية تُمرر للمزود بصيغة JSON (اختياري)" %}</div>
+                    </div>
+
+                    <!-- Test connection button -->
+                    <div class="col-md-6 d-flex align-items-end">
+                        <div>
+                            <button type="button" id="testVoiceAgentBtn" class="btn btn-outline-success">
+                                <i class="fas fa-plug me-1"></i>{% trans "اختبار اتصال الوكيل" %}
+                            </button>
+                            <span id="testVoiceAgentResult" class="ms-2"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom/Advanced agent provider settings -->
+                <div id="customAgentSettings" style="{% if settings.voice_agent_provider != 'custom_agent' and settings.voice_agent_provider != 'livekit' %}display:none{% endif %}">
+                    <hr class="my-4">
+                    <h6 class="text-muted mb-3"><i class="fas fa-cog me-1"></i>{% trans "إعدادات متقدمة" %}</h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">{% trans "رابط WebSocket" %}</label>
+                            <input type="url" name="voice_agent_custom_ws_url" class="form-control" dir="ltr" value="{{ settings.voice_agent_custom_ws_url }}" placeholder="wss://agent.example.com/ws">
+                            <div class="chatbot-help">{% trans "رابط WebSocket للاتصال الصوتي المباشر (مطلوب لـ LiveKit والمخصص)" %}</div>
+                        </div>
+                        <div class="col-md-6" id="customAgentApiUrlGroup">
+                            <label class="form-label fw-bold">{% trans "رابط REST API" %}</label>
+                            <input type="url" name="voice_agent_custom_api_url" class="form-control" dir="ltr" value="{{ settings.voice_agent_custom_api_url }}" placeholder="https://api.example.com/v1/call">
+                            <div class="chatbot-help">{% trans "رابط API لبدء/إنهاء المكالمة" %}</div>
+                        </div>
+                        <div class="col-md-6" id="customAgentAuthHeaderGroup">
+                            <label class="form-label fw-bold">{% trans "اسم هيدر المصادقة" %}</label>
+                            <input type="text" name="voice_agent_custom_auth_header" class="form-control" value="{{ settings.voice_agent_custom_auth_header|default:'Authorization' }}" placeholder="Authorization">
+                        </div>
+                        <div class="col-md-6" id="customAgentAuthPrefixGroup">
+                            <label class="form-label fw-bold">{% trans "بادئة المصادقة" %}</label>
+                            <input type="text" name="voice_agent_custom_auth_prefix" class="form-control" value="{{ settings.voice_agent_custom_auth_prefix|default:'Bearer' }}" placeholder="Bearer">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Save Button -->
         <div class="d-flex justify-content-end gap-2 mb-4">
             <button type="submit" class="btn btn-primary btn-lg px-5">
@@ -971,6 +1131,78 @@
             btn.innerHTML = '<i class="fas fa-eye"></i>';
         }
     };
+
+    window.toggleVoiceAgentKeyVisibility = function(btn){
+        var input = btn.parentElement.querySelector('input');
+        if(input.type === 'password'){
+            input.type = 'text';
+            btn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+        } else {
+            input.type = 'password';
+            btn.innerHTML = '<i class="fas fa-eye"></i>';
+        }
+    };
+
+    // ====== Voice Agent provider settings ======
+    var voiceAgentProviderSelect = document.getElementById('voiceAgentProviderSelect');
+    var customAgentSettings = document.getElementById('customAgentSettings');
+    var customAgentApiUrlGroup = document.getElementById('customAgentApiUrlGroup');
+    var customAgentAuthHeaderGroup = document.getElementById('customAgentAuthHeaderGroup');
+    var customAgentAuthPrefixGroup = document.getElementById('customAgentAuthPrefixGroup');
+
+    function updateVoiceAgentUI(){
+        var provider = voiceAgentProviderSelect.value;
+        var showAdvanced = (provider === 'custom_agent' || provider === 'livekit');
+        customAgentSettings.style.display = showAdvanced ? '' : 'none';
+        // For LiveKit, only show WS URL
+        var isCustom = (provider === 'custom_agent');
+        if(customAgentApiUrlGroup) customAgentApiUrlGroup.style.display = isCustom ? '' : 'none';
+        if(customAgentAuthHeaderGroup) customAgentAuthHeaderGroup.style.display = isCustom ? '' : 'none';
+        if(customAgentAuthPrefixGroup) customAgentAuthPrefixGroup.style.display = isCustom ? '' : 'none';
+    }
+    voiceAgentProviderSelect.addEventListener('change', updateVoiceAgentUI);
+    updateVoiceAgentUI();
+
+    // Voice agent color sync
+    var vaColorInput = document.querySelector('[name="voice_agent_button_color"]');
+    var vaColorText = document.getElementById('voiceAgentColorText');
+    if(vaColorInput && vaColorText){
+        vaColorInput.addEventListener('input', function(){ vaColorText.value = vaColorInput.value; });
+        vaColorText.addEventListener('input', function(){ vaColorInput.value = vaColorText.value; });
+    }
+
+    // Test voice agent connection
+    var testVoiceAgentBtn = document.getElementById('testVoiceAgentBtn');
+    if(testVoiceAgentBtn){
+        testVoiceAgentBtn.addEventListener('click', function(){
+            var btn = this;
+            var result = document.getElementById('testVoiceAgentResult');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>{% trans "جاري الاختبار..." %}';
+            result.textContent = '';
+
+            fetch('{% url "dashboard:chatbot_test_voice_agent" %}', {
+                method: 'POST',
+                headers: {'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json'},
+                credentials: 'same-origin'
+            })
+            .then(function(r){ return r.json(); })
+            .then(function(data){
+                if(data.success){
+                    result.innerHTML = '<span class="text-success"><i class="fas fa-check-circle me-1"></i>' + data.message + '</span>';
+                } else {
+                    result.innerHTML = '<span class="text-danger"><i class="fas fa-times-circle me-1"></i>' + data.message + '</span>';
+                }
+            })
+            .catch(function(){
+                result.innerHTML = '<span class="text-danger"><i class="fas fa-times-circle me-1"></i>{% trans "خطأ في الاتصال" %}</span>';
+            })
+            .finally(function(){
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-plug me-1"></i>{% trans "اختبار اتصال الوكيل" %}';
+            });
+        });
+    }
 })();
 </script>
 {% endblock %}

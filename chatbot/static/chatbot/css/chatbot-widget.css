@@ -684,4 +684,109 @@
     .esco-chatbot-bubble { bottom: 16px !important; }
     .esco-chatbot-bubble.bottom-right { right: 16px; }
     .esco-chatbot-bubble.bottom-left { left: 16px; }
+    .esco-voice-agent-fab { bottom: 16px !important; }
+    .esco-voice-agent-fab.bottom-left { left: 16px; }
+    .esco-voice-agent-fab.bottom-right { right: 16px; }
+    .esco-voice-agent-fab-label { display: none; }
+}
+
+/* ====== Voice Agent Styles ====== */
+.esco-voice-agent-fab {
+    position: fixed;
+    z-index: 9997;
+    bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    border-radius: 30px;
+    padding: 12px 20px;
+    font-family: var(--chatbot-font);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.esco-voice-agent-fab:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+}
+.esco-voice-agent-fab.bottom-left { left: 24px; }
+.esco-voice-agent-fab.bottom-right { right: 24px; }
+.esco-voice-agent-fab i { font-size: 18px; }
+
+.esco-voice-agent-header-btn {
+    animation: pulse-voice 2s infinite;
+}
+@keyframes pulse-voice {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* Voice Agent Call Overlay */
+.esco-voice-agent-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+.esco-voice-agent-call-card {
+    background: #fff;
+    border-radius: 24px;
+    padding: 40px;
+    text-align: center;
+    box-shadow: 0 16px 64px rgba(0,0,0,0.3);
+    min-width: 300px;
+    max-width: 400px;
+}
+.esco-voice-agent-call-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4caf50, #66bb6a);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    color: #fff;
+    font-size: 32px;
+    animation: pulse-agent 1.5s infinite;
+}
+@keyframes pulse-agent {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); }
+    50% { box-shadow: 0 0 0 16px rgba(76, 175, 80, 0); }
+}
+.esco-voice-agent-call-status {
+    font-family: var(--chatbot-font);
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+.esco-voice-agent-call-timer {
+    font-family: monospace;
+    font-size: 24px;
+    color: #666;
+    margin-bottom: 24px;
+}
+.esco-voice-agent-hangup {
+    background: #e53935;
+    color: #fff;
+    border: none;
+    border-radius: 30px;
+    padding: 12px 32px;
+    font-family: var(--chatbot-font);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+}
+.esco-voice-agent-hangup:hover {
+    background: #c62828;
+    transform: scale(1.05);
 }

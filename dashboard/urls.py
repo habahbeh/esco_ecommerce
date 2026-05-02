@@ -339,6 +339,7 @@ urlpatterns = [
     path('chatbot/suggested/create/', views.ChatbotSuggestedCreateView.as_view(), name='chatbot_suggested_create'),
     path('chatbot/suggested/<int:suggestion_id>/delete/', views.ChatbotSuggestedDeleteView.as_view(), name='chatbot_suggested_delete'),
     path('chatbot/test-connection/', views.ChatbotTestConnectionView.as_view(), name='chatbot_test_connection'),
+    path('chatbot/test-voice-agent/', views.ChatbotTestVoiceAgentView.as_view(), name='chatbot_test_voice_agent'),
     path('chatbot/analytics/', views.ChatbotAnalyticsView.as_view(), name='chatbot_analytics'),
 
     # ========================= إدارة العملاء =========================
