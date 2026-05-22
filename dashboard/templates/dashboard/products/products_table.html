@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load static %}
 
 <table id="products-datatable" class="table table-hover align-middle">
     <thead class="table-light">
@@ -22,6 +23,7 @@
 
 <script>
 $(document).ready(function() {
+    var noImageUrl = "{% static 'images/no-image.png' %}";
     const productsTable = $('#products-datatable').DataTable({
         processing: true,
         serverSide: true,
@@ -46,9 +48,7 @@ $(document).ready(function() {
             {
                 data: null,
                 render: function(data) {
-                    let img = data.has_image
-                        ? '<img src="' + data.image_url + '" alt="' + data.name + '" class="product-thumbnail me-2">'
-                        : '<div class="product-thumbnail-placeholder me-2"><i class="fa fa-image"></i></div>';
+                    let img = '<img src="' + data.image_url + '" alt="' + data.name + '" class="product-thumbnail me-2" onerror="this.onerror=null;this.src=\'' + noImageUrl + '\';">';
 
                     let brand = data.brand_name
                         ? '<div class="product-brand small">' + data.brand_name + '</div>'

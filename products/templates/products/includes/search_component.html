@@ -11,7 +11,7 @@
                 name="q"
                 x-model="query"
                 @input.debounce.300ms="getSuggestions()"
-                @focus="showSuggestions = true"
+                @focus="onFocus()"
                 placeholder="{% trans 'ابحث عن المنتجات، الفئات، العلامات التجارية...' %}"
                 class="flex-1 px-4 py-2 outline-none text-gray-700 placeholder-gray-400"
                 autocomplete="off"
@@ -24,6 +24,42 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                 </svg>
             </button>
+        </div>
+
+        <!-- Recent & Popular searches (shown on empty focus) -->
+        <div
+            x-show="showRecent && query.length < 2 && (recentSearches.length > 0 || popularSearches.length > 0)"
+            @click.away="showRecent = false"
+            class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 mt-1 max-h-80 overflow-y-auto"
+        >
+            <template x-if="recentSearches.length > 0">
+                <div class="p-3 border-b border-gray-100">
+                    <p class="text-xs font-semibold text-gray-500 uppercase mb-2">{% trans "عمليات البحث الأخيرة" %}</p>
+                    <template x-for="term in recentSearches" :key="'recent-'+term">
+                        <a :href="'{% url "products:product_search" %}?q=' + encodeURIComponent(term)"
+                           class="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded text-sm text-gray-700">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span x-text="term"></span>
+                        </a>
+                    </template>
+                </div>
+            </template>
+            <template x-if="popularSearches.length > 0">
+                <div class="p-3">
+                    <p class="text-xs font-semibold text-gray-500 uppercase mb-2">{% trans "الأكثر بحثاً" %}</p>
+                    <template x-for="term in popularSearches" :key="'popular-'+term">
+                        <a :href="'{% url "products:product_search" %}?q=' + encodeURIComponent(term)"
+                           class="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded text-sm text-gray-700">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                            </svg>
+                            <span x-text="term"></span>
+                        </a>
+                    </template>
+                </div>
+            </template>
         </div>
 
         <!-- اقتراحات البحث -->
@@ -50,16 +86,11 @@
                         <template x-if="suggestion.type === 'product'">
                             <div class="w-10 h-10 bg-gray-200 rounded overflow-hidden">
                                 <img
-                                    x-show="suggestion.image"
-                                    :src="suggestion.image"
+                                    :src="suggestion.image || '{% static "images/no-image.png" %}'"
                                     :alt="suggestion.title"
                                     class="w-full h-full object-cover"
+                                    onerror="this.onerror=null;this.src='{% static "images/no-image.png" %}';"
                                 >
-                                <div x-show="!suggestion.image" class="w-full h-full flex items-center justify-center">
-                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                                    </svg>
-                                </div>
                             </div>
                         </template>
 
@@ -85,6 +116,9 @@
                         <p class="text-sm font-medium text-gray-900 truncate" x-text="suggestion.title"></p>
 
                         <!-- معلومات إضافية حسب النوع -->
+                        <template x-if="suggestion.type === 'product' && suggestion.sku">
+                            <p class="text-xs text-gray-500" x-text="'SKU: ' + suggestion.sku"></p>
+                        </template>
                         <template x-if="suggestion.type === 'product' && suggestion.price">
                             <p class="text-sm text-blue-600 font-semibold" x-text="suggestion.price + ' {% trans "ريال" %}'"></p>
                         </template>
@@ -154,15 +188,45 @@ function searchComponent() {
         query: '',
         suggestions: [],
         showSuggestions: false,
+        showRecent: false,
         loading: false,
+        recentSearches: [],
+        popularSearches: [],
+        recentLoaded: false,
+
+        async onFocus() {
+            if (this.query.length < 2) {
+                this.showRecent = true;
+                this.showSuggestions = false;
+                if (!this.recentLoaded) {
+                    await this.loadRecentPopular();
+                }
+            }
+        },
+
+        async loadRecentPopular() {
+            try {
+                const response = await fetch('{% url "products:recent_popular_searches" %}');
+                const data = await response.json();
+                this.recentSearches = data.recent || [];
+                this.popularSearches = data.popular || [];
+                this.recentLoaded = true;
+            } catch (error) {
+                console.error('Error fetching recent searches:', error);
+            }
+        },
 
         async getSuggestions() {
             if (this.query.length < 2) {
                 this.suggestions = [];
                 this.showSuggestions = false;
+                if (this.query.length === 0) {
+                    this.showRecent = true;
+                }
                 return;
             }
 
+            this.showRecent = false;
             this.loading = true;
 
             try {

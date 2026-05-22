@@ -436,9 +436,9 @@
                         <div class="wishlist-image">
                             <a href="{% url 'products:product_detail' item.product.slug %}">
                                 {% if item.product.images.exists %}
-                                    <img src="{{ item.product.images.first.image.url }}" alt="{% if LANGUAGE_CODE == 'en' and item.product.name_en %}{{ item.product.name_en }}{% else %}{{ item.product.name }}{% endif %}">
+                                    <img src="{{ item.product.images.first.image.url }}" alt="{% if LANGUAGE_CODE == 'en' and item.product.name_en %}{{ item.product.name_en }}{% else %}{{ item.product.name }}{% endif %}" loading="lazy">
                                 {% else %}
-                                    <img src="{{ item.product.default_image.url }}" alt="{% if LANGUAGE_CODE == 'en' and item.product.name_en %}{{ item.product.name_en }}{% else %}{{ item.product.name }}{% endif %}">
+                                    <img src="{{ item.product.default_image.url }}" alt="{% if LANGUAGE_CODE == 'en' and item.product.name_en %}{{ item.product.name_en }}{% else %}{{ item.product.name }}{% endif %}" loading="lazy">
                                 {% endif %}
                             </a>
                         </div>

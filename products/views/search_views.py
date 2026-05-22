@@ -9,13 +9,14 @@ from django.shortcuts import render
 from django.views.generic import TemplateView, ListView
 from django.utils.translation import gettext as _
 from django.utils import timezone
-from django.db.models import Q, Count, Avg, Min, Max
+from django.db.models import Q, Count, Avg, Min, Max, F
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django.http import JsonResponse
 from django.conf import settings
 import logging
+import os
 import re
 
 from .base_views import BaseProductListView, CachedMixin, OptimizedQueryMixin
@@ -68,12 +69,16 @@ class SearchMixin:
                     Q(name__icontains=term) |
                     Q(name_en__icontains=term) |
                     Q(description__icontains=term) |
-                    # Q(description_en__icontains=term) |
                     Q(short_description__icontains=term) |
                     Q(sku__icontains=term) |
+                    Q(barcode__icontains=term) |
+                    Q(variants__sku__icontains=term) |
+                    Q(variants__name__icontains=term) |
                     Q(tags__name__icontains=term) |
                     Q(category__name__icontains=term) |
-                    Q(brand__name__icontains=term)
+                    Q(category__name_en__icontains=term) |
+                    Q(brand__name__icontains=term) |
+                    Q(brand__name_en__icontains=term)
             )
 
             main_query &= term_query
@@ -81,25 +86,32 @@ class SearchMixin:
         return main_query
 
     def save_search_query(self, request, query: str, results_count: int = 0):
-        """Save search query to session and analytics"""
+        """Save search query to session and database"""
         if not query or len(query.strip()) < 2:
             return
 
-        # Save to recent searches in session
         session_key = 'recent_searches'
         recent_searches = request.session.get(session_key, [])
 
-        # Remove if already exists and add to beginning
         if query in recent_searches:
             recent_searches.remove(query)
         recent_searches.insert(0, query)
 
-        # Keep only last 10 searches
         recent_searches = recent_searches[:10]
         request.session[session_key] = recent_searches
 
-        # Log search for analytics
-        logger.info(f"Search query: '{query}' - Results: {results_count}")
+        try:
+            from ..models import SearchQuery
+            obj, created = SearchQuery.objects.get_or_create(
+                query=query.lower().strip(),
+                defaults={'results_count': results_count}
+            )
+            if not created:
+                obj.count = F('count') + 1
+                obj.results_count = results_count
+                obj.save(update_fields=['count', 'results_count', 'last_searched'])
+        except Exception:
+            pass
 
 
 class SearchView(BaseProductListView, SearchMixin):
@@ -182,16 +194,28 @@ class SearchView(BaseProductListView, SearchMixin):
         context['search_query'] = query
 
         if query:
-            # Save search query
-            results_count = self.get_queryset().count()
+            # Use paginator count to avoid duplicate queryset evaluation
+            paginator = context.get('paginator')
+            results_count = paginator.count if paginator else 0
             self.save_search_query(self.request, query, results_count)
 
-            # Search suggestions if no results
+            # "Did you mean?" and search suggestions if no results
             if results_count == 0:
                 context['search_suggestions'] = self.get_search_suggestions(query)
+                try:
+                    from ..search import SearchService
+                    service = SearchService()
+                    did_you_mean = service.did_you_mean(query)
+                    if did_you_mean:
+                        context['did_you_mean'] = did_you_mean
+                except Exception:
+                    pass
 
             # Popular searches
             context['popular_searches'] = self.get_popular_searches()
+
+            # Recent searches from session
+            context['recent_searches'] = self.request.session.get('recent_searches', [])[:5]
 
             context['results_count'] = results_count
 
@@ -227,16 +251,16 @@ class SearchView(BaseProductListView, SearchMixin):
         return list(set(suggestions))[:5]
 
     def get_popular_searches(self) -> List[str]:
-        """Get popular search terms"""
-        # This would come from search analytics
-        # For now, return some common searches
-        return [
-            _('هواتف ذكية'),
-            _('لابتوب'),
-            _('ساعات ذكية'),
-            _('سماعات'),
-            _('كاميرات')
-        ]
+        """Get popular search terms from database"""
+        try:
+            from ..models import SearchQuery
+            return list(
+                SearchQuery.objects.filter(results_count__gt=0)
+                .order_by('-count')
+                .values_list('query', flat=True)[:8]
+            )
+        except Exception:
+            return []
 
 
 class AdvancedSearchView(TemplateView, OptimizedQueryMixin, SearchMixin):
@@ -434,9 +458,11 @@ class AdvancedSearchView(TemplateView, OptimizedQueryMixin, SearchMixin):
         elif sort_by == 'best_selling':
             queryset = queryset.order_by('-sales_count')
         elif sort_by == 'top_rated':
-            queryset = queryset.annotate(
-                avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True))
-            ).order_by('-avg_rating')
+            if 'avg_rating' not in queryset.query.annotations:
+                queryset = queryset.annotate(
+                    avg_rating=Avg('reviews__rating', filter=Q(reviews__is_approved=True))
+                )
+            queryset = queryset.order_by('-avg_rating')
         else:
             queryset = queryset.order_by('-created_at')
 
@@ -451,16 +477,17 @@ class AdvancedSearchView(TemplateView, OptimizedQueryMixin, SearchMixin):
         except EmptyPage:
             products_page = paginator.page(paginator.num_pages)
 
-        # Save search if there's a query
+        total_results = paginator.count
+
         if query:
-            self.save_search_query(self.request, query, queryset.count())
+            self.save_search_query(self.request, query, total_results)
 
         return {
             'products': products_page,
             'page_obj': products_page,
             'paginator': paginator,
             'is_paginated': products_page.has_other_pages(),
-            'total_results': queryset.count()
+            'total_results': total_results
         }
 
 
@@ -537,10 +564,13 @@ class QuickSearchView(ListView, OptimizedQueryMixin):
         return Product.objects.filter(
             Q(name__icontains=query) |
             Q(name_en__icontains=query) |
-            Q(sku__icontains=query),
+            Q(sku__icontains=query) |
+            Q(barcode__icontains=query) |
+            Q(variants__sku__icontains=query) |
+            Q(variants__name__icontains=query),
             is_active=True,
             status='published'
-        ).select_related('category', 'brand').prefetch_related('images')[:20]
+        ).select_related('category', 'brand').prefetch_related('images').distinct()[:20]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -568,10 +598,14 @@ def search_suggestions(request):
 
         # البحث في المنتجات
         products = Product.objects.filter(
-            Q(name__icontains=query) | Q(name_en__icontains=query),
+            Q(name__icontains=query) | Q(name_en__icontains=query) |
+            Q(sku__icontains=query) | Q(barcode__icontains=query) |
+            Q(variants__sku__icontains=query) | Q(variants__name__icontains=query) |
+            Q(category__name__icontains=query) | Q(category__name_en__icontains=query) |
+            Q(brand__name__icontains=query) | Q(brand__name_en__icontains=query),
             is_active=True,
             status='published'
-        ).select_related('category', 'brand')[:5]
+        ).select_related('category', 'brand').prefetch_related('images').distinct()[:5]
 
         # البحث في الفئات
         categories = Category.objects.filter(
@@ -588,14 +622,20 @@ def search_suggestions(request):
         suggestions = []
 
         # إضافة المنتجات
+        default_image = settings.STATIC_URL + 'images/no-image.png'
+
         for product in products:
-            main_image_url = ''
-            if hasattr(product, 'main_image') and product.main_image:
-                main_image_url = product.main_image.url
-            elif hasattr(product, 'images') and product.images.exists():
-                first_image = product.images.first()
-                if first_image and hasattr(first_image, 'image'):
-                    main_image_url = first_image.image.url
+            main_image_url = default_image
+            all_images = list(product.images.all())
+            if all_images:
+                primary = next((img for img in all_images if img.is_primary), None)
+                img = primary or all_images[0]
+                if img and img.image:
+                    try:
+                        if os.path.isfile(img.image.path):
+                            main_image_url = img.image.url
+                    except Exception:
+                        pass
 
             # السعر الحالي
             current_price = 0
@@ -618,11 +658,15 @@ def search_suggestions(request):
                 'url': product_url,
                 'image': main_image_url,
                 'price': str(current_price),
+                'sku': product.sku or '',
             })
 
         # إضافة الفئات
         for category in categories:
-            category_url = category.get_absolute_url() if hasattr(category, 'get_absolute_url') else '#'
+            try:
+                category_url = category.get_absolute_url() if hasattr(category, 'get_absolute_url') else '#'
+            except Exception:
+                category_url = '#'
             if category_url != '#' and not category_url.startswith(('/en/', '/ar/')):
                 category_url = lang_prefix + category_url
 
@@ -642,9 +686,12 @@ def search_suggestions(request):
         # إضافة العلامات التجارية
         for brand in brands:
             brand_url = '#'
-            if hasattr(brand, 'get_absolute_url'):
-                brand_url = brand.get_absolute_url()
-            elif hasattr(brand, 'slug'):
+            try:
+                if hasattr(brand, 'get_absolute_url'):
+                    brand_url = brand.get_absolute_url()
+            except Exception:
+                pass
+            if brand_url == '#' and hasattr(brand, 'slug'):
                 brand_url = f'/products/brand/{brand.slug}/'
 
             if brand_url != '#' and not brand_url.startswith(('/en/', '/ar/')):
@@ -682,15 +729,39 @@ def quick_search_simple(request):
         products = Product.objects.filter(
             Q(name__icontains=query) |
             Q(name_en__icontains=query) |
-            Q(sku__icontains=query),
+            Q(sku__icontains=query) |
+            Q(barcode__icontains=query) |
+            Q(variants__sku__icontains=query) |
+            Q(variants__name__icontains=query),
             is_active=True,
             status='published'
-        ).select_related('category', 'brand').prefetch_related('images')[:10]
+        ).select_related('category', 'brand').prefetch_related('images').distinct()[:10]
 
     return render(request, 'products/quick_search.html', {
         'query': query,
         'products': products,
         'results_count': len(products),
+    })
+
+
+def recent_popular_searches(request):
+    """API endpoint for recent and popular searches (shown on search focus)"""
+    recent = request.session.get('recent_searches', [])[:5]
+
+    popular = []
+    try:
+        from ..models import SearchQuery
+        popular = list(
+            SearchQuery.objects.filter(results_count__gt=0)
+            .order_by('-count')
+            .values_list('query', flat=True)[:6]
+        )
+    except Exception:
+        pass
+
+    return JsonResponse({
+        'recent': recent,
+        'popular': popular,
     })
 
 

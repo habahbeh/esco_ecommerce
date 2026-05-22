@@ -103,3 +103,32 @@ def delete_product_from_vector_db(sender, instance, **kwargs):
         log_step(f"🗑️ تم حذف: {instance.name}")
     except Exception as e:
         log_step(f"❌ فشل حذف: {instance.name} - {e}")
+
+
+@receiver(post_save, sender=Product)
+def update_product_in_meilisearch(sender, instance, created, **kwargs):
+    try:
+        from .search.client import is_available
+        if not is_available():
+            return
+        from .search.indexer import MeilisearchIndexer
+        ms_indexer = MeilisearchIndexer()
+        if instance.is_active and instance.status == 'published':
+            ms_indexer.index_product(instance)
+        else:
+            ms_indexer.delete_product(instance.id)
+    except Exception as e:
+        logger.warning(f"Meilisearch sync failed for product {instance.id}: {e}")
+
+
+@receiver(post_delete, sender=Product)
+def delete_product_from_meilisearch(sender, instance, **kwargs):
+    try:
+        from .search.client import is_available
+        if not is_available():
+            return
+        from .search.indexer import MeilisearchIndexer
+        ms_indexer = MeilisearchIndexer()
+        ms_indexer.delete_product(instance.id)
+    except Exception as e:
+        logger.warning(f"Meilisearch delete failed for product {instance.id}: {e}")

@@ -48,6 +48,19 @@ class ChatbotSettings(models.Model):
         ('en-US', _('الإنجليزية (أمريكا)')),
         ('en-GB', _('الإنجليزية (بريطانيا)')),
     ]
+    VOICE_AGENT_PROVIDER_CHOICES = [
+        ('vapi', 'Vapi.ai'),
+        ('bland', 'Bland.ai'),
+        ('retell', 'Retell.ai'),
+        ('voiceflow', 'Voiceflow'),
+        ('livekit', 'LiveKit'),
+        ('custom_agent', _('مخصص (أي منصة)')),
+    ]
+    VOICE_AGENT_TRIGGER_CHOICES = [
+        ('floating_button', _('زر عائم مستقل')),
+        ('inside_chatbot', _('داخل نافذة الشات')),
+        ('replace_chatbot', _('يحل محل الشات بوت')),
+    ]
 
     is_enabled = models.BooleanField(_("تفعيل الشات بوت"), default=False)
 
@@ -111,6 +124,37 @@ class ChatbotSettings(models.Model):
                                               help_text=_('اسم الحقل في multipart/form-data (مثال: file أو audio)'))
     custom_voice_response_path = models.CharField(_("مسار النص في الرد"), max_length=200, blank=True, default='text',
                                                    help_text=_('مسار JSON للنص المُحوَّل (مثال: text أو result.transcript أو data.text)'))
+
+    # Voice Agent fields
+    enable_voice_agent = models.BooleanField(_("تفعيل الوكيل الصوتي"), default=False)
+    voice_agent_provider = models.CharField(_("مزود الوكيل الصوتي"), max_length=20,
+                                            choices=VOICE_AGENT_PROVIDER_CHOICES, default='vapi')
+    voice_agent_api_key = models.CharField(_("مفتاح API للوكيل الصوتي"), max_length=500, blank=True, default='')
+    voice_agent_id = models.CharField(_("معرّف الوكيل الصوتي"), max_length=200, blank=True, default='',
+                                      help_text=_('معرّف الوكيل/المساعد لدى المزود (Agent ID أو Assistant ID)'))
+    voice_agent_phone_number = models.CharField(_("رقم هاتف الوكيل"), max_length=30, blank=True, default='',
+                                                help_text=_('رقم الهاتف المربوط بالوكيل (اختياري)'))
+    voice_agent_trigger = models.CharField(_("طريقة تشغيل الوكيل"), max_length=20,
+                                           choices=VOICE_AGENT_TRIGGER_CHOICES, default='floating_button')
+    voice_agent_button_color = models.CharField(_("لون زر الوكيل"), max_length=7, default='#4caf50')
+    voice_agent_button_icon = models.CharField(_("أيقونة زر الوكيل"), max_length=50, default='fas fa-phone-alt')
+    voice_agent_button_position = models.CharField(_("موقع زر الوكيل"), max_length=20,
+                                                   choices=[('bottom-right', _('أسفل اليمين')), ('bottom-left', _('أسفل اليسار'))],
+                                                   default='bottom-left')
+    voice_agent_label_ar = models.CharField(_("نص الزر (عربي)"), max_length=50, blank=True, default='تحدث معنا')
+    voice_agent_label_en = models.CharField(_("نص الزر (إنجليزي)"), max_length=50, blank=True, default='Talk to us')
+    voice_agent_embed_code = models.TextField(_("كود التضمين (Embed)"), blank=True, default='',
+                                              help_text=_('كود HTML/JS من المزود لتضمينه مباشرة (اختياري — يُستخدم بدلاً من SDK)'))
+    voice_agent_extra_config = models.JSONField(_("إعدادات إضافية (JSON)"), blank=True, default=dict,
+                                                help_text=_('إعدادات إضافية بصيغة JSON تُمرر للمزود'))
+
+    # Custom voice agent provider fields
+    voice_agent_custom_ws_url = models.URLField(_("رابط WebSocket"), max_length=500, blank=True, default='',
+                                                help_text=_('رابط WebSocket للاتصال المباشر بالوكيل الصوتي'))
+    voice_agent_custom_api_url = models.URLField(_("رابط API للوكيل"), max_length=500, blank=True, default='',
+                                                  help_text=_('رابط REST API لبدء/إنهاء المكالمة'))
+    voice_agent_custom_auth_header = models.CharField(_("هيدر المصادقة"), max_length=100, blank=True, default='Authorization')
+    voice_agent_custom_auth_prefix = models.CharField(_("بادئة المصادقة"), max_length=50, blank=True, default='Bearer')
 
     max_messages_per_session = models.PositiveIntegerField(_("الحد الأقصى لرسائل الجلسة"), default=50)
     rate_limit_per_minute = models.PositiveIntegerField(_("الحد الأقصى للرسائل بالدقيقة"), default=10)

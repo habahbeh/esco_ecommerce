@@ -23,7 +23,8 @@ from .models import (
     Tag, ProductReview, Wishlist, ProductComparison, ProductViewHistory,
     ProductAttribute, ProductAttributeValue, ProductQuestion,
     ProductSubscription, ProductDiscount, DiscountUsage,
-    CategoryFAQ, CategoryLandingContent
+    CategoryFAQ, CategoryLandingContent,
+    SearchSynonym, SearchQuery,
 )
 
 
@@ -1255,6 +1256,22 @@ admin.site.register(ProductViewHistory)
 admin.site.register(ProductAttributeValue)
 admin.site.register(ProductSubscription)
 admin.site.register(DiscountUsage)
+
+
+@admin.register(SearchSynonym)
+class SearchSynonymAdmin(admin.ModelAdmin):
+    list_display = ('terms', 'is_active', 'created_at')
+    list_filter = ('is_active',)
+    search_fields = ('terms',)
+
+
+@admin.register(SearchQuery)
+class SearchQueryAdmin(admin.ModelAdmin):
+    list_display = ('query', 'count', 'results_count', 'last_searched')
+    list_filter = ('results_count',)
+    search_fields = ('query',)
+    ordering = ('-count',)
+    readonly_fields = ('query', 'count', 'results_count', 'last_searched', 'created_at')
 
 # تخصيص عناوين الإدارة
 admin.site.site_header = _('إدارة المنتجات')

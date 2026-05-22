@@ -216,8 +216,14 @@ STATICFILES_DIRS = [
 ]
 
 # ملفات الوسائط - Media files
-MEDIA_URL = 'media/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Image optimization settings
+IMAGE_MAX_DIMENSION = 1200
+IMAGE_QUALITY = 85
+IMAGE_THUMBNAIL_SIZE = (300, 300)
+IMAGE_MEDIUM_SIZE = (600, 600)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -346,6 +352,11 @@ if not DEBUG:
     SECURE_HSTS_PRELOAD = True
 
 
+
+# Meilisearch Configuration
+MEILISEARCH_URL = 'http://127.0.0.1:7700'
+MEILISEARCH_MASTER_KEY = ''
+MEILISEARCH_INDEX_PREFIX = 'esco_'
 
 # مسارات تسجيل الدخول
 # LOGIN_URL = 'dashboard:dashboard_login'

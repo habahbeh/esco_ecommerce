@@ -72,18 +72,20 @@
                             <!-- صورة المنتج -->
                             <div class="aspect-w-1 aspect-h-1 bg-gray-100">
                                 {% if product.main_image %}
-                                    <img 
-                                        src="{{ product.main_image.url }}" 
-                                        alt="{{ product.name }}" 
+                                    <img
+                                        src="{{ product.main_image.url }}"
+                                        alt="{{ product.name }}"
                                         class="w-full h-32 object-cover"
+                                        loading="lazy"
                                     >
                                 {% elif product.images.exists %}
                                     {% with product.images.first as first_image %}
                                         {% if first_image.image %}
-                                            <img 
-                                                src="{{ first_image.image.url }}" 
-                                                alt="{{ product.name }}" 
+                                            <img
+                                                src="{{ first_image.image.url }}"
+                                                alt="{{ product.name }}"
                                                 class="w-full h-32 object-cover"
+                                                loading="lazy"
                                             >
                                         {% endif %}
                                     {% endwith %}

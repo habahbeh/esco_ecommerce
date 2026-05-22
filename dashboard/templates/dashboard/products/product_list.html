@@ -14,12 +14,12 @@
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap5.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.bootstrap5.min.css">
 <style>
     .product-actions {
         display: flex;
         gap: 5px;
+        white-space: nowrap;
     }
     .product-thumbnail {
         width: 50px;
@@ -562,7 +562,8 @@
             <div class="card-body">
                 <form id="bulk-action-form" method="post" action="{% url 'dashboard:dashboard_product_bulk_actions' %}">
                     {% csrf_token %}
-                    <table id="products-datatable" class="table table-hover align-middle w-100">
+                    <div class="table-responsive">
+                    <table id="products-datatable" class="table table-hover align-middle" style="width:100%">
                         <thead class="table-light">
                             <tr>
                                 <th width="35">
@@ -576,12 +577,13 @@
                                 <th>{% trans 'العلامة التجارية' %}</th>
                                 <th>{% trans 'السعر' %}</th>
                                 <th>{% trans 'المخزون' %}</th>
-                                <th style="min-width: 100px;">{% trans 'الحالة' %}</th>
+                                <th>{% trans 'الحالة' %}</th>
                                 <th>{% trans 'التاريخ' %}</th>
-                                <th width="110">{% trans 'الإجراءات' %}</th>
+                                <th>{% trans 'الإجراءات' %}</th>
                             </tr>
                         </thead>
                     </table>
+                    </div>
                 </form>
             </div>
         </div>
@@ -730,8 +732,6 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
-<script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
-<script src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.bootstrap5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
@@ -886,10 +886,11 @@
         });
 
         // إعداد DataTables
+        var noImageUrl = "{% static 'images/no-image.png' %}";
         const productsTable = $('#products-datatable').DataTable({
             processing: true,
             serverSide: true,
-            responsive: true,
+            responsive: false,
             ajax: {
                 url: "{% url 'dashboard:dashboard_products_api' %}",
                 type: "POST",
@@ -918,9 +919,7 @@
                 {
                     data: null,
                     render: function(data) {
-                        let img = data.has_image
-                            ? '<img src="' + data.image_url + '" alt="' + data.name + '" class="product-thumbnail me-2">'
-                            : '<div class="product-thumbnail-placeholder me-2"><i class="fa fa-image"></i></div>';
+                        let img = '<img src="' + data.image_url + '" alt="' + data.name + '" class="product-thumbnail me-2" onerror="this.onerror=null;this.src=\'' + noImageUrl + '\';">';
 
                         return '<div class="d-flex align-items-center">' +
                             img +
@@ -1050,7 +1049,7 @@
                     data: null,
                     render: function(data) {
                         let dates = '<div class="small text-muted">' + data.created_at + '</div>';
-                        if (data.published_at) {
+                        if (data.published_at && data.published_at !== data.created_at) {
                             dates += '<div class="small text-muted">' + data.published_at + '</div>';
                         }
                         return dates;
@@ -1110,7 +1109,6 @@
     }
 ],
             drawCallback: function() {
-                // إعادة تفعيل أحداث الحذف والتحديد بعد تحديث الجدول
                 bindEvents();
             },
             initComplete: function() {

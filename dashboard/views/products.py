@@ -21,6 +21,7 @@ from datetime import datetime
 import re
 import os
 
+from django.conf import settings
 from decimal import Decimal, InvalidOperation
 
 
@@ -1284,6 +1285,20 @@ class ProductImportProgressView(View):
 class ProductDataTableView(DashboardAccessMixin, View):
     """واجهة برمجية لجدول المنتجات بالتحميل الجزئي"""
 
+    _default_image_url = None
+
+    def _get_product_image_url(self, product):
+        if self._default_image_url is None:
+            ProductDataTableView._default_image_url = settings.STATIC_URL + 'images/no-image.png'
+        img = product.default_image
+        if img and img.image:
+            try:
+                if os.path.isfile(img.image.path):
+                    return img.image.url
+            except Exception:
+                pass
+        return self._default_image_url
+
     def post(self, request):
         # استلام معلمات DataTables
         draw = int(request.POST.get('draw', 1))
@@ -1300,22 +1315,48 @@ class ProductDataTableView(DashboardAccessMixin, View):
 
         queryset = Product.objects.select_related('category', 'brand').prefetch_related('images')
 
-        # تطبيق البحث
+        # تطبيق البحث — Meilisearch with ORM fallback
         if search_value:
-            queryset = queryset.filter(
-                Q(name__icontains=search_value) |
-                Q(name_en__icontains=search_value) |
-                Q(sku__icontains=search_value) |
-                Q(description__icontains=search_value) |
-                Q(search_keywords__icontains=search_value)
-            )
+            ms_ids = None
+            try:
+                from products.search.client import is_available
+                if is_available():
+                    from products.search.searcher import MeilisearchSearcher
+                    ms = MeilisearchSearcher()
+                    result = ms.dashboard_search(search_value, per_page=1000)
+                    if result and result['hits']:
+                        ms_ids = [h['id'] for h in result['hits']]
+            except Exception:
+                pass
+
+            if ms_ids is not None:
+                from django.db.models import Case, When
+                preserved = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(ms_ids)])
+                queryset = queryset.filter(pk__in=ms_ids).order_by(preserved)
+            else:
+                queryset = queryset.filter(
+                    Q(name__icontains=search_value) |
+                    Q(name_en__icontains=search_value) |
+                    Q(sku__icontains=search_value) |
+                    Q(barcode__icontains=search_value) |
+                    Q(variants__sku__icontains=search_value) |
+                    Q(variants__name__icontains=search_value) |
+                    Q(category__name__icontains=search_value) |
+                    Q(category__name_en__icontains=search_value) |
+                    Q(brand__name__icontains=search_value) |
+                    Q(brand__name_en__icontains=search_value) |
+                    Q(description__icontains=search_value) |
+                    Q(search_keywords__icontains=search_value)
+                ).distinct()
 
         # تطبيق التصفية
         if category_filter:
-            category = Category.objects.get(id=category_filter)
-            # الحصول على جميع الفئات الفرعية
-            subcategories = category.get_all_children(include_self=True)
-            queryset = queryset.filter(category__in=subcategories)
+            try:
+                category = Category.objects.get(id=category_filter)
+                subcategories = category.get_all_children(include_self=True)
+                queryset = queryset.filter(category__in=subcategories)
+            except (Category.DoesNotExist, ValueError, TypeError):
+                pass
 
         if brand_filter:
             queryset = queryset.filter(brand_id=brand_filter)
@@ -1348,10 +1389,11 @@ class ProductDataTableView(DashboardAccessMixin, View):
             elif stock_filter == 'out_of_stock':
                 queryset = queryset.filter(stock_status='out_of_stock')
             elif stock_filter == 'low_stock':
-                # يمكن تعديل هذا حسب كيفية تعريف "كمية منخفضة" في النظام
                 queryset = queryset.filter(
                     stock_status='in_stock',
-                    low_stock=True
+                    track_inventory=True,
+                    stock_quantity__gt=0,
+                    stock_quantity__lte=F('min_stock_level')
                 )
             elif stock_filter == 'pre_order':
                 queryset = queryset.filter(stock_status='pre_order')
@@ -1416,8 +1458,8 @@ class ProductDataTableView(DashboardAccessMixin, View):
                 'is_featured': product.is_featured,
                 'created_at': product.created_at.strftime('%Y/%m/%d'),
                 'published_at': product.published_at.strftime('%Y/%m/%d') if product.published_at else '',
-                'has_image': product.default_image is not None,
-                'image_url': product.default_image.image.url if product.default_image else ''
+                'has_image': True,
+                'image_url': self._get_product_image_url(product)
             })
 
         # إرجاع النتيجة بتنسيق DataTables

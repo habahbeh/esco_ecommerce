@@ -58,6 +58,7 @@ try:
         search_suggestions,
         quick_search_simple,
         advanced_search_view,
+        recent_popular_searches,
     )
 
     SEARCH_VIEWS_AVAILABLE = True
@@ -86,11 +87,13 @@ def fallback_search_view(request):
             Q(name__icontains=query) |
             Q(name_en__icontains=query) |
             Q(description__icontains=query) |
-            # Q(description_en__icontains=query) |
-            Q(sku__icontains=query),
+            Q(sku__icontains=query) |
+            Q(barcode__icontains=query) |
+            Q(variants__sku__icontains=query) |
+            Q(variants__name__icontains=query),
             is_active=True,
             status='published'
-        ).select_related('category', 'brand').prefetch_related('images')[:50]
+        ).select_related('category', 'brand').prefetch_related('images').distinct()[:50]
 
     return render(request, 'products/search_results.html', {
         'search_query': query,
@@ -128,6 +131,11 @@ urlpatterns = [
     path('api/search/quick/',
          quick_search_simple if SEARCH_VIEWS_AVAILABLE else fallback_search_view,
          name='api_quick_search'),
+
+    # API for recent & popular searches
+    path('api/search/recent-popular/',
+         recent_popular_searches if SEARCH_VIEWS_AVAILABLE else fallback_search_view,
+         name='recent_popular_searches'),
 
     # الصفحة الرئيسية للمنتجات
     path('', ProductListView.as_view(), name='product_list'),

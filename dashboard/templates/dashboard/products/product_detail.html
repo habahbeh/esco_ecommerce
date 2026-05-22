@@ -401,13 +401,8 @@
             <div class="col-md-5 mb-4">
                 <div class="product-image-gallery">
                     <div class="product-image-main">
-                        {% if product.default_image %}
-                        <img src="{{ product.default_image.image.url }}" alt="{{ product.name }}" id="main-product-image">
-                        {% else %}
-                        <div class="d-flex align-items-center justify-content-center h-100 w-100 bg-light">
-                            <i class="fa fa-image fa-3x text-muted"></i>
-                        </div>
-                        {% endif %}
+                        <img src="{% if product.default_image %}{{ product.default_image.image.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}" alt="{{ product.name }}" id="main-product-image" onerror="this.onerror=null;this.src='{% static "images/no-image.png" %}';">
+
                     </div>
                     <div class="product-thumbnails">
                         {% for image in images %}
@@ -1013,13 +1008,8 @@
                     <div class="swiper-slide">
                         <div class="card related-product-card h-100">
                             <div class="related-product-image p-3">
-                                {% if related_product.default_image %}
-                                <img src="{{ related_product.default_image.image.url }}" alt="{{ related_product.name }}">
-                                {% else %}
-                                <div class="d-flex align-items-center justify-content-center h-100 w-100 bg-light">
-                                    <i class="fa fa-image fa-2x text-muted"></i>
-                                </div>
-                                {% endif %}
+                                <img src="{% if related_product.default_image %}{{ related_product.default_image.image.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}" alt="{{ related_product.name }}" onerror="this.onerror=null;this.src='{% static "images/no-image.png" %}';">
+
                             </div>
                             <div class="card-body">
                                 <h5 class="card-title">{{ related_product.name }}</h5>

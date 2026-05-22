@@ -12,6 +12,7 @@ from dashboard.mixins import DashboardAccessMixin, SuperuserRequiredMixin
 from chatbot.models import ChatbotSettings, Conversation, Message, CustomQA, SuggestedQuestion
 from chatbot.providers.registry import get_provider, get_all_providers_models
 from chatbot.voice_providers.registry import get_all_voice_providers_voices
+from chatbot.voice_agent_providers.registry import get_all_voice_agent_providers_info
 
 
 class ChatbotSettingsView(SuperuserRequiredMixin, View):
@@ -21,16 +22,24 @@ class ChatbotSettingsView(SuperuserRequiredMixin, View):
         settings = ChatbotSettings.get_settings()
         all_models = get_all_providers_models()
         all_voices = get_all_voice_providers_voices()
+        all_agent_providers = get_all_voice_agent_providers_info()
         api_key = settings.api_key or ''
         voice_api_key = settings.voice_api_key or ''
+        voice_agent_api_key = settings.voice_agent_api_key or ''
+        extra_config = settings.voice_agent_extra_config
+        extra_config_json = json.dumps(extra_config, ensure_ascii=False, indent=2) if extra_config else ''
         context = {
             'settings': settings,
             'all_models': json.dumps(all_models),
             'all_voices': json.dumps(all_voices),
+            'all_agent_providers': json.dumps(all_agent_providers),
             'api_key_set': bool(api_key),
             'api_key_masked': (api_key[:8] + '...' + api_key[-4:]) if len(api_key) > 12 else '',
             'voice_api_key_set': bool(voice_api_key),
             'voice_api_key_masked': (voice_api_key[:8] + '...' + voice_api_key[-4:]) if len(voice_api_key) > 12 else '',
+            'voice_agent_api_key_set': bool(voice_agent_api_key),
+            'voice_agent_api_key_masked': (voice_agent_api_key[:8] + '...' + voice_agent_api_key[-4:]) if len(voice_agent_api_key) > 12 else '',
+            'voice_agent_extra_config_json': extra_config_json,
             'page_title': _('إعدادات الشات بوت'),
             'current_page': 'chatbot',
         }
@@ -107,6 +116,34 @@ class ChatbotSettingsView(SuperuserRequiredMixin, View):
         settings.custom_voice_stt_field = request.POST.get('custom_voice_stt_field', 'file')
         settings.custom_voice_response_path = request.POST.get('custom_voice_response_path', 'text')
 
+        # Voice Agent settings
+        settings.enable_voice_agent = request.POST.get('enable_voice_agent') == 'on'
+        settings.voice_agent_provider = request.POST.get('voice_agent_provider', 'vapi')
+        new_voice_agent_api_key = request.POST.get('voice_agent_api_key', '').strip()
+        if new_voice_agent_api_key:
+            settings.voice_agent_api_key = new_voice_agent_api_key
+        settings.voice_agent_id = request.POST.get('voice_agent_id', '')
+        settings.voice_agent_phone_number = request.POST.get('voice_agent_phone_number', '')
+        settings.voice_agent_trigger = request.POST.get('voice_agent_trigger', 'floating_button')
+        settings.voice_agent_button_color = request.POST.get('voice_agent_button_color', '#4caf50')
+        settings.voice_agent_button_icon = request.POST.get('voice_agent_button_icon', 'fas fa-phone-alt')
+        settings.voice_agent_button_position = request.POST.get('voice_agent_button_position', 'bottom-left')
+        settings.voice_agent_label_ar = request.POST.get('voice_agent_label_ar', 'تحدث معنا')
+        settings.voice_agent_label_en = request.POST.get('voice_agent_label_en', 'Talk to us')
+        settings.voice_agent_embed_code = request.POST.get('voice_agent_embed_code', '')
+        extra_config_str = request.POST.get('voice_agent_extra_config', '').strip()
+        if extra_config_str:
+            try:
+                settings.voice_agent_extra_config = json.loads(extra_config_str)
+            except (json.JSONDecodeError, ValueError):
+                messages.warning(request, _('تنسيق JSON غير صالح في الإعدادات الإضافية للوكيل الصوتي'))
+        else:
+            settings.voice_agent_extra_config = {}
+        settings.voice_agent_custom_ws_url = request.POST.get('voice_agent_custom_ws_url', '')
+        settings.voice_agent_custom_api_url = request.POST.get('voice_agent_custom_api_url', '')
+        settings.voice_agent_custom_auth_header = request.POST.get('voice_agent_custom_auth_header', 'Authorization')
+        settings.voice_agent_custom_auth_prefix = request.POST.get('voice_agent_custom_auth_prefix', 'Bearer')
+
         settings.max_messages_per_session = request.POST.get('max_messages_per_session', 50)
         settings.rate_limit_per_minute = request.POST.get('rate_limit_per_minute', 10)
 
@@ -125,6 +162,23 @@ class ChatbotTestConnectionView(SuperuserRequiredMixin, View):
                 return JsonResponse({'success': True, 'message': 'Connection successful!'})
             else:
                 return JsonResponse({'success': False, 'message': 'Connection failed. Check your API key and model.'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+
+
+class ChatbotTestVoiceAgentView(SuperuserRequiredMixin, View):
+    def post(self, request):
+        settings = ChatbotSettings.get_settings()
+        try:
+            from chatbot.voice_agent_providers.registry import get_voice_agent_provider
+            provider = get_voice_agent_provider(settings)
+            if not provider:
+                return JsonResponse({'success': False, 'message': 'Voice agent provider not configured'})
+            success = provider.test_connection()
+            if success:
+                return JsonResponse({'success': True, 'message': 'Voice agent connection successful!'})
+            else:
+                return JsonResponse({'success': False, 'message': 'Voice agent connection failed. Check your API key and Agent ID.'})
         except Exception as e:
             return JsonResponse({'success': False, 'message': str(e)})
 

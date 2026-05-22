@@ -856,7 +856,7 @@
 <div class="offer-image">
     <a href="{% url 'products:product_detail' product.slug %}">
         {% if product.default_image %}
-            <img src="{{ product.default_image.image.url }}" alt="{{ product.name }}">
+            <img src="{{ product.default_image.image.url }}" alt="{{ product.name }}" loading="lazy">
         {% else %}
             <div class="no-image d-flex align-items-center justify-content-center h-100">
                 <i class="far fa-image fa-3x text-muted"></i>

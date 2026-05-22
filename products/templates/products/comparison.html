@@ -465,9 +465,9 @@
                                 
                                 <a href="{% url 'products:product_detail' product.slug %}">
                                     {% if product.images.exists %}
-                                        <img src="{{ product.images.first.image.url }}" class="product-image-compare" alt="{{ product.name }}">
+                                        <img src="{{ product.images.first.image.url }}" class="product-image-compare" alt="{{ product.name }}" loading="lazy">
                                     {% else %}
-                                        <img src="{{ product.default_image.url }}" class="product-image-compare" alt="{{ product.name }}">
+                                        <img src="{{ product.default_image.url }}" class="product-image-compare" alt="{{ product.name }}" loading="lazy">
                                     {% endif %}
                                 </a>
                                 

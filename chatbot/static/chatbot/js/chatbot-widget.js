@@ -912,4 +912,241 @@
         bubbleDiv.appendChild(btn);
     }
 
+    // ====== Voice Agent Integration ======
+    var voiceAgent = CFG.voice_agent || {};
+    if(voiceAgent.enabled){
+        initVoiceAgent(voiceAgent);
+    }
+
+    function initVoiceAgent(agentCfg){
+        // If embed_script is provided, inject it directly
+        if(agentCfg.embed_script){
+            injectEmbedScript(agentCfg.embed_script);
+            return;
+        }
+
+        var trigger = agentCfg.trigger || 'floating_button';
+
+        if(trigger === 'floating_button'){
+            renderVoiceAgentFloatingButton(agentCfg);
+        } else if(trigger === 'inside_chatbot'){
+            renderVoiceAgentInsideChatbot(agentCfg);
+        } else if(trigger === 'replace_chatbot'){
+            renderVoiceAgentReplace(agentCfg);
+        }
+    }
+
+    function injectEmbedScript(code){
+        var container = document.createElement('div');
+        container.id = 'esco-voice-agent-embed';
+        container.innerHTML = code;
+        document.body.appendChild(container);
+        // Execute any script tags in the embed code
+        var scripts = container.querySelectorAll('script');
+        for(var i = 0; i < scripts.length; i++){
+            var newScript = document.createElement('script');
+            if(scripts[i].src){
+                newScript.src = scripts[i].src;
+            } else {
+                newScript.textContent = scripts[i].textContent;
+            }
+            document.body.appendChild(newScript);
+        }
+    }
+
+    function safeIconClass(icon){
+        return (icon || 'fas fa-phone-alt').replace(/[^a-zA-Z0-9\s\-_]/g, '');
+    }
+
+    function renderVoiceAgentFloatingButton(agentCfg){
+        var btnPos = agentCfg.button_position || 'bottom-left';
+        var btnColor = agentCfg.button_color || '#4caf50';
+        var btnIcon = safeIconClass(agentCfg.button_icon);
+        var label = agentCfg.label || (isAr ? 'تحدث معنا' : 'Talk to us');
+
+        var floatBtn = document.createElement('button');
+        floatBtn.className = 'esco-voice-agent-fab ' + btnPos;
+        floatBtn.style.cssText = 'background:' + btnColor + ';color:#fff;';
+        floatBtn.innerHTML = '<i class="' + btnIcon + '"></i><span class="esco-voice-agent-fab-label">' + esc(label) + '</span>';
+        floatBtn.title = label;
+        floatBtn.addEventListener('click', function(){
+            startVoiceAgentCall(agentCfg);
+        });
+        document.body.appendChild(floatBtn);
+    }
+
+    function renderVoiceAgentInsideChatbot(agentCfg){
+        var btnIcon = safeIconClass(agentCfg.button_icon);
+        var btnColor = agentCfg.button_color || '#4caf50';
+        var label = agentCfg.label || (isAr ? 'تحدث معنا' : 'Talk to us');
+
+        var headerActions = document.querySelector('.esco-chatbot-header-actions');
+        if(headerActions){
+            var agentBtn = document.createElement('button');
+            agentBtn.className = 'esco-chatbot-header-btn esco-voice-agent-header-btn';
+            agentBtn.title = label;
+            agentBtn.style.color = btnColor;
+            agentBtn.innerHTML = '<i class="' + btnIcon + '"></i>';
+            agentBtn.addEventListener('click', function(){
+                startVoiceAgentCall(agentCfg);
+            });
+            headerActions.insertBefore(agentBtn, headerActions.firstChild);
+        }
+    }
+
+    function renderVoiceAgentReplace(agentCfg){
+        if(bubble) bubble.style.display = 'none';
+        if(chatWindow) chatWindow.style.display = 'none';
+        renderVoiceAgentFloatingButton(agentCfg);
+    }
+
+    var voiceAgentActive = false;
+    var voiceAgentOverlay = null;
+
+    function startVoiceAgentCall(agentCfg){
+        if(voiceAgentActive) return;
+        voiceAgentActive = true;
+
+        var btnIcon = safeIconClass(agentCfg.button_icon);
+
+        // Show call overlay
+        voiceAgentOverlay = document.createElement('div');
+        voiceAgentOverlay.className = 'esco-voice-agent-overlay';
+        voiceAgentOverlay.innerHTML =
+            '<div class="esco-voice-agent-call-card">' +
+                '<div class="esco-voice-agent-call-avatar"><i class="' + btnIcon + '"></i></div>' +
+                '<div class="esco-voice-agent-call-status">' + (isAr ? 'جاري الاتصال...' : 'Connecting...') + '</div>' +
+                '<div class="esco-voice-agent-call-timer" id="escoVoiceAgentTimer">00:00</div>' +
+                '<button class="esco-voice-agent-hangup" id="escoVoiceAgentHangup"><i class="fas fa-phone-slash"></i> ' + (isAr ? 'إنهاء المكالمة' : 'End Call') + '</button>' +
+            '</div>';
+        document.body.appendChild(voiceAgentOverlay);
+
+        document.getElementById('escoVoiceAgentHangup').addEventListener('click', function(){
+            endVoiceAgentCall(agentCfg);
+        });
+
+        // Fetch credentials from backend, then load SDK
+        var startUrl = agentCfg.start_call_url || '/api/chatbot/voice-agent/start/';
+        fetch(startUrl, {
+            method: 'POST',
+            headers: {'X-CSRFToken': CFG.csrf_token, 'Content-Type': 'application/json'},
+            credentials: 'same-origin',
+            body: '{}'
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+            if(!data.success){
+                var statusEl = voiceAgentOverlay ? voiceAgentOverlay.querySelector('.esco-voice-agent-call-status') : null;
+                if(statusEl) statusEl.textContent = data.error || (isAr ? 'خطأ' : 'Error');
+                return;
+            }
+            // Merge server config (with API key) into init_config
+            var fullConfig = Object.assign({}, agentCfg.init_config || {}, data.config || {});
+            agentCfg._fullConfig = fullConfig;
+
+            loadVoiceAgentSDK(agentCfg, function(){
+                var statusEl = voiceAgentOverlay ? voiceAgentOverlay.querySelector('.esco-voice-agent-call-status') : null;
+                if(statusEl) statusEl.textContent = isAr ? 'متصل' : 'Connected';
+                startCallTimer();
+            });
+        })
+        .catch(function(){
+            var statusEl = voiceAgentOverlay ? voiceAgentOverlay.querySelector('.esco-voice-agent-call-status') : null;
+            if(statusEl) statusEl.textContent = isAr ? 'خطأ في الاتصال' : 'Connection error';
+        });
+    }
+
+    var callTimerInterval = null;
+    var callSeconds = 0;
+
+    function startCallTimer(){
+        callSeconds = 0;
+        callTimerInterval = setInterval(function(){
+            callSeconds++;
+            var m = Math.floor(callSeconds / 60);
+            var s = callSeconds % 60;
+            var timerEl = document.getElementById('escoVoiceAgentTimer');
+            if(timerEl) timerEl.textContent = (m < 10 ? '0' + m : m) + ':' + (s < 10 ? '0' + s : s);
+        }, 1000);
+    }
+
+    function endVoiceAgentCall(agentCfg){
+        voiceAgentActive = false;
+        if(callTimerInterval) clearInterval(callTimerInterval);
+        if(voiceAgentOverlay){
+            voiceAgentOverlay.remove();
+            voiceAgentOverlay = null;
+        }
+        // Cleanup SDK connection
+        if(window.__escoVoiceAgentCleanup){
+            window.__escoVoiceAgentCleanup();
+            window.__escoVoiceAgentCleanup = null;
+        }
+    }
+
+    function loadVoiceAgentSDK(agentCfg, onConnected){
+        var provider = agentCfg.provider;
+        var initConfig = agentCfg._fullConfig || agentCfg.init_config || {};
+        var sdkUrl = agentCfg.sdk_url;
+
+        if(!sdkUrl){
+            // No SDK — use embed script or just fire connected
+            initVoiceAgentSDK(provider, initConfig, onConnected);
+            return;
+        }
+
+        // Deduplicate: check if SDK already loaded
+        if(document.querySelector('script[src="' + sdkUrl + '"]')){
+            initVoiceAgentSDK(provider, initConfig, onConnected);
+            return;
+        }
+
+        var script = document.createElement('script');
+        script.src = sdkUrl;
+        script.onload = function(){
+            initVoiceAgentSDK(provider, initConfig, onConnected);
+        };
+        script.onerror = function(){
+            var statusEl = voiceAgentOverlay ? voiceAgentOverlay.querySelector('.esco-voice-agent-call-status') : null;
+            if(statusEl) statusEl.textContent = isAr ? 'خطأ في تحميل المكتبة' : 'SDK load error';
+        };
+        document.body.appendChild(script);
+    }
+
+    function initVoiceAgentSDK(provider, config, onConnected){
+        try{
+            if(provider === 'vapi' && window.Vapi){
+                var vapi = new window.Vapi(config.apiKey);
+                vapi.start(config.assistantId, config);
+                vapi.on('call-start', function(){ if(onConnected) onConnected(); });
+                vapi.on('call-end', function(){ endVoiceAgentCall({}); });
+                window.__escoVoiceAgentCleanup = function(){ vapi.stop(); };
+            } else if(provider === 'retell' && window.RetellWebClient){
+                var retell = new window.RetellWebClient();
+                retell.startCall({ accessToken: config.apiKey, agentId: config.agentId });
+                retell.on('call_started', function(){ if(onConnected) onConnected(); });
+                retell.on('call_ended', function(){ endVoiceAgentCall({}); });
+                window.__escoVoiceAgentCleanup = function(){ retell.stopCall(); };
+            } else if(provider === 'bland'){
+                if(onConnected) onConnected();
+                window.__escoVoiceAgentCleanup = function(){};
+            } else if(provider === 'voiceflow'){
+                if(onConnected) onConnected();
+                window.__escoVoiceAgentCleanup = function(){};
+            } else if(provider === 'livekit' && window.LivekitClient){
+                var room = new window.LivekitClient.Room();
+                room.connect(config.wsUrl, config.apiKey);
+                room.on('connected', function(){ if(onConnected) onConnected(); });
+                room.on('disconnected', function(){ endVoiceAgentCall({}); });
+                window.__escoVoiceAgentCleanup = function(){ room.disconnect(); };
+            } else {
+                if(onConnected) onConnected();
+                window.__escoVoiceAgentCleanup = function(){};
+            }
+        } catch(e){
+            var statusEl = voiceAgentOverlay ? voiceAgentOverlay.querySelector('.esco-voice-agent-call-status') : null;
+            if(statusEl) statusEl.textContent = (isAr ? 'خطأ: ' : 'Error: ') + e.message;
+        }
+    }
+
 })();

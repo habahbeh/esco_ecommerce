@@ -56,6 +56,31 @@ class ChatbotConfigView(View):
             'voice_language': settings.voice_language,
             'auto_play_voice': settings.auto_play_voice,
         }
+
+        if settings.enable_voice_agent:
+            from .voice_agent_providers.registry import get_voice_agent_provider
+            agent_provider = get_voice_agent_provider(settings)
+            agent_config = {
+                'enabled': True,
+                'provider': settings.voice_agent_provider,
+                'trigger': settings.voice_agent_trigger,
+                'button_color': settings.voice_agent_button_color,
+                'button_icon': settings.voice_agent_button_icon,
+                'button_position': settings.voice_agent_button_position,
+                'label': settings.voice_agent_label_ar if lang == 'ar' else settings.voice_agent_label_en,
+            }
+            if agent_provider:
+                agent_config['sdk_url'] = agent_provider.get_sdk_url()
+                # Never expose raw API keys — strip them from init_config
+                init_cfg = agent_provider.get_init_config()
+                init_cfg.pop('apiKey', None)
+                agent_config['init_config'] = init_cfg
+                agent_config['embed_script'] = agent_provider.get_embed_script()
+                agent_config['start_call_url'] = '/api/chatbot/voice-agent/start/'
+            config['voice_agent'] = agent_config
+        else:
+            config['voice_agent'] = {'enabled': False}
+
         return JsonResponse(config)
 
 
@@ -474,3 +499,33 @@ class ChatbotVoiceSynthesizeView(View):
         except Exception as e:
             logger.error(f'Voice synthesis error: {e}')
             return JsonResponse({'error': 'Synthesis failed'}, status=500)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ChatbotVoiceAgentStartView(View):
+    def post(self, request):
+        settings = ChatbotSettings.get_settings()
+        if not settings.is_enabled or not settings.enable_voice_agent:
+            return JsonResponse({'error': 'Voice agent is disabled'}, status=403)
+
+        # Rate limit: max 5 voice agent starts per minute per session
+        if not request.session.session_key:
+            request.session.create()
+        cache_key = f'voice_agent_rate_{request.session.session_key}'
+        count = cache.get(cache_key, 0)
+        if count >= 5:
+            return JsonResponse({'error': 'Too many requests'}, status=429)
+        cache.set(cache_key, count + 1, 60)
+
+        from .voice_agent_providers.registry import get_voice_agent_provider
+        provider = get_voice_agent_provider(settings)
+        if not provider:
+            return JsonResponse({'error': 'Voice agent provider not configured'}, status=400)
+
+        init_config = provider.get_init_config()
+
+        return JsonResponse({
+            'success': True,
+            'provider': settings.voice_agent_provider,
+            'config': init_config,
+        })

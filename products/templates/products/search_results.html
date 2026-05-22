@@ -865,6 +865,23 @@
                                     {% blocktrans %}لا توجد نتائج للبحث عن "{{ search_query }}"{% endblocktrans %}
                                 </p>
 
+                                <!-- Did you mean? -->
+                                {% if did_you_mean %}
+                                    <div class="mb-4">
+                                        <p class="text-muted mb-2">{% trans "هل تقصد:" %}</p>
+                                        <div class="suggestions-container">
+                                            {% for term in did_you_mean %}
+                                                <a
+                                                    href="?q={{ term|urlencode }}"
+                                                    class="suggestion-tag bg-warning-subtle text-warning-emphasis fw-semibold"
+                                                >
+                                                    {{ term }}
+                                                </a>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+
                                 <!-- اقتراحات البحث إذا كانت متوفرة -->
                                 {% if search_suggestions %}
                                     <div class="mb-4">
@@ -894,6 +911,17 @@
                                         </ul>
                                     </div>
                                 </div>
+
+                                {% if popular_searches %}
+                                    <div class="mb-4">
+                                        <p class="text-muted mb-2">{% trans "عمليات البحث الشائعة:" %}</p>
+                                        <div class="suggestions-container">
+                                            {% for term in popular_searches %}
+                                                <a href="?q={{ term|urlencode }}" class="suggestion-tag bg-body-secondary text-body">{{ term }}</a>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endif %}
 
                                 <a
                                     href="{% url 'products:product_list' %}"

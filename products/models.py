@@ -561,7 +561,7 @@ class Brand(TimeStampedModel, SEOModel):
         self.update_statistics()
 
     def get_absolute_url(self):
-        return reverse('products:brand_detail', kwargs={'slug': self.slug})
+        return reverse('products:brand_products', kwargs={'brand_slug': self.slug})
 
     def update_statistics(self):
         """Update brand statistics"""
@@ -1750,38 +1750,45 @@ class ProductImage(TimeStampedModel):
         return f"{self.product.name} - Image {self.pk}"
 
     def save(self, *args, **kwargs):
-        """
-        تعديل دالة الحفظ لتغيير حجم الصور تلقائيًا
-        Override save method to automatically resize images
-        """
-        # حفظ النموذج أولاً للحصول على الملف الأصلي
-        # Save the model first to get the original file
+        is_new = self._state.adding
         super().save(*args, **kwargs)
 
-        # تغيير حجم الصورة الرئيسية إلى 280×200
-        # Resize main image to 280x200
-        # if self.image:
-        #     self.resize_image(self.image, (280, 200))
+        if self.image and is_new:
+            self._optimize_on_upload()
 
-        # إنشاء النسخة المصغرة (اختياري - يمكنك ضبط الحجم حسب الحاجة)
-        # Create thumbnail (optional - you can adjust the size as needed)
-        if self.image and not self.image_thumbnail:
-            # استخدام نفس الملف المعاد تحجيمه للنسخة المصغرة
-            # Use the same resized file for thumbnail
-            self.image_thumbnail.name = self.image.name.replace('.', '_thumbnail.')
-            self.image_thumbnail = self.image
+    def _optimize_on_upload(self):
+        from products.image_utils import optimize_image, generate_thumbnail, generate_medium
+        import logging as _logging
 
-        # إنشاء النسخة المتوسطة (اختياري - يمكنك ضبط الحجم حسب الحاجة)
-        # Create medium version (optional - you can adjust the size as needed)
-        if self.image and not self.image_medium:
-            # استخدام نفس الملف المعاد تحجيمه للنسخة المتوسطة
-            # Use the same resized file for medium version
-            self.image_medium.name = self.image.name.replace('.', '_medium.')
-            self.image_medium = self.image
+        try:
+            image_path = self.image.path
+            if not os.path.isfile(image_path):
+                return
 
-        # حفظ النموذج مرة أخرى بدون الدخول في حلقة لانهائية
-        # Save the model again without triggering an infinite loop
-        super().save(update_fields=['image', 'image_thumbnail', 'image_medium'])
+            result = optimize_image(image_path)
+            if result:
+                content, filename = result
+                self.image.save(filename, content, save=False)
+
+            optimized_path = self.image.path
+
+            result = generate_thumbnail(optimized_path)
+            if result:
+                content, filename = result
+                self.image_thumbnail.save(filename, content, save=False)
+
+            result = generate_medium(optimized_path)
+            if result:
+                content, filename = result
+                self.image_medium.save(filename, content, save=False)
+
+            ProductImage.objects.filter(pk=self.pk).update(
+                image=self.image,
+                image_thumbnail=self.image_thumbnail,
+                image_medium=self.image_medium,
+            )
+        except Exception as e:
+            _logging.getLogger(__name__).warning("Image optimization failed for pk=%s: %s", self.pk, e)
 
     def resize_image(self, image_field, size):
         """
@@ -3207,3 +3214,35 @@ class CategoryLandingContent(models.Model):
 
     def __str__(self):
         return f"Landing: {self.category.name}"
+
+
+class SearchSynonym(models.Model):
+    terms = models.TextField(
+        _("المصطلحات المترادفة"),
+        help_text=_("مصطلحات مفصولة بفاصلة - مثال: موبايل, جوال, هاتف")
+    )
+    is_active = models.BooleanField(_("نشط"), default=True)
+    created_at = models.DateTimeField(_("تاريخ الإنشاء"), auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("مرادف بحث")
+        verbose_name_plural = _("مرادفات البحث")
+
+    def __str__(self):
+        return self.terms[:80]
+
+
+class SearchQuery(models.Model):
+    query = models.CharField(_("عبارة البحث"), max_length=255, unique=True)
+    count = models.PositiveIntegerField(_("عدد المرات"), default=1)
+    results_count = models.PositiveIntegerField(_("عدد النتائج"), default=0)
+    last_searched = models.DateTimeField(_("آخر بحث"), auto_now=True)
+    created_at = models.DateTimeField(_("تاريخ الإنشاء"), auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("استعلام بحث")
+        verbose_name_plural = _("استعلامات البحث")
+        ordering = ['-count']
+
+    def __str__(self):
+        return f"{self.query} ({self.count})"
