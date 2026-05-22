@@ -10,7 +10,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.http import HttpResponse
 from django.views.generic import TemplateView, RedirectView
-from django.contrib.sitemaps.views import sitemap
+from django.contrib.sitemaps.views import sitemap, index as sitemap_index
 # from django.views.i18n import set_language, JavaScriptCatalog
 from django.conf.urls.i18n import i18n_patterns
 
@@ -57,6 +57,9 @@ urlpatterns = [
         content_type='text/html'
     ), name='google_verification'),
 
+    # Favicon at root for Google and browsers
+    path('favicon.ico', RedirectView.as_view(url='/static/images/favicon.ico', permanent=True)),
+
     # Health check and system endpoints
     path('health/', TemplateView.as_view(template_name='health.html'), name='health_check'),
     path('robots.txt', TemplateView.as_view(
@@ -70,8 +73,9 @@ urlpatterns = [
     # IndexNow verification key
     path('a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6.txt', lambda r: HttpResponse('a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6', content_type='text/plain')),
 
-    # Sitemap
-    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='sitemap'),
+    # Sitemap index + per-section sitemaps
+    path('sitemap.xml', sitemap_index, {'sitemaps': sitemaps, 'sitemap_url_name': 'sitemaps'}),
+    path('sitemap-<section>.xml', sitemap, {'sitemaps': sitemaps}, name='sitemaps'),
 
     # Webhooks and external integrations (لا تحتاج ترجمة)
     path('webhooks/', include([

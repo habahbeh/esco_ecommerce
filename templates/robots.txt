@@ -1,5 +1,10 @@
 User-agent: *
 Allow: /
+Allow: /static/images/
+Allow: /media/products/
+Allow: /media/brands/
+Allow: /media/categories/
+Allow: /media/blog/
 Disallow: /admin/
 Disallow: /dashboard/
 Disallow: /cart/
@@ -8,8 +13,9 @@ Disallow: /accounts/
 Disallow: /api/
 Disallow: /payment/
 Disallow: /orders/
-Disallow: /static/
-Disallow: /media/
+Disallow: /static/admin/
+Disallow: /static/ckeditor/
+Disallow: /media/exports/
 
 # Sitemaps
 Sitemap: {% if site_settings.canonical_domain %}{{ site_settings.canonical_domain }}{% else %}{{ request.scheme }}://{{ request.get_host }}{% endif %}/sitemap.xml

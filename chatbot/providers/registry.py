@@ -16,7 +16,7 @@ def get_provider(chatbot_settings):
         api_key=api_key,
         model=chatbot_settings.model_name,
         temperature=float(chatbot_settings.temperature),
-        max_tokens=min(chatbot_settings.max_tokens, 512),
+        max_tokens=chatbot_settings.max_tokens,
     )
 
 

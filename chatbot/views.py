@@ -309,45 +309,29 @@ class ChatbotStreamView(View):
                 'conversation_id': conversation.id,
             })
 
-        conv_id = conversation.id
         t0 = time.time()
+        response = provider.chat(ai_messages)
+        elapsed_ms = int((time.time() - t0) * 1000)
 
-        def _sse(obj):
-            return f"data: {json.dumps(obj, ensure_ascii=False)}\n\n"
+        parsed = parse_response(response.content, msg_language, chatbot_settings=settings)
 
-        def event_stream():
-            full_text = []
-            try:
-                for token in provider.chat_stream(ai_messages):
-                    full_text.append(token)
-                    yield _sse({'token': token})
-            except Exception as e:
-                logger.error('Stream event_stream error: %s', e, exc_info=True)
-                err = 'عذراً، حدث خطأ.' if msg_language == 'ar' else 'Sorry, an error occurred.'
-                full_text.append(err)
-                yield _sse({'token': err})
+        Message.objects.create(
+            conversation=conversation,
+            role='assistant',
+            content=parsed['text'],
+            rich_content=parsed['rich_content'],
+            tokens_used=response.tokens_used,
+            response_time_ms=elapsed_ms,
+            provider_used=settings.provider,
+            model_used=response.model,
+        )
 
-            complete_text = ''.join(full_text)
-            elapsed_ms = int((time.time() - t0) * 1000)
-            parsed = parse_response(complete_text, msg_language, chatbot_settings=settings)
-
-            Message.objects.create(
-                conversation_id=conv_id,
-                role='assistant',
-                content=parsed['text'],
-                rich_content=parsed['rich_content'],
-                response_time_ms=elapsed_ms,
-                provider_used=settings.provider,
-                model_used=provider.model,
-            )
-
-            yield _sse({'done': True, 'parsed': parsed, 'conversation_id': conv_id})
-
-        response = StreamingHttpResponse(event_stream(), content_type='text/event-stream; charset=utf-8')
-        response['Cache-Control'] = 'no-cache, no-store'
-        response['X-Accel-Buffering'] = 'no'
-        response['Content-Encoding'] = 'identity'
-        return response
+        return JsonResponse({
+            'message': parsed['text'],
+            'rich_content': parsed['rich_content'],
+            'quick_replies': parsed.get('quick_replies', []),
+            'conversation_id': conversation.id,
+        })
 
 
 @method_decorator(csrf_exempt, name='dispatch')

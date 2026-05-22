@@ -7,12 +7,18 @@ from .base import AbstractProvider, ChatResponse
 logger = logging.getLogger(__name__)
 
 
+FALLBACK_MODELS = [
+    'liquid/lfm-2.5-1.2b-instruct:free',
+    'nvidia/nemotron-nano-9b-v2:free',
+]
+
 FREE_MODELS = [
-    {'id': 'openrouter/free', 'name': 'Auto (Best Free Model)'},
-    {'id': 'nvidia/nemotron-3-super-120b-a12b:free', 'name': 'NVIDIA Nemotron 3 Super 120B (Free)'},
+    {'id': 'nvidia/nemotron-3-nano-30b-a3b:free', 'name': 'NVIDIA Nemotron 3 Nano 30B (Free)'},
     {'id': 'google/gemma-4-31b-it:free', 'name': 'Google Gemma 4 31B (Free)'},
-    {'id': 'google/gemma-4-26b-a4b-it:free', 'name': 'Google Gemma 4 26B (Free)'},
-    {'id': 'minimax/minimax-m2.5:free', 'name': 'MiniMax M2.5 (Free)'},
+    {'id': 'deepseek/deepseek-v4-flash:free', 'name': 'DeepSeek V4 Flash (Free)'},
+    {'id': 'liquid/lfm-2.5-1.2b-instruct:free', 'name': 'Liquid LFM 1.2B (Free, Fast)'},
+    {'id': 'nvidia/nemotron-nano-9b-v2:free', 'name': 'NVIDIA Nemotron Nano 9B v2 (Free)'},
+    {'id': 'openrouter/free', 'name': 'Auto (Best Free Model)'},
 ]
 
 PAID_MODELS = [
@@ -45,28 +51,44 @@ class OpenRouterProvider(AbstractProvider):
             p["stream"] = True
         return p
 
+    def _try_chat(self, messages, model_override=None, timeout=30):
+        payload = self._payload(messages)
+        if model_override:
+            payload['model'] = model_override
+        resp = requests.post(self.BASE_URL, json=payload, headers=self._headers(), timeout=timeout)
+        resp.raise_for_status()
+        data = resp.json()
+        if 'error' in data:
+            raise ValueError(data['error'].get('message', str(data['error'])) if isinstance(data['error'], dict) else str(data['error']))
+        choice = data.get('choices', [{}])[0]
+        message = choice.get('message', {})
+        content = message.get('content', '')
+        if not content:
+            raise ValueError('Empty response from model')
+        usage = data.get('usage', {})
+        return ChatResponse(
+            content=content,
+            tokens_used=usage.get('total_tokens', 0),
+            model=data.get('model', model_override or self.model),
+            finish_reason=choice.get('finish_reason', ''),
+        )
+
     def chat(self, messages: List[Dict[str, str]], **kwargs) -> ChatResponse:
         try:
-            resp = requests.post(self.BASE_URL, json=self._payload(messages), headers=self._headers(), timeout=60)
-            resp.raise_for_status()
-            data = resp.json()
-            choice = data.get('choices', [{}])[0]
-            message = choice.get('message', {})
-            usage = data.get('usage', {})
-            return ChatResponse(
-                content=message.get('content', ''),
-                tokens_used=usage.get('total_tokens', 0),
-                model=data.get('model', self.model),
-                finish_reason=choice.get('finish_reason', ''),
-            )
-        except requests.exceptions.Timeout:
-            return ChatResponse(content='عذراً، استغرقت الاستجابة وقتاً طويلاً. حاول مرة أخرى.')
-        except requests.exceptions.HTTPError as e:
-            if e.response and e.response.status_code == 429:
-                return ChatResponse(content='عذراً، عدد الطلبات كثير. انتظر قليلاً وحاول مرة أخرى.')
+            return self._try_chat(messages)
+        except Exception as primary_err:
+            logger.warning('Primary model %s failed: %s', self.model, primary_err)
+            for fallback in FALLBACK_MODELS:
+                if fallback == self.model:
+                    continue
+                try:
+                    logger.info('Trying fallback model: %s', fallback)
+                    return self._try_chat(messages, model_override=fallback)
+                except Exception as fb_err:
+                    logger.warning('Fallback %s failed: %s', fallback, fb_err)
+            if isinstance(primary_err, requests.exceptions.Timeout):
+                return ChatResponse(content='عذراً، استغرقت الاستجابة وقتاً طويلاً. حاول مرة أخرى.')
             return ChatResponse(content='عذراً، حدث خطأ في الاتصال بالذكاء الاصطناعي.')
-        except Exception:
-            return ChatResponse(content='عذراً، حدث خطأ غير متوقع.')
 
     def chat_stream(self, messages: List[Dict[str, str]], **kwargs) -> Generator[str, None, None]:
         try:
