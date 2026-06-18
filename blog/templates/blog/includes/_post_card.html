@@ -6,7 +6,7 @@
             {% if post.featured_image %}
             <img src="{{ post.featured_image.url }}"
                  alt="{% if LANGUAGE_CODE == 'en' and post.featured_image_alt_en %}{{ post.featured_image_alt_en }}{% else %}{{ post.featured_image_alt|default:post.title }}{% endif %}"
-                 class="w-100 h-100" style="object-fit:cover;transition:transform 0.3s;" loading="lazy">
+                 class="w-100 h-100" style="object-fit:cover;transition:transform 0.3s;">
             {% else %}
             <div class="card-icon-area w-100 h-100 d-flex align-items-center justify-content-center"
                  style="background: linear-gradient(135deg, {{ post.card_icon_color|default:'#2563eb' }}18, {{ post.card_icon_color|default:'#2563eb' }}08);">

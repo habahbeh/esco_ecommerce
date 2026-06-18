@@ -750,7 +750,7 @@ function setupImageButtons() {
             function handleDrop(e) {
                 const dt = e.dataTransfer;
                 const files = dt.files;
-
+                addFilesToInput(files);
                 handleFiles(files);
             }
         }
@@ -759,9 +759,24 @@ function setupImageButtons() {
             handleFiles(this.files);
         });
 
+        function addFilesToInput(newFiles) {
+            const dt = new DataTransfer();
+            for (let f of productImagesInput.files) dt.items.add(f);
+            for (let f of newFiles) dt.items.add(f);
+            productImagesInput.files = dt.files;
+        }
+
+        function removeFileFromInput(index) {
+            const dt = new DataTransfer();
+            const files = productImagesInput.files;
+            for (let i = 0; i < files.length; i++) {
+                if (i !== index) dt.items.add(files[i]);
+            }
+            productImagesInput.files = dt.files;
+        }
+
         function handleFiles(files) {
             if (files.length > 0) {
-                // إخفاء رسالة السحب والإفلات بعد إضافة صور
                 const dropzoneMessage = document.querySelector('.dropzone-message');
                 if (dropzoneMessage) {
                     dropzoneMessage.style.display = 'none';
@@ -770,12 +785,14 @@ function setupImageButtons() {
                 for (let i = 0; i < files.length; i++) {
                     let file = files[i];
                     let reader = new FileReader();
+                    const fileIndex = productImagesInput.files.length - files.length + i;
 
                     reader.onload = function(e) {
                         const uniqueId = 'temp-' + Date.now() + '-' + i;
                         const imagePreview = document.createElement('div');
                         imagePreview.className = 'image-preview-item temp-image';
                         imagePreview.dataset.tempId = uniqueId;
+                        imagePreview.dataset.fileIndex = fileIndex;
 
                         imagePreview.innerHTML = `
                             <div class="image-preview-inner">
@@ -793,18 +810,20 @@ function setupImageButtons() {
                             </div>
                         `;
 
-                        // إضافة الصورة
                         imagePreviews.appendChild(imagePreview);
 
-                        // إضافة حدث لحذف الصورة المؤقتة
                         imagePreview.querySelector('.btn-remove-temp-image').addEventListener('click', function() {
+                            const idx = parseInt(imagePreview.dataset.fileIndex);
+                            removeFileFromInput(idx);
                             imagePreview.remove();
+                            // Reindex remaining temp previews
+                            document.querySelectorAll('.temp-image').forEach(function(el, newIdx) {
+                                el.dataset.fileIndex = newIdx;
+                            });
 
-                            // إظهار رسالة السحب والإفلات إذا لم تعد هناك صور
                             if (document.querySelectorAll('.image-preview-item').length === 0) {
-                                if (dropzoneMessage) {
-                                    dropzoneMessage.style.display = 'block';
-                                }
+                                const msg = document.querySelector('.dropzone-message');
+                                if (msg) msg.style.display = 'block';
                             }
                         });
                     };

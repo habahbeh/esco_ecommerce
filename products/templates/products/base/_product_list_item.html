@@ -9,8 +9,7 @@
                 {% if product.default_image %}
                     <img src="{{ product.default_image.image.url }}"
                          alt="{{ product.default_image.alt_text|default:product.name }}"
-                         class="img-fluid rounded"
-                         loading="lazy">
+                         class="img-fluid rounded">
                 {% else %}
                     <img src="{% static 'images/no-image.png' %}"
                          alt="{{ product.name }}"

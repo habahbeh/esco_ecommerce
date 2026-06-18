@@ -99,22 +99,19 @@
                                     <div class="thumbnail-item {% if forloop.first %}active{% endif %}" data-image-id="{{ image.id }}">
                                         <img src="{{ image.image.url }}"
                                              onerror="this.onerror=null;this.src='{% static 'images/no-image.svg' %}';"
-                                             alt="{% if LANGUAGE_CODE == 'en' %}{{ product.name_en }}{% else %}{{ product.name }}{% endif %} - {% trans 'صورة' %} {{ forloop.counter }}"
-                                             loading="lazy">
+                                             alt="{% if LANGUAGE_CODE == 'en' %}{{ product.name_en }}{% else %}{{ product.name }}{% endif %} - {% trans 'صورة' %} {{ forloop.counter }}">
                                     </div>
                                 {% endfor %}
                             {% elif product.default_image %}
                                 <div class="thumbnail-item active">
                                     <img src="{{ product.default_image.image.url }}"
                                          onerror="this.onerror=null;this.src='{% static 'images/no-image.svg' %}';"
-                                         alt="{% if LANGUAGE_CODE == 'en' %}{{ product.name_en }}{% else %}{{ product.name }}{% endif %}"
-                                         loading="lazy">
+                                         alt="{% if LANGUAGE_CODE == 'en' %}{{ product.name_en }}{% else %}{{ product.name }}{% endif %}">
                                 </div>
                             {% else %}
                                 <div class="thumbnail-item active">
                                     <img src="{% static 'images/no-image.svg' %}"
-                                         alt="{% if LANGUAGE_CODE == 'en' %}{{ product.name_en }}{% else %}{{ product.name }}{% endif %}"
-                                         loading="lazy">
+                                         alt="{% if LANGUAGE_CODE == 'en' %}{{ product.name_en }}{% else %}{{ product.name }}{% endif %}">
                                 </div>
                             {% endif %}
                         </div>

@@ -1064,7 +1064,7 @@
     <div class="carousel-inner" >
         {% for item in slider_items %}
         <div class="carousel-item {% if forloop.first %}active{% endif %}">
-            <img src="{{ item.image.url }}" class="d-block w-100" alt="{% if LANGUAGE_CODE == 'en' %}{{ item.title_en|default:item.title }}{% else %}{{ item.title }}{% endif %}" width="1920" height="600" {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>
+            <img src="{{ item.image.url }}" class="d-block w-100" alt="{% if LANGUAGE_CODE == 'en' %}{{ item.title_en|default:item.title }}{% else %}{{ item.title }}{% endif %}" width="1920" height="600" fetchpriority="high">
             <div class="carousel-caption">
                 <h2>{% if LANGUAGE_CODE == 'en' %}{{ item.title_en|default:item.title }}{% else %}{{ item.title }}{% endif %}</h2>
                 <h3>{% if LANGUAGE_CODE == 'en' %}{{ item.subtitle_en|default:item.subtitle }}{% else %}{{ item.subtitle }}{% endif %}</h3>
@@ -1202,7 +1202,7 @@
                 <div class="category-card" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
                     {% if category.image %}
                         <img src="{{ category.image.url }}" class="category-image" alt="{% if LANGUAGE_CODE == 'en' %}{{ category.name_en|default:category.name }}{% else %}{{ category.name }}{% endif %}"
-                             width="400" height="300" loading="lazy" onerror="this.style.display='none'">
+                             width="400" height="300" onerror="this.style.display='none'">
                     {% endif %}
                     <div class="category-overlay">
                         <h3 class="category-name">{% if LANGUAGE_CODE == 'en' %}{{ category.name_en|default:category.name }}{% else %}{{ category.name }}{% endif %}</h3>
@@ -1245,7 +1245,7 @@
                     </div>
                     <a href="{% url 'products:product_detail' product.slug %}" class="product-image-wrapper d-block">
                         {% if product.default_image %}
-                            <img src="{{ product.default_image.image.url }}" class="product-main-image" width="300" height="300" alt="{{ product.name }} - {% trans 'عدد وأدوات في الأردن' %}" loading="lazy">
+                            <img src="{{ product.default_image.image.url }}" class="product-main-image" width="300" height="300" alt="{{ product.name }} - {% trans 'عدد وأدوات في الأردن' %}">
                         {% endif %}
                     </a>
                     <div class="product-details">
@@ -1311,7 +1311,7 @@
                     </div>
                     <a href="{% url 'products:product_detail' product.slug %}" class="product-image-wrapper d-block">
                         {% if product.default_image %}
-                            <img src="{{ product.default_image.image.url }}" class="product-main-image" width="300" height="300" alt="{{ product.name }} - {% trans 'شراء أونلاين الأردن' %}" loading="lazy">
+                            <img src="{{ product.default_image.image.url }}" class="product-main-image" width="300" height="300" alt="{{ product.name }} - {% trans 'شراء أونلاين الأردن' %}">
                         {% endif %}
                     </a>
                     <div class="product-details">
@@ -1375,7 +1375,7 @@
                     </div>
                     <a href="{% url 'products:product_detail' product.slug %}" class="product-image-wrapper d-block">
                         {% if product.default_image %}
-                            <img src="{{ product.default_image.image.url }}" class="product-main-image" width="300" height="300" alt="{{ product.name }} - {% trans 'عروض أدوات الأردن' %}" loading="lazy">
+                            <img src="{{ product.default_image.image.url }}" class="product-main-image" width="300" height="300" alt="{{ product.name }} - {% trans 'عروض أدوات الأردن' %}">
                         {% endif %}
                     </a>
                     <div class="product-details">
@@ -1422,7 +1422,7 @@
             {% for brand in brands %}
                 <a href="{% url 'products:brand_products' brand.slug %}" title="{{ brand.name }} - {% trans 'عدد وأدوات' %}">
                     {% if brand.logo %}
-                        <img src="{{ brand.logo.url }}" class="partner-logo" alt="{{ brand.name }}" width="120" height="60" loading="lazy">
+                        <img src="{{ brand.logo.url }}" class="partner-logo" alt="{{ brand.name }}" width="120" height="60">
                     {% else %}
                         <span class="partner-name-text">{{ brand.name }}</span>
                     {% endif %}
@@ -1486,7 +1486,7 @@
                 <a href="{{ post.get_absolute_url }}" class="text-decoration-none">
                     <div class="card h-100 border-0 shadow-sm" style="transition:transform .3s,box-shadow .3s;">
                         {% if post.featured_image %}
-                        <img src="{{ post.featured_image.url }}" class="card-img-top" style="height:180px;object-fit:cover;" alt="{% if LANGUAGE_CODE == 'en' and post.title_en %}{{ post.title_en }}{% else %}{{ post.title }}{% endif %}" loading="lazy">
+                        <img src="{{ post.featured_image.url }}" class="card-img-top" style="height:180px;object-fit:cover;" alt="{% if LANGUAGE_CODE == 'en' and post.title_en %}{{ post.title_en }}{% else %}{{ post.title }}{% endif %}">
                         {% else %}
                         <div class="card-img-top d-flex align-items-center justify-content-center" style="height:180px;background:linear-gradient(135deg,{{ post.card_icon_color|default:'#2563eb' }},{{ post.card_icon_color|default:'#2563eb' }}cc);">
                             <i class="fas {{ post.card_icon|default:'fa-newspaper' }} fa-3x text-white opacity-75"></i>

@@ -76,7 +76,6 @@
                                         src="{{ product.main_image.url }}"
                                         alt="{{ product.name }}"
                                         class="w-full h-32 object-cover"
-                                        loading="lazy"
                                     >
                                 {% elif product.images.exists %}
                                     {% with product.images.first as first_image %}
@@ -85,7 +84,6 @@
                                                 src="{{ first_image.image.url }}"
                                                 alt="{{ product.name }}"
                                                 class="w-full h-32 object-cover"
-                                                loading="lazy"
                                             >
                                         {% endif %}
                                     {% endwith %}

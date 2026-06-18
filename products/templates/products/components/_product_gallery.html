@@ -135,8 +135,7 @@
                              data-index="{{ forloop.counter }}"
                              onclick="changeMainImage(this)">
                             <img src="{{ image.image.url }}"
-                                 alt="{{ image.alt_text|default:product.name }}"
-                                 loading="lazy">
+                                 alt="{{ image.alt_text|default:product.name }}">
 
                             <!-- Video Indicator for Video Thumbnails -->
                             {% if image.is_video_thumbnail %}
@@ -185,7 +184,7 @@
                                 {% endif %}
                             </div>
                         {% else %}
-                            <img src="{{ variant.thumbnail.url }}" alt="{{ variant.color_name }}" loading="lazy">
+                            <img src="{{ variant.thumbnail.url }}" alt="{{ variant.color_name }}">
                         {% endif %}
                     </div>
                 {% endfor %}

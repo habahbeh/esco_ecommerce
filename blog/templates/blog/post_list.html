@@ -254,7 +254,7 @@
             <a href="{{ fpost.get_absolute_url }}" class="text-decoration-none">
                 <div class="featured-post-card shadow">
                     {% if fpost.featured_image %}
-                    <img src="{{ fpost.featured_image.url }}" alt="{% if LANGUAGE_CODE == 'en' and fpost.featured_image_alt_en %}{{ fpost.featured_image_alt_en }}{% elif fpost.featured_image_alt %}{{ fpost.featured_image_alt }}{% else %}{{ fpost.title }}{% endif %}" loading="lazy">
+                    <img src="{{ fpost.featured_image.url }}" alt="{% if LANGUAGE_CODE == 'en' and fpost.featured_image_alt_en %}{{ fpost.featured_image_alt_en }}{% elif fpost.featured_image_alt %}{{ fpost.featured_image_alt }}{% else %}{{ fpost.title }}{% endif %}">
                     {% else %}
                     <div class="w-100 h-100 d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, {{ fpost.card_icon_color|default:'#2563eb' }}, {{ fpost.card_icon_color|default:'#2563eb' }}dd);">
                         <i class="fas {{ fpost.card_icon|default:'fa-newspaper' }} fa-4x text-white opacity-50"></i>

@@ -29,13 +29,11 @@
         {% if product.default_image %}
             <img src="{{ product.default_image.image.url }}"
                  class="product-image"
-                 alt="{{ product.name }}"
-                 loading="lazy">
+                 alt="{{ product.name }}">
         {% elif product.images.exists %}
             <img src="{{ product.images.first.image.url }}"
                  class="product-image"
-                 alt="{{ product.name }}"
-                 loading="lazy">
+                 alt="{{ product.name }}">
         {% else %}
             <div class="d-flex justify-content-center align-items-center h-100">
                 <i class="fas fa-image fa-3x text-muted opacity-25"></i>
