@@ -714,7 +714,10 @@ function setupImageButtons() {
     const imagesDropzone = document.querySelector('.images-dropzone');
 
     if (addImageBtn && productImagesInput) {
+        let previousFiles = [];
+
         addImageBtn.addEventListener('click', function() {
+            previousFiles = Array.from(productImagesInput.files);
             productImagesInput.click();
         });
 
@@ -756,7 +759,15 @@ function setupImageButtons() {
         }
 
         productImagesInput.addEventListener('change', function() {
-            handleFiles(this.files);
+            const newFiles = Array.from(this.files);
+            if (previousFiles.length > 0) {
+                const dt = new DataTransfer();
+                for (let f of previousFiles) dt.items.add(f);
+                for (let f of newFiles) dt.items.add(f);
+                productImagesInput.files = dt.files;
+                previousFiles = [];
+            }
+            handleFiles(newFiles);
         });
 
         function addFilesToInput(newFiles) {
