@@ -3,7 +3,7 @@
     --bs-primary: #1e88e5;
     --bs-primary-rgb: 30, 136, 229;
     --header-height: 130px;
-    --mobile-nav-height: 80px;
+    --mobile-nav-height: 44px; /* used for body padding-top under fixed header */
 }
 
 body {
@@ -54,7 +54,7 @@ body {
 
 @media (max-width: 991.98px) {
     .header-wrapper {
-        min-height: var(--mobile-nav-height);
+        min-height: auto;
     }
 }
 
@@ -312,18 +312,21 @@ html[dir="rtl"] .search-container {
 .mobile-menu-toggle {
     display: none;
     background: transparent;
-    border: 2px solid var(--bs-body-color);
-    border-radius: 8px;
+    border: none;
+    border-radius: 50%;
     padding: 0.5rem;
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     color: var(--bs-body-color);
     transition: all 0.3s ease;
+    width: 36px;
+    height: 36px;
+    justify-content: center;
+    align-items: center;
 }
 
 .mobile-menu-toggle:hover {
-    background: var(--bs-primary);
-    border-color: var(--bs-primary);
-    color: white;
+    background: rgba(var(--bs-primary-rgb), 0.1);
+    color: var(--bs-primary);
 }
 
 .mobile-overlay {
@@ -442,21 +445,22 @@ html[dir="rtl"] .mobile-menu.active {
 /* Responsive */
 @media (max-width: 991.98px) {
     .modern-header {
-        padding: 0.5rem 0;
-        min-height: var(--mobile-nav-height);
+        padding: 0;
+        min-height: auto;
     }
 
     .nav-container {
-        min-height: var(--mobile-nav-height);
-        padding: 0.5rem 0 0.5rem 90px;
+        min-height: auto;
+        padding: 6px 0;
+        justify-content: space-between;
     }
 
     html[dir="rtl"] .nav-container {
-        padding: 0.5rem 90px 0.5rem 0;
+        padding: 6px 0;
     }
 
     .logo-wrapper {
-        padding: 10px;
+        padding: 6px;
         left: 10px;
     }
 
@@ -476,12 +480,37 @@ html[dir="rtl"] .mobile-menu.active {
         display: none;
     }
 
-    .header-actions .action-btn {
-        padding: 0.5rem;
+    .header-actions {
+        gap: 2px;
+    }
+
+    .header-actions .action-btn,
+    .header-actions .mobile-menu-toggle {
+        padding: 0;
         border-radius: 50%;
-        width: 40px;
-        height: 40px;
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        min-height: 32px;
         justify-content: center;
+        background: transparent;
+        border: none;
+        color: #555;
+        font-size: 0.9rem;
+    }
+
+    .header-actions .action-btn.cart-btn {
+        background: transparent;
+        color: #555;
+    }
+
+    .header-actions .action-btn:hover,
+    .header-actions .action-btn.cart-btn:hover,
+    .mobile-menu-toggle:hover {
+        color: var(--bs-primary);
+        background: transparent;
+        box-shadow: none;
+        transform: none;
     }
 
     .main-nav {
@@ -489,7 +518,22 @@ html[dir="rtl"] .mobile-menu.active {
     }
 
     .mobile-menu-toggle {
-        display: block;
+        display: flex;
+        font-size: 0.9rem;
+        background: transparent;
+        border: none;
+        border-radius: 50%;
+        color: #555;
+        width: 32px;
+        height: 32px;
+    }
+
+    .cart-badge {
+        top: -3px;
+        right: -3px;
+        padding: 1px 4px;
+        font-size: 0.6rem;
+        min-width: 14px;
     }
 
     body {

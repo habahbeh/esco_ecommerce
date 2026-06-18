@@ -92,8 +92,14 @@ function setupFormValidation() {
 
     if (form) {
         form.addEventListener('submit', function(event) {
-            // منع الإرسال التلقائي للنموذج
-            event.preventDefault();
+            // Sync Summernote content back to textarea before validation
+            if (window.jQuery && jQuery.fn.summernote) {
+                jQuery('.rich-text-editor').each(function() {
+                    if (jQuery(this).next('.note-editor').length) {
+                        jQuery(this).val(jQuery(this).summernote('code'));
+                    }
+                });
+            }
 
             // إزالة رسائل الخطأ السابقة
             document.querySelectorAll('.alert-validation').forEach(el => el.remove());
@@ -106,7 +112,6 @@ function setupFormValidation() {
                 { id: 'id_name', message: isArabic ? 'الرجاء إدخال اسم المنتج' : 'Please enter product name' },
                 { id: 'id_category', message: isArabic ? 'الرجاء اختيار فئة للمنتج' : 'Please select a category' },
                 { id: 'id_base_price', message: isArabic ? 'الرجاء إدخال سعر المنتج' : 'Please enter product price' },
-                { id: 'id_description', message: isArabic ? 'الرجاء إدخال وصف المنتج' : 'Please enter product description' },
                 { id: 'id_sku', message: isArabic ? 'الرجاء إدخال رقم المنتج (SKU)' : 'Please enter product SKU' }
             ];
 
@@ -138,6 +143,8 @@ function setupFormValidation() {
             }
 
             if (hasError) {
+                event.preventDefault();
+
                 // إضافة رسالة خطأ عامة
                 const alertDiv = document.createElement('div');
                 alertDiv.className = 'alert alert-danger mb-4';
@@ -160,8 +167,7 @@ function setupFormValidation() {
                 return false;
             }
 
-            // إذا لم تكن هناك أخطاء، أرسل النموذج
-            form.submit();
+            // No errors — let the native form submit proceed (includes file inputs)
         });
     }
 }

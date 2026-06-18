@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.db.models import Q, Count, Avg, Min, Max, F
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
+from django.views.decorators.cache import cache_page, never_cache
 from django.http import JsonResponse
 from django.conf import settings
 import logging
@@ -578,6 +578,7 @@ class QuickSearchView(ListView, OptimizedQueryMixin):
         return context
 
 
+@never_cache
 def search_suggestions(request):
     """
     اقتراحات البحث عبر AJAX - يعطي اقتراحات سريعة للبحث
@@ -637,12 +638,13 @@ def search_suggestions(request):
                     except Exception:
                         pass
 
-            # السعر الحالي
-            current_price = 0
-            if hasattr(product, 'current_price'):
-                current_price = product.current_price
-            elif hasattr(product, 'base_price'):
-                current_price = product.base_price
+            # السعر الحالي - فقط إذا كان مسموح بعرضه
+            current_price = None
+            if product.is_price_visible:
+                if hasattr(product, 'current_price'):
+                    current_price = f"{product.current_price:.2f}"
+                elif hasattr(product, 'base_price'):
+                    current_price = f"{product.base_price:.2f}"
 
             # إضافة language prefix للـ URL
             product_url = product.get_absolute_url() if hasattr(product, 'get_absolute_url') else '#'
@@ -657,7 +659,7 @@ def search_suggestions(request):
                 'title': product_title,
                 'url': product_url,
                 'image': main_image_url,
-                'price': str(current_price),
+                'price': current_price,
                 'sku': product.sku or '',
             })
 

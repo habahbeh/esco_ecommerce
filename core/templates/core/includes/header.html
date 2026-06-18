@@ -9,7 +9,7 @@
 <!-- Modern Header -->
 <header class="modern-header" id="header">
     <div class="header-wrapper " >
-        <div class="container pb-2">
+        <div class="container pb-0 pb-lg-2">
 
 
             <div class="nav-container ">
@@ -132,7 +132,7 @@
 {#                            </span>#}
 {#                        </button>#}
                     <button class="action-btn lang-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="{% trans 'تغيير اللغة' %}">
-    <span class="language-icon">
+    <span class="language-icon d-none d-md-inline-flex">
         {% get_current_language as CURRENT_LANGUAGE %}
         {% if CURRENT_LANGUAGE == 'ar' %}
             <span class="fi fi-jo fis"></span>
@@ -143,8 +143,7 @@
     <span class="d-none d-md-inline ms-2">
         {% if CURRENT_LANGUAGE == 'ar' %}العربية{% else %}English{% endif %}
     </span>
-    <!-- أيقونة سهم للإشارة إلى القائمة المنسدلة - تظهر فقط في الموبايل -->
-    <i class="fas fa-globe d-inline d-md-none ms-1"></i>
+    <i class="fas fa-globe d-inline d-md-none"></i>
 </button>
                         <ul class="dropdown-menu dropdown-menu-end" style="z-index:1060;">
                             {% get_current_language as CURRENT_LANGUAGE %}
@@ -454,6 +453,7 @@ html[dir="rtl"] .cart-dropdown::before {
     }
 }
 
+    /* Desktop: logo absolute, nav-container padded */
     .logo-wrapper1 {
     position: absolute;
     top: 50%;
@@ -495,25 +495,17 @@ html[dir="rtl"] .nav-container {
     padding-right: 200px;
 }
 
-/* Responsive adjustments */
-@media (max-width: 991.98px) {
+/* Tablet adjustments */
+@media (min-width: 992px) and (max-width: 1399.98px) {
     .logo-wrapper1 {
-        padding: 6px 10px;
-        left: 10px;
-        border-radius: 10px;
+        padding: 6px 12px;
+        left: 15px;
     }
     .logo-wrapper1 img {
-        max-height: 48px;
+        max-height: 55px;
     }
     html[dir="rtl"] .logo-wrapper1 {
-        right: 10px;
-    }
-    .nav-container {
-        padding-left: 100px;
-    }
-    html[dir="rtl"] .nav-container {
-        padding-left: 0;
-        padding-right: 100px;
+        right: 15px;
     }
 }
 
@@ -533,73 +525,55 @@ html[dir="rtl"] .nav-container {
     }
 }
 
-/* iPhone and small mobile devices */
-@media screen and (max-width: 576px) {
+/* Mobile: logo joins the flex flow — no absolute positioning */
+@media (max-width: 991.98px) {
     .logo-wrapper1 {
-        left: 8px;
-        padding: 4px 8px;
-        border-radius: 8px;
+        position: static;
+        transform: none;
+        padding: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        flex-shrink: 0;
+    }
+    .logo-wrapper1:hover {
+        box-shadow: none;
     }
     .logo-wrapper1 img {
-        max-height: 35px;
-    }
-    html[dir="rtl"] .logo-wrapper1 {
-        right: 8px;
+        max-height: 28px;
     }
     .nav-container {
-        padding-left: 90px;
-    }
-    html[dir="rtl"] .nav-container {
-        padding-left: 0;
-        padding-right: 90px;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
     }
 }
 
-/* Medium mobile devices */
-@media screen and (min-width: 577px) and (max-width: 767px) {
+@media (max-width: 375px) {
     .logo-wrapper1 img {
-        max-height: 42px;
+        max-height: 26px;
     }
 }
 
     /* Mobile Flag Fixes */
 @media (max-width: 768px) {
-    /* تكبير الأعلام في الموبايل */
-    .fi {
-        width: 1.5em !important;
-        height: 1.1em !important;
-    }
-
-    .fis {
-        width: 2em !important;
-        height: 1.5em !important;
-    }
-
-    /* تحسين أزرار اللغة للموبايل */
+    /* تحسين أزرار اللغة للموبايل - dropdown items */
     .language-btn {
-        padding: 1rem !important;
+        padding: 0.75rem !important;
         font-size: 1rem !important;
-        min-height: 50px;
+        min-height: 44px;
         display: flex !important;
         align-items: center !important;
+    }
+
+    .language-btn .fi {
+        width: 1.5em !important;
+        height: 1.1em !important;
     }
 
     /* تحسين dropdown في الموبايل */
     .dropdown-menu {
         min-width: 200px !important;
         margin-top: 5px !important;
-    }
-
-    /* إخفاء النص في الزر الرئيسي على الشاشات الصغيرة جداً */
-    .action-btn .d-none.d-sm-inline {
-        display: none !important;
-    }
-
-    /* تكبير الزر الرئيسي */
-    .action-btn {
-        padding: 0.75rem !important;
-        min-width: 50px;
-        min-height: 50px;
     }
 }
 
@@ -660,47 +634,22 @@ html[dir="rtl"] .ms-auto {
 
 
     @media (max-width: 360px) {
-    .action-btn {
-        padding: 0.5rem 0.75rem;
+    .header-actions {
+        gap: 0 !important;
     }
 
-    .action-btn .ms-2 {
-        font-size: 0.9rem;
-    }
-}
-@media (max-width: 767.98px) {
-    /* تنسيق زر اللغة في الموبايل */
-    .lang-btn {
-        padding: 0.6rem !important;
-        min-width: 40px;
-        min-height: 40px;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
+    .header-actions .action-btn,
+    .header-actions .mobile-menu-toggle,
+    .mobile-menu-toggle {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        font-size: 0.85rem !important;
     }
 
-    /* تنسيق أيقونة العلم */
-    .lang-btn .language-icon {
-        display: flex;
-        align-items: center;
-    }
-
-    /* تكبير الأعلام في الموبايل */
-    .lang-btn .fis {
-        width: 1.5em !important;
-        height: 1.2em !important;
-    }
-
-    /* تنسيق أيقونة العالم */
-    .lang-btn .fa-globe {
-        font-size: 0.85em;
-        color: var(--bs-primary);
-    }
-
-    /* تحسين مظهر القائمة المنسدلة */
-    .language-dropdown-menu {
-        min-width: 180px !important;
-        margin-top: 8px !important;
+    .logo-wrapper1 img {
+        max-height: 24px !important;
     }
 }
 

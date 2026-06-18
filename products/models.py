@@ -1149,6 +1149,13 @@ class Product(TimeStampedModel, SEOModel):
 
         super().save(*args, **kwargs)
 
+        # Cascade show_price to category and brand (same logic as bulk price editor)
+        if self.show_price:
+            if self.category_id and not self.category.show_prices:
+                Category.objects.filter(pk=self.category_id).update(show_prices=True)
+            if self.brand_id and not self.brand.show_prices:
+                Brand.objects.filter(pk=self.brand_id).update(show_prices=True)
+
         # Update search keywords
         self.update_search_keywords()
 

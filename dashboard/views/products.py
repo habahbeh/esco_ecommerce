@@ -3855,6 +3855,7 @@ class PriceVisibilityAPIView(DashboardAccessMixin, View):
                 product_count = Product.objects.all().update(show_price=visible)
                 cat_count = Category.objects.all().update(show_prices=visible)
                 brand_count = Brand.objects.all().update(show_prices=visible)
+                cache.clear()
                 return JsonResponse({
                     'success': True,
                     'message': f'تم تحديث {product_count} منتج و {cat_count} فئة و {brand_count} علامة تجارية',
@@ -3876,6 +3877,7 @@ class PriceVisibilityAPIView(DashboardAccessMixin, View):
                 if visible:
                     brand_ids = products_qs.values_list('brand_id', flat=True).distinct()
                     Brand.objects.filter(id__in=brand_ids, show_prices=False).update(show_prices=True)
+                cache.clear()
                 status_text = 'إظهار' if visible else 'إخفاء'
                 return JsonResponse({
                     'success': True,
@@ -3898,6 +3900,7 @@ class PriceVisibilityAPIView(DashboardAccessMixin, View):
                 if visible:
                     cat_ids = products_qs.values_list('category_id', flat=True).distinct()
                     Category.objects.filter(id__in=cat_ids, show_prices=False).update(show_prices=True)
+                cache.clear()
                 status_text = 'إظهار' if visible else 'إخفاء'
                 return JsonResponse({
                     'success': True,
@@ -3916,6 +3919,7 @@ class PriceVisibilityAPIView(DashboardAccessMixin, View):
                     Category.objects.filter(id__in=cat_ids, show_prices=False).update(show_prices=True)
                     brand_ids = products_qs.values_list('brand_id', flat=True).distinct()
                     Brand.objects.filter(id__in=brand_ids, show_prices=False).update(show_prices=True)
+                cache.clear()
                 return JsonResponse({
                     'success': True,
                     'message': f'تم تحديث {count} منتج',
