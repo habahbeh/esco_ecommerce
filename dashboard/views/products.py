@@ -37,6 +37,7 @@ import pandas as pd
 from dashboard.forms.import_export import ProductImportForm
 import numpy as np  # أضف هذا السطر
 from django.core.cache import cache  # أضف هذا السطر
+from django.views.decorators.cache import never_cache
 
 from django.http import HttpResponse
 from io import BytesIO
@@ -1550,7 +1551,7 @@ class ProductListView(DashboardAccessMixin, View):
 
         return render(request, 'dashboard/products/product_list.html', context)
 
-@method_decorator(permission_required('products.view_product'), name='dispatch')
+@method_decorator([permission_required('products.view_product'), never_cache], name='dispatch')
 class ProductDetailView(DashboardAccessMixin, View):
     """عرض تفاصيل المنتج"""
 
@@ -1596,7 +1597,7 @@ class ProductDetailView(DashboardAccessMixin, View):
 
         return render(request, 'dashboard/products/product_detail.html', context)
 
-@method_decorator(permission_required('products.add_product'), name='dispatch')
+@method_decorator([permission_required('products.add_product'), never_cache], name='dispatch')
 class ProductFormView(DashboardAccessMixin, View):
     """عرض إنشاء وتحديث المنتج باستخدام نموذج Django"""
 
