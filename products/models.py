@@ -930,6 +930,22 @@ class Product(TimeStampedModel, SEOModel):
     )
     warranty_details = models.TextField(_("تفاصيل الضمان"), blank=True)
 
+    # Shipping & Returns (per-product overrides)
+    show_shipping_returns = models.BooleanField(_("عرض الشحن والإرجاع"), default=True)
+    shipping_info = models.TextField(
+        _("معلومات الشحن"),
+        blank=True,
+        help_text=_("سطر واحد لكل نقطة. اتركه فارغاً لاستخدام النص الافتراضي")
+    )
+    return_info = models.TextField(
+        _("سياسة الإرجاع"),
+        blank=True,
+        help_text=_("سطر واحد لكل نقطة. اتركه فارغاً لاستخدام النص الافتراضي")
+    )
+
+    # General Info visibility
+    show_general_info = models.BooleanField(_("عرض معلومات عامة"), default=True)
+
     # Display settings
     status = models.CharField(
         _("الحالة"),
@@ -1395,6 +1411,18 @@ class Product(TimeStampedModel, SEOModel):
         if self.track_inventory:
             return 0 < self.available_quantity <= self.min_stock_level
         return False
+
+    @property
+    def shipping_info_lines(self):
+        if not self.shipping_info:
+            return []
+        return [line.strip() for line in self.shipping_info.splitlines() if line.strip()]
+
+    @property
+    def return_info_lines(self):
+        if not self.return_info:
+            return []
+        return [line.strip() for line in self.return_info.splitlines() if line.strip()]
 
     @property
     def default_image(self):

@@ -368,9 +368,11 @@
                                     <i class="fas fa-photo-video me-2"></i>{% trans "المرفقات" %}
                                 </div>
                             {% endif %}
+                            {% if product.show_shipping_returns %}
                             <div class="amazon-tab" data-tab="shipping">
                                 <i class="fas fa-truck me-2"></i>{% trans "الشحن والإرجاع" %}
                             </div>
+                            {% endif %}
                         </div>
 
                         <div id="tabContent">
@@ -485,6 +487,7 @@
 {% endif %}
 
                             <!-- محتوى تبويب الشحن والإرجاع -->
+                            {% if product.show_shipping_returns %}
                             <div class="tab-content-wrapper" id="shipping-content" style="display: none;">
                                 <div class="row">
                                     <div class="col-md-6">
@@ -492,11 +495,15 @@
                                             <i class="fas fa-shipping-fast me-2"></i>{% trans "معلومات الشحن" %}
                                         </h5>
                                         <ul class="shipping-info-list">
-                                            <li>{% trans "شحن سريع خلال 2-3 أيام عمل داخل عمّان" %}</li>
-                                            <li>{% trans "شحن خلال 4-5 أيام للمحافظات الأخرى" %}</li>
-                                            <li>{% trans "إمكانية الشحن الدولي (حسب الوجهة)" %}</li>
-                                            <li>{% trans "تتبع الشحنة أونلاين" %}</li>
-                                            <li>{% trans "تغليف آمن ومحكم" %}</li>
+                                            {% if product.shipping_info %}
+                                                {% for line in product.shipping_info_lines %}
+                                                <li>{{ line }}</li>
+                                                {% endfor %}
+                                            {% elif site_settings.default_shipping_info %}
+                                                {% for line in site_settings.default_shipping_info_lines %}
+                                                <li>{{ line }}</li>
+                                                {% endfor %}
+                                            {% endif %}
                                         </ul>
                                     </div>
 
@@ -505,15 +512,20 @@
                                             <i class="fas fa-undo me-2"></i>{% trans "سياسة الإرجاع" %}
                                         </h5>
                                         <ul class="return-policy-list">
-                                            <li>{% trans "إرجاع مجاني خلال 30 يوم" %}</li>
-                                            <li>{% trans "المنتج يجب أن يكون في حالته الأصلية" %}</li>
-                                            <li>{% trans "مع جميع الملحقات والفاتورة الأصلية" %}</li>
-                                            <li>{% trans "استرداد المبلغ خلال 7-10 أيام عمل" %}</li>
-                                            <li>{% trans "إمكانية الاستبدال بمنتج آخر" %}</li>
+                                            {% if product.return_info %}
+                                                {% for line in product.return_info_lines %}
+                                                <li>{{ line }}</li>
+                                                {% endfor %}
+                                            {% elif site_settings.default_return_info %}
+                                                {% for line in site_settings.default_return_info_lines %}
+                                                <li>{{ line }}</li>
+                                                {% endfor %}
+                                            {% endif %}
                                         </ul>
                                     </div>
                                 </div>
                             </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>

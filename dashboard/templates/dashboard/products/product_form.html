@@ -38,7 +38,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.20/summernote-bs5.min.css">
-<link rel="stylesheet" href="{% static 'dashboard/css/product.css' %}">
+<link rel="stylesheet" href="{% static 'dashboard/css/product.css' %}?v=4">
 <style>
     .tracked-badge { display:inline-flex; align-items:center; gap:.25rem; font-size:.68rem; padding:.15em .5em; border-radius:4px; background:#fff3cd; color:#856404; font-weight:600; vertical-align:middle; }
     .tracked-badge i { font-size:.6rem; }
@@ -270,64 +270,62 @@
     <div class="col-12">
         <h6 class="text-muted mb-3">{% trans 'خيارات العرض والتصنيف' %}</h6>
         <div class="row">
-            <!-- نشط -->
             <div class="col-md-3 mb-3">
-                <div class="form-check form-switch feature-switch">
+                <div class="form-check form-switch">
                     {{ form.is_active }}
-                    <label class="form-check-label"
-                           for="{{ form.is_active.id_for_label }}">
-                        <i class="feature-icon fas fa-check-circle text-success"></i>
-                        <span class="feature-text">{% trans 'نشط' %}</span> <span class="tracked-badge" title="{% trans 'يتم تتبع تغييرات هذا الحقل تلقائياً في متتبع المنتجات' %}"><i class="fas fa-satellite-dish"></i></span>
+                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                        <i class="fas fa-check-circle text-success mx-1"></i>{% trans 'نشط' %}
                     </label>
                 </div>
             </div>
-
-            <!-- مميز -->
             <div class="col-md-3 mb-3">
-                <div class="form-check form-switch feature-switch">
+                <div class="form-check form-switch">
                     {{ form.is_featured }}
-                    <label class="form-check-label"
-                           for="{{ form.is_featured.id_for_label }}">
-                        <i class="feature-icon fas fa-star text-warning"></i>
-                        <span class="feature-text">{{ form.is_featured.label }}</span>
+                    <label class="form-check-label" for="{{ form.is_featured.id_for_label }}">
+                        <i class="fas fa-star text-warning mx-1"></i>{{ form.is_featured.label }}
                     </label>
                 </div>
             </div>
-
-            <!-- جديد -->
             <div class="col-md-3 mb-3">
-                <div class="form-check form-switch feature-switch">
+                <div class="form-check form-switch">
                     {{ form.is_new }}
-                    <label class="form-check-label"
-                           for="{{ form.is_new.id_for_label }}">
-                        <i class="feature-icon fas fa-certificate text-primary"></i>
-                        <span class="feature-text">{{ form.is_new.label }}</span>
+                    <label class="form-check-label" for="{{ form.is_new.id_for_label }}">
+                        <i class="fas fa-certificate text-primary mx-1"></i>{{ form.is_new.label }}
                     </label>
                 </div>
             </div>
-
-            <!-- الأكثر مبيعًا -->
             <div class="col-md-3 mb-3">
-                <div class="form-check form-switch feature-switch">
+                <div class="form-check form-switch">
                     {{ form.is_best_seller }}
-                    <label class="form-check-label"
-                           for="{{ form.is_best_seller.id_for_label }}">
-                        <i class="feature-icon fas fa-fire text-danger"></i>
-                        <span class="feature-text">{{ form.is_best_seller.label }}</span>
+                    <label class="form-check-label" for="{{ form.is_best_seller.id_for_label }}">
+                        <i class="fas fa-fire text-danger mx-1"></i>{{ form.is_best_seller.label }}
                     </label>
                 </div>
             </div>
         </div>
 
         <div class="row">
-            <!-- عرض السعر -->
             <div class="col-md-3 mb-3">
-                <div class="form-check form-switch feature-switch">
+                <div class="form-check form-switch">
                     {{ form.show_price }}
-                    <label class="form-check-label"
-                           for="{{ form.show_price.id_for_label }}">
-                        <i class="feature-icon fas fa-tag text-info"></i>
-                        <span class="feature-text">{% trans 'عرض السعر' %}</span>
+                    <label class="form-check-label" for="{{ form.show_price.id_for_label }}">
+                        <i class="fas fa-tag text-info mx-1"></i>{% trans 'عرض السعر' %}
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="form-check form-switch">
+                    {{ form.show_general_info }}
+                    <label class="form-check-label" for="{{ form.show_general_info.id_for_label }}">
+                        <i class="fas fa-info-circle text-primary mx-1"></i>{% trans 'عرض معلومات عامة' %}
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="form-check form-switch">
+                    {{ form.show_shipping_returns }}
+                    <label class="form-check-label" for="{{ form.show_shipping_returns.id_for_label }}">
+                        <i class="fas fa-truck text-success mx-1"></i>{% trans 'عرض الشحن والإرجاع' %}
                     </label>
                 </div>
             </div>
@@ -858,6 +856,31 @@
 
                                         <!-- حقل مخفي لتخزين معرفات الخصائص المحذوفة -->
                                         <input type="hidden" name="deleted_attributes" id="deleted-attributes" value="">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- قسم الشحن والإرجاع -->
+                            <div class="form-section mt-4">
+                                <h5 class="form-section-title">
+                                    <i class="fas fa-truck me-2"></i>{% trans 'الشحن والإرجاع' %}
+                                </h5>
+                                <p class="text-muted small">{% trans 'اتركه فارغاً لاستخدام النص الافتراضي. أدخل سطراً واحداً لكل نقطة.' %}</p>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.shipping_info.id_for_label }}" class="form-label">
+                                            <i class="fas fa-shipping-fast me-1"></i>{{ form.shipping_info.label }}
+                                        </label>
+                                        {{ form.shipping_info }}
+                                        <div class="form-text">{{ form.shipping_info.help_text }}</div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.return_info.id_for_label }}" class="form-label">
+                                            <i class="fas fa-undo me-1"></i>{{ form.return_info.label }}
+                                        </label>
+                                        {{ form.return_info }}
+                                        <div class="form-text">{{ form.return_info.help_text }}</div>
                                     </div>
                                 </div>
                             </div>

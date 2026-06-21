@@ -41,6 +41,7 @@
         <div class="additional-details">
             <div class="details-grid">
                 <!-- General Info -->
+                {% if product.show_general_info %}
                 <div class="detail-card" data-aos="fade-up">
                     <div class="card-header">
                         <svg class="card-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -82,17 +83,20 @@
                         </div>
                         {% endif %}
                         {% endif %}
+                        {% if product.warranty_period %}
                         <div class="info-item">
                             <span class="info-label">{% trans "الضمان" %}</span>
                             <span class="info-value warranty">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
-                                {% trans "سنة واحدة" %}
+                                {{ product.warranty_period }}
                             </span>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
+                {% endif %}
 
                 <!-- Dimensions & Weight -->
                 {% if product.weight or product.length or product.width or product.height %}

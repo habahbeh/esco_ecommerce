@@ -9,6 +9,8 @@ from django.shortcuts import render, get_object_or_404
 from django.views.generic import DetailView, ListView
 from django.db.models import Q, Avg, Count, Min, Max, Prefetch, Q, F
 from django.utils.translation import gettext as _
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import never_cache
 from django.http import Http404
 import logging
 
@@ -513,6 +515,7 @@ class ProductListView(BaseProductListView):
 
         return active_filters
 
+@method_decorator(never_cache, name='dispatch')
 class ProductDetailView(BaseProductDetailView):
     """
     Enhanced product detail view with performance optimizations

@@ -151,12 +151,6 @@ class ProductForm(forms.ModelForm):
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3})
     )
 
-    # إعدادات العرض الإضافية
-    show_price = forms.BooleanField(
-        label=_("عرض السعر"),
-        required=False,
-        initial=False
-    )
 
     # منتجات متعلقة إضافية
     cross_sell_products = forms.ModelMultipleChoiceField(
@@ -241,7 +235,9 @@ class ProductForm(forms.ModelForm):
             'discount_percentage', 'discount_amount', 'discount_start', 'discount_end',
             'reserved_quantity', 'max_order_quantity', 'track_inventory',
             'available_for_preorder', 'preorder_message',
-            'warranty_period', 'warranty_details', 'featured_until'
+            'warranty_period', 'warranty_details', 'featured_until',
+            'show_shipping_returns', 'shipping_info', 'return_info',
+            'show_general_info',
         ]
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -270,7 +266,15 @@ class ProductForm(forms.ModelForm):
             'meta_description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'meta_keywords': forms.TextInput(attrs={'class': 'form-control tagsinput'}),
             'search_keywords': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_featured': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_new': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_best_seller': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'show_price': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'show_shipping_returns': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'show_general_info': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'shipping_info': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'سطر واحد لكل نقطة'}),
+            'return_info': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'سطر واحد لكل نقطة'}),
         }
         error_messages = {
             'name': {

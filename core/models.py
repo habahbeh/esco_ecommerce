@@ -94,6 +94,20 @@ class SiteSettings(models.Model):
         help_text=_("تفعيل خيار الاستلام من الفرع للعملاء")
     )
 
+    # =================== Default Shipping & Returns Text ===================
+    default_shipping_info = models.TextField(
+        _("معلومات الشحن الافتراضية"),
+        blank=True,
+        default='شحن سريع خلال 2-3 أيام عمل داخل عمّان\nشحن خلال 4-5 أيام للمحافظات الأخرى\nإمكانية الشحن الدولي (حسب الوجهة)\nتتبع الشحنة أونلاين\nتغليف آمن ومحكم',
+        help_text=_("سطر واحد لكل نقطة")
+    )
+    default_return_info = models.TextField(
+        _("سياسة الإرجاع الافتراضية"),
+        blank=True,
+        default='إرجاع مجاني خلال 30 يوم\nالمنتج يجب أن يكون في حالته الأصلية\nمع جميع الملحقات والفاتورة الأصلية\nاسترداد المبلغ خلال 7-10 أيام عمل\nإمكانية الاستبدال بمنتج آخر',
+        help_text=_("سطر واحد لكل نقطة")
+    )
+
     # =================== Announcement Banner ===================
     show_announcement_banner = models.BooleanField(
         _("إظهار شريط الإعلانات"),
@@ -240,6 +254,18 @@ class SiteSettings(models.Model):
                 self.primary_color_rgb = "30, 136, 229"  # أزرق افتراضي
 
         super().save(*args, **kwargs)
+
+    @property
+    def default_shipping_info_lines(self):
+        if not self.default_shipping_info:
+            return []
+        return [line.strip() for line in self.default_shipping_info.splitlines() if line.strip()]
+
+    @property
+    def default_return_info_lines(self):
+        if not self.default_return_info:
+            return []
+        return [line.strip() for line in self.default_return_info.splitlines() if line.strip()]
 
     @classmethod
     def get_settings(cls):

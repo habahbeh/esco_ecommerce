@@ -39,9 +39,28 @@ class SiteSettingsView( SuperuserRequiredMixin, UpdateView):
 
 
     def get_object(self, queryset=None):
-        """الحصول على كائن الإعدادات الحالي أو إنشاء واحد جديد إذا لم يكن موجوداً"""
         settings = SiteSettings.get_settings()
         return settings
+
+    def _clear_missing_files(self):
+        """Clear file field references in DB when physical files are missing locally."""
+        from django.db import models as db_models
+        update = {}
+        for field in self.object._meta.get_fields():
+            if isinstance(field, db_models.FileField):
+                val = getattr(self.object, field.attname)
+                if val:
+                    full_path = os.path.join(django_settings.MEDIA_ROOT, str(val))
+                    if not os.path.isfile(full_path):
+                        update[field.attname] = ''
+        if update:
+            SiteSettings.objects.filter(pk=self.object.pk).update(**update)
+            self.object.refresh_from_db()
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        self._clear_missing_files()
+        return super().post(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -53,18 +72,15 @@ class SiteSettingsView( SuperuserRequiredMixin, UpdateView):
         return context
 
     def form_valid(self, form):
-        # تخزين الملفات القديمة للحذف لاحقاً إذا تم تغييرها
         old_logo = None
         old_favicon = None
 
         if self.object.logo and form.cleaned_data.get('logo') and self.object.logo != form.cleaned_data.get('logo'):
             old_logo = self.object.logo
 
-        if self.object.favicon and form.cleaned_data.get('favicon') and self.object.favicon != form.cleaned_data.get(
-                'favicon'):
+        if self.object.favicon and form.cleaned_data.get('favicon') and self.object.favicon != form.cleaned_data.get('favicon'):
             old_favicon = self.object.favicon
 
-        # حفظ النموذج
         response = super().form_valid(form)
 
         # معالجة الشعار (تغيير الحجم)
@@ -85,23 +101,18 @@ class SiteSettingsView( SuperuserRequiredMixin, UpdateView):
             except Exception as e:
                 messages.warning(self.request, _("تعذر معالجة أيقونة الموقع: %s") % str(e))
 
-        # حذف الملفات القديمة لتوفير مساحة التخزين
-        if old_logo and os.path.isfile(old_logo.path):
-            try:
-                os.remove(old_logo.path)
-            except:
-                pass
+        # حذف الملفات القديمة
+        for old_file in (old_logo, old_favicon):
+            if old_file:
+                try:
+                    if os.path.isfile(old_file.path):
+                        os.remove(old_file.path)
+                except Exception:
+                    pass
 
-        if old_favicon and os.path.isfile(old_favicon.path):
-            try:
-                os.remove(old_favicon.path)
-            except:
-                pass
-
-        # مسح ذاكرة التخزين المؤقت للإعدادات
         cache.delete('site_settings')
 
-        # حفظ محتوى "نبذة عن الشركة" (عربي + إنجليزي)
+        # حفظ محتوى "نبذة عن الشركة"
         about_ar = self.request.POST.get('about_content_ar')
         about_en = self.request.POST.get('about_content_en')
         if about_ar is not None or about_en is not None:
@@ -302,6 +313,8 @@ class ShippingSettingsView( SuperuserRequiredMixin, TemplateView):
         site_settings.shipping_fee_other = Decimal(request.POST.get('shipping_fee_other', '3.00') or '3.00')
         site_settings.free_shipping_threshold = Decimal(request.POST.get('free_shipping_threshold', '0.00') or '0.00')
         site_settings.pickup_enabled = request.POST.get('pickup_enabled') == 'on'
+        site_settings.default_shipping_info = request.POST.get('default_shipping_info', '')
+        site_settings.default_return_info = request.POST.get('default_return_info', '')
 
         site_settings.save()
 
