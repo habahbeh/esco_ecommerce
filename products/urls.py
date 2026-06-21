@@ -3,9 +3,9 @@
 Updated URLs configuration for products app
 """
 
-from django.urls import path
+from django.urls import path, re_path
 from django.http import JsonResponse
-from django.urls import re_path
+from django.views.decorators.cache import cache_page
 
 # Import product views (بعد دمج category_views.py في product_views.py)
 from .views.product_views import (
@@ -141,7 +141,7 @@ urlpatterns = [
     path('', ProductListView.as_view(), name='product_list'),
 
     # قوائم المنتجات الخاصة
-    path('categories/', CategoryListView.as_view(), name='category_list'),  # تم تحديثها لاستخدام CategoryListView من product_views.py
+    path('categories/', cache_page(300)(CategoryListView.as_view()), name='category_list'),
     # path('category/<slug:parent_slug>/subcategories/', SubCategoryListView.as_view(), name='subcategories'),
     re_path(r'category/(?P<parent_slug>[-\w\u0600-\u06FF]+)/subcategories/', SubCategoryListView.as_view(), name='subcategories'),
     path('brands/', BrandListView.as_view(), name='brand_list'),
