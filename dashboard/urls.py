@@ -365,6 +365,8 @@ urlpatterns = [
     path('seo/keywords/<int:pk>/edit/', views.SEOKeywordEditView.as_view(), name='seo_keyword_edit'),
     path('seo/keywords/<int:pk>/delete/', views.SEOKeywordDeleteView.as_view(), name='seo_keyword_delete'),
     path('seo/auto-tag/', views.AutoTagView.as_view(), name='seo_auto_tag'),
+    path('seo/analytics/', views.SiteAnalyticsView.as_view(), name='seo_analytics'),
+    path('seo/analytics/api/', views.AnalyticsAPIView.as_view(), name='seo_analytics_api'),
 
     # ========================= واجهات برمجة التطبيقات API =========================
     path('api/stats/', views.DashboardStatsAPIView.as_view(), name='dashboard_stats_api'),

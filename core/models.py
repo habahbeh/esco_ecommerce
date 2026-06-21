@@ -456,3 +456,38 @@ class SEOKeyword(models.Model):
 
     def __str__(self):
         return f"{self.keyword} ({self.get_level_display()})"
+
+
+class PageView(models.Model):
+    path = models.CharField(max_length=500, db_index=True)
+    full_url = models.URLField(max_length=1000, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True, db_index=True)
+    user_agent = models.TextField(blank=True)
+    referrer = models.URLField(max_length=1000, blank=True)
+    user = models.ForeignKey(
+        'accounts.User', null=True, blank=True, on_delete=models.SET_NULL
+    )
+    session_key = models.CharField(max_length=40, blank=True, db_index=True)
+    country = models.CharField(max_length=100, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    device_type = models.CharField(max_length=20, choices=[
+        ('desktop', 'Desktop'),
+        ('mobile', 'Mobile'),
+        ('tablet', 'Tablet'),
+        ('bot', 'Bot'),
+    ], default='desktop')
+    browser = models.CharField(max_length=100, blank=True)
+    os = models.CharField(max_length=100, blank=True)
+    is_bot = models.BooleanField(default=False)
+    timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        app_label = 'core'
+        indexes = [
+            models.Index(fields=['is_bot', 'timestamp']),
+            models.Index(fields=['timestamp', 'is_bot']),
+            models.Index(fields=['path', 'timestamp']),
+        ]
+
+    def __str__(self):
+        return f"{self.path} - {self.ip_address} - {self.timestamp}"

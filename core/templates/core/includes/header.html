@@ -11,7 +11,6 @@
     <div class="header-wrapper " >
         <div class="container pb-0 pb-lg-2">
 
-
             <div class="nav-container ">
                 <!-- Logo -->
                 <div class="logo-wrapper1">
@@ -45,7 +44,6 @@
                             <span>
                                 {% if user.is_authenticated %}
                                     {{ user.first_name|default:user.username|truncatechars:10 }}
-{#                                    {{ user.get_full_name|default:user.username|truncatechars:10 }}#}
                                 {% else %}
                                     {% trans "الحساب" %}
                                 {% endif %}
@@ -55,10 +53,6 @@
                             {% if user.is_authenticated %}
                                 <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="fas fa-user-circle me-2"></i> {% trans "الملف الشخصي" %}</a></li>
                                 <li hidden><a class="dropdown-item" href="{% url 'accounts:order_history' %}"><i class="fas fa-box me-2"></i> {% trans "طلباتي" %}</a></li>
-{#                                {% if user.is_staff %}#}
-{#                                    <li><hr class="dropdown-divider"></li>#}
-{#                                    <li><a class="dropdown-item" href="{% url 'dashboard:index' %}"><i class="fas fa-tachometer-alt me-2"></i> {% trans "لوحة التحكم" %}</a></li>#}
-{#                                {% endif %}#}
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="{% url 'accounts:logout' %}"><i class="fas fa-sign-out-alt me-2"></i> {% trans "تسجيل الخروج" %}</a></li>
                             {% else %}
@@ -120,17 +114,6 @@
 
                     <!-- Language Switcher -->
                     <div class="dropdown">
-{#                        <button class="action-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">#}
-{#                            {% get_current_language as CURRENT_LANGUAGE %}#}
-{#                            {% if CURRENT_LANGUAGE == 'ar' %}#}
-{#                                <span class="fi fi-jo fis"></span>#}
-{#                            {% else %}#}
-{#                                <span class="fi fi-us fis"></span>#}
-{#                            {% endif %}#}
-{#                            <span class="d-none d-md-inline ms-2">#}
-{#                                {% if CURRENT_LANGUAGE == 'ar' %}العربية{% else %}English{% endif %}#}
-{#                            </span>#}
-{#                        </button>#}
                     <button class="action-btn lang-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="{% trans 'تغيير اللغة' %}">
     <span class="language-icon d-none d-md-inline-flex">
         {% get_current_language as CURRENT_LANGUAGE %}
@@ -153,7 +136,6 @@
                                 <li>
                                     <form action="{% url 'set_language' %}" method="post" class="d-inline">
                                         {% csrf_token %}
-                                        <!-- الحل: استخدام template logic لتنظيف المسار -->
                                         {% if request.path|slice:":3" == "/ar" %}
                                             <input name="next" type="hidden" value="{{ request.path|slice:"3:" }}"/>
                                         {% elif request.path|slice:":4" == "/en/" %}
@@ -185,8 +167,6 @@
                         </ul>
                     </div>
 
-
-
                     <!-- Dark Mode Toggle -->
                     {% if site_settings.enable_dark_mode %}
                         <button class="action-btn" id="darkModeToggle" aria-label="{% trans 'تبديل الوضع الداكن' %}">
@@ -194,11 +174,26 @@
                         </button>
                     {% endif %}
 
-                    <!-- Mobile Menu Toggle -->
+                </div>
+
+                <!-- Mobile Menu Toggle (trailing side on mobile) -->
+                <div class="header-end d-lg-none">
                     <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="{% trans 'فتح القائمة' %}">
                         <i class="fas fa-bars"></i>
                     </button>
                 </div>
+            </div>
+
+            <!-- Mobile Search Bar (Row 2) -->
+            <div class="mobile-search-row d-lg-none">
+                {% get_current_language as CURRENT_LANGUAGE %}
+                <form action="{% if CURRENT_LANGUAGE == 'en' %}/en{% endif %}/products/search/" method="GET" role="search" class="search-form" id="mobileHeaderSearchForm">
+                    <input type="search" name="q" class="search-input" id="mobileHeaderSearchInput" placeholder="{% trans 'ابحث عن المنتجات...' %}" aria-label="{% trans 'بحث' %}" value="{{ request.GET.q|default:'' }}" autocomplete="off">
+                    <button type="submit" class="search-btn" aria-label="{% trans 'بحث' %}">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <div class="search-suggestions" id="mobileHeaderSearchSuggestions"></div>
+                </form>
             </div>
         </div>
 
@@ -231,67 +226,77 @@
 <div class="mobile-overlay" id="mobileOverlay"></div>
 <div class="mobile-menu" id="mobileMenu">
     <div class="mobile-menu-header">
-        <div class="logo-wrapper">
-            {% if site_settings.logo %}
-                <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name|default:'ESCO' }}" height="30">
-            {% else %}
-                <img src="{% static 'images/logo.png' %}" alt="ESCO" height="30">
-            {% endif %}
-        </div>
-        <button class="mobile-menu-close" id="mobileMenuClose" aria-label="{% trans 'إغلاق القائمة' %}">
-            <i class="fas fa-times"></i>
-        </button>
-    </div>
-
-    <div class="mobile-search">
-        {% get_current_language as CURRENT_LANGUAGE %}
-        <form action="{% if CURRENT_LANGUAGE == 'en' %}/en{% endif %}/products/search/" method="GET" role="search" class="search-form" id="mobileSearchForm">
-            <input type="search" name="q" class="search-input" id="mobileSearchInput" placeholder="{% trans 'ابحث عن المنتجات...' %}" aria-label="{% trans 'بحث' %}" value="{{ request.GET.q|default:'' }}" autocomplete="off">
-            <button type="submit" class="search-btn" aria-label="{% trans 'بحث' %}">
-                <i class="fas fa-search"></i>
+        <div class="mm-header-top">
+            <div class="mm-logo">
+                {% if site_settings.logo %}
+                    <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name|default:'ESCO' }}">
+                {% else %}
+                    <img src="{% static 'images/logo.png' %}" alt="ESCO">
+                {% endif %}
+            </div>
+            <button class="mobile-menu-close" id="mobileMenuClose" aria-label="{% trans 'إغلاق القائمة' %}">
+                <i class="fas fa-times"></i>
             </button>
-            <div class="search-suggestions" id="mobileSearchSuggestions"></div>
-        </form>
+        </div>
+        {% if user.is_authenticated %}
+        <div class="mm-user-greeting">
+            <div class="mm-avatar"><i class="fas fa-user"></i></div>
+            <div class="mm-user-info">
+                <span class="mm-welcome">{% trans "مرحباً" %}</span>
+                <span class="mm-username">{{ user.first_name|default:user.username }}</span>
+            </div>
+        </div>
+        {% else %}
+        <div class="mm-user-greeting mm-guest">
+            <a href="{% url 'accounts:login' %}" class="mm-login-btn">
+                <i class="fas fa-sign-in-alt"></i>
+                {% trans "تسجيل الدخول" %}
+            </a>
+            <a href="{% url 'accounts:register' %}" class="mm-register-btn">{% trans "إنشاء حساب" %}</a>
+        </div>
+        {% endif %}
     </div>
 
-    <ul class="mobile-nav-list">
-        <li><a href="{% url 'core:home' %}"><i class="fas fa-home"></i>{% trans "الرئيسية" %}</a></li>
-{#        <li><a href="{% url 'products:product_list' %}"><i class="fas fa-th-large"></i>{% trans "المنتجات" %}</a></li>#}
-    <li><a href="{% url 'products:category_list' %}" class="{% if '/categories/' in request.path %}active{% endif %}"><i class="fas fa-th-large me-2"></i>{% trans "التصنيفات" %}</a></li>
-    <li><a href="{% url 'products:brand_list' %}" class="{% if '/brands/' in request.path %}active{% endif %}"><i class="fas fa-trademark me-2"></i>{% trans "العلامات التجارية" %}</a></li>
-
-                    <li><a href="{% url 'products:product_list' %}" class="{% if request.path == '/products/' or request.path == '/products' %}active{% endif %}"><i class="fas fa-th-large me-2"></i>{% trans "المنتجات" %}</a></li>
-
-        <li><a href="{% url 'products:special_offers' %}"><i class="fas fa-tags"></i>{% trans "العروض الخاصة" %}</a>
-        </li>
-        <li><a href="{% url 'events:event_list' %}"><i class="fas fa-calendar-alt"></i>{% trans "الفعاليات" %}</a></li>
-        <li><a href="{% url 'blog:post_list' %}"><i class="fas fa-blog"></i>{% trans "المدونة" %}</a></li>
-        <li>
-            <a href="{% if CURRENT_LANGUAGE == 'en' %}{% if site_settings.catalog_en %}{{ site_settings.catalog_en.url }}{% else %}/media/pdf/ESCO-Catalog-English.pdf{% endif %}{% else %}{% if site_settings.catalog_ar %}{{ site_settings.catalog_ar.url }}{% else %}/media/pdf/ESCO-Catalog-Arabic.pdf{% endif %}{% endif %}"
-               target="_blank">
-                <i class="fas fa-book"></i>{% trans "كتالوج" %}
-            </a>
-        </li>
-        <li><a href="{% url 'core:about' %}"><i class="fas fa-info-circle"></i>{% trans "من نحن" %}</a></li>
-        <li><a href="{% url 'core:contact' %}"><i class="fas fa-envelope"></i>{% trans "اتصل بنا" %}</a></li>
-{#        <li><a href="{% url 'orders:track_order' %}"><i class="fas fa-truck"></i>{% trans "تتبع الطلب" %}</a></li>#}
-    </ul>
-
-    {% if user.is_authenticated %}
-        <div class="mobile-nav-list mt-3 pt-3 border-top">
-            <a href="{% url 'accounts:profile' %}"><i class="fas fa-user-circle"></i>{% trans "الملف الشخصي" %}</a>
-            <a href="{% url 'accounts:order_history' %}" hidden><i class="fas fa-box"></i>{% trans "طلباتي" %}</a>
-{#            {% if user.is_staff %}#}
-{#                <a href="{% url 'dashboard:index' %}"><i class="fas fa-tachometer-alt"></i>{% trans "لوحة التحكم" %}</a>#}
-{#            {% endif %}#}
-            <a href="{% url 'accounts:logout' %}" class="text-danger"><i class="fas fa-sign-out-alt"></i>{% trans "تسجيل الخروج" %}</a>
+    <div class="mm-body">
+        <div class="mm-section">
+            <div class="mm-section-label">{% trans "تصفح" %}</div>
+            <ul class="mm-nav">
+                <li><a href="{% url 'core:home' %}" class="{% if request.path == '/' %}mm-active{% endif %}"><span class="mm-icon"><i class="fas fa-home"></i></span><span class="mm-label">{% trans "الرئيسية" %}</span><i class="fas fa-chevron-left mm-arrow"></i></a></li>
+                <li><a href="{% url 'products:category_list' %}" class="{% if '/categories/' in request.path %}mm-active{% endif %}"><span class="mm-icon"><i class="fas fa-th-large"></i></span><span class="mm-label">{% trans "التصنيفات" %}</span><i class="fas fa-chevron-left mm-arrow"></i></a></li>
+                <li><a href="{% url 'products:product_list' %}" class="{% if request.path == '/products/' or request.path == '/products' %}mm-active{% endif %}"><span class="mm-icon"><i class="fas fa-box-open"></i></span><span class="mm-label">{% trans "المنتجات" %}</span><i class="fas fa-chevron-left mm-arrow"></i></a></li>
+                <li><a href="{% url 'products:brand_list' %}" class="{% if '/brands/' in request.path %}mm-active{% endif %}"><span class="mm-icon"><i class="fas fa-award"></i></span><span class="mm-label">{% trans "العلامات التجارية" %}</span><i class="fas fa-chevron-left mm-arrow"></i></a></li>
+                <li><a href="{% url 'products:special_offers' %}"><span class="mm-icon mm-icon-accent"><i class="fas fa-tags"></i></span><span class="mm-label">{% trans "العروض الخاصة" %}</span><i class="fas fa-chevron-left mm-arrow"></i></a></li>
+            </ul>
         </div>
-    {% else %}
-        <div class="mobile-nav-list mt-3 pt-3 border-top">
-            <a href="{% url 'accounts:login' %}"><i class="fas fa-sign-in-alt"></i>{% trans "تسجيل الدخول" %}</a>
-            <a href="{% url 'accounts:register' %}"><i class="fas fa-user-plus"></i>{% trans "إنشاء حساب" %}</a>
+
+        <div class="mm-section">
+            <div class="mm-section-label">{% trans "المزيد" %}</div>
+            <ul class="mm-nav">
+                <li><a href="{% url 'events:event_list' %}"><span class="mm-icon"><i class="fas fa-calendar-alt"></i></span><span class="mm-label">{% trans "الفعاليات" %}</span><i class="fas fa-chevron-left mm-arrow"></i></a></li>
+                <li><a href="{% url 'blog:post_list' %}"><span class="mm-icon"><i class="fas fa-blog"></i></span><span class="mm-label">{% trans "المدونة" %}</span><i class="fas fa-chevron-left mm-arrow"></i></a></li>
+                {% get_current_language as CURRENT_LANGUAGE %}
+                <li><a href="{% if CURRENT_LANGUAGE == 'en' %}{% if site_settings.catalog_en %}{{ site_settings.catalog_en.url }}{% else %}/media/pdf/ESCO-Catalog-English.pdf{% endif %}{% else %}{% if site_settings.catalog_ar %}{{ site_settings.catalog_ar.url }}{% else %}/media/pdf/ESCO-Catalog-Arabic.pdf{% endif %}{% endif %}" target="_blank"><span class="mm-icon"><i class="fas fa-book"></i></span><span class="mm-label">{% trans "كتالوج" %}</span><i class="fas fa-external-link-alt mm-arrow"></i></a></li>
+            </ul>
         </div>
-    {% endif %}
+
+        <div class="mm-section">
+            <div class="mm-section-label">{% trans "الشركة" %}</div>
+            <ul class="mm-nav">
+                <li><a href="{% url 'core:about' %}"><span class="mm-icon"><i class="fas fa-info-circle"></i></span><span class="mm-label">{% trans "من نحن" %}</span><i class="fas fa-chevron-left mm-arrow"></i></a></li>
+                <li><a href="{% url 'core:contact' %}"><span class="mm-icon"><i class="fas fa-envelope"></i></span><span class="mm-label">{% trans "اتصل بنا" %}</span><i class="fas fa-chevron-left mm-arrow"></i></a></li>
+            </ul>
+        </div>
+
+        {% if user.is_authenticated %}
+        <div class="mm-section">
+            <div class="mm-section-label">{% trans "حسابي" %}</div>
+            <ul class="mm-nav">
+                <li><a href="{% url 'accounts:profile' %}"><span class="mm-icon"><i class="fas fa-user-circle"></i></span><span class="mm-label">{% trans "الملف الشخصي" %}</span><i class="fas fa-chevron-left mm-arrow"></i></a></li>
+                <li><a href="{% url 'accounts:logout' %}" class="mm-logout"><span class="mm-icon"><i class="fas fa-sign-out-alt"></i></span><span class="mm-label">{% trans "تسجيل الخروج" %}</span></a></li>
+            </ul>
+        </div>
+        {% endif %}
+    </div>
 </div>
 
 <style>
@@ -525,7 +530,7 @@ html[dir="rtl"] .nav-container {
     }
 }
 
-/* Mobile: logo joins the flex flow — no absolute positioning */
+/* Mobile: logo joins the flex flow — centered, app-like */
 @media (max-width: 991.98px) {
     .logo-wrapper1 {
         position: static;
@@ -535,12 +540,14 @@ html[dir="rtl"] .nav-container {
         background: transparent;
         box-shadow: none;
         flex-shrink: 0;
+        flex-grow: 1;
+        justify-content: center;
     }
     .logo-wrapper1:hover {
         box-shadow: none;
     }
     .logo-wrapper1 img {
-        max-height: 28px;
+        max-height: 42px;
     }
     .nav-container {
         padding-left: 0 !important;
@@ -550,13 +557,12 @@ html[dir="rtl"] .nav-container {
 
 @media (max-width: 375px) {
     .logo-wrapper1 img {
-        max-height: 26px;
+        max-height: 36px;
     }
 }
 
     /* Mobile Flag Fixes */
 @media (max-width: 768px) {
-    /* تحسين أزرار اللغة للموبايل - dropdown items */
     .language-btn {
         padding: 0.75rem !important;
         font-size: 1rem !important;
@@ -570,7 +576,6 @@ html[dir="rtl"] .nav-container {
         height: 1.1em !important;
     }
 
-    /* تحسين dropdown في الموبايل */
     .dropdown-menu {
         min-width: 200px !important;
         margin-top: 5px !important;
@@ -635,21 +640,21 @@ html[dir="rtl"] .ms-auto {
 
     @media (max-width: 360px) {
     .header-actions {
-        gap: 0 !important;
+        gap: 4px !important;
     }
 
     .header-actions .action-btn,
-    .header-actions .mobile-menu-toggle,
     .mobile-menu-toggle {
-        width: 30px !important;
-        height: 30px !important;
-        min-width: 30px !important;
-        min-height: 30px !important;
-        font-size: 0.85rem !important;
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
+        font-size: 0.95rem !important;
+        border-radius: 10px !important;
     }
 
     .logo-wrapper1 img {
-        max-height: 24px !important;
+        max-height: 32px !important;
     }
 }
 
@@ -986,7 +991,7 @@ html[dir="rtl"] .search-suggestions {
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
         initializeSearch('desktopSearchInput', 'desktopSearchSuggestions');
-        initializeSearch('mobileSearchInput', 'mobileSearchSuggestions');
+        initializeSearch('mobileHeaderSearchInput', 'mobileHeaderSearchSuggestions');
 
         // Form action is already set in HTML template, no need for JavaScript
     });

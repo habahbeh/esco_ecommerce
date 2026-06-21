@@ -1,15 +1,21 @@
 import json
 import logging
+from collections import Counter
+from datetime import timedelta
+from urllib.parse import urlparse
 
-from django.db.models import Q
-from django.views.generic import UpdateView, ListView, CreateView, DeleteView
+from django.db import models
+from django.db.models import Q, Count, Subquery, OuterRef
+from django.db.models.functions import TruncDate, TruncHour
+from django.views.generic import UpdateView, ListView, CreateView, DeleteView, TemplateView
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 from django.http import JsonResponse
 from django.views import View
 
-from core.models import SiteSettings, SEOKeyword
+from core.models import SiteSettings, SEOKeyword, PageView
 from dashboard.forms.seo import SEOSettingsForm, SEOKeywordForm
 from dashboard.mixins import SuperuserRequiredMixin
 from accounts.models import UserActivity
@@ -263,3 +269,256 @@ class AutoTagView(SuperuserRequiredMixin, View):
             'percent': round(processed / total * 100) if total else 100,
             'log': log_entries,
         })
+
+
+class SiteAnalyticsView(SuperuserRequiredMixin, TemplateView):
+    template_name = 'dashboard/seo/analytics.html'
+
+    def _calc_change(self, current, previous):
+        if previous == 0:
+            return 100 if current > 0 else 0
+        return round((current - previous) / previous * 100, 1)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = _('تحليلات الموقع')
+
+        now = timezone.now()
+        period = self.request.GET.get('period', '30')
+        try:
+            days = int(period)
+        except (ValueError, TypeError):
+            days = 30
+        days = max(1, min(days, 365))
+        start_date = now - timedelta(days=days)
+
+        human_qs = PageView.objects.filter(is_bot=False, timestamp__gte=start_date).order_by()
+        all_qs = PageView.objects.filter(timestamp__gte=start_date).order_by()
+
+        # ── 1. Core KPIs ──
+        total_views = human_qs.count()
+        unique_visitors = human_qs.values('ip_address').distinct().count()
+        bot_hits = all_qs.filter(is_bot=True).count()
+
+        session_qs = human_qs.exclude(session_key='')
+        unique_sessions = session_qs.values('session_key').distinct().count()
+        session_views = session_qs.count()
+        avg_pages = round(session_views / unique_sessions, 1) if unique_sessions else 0
+
+        # Bounce rate: count sessions with exactly 1 page view in DB
+        if unique_sessions > 0:
+            bounced = (
+                session_qs.values('session_key')
+                .annotate(pages=Count('id'))
+                .filter(pages=1)
+                .count()
+            )
+            bounce_rate = round(bounced / unique_sessions * 100, 1)
+        else:
+            bounce_rate = 0
+
+        # Previous period comparison
+        prev_start = start_date - timedelta(days=days)
+        prev_qs = PageView.objects.filter(is_bot=False, timestamp__gte=prev_start, timestamp__lt=start_date).order_by()
+        prev_views = prev_qs.count()
+        prev_unique = prev_qs.values('ip_address').distinct().count()
+        views_change = self._calc_change(total_views, prev_views)
+        visitors_change = self._calc_change(unique_visitors, prev_unique)
+
+        # Today
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        today_views = human_qs.filter(timestamp__gte=today_start).count()
+        today_unique = human_qs.filter(timestamp__gte=today_start).values('ip_address').distinct().count()
+
+        # Live
+        last_5min = now - timedelta(minutes=5)
+        live_visitors = PageView.objects.filter(is_bot=False, timestamp__gte=last_5min).values('ip_address').distinct().count()
+
+        # Week / Month (always absolute, not period-dependent)
+        weekly_views = PageView.objects.filter(is_bot=False, timestamp__gte=now - timedelta(days=7)).count()
+        monthly_views = PageView.objects.filter(is_bot=False, timestamp__gte=now - timedelta(days=30)).count()
+
+        # ── 2. Traffic chart ──
+        if days <= 2:
+            chart_data = list(
+                human_qs.annotate(date=TruncHour('timestamp'))
+                .values('date').annotate(views=Count('id'), visitors=Count('ip_address', distinct=True))
+                .order_by('date')
+            )
+        else:
+            chart_data = list(
+                human_qs.annotate(date=TruncDate('timestamp'))
+                .values('date').annotate(views=Count('id'), visitors=Count('ip_address', distinct=True))
+                .order_by('date')
+            )
+
+        chart_labels, chart_views_data, chart_visitors_data = [], [], []
+        for entry in chart_data:
+            d = entry['date']
+            chart_labels.append(d.strftime('%H:%M') if days <= 2 else d.strftime('%m/%d'))
+            chart_views_data.append(entry['views'])
+            chart_visitors_data.append(entry['visitors'])
+
+        # ── 3. Top pages ──
+        top_pages = list(
+            human_qs.values('path')
+            .annotate(views=Count('id'), visitors=Count('ip_address', distinct=True))
+            .order_by('-views')[:10]
+        )
+
+        # ── 4. Exit pages — single query using subquery ──
+        last_ts_sub = (
+            session_qs.filter(session_key=OuterRef('session_key'))
+            .order_by('-timestamp')
+            .values('timestamp')[:1]
+        )
+        exit_pages_qs = (
+            session_qs
+            .filter(timestamp=Subquery(last_ts_sub))
+            .values('path')
+            .annotate(count=Count('id'))
+            .order_by('-count')[:10]
+        )
+        exit_pages = list(exit_pages_qs)
+
+        # ── 5. Devices / Browsers / OS ──
+        device_stats = list(human_qs.values('device_type').annotate(count=Count('id')).order_by('-count'))
+        browser_stats = list(human_qs.exclude(browser='').values('browser').annotate(count=Count('id')).order_by('-count')[:6])
+        os_stats = list(human_qs.exclude(os='').values('os').annotate(count=Count('id')).order_by('-count')[:6])
+
+        device_total = sum(d['count'] for d in device_stats) or 1
+        device_percents = [
+            {'type': d['device_type'], 'count': d['count'], 'percent': round(d['count'] / device_total * 100, 1)}
+            for d in device_stats
+        ]
+        browser_total = sum(b['count'] for b in browser_stats) or 1
+        os_total = sum(o['count'] for o in os_stats) or 1
+
+        # ── 6. Geography ──
+        country_stats = list(
+            human_qs.exclude(country='').values('country')
+            .annotate(count=Count('id'), visitors=Count('ip_address', distinct=True))
+            .order_by('-count')[:15]
+        )
+        city_stats = list(
+            human_qs.exclude(city='').values('city', 'country')
+            .annotate(count=Count('id')).order_by('-count')[:10]
+        )
+
+        # ── 7. Referrers — aggregate in DB, parse in Python only top results ──
+        referrer_rows = list(
+            human_qs.exclude(referrer='')
+            .values('referrer')
+            .annotate(count=Count('id'))
+            .order_by('-count')[:200]
+        )
+        referrer_domains = Counter()
+        for row in referrer_rows:
+            try:
+                domain = urlparse(row['referrer']).netloc
+                if domain:
+                    referrer_domains[domain] += row['count']
+            except Exception:
+                pass
+        top_referrers = referrer_domains.most_common(10)
+
+        # ── 8. Hourly distribution ──
+        hourly_data = list(
+            human_qs.annotate(hour=TruncHour('timestamp'))
+            .values('hour').annotate(count=Count('id')).order_by('hour')
+        )
+        hourly_distribution = [0] * 24
+        for entry in hourly_data:
+            hourly_distribution[entry['hour'].hour] += entry['count']
+
+        # ── 9. New vs returning (by unique session count per IP) ──
+        ip_sessions = (
+            session_qs.values('ip_address')
+            .annotate(session_count=Count('session_key', distinct=True))
+        )
+        new_count = ip_sessions.filter(session_count=1).count()
+        returning_count = ip_sessions.filter(session_count__gt=1).count()
+
+        # ── 10. Search terms ──
+        from products.models import SearchQuery
+        top_searches = list(
+            SearchQuery.objects.order_by('-count')
+            .values('query', 'count', 'results_count', 'last_searched')[:15]
+        )
+        zero_result_searches = list(
+            SearchQuery.objects.filter(results_count=0).order_by('-count')
+            .values('query', 'count')[:10]
+        )
+
+        # ── 11. Bot crawlers — group by browser only ──
+        bot_browsers = list(
+            all_qs.filter(is_bot=True)
+            .values('browser')
+            .annotate(count=Count('id'))
+            .order_by('-count')[:8]
+        )
+
+        context.update({
+            'period': days,
+            # KPIs
+            'live_visitors': live_visitors,
+            'today_views': today_views,
+            'today_unique': today_unique,
+            'weekly_views': weekly_views,
+            'monthly_views': monthly_views,
+            'total_views': total_views,
+            'unique_visitors': unique_visitors,
+            'avg_pages': avg_pages,
+            'bounce_rate': bounce_rate,
+            'views_change': views_change,
+            'visitors_change': visitors_change,
+            'bot_hits': bot_hits,
+            # Charts
+            'chart_labels': json.dumps(chart_labels),
+            'chart_views': json.dumps(chart_views_data),
+            'chart_visitors': json.dumps(chart_visitors_data),
+            'hourly_distribution': json.dumps(hourly_distribution),
+            # Tables
+            'top_pages': top_pages,
+            'exit_pages': exit_pages,
+            'top_referrers': top_referrers,
+            'top_searches': top_searches,
+            'zero_result_searches': zero_result_searches,
+            # Segments
+            'device_stats': device_percents,
+            'device_labels': json.dumps([d['device_type'] for d in device_stats]),
+            'device_values': json.dumps([d['count'] for d in device_stats]),
+            'browser_stats': browser_stats,
+            'browser_total': browser_total,
+            'browser_labels': json.dumps([b['browser'] for b in browser_stats]),
+            'browser_values': json.dumps([b['count'] for b in browser_stats]),
+            'os_stats': os_stats,
+            'os_total': os_total,
+            'os_labels': json.dumps([o['os'] for o in os_stats]),
+            'os_values': json.dumps([o['count'] for o in os_stats]),
+            # Geo
+            'country_stats': country_stats,
+            'city_stats': city_stats,
+            # Audience
+            'new_visitors': new_count,
+            'returning_visitors': returning_count,
+            # Bots
+            'bot_browsers': bot_browsers,
+        })
+        return context
+
+
+class AnalyticsAPIView(SuperuserRequiredMixin, View):
+
+    def get(self, request, *args, **kwargs):
+        action = request.GET.get('action', '')
+        now = timezone.now()
+
+        if action == 'live':
+            last_5min = now - timedelta(minutes=5)
+            active = PageView.objects.filter(
+                is_bot=False, timestamp__gte=last_5min
+            ).values('ip_address').distinct().count()
+            return JsonResponse({'active_visitors': active})
+
+        return JsonResponse({'error': 'Unknown action'}, status=400)
