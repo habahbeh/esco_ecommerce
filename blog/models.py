@@ -96,36 +96,10 @@ class BlogPost(models.Model):
     featured_image_alt = models.CharField(_("وصف الصورة"), max_length=200, blank=True)
     featured_image_alt_en = models.CharField(_("Image Alt"), max_length=200, blank=True)
 
-    ICON_COLOR_CHOICES = [
-        ('#2563eb', _('أزرق')),
-        ('#1d4ed8', _('أزرق داكن')),
-        ('#3b82f6', _('أزرق فاتح')),
-        ('#0ea5e9', _('أزرق سماوي')),
-        ('#0891b2', _('سماوي')),
-        ('#06b6d4', _('تركوازي')),
-        ('#0d9488', _('أخضر مزرق')),
-        ('#16a34a', _('أخضر')),
-        ('#059669', _('زمردي')),
-        ('#65a30d', _('أخضر زيتي')),
-        ('#ca8a04', _('ذهبي')),
-        ('#d97706', _('برتقالي')),
-        ('#ea580c', _('برتقالي داكن')),
-        ('#dc2626', _('أحمر')),
-        ('#b91c1c', _('أحمر داكن')),
-        ('#e11d48', _('وردي')),
-        ('#db2777', _('فوشيا')),
-        ('#9333ea', _('بنفسجي')),
-        ('#7c3aed', _('بنفسجي فاتح')),
-        ('#6d28d9', _('نيلي')),
-        ('#4f46e5', _('نيلي فاتح')),
-        ('#475569', _('رمادي أزرق')),
-        ('#4b5563', _('رمادي')),
-        ('#1e293b', _('كحلي')),
-    ]
     card_icon = models.CharField(_("أيقونة البطاقة"), max_length=50, blank=True, default='fa-newspaper',
                                   help_text=_("Font Awesome icon class"))
     card_icon_color = models.CharField(_("لون الأيقونة"), max_length=20, blank=True, default='#2563eb',
-                                        choices=ICON_COLOR_CHOICES)
+                                        help_text=_("كود اللون بصيغة HEX مثل #2563eb"))
 
     status = models.CharField(_("الحالة"), max_length=10, choices=STATUS_CHOICES, default='draft')
     is_featured = models.BooleanField(_("مقال مميز"), default=False)
