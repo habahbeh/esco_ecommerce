@@ -253,7 +253,7 @@
         <div class="col-md-4 mb-3">
             <a href="{{ fpost.get_absolute_url }}" class="text-decoration-none">
                 <div class="featured-post-card shadow">
-                    {% if fpost.card_display_mode == 'image' and fpost.featured_image %}
+                    {% if fpost.featured_image and fpost.card_display_mode != 'icon' %}
                     <img src="{{ fpost.featured_image.url }}" alt="{% if LANGUAGE_CODE == 'en' and fpost.featured_image_alt_en %}{{ fpost.featured_image_alt_en }}{% elif fpost.featured_image_alt %}{{ fpost.featured_image_alt }}{% else %}{{ fpost.title }}{% endif %}">
                     {% else %}
                     <div class="w-100 h-100 d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, {{ fpost.card_icon_color|default:'#2563eb' }}, {{ fpost.card_icon_color|default:'#2563eb' }}dd);">

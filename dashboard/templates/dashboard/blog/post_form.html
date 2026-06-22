@@ -616,21 +616,33 @@ $(document).ready(function() {
     var displayModeHidden = document.getElementById('{{ form.card_display_mode.id_for_label }}');
     var imageSection = document.getElementById('cardImageSection');
     var iconSection = document.getElementById('cardIconSection');
+    function setCardDisplayMode(mode) {
+        document.querySelectorAll('.card-display-btn').forEach(function(b) { b.classList.remove('active'); });
+        var activeBtn = document.querySelector('.card-display-btn[data-mode="' + mode + '"]');
+        if (activeBtn) activeBtn.classList.add('active');
+        if (displayModeHidden) displayModeHidden.value = mode;
+        if (mode === 'image') {
+            imageSection.style.display = '';
+            iconSection.style.display = 'none';
+        } else {
+            imageSection.style.display = 'none';
+            iconSection.style.display = '';
+        }
+    }
     document.querySelectorAll('.card-display-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
-            var mode = this.getAttribute('data-mode');
-            document.querySelectorAll('.card-display-btn').forEach(function(b) { b.classList.remove('active'); });
-            this.classList.add('active');
-            if (displayModeHidden) displayModeHidden.value = mode;
-            if (mode === 'image') {
-                imageSection.style.display = '';
-                iconSection.style.display = 'none';
-            } else {
-                imageSection.style.display = 'none';
-                iconSection.style.display = '';
-            }
+            setCardDisplayMode(this.getAttribute('data-mode'));
         });
     });
+    // Auto-switch to image mode when a file is selected
+    var featuredImageInput = document.getElementById('{{ form.featured_image.id_for_label }}');
+    if (featuredImageInput) {
+        featuredImageInput.addEventListener('change', function() {
+            if (this.files && this.files.length > 0) {
+                setCardDisplayMode('image');
+            }
+        });
+    }
 
     // ── Icon Picker Modal ──
     var blogIconInput = document.getElementById('blogIconTextInput');

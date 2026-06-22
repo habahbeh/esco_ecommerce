@@ -177,7 +177,7 @@
         <div class="col-lg-8">
             <article class="bg-body rounded shadow-sm p-4 mb-4">
                 <!-- Featured Image -->
-                {% if post.card_display_mode == 'image' and post.featured_image %}
+                {% if post.featured_image and post.card_display_mode != 'icon' %}
                 <img src="{{ post.featured_image.url }}"
                      alt="{% if LANGUAGE_CODE == 'en' and post.featured_image_alt_en %}{{ post.featured_image_alt_en }}{% else %}{{ post.featured_image_alt|default:post.title }}{% endif %}"
                      class="w-100 rounded mb-4" style="max-height:400px;object-fit:cover;">
@@ -314,7 +314,7 @@
                     {% for rpost in related_posts %}
                     <div class="col-md-6 mb-3">
                         <div class="d-flex align-items-start">
-                            {% if rpost.card_display_mode == 'image' and rpost.featured_image %}
+                            {% if rpost.featured_image and rpost.card_display_mode != 'icon' %}
                             <img src="{{ rpost.featured_image.url }}" alt="{{ rpost.title }}" class="rounded me-3" style="width:80px;height:80px;object-fit:cover;">
                             {% elif rpost.card_display_mode == 'icon' %}
                             <div class="rounded me-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width:80px;height:80px;background:linear-gradient(135deg, {{ rpost.card_icon_color|default:'#2563eb' }}18, {{ rpost.card_icon_color|default:'#2563eb' }}08);">
