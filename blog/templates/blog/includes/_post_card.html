@@ -3,7 +3,7 @@
 <div class="col-md-6 col-lg-4 mb-4">
     <article class="blog-card h-100 shadow-sm rounded overflow-hidden bg-body">
         <a href="{{ post.get_absolute_url }}" class="d-block position-relative overflow-hidden" style="height:200px;">
-            {% if post.featured_image %}
+            {% if post.card_display_mode == 'image' and post.featured_image %}
             <img src="{{ post.featured_image.url }}"
                  alt="{% if LANGUAGE_CODE == 'en' and post.featured_image_alt_en %}{{ post.featured_image_alt_en }}{% else %}{{ post.featured_image_alt|default:post.title }}{% endif %}"
                  class="w-100 h-100" style="object-fit:cover;transition:transform 0.3s;">

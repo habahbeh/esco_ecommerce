@@ -64,7 +64,7 @@ class BlogPostForm(forms.ModelForm):
             'title', 'title_en', 'slug', 'category', 'tags', 'author',
             'excerpt', 'excerpt_en', 'content', 'content_en',
             'featured_image', 'featured_image_alt', 'featured_image_alt_en',
-            'card_icon', 'card_icon_color',
+            'card_display_mode', 'card_icon', 'card_icon_color',
             'status', 'is_featured', 'allow_comments', 'published_at',
             'meta_title', 'meta_description', 'meta_keywords', 'canonical_url',
             'related_products', 'related_categories',
@@ -89,6 +89,7 @@ class BlogPostForm(forms.ModelForm):
             'meta_description': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
             'meta_keywords': forms.TextInput(attrs={'class': 'form-control'}),
             'canonical_url': forms.URLInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
+            'card_display_mode': forms.HiddenInput(),
             'card_icon': forms.HiddenInput(),
             'card_icon_color': forms.HiddenInput(),
         }

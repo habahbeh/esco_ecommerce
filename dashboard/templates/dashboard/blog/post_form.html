@@ -251,102 +251,127 @@
         </div>
     </div>
 
-    <!-- ═══ 3. Media & Appearance Row ═══ -->
-    <div class="row mb-3">
-        <!-- Image + Tags -->
-        <div class="col-lg-7">
-            <div class="card h-100">
-                <div class="card-header py-2">
-                    <h6 class="card-title mb-0"><i class="fas fa-image me-2 text-muted"></i>{% trans "الصورة الرئيسية" %} &amp; {% trans "الوسوم" %}</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            {% if post and post.featured_image %}
-                            <div class="mb-2">
-                                <img src="{{ post.featured_image.url }}" alt="" class="img-thumbnail w-100" style="max-height:140px;object-fit:cover;">
-                            </div>
-                            {% endif %}
-                            <div class="form-group mb-2">
-                                {{ form.featured_image }}
-                                <div class="field-hint"><i class="fas fa-info-circle"></i> {% trans "الحجم المثالي: 1200×630 بكسل. الصيغ المدعومة: JPG, PNG, WebP. يفضل أقل من 200KB." %}</div>
-                            </div>
-                            <div class="form-group mb-2">
-                                <label for="{{ form.featured_image_alt.id_for_label }}" class="form-label small">{% trans "وصف الصورة" %}</label>
-                                {{ form.featured_image_alt }}
-                            </div>
-                            <div class="form-group">
-                                <label for="{{ form.featured_image_alt_en.id_for_label }}" class="form-label small">{% trans "وصف الصورة بالإنجليزية" %}</label>
-                                {{ form.featured_image_alt_en }}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label for="{{ form.tags.id_for_label }}" class="form-label small">{% trans "الوسوم" %}</label>
-                                {{ form.tags }}
-                                <div class="field-hint"><i class="fas fa-info-circle"></i> {% trans "اضغط Ctrl للاختيار المتعدد. الوسوم تساعد في ربط المقالات المشابهة." %}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <!-- ═══ 3. Media & Appearance ═══ -->
+    <div class="card mb-3">
+        <div class="card-header py-2">
+            <h6 class="card-title mb-0"><i class="fas fa-image me-2 text-muted"></i>{% trans "مظهر البطاقة" %} &amp; {% trans "الوسوم" %}</h6>
         </div>
-
-        <!-- Card Icon & Color Picker -->
-        <div class="col-lg-5">
-            <div class="card h-100">
-                <div class="card-header py-2">
-                    <h6 class="card-title mb-0"><i class="fas fa-palette me-2 text-muted"></i>{% trans "أيقونة البطاقة" %}</h6>
+        <div class="card-body">
+            <!-- Display Mode Toggle -->
+            <div class="mb-3">
+                <label class="form-label small fw-semibold">{% trans "طريقة عرض البطاقة" %}</label>
+                <div class="btn-group w-100" role="group" id="cardDisplayToggle">
+                    <button type="button" class="btn btn-outline-primary card-display-btn{% if form.card_display_mode.value != 'icon' %} active{% endif %}" data-mode="image">
+                        <i class="fas fa-image me-1"></i> {% trans "صورة" %}
+                    </button>
+                    <button type="button" class="btn btn-outline-primary card-display-btn{% if form.card_display_mode.value == 'icon' %} active{% endif %}" data-mode="icon">
+                        <i class="fas fa-palette me-1"></i> {% trans "أيقونة ولون" %}
+                    </button>
                 </div>
-                <div class="card-body">
-                    <div class="field-hint mb-3"><i class="fas fa-info-circle"></i> {% trans "اختر أيقونة ولوناً يظهران على بطاقة المقال عندما لا تكون هناك صورة رئيسية." %}</div>
+                {{ form.card_display_mode }}
+            </div>
 
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold">{% trans "الأيقونة" %}</label>
-                        <div class="input-group">
-                            <span class="input-group-text icon-preview-box" id="blogIconPreviewBox">
-                                <i class="fas {{ form.card_icon.value|default:'fa-newspaper' }}" id="blogIconPreviewIcon"></i>
-                            </span>
-                            <input type="text" class="form-control" id="blogIconTextInput"
-                                   value="{{ form.card_icon.value|default:'' }}"
-                                   placeholder="fas fa-newspaper" dir="ltr">
+            <!-- Image Section -->
+            <div id="cardImageSection"{% if form.card_display_mode.value == 'icon' %} style="display:none;"{% endif %}>
+                <div class="row">
+                    <div class="col-md-6">
+                        {% if post and post.featured_image %}
+                        <div class="mb-2">
+                            <img src="{{ post.featured_image.url }}" alt="" class="img-thumbnail w-100" style="max-height:140px;object-fit:cover;">
                         </div>
-                        <div class="mt-2">
-                            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#blogIconPickerModal">
-                                <i class="fas fa-th me-1"></i> {% trans "تصفح الأيقونات" %}
-                            </button>
+                        {% endif %}
+                        <div class="form-group mb-2">
+                            {{ form.featured_image }}
+                            <div class="field-hint"><i class="fas fa-info-circle"></i> {% trans "الحجم المثالي: 1200×630 بكسل. الصيغ المدعومة: JPG, PNG, WebP. يفضل أقل من 200KB." %}</div>
+                        </div>
+                        <div class="form-group mb-2">
+                            <label for="{{ form.featured_image_alt.id_for_label }}" class="form-label small">{% trans "وصف الصورة" %}</label>
+                            {{ form.featured_image_alt }}
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.featured_image_alt_en.id_for_label }}" class="form-label small">{% trans "وصف الصورة بالإنجليزية" %}</label>
+                            {{ form.featured_image_alt_en }}
                         </div>
                     </div>
-
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold">{% trans "لون الأيقونة" %}</label>
-                        <div class="input-group">
-                            <input type="color" class="form-control form-control-color" id="blogColorPicker"
-                                   value="{{ form.card_icon_color.value|default:'#2563eb' }}" style="width: 50px; padding: 4px;">
-                            <input type="text" class="form-control" id="blogColorTextInput"
-                                   value="{{ form.card_icon_color.value|default:'' }}"
-                                   placeholder="#2563eb" dir="ltr" maxlength="7">
-                        </div>
-                        <div class="mt-2">
-                            <span class="color-quick-pick me-1 mb-1" data-color="#2563eb" style="background:#2563eb;" title="Blue"></span>
-                            <span class="color-quick-pick me-1 mb-1" data-color="#1d4ed8" style="background:#1d4ed8;" title="Dark Blue"></span>
-                            <span class="color-quick-pick me-1 mb-1" data-color="#0ea5e9" style="background:#0ea5e9;" title="Sky Blue"></span>
-                            <span class="color-quick-pick me-1 mb-1" data-color="#0891b2" style="background:#0891b2;" title="Cyan"></span>
-                            <span class="color-quick-pick me-1 mb-1" data-color="#16a34a" style="background:#16a34a;" title="Green"></span>
-                            <span class="color-quick-pick me-1 mb-1" data-color="#059669" style="background:#059669;" title="Emerald"></span>
-                            <span class="color-quick-pick me-1 mb-1" data-color="#ca8a04" style="background:#ca8a04;" title="Gold"></span>
-                            <span class="color-quick-pick me-1 mb-1" data-color="#d97706" style="background:#d97706;" title="Orange"></span>
-                            <span class="color-quick-pick me-1 mb-1" data-color="#dc2626" style="background:#dc2626;" title="Red"></span>
-                            <span class="color-quick-pick me-1 mb-1" data-color="#e11d48" style="background:#e11d48;" title="Pink"></span>
-                            <span class="color-quick-pick me-1 mb-1" data-color="#9333ea" style="background:#9333ea;" title="Purple"></span>
-                            <span class="color-quick-pick me-1 mb-1" data-color="#4f46e5" style="background:#4f46e5;" title="Indigo"></span>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="{{ form.tags.id_for_label }}" class="form-label small">{% trans "الوسوم" %}</label>
+                            {{ form.tags }}
+                            <div class="field-hint"><i class="fas fa-info-circle"></i> {% trans "اضغط Ctrl للاختيار المتعدد. الوسوم تساعد في ربط المقالات المشابهة." %}</div>
                         </div>
                     </div>
-
-                    {{ form.card_icon }}
-                    {{ form.card_icon_color }}
                 </div>
             </div>
+
+            <!-- Icon & Color Section -->
+            <div id="cardIconSection"{% if form.card_display_mode.value != 'icon' %} style="display:none;"{% endif %}>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">{% trans "الأيقونة" %}</label>
+                            <div class="input-group">
+                                <span class="input-group-text icon-preview-box" id="blogIconPreviewBox">
+                                    <i class="fas {{ form.card_icon.value|default:'fa-newspaper' }}" id="blogIconPreviewIcon"></i>
+                                </span>
+                                <input type="text" class="form-control" id="blogIconTextInput"
+                                       value="{{ form.card_icon.value|default:'' }}"
+                                       placeholder="fas fa-newspaper" dir="ltr">
+                            </div>
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#blogIconPickerModal">
+                                    <i class="fas fa-th me-1"></i> {% trans "تصفح الأيقونات" %}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">{% trans "لون الأيقونة" %}</label>
+                            <div class="input-group">
+                                <input type="color" class="form-control form-control-color" id="blogColorPicker"
+                                       value="{{ form.card_icon_color.value|default:'#2563eb' }}" style="width: 50px; padding: 4px;">
+                                <input type="text" class="form-control" id="blogColorTextInput"
+                                       value="{{ form.card_icon_color.value|default:'' }}"
+                                       placeholder="#2563eb" dir="ltr" maxlength="7">
+                            </div>
+                            <div class="mt-2">
+                                <span class="color-quick-pick me-1 mb-1" data-color="#2563eb" style="background:#2563eb;" title="Blue"></span>
+                                <span class="color-quick-pick me-1 mb-1" data-color="#1d4ed8" style="background:#1d4ed8;" title="Dark Blue"></span>
+                                <span class="color-quick-pick me-1 mb-1" data-color="#0ea5e9" style="background:#0ea5e9;" title="Sky Blue"></span>
+                                <span class="color-quick-pick me-1 mb-1" data-color="#0891b2" style="background:#0891b2;" title="Cyan"></span>
+                                <span class="color-quick-pick me-1 mb-1" data-color="#16a34a" style="background:#16a34a;" title="Green"></span>
+                                <span class="color-quick-pick me-1 mb-1" data-color="#059669" style="background:#059669;" title="Emerald"></span>
+                                <span class="color-quick-pick me-1 mb-1" data-color="#ca8a04" style="background:#ca8a04;" title="Gold"></span>
+                                <span class="color-quick-pick me-1 mb-1" data-color="#d97706" style="background:#d97706;" title="Orange"></span>
+                                <span class="color-quick-pick me-1 mb-1" data-color="#dc2626" style="background:#dc2626;" title="Red"></span>
+                                <span class="color-quick-pick me-1 mb-1" data-color="#e11d48" style="background:#e11d48;" title="Pink"></span>
+                                <span class="color-quick-pick me-1 mb-1" data-color="#9333ea" style="background:#9333ea;" title="Purple"></span>
+                                <span class="color-quick-pick me-1 mb-1" data-color="#4f46e5" style="background:#4f46e5;" title="Indigo"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="{{ form.tags.id_for_label }}_icon" class="form-label small">{% trans "الوسوم" %}</label>
+                            <div class="field-hint mb-2"><i class="fas fa-info-circle"></i> {% trans "الوسوم موجودة في قسم الصورة. قم بالتبديل لإضافتها." %}</div>
+                        </div>
+                        <!-- Live Preview -->
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">{% trans "معاينة البطاقة" %}</label>
+                            <div id="iconCardPreview" class="rounded overflow-hidden" style="height:120px;">
+                                <div class="w-100 h-100 d-flex align-items-center justify-content-center"
+                                     style="background: linear-gradient(135deg, {{ form.card_icon_color.value|default:'#2563eb' }}18, {{ form.card_icon_color.value|default:'#2563eb' }}08);">
+                                    <div style="width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ form.card_icon_color.value|default:'#2563eb' }}15;border:2px solid {{ form.card_icon_color.value|default:'#2563eb' }}20;">
+                                        <i class="fas {{ form.card_icon.value|default:'fa-newspaper' }}" id="iconCardPreviewIcon" style="font-size:1.5rem;color:{{ form.card_icon_color.value|default:'#2563eb' }};"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{ form.card_icon }}
+            {{ form.card_icon_color }}
         </div>
     </div>
 
@@ -587,6 +612,26 @@ $(document).ready(function() {
     }
     if (statusSel) { statusSel.addEventListener('change', syncStatus); syncStatus(); }
 
+    // ── Card Display Mode Toggle ──
+    var displayModeHidden = document.getElementById('{{ form.card_display_mode.id_for_label }}');
+    var imageSection = document.getElementById('cardImageSection');
+    var iconSection = document.getElementById('cardIconSection');
+    document.querySelectorAll('.card-display-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var mode = this.getAttribute('data-mode');
+            document.querySelectorAll('.card-display-btn').forEach(function(b) { b.classList.remove('active'); });
+            this.classList.add('active');
+            if (displayModeHidden) displayModeHidden.value = mode;
+            if (mode === 'image') {
+                imageSection.style.display = '';
+                iconSection.style.display = 'none';
+            } else {
+                imageSection.style.display = 'none';
+                iconSection.style.display = '';
+            }
+        });
+    });
+
     // ── Icon Picker Modal ──
     var blogIconInput = document.getElementById('blogIconTextInput');
     var blogIconHidden = document.getElementById('{{ form.card_icon.id_for_label }}');
@@ -786,6 +831,27 @@ $(document).ready(function() {
             blogIconPreview.style.color = blogColorText.value;
         }
     }
+
+    // ── Icon Card Preview Update ──
+    function updateIconCardPreview() {
+        var previewBox = document.getElementById('iconCardPreview');
+        var previewIcon = document.getElementById('iconCardPreviewIcon');
+        if (!previewBox || !previewIcon) return;
+        var color = blogColorText.value || '#2563eb';
+        var iconCls = blogIconInput.value || 'fas fa-newspaper';
+        previewIcon.className = iconCls;
+        previewIcon.style.color = color;
+        previewBox.querySelector('div').style.background = 'linear-gradient(135deg, ' + color + '18, ' + color + '08)';
+        var circle = previewIcon.parentElement;
+        circle.style.background = color + '15';
+        circle.style.borderColor = color + '20';
+    }
+    if (blogColorText) blogColorText.addEventListener('input', updateIconCardPreview);
+    if (blogColorPicker) blogColorPicker.addEventListener('input', updateIconCardPreview);
+    if (blogIconInput) blogIconInput.addEventListener('input', updateIconCardPreview);
+    document.querySelectorAll('.color-quick-pick').forEach(function(btn) {
+        btn.addEventListener('click', function() { setTimeout(updateIconCardPreview, 10); });
+    });
 
     // ── Blog FAQ Management ──
     var blogFaqsData = (typeof initialBlogFaqsData !== 'undefined') ? initialBlogFaqsData : [];

@@ -96,6 +96,13 @@ class BlogPost(models.Model):
     featured_image_alt = models.CharField(_("وصف الصورة"), max_length=200, blank=True)
     featured_image_alt_en = models.CharField(_("Image Alt"), max_length=200, blank=True)
 
+    CARD_DISPLAY_CHOICES = [
+        ('image', _('صورة')),
+        ('icon', _('أيقونة ولون')),
+    ]
+    card_display_mode = models.CharField(_("طريقة عرض البطاقة"), max_length=10,
+                                          choices=CARD_DISPLAY_CHOICES, default='image',
+                                          help_text=_("اختر عرض صورة أو أيقونة ولون على بطاقة المقال"))
     card_icon = models.CharField(_("أيقونة البطاقة"), max_length=50, blank=True, default='fa-newspaper',
                                   help_text=_("Font Awesome icon class"))
     card_icon_color = models.CharField(_("لون الأيقونة"), max_length=20, blank=True, default='#2563eb',

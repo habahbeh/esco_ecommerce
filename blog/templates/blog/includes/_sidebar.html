@@ -25,7 +25,7 @@
     </h5>
     {% for rpost in recent_posts %}
     <div class="d-flex align-items-start mb-2 recent-post-item">
-        {% if rpost.featured_image %}
+        {% if rpost.card_display_mode == 'image' and rpost.featured_image %}
         <img src="{{ rpost.featured_image.url }}" alt="{{ rpost.get_display_title }}" class="rounded me-3" style="width:56px;height:56px;object-fit:cover;flex-shrink:0;">
         {% else %}
         <div class="rounded me-3 d-flex align-items-center justify-content-center" style="width:56px;height:56px;min-width:56px;background:{{ rpost.card_icon_color|default:'#6b7280' }}12;">

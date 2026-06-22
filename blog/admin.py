@@ -48,8 +48,9 @@ class BlogPostAdmin(admin.ModelAdmin):
             'fields': ('title', 'title_en', 'slug', 'category', 'tags', 'author',
                        'excerpt', 'excerpt_en', 'content', 'content_en')
         }),
-        (_("الصورة"), {
-            'fields': ('featured_image', 'featured_image_alt', 'featured_image_alt_en')
+        (_("مظهر البطاقة"), {
+            'fields': ('card_display_mode', 'featured_image', 'featured_image_alt', 'featured_image_alt_en',
+                       'card_icon', 'card_icon_color')
         }),
         (_("الإعدادات"), {
             'fields': ('status', 'is_featured', 'allow_comments', 'published_at')
