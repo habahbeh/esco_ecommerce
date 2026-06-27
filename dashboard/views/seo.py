@@ -553,8 +553,8 @@ class SiteAnalyticsView(SuperuserRequiredMixin, TemplateView):
         # ── 18. Insight tags for the headline ──
         peak_hour_idx = hourly_distribution.index(max(hourly_distribution)) if any(hourly_distribution) else None
         peak_hour_label = f"{peak_hour_idx:02d}:00" if peak_hour_idx is not None else "—"
-        dow_names_ar = ['الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
-        peak_dow = dow_names_ar[dow_counts.index(max(dow_counts))] if any(dow_counts) else "—"
+        dow_names = [_('الإثنين'), _('الثلاثاء'), _('الأربعاء'), _('الخميس'), _('الجمعة'), _('السبت'), _('الأحد')]
+        peak_dow = dow_names[dow_counts.index(max(dow_counts))] if any(dow_counts) else "—"
         top_country = country_stats[0]['country'] if country_stats else None
         primary_device = max(device_stats, key=lambda d: d['count'])['device_type'] if device_stats else None
 
