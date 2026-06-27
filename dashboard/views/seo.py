@@ -2,10 +2,12 @@ import json
 import logging
 from collections import Counter
 from datetime import timedelta
+from functools import reduce
+from operator import or_
 from urllib.parse import urlparse
 
 from django.db import models
-from django.db.models import Q, Count, Subquery, OuterRef
+from django.db.models import Q, Count, Max
 from django.db.models.functions import TruncDate, TruncHour
 from django.views.generic import UpdateView, ListView, CreateView, DeleteView, TemplateView
 from django.urls import reverse_lazy
@@ -366,20 +368,21 @@ class SiteAnalyticsView(SuperuserRequiredMixin, TemplateView):
             .order_by('-views')[:10]
         )
 
-        # ── 4. Exit pages — single query using subquery ──
-        last_ts_sub = (
-            session_qs.filter(session_key=OuterRef('session_key'))
-            .order_by('-timestamp')
-            .values('timestamp')[:1]
+        # ── 4. Exit pages — two-step: max timestamp per session, then lookup ──
+        last_per_session = list(
+            session_qs.values('session_key')
+            .annotate(last_ts=Max('timestamp'))
+            .values_list('session_key', 'last_ts')
         )
-        exit_pages_qs = (
-            session_qs
-            .filter(timestamp=Subquery(last_ts_sub))
-            .values('path')
-            .annotate(count=Count('id'))
-            .order_by('-count')[:10]
-        )
-        exit_pages = list(exit_pages_qs)
+        if last_per_session:
+            exit_filter = reduce(or_, [Q(session_key=sk, timestamp=ts) for sk, ts in last_per_session])
+            exit_pages = list(
+                session_qs.filter(exit_filter)
+                .values('path').annotate(count=Count('id'))
+                .order_by('-count')[:10]
+            )
+        else:
+            exit_pages = []
 
         # ── 5. Devices / Browsers / OS ──
         device_stats = list(human_qs.values('device_type').annotate(count=Count('id')).order_by('-count'))
