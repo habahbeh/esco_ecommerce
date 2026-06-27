@@ -205,22 +205,50 @@ urlpatterns += [
             RedirectView.as_view(url='/products/%(rest)s', permanent=True, query_string=True),
             name='strip-doubled-products'),
 
-    # Legacy PrestaShop URLs from the old site, still in Google's index:
-    #   /en/<CATEGORY_NAME>/<digits>-<TITLE_OR_SKU>.html        → product
-    #   /en/<digits>-<CATEGORY_NAME>                            → category listing
-    #   /en/<CATEGORY_NAME>/<digits><moreDigits>                → product (no .html)
-    # We don't have a perfect mapping to new slugs, so redirect them all to the
-    # English catalog homepage. Google passes link equity through 301 and stops
-    # treating these as broken pages.
-    re_path(r'^en/[A-Z][A-Za-z_]*/\d+[-_].*$',
+    # ─── Legacy PrestaShop URL cleanup ───────────────────────────────────────
+    # Google Search Console reported 11,115 URLs in "Not found (404)" — all from
+    # the old PrestaShop site that's still in Google's index from months ago.
+    # All redirects below 301 to /en/products/ so Google passes link equity and
+    # stops treating them as broken pages.
+    #
+    # MAIN pattern (~11K URLs): faceted-filter URLs from the old shop.
+    #   /en/2-2-categories?q=Availability-In stock/Brand-AIRFIT-BOSCH-...
+    #   /ar/2-2-categories?q=العلامة-التجارية-...&page=N&order=...
+    #   The /ar/ form is already handled by the strip-ar-prefix redirect above,
+    #   which forwards to /2-2-categories... — this rule catches THAT next-hop.
+    re_path(r'^(en/)?\d+-\d+-categories.*$',
+            RedirectView.as_view(url='/en/products/', permanent=True),
+            name='legacy-prestashop-faceted'),
+
+    # Product-detail URLs: /en/<CategoryName>/<digits>-<slug>.html
+    # CamelCase variant: /en/HAMMER/2932-RUBBER_HAMMER_FINDER.html
+    # snake_case variant: /en/ceramic_fiber/2684-Braided_ceramic_fiber_18MM.html
+    # Mixed-case: /en/Pneumatic_Cylinders/1450-Air_Cylinder_TN.html
+    # (\w matches both upper and lower so we catch all variants now)
+    re_path(r'^en/[A-Za-z][A-Za-z0-9_]*/\d+[-_].*$',
             RedirectView.as_view(url='/en/products/', permanent=True),
             name='legacy-prestashop-product'),
-    re_path(r'^en/\d+-[A-Za-z_]+/?$',
+
+    # Category-listing URLs: /en/<digits>-<CategoryName> (e.g. /en/570-Electrical_Department)
+    re_path(r'^en/\d+-[A-Za-z_][A-Za-z0-9_]*(\?.*)?/?$',
             RedirectView.as_view(url='/en/products/', permanent=True),
             name='legacy-prestashop-category'),
-    re_path(r'^en/\d+-\d+-[a-z]+/?$',
+
+    # Pagination URLs from old shop: /en/2-2-categories or /en/100-Silencer?order=...
+    re_path(r'^en/\d+-\d+-[A-Za-z]+/?$',
             RedirectView.as_view(url='/en/products/', permanent=True),
             name='legacy-prestashop-pagination'),
+
+    # PrestaShop module/customer/checkout system URLs
+    re_path(r'^(en/)?module/.*$',
+            RedirectView.as_view(url='/en/products/', permanent=True),
+            name='legacy-prestashop-module'),
+
+    # Arabic legacy product URLs (mojibake'd UTF-8) that survived the
+    # strip-ar-prefix redirect. Catches /<arabic-text>/<digits>-<...>.html
+    re_path(r'^[^/]+/\d+-[^/]+\.html$',
+            RedirectView.as_view(url='/', permanent=True),
+            name='legacy-prestashop-arabic'),
 ]
 
 # URLs للتطبيقات الإضافية (يمكن تفعيلها لاحقاً)
