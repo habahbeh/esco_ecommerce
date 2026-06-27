@@ -11,6 +11,7 @@ from django.conf.urls.static import static
 from django.http import HttpResponse
 from django.views.generic import TemplateView, RedirectView
 from django.contrib.sitemaps.views import sitemap, index as sitemap_index
+from django.views.decorators.cache import cache_page
 # from django.views.i18n import set_language, JavaScriptCatalog
 from django.conf.urls.i18n import i18n_patterns
 
@@ -73,9 +74,17 @@ urlpatterns = [
     # IndexNow verification key
     path('a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6.txt', lambda r: HttpResponse('a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6', content_type='text/plain')),
 
-    # Sitemap index + per-section sitemaps
-    path('sitemap.xml', sitemap_index, {'sitemaps': sitemaps, 'sitemap_url_name': 'sitemaps'}),
-    path('sitemap-<section>.xml', sitemap, {'sitemaps': sitemaps}, name='sitemaps'),
+    # Sitemap index + per-section sitemaps — cached 6 hours since they query
+    # 4k+ products/categories from DB and take 2-3s uncached. New products/
+    # blog posts will appear within 6 hours of publishing, which is acceptable
+    # for SEO (Googlebot doesn't crawl that often anyway).
+    path('sitemap.xml',
+         cache_page(60 * 60 * 6)(sitemap_index),
+         {'sitemaps': sitemaps, 'sitemap_url_name': 'sitemaps'}),
+    path('sitemap-<section>.xml',
+         cache_page(60 * 60 * 6)(sitemap),
+         {'sitemaps': sitemaps},
+         name='sitemaps'),
 
     # Webhooks and external integrations (لا تحتاج ترجمة)
     path('webhooks/', include([
