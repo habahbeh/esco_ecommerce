@@ -332,9 +332,13 @@ class SiteAnalyticsView(SuperuserRequiredMixin, TemplateView):
         today_views = human_qs.filter(timestamp__gte=today_start).count()
         today_unique = human_qs.filter(timestamp__gte=today_start).values('ip_address').distinct().count()
 
-        # Live
-        last_5min = now - timedelta(minutes=5)
-        live_visitors = PageView.objects.filter(is_bot=False, timestamp__gte=last_5min).values('ip_address').distinct().count()
+        # Live — active visitors in the last 15 minutes (by IP)
+        live_window = now - timedelta(minutes=15)
+        live_visitors = (
+            PageView.objects.filter(is_bot=False, timestamp__gte=live_window)
+            .exclude(ip_address__isnull=True)
+            .values('ip_address').distinct().count()
+        )
 
         # Week / Month (always absolute, not period-dependent)
         weekly_views = PageView.objects.filter(is_bot=False, timestamp__gte=now - timedelta(days=7)).count()
@@ -518,10 +522,12 @@ class AnalyticsAPIView(SuperuserRequiredMixin, View):
         now = timezone.now()
 
         if action == 'live':
-            last_5min = now - timedelta(minutes=5)
-            active = PageView.objects.filter(
-                is_bot=False, timestamp__gte=last_5min
-            ).values('ip_address').distinct().count()
+            live_window = now - timedelta(minutes=15)
+            active = (
+                PageView.objects.filter(is_bot=False, timestamp__gte=live_window)
+                .exclude(ip_address__isnull=True)
+                .values('ip_address').distinct().count()
+            )
             return JsonResponse({'active_visitors': active})
 
         return JsonResponse({'error': 'Unknown action'}, status=400)
