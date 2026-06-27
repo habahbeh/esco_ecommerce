@@ -471,13 +471,19 @@ class SiteAnalyticsView(SuperuserRequiredMixin, TemplateView):
         logged_in_pct = round(logged_in_visitors / unique_visitors * 100, 1) if unique_visitors else 0
 
         # ── 13. Visitor interest: top product & category pages ──
+        # URLs: /products/<slug>/ for a product page
+        #       /products/category/<slug>/ for a category
+        #       /products/brand/<slug>/ for a brand
+        #       /products/, /products/categories/, /products/brands/ are LISTING pages
+        # Product pages = under /products/ but NOT under the listing/category/brand sub-routes
         product_views = (
-            human_qs.filter(path__regex=r'^/(en/)?product/')
+            human_qs.filter(path__regex=r'^/(en/)?products/[^/]+/?$')
+            .exclude(path__regex=r'^/(en/)?products/(categories?|brands?|search|category|brand|new|featured|best-?sellers|special-?offers|offers|tag|tags|wishlist|compare|chat)/?$')
             .values('path').annotate(views=Count('id'), visitors=Count('ip_address', distinct=True))
             .order_by('-views')[:8]
         )
         category_views = (
-            human_qs.filter(path__regex=r'^/(en/)?category/')
+            human_qs.filter(path__regex=r'^/(en/)?(products/category|blog/category)/[^/]+')
             .values('path').annotate(views=Count('id'), visitors=Count('ip_address', distinct=True))
             .order_by('-views')[:8]
         )
