@@ -402,7 +402,7 @@ class SiteAnalyticsView(SuperuserRequiredMixin, TemplateView):
         os_total = sum(o['count'] for o in os_stats) or 1
 
         # ── 6. Geography ──
-        from core.country_data import get_country_info
+        from core.country_data import get_country_info, get_city_ar
         is_arabic = (self.request.LANGUAGE_CODE or 'en').startswith('ar')
 
         country_stats_raw = list(
@@ -412,11 +412,10 @@ class SiteAnalyticsView(SuperuserRequiredMixin, TemplateView):
         )
         country_stats = []
         for row in country_stats_raw:
-            ar_name, iso, flag = get_country_info(row['country'])
+            ar_name, iso = get_country_info(row['country'])
             country_stats.append({
                 'country': ar_name if is_arabic else row['country'],
-                'country_code': iso,
-                'flag': flag,
+                'country_code': iso.lower() if iso else '',
                 'count': row['count'],
                 'visitors': row['visitors'],
             })
@@ -427,11 +426,12 @@ class SiteAnalyticsView(SuperuserRequiredMixin, TemplateView):
         )
         city_stats = []
         for row in city_stats_raw:
-            ar_name, iso, flag = get_country_info(row['country']) if row['country'] else ('', '', '🏳️')
+            ar_name, iso = get_country_info(row['country']) if row['country'] else ('', '')
+            city_display = get_city_ar(row['city']) if is_arabic else row['city']
             city_stats.append({
-                'city': row['city'],
+                'city': city_display,
                 'country': ar_name if is_arabic else row['country'],
-                'flag': flag,
+                'country_code': iso.lower() if iso else '',
                 'count': row['count'],
             })
 

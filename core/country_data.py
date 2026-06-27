@@ -104,23 +104,119 @@ _COUNTRY_AR = {
 }
 
 
-def iso_to_flag(iso_code):
-    """ISO alpha-2 -> Unicode flag emoji (regional indicator pair)."""
-    if not iso_code or len(iso_code) != 2:
-        return '🏳️'
-    code = iso_code.upper()
-    return chr(0x1F1E6 + ord(code[0]) - ord('A')) + chr(0x1F1E6 + ord(code[1]) - ord('A'))
+# Cities encountered in the wild — extend as needed
+_CITY_AR = {
+    "Frankfurt am Main": "فرانكفورت",
+    "Dubai": "دبي",
+    "San Mateo": "سان ماتيو",
+    "Beijing": "بكين",
+    "Berazategui": "بيراساتيغوي",
+    "Ashburn": "آشبيرن",
+    "Newark": "نيوارك",
+    "Amman": "عمّان",
+    "Irbid": "إربد",
+    "Zarqa": "الزرقاء",
+    "Aqaba": "العقبة",
+    "Riyadh": "الرياض",
+    "Jeddah": "جدة",
+    "Mecca": "مكة المكرمة",
+    "Medina": "المدينة المنورة",
+    "Dammam": "الدمام",
+    "Abu Dhabi": "أبو ظبي",
+    "Sharjah": "الشارقة",
+    "Doha": "الدوحة",
+    "Kuwait City": "مدينة الكويت",
+    "Manama": "المنامة",
+    "Muscat": "مسقط",
+    "Cairo": "القاهرة",
+    "Alexandria": "الإسكندرية",
+    "Beirut": "بيروت",
+    "Damascus": "دمشق",
+    "Baghdad": "بغداد",
+    "Basra": "البصرة",
+    "Erbil": "أربيل",
+    "Sanaa": "صنعاء",
+    "Khartoum": "الخرطوم",
+    "Tripoli": "طرابلس",
+    "Tunis": "تونس",
+    "Algiers": "الجزائر",
+    "Casablanca": "الدار البيضاء",
+    "Rabat": "الرباط",
+    "Marrakesh": "مراكش",
+    "Istanbul": "إسطنبول",
+    "Ankara": "أنقرة",
+    "London": "لندن",
+    "Paris": "باريس",
+    "Berlin": "برلين",
+    "Munich": "ميونخ",
+    "Madrid": "مدريد",
+    "Barcelona": "برشلونة",
+    "Rome": "روما",
+    "Milan": "ميلانو",
+    "Amsterdam": "أمستردام",
+    "Brussels": "بروكسل",
+    "Vienna": "فيينا",
+    "Zurich": "زيورخ",
+    "Stockholm": "ستوكهولم",
+    "Oslo": "أوسلو",
+    "Copenhagen": "كوبنهاغن",
+    "Moscow": "موسكو",
+    "Tokyo": "طوكيو",
+    "Osaka": "أوساكا",
+    "Seoul": "سيول",
+    "Shanghai": "شنغهاي",
+    "Hong Kong": "هونغ كونغ",
+    "Singapore": "سنغافورة",
+    "Mumbai": "مومباي",
+    "Delhi": "نيودلهي",
+    "Karachi": "كراتشي",
+    "Lahore": "لاهور",
+    "Sydney": "سيدني",
+    "Melbourne": "ملبورن",
+    "Toronto": "تورنتو",
+    "Montreal": "مونتريال",
+    "New York": "نيويورك",
+    "Los Angeles": "لوس أنجلوس",
+    "Chicago": "شيكاغو",
+    "San Francisco": "سان فرانسيسكو",
+    "Seattle": "سياتل",
+    "Washington": "واشنطن",
+    "Miami": "ميامي",
+    "Boston": "بوسطن",
+    "Houston": "هيوستن",
+    "Dallas": "دالاس",
+    "Atlanta": "أتلانتا",
+    "Denver": "دنفر",
+    "Phoenix": "فينيكس",
+    "Mexico City": "مكسيكو سيتي",
+    "São Paulo": "ساو باولو",
+    "Buenos Aires": "بوينس آيرس",
+    "Lima": "ليما",
+    "Bogotá": "بوغوتا",
+    "Santiago": "سانتياغو",
+    "Lagos": "لاغوس",
+    "Nairobi": "نيروبي",
+    "Addis Ababa": "أديس أبابا",
+    "Cape Town": "كيب تاون",
+    "Johannesburg": "جوهانسبرغ",
+}
+
+
+def get_city_ar(english_name):
+    """Return Arabic name of a city, or fallback to English."""
+    if not english_name:
+        return ''
+    return _CITY_AR.get(english_name, english_name)
 
 
 def get_country_info(english_name):
-    """Return (arabic_name, iso_code, flag_emoji) for an English country name.
+    """Return (arabic_name, iso_code) for an English country name.
 
-    Falls back to (english_name, '', generic_flag) if unknown.
+    Falls back to (english_name, '') if unknown — ISO empty means no flag.
     """
     if not english_name:
-        return ('', '', '🏳️')
+        return ('', '')
     info = _COUNTRY_AR.get(english_name)
     if info:
-        ar, iso = info
-        return (ar, iso, iso_to_flag(iso))
-    return (english_name, '', '🏳️')
+        return info
+    return (english_name, '')
