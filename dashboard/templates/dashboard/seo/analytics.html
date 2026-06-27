@@ -166,29 +166,51 @@
 .flow-out .flow-link { color:#bf360c; }
 .flow-out .flow-count { background:#ffe0b2; color:#bf360c; }
 
-/* ── COLORFUL Geography cards ── */
-.geo-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:10px; }
-.geo-card { display:flex; align-items:center; gap:12px; padding:14px 16px; border-radius:14px; background:linear-gradient(135deg,#fff,#fafbfc); border:1px solid #ecf0f5; transition:all .2s; position:relative; overflow:hidden; }
-.geo-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
-.geo-card:hover { transform:translateY(-2px); box-shadow:0 4px 16px rgba(0,0,0,.08); }
-.geo-card .gc-rank { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.78rem; font-weight:800; color:#fff; flex-shrink:0; }
-.geo-card .gc-body { flex:1; min-width:0; }
-.geo-card .gc-name { font-size:.95rem; font-weight:700; color:#1a1a1a; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.geo-card .gc-meta { font-size:.72rem; color:#888; margin-top:2px; }
-.geo-card .gc-meta b { color:#333; font-weight:700; }
-.geo-card .gc-icon { width:42px; height:42px; border-radius:12px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:1.2rem; color:#fff; box-shadow:0 2px 6px rgba(0,0,0,.1); }
-.geo-card .gc-bar { height:5px; background:#f0f0f0; border-radius:3px; overflow:hidden; margin-top:8px; }
-.geo-card .gc-bar > i { display:block; height:100%; border-radius:3px; }
-.geo-c1::before{background:#0077c8} .geo-c1 .gc-icon{background:linear-gradient(135deg,#42a5f5,#1976d2)} .geo-c1 .gc-rank{background:#1976d2} .geo-c1 .gc-bar>i{background:#1976d2}
-.geo-c2::before{background:#28a745} .geo-c2 .gc-icon{background:linear-gradient(135deg,#66bb6a,#2e7d32)} .geo-c2 .gc-rank{background:#2e7d32} .geo-c2 .gc-bar>i{background:#2e7d32}
-.geo-c3::before{background:#fd7e14} .geo-c3 .gc-icon{background:linear-gradient(135deg,#ffa726,#ef6c00)} .geo-c3 .gc-rank{background:#ef6c00} .geo-c3 .gc-bar>i{background:#ef6c00}
-.geo-c4::before{background:#6f42c1} .geo-c4 .gc-icon{background:linear-gradient(135deg,#ab47bc,#6a1b9a)} .geo-c4 .gc-rank{background:#6a1b9a} .geo-c4 .gc-bar>i{background:#6a1b9a}
-.geo-c5::before{background:#e83e8c} .geo-c5 .gc-icon{background:linear-gradient(135deg,#ec407a,#ad1457)} .geo-c5 .gc-rank{background:#ad1457} .geo-c5 .gc-bar>i{background:#ad1457}
-.geo-c6::before{background:#20c997} .geo-c6 .gc-icon{background:linear-gradient(135deg,#26a69a,#00695c)} .geo-c6 .gc-rank{background:#00695c} .geo-c6 .gc-bar>i{background:#00695c}
-.geo-c7::before{background:#17a2b8} .geo-c7 .gc-icon{background:linear-gradient(135deg,#29b6f6,#0277bd)} .geo-c7 .gc-rank{background:#0277bd} .geo-c7 .gc-bar>i{background:#0277bd}
-.geo-c8::before{background:#dc3545} .geo-c8 .gc-icon{background:linear-gradient(135deg,#ef5350,#c62828)} .geo-c8 .gc-rank{background:#c62828} .geo-c8 .gc-bar>i{background:#c62828}
-.geo-c9::before{background:#6610f2} .geo-c9 .gc-icon{background:linear-gradient(135deg,#7c4dff,#4527a0)} .geo-c9 .gc-rank{background:#4527a0} .geo-c9 .gc-bar>i{background:#4527a0}
-.geo-c10::before{background:#ffc107} .geo-c10 .gc-icon{background:linear-gradient(135deg,#ffca28,#ff8f00)} .geo-c10 .gc-rank{background:#ff8f00} .geo-c10 .gc-bar>i{background:#ff8f00}
+/* ── Clean Geography rows ── */
+.geo-list { display:flex; flex-direction:column; gap:6px; }
+.geo-item {
+    display:flex; align-items:center; gap:14px;
+    padding:12px 14px; border-radius:10px;
+    background:#fff; border:1px solid #eef2f6;
+    transition:all .15s;
+}
+.geo-item:hover { background:#f8fbff; border-color:#bbdefb; transform:translateX(-2px); }
+.geo-item .gi-rank {
+    width:28px; height:28px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:.78rem; font-weight:800; color:#fff; flex-shrink:0;
+}
+.geo-item .gi-icon {
+    width:32px; height:32px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-size:.9rem; flex-shrink:0;
+}
+.geo-item .gi-name {
+    flex:1; min-width:0;
+    font-size:.92rem; font-weight:600; color:#1a1a1a;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.geo-item .gi-name small { color:#888; font-weight:500; }
+.geo-item .gi-bar {
+    flex:0 0 120px; height:6px;
+    background:#f1f5f9; border-radius:3px; overflow:hidden;
+}
+.geo-item .gi-bar > i { display:block; height:100%; border-radius:3px; }
+.geo-item .gi-stats { display:flex; flex-direction:column; align-items:flex-end; gap:1px; flex-shrink:0; min-width:75px; }
+.geo-item .gi-views { font-size:.95rem; font-weight:800; color:#1a1a1a; line-height:1.1; }
+.geo-item .gi-visitors { font-size:.7rem; color:#888; }
+
+/* 10 rank colors */
+.gi-c1 .gi-rank, .gi-c1 .gi-icon, .gi-c1 .gi-bar > i { background:#1976d2; }
+.gi-c2 .gi-rank, .gi-c2 .gi-icon, .gi-c2 .gi-bar > i { background:#2e7d32; }
+.gi-c3 .gi-rank, .gi-c3 .gi-icon, .gi-c3 .gi-bar > i { background:#ef6c00; }
+.gi-c4 .gi-rank, .gi-c4 .gi-icon, .gi-c4 .gi-bar > i { background:#6a1b9a; }
+.gi-c5 .gi-rank, .gi-c5 .gi-icon, .gi-c5 .gi-bar > i { background:#ad1457; }
+.gi-c6 .gi-rank, .gi-c6 .gi-icon, .gi-c6 .gi-bar > i { background:#00695c; }
+.gi-c7 .gi-rank, .gi-c7 .gi-icon, .gi-c7 .gi-bar > i { background:#0277bd; }
+.gi-c8 .gi-rank, .gi-c8 .gi-icon, .gi-c8 .gi-bar > i { background:#c62828; }
+.gi-c9 .gi-rank, .gi-c9 .gi-icon, .gi-c9 .gi-bar > i { background:#4527a0; }
+.gi-c10 .gi-rank, .gi-c10 .gi-icon, .gi-c10 .gi-bar > i { background:#ff8f00; }
 
 /* ── Funnel ── */
 .funnel { display:flex; flex-direction:column; gap:6px; }
@@ -357,7 +379,7 @@
     .sc .val{font-size:1.2rem} .period-bar{justify-content:center}
     .pnl{padding:1rem}
     .insight-strip { grid-template-columns:1fr 1fr; }
-    .geo-grid { grid-template-columns:1fr; }
+    .geo-item .gi-bar { flex-basis:60px; }
     .an-tabs { flex-direction:column; position:static; }
     .an-tab { min-width:0; }
 }
@@ -476,7 +498,7 @@
     </div></div>
     <div class="col-md-4"><div class="pnl mb-0 h-100">
         <div class="pnl-t"><i class="fas fa-user-friends"></i> {% trans "جدد مقابل عائدين" %}</div>
-        <div class="pnl-h">{% trans "العائدون: دليل على رضا الزبائن وولائهم. النسبة الصحية: 30% أو أكثر عائدين." %}</div>
+        <div class="pnl-h">{% trans "العائدون دليل على رضا الزبائن وولائهم. النسبة الصحية: ثلاثون بالمئة أو أكثر عائدين." %}</div>
         <div style="position:relative;height:160px;"><canvas id="nrChart"></canvas></div>
         <div class="d-flex justify-content-around mt-3">
             <div class="text-center"><div style="font-size:1.3rem;font-weight:800;color:var(--an-primary);">{{ new_visitors|intcomma }}</div><div style="font-size:.75rem;color:#666;">{% trans "جديد" %}</div></div>
@@ -496,19 +518,20 @@
 
 <div class="section-title"><i class="fas fa-globe-americas"></i> {% trans "الجغرافيا — من أين يأتي زوارك؟" %} <small>{% trans "حدد أسواقك القوية والواعدة" %}</small></div>
 <div class="row g-3">
-    <div class="col-lg-7"><div class="pnl mb-0 h-100">
+    <div class="col-lg-6"><div class="pnl mb-0 h-100">
         <div class="pnl-t"><i class="fas fa-flag"></i> {% trans "أعلى الدول" %}</div>
         <div class="pnl-h">{% trans "يكشف لك الأسواق المهمة — استخدمها لتوجيه حملات إعلانية محلية، أو لإضافة شحن لدول جديدة." %}</div>
         {% if country_stats %}
-        <div class="geo-grid">
+        <div class="geo-list">
             {% for c in country_stats %}
-            <div class="geo-card geo-c{{ forloop.counter0|add:1 }}">
-                <div class="gc-rank">{{ forloop.counter }}</div>
-                <div class="gc-icon"><i class="fas fa-flag"></i></div>
-                <div class="gc-body">
-                    <div class="gc-name">{{ c.country }}</div>
-                    <div class="gc-meta"><i class="fas fa-eye"></i> <b>{{ c.count|intcomma }}</b> {% trans "مشاهدة" %} · <i class="fas fa-user"></i> <b>{{ c.visitors|intcomma }}</b> {% trans "زائر" %}</div>
-                    <div class="gc-bar"><i style="width:{% widthratio c.count country_stats.0.count 100 %}%;"></i></div>
+            <div class="geo-item gi-c{{ forloop.counter0|add:1 }}">
+                <div class="gi-rank">{{ forloop.counter }}</div>
+                <div class="gi-icon"><i class="fas fa-flag"></i></div>
+                <div class="gi-name">{{ c.country }}</div>
+                <div class="gi-bar"><i style="width:{% widthratio c.count country_stats.0.count 100 %}%;"></i></div>
+                <div class="gi-stats">
+                    <div class="gi-views">{{ c.count|intcomma }}</div>
+                    <div class="gi-visitors">{{ c.visitors|intcomma }} {% trans "زائر" %}</div>
                 </div>
             </div>
             {% endfor %}
@@ -517,19 +540,20 @@
         <div class="empty-state"><i class="fas fa-globe"></i><div class="es-t">{% trans "جاري تجميع بيانات الدول..." %}</div><div class="es-d">{% trans "يتم اكتشاف الدولة تلقائياً من عنوان IP. ستظهر البيانات مع الزوار الجدد." %}</div></div>
         {% endif %}
     </div></div>
-    <div class="col-lg-5"><div class="pnl mb-0 h-100">
+    <div class="col-lg-6"><div class="pnl mb-0 h-100">
         <div class="pnl-t"><i class="fas fa-city"></i> {% trans "أعلى المدن" %}</div>
         <div class="pnl-h">{% trans "المدن الأكثر إقبالاً — مفيد لاستهداف الإعلانات الجغرافية، وللتخطيط للتوصيل والفروع." %}</div>
         {% if city_stats %}
-        <div class="geo-grid" style="grid-template-columns:1fr;">
+        <div class="geo-list">
             {% for c in city_stats %}
-            <div class="geo-card geo-c{{ forloop.counter0|add:1 }}">
-                <div class="gc-rank">{{ forloop.counter }}</div>
-                <div class="gc-icon"><i class="fas fa-map-marker-alt"></i></div>
-                <div class="gc-body">
-                    <div class="gc-name">{{ c.city }}{% if c.country %} <small style="color:#888;font-weight:500;">· {{ c.country }}</small>{% endif %}</div>
-                    <div class="gc-meta"><i class="fas fa-eye"></i> <b>{{ c.count|intcomma }}</b> {% trans "مشاهدة" %}</div>
-                    <div class="gc-bar"><i style="width:{% widthratio c.count city_stats.0.count 100 %}%;"></i></div>
+            <div class="geo-item gi-c{{ forloop.counter0|add:1 }}">
+                <div class="gi-rank">{{ forloop.counter }}</div>
+                <div class="gi-icon"><i class="fas fa-map-marker-alt"></i></div>
+                <div class="gi-name">{{ c.city }}{% if c.country %} <small>· {{ c.country }}</small>{% endif %}</div>
+                <div class="gi-bar"><i style="width:{% widthratio c.count city_stats.0.count 100 %}%;"></i></div>
+                <div class="gi-stats">
+                    <div class="gi-views">{{ c.count|intcomma }}</div>
+                    <div class="gi-visitors">{% trans "مشاهدة" %}</div>
                 </div>
             </div>
             {% endfor %}
@@ -601,7 +625,7 @@
 <div class="section-title"><i class="fas fa-shopping-cart"></i> {% trans "عربات للاسترجاع" %} <small>{% trans "زبائن تركوا منتجات في العربة — اتصل بهم!" %}</small></div>
 <div class="pnl mb-3">
     <div class="pnl-t"><i class="fas fa-cart-arrow-down" style="color:var(--an-warning);"></i> {% trans "العربات المهجورة" %} <span style="margin-inline-start:auto;font-size:.78rem;color:#999;font-weight:500;">{% trans "إجمالي القيمة" %}: <b style="color:var(--an-warning);">{{ cart_recovery_value|floatformat:2|intcomma }} {% trans "د.أ" %}</b></span></div>
-    <div class="pnl-h">{% trans "هؤلاء زبائن أضافوا منتجات لكن لم يكملوا الشراء. تواصل معهم عبر بريد إلكتروني أو واتساب لتذكيرهم — متوسط معدل الاسترجاع 10-20%!" %}</div>
+    <div class="pnl-h">{% trans "هؤلاء زبائن أضافوا منتجات لكن لم يكملوا الشراء. تواصل معهم عبر بريد إلكتروني أو واتساب لتذكيرهم — متوسط معدل الاسترجاع بين عشرة وعشرين بالمئة." %}</div>
     {% if cart_recovery %}
     <div class="row g-2">
         {% for c in cart_recovery %}
