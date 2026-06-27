@@ -435,22 +435,106 @@ class SiteAnalyticsView(SuperuserRequiredMixin, TemplateView):
                 'count': row['count'],
             })
 
-        # ── 7. Referrers — aggregate in DB, parse in Python only top results ──
-        referrer_rows = list(
+        # ── 7. Referrers — categorize, dedupe domains, compute shares ──
+        # Get domain + visitors (unique IPs) + last seen, not just count
+        referrer_raw = list(
             human_qs.exclude(referrer='')
-            .values('referrer')
-            .annotate(count=Count('id'))
-            .order_by('-count')[:200]
+            .values('referrer', 'ip_address', 'timestamp')[:5000]
         )
-        referrer_domains = Counter()
-        for row in referrer_rows:
+
+        # Aggregate by domain
+        domain_data = {}  # domain → {'count': N, 'visitors': set(), 'last_seen': ts, 'sample_url': str}
+        own_host_parts = ('esco.jo', 'www.esco.jo', '206.81.25.184')
+        for row in referrer_raw:
             try:
-                domain = urlparse(row['referrer']).netloc
-                if domain:
-                    referrer_domains[domain] += row['count']
+                parsed = urlparse(row['referrer'])
+                domain = parsed.netloc.lower()
+                if not domain:
+                    continue
+                # Strip 'www.' for cleaner grouping
+                clean_domain = domain[4:] if domain.startswith('www.') else domain
+                if clean_domain not in domain_data:
+                    domain_data[clean_domain] = {
+                        'domain': clean_domain,
+                        'count': 0,
+                        'visitors': set(),
+                        'last_seen': row['timestamp'],
+                        'sample_url': row['referrer'],
+                        'is_own': any(p in clean_domain for p in own_host_parts),
+                    }
+                d = domain_data[clean_domain]
+                d['count'] += 1
+                if row['ip_address']:
+                    d['visitors'].add(row['ip_address'])
+                if row['timestamp'] > d['last_seen']:
+                    d['last_seen'] = row['timestamp']
             except Exception:
                 pass
-        top_referrers = referrer_domains.most_common(10)
+
+        # Classify each referrer into a channel
+        SEARCH_DOMAINS = ('google.', 'bing.', 'yahoo.', 'duckduckgo.', 'yandex.', 'baidu.', 'ecosia.', 'startpage.', 'qwant.', 'brave.com')
+        SOCIAL_DOMAINS = ('facebook.', 'instagram.', 'twitter.', 'x.com', 't.co', 'linkedin.', 'youtube.', 'tiktok.', 'whatsapp.', 'wa.me', 'telegram.', 't.me', 'snapchat.', 'pinterest.', 'reddit.')
+        EMAIL_DOMAINS = ('mail.google.', 'outlook.', 'mail.yahoo.', 'mail.live.', 'hotmail.')
+
+        def classify(domain, is_own):
+            if is_own:
+                return 'internal'
+            if any(s in domain for s in SEARCH_DOMAINS):
+                return 'search'
+            if any(s in domain for s in SOCIAL_DOMAINS):
+                return 'social'
+            if any(s in domain for s in EMAIL_DOMAINS):
+                return 'email'
+            return 'referral'
+
+        for d in domain_data.values():
+            d['channel'] = classify(d['domain'], d['is_own'])
+            d['visitors_count'] = len(d['visitors'])
+
+        # Sort and finalize — exclude internal/own-site refs from "top referrers" list
+        external = [d for d in domain_data.values() if not d['is_own']]
+        external.sort(key=lambda d: d['count'], reverse=True)
+
+        total_external_count = sum(d['count'] for d in external) or 1
+        top_referrers = []
+        for d in external[:12]:
+            top_referrers.append({
+                'domain': d['domain'],
+                'count': d['count'],
+                'visitors': d['visitors_count'],
+                'share': round(d['count'] / total_external_count * 100, 1),
+                'last_seen': d['last_seen'],
+                'channel': d['channel'],
+                'sample_url': d['sample_url'],
+            })
+
+        # Channel summary: aggregate counts by channel
+        channel_totals = Counter()
+        for d in external:
+            channel_totals[d['channel']] += d['count']
+        # Also count direct visits (no referrer) for the channel summary
+        direct_count = human_qs.filter(referrer='').count()
+
+        channel_summary = []
+        channel_meta = [
+            ('search',   _('بحث عضوي'),    _('من محركات البحث (جوجل، بنج، ...)'),  '#ea4335', 'fas fa-search'),
+            ('social',   _('شبكات اجتماعية'), _('من فيسبوك، إنستجرام، تويتر، ...'),     '#1da1f2', 'fas fa-share-alt'),
+            ('email',    _('بريد إلكتروني'),  _('من رسائل البريد الإلكتروني'),         '#7c4dff', 'fas fa-envelope'),
+            ('referral', _('إحالات أخرى'),   _('من مواقع أخرى ترسل زواراً'),          '#fb8c00', 'fas fa-external-link-alt'),
+            ('direct',   _('زيارة مباشرة'),  _('كتبوا الرابط مباشرة أو من إشارة مرجعية'), '#607d8b', 'fas fa-mouse-pointer'),
+        ]
+        total_with_direct = sum(channel_totals.values()) + direct_count or 1
+        for key, label, hint, color, icon in channel_meta:
+            c = channel_totals.get(key, 0) if key != 'direct' else direct_count
+            channel_summary.append({
+                'key': key,
+                'label': label,
+                'hint': hint,
+                'color': color,
+                'icon': icon,
+                'count': c,
+                'share': round(c / total_with_direct * 100, 1) if total_with_direct else 0,
+            })
 
         # ── 8. Hourly distribution ──
         hourly_data = list(
@@ -840,6 +924,8 @@ class SiteAnalyticsView(SuperuserRequiredMixin, TemplateView):
             'top_pages': top_pages,
             'exit_pages': exit_pages,
             'top_referrers': top_referrers,
+            'channel_summary': channel_summary,
+            'direct_visits': direct_count,
             'top_searches': top_searches,
             'zero_result_searches': zero_result_searches,
             # Segments
