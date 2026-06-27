@@ -185,6 +185,11 @@
     display:flex; align-items:center; justify-content:center;
     color:#fff; font-size:.9rem; flex-shrink:0;
 }
+.geo-item .gi-flag {
+    font-size:1.6rem; line-height:1; flex-shrink:0;
+    width:36px; text-align:center;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,.15));
+}
 .geo-item .gi-name {
     flex:1; min-width:0;
     font-size:.92rem; font-weight:600; color:#1a1a1a;
@@ -526,7 +531,7 @@
             {% for c in country_stats %}
             <div class="geo-item gi-c{{ forloop.counter0|add:1 }}">
                 <div class="gi-rank">{{ forloop.counter }}</div>
-                <div class="gi-icon"><i class="fas fa-flag"></i></div>
+                <div class="gi-flag">{{ c.flag }}</div>
                 <div class="gi-name">{{ c.country }}</div>
                 <div class="gi-bar"><i style="width:{% widthratio c.count country_stats.0.count 100 %}%;"></i></div>
                 <div class="gi-stats">
@@ -548,7 +553,7 @@
             {% for c in city_stats %}
             <div class="geo-item gi-c{{ forloop.counter0|add:1 }}">
                 <div class="gi-rank">{{ forloop.counter }}</div>
-                <div class="gi-icon"><i class="fas fa-map-marker-alt"></i></div>
+                <div class="gi-flag">{{ c.flag }}</div>
                 <div class="gi-name">{{ c.city }}{% if c.country %} <small>· {{ c.country }}</small>{% endif %}</div>
                 <div class="gi-bar"><i style="width:{% widthratio c.count city_stats.0.count 100 %}%;"></i></div>
                 <div class="gi-stats">

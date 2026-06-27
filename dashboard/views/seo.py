@@ -402,15 +402,38 @@ class SiteAnalyticsView(SuperuserRequiredMixin, TemplateView):
         os_total = sum(o['count'] for o in os_stats) or 1
 
         # ── 6. Geography ──
-        country_stats = list(
+        from core.country_data import get_country_info
+        is_arabic = (self.request.LANGUAGE_CODE or 'en').startswith('ar')
+
+        country_stats_raw = list(
             human_qs.exclude(country='').values('country')
             .annotate(count=Count('id'), visitors=Count('ip_address', distinct=True))
             .order_by('-count')[:15]
         )
-        city_stats = list(
+        country_stats = []
+        for row in country_stats_raw:
+            ar_name, iso, flag = get_country_info(row['country'])
+            country_stats.append({
+                'country': ar_name if is_arabic else row['country'],
+                'country_code': iso,
+                'flag': flag,
+                'count': row['count'],
+                'visitors': row['visitors'],
+            })
+
+        city_stats_raw = list(
             human_qs.exclude(city='').values('city', 'country')
             .annotate(count=Count('id')).order_by('-count')[:10]
         )
+        city_stats = []
+        for row in city_stats_raw:
+            ar_name, iso, flag = get_country_info(row['country']) if row['country'] else ('', '', '🏳️')
+            city_stats.append({
+                'city': row['city'],
+                'country': ar_name if is_arabic else row['country'],
+                'flag': flag,
+                'count': row['count'],
+            })
 
         # ── 7. Referrers — aggregate in DB, parse in Python only top results ──
         referrer_rows = list(
