@@ -5,7 +5,7 @@ URL configuration for esco_project.
 """
 
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import HttpResponse
@@ -192,6 +192,12 @@ urlpatterns += [
         path('api-catalog', APICatalogView.as_view(), name='api-catalog'),
         path('traffic-advice', TrafficAdviceView.as_view(), name='traffic-advice'),
     ])),
+
+    # Strip /ar/ prefix — Arabic is the default language and uses no prefix,
+    # so /ar/foo/ would 404. Permanent-redirect it to /foo/ instead.
+    re_path(r'^ar/(?P<rest>.*)$',
+            RedirectView.as_view(url='/%(rest)s', permanent=True, query_string=True),
+            name='strip-ar-prefix'),
 ]
 
 # URLs للتطبيقات الإضافية (يمكن تفعيلها لاحقاً)
