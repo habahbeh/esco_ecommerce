@@ -8,11 +8,13 @@
 {% block meta_keywords %}{{ post.meta_keywords }}{% endblock %}
 
 {% block og_tags %}
-<meta property="og:type" content="article">
-<meta property="og:title" content="{% if LANGUAGE_CODE == 'en' and post.title_en %}{{ post.title_en }}{% else %}{{ post.title }}{% endif %}">
-<meta property="og:description" content="{% if LANGUAGE_CODE == 'en' and post.excerpt_en %}{{ post.excerpt_en }}{% else %}{{ post.excerpt }}{% endif %}">
-{% if post.featured_image %}<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ post.featured_image.url }}">{% endif %}
-<meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{{ post.get_absolute_url }}">
+{# Use og_meta_tags to get full OG + Twitter Card baseline (og:site_name, og:locale, twitter:card, etc.) #}
+{% if post.featured_image %}
+    {% og_meta_tags title=post.title description=post.excerpt obj_type="article" image=post.featured_image.url %}
+{% else %}
+    {% og_meta_tags title=post.title description=post.excerpt obj_type="article" %}
+{% endif %}
+{# Article-specific OG extensions #}
 <meta property="article:published_time" content="{{ post.published_at|date:'c' }}">
 <meta property="article:modified_time" content="{{ post.updated_at|date:'c' }}">
 {% if post.author %}<meta property="article:author" content="{{ post.author.get_full_name|default:post.author.username }}">{% endif %}

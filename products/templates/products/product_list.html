@@ -3,25 +3,49 @@
 {% load i18n %}
 {% load seo_tags %}
 
-{% block title %}
+{% block title %}{% spaceless %}
     {% if category %}
-        {% if category.meta_title %}{{ category.meta_title }}{% elif LANGUAGE_CODE == 'en' %}{{ category.name_en }}{% else %}{{ category.name }}{% endif %} - {% trans "المنتجات" %}
+        {% if category.meta_title %}{{ category.meta_title }}{% elif LANGUAGE_CODE == 'en' and category.name_en %}{{ category.name_en }} in Jordan - Buy at ESCO{% else %}{{ category.name }} في الأردن - أسعار ومواصفات | ESCO{% endif %}
     {% elif brand %}
-        {% if brand.meta_title %}{{ brand.meta_title }}{% elif LANGUAGE_CODE == 'en' and brand.name_en %}{{ brand.name_en }}{% else %}{{ brand.name }}{% endif %} - {% trans "المنتجات" %}
+        {% if brand.meta_title %}{{ brand.meta_title }}{% elif LANGUAGE_CODE == 'en' and brand.name_en %}{{ brand.name_en }} Jordan - Official Distributor | ESCO{% else %}{{ brand.name }} الأردن - الوكيل المعتمد | ESCO{% endif %}
     {% else %}
-        {% trans "جميع المنتجات" %} | {{ site_settings.site_name|default:"ESCO" }}
+        {% if LANGUAGE_CODE == 'en' %}All Industrial Tools & Hardware in Jordan | ESCO Store{% else %}جميع العدد الصناعية والأدوات الهندسية في الأردن | متجر ESCO{% endif %}
     {% endif %}
-{% endblock %}
+{% endspaceless %}{% endblock %}
 
-{% block meta_description %}{% if category and category.meta_description %}{{ category.meta_description }}{% elif brand and brand.meta_description %}{{ brand.meta_description }}{% elif category %}{{ category.description|striptags|truncatewords:30 }}{% elif brand %}{{ brand.description|striptags|truncatewords:30 }}{% endif %}{% endblock %}
+{% block meta_description %}{% spaceless %}
+    {% if category and category.meta_description %}{{ category.meta_description }}
+    {% elif brand and brand.meta_description %}{{ brand.meta_description }}
+    {% elif category %}
+        {% if LANGUAGE_CODE == 'en' and category.name_en %}Browse {{ category.name_en }} at ESCO Jordan. {{ page_obj.paginator.count|default:"hundreds of" }} products from top brands. Best prices, fast delivery across Jordan.{% else %}تسوّق {{ category.name }} من متجر ESCO الأردن. {{ page_obj.paginator.count|default:"المئات" }} منتج من أفضل الماركات العالمية. أسعار منافسة وتوصيل سريع لجميع المحافظات.{% endif %}
+    {% elif brand %}
+        {% if LANGUAGE_CODE == 'en' and brand.name_en %}Shop {{ brand.name_en }} products at ESCO — the authorized {{ brand.name_en }} distributor in Jordan. Warranty, fast delivery, best prices.{% else %}منتجات {{ brand.name }} من ESCO الوكيل المعتمد في الأردن. ضمان رسمي، توصيل سريع، أسعار منافسة على كل المنتجات.{% endif %}
+    {% else %}
+        {% if LANGUAGE_CODE == 'en' %}ESCO Jordan — the largest store for industrial tools, hand tools, power tools, safety equipment, plumbing, and electrical supplies. Top brands: DeWalt, Bosch, Stanley, Makita, Total. Shop online, fast delivery across Jordan.{% else %}متجر ESCO — أكبر متجر للعدد الصناعية والأدوات اليدوية والكهربائية ومعدات السلامة والأدوات الصحية في الأردن. ماركات عالمية: ديوالت، بوش، ستانلي، ماكيتا، توتال. تسوّق أون لاين وتوصيل سريع.{% endif %}
+    {% endif %}
+{% endspaceless %}{% endblock %}
 
-{% block meta_keywords %}{% if category and category.meta_keywords %}{{ category.meta_keywords }}{% elif brand and brand.meta_keywords %}{{ brand.meta_keywords }}{% endif %}{% endblock %}
+{% block meta_keywords %}{% spaceless %}
+    {% if category and category.meta_keywords %}{{ category.meta_keywords }}
+    {% elif brand and brand.meta_keywords %}{{ brand.meta_keywords }}
+    {% elif category %}{{ category.name }}, {{ category.name }} الأردن, شراء {{ category.name }}, أسعار {{ category.name }}, ESCO
+    {% elif brand %}{{ brand.name }}, {{ brand.name }} الأردن, وكيل {{ brand.name }}, ضمان {{ brand.name }}, ESCO
+    {% else %}عدد صناعية, أدوات هندسية, عدد يدوية, عدد كهربائية, معدات سلامة, أدوات صحية, متجر عدد الأردن, ESCO, ديوالت, بوش, ستانلي, ماكيتا{% endif %}
+{% endspaceless %}{% endblock %}
 
 {% block og_tags %}
 {% if category %}
-    {% og_meta_tags title=category.name description=category.description|striptags|truncatewords:30 %}
+    {% if category.image %}
+        {% og_meta_tags title=category.name description=category.description|striptags|truncatewords:30 image=category.image.url %}
+    {% else %}
+        {% og_meta_tags title=category.name description=category.description|striptags|truncatewords:30 %}
+    {% endif %}
 {% elif brand %}
-    {% og_meta_tags title=brand.name description=brand.description|striptags|truncatewords:30 %}
+    {% if brand.logo %}
+        {% og_meta_tags title=brand.name description=brand.description|striptags|truncatewords:30 image=brand.logo.url %}
+    {% else %}
+        {% og_meta_tags title=brand.name description=brand.description|striptags|truncatewords:30 %}
+    {% endif %}
 {% else %}
     {% og_meta_tags %}
 {% endif %}
@@ -29,6 +53,25 @@
 
 {% block structured_data %}
 {% if breadcrumbs %}{% jsonld_breadcrumb breadcrumbs %}{% endif %}
+{% if category and products %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "{{ category.name|escapejs }}",
+    "description": "{{ category.description|striptags|truncatewords:30|escapejs }}",
+    "url": "{{ request.scheme }}://{{ request.get_host }}{{ request.path }}",
+    "isPartOf": {"@type": "WebSite", "name": "{{ site_settings.site_name|default:'ESCO'|escapejs }}", "url": "{{ request.scheme }}://{{ request.get_host }}"},
+    "mainEntity": {
+        "@type": "ItemList",
+        "numberOfItems": {{ page_obj.paginator.count|default:products|length }},
+        "itemListElement": [{% for p in products|slice:":20" %}
+            {"@type": "ListItem", "position": {{ forloop.counter }}, "url": "{{ request.scheme }}://{{ request.get_host }}{{ p.get_absolute_url }}", "name": "{{ p.name|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}
+        ]
+    }
+}
+</script>
+{% endif %}
 {% endblock %}
 
 {% block extra_css %}

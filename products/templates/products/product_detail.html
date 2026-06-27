@@ -10,21 +10,22 @@
 {% block meta_keywords %}{% if product.meta_keywords %}{{ product.meta_keywords }}{% else %}{{ product.name }}, {{ product.category.name|default:"" }}, {{ product.brand.name|default:"" }}, ESCO{% endif %}{% endblock %}
 
 {% block og_tags %}
-    {% og_meta_tags title=product.name description=product.description|striptags|truncatewords:30 obj_type="product" %}
     {% if product.default_image %}
-    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.default_image.image.url }}">
-    <meta property="og:image:alt" content="{% if LANGUAGE_CODE == 'en' %}{{ product.name_en }}{% else %}{{ product.name }}{% endif %}">
+        {% og_meta_tags title=product.name description=product.description|striptags|truncatewords:30 obj_type="product" image=product.default_image.image.url %}
+        <meta property="og:image:alt" content="{% if LANGUAGE_CODE == 'en' and product.name_en %}{{ product.name_en }}{% else %}{{ product.name }}{% endif %}">
+    {% else %}
+        {% og_meta_tags title=product.name description=product.description|striptags|truncatewords:30 obj_type="product" %}
     {% endif %}
     {% if product.is_price_visible %}
     <meta property="product:price:amount" content="{{ product.current_price }}">
     <meta property="product:price:currency" content="JOD">
+    <meta property="product:availability" content="{% if product.in_stock %}in stock{% else %}out of stock{% endif %}">
+    {% if product.brand %}<meta property="product:brand" content="{{ product.brand.name }}">{% endif %}
     {% endif %}
 {% endblock %}
 
-{% block structured_data %}
-    {% jsonld_product product %}
-    {% jsonld_breadcrumb breadcrumbs %}
-{% endblock %}
+{# structured_data is fully handled by the _product_schema.html include further down — do NOT add jsonld_product/jsonld_breadcrumb here, they would duplicate. #}
+{% block structured_data %}{% endblock %}
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'products/css/category_tree.css' %}?v=9">

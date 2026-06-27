@@ -6,6 +6,7 @@ class StaticViewSitemap(Sitemap):
     changefreq = 'monthly'
     priority = 0.5
     protocol = 'https'
+    i18n = True
 
     def items(self):
         return ['core:home', 'core:about', 'core:contact', 'core:terms', 'core:privacy']

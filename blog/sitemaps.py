@@ -8,6 +8,7 @@ class BlogPostSitemap(Sitemap):
     changefreq = 'weekly'
     priority = 0.7
     protocol = 'https'
+    i18n = True
 
     def items(self):
         return BlogPost.objects.filter(status='published', published_at__lte=timezone.now())
@@ -20,6 +21,7 @@ class BlogCategorySitemap(Sitemap):
     changefreq = 'weekly'
     priority = 0.6
     protocol = 'https'
+    i18n = True
 
     def items(self):
         return BlogCategory.objects.filter(is_active=True).annotate(

@@ -197,48 +197,7 @@
 }
 </script>
 
-<!-- Organization Schema -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  "name": "{{ site_settings.site_name|default:'ESCO'|escapejs }}",
-  "url": "{{ request.scheme }}://{{ request.get_host }}",
-  {% if site_settings.logo %}"logo": "{{ request.scheme }}://{{ request.get_host }}{{ site_settings.logo.url }}",{% endif %}
-  {% if site_settings.phone %}"telephone": "{{ site_settings.phone|escapejs }}",{% endif %}
-  {% if site_settings.email %}"email": "{{ site_settings.email|escapejs }}",{% endif %}
-  {% if site_settings.address %}"address": {
-    "@type": "PostalAddress",
-    "streetAddress": "{{ site_settings.address|escapejs }}",
-    "addressCountry": "JO"
-  },{% endif %}
-  "sameAs": [
-    {% if site_settings.facebook %}"{{ site_settings.facebook|escapejs }}"{% if site_settings.twitter or site_settings.instagram or site_settings.linkedin %},{% endif %}{% endif %}
-    {% if site_settings.twitter %}"{{ site_settings.twitter|escapejs }}"{% if site_settings.instagram or site_settings.linkedin %},{% endif %}{% endif %}
-    {% if site_settings.instagram %}"{{ site_settings.instagram|escapejs }}"{% if site_settings.linkedin %},{% endif %}{% endif %}
-    {% if site_settings.linkedin %}"{{ site_settings.linkedin|escapejs }}"{% endif %}
-  ],
-  "foundingDate": "2020",
-  "areaServed": {
-    "@type": "Country",
-    "name": "Jordan"
-  },
-  "hasOfferCatalog": {
-    "@type": "OfferCatalog",
-    "name": "{{ site_settings.site_name|default:'ESCO'|escapejs }} Products",
-    "itemListElement": [
-      {
-        "@type": "Offer",
-        "itemOffered": {
-          "@type": "Product",
-          "name": "{{ product.name|escapejs }}",
-          "category": "{{ product.category.name|escapejs }}"
-        }
-      }
-    ]
-  }
-}
-</script>
+{# Organization schema is already emitted by base.html via jsonld_organization templatetag. Removed duplicate. #}
 
 <!-- BreadcrumbList Schema -->
 <script type="application/ld+json">
@@ -301,92 +260,10 @@
 </script>
 {% endif %}
 
-<!-- Local Business Schema (for company info) -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "LocalBusiness",
-  "name": "{{ site_settings.site_name|default:'ESCO'|escapejs }}",
-  "image": {% if site_settings.logo %}"{{ request.scheme }}://{{ request.get_host }}{{ site_settings.logo.url }}"{% else %}""{% endif %},
-  "@id": "{{ request.scheme }}://{{ request.get_host }}/",
-  "url": "{{ request.scheme }}://{{ request.get_host }}/",
-  {% if site_settings.phone %}"telephone": "{{ site_settings.phone|escapejs }}",{% endif %}
-  {% if site_settings.email %}"email": "{{ site_settings.email|escapejs }}",{% endif %}
-  {% if site_settings.address %}"address": {
-    "@type": "PostalAddress",
-    "streetAddress": "{{ site_settings.address|escapejs }}",
-    "addressCountry": "JO"
-  },{% endif %}
-  "geo": {
-    "@type": "GeoCoordinates",
-    "latitude": 31.9539,
-    "longitude": 35.9106
-  },
-  "openingHoursSpecification": {
-    "@type": "OpeningHoursSpecification",
-    "dayOfWeek": [
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Sunday"
-    ],
-    "opens": "08:00",
-    "closes": "17:00"
-  },
-  "priceRange": "$$",
-  "currenciesAccepted": "JOD",
-  "paymentAccepted": "Cash, Credit Card",
-  "areaServed": {
-    "@type": "Country",
-    "name": "Jordan"
-  }
-}
-</script>
-
-<!-- WebSite Schema with Site Search -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  "name": "{{ site_settings.site_name|default:'ESCO'|escapejs }}",
-  "url": "{{ request.scheme }}://{{ request.get_host }}/",
-  "potentialAction": {
-    "@type": "SearchAction",
-    "target": {
-      "@type": "EntryPoint",
-      "urlTemplate": "{{ request.scheme }}://{{ request.get_host }}{% url 'products:product_search' %}?q={search_term_string}"
-    },
-    "query-input": "required name=search_term_string"
-  },
-  "sameAs": [
-    {% if site_settings.facebook %}"{{ site_settings.facebook|escapejs }}"{% if site_settings.twitter or site_settings.instagram or site_settings.linkedin %},{% endif %}{% endif %}
-    {% if site_settings.twitter %}"{{ site_settings.twitter|escapejs }}"{% if site_settings.instagram or site_settings.linkedin %},{% endif %}{% endif %}
-    {% if site_settings.instagram %}"{{ site_settings.instagram|escapejs }}"{% if site_settings.linkedin %},{% endif %}{% endif %}
-    {% if site_settings.linkedin %}"{{ site_settings.linkedin|escapejs }}"{% endif %}
-  ]
-}
-</script>
-
-<!-- Additional Open Graph Tags -->
-<meta property="og:title" content="{{ product.name|striptags }}">
-<meta property="og:description" content="{{ product.short_description|default:product.description|striptags|truncatewords:30 }}">
-<meta property="og:type" content="product">
-<meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{{ product.get_absolute_url }}">
-{% if product.default_image %}<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.default_image.image.url }}">{% endif %}
-<meta property="og:site_name" content="{{ site_settings.site_name|default:'ESCO' }}">
-{% if product.is_price_visible %}<meta property="product:price:amount" content="{{ product.current_price }}">
-<meta property="product:price:currency" content="JOD">{% endif %}
-<meta property="product:availability" content="{% if product.in_stock %}in stock{% else %}out of stock{% endif %}">
-<meta property="product:condition" content="new">
-<meta property="product:brand" content="{{ product.brand.name|default:'ESCO' }}">
-<meta property="product:category" content="{{ product.category.name }}">
-
-<!-- Twitter Card Tags -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="{{ product.name|striptags }}">
-<meta name="twitter:description" content="{{ product.short_description|default:product.description|striptags|truncatewords:30 }}">
-{% if product.default_image %}<meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.default_image.image.url }}">{% endif %}
+{# LocalBusiness, WebSite, OG tags, and Twitter cards are already emitted by base.html
+   via jsonld_local_business / jsonld_website / og_meta_tags. Removed duplicates here.
+   Product-specific extensions (product:price, product:availability, etc.) are still
+   added in product_detail.html's og_tags block. #}
 
 <!-- Additional Meta Tags -->
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">

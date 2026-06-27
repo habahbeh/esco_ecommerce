@@ -64,6 +64,9 @@ def og_meta_tags(context, title='', description='', image='', obj_type='website'
     og_desc = description or (getattr(site_settings, 'seo_description', '') or '') or (getattr(site_settings, 'site_description', '') or '')
     og_url = url or f"{domain}{request.path}"
     og_image = image
+    # If a relative image path was passed (starts with /), prefix with domain
+    if og_image and og_image.startswith('/'):
+        og_image = f"{domain}{og_image}"
     if not og_image and site_settings:
         if hasattr(site_settings, 'og_image') and site_settings.og_image:
             try:
