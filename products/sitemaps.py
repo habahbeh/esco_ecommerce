@@ -1,4 +1,5 @@
 from django.contrib.sitemaps import Sitemap
+from django.db import models
 from django.urls import reverse
 from .models import Product, Category, Brand
 
@@ -37,7 +38,15 @@ class CategorySitemap(Sitemap):
     i18n = True
 
     def items(self):
-        return Category.objects.filter(is_active=True).order_by('level', 'sort_order')
+        # Only include categories that actually have at least one published product.
+        # Empty categories render as "Soft 404" in Google Search Console.
+        from django.db.models import Count
+        return (
+            Category.objects.filter(is_active=True)
+            .annotate(product_count=Count('products', filter=models.Q(products__is_active=True, products__status='published')))
+            .filter(product_count__gt=0)
+            .order_by('level', 'sort_order')
+        )
 
     def lastmod(self, obj):
         return obj.updated_at
