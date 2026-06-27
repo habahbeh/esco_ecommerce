@@ -479,6 +479,7 @@ class PageView(models.Model):
     browser = models.CharField(max_length=100, blank=True)
     os = models.CharField(max_length=100, blank=True)
     is_bot = models.BooleanField(default=False)
+    status_code = models.PositiveSmallIntegerField(default=200, db_index=True)
     timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
@@ -487,6 +488,7 @@ class PageView(models.Model):
             models.Index(fields=['is_bot', 'timestamp']),
             models.Index(fields=['timestamp', 'is_bot']),
             models.Index(fields=['path', 'timestamp']),
+            models.Index(fields=['status_code', 'timestamp']),
         ]
 
     def __str__(self):

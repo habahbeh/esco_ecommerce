@@ -112,7 +112,9 @@ class PageViewTrackingMiddleware(MiddlewareMixin):
         if SKIP_PATHS.match(path) or SKIP_EXTENSIONS.search(path):
             return response
 
-        if response.status_code < 200 or response.status_code >= 400:
+        status = response.status_code
+        # Track 2xx (real views) and 404 (broken links worth knowing about). Skip everything else.
+        if not (200 <= status < 400 or status == 404):
             return response
 
         content_type = response.get('Content-Type', '')
@@ -153,6 +155,7 @@ class PageViewTrackingMiddleware(MiddlewareMixin):
                 browser=browser,
                 os=os_name,
                 is_bot=is_bot,
+                status_code=status,
             )
         except Exception:
             logger.debug('Failed to save page view', exc_info=True)

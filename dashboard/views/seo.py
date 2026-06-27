@@ -558,6 +558,241 @@ class SiteAnalyticsView(SuperuserRequiredMixin, TemplateView):
         top_country = country_stats[0]['country'] if country_stats else None
         primary_device = max(device_stats, key=lambda d: d['count'])['device_type'] if device_stats else None
 
+        # ── 19. Hour × Day-of-week heatmap (7 rows x 24 cols) ──
+        heatmap = [[0] * 24 for _ in range(7)]
+        for ts in human_qs.values_list('timestamp', flat=True)[:80000]:
+            heatmap[ts.weekday()][ts.hour] += 1
+        heatmap_max = max((max(row) for row in heatmap), default=0)
+
+        # ── 20. Revenue trend (daily) + AOV + RPV ──
+        revenue_chart_labels, revenue_chart_values, orders_chart_values = [], [], []
+        aov = 0
+        rpv = 0
+        try:
+            from orders.models import Order
+            paid_qs = Order.objects.filter(created_at__gte=start_date, payment_status='paid')
+            if days <= 2:
+                daily_rev = list(
+                    paid_qs.annotate(date=TruncHour('created_at'))
+                    .values('date').annotate(total=Sum('grand_total'), cnt=Count('id'))
+                    .order_by('date')
+                )
+            else:
+                daily_rev = list(
+                    paid_qs.annotate(date=TruncDate('created_at'))
+                    .values('date').annotate(total=Sum('grand_total'), cnt=Count('id'))
+                    .order_by('date')
+                )
+            for d in daily_rev:
+                dt = d['date']
+                revenue_chart_labels.append(dt.strftime('%H:%M') if days <= 2 else dt.strftime('%m/%d'))
+                revenue_chart_values.append(float(d['total'] or 0))
+                orders_chart_values.append(d['cnt'])
+            if paid_orders > 0 and revenue:
+                aov = round(float(revenue) / paid_orders, 2)
+            if unique_visitors > 0 and revenue:
+                rpv = round(float(revenue) / unique_visitors, 2)
+        except Exception:
+            pass
+
+        # ── 21. Top customers by lifetime value (all-time) ──
+        top_customers = []
+        try:
+            from accounts.models import User
+            top_customers = list(
+                User.objects.filter(orders__payment_status='paid')
+                .annotate(
+                    ltv=Sum('orders__grand_total'),
+                    order_count=Count('orders', distinct=True),
+                    last_order=Max('orders__created_at'),
+                )
+                .filter(ltv__gt=0)
+                .order_by('-ltv')
+                .values('id', 'first_name', 'last_name', 'email', 'ltv', 'order_count', 'last_order')[:10]
+            )
+        except Exception:
+            pass
+
+        # ── 22. First vs Repeat buyers (all-time) ──
+        first_time_buyers = 0
+        repeat_buyers = 0
+        try:
+            from orders.models import Order
+            buyer_orders = (
+                Order.objects.filter(user__isnull=False, payment_status='paid')
+                .values('user').annotate(c=Count('id'))
+            )
+            for b in buyer_orders:
+                if b['c'] == 1:
+                    first_time_buyers += 1
+                else:
+                    repeat_buyers += 1
+        except Exception:
+            pass
+
+        # ── 23. Cart recovery: active unconverted carts with items ──
+        cart_recovery = []
+        cart_recovery_value = 0
+        try:
+            from cart.models import Cart
+            active_carts_qs = (
+                Cart.objects.filter(is_active=True, converted_to_order=False)
+                .annotate(item_count=Count('items'))
+                .filter(item_count__gt=0)
+                .select_related('user')
+                .prefetch_related('items__product', 'items__variant')
+                .order_by('-updated_at')[:15]
+            )
+            for c in active_carts_qs:
+                items = list(c.items.all())
+                if not items:
+                    continue
+                try:
+                    val = sum(i.total_price for i in items)
+                except Exception:
+                    val = 0
+                user_label = ''
+                if c.user:
+                    user_label = c.user.get_full_name() or c.user.email
+                else:
+                    user_label = _('ضيف')
+                cart_recovery.append({
+                    'id': str(c.id),
+                    'user_name': user_label,
+                    'user_email': c.user.email if c.user else '',
+                    'is_guest': c.user is None,
+                    'item_count': len(items),
+                    'total': float(val or 0),
+                    'updated_at': c.updated_at,
+                    'sample_product': items[0].product.name if items[0].product else '',
+                })
+                cart_recovery_value += float(val or 0)
+        except Exception:
+            pass
+
+        # ── 24. Wishlist top items ──
+        wishlist_top = []
+        try:
+            from products.models import Wishlist
+            wl = (
+                Wishlist.objects.values('product__id', 'product__name', 'product__slug')
+                .annotate(wishes=Count('id'), users=Count('user', distinct=True))
+                .order_by('-wishes')[:10]
+            )
+            for w in wl:
+                if not w['product__id']:
+                    continue
+                wishlist_top.append({
+                    'name': w['product__name'],
+                    'slug': w['product__slug'],
+                    'wishes': w['wishes'],
+                    'users': w['users'],
+                })
+        except Exception:
+            pass
+
+        # ── 25. Stock vs Demand: high-viewed products with low/zero stock ──
+        stock_alerts = []
+        try:
+            from products.models import Product
+            slugs_seen = []
+            # Use the top_pages list which has highest-traffic paths
+            for pv in list(product_views) + list(top_pages):
+                parts = pv['path'].strip('/').split('/')
+                if len(parts) >= 2 and parts[0] in ('products', 'en') and parts[-1]:
+                    slug = parts[-1]
+                    if slug not in [s[0] for s in slugs_seen]:
+                        slugs_seen.append((slug, pv.get('views', 0), pv.get('visitors', 0)))
+            slugs_only = [s[0] for s in slugs_seen]
+            if slugs_only:
+                products_meta = {
+                    p.slug: p for p in
+                    Product.objects.filter(slug__in=slugs_only)
+                    .only('slug', 'name', 'stock_quantity', 'stock_status', 'min_stock_level', 'track_inventory')
+                }
+                for slug, views, visitors in slugs_seen:
+                    p = products_meta.get(slug)
+                    if not p or not p.track_inventory:
+                        continue
+                    if p.stock_quantity == 0 or p.stock_status == 'out_of_stock':
+                        severity = 'critical'
+                    elif p.min_stock_level and p.stock_quantity <= p.min_stock_level:
+                        severity = 'low'
+                    else:
+                        continue
+                    stock_alerts.append({
+                        'name': p.name,
+                        'slug': p.slug,
+                        'views': views,
+                        'visitors': visitors,
+                        'stock': p.stock_quantity,
+                        'severity': severity,
+                    })
+                stock_alerts = stock_alerts[:8]
+        except Exception:
+            pass
+
+        # ── 26. Slowest / bounce-prone pages ──
+        slowest_pages = []
+        try:
+            single_page_session_keys = list(
+                session_qs.values('session_key')
+                .annotate(c=Count('id'))
+                .filter(c=1)
+                .values_list('session_key', flat=True)[:5000]
+            )
+            if single_page_session_keys:
+                slowest_pages = list(
+                    session_qs.filter(session_key__in=single_page_session_keys)
+                    .values('path').annotate(bounces=Count('id'))
+                    .order_by('-bounces')[:8]
+                )
+        except Exception:
+            pass
+
+        # ── 27. 404 errors ──
+        not_found_pages = []
+        try:
+            not_found_pages = list(
+                PageView.objects.filter(status_code=404, timestamp__gte=start_date, is_bot=False)
+                .values('path').annotate(count=Count('id'))
+                .order_by('-count')[:10]
+            )
+        except Exception:
+            pass
+
+        # ── 28. Search → conversion ──
+        search_conversion = None
+        try:
+            search_session_keys = list(
+                session_qs.filter(path__contains='/search')
+                .values_list('session_key', flat=True).distinct()[:5000]
+            )
+            if search_session_keys:
+                converted = (
+                    session_qs.filter(
+                        session_key__in=search_session_keys,
+                        path__regex=r'^/(en/)?products/[^/]+/?$',
+                    ).values('session_key').distinct().count()
+                )
+                search_conversion = {
+                    'searched': len(search_session_keys),
+                    'viewed_product': converted,
+                    'rate': round(converted / len(search_session_keys) * 100, 1) if search_session_keys else 0,
+                }
+        except Exception:
+            pass
+
+        # ── 29. All-time order context ──
+        try:
+            from orders.models import Order
+            all_time_orders = Order.objects.count()
+            all_time_paid_orders = Order.objects.filter(payment_status='paid').count()
+            all_time_revenue = Order.objects.filter(payment_status='paid').aggregate(t=Sum('grand_total'))['t'] or 0
+        except Exception:
+            all_time_orders = all_time_paid_orders = 0
+            all_time_revenue = 0
+
         context.update({
             'period': days,
             # KPIs
@@ -628,6 +863,34 @@ class SiteAnalyticsView(SuperuserRequiredMixin, TemplateView):
             'primary_device': primary_device,
             # Bots
             'bot_browsers': bot_browsers,
+            # Heatmap
+            'heatmap': json.dumps(heatmap),
+            'heatmap_max': heatmap_max,
+            # Revenue trend
+            'revenue_chart_labels': json.dumps(revenue_chart_labels),
+            'revenue_chart_values': json.dumps(revenue_chart_values),
+            'orders_chart_values': json.dumps(orders_chart_values),
+            'aov': aov,
+            'rpv': rpv,
+            # Top customers
+            'top_customers': top_customers,
+            'first_time_buyers': first_time_buyers,
+            'repeat_buyers': repeat_buyers,
+            # Cart recovery
+            'cart_recovery': cart_recovery,
+            'cart_recovery_value': cart_recovery_value,
+            # Wishlist
+            'wishlist_top': wishlist_top,
+            # Stock alerts
+            'stock_alerts': stock_alerts,
+            # Slowest pages + 404 + search conversion
+            'slowest_pages': slowest_pages,
+            'not_found_pages': not_found_pages,
+            'search_conversion': search_conversion,
+            # All-time context
+            'all_time_orders': all_time_orders,
+            'all_time_paid_orders': all_time_paid_orders,
+            'all_time_revenue': all_time_revenue,
         })
         return context
 
