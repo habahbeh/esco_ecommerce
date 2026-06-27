@@ -7,7 +7,7 @@ from operator import or_
 from urllib.parse import urlparse
 
 from django.db import models
-from django.db.models import Q, Count, Max
+from django.db.models import Q, Count, Max, Min, Sum, F
 from django.db.models.functions import TruncDate, TruncHour
 from django.views.generic import UpdateView, ListView, CreateView, DeleteView, TemplateView
 from django.urls import reverse_lazy
@@ -465,6 +465,93 @@ class SiteAnalyticsView(SuperuserRequiredMixin, TemplateView):
             .order_by('-count')[:8]
         )
 
+        # ── 12. Audience profile: logged-in vs guest ──
+        logged_in_visitors = human_qs.exclude(user__isnull=True).values('ip_address').distinct().count()
+        guest_visitors = max(0, unique_visitors - logged_in_visitors)
+        logged_in_pct = round(logged_in_visitors / unique_visitors * 100, 1) if unique_visitors else 0
+
+        # ── 13. Visitor interest: top product & category pages ──
+        product_views = (
+            human_qs.filter(path__regex=r'^/(en/)?product/')
+            .values('path').annotate(views=Count('id'), visitors=Count('ip_address', distinct=True))
+            .order_by('-views')[:8]
+        )
+        category_views = (
+            human_qs.filter(path__regex=r'^/(en/)?category/')
+            .values('path').annotate(views=Count('id'), visitors=Count('ip_address', distinct=True))
+            .order_by('-views')[:8]
+        )
+
+        # ── 14. Conversion funnel: visitors → carts → orders ──
+        try:
+            from cart.models import Cart
+            from orders.models import Order
+            active_carts = Cart.objects.filter(
+                is_active=True, converted_to_order=False,
+                updated_at__gte=start_date,
+            ).count()
+            period_orders = Order.objects.filter(created_at__gte=start_date).count()
+            paid_orders = Order.objects.filter(
+                created_at__gte=start_date, payment_status='paid'
+            ).count()
+            revenue = Order.objects.filter(
+                created_at__gte=start_date, payment_status='paid'
+            ).aggregate(t=Sum('grand_total'))['t'] or 0
+        except Exception:
+            active_carts = period_orders = paid_orders = 0
+            revenue = 0
+
+        conversion_rate = round(period_orders / unique_visitors * 100, 2) if unique_visitors else 0
+        cart_abandonment = (
+            round((active_carts) / (active_carts + period_orders) * 100, 1)
+            if (active_carts + period_orders) > 0 else 0
+        )
+
+        # ── 15. Top landing pages (first page per session) ──
+        first_per_session = list(
+            session_qs.values('session_key')
+            .annotate(first_ts=Min('timestamp'))
+            .values_list('session_key', 'first_ts')[:5000]
+        )
+        if first_per_session:
+            landing_filter = reduce(or_, [Q(session_key=sk, timestamp=ts) for sk, ts in first_per_session])
+            landing_pages = list(
+                session_qs.filter(landing_filter)
+                .values('path').annotate(count=Count('id'))
+                .order_by('-count')[:8]
+            )
+        else:
+            landing_pages = []
+
+        # ── 16. Average session duration (first→last view per session) ──
+        try:
+            session_spans = (
+                session_qs.values('session_key')
+                .annotate(start=Min('timestamp'), end=Max('timestamp'))
+            )
+            durations = [
+                (s['end'] - s['start']).total_seconds()
+                for s in session_spans if s['end'] and s['start']
+            ]
+            multi_page = [d for d in durations if d > 0]
+            avg_session_seconds = int(sum(multi_page) / len(multi_page)) if multi_page else 0
+        except Exception:
+            avg_session_seconds = 0
+        avg_session_minutes = round(avg_session_seconds / 60, 1)
+
+        # ── 17. Day-of-week distribution ──
+        dow_counts = [0] * 7
+        for entry in human_qs.values_list('timestamp', flat=True)[:50000]:
+            dow_counts[entry.weekday()] += 1
+
+        # ── 18. Insight tags for the headline ──
+        peak_hour_idx = hourly_distribution.index(max(hourly_distribution)) if any(hourly_distribution) else None
+        peak_hour_label = f"{peak_hour_idx:02d}:00" if peak_hour_idx is not None else "—"
+        dow_names_ar = ['الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
+        peak_dow = dow_names_ar[dow_counts.index(max(dow_counts))] if any(dow_counts) else "—"
+        top_country = country_stats[0]['country'] if country_stats else None
+        primary_device = max(device_stats, key=lambda d: d['count'])['device_type'] if device_stats else None
+
         context.update({
             'period': days,
             # KPIs
@@ -509,6 +596,30 @@ class SiteAnalyticsView(SuperuserRequiredMixin, TemplateView):
             # Audience
             'new_visitors': new_count,
             'returning_visitors': returning_count,
+            'logged_in_visitors': logged_in_visitors,
+            'guest_visitors': guest_visitors,
+            'logged_in_pct': logged_in_pct,
+            # Visitor interest (audience signals)
+            'product_views': list(product_views),
+            'category_views': list(category_views),
+            # Conversion funnel
+            'active_carts': active_carts,
+            'period_orders': period_orders,
+            'paid_orders': paid_orders,
+            'revenue': revenue,
+            'conversion_rate': conversion_rate,
+            'cart_abandonment': cart_abandonment,
+            # Engagement
+            'landing_pages': landing_pages,
+            'avg_session_seconds': avg_session_seconds,
+            'avg_session_minutes': avg_session_minutes,
+            # Time patterns
+            'dow_counts': json.dumps(dow_counts),
+            'peak_hour_label': peak_hour_label,
+            'peak_dow': peak_dow,
+            # Headline insights
+            'top_country': top_country,
+            'primary_device': primary_device,
             # Bots
             'bot_browsers': bot_browsers,
         })

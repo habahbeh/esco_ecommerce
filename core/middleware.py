@@ -1,10 +1,51 @@
 import logging
+import os
 import re
 
 from django.http import HttpResponse
 from django.utils.deprecation import MiddlewareMixin
 
 logger = logging.getLogger(__name__)
+
+
+_GEOIP_READER = None
+_GEOIP_INITIALIZED = False
+_GEOIP_DB_PATHS = (
+    '/usr/share/GeoIP/GeoLite2-City.mmdb',
+    '/usr/local/share/GeoIP/GeoLite2-City.mmdb',
+)
+
+
+def _get_geoip_reader():
+    global _GEOIP_READER, _GEOIP_INITIALIZED
+    if _GEOIP_INITIALIZED:
+        return _GEOIP_READER
+    _GEOIP_INITIALIZED = True
+    try:
+        import geoip2.database
+        for path in _GEOIP_DB_PATHS:
+            if os.path.exists(path):
+                _GEOIP_READER = geoip2.database.Reader(path)
+                logger.info('GeoIP database loaded from %s', path)
+                return _GEOIP_READER
+    except Exception:
+        logger.debug('GeoIP reader could not be initialized', exc_info=True)
+    return None
+
+
+def _lookup_geo(ip):
+    if not ip:
+        return '', ''
+    reader = _get_geoip_reader()
+    if reader is None:
+        return '', ''
+    try:
+        resp = reader.city(ip)
+        country = (resp.country.name or '')[:100]
+        city = (resp.city.name or '')[:100]
+        return country, city
+    except Exception:
+        return '', ''
 
 
 BOT_PATTERNS = re.compile(
@@ -96,6 +137,8 @@ class PageViewTrackingMiddleware(MiddlewareMixin):
             if hasattr(request, 'session') and request.session.session_key:
                 session_key = request.session.session_key
 
+            country, city = _lookup_geo(ip) if not is_bot else ('', '')
+
             PageView.objects.create(
                 path=path[:500],
                 full_url=request.build_absolute_uri()[:1000],
@@ -104,6 +147,8 @@ class PageViewTrackingMiddleware(MiddlewareMixin):
                 referrer=request.META.get('HTTP_REFERER', '')[:1000],
                 user=user,
                 session_key=session_key,
+                country=country,
+                city=city,
                 device_type=device_type,
                 browser=browser,
                 os=os_name,

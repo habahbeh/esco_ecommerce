@@ -7,14 +7,22 @@
 
 {% block extra_css %}
 <style>
+:root {
+    --an-primary:#0077c8; --an-success:#28a745; --an-warning:#fd7e14;
+    --an-danger:#dc3545; --an-info:#17a2b8; --an-purple:#6f42c1; --an-teal:#20c997;
+}
 /* ── Layout ── */
 .an { max-width:1400px; margin:0 auto; }
 .section-title {
-    font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px;
-    color:#0077c8; margin:1.5rem 0 .75rem; padding-bottom:.4rem;
+    font-size:.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px;
+    color:var(--an-primary); margin:1.6rem 0 .75rem; padding-bottom:.45rem;
     border-bottom:2px solid rgba(0,119,200,.12); display:flex; align-items:center; gap:8px;
 }
 .section-title i { font-size:.85rem; }
+.section-title small {
+    font-size:.7rem; font-weight:500; color:#888; text-transform:none;
+    letter-spacing:0; margin-inline-start:.5rem; flex:1;
+}
 
 /* ── Period bar ── */
 .period-bar { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
@@ -36,6 +44,28 @@
 .live-dot { width:9px; height:9px; border-radius:50%; background:#fff; box-shadow:0 0 0 0 rgba(255,255,255,.7); animation:lp 1.5s ease-in-out infinite; }
 @keyframes lp { 0%{box-shadow:0 0 0 0 rgba(255,255,255,.7)} 70%{box-shadow:0 0 0 8px rgba(255,255,255,0)} 100%{box-shadow:0 0 0 0 rgba(255,255,255,0)} }
 
+/* ── Insight cards (headline) ── */
+.insight-strip {
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:10px; margin-bottom:1rem;
+}
+.insight {
+    background:linear-gradient(135deg,#fff,#fafbfc);
+    border:1px solid #ecf0f5; border-radius:12px; padding:12px 14px;
+    display:flex; gap:10px; align-items:flex-start;
+    box-shadow:0 1px 4px rgba(0,0,0,.03);
+}
+.insight .ii {
+    width:36px; height:36px; border-radius:10px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:.95rem;
+}
+.insight .it { font-size:.72rem; color:#666; font-weight:600; margin-bottom:2px; }
+.insight .iv { font-size:.95rem; font-weight:700; color:#1a1a1a; line-height:1.3; }
+.insight.b1 .ii { background:rgba(0,119,200,.1); color:var(--an-primary); }
+.insight.b2 .ii { background:rgba(40,167,69,.1); color:var(--an-success); }
+.insight.b3 .ii { background:rgba(253,126,20,.1); color:var(--an-warning); }
+.insight.b4 .ii { background:rgba(111,66,193,.1); color:var(--an-purple); }
+
 /* ── Stat cards ── */
 .sc {
     background:#fff; border-radius:14px; padding:1.1rem 1.2rem; height:100%;
@@ -43,22 +73,23 @@
     position:relative; overflow:hidden;
 }
 .sc::after { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
-.sc-bl::after{background:#0077c8} .sc-gn::after{background:#28a745} .sc-pp::after{background:#6f42c1}
-.sc-or::after{background:#fd7e14} .sc-tl::after{background:#20c997} .sc-rd::after{background:#dc3545}
-.sc-cy::after{background:#17a2b8}
+.sc-bl::after{background:var(--an-primary)} .sc-gn::after{background:var(--an-success)} .sc-pp::after{background:var(--an-purple)}
+.sc-or::after{background:var(--an-warning)} .sc-tl::after{background:var(--an-teal)} .sc-rd::after{background:var(--an-danger)}
+.sc-cy::after{background:var(--an-info)}
 .sc .ic {
     width:40px; height:40px; border-radius:10px; display:flex; align-items:center;
     justify-content:center; font-size:1rem; flex-shrink:0;
 }
-.sc-bl .ic{background:rgba(0,119,200,.1);color:#0077c8}  .sc-gn .ic{background:rgba(40,167,69,.1);color:#28a745}
-.sc-pp .ic{background:rgba(111,66,193,.1);color:#6f42c1}  .sc-or .ic{background:rgba(253,126,20,.1);color:#fd7e14}
-.sc-tl .ic{background:rgba(32,201,151,.1);color:#20c997}  .sc-rd .ic{background:rgba(220,53,69,.1);color:#dc3545}
-.sc-cy .ic{background:rgba(23,162,184,.1);color:#17a2b8}
-.sc .val { font-size:1.6rem; font-weight:700; color:#1a1a1a; line-height:1.2; }
-.sc .lbl { font-size:.78rem; color:#888; margin-top:1px; }
+.sc-bl .ic{background:rgba(0,119,200,.1);color:var(--an-primary)}  .sc-gn .ic{background:rgba(40,167,69,.1);color:var(--an-success)}
+.sc-pp .ic{background:rgba(111,66,193,.1);color:var(--an-purple)}  .sc-or .ic{background:rgba(253,126,20,.1);color:var(--an-warning)}
+.sc-tl .ic{background:rgba(32,201,151,.1);color:var(--an-teal)}  .sc-rd .ic{background:rgba(220,53,69,.1);color:var(--an-danger)}
+.sc-cy .ic{background:rgba(23,162,184,.1);color:var(--an-info)}
+.sc .val { font-size:1.55rem; font-weight:700; color:#1a1a1a; line-height:1.2; }
+.sc .lbl { font-size:.78rem; color:#888; margin-top:1px; display:flex; align-items:center; gap:4px; }
+.sc .lbl .help { cursor:help; color:#bbb; font-size:.7rem; }
 .sc .chg { font-size:.72rem; font-weight:600; padding:2px 7px; border-radius:10px; }
 .chg.up{background:#e8f5e9;color:#2e7d32} .chg.dn{background:#ffebee;color:#c62828}
-.sc .hint { font-size:.68rem; color:#aaa; margin-top:5px; line-height:1.4; }
+.sc .hint { font-size:.7rem; color:#999; margin-top:6px; line-height:1.5; }
 
 /* ── Panels ── */
 .pnl {
@@ -68,9 +99,10 @@
 .pnl .pnl-t { font-size:.95rem; font-weight:700; color:#1a1a1a; display:flex; align-items:center; gap:8px; margin-bottom:.4rem; }
 .pnl .pnl-t i { color:var(--bs-primary); font-size:.85rem; }
 .pnl .pnl-h {
-    font-size:.72rem; color:#999; line-height:1.5; padding:6px 10px; background:#f8f9fa;
+    font-size:.74rem; color:#777; line-height:1.6; padding:8px 12px; background:#f8fbff;
     border-radius:8px; border-inline-start:3px solid var(--bs-primary); margin-bottom:.9rem;
 }
+.pnl .pnl-h b { color:#0077c8; }
 
 /* ── Tables ── */
 .at { width:100%; border-collapse:separate; border-spacing:0; }
@@ -81,7 +113,101 @@
 .at td { padding:9px 12px; font-size:.83rem; border-bottom:1px solid #f0f0f0; color:#333; }
 .at tr:last-child td { border-bottom:none; }
 .at tr:hover td { background:#fafbfc; }
-.at .pp { max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:monospace; font-size:.78rem; color:var(--bs-primary); }
+
+/* ── Top pages list ── */
+.tp-row {
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px; border-radius:10px; transition:background .15s;
+    border-bottom:1px solid #f0f0f0;
+}
+.tp-row:last-child { border-bottom:none; }
+.tp-row:hover { background:#f8fbff; }
+.tp-rank {
+    width:26px; height:26px; border-radius:8px; background:#eef5fb; color:var(--an-primary);
+    display:flex; align-items:center; justify-content:center;
+    font-size:.78rem; font-weight:700; flex-shrink:0;
+}
+.tp-rank.rank-1 { background:linear-gradient(135deg,#ffd54f,#ffa000); color:#fff; box-shadow:0 2px 4px rgba(255,160,0,.3); }
+.tp-rank.rank-2 { background:linear-gradient(135deg,#bdbdbd,#757575); color:#fff; box-shadow:0 2px 4px rgba(117,117,117,.3); }
+.tp-rank.rank-3 { background:linear-gradient(135deg,#bf8a5b,#8d6e63); color:#fff; box-shadow:0 2px 4px rgba(141,110,99,.3); }
+.tp-body { flex:1; min-width:0; }
+.tp-path {
+    display:flex; align-items:center; gap:6px;
+    font-size:.83rem; color:#1a1a1a; text-decoration:none;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    direction:ltr; text-align:left;
+}
+.tp-path:hover { color:var(--an-primary); text-decoration:underline; }
+.tp-path .tp-icon { color:#aaa; font-size:.7rem; flex-shrink:0; }
+.tp-meta { display:flex; gap:14px; align-items:center; margin-top:5px; flex-wrap:wrap; }
+.tp-meta .m { font-size:.7rem; color:#888; display:inline-flex; align-items:center; gap:4px; }
+.tp-meta .m i { font-size:.7rem; }
+.tp-meta .m b { color:#333; font-size:.78rem; font-weight:700; }
+.tp-bar { height:4px; background:#f0f0f0; border-radius:2px; overflow:hidden; margin-top:6px; }
+.tp-bar > i { display:block; height:100%; background:linear-gradient(90deg,var(--an-primary),var(--an-teal)); border-radius:2px; }
+
+/* ── Geo / referrer rows ── */
+.geo-row {
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px; border-radius:10px;
+    border-bottom:1px solid #f0f0f0; transition:background .15s;
+}
+.geo-row:last-child { border-bottom:none; }
+.geo-row:hover { background:#f8fbff; }
+.geo-flag { font-size:1.1rem; width:24px; text-align:center; flex-shrink:0; }
+.geo-name { flex:1; font-size:.85rem; color:#333; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.geo-name small { color:#888; font-size:.72rem; }
+.geo-count { font-size:.85rem; font-weight:700; color:var(--an-primary); min-width:50px; text-align:end; }
+.geo-bar { flex:0 0 90px; height:6px; background:#f0f0f0; border-radius:3px; overflow:hidden; margin:0 8px; }
+.geo-bar > i { display:block; height:100%; border-radius:3px; }
+
+/* ── Empty state ── */
+.empty-state {
+    text-align:center; padding:2.5rem 1rem; color:#999;
+}
+.empty-state i { font-size:2.4rem; color:#dde3ea; margin-bottom:.6rem; display:block; }
+.empty-state .es-t { font-size:.95rem; font-weight:600; color:#555; margin-bottom:.3rem; }
+.empty-state .es-d { font-size:.78rem; line-height:1.6; max-width:380px; margin:0 auto; }
+
+/* ── Funnel ── */
+.funnel { display:flex; flex-direction:column; gap:6px; }
+.funnel-step {
+    background:#fff; border:1px solid #ecf0f5; border-radius:10px;
+    padding:12px 14px; position:relative; overflow:hidden;
+}
+.funnel-step::before {
+    content:''; position:absolute; top:0; bottom:0; left:0; right:0;
+    background:linear-gradient(90deg, currentColor, transparent);
+    opacity:.06; pointer-events:none;
+}
+.funnel-step .fs-h { display:flex; justify-content:space-between; align-items:baseline; }
+.funnel-step .fs-l { font-size:.8rem; color:#555; font-weight:600; }
+.funnel-step .fs-v { font-size:1.2rem; font-weight:800; }
+.funnel-step .fs-d { font-size:.7rem; color:#888; margin-top:3px; }
+.funnel-step.fs-1 { color:var(--an-primary); }
+.funnel-step.fs-2 { color:var(--an-warning); }
+.funnel-step.fs-3 { color:var(--an-purple); }
+.funnel-step.fs-4 { color:var(--an-success); }
+.funnel-arrow { text-align:center; color:#bbb; font-size:.7rem; padding:2px 0; }
+
+/* ── Bot cards ── */
+.bot-card {
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px; background:#fff; border:1px solid #eee;
+    border-radius:10px; transition:all .15s;
+}
+.bot-card:hover { border-color:var(--an-danger); transform:translateY(-1px); }
+.bot-card .bc-ic {
+    width:32px; height:32px; border-radius:8px;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(220,53,69,.08); color:var(--an-danger); flex-shrink:0;
+}
+.bot-card .bc-name { flex:1; font-size:.78rem; color:#333; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.bot-card .bc-count { font-size:.85rem; font-weight:700; color:var(--an-danger); }
+
+/* ── Badges ── */
+.tg { display:inline-block; padding:3px 10px; border-radius:10px; font-size:.73rem; font-weight:500; }
+.tg-s{background:#e3f2fd;color:#1565c0} .tg-z{background:#fff3e0;color:#e65100}
 
 /* ── Bars ── */
 .bw { display:flex; align-items:center; gap:8px; }
@@ -89,14 +215,20 @@
 .bf { height:100%; border-radius:3px; transition:width .6s ease; }
 .bv { font-size:.78rem; font-weight:600; color:#555; min-width:36px; text-align:end; }
 
-/* ── Badges ── */
-.tg { display:inline-block; padding:3px 10px; border-radius:10px; font-size:.73rem; font-weight:500; }
-.tg-s{background:#e3f2fd;color:#1565c0} .tg-z{background:#fff3e0;color:#e65100}
+/* ── Help tooltip box ── */
+.guide-box {
+    background:#fff8e1; border:1px solid #ffe082; border-radius:10px;
+    padding:10px 14px; margin-bottom:1rem; display:flex; gap:10px; align-items:flex-start;
+    font-size:.78rem; color:#5d4037; line-height:1.6;
+}
+.guide-box i { color:#f57f17; font-size:.95rem; margin-top:2px; }
+.guide-box b { color:#bf360c; }
 
 /* ── Responsive ── */
 @media(max-width:768px){
     .sc .val{font-size:1.2rem} .period-bar{justify-content:center}
     .pnl{padding:1rem}
+    .insight-strip { grid-template-columns:1fr 1fr; }
 }
 </style>
 {% endblock %}
@@ -104,8 +236,12 @@
 {% block content %}
 <div class="an">
 
-<!-- ═══════════════ TOOLBAR ═══════════════ -->
-<div class="d-flex justify-content-end align-items-center flex-wrap gap-2 mb-3">
+<!-- ═══════════════ TOP BAR: LIVE + INSIGHTS ═══════════════ -->
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+        <h5 class="mb-1" style="font-weight:700;">{% trans "تحليلات الموقع والجمهور" %}</h5>
+        <div style="font-size:.78rem;color:#888;">{% trans "افهم زوارك، تتبع سلوكهم، وحسّن قراراتك التسويقية" %}</div>
+    </div>
     <div class="live-badge {% if not live_visitors %}is-zero{% endif %}" id="liveBadge" title="{% trans 'الزوار النشطون خلال آخر 15 دقيقة' %}">
         <span class="live-dot"></span>
         <span class="live-num" id="liveCount">{{ live_visitors }}</span>
@@ -113,10 +249,44 @@
     </div>
 </div>
 
+<!-- Headline insights -->
+<div class="insight-strip">
+    <div class="insight b1">
+        <div class="ii"><i class="fas fa-clock"></i></div>
+        <div>
+            <div class="it">{% trans "ساعة الذروة" %}</div>
+            <div class="iv">{{ peak_hour_label }}</div>
+        </div>
+    </div>
+    <div class="insight b2">
+        <div class="ii"><i class="fas fa-calendar-day"></i></div>
+        <div>
+            <div class="it">{% trans "يوم الذروة" %}</div>
+            <div class="iv">{{ peak_dow }}</div>
+        </div>
+    </div>
+    <div class="insight b3">
+        <div class="ii"><i class="fas fa-globe"></i></div>
+        <div>
+            <div class="it">{% trans "أعلى دولة" %}</div>
+            <div class="iv">{{ top_country|default:"—" }}</div>
+        </div>
+    </div>
+    <div class="insight b4">
+        <div class="ii"><i class="fas fa-mobile-alt"></i></div>
+        <div>
+            <div class="it">{% trans "الجهاز الأساسي" %}</div>
+            <div class="iv text-capitalize">{{ primary_device|default:"—" }}</div>
+        </div>
+    </div>
+</div>
+
 <!-- ═══════════════ 1. OVERVIEW KPIs ═══════════════ -->
-<div class="section-title"><i class="fas fa-tachometer-alt"></i> {% trans "نظرة عامة" %}</div>
+<div class="section-title">
+    <i class="fas fa-tachometer-alt"></i> {% trans "نظرة عامة" %}
+    <small>{% trans "المؤشرات الرئيسية لأداء الموقع" %}</small>
+</div>
 <div class="row g-3 mb-2">
-    <!-- Today Views -->
     <div class="col-6 col-md-4 col-xl">
         <div class="sc sc-bl">
             <div class="d-flex align-items-start justify-content-between">
@@ -126,10 +296,9 @@
                 </div>
                 <div class="ic"><i class="fas fa-eye"></i></div>
             </div>
-            <div class="hint">{% trans "عدد الصفحات التي تم فتحها اليوم" %}</div>
+            <div class="hint">{% trans "عدد الصفحات التي تم فتحها منذ منتصف الليل" %}</div>
         </div>
     </div>
-    <!-- Today Visitors -->
     <div class="col-6 col-md-4 col-xl">
         <div class="sc sc-gn">
             <div class="d-flex align-items-start justify-content-between">
@@ -139,10 +308,9 @@
                 </div>
                 <div class="ic"><i class="fas fa-user"></i></div>
             </div>
-            <div class="hint">{% trans "زوار فريدون حسب عنوان IP" %}</div>
+            <div class="hint">{% trans "أشخاص فريدون زاروا الموقع اليوم (حسب IP)" %}</div>
         </div>
     </div>
-    <!-- Weekly Views -->
     <div class="col-6 col-md-4 col-xl">
         <div class="sc sc-pp">
             <div class="d-flex align-items-start justify-content-between">
@@ -152,10 +320,9 @@
                 </div>
                 <div class="ic"><i class="fas fa-calendar-week"></i></div>
             </div>
-            <div class="hint">{% trans "آخر 7 أيام" %}</div>
+            <div class="hint">{% trans "إجمالي المشاهدات خلال آخر 7 أيام" %}</div>
         </div>
     </div>
-    <!-- Monthly Views -->
     <div class="col-6 col-md-4 col-xl">
         <div class="sc sc-or">
             <div class="d-flex align-items-start justify-content-between">
@@ -165,10 +332,9 @@
                 </div>
                 <div class="ic"><i class="fas fa-calendar-alt"></i></div>
             </div>
-            <div class="hint">{% trans "آخر 30 يوم" %}</div>
+            <div class="hint">{% trans "إجمالي المشاهدات خلال آخر 30 يوم" %}</div>
         </div>
     </div>
-    <!-- Period Unique -->
     <div class="col-6 col-md-4 col-xl">
         <div class="sc sc-tl">
             <div class="d-flex align-items-start justify-content-between">
@@ -183,10 +349,9 @@
                 </div>
                 <div class="ic"><i class="fas fa-users"></i></div>
             </div>
-            <div class="hint">{% trans "مقارنة بالفترة السابقة" %}</div>
+            <div class="hint">{% trans "إجمالي الزوار الفريدين خلال الفترة المحددة، مقارنة بالفترة السابقة" %}</div>
         </div>
     </div>
-    <!-- Avg Pages -->
     <div class="col-6 col-md-4 col-xl">
         <div class="sc sc-cy">
             <div class="d-flex align-items-start justify-content-between">
@@ -196,10 +361,9 @@
                 </div>
                 <div class="ic"><i class="fas fa-file-alt"></i></div>
             </div>
-            <div class="hint">{% trans "كلما زاد العدد دل على اهتمام الزائر بالمحتوى" %}</div>
+            <div class="hint">{% trans "كلما زاد العدد، دل على اهتمام الزائر بالمحتوى. <2 ضعيف، 2-4 جيد، >4 ممتاز" %}</div>
         </div>
     </div>
-    <!-- Bounce Rate -->
     <div class="col-6 col-md-4 col-xl">
         <div class="sc sc-rd">
             <div class="d-flex align-items-start justify-content-between">
@@ -209,13 +373,16 @@
                 </div>
                 <div class="ic"><i class="fas fa-door-open"></i></div>
             </div>
-            <div class="hint">{% trans "نسبة الزوار الذين غادروا بعد صفحة واحدة فقط" %}</div>
+            <div class="hint">{% trans "نسبة الزوار الذين غادروا بعد صفحة واحدة. الأقل أفضل. >70% يعني المحتوى لا يجذب الانتباه" %}</div>
         </div>
     </div>
 </div>
 
 <!-- ═══════════════ 2. TRAFFIC CHART ═══════════════ -->
-<div class="section-title"><i class="fas fa-chart-line"></i> {% trans "حركة الزوار" %}</div>
+<div class="section-title">
+    <i class="fas fa-chart-line"></i> {% trans "حركة الزوار عبر الزمن" %}
+    <small>{% trans "متى يأتي الزوار وكيف يتغير الاتجاه" %}</small>
+</div>
 <div class="pnl">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
         <div class="pnl-t mb-0"><i class="fas fa-chart-area"></i> {% trans "المشاهدات والزوار" %}</div>
@@ -233,42 +400,333 @@
         </span>
         {% endif %}
     </div>
-    <div class="pnl-h">{% trans "يوضح هذا الرسم عدد مشاهدات الصفحات وعدد الزوار الفريدين خلال الفترة المحددة" %}</div>
+    <div class="pnl-h">{% trans "<b>المشاهدات</b> = إجمالي مرات فتح أي صفحة. <b>الزوار</b> = عدد الأشخاص الفريدين. الفجوة بين الرقمين تدل على عمق التصفح: كلما اتسعت، كلما تصفح الزائر صفحات أكثر." %}</div>
     <div style="position:relative;height:300px;"><canvas id="trafficChart"></canvas></div>
 </div>
 
+<!-- ═══════════════ 3. AUDIENCE & CUSTOMER INTENT ═══════════════ -->
+<div class="section-title">
+    <i class="fas fa-user-tie"></i> {% trans "الجمهور والزبائن المحتملين" %}
+    <small>{% trans "من هم زوارك؟ ما اهتماماتهم؟ وأي منهم قريب من الشراء؟" %}</small>
+</div>
+
+<div class="guide-box">
+    <i class="fas fa-lightbulb"></i>
+    <div>
+        {% trans "<b>كيف تقرأ هذه الأرقام؟</b> الزائر المسجّل دخول هو زبون فعلي محتمل (اهتمام أعلى). الزوار الذين يشاهدون صفحات منتجات بكثرة هم زبائن قريبون من اتخاذ قرار الشراء. عدد العربات النشطة يعكس النية الشرائية الحالية." %}
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Logged-in vs Guest -->
+    <div class="col-md-4">
+        <div class="pnl mb-0 h-100">
+            <div class="pnl-t"><i class="fas fa-id-card"></i> {% trans "مسجّلون مقابل ضيوف" %}</div>
+            <div class="pnl-h">{% trans "<b>المسجّلون</b> زبائن لديهم حساب — اهتمام أعلى ومسار شراء أسرع. <b>الضيوف</b> فرصة تحويلهم لمسجّلين عبر العروض والمحتوى." %}</div>
+            <div style="position:relative;height:160px;"><canvas id="loginChart"></canvas></div>
+            <div class="d-flex justify-content-around mt-3">
+                <div class="text-center">
+                    <div style="font-size:1.3rem;font-weight:800;color:var(--an-success);">{{ logged_in_visitors|intcomma }}</div>
+                    <div style="font-size:.75rem;color:#666;">{% trans "مسجّل" %} ({{ logged_in_pct }}%)</div>
+                </div>
+                <div class="text-center">
+                    <div style="font-size:1.3rem;font-weight:800;color:#888;">{{ guest_visitors|intcomma }}</div>
+                    <div style="font-size:.75rem;color:#666;">{% trans "ضيف" %}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New vs Returning -->
+    <div class="col-md-4">
+        <div class="pnl mb-0 h-100">
+            <div class="pnl-t"><i class="fas fa-user-friends"></i> {% trans "جدد مقابل عائدين" %}</div>
+            <div class="pnl-h">{% trans "<b>العائدون</b> دليل على رضا الزبائن وولائهم. النسبة الصحية: 30%+ عائدين." %}</div>
+            <div style="position:relative;height:160px;"><canvas id="nrChart"></canvas></div>
+            <div class="d-flex justify-content-around mt-3">
+                <div class="text-center">
+                    <div style="font-size:1.3rem;font-weight:800;color:var(--an-primary);">{{ new_visitors|intcomma }}</div>
+                    <div style="font-size:.75rem;color:#666;">{% trans "جديد" %}</div>
+                </div>
+                <div class="text-center">
+                    <div style="font-size:1.3rem;font-weight:800;color:var(--an-success);">{{ returning_visitors|intcomma }}</div>
+                    <div style="font-size:.75rem;color:#666;">{% trans "عائد" %}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Engagement -->
+    <div class="col-md-4">
+        <div class="pnl mb-0 h-100">
+            <div class="pnl-t"><i class="fas fa-stopwatch"></i> {% trans "مدى التفاعل" %}</div>
+            <div class="pnl-h">{% trans "مؤشرات تخبرك بمدى عمق تفاعل الزائر مع موقعك." %}</div>
+            <div class="d-flex flex-column gap-2 mt-2">
+                <div class="d-flex justify-content-between align-items-center p-2 rounded" style="background:#f8fbff;">
+                    <span style="font-size:.83rem;color:#555;"><i class="fas fa-clock text-primary me-1"></i> {% trans "متوسط مدة الزيارة" %}</span>
+                    <span style="font-size:1rem;font-weight:700;color:var(--an-primary);">{{ avg_session_minutes }} {% trans "د" %}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center p-2 rounded" style="background:#f8fbff;">
+                    <span style="font-size:.83rem;color:#555;"><i class="fas fa-file-alt text-success me-1"></i> {% trans "صفحات/جلسة" %}</span>
+                    <span style="font-size:1rem;font-weight:700;color:var(--an-success);">{{ avg_pages }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center p-2 rounded" style="background:#f8fbff;">
+                    <span style="font-size:.83rem;color:#555;"><i class="fas fa-door-open text-danger me-1"></i> {% trans "معدل الارتداد" %}</span>
+                    <span style="font-size:1rem;font-weight:700;color:var(--an-danger);">{{ bounce_rate }}%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Conversion Funnel -->
+<div class="section-title">
+    <i class="fas fa-funnel-dollar"></i> {% trans "قمع التحويل — من الزيارة إلى الشراء" %}
+    <small>{% trans "تتبع رحلة الزائر من الدخول إلى إتمام الطلب" %}</small>
+</div>
 <div class="row g-3">
     <div class="col-lg-7">
         <div class="pnl mb-0 h-100">
-            <div class="pnl-t"><i class="fas fa-fire"></i> {% trans "الصفحات الأكثر زيارة" %}</div>
-            <div class="pnl-h">{% trans "الصفحات التي تجلب أكبر عدد من الزوار" %}</div>
-            <div class="table-responsive"><table class="at">
-                <thead><tr><th>#</th><th>{% trans "الصفحة" %}</th><th>{% trans "المشاهدات" %}</th><th>{% trans "الزوار" %}</th></tr></thead>
-                <tbody>
-                {% for p in top_pages %}
-                <tr><td>{{ forloop.counter }}</td><td><span class="pp" title="{{ p.path }}">{{ p.path }}</span></td><td><strong>{{ p.views|intcomma }}</strong></td><td>{{ p.visitors|intcomma }}</td></tr>
-                {% empty %}<tr><td colspan="4" class="text-center text-muted py-4">{% trans "لا توجد بيانات بعد" %}</td></tr>{% endfor %}
-                </tbody>
-            </table></div>
+            <div class="pnl-t"><i class="fas fa-filter"></i> {% trans "مراحل التحويل" %}</div>
+            <div class="pnl-h">{% trans "كلما ضاق القمع من أعلى لأسفل، كلما زادت الفرص الضائعة. ركّز على المراحل التي يحدث فيها أكبر تسرّب." %}</div>
+            <div class="funnel">
+                <div class="funnel-step fs-1">
+                    <div class="fs-h">
+                        <div class="fs-l">{% trans "1. الزوار الفريدون" %}</div>
+                        <div class="fs-v">{{ unique_visitors|intcomma }}</div>
+                    </div>
+                    <div class="fs-d">{% trans "إجمالي الأشخاص الذين دخلوا الموقع خلال الفترة" %}</div>
+                </div>
+                <div class="funnel-arrow"><i class="fas fa-chevron-down"></i></div>
+                <div class="funnel-step fs-2">
+                    <div class="fs-h">
+                        <div class="fs-l">{% trans "2. عربات نشطة" %}</div>
+                        <div class="fs-v">{{ active_carts|intcomma }}</div>
+                    </div>
+                    <div class="fs-d">{% trans "زوار أضافوا منتجات لكن لم يكملوا الشراء — فرصة استرجاع!" %}</div>
+                </div>
+                <div class="funnel-arrow"><i class="fas fa-chevron-down"></i></div>
+                <div class="funnel-step fs-3">
+                    <div class="fs-h">
+                        <div class="fs-l">{% trans "3. طلبات" %}</div>
+                        <div class="fs-v">{{ period_orders|intcomma }}</div>
+                    </div>
+                    <div class="fs-d">{% trans "زوار قدّموا طلب شراء (بكافة حالات الدفع)" %}</div>
+                </div>
+                <div class="funnel-arrow"><i class="fas fa-chevron-down"></i></div>
+                <div class="funnel-step fs-4">
+                    <div class="fs-h">
+                        <div class="fs-l">{% trans "4. طلبات مدفوعة" %}</div>
+                        <div class="fs-v">{{ paid_orders|intcomma }}</div>
+                    </div>
+                    <div class="fs-d">{% trans "إيرادات: " %}{{ revenue|floatformat:2|intcomma }} {% trans "د.أ" %}</div>
+                </div>
+            </div>
         </div>
     </div>
     <div class="col-lg-5">
         <div class="pnl mb-0 h-100">
-            <div class="pnl-t"><i class="fas fa-clock"></i> {% trans "أوقات الذروة" %}</div>
-            <div class="pnl-h">{% trans "أفضل الأوقات لنشر المحتوى أو إطلاق العروض" %}</div>
-            <div style="position:relative;height:220px;"><canvas id="hourlyChart"></canvas></div>
+            <div class="pnl-t"><i class="fas fa-percentage"></i> {% trans "مؤشرات التحويل" %}</div>
+            <div class="pnl-h">{% trans "هذه الأرقام تخبرك بكفاءة موقعك في تحويل الزوار إلى زبائن." %}</div>
+            <div class="d-flex flex-column gap-2 mt-2">
+                <div style="padding:14px;background:linear-gradient(135deg,#e8f5e9,#fff);border-radius:10px;border:1px solid #c8e6c9;">
+                    <div style="font-size:.75rem;color:#2e7d32;font-weight:600;">{% trans "معدل التحويل" %}</div>
+                    <div style="font-size:1.8rem;font-weight:800;color:#1b5e20;">{{ conversion_rate }}%</div>
+                    <div style="font-size:.7rem;color:#388e3c;line-height:1.5;">{% trans "نسبة الزوار الذين أصبحوا زبائن. المتوسط في التجارة الإلكترونية: 1-3%" %}</div>
+                </div>
+                <div style="padding:14px;background:linear-gradient(135deg,#fff3e0,#fff);border-radius:10px;border:1px solid #ffe0b2;">
+                    <div style="font-size:.75rem;color:#e65100;font-weight:600;">{% trans "معدل ترك العربة" %}</div>
+                    <div style="font-size:1.8rem;font-weight:800;color:#bf360c;">{{ cart_abandonment }}%</div>
+                    <div style="font-size:.7rem;color:#e65100;line-height:1.5;">{% trans "نسبة العربات غير المكتملة. الأقل أفضل. >70% يعني مشاكل في صفحة الدفع" %}</div>
+                </div>
+                <div style="padding:14px;background:linear-gradient(135deg,#e3f2fd,#fff);border-radius:10px;border:1px solid #bbdefb;">
+                    <div style="font-size:.75rem;color:#1565c0;font-weight:600;">{% trans "متوسط مدة الزيارة" %}</div>
+                    <div style="font-size:1.8rem;font-weight:800;color:#0d47a1;">{{ avg_session_minutes }} <small style="font-size:.85rem;font-weight:500;">{% trans "دقيقة" %}</small></div>
+                    <div style="font-size:.7rem;color:#1565c0;line-height:1.5;">{% trans "أعلى من 2 دقيقة يدل على محتوى مفيد للزوار" %}</div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- ═══════════════ 3. AUDIENCE ═══════════════ -->
-<div class="section-title"><i class="fas fa-users"></i> {% trans "الجمهور" %}</div>
+<!-- Visitor Interests -->
+<div class="row g-3 mt-1">
+    <div class="col-lg-6">
+        <div class="pnl mb-0 h-100">
+            <div class="pnl-t"><i class="fas fa-box"></i> {% trans "المنتجات الأكثر اهتماماً" %}</div>
+            <div class="pnl-h">{% trans "أكثر صفحات المنتجات مشاهدة — هؤلاء الزوار قريبون من اتخاذ قرار الشراء. تأكد أن هذه المنتجات متوفرة ومسعّرة بشكل تنافسي." %}</div>
+            {% if product_views %}
+                {% for p in product_views %}
+                <div class="tp-row">
+                    <div class="tp-rank rank-{{ forloop.counter }}">{{ forloop.counter }}</div>
+                    <div class="tp-body">
+                        <a href="{{ p.path }}" target="_blank" rel="noopener" class="tp-path" title="{{ p.path }}">
+                            <i class="fas fa-external-link-alt tp-icon"></i>
+                            <span>{{ p.path }}</span>
+                        </a>
+                        <div class="tp-meta">
+                            <span class="m"><i class="fas fa-eye"></i> <b>{{ p.views|intcomma }}</b></span>
+                            <span class="m"><i class="fas fa-user"></i> <b>{{ p.visitors|intcomma }}</b> {% trans "زائر" %}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-box-open"></i>
+                    <div class="es-t">{% trans "لا توجد بيانات منتجات بعد" %}</div>
+                    <div class="es-d">{% trans "ستظهر صفحات المنتجات الأكثر زيارة هنا" %}</div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="pnl mb-0 h-100">
+            <div class="pnl-t"><i class="fas fa-tags"></i> {% trans "الفئات الأكثر اهتماماً" %}</div>
+            <div class="pnl-h">{% trans "الفئات التي يفضلها زوارك — مفيدة لاختيار المنتجات للترويج، وللعروض الموسمية، وللإعلانات المستهدفة." %}</div>
+            {% if category_views %}
+                {% for p in category_views %}
+                <div class="tp-row">
+                    <div class="tp-rank rank-{{ forloop.counter }}">{{ forloop.counter }}</div>
+                    <div class="tp-body">
+                        <a href="{{ p.path }}" target="_blank" rel="noopener" class="tp-path" title="{{ p.path }}">
+                            <i class="fas fa-external-link-alt tp-icon"></i>
+                            <span>{{ p.path }}</span>
+                        </a>
+                        <div class="tp-meta">
+                            <span class="m"><i class="fas fa-eye"></i> <b>{{ p.views|intcomma }}</b></span>
+                            <span class="m"><i class="fas fa-user"></i> <b>{{ p.visitors|intcomma }}</b> {% trans "زائر" %}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-tags"></i>
+                    <div class="es-t">{% trans "لا توجد بيانات فئات بعد" %}</div>
+                    <div class="es-d">{% trans "ستظهر صفحات الفئات الأكثر زيارة هنا" %}</div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════ 4. VISITOR BEHAVIOR ═══════════════ -->
+<div class="section-title">
+    <i class="fas fa-route"></i> {% trans "سلوك الزوار" %}
+    <small>{% trans "ما الصفحات التي يفتحونها؟ متى يأتون؟ ومن أين يغادرون؟" %}</small>
+</div>
 <div class="row g-3">
-    <!-- Devices -->
+    <div class="col-lg-7">
+        <div class="pnl mb-0 h-100">
+            <div class="pnl-t"><i class="fas fa-fire"></i> {% trans "الصفحات الأكثر زيارة" %}</div>
+            <div class="pnl-h">{% trans "هذه الصفحات تحقق أعلى تفاعل. ركّز جهود التحسين والمحتوى عليها — انقر على أي صفحة لفتحها في تبويب جديد." %}</div>
+            {% if top_pages %}
+                {% for p in top_pages %}
+                <div class="tp-row">
+                    <div class="tp-rank rank-{{ forloop.counter }}">{{ forloop.counter }}</div>
+                    <div class="tp-body">
+                        <a href="{{ p.path }}" target="_blank" rel="noopener" class="tp-path" title="{{ p.path }}">
+                            <i class="fas fa-external-link-alt tp-icon"></i>
+                            <span>{{ p.path }}</span>
+                        </a>
+                        <div class="tp-meta">
+                            <span class="m"><i class="fas fa-eye"></i> {% trans "مشاهدات" %}: <b>{{ p.views|intcomma }}</b></span>
+                            <span class="m"><i class="fas fa-user"></i> {% trans "زوار" %}: <b>{{ p.visitors|intcomma }}</b></span>
+                        </div>
+                        <div class="tp-bar"><i style="width:{% widthratio p.views top_pages.0.views 100 %}%;"></i></div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-chart-bar"></i>
+                    <div class="es-t">{% trans "لا توجد بيانات بعد" %}</div>
+                    <div class="es-d">{% trans "ستظهر هنا الصفحات الأكثر زيارة بمجرد تسجيل عدد كاف من الزيارات." %}</div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="pnl mb-0 h-100">
+            <div class="pnl-t"><i class="fas fa-clock"></i> {% trans "أوقات الذروة (24 ساعة)" %}</div>
+            <div class="pnl-h">{% trans "أفضل ساعات اليوم لنشر المحتوى أو إطلاق العروض. الأرقام أعلى كل عمود تظهر عدد الزيارات في تلك الساعة." %}</div>
+            <div style="position:relative;height:240px;"><canvas id="hourlyChart"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mt-1">
+    <!-- Landing pages -->
+    <div class="col-lg-6">
+        <div class="pnl mb-0 h-100">
+            <div class="pnl-t"><i class="fas fa-sign-in-alt"></i> {% trans "صفحات الدخول" %}</div>
+            <div class="pnl-h">{% trans "أول صفحة يراها الزائر عند وصوله — هذه هي «الانطباع الأول». تأكد أنها سريعة، واضحة، وتقدم قيمة فورية." %}</div>
+            {% if landing_pages %}
+                {% for p in landing_pages %}
+                <div class="tp-row">
+                    <div class="tp-rank">{{ forloop.counter }}</div>
+                    <div class="tp-body">
+                        <a href="{{ p.path }}" target="_blank" rel="noopener" class="tp-path" title="{{ p.path }}">
+                            <i class="fas fa-external-link-alt tp-icon"></i>
+                            <span>{{ p.path }}</span>
+                        </a>
+                        <div class="tp-meta">
+                            <span class="m"><i class="fas fa-sign-in-alt"></i> {% trans "دخول" %}: <b>{{ p.count|intcomma }}</b></span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <div class="es-t">{% trans "لا توجد بيانات بعد" %}</div>
+                    <div class="es-d">{% trans "ستظهر صفحات الدخول هنا" %}</div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    <!-- Exit pages -->
+    <div class="col-lg-6">
+        <div class="pnl mb-0 h-100">
+            <div class="pnl-t"><i class="fas fa-sign-out-alt"></i> {% trans "صفحات الخروج" %}</div>
+            <div class="pnl-h">{% trans "آخر صفحة قبل أن يغادر الزائر. ارتفاع الخروج من صفحات مهمة (مثل الدفع) يعني وجود مشكلة تحتاج إصلاح فوري." %}</div>
+            {% if exit_pages %}
+                {% for p in exit_pages %}
+                <div class="tp-row">
+                    <div class="tp-rank">{{ forloop.counter }}</div>
+                    <div class="tp-body">
+                        <a href="{{ p.path }}" target="_blank" rel="noopener" class="tp-path" title="{{ p.path }}">
+                            <i class="fas fa-external-link-alt tp-icon"></i>
+                            <span>{{ p.path }}</span>
+                        </a>
+                        <div class="tp-meta">
+                            <span class="m"><i class="fas fa-sign-out-alt"></i> {% trans "مغادرات" %}: <b>{{ p.count|intcomma }}</b></span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <div class="es-t">{% trans "لا توجد بيانات بعد" %}</div>
+                    <div class="es-d">{% trans "ستظهر صفحات الخروج هنا" %}</div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════ 5. TECHNOLOGY ═══════════════ -->
+<div class="section-title">
+    <i class="fas fa-laptop-code"></i> {% trans "التقنية" %}
+    <small>{% trans "ما الأجهزة والمتصفحات التي يستخدمها زوارك" %}</small>
+</div>
+<div class="row g-3">
     <div class="col-md-4">
         <div class="pnl mb-0 h-100">
             <div class="pnl-t"><i class="fas fa-mobile-alt"></i> {% trans "الأجهزة" %}</div>
-            <div class="pnl-h">{% trans "تأكد من أن الموقع يعمل بشكل ممتاز على الأجهزة الأكثر استخداماً" %}</div>
+            <div class="pnl-h">{% trans "تأكد أن موقعك يعمل بشكل ممتاز على الجهاز الذي يستخدمه أغلب زوارك. تجربة سيئة على الجوال = خسارة مبيعات." %}</div>
             <div style="position:relative;height:180px;"><canvas id="deviceChart"></canvas></div>
             <div class="mt-3">
             {% for d in device_stats %}
@@ -286,11 +744,10 @@
             </div>
         </div>
     </div>
-    <!-- Browsers -->
     <div class="col-md-4">
         <div class="pnl mb-0 h-100">
             <div class="pnl-t"><i class="fas fa-globe"></i> {% trans "المتصفحات" %}</div>
-            <div class="pnl-h">{% trans "اختبر الموقع على المتصفحات الشائعة لضمان تجربة مستخدم متسقة" %}</div>
+            <div class="pnl-h">{% trans "اختبر موقعك على المتصفحات الأكثر استخداماً لضمان تجربة متسقة لكل الزبائن." %}</div>
             <div style="position:relative;height:180px;"><canvas id="browserChart"></canvas></div>
             <div class="mt-3">
             {% for b in browser_stats %}
@@ -303,11 +760,10 @@
             </div>
         </div>
     </div>
-    <!-- OS -->
     <div class="col-md-4">
         <div class="pnl mb-0 h-100">
             <div class="pnl-t"><i class="fas fa-laptop"></i> {% trans "أنظمة التشغيل" %}</div>
-            <div class="pnl-h">{% trans "فهم التكنولوجيا التي يستخدمها جمهورك" %}</div>
+            <div class="pnl-h">{% trans "نظام تشغيل الزائر يخبرك بنوعية جهازه وعاداته (مستخدم iOS عادة أعلى قدرة شرائية)." %}</div>
             <div style="position:relative;height:180px;"><canvas id="osChart"></canvas></div>
             <div class="mt-3">
             {% for o in os_stats %}
@@ -322,106 +778,116 @@
     </div>
 </div>
 
-<div class="row g-3 mt-1">
-    <!-- New vs Returning -->
-    <div class="col-md-4">
-        <div class="pnl mb-0 h-100">
-            <div class="pnl-t"><i class="fas fa-user-friends"></i> {% trans "جدد مقابل عائدين" %}</div>
-            <div class="pnl-h">{% trans "نسبة عائدين عالية تدل على ولاء الزوار" %}</div>
-            <div style="position:relative;height:180px;"><canvas id="nrChart"></canvas></div>
-            <div class="d-flex justify-content-around mt-3">
-                <div class="text-center"><div style="font-size:1.2rem;font-weight:700;color:#0077c8;">{{ new_visitors|intcomma }}</div><div style="font-size:.78rem;color:#888;">{% trans "جدد" %}</div></div>
-                <div class="text-center"><div style="font-size:1.2rem;font-weight:700;color:#28a745;">{{ returning_visitors|intcomma }}</div><div style="font-size:.78rem;color:#888;">{% trans "عائدين" %}</div></div>
-            </div>
-        </div>
-    </div>
-    <!-- Exit Pages -->
-    <div class="col-md-8">
-        <div class="pnl mb-0 h-100">
-            <div class="pnl-t"><i class="fas fa-sign-out-alt"></i> {% trans "صفحات الخروج" %}</div>
-            <div class="pnl-h">{% trans "آخر صفحة يراها الزائر قبل مغادرة الموقع" %}</div>
-            <div class="table-responsive"><table class="at">
-                <thead><tr><th>#</th><th>{% trans "الصفحة" %}</th><th>{% trans "المغادرات" %}</th></tr></thead>
-                <tbody>
-                {% for p in exit_pages %}
-                <tr><td>{{ forloop.counter }}</td><td><span class="pp" title="{{ p.path }}">{{ p.path }}</span></td><td><strong>{{ p.count|intcomma }}</strong></td></tr>
-                {% empty %}<tr><td colspan="3" class="text-center text-muted py-4">{% trans "لا توجد بيانات بعد" %}</td></tr>{% endfor %}
-                </tbody>
-            </table></div>
-        </div>
-    </div>
+<!-- ═══════════════ 6. GEOGRAPHY ═══════════════ -->
+<div class="section-title">
+    <i class="fas fa-globe-americas"></i> {% trans "الجغرافيا — من أين يأتي زوارك؟" %}
+    <small>{% trans "حدد أسواقك القوية والواعدة" %}</small>
 </div>
-
-<!-- ═══════════════ 4. GEOGRAPHY ═══════════════ -->
-<div class="section-title"><i class="fas fa-globe-americas"></i> {% trans "الجغرافيا" %}</div>
 <div class="row g-3">
     <div class="col-lg-6">
         <div class="pnl mb-0 h-100">
-            <div class="pnl-t"><i class="fas fa-flag"></i> {% trans "الدول" %}</div>
-            <div class="pnl-h">{% trans "الدول التي يأتي منها الزوار" %}</div>
-            <div class="table-responsive"><table class="at">
-                <thead><tr><th>{% trans "الدولة" %}</th><th>{% trans "المشاهدات" %}</th><th>{% trans "الزوار" %}</th></tr></thead>
-                <tbody>
+            <div class="pnl-t"><i class="fas fa-flag"></i> {% trans "أعلى الدول" %}</div>
+            <div class="pnl-h">{% trans "يكشف لك الأسواق المهمة — استخدمها لتوجيه حملات إعلانية محلية، أو لإضافة شحن لدول جديدة." %}</div>
+            {% if country_stats %}
                 {% for c in country_stats %}
-                <tr><td>{{ c.country }}</td><td><strong>{{ c.count|intcomma }}</strong></td><td>{{ c.visitors|intcomma }}</td></tr>
-                {% empty %}<tr><td colspan="3" class="text-center text-muted py-4">{% trans "لا توجد بيانات جغرافية بعد" %}</td></tr>{% endfor %}
-                </tbody>
-            </table></div>
+                <div class="geo-row">
+                    <div class="geo-flag"><i class="fas fa-flag text-primary"></i></div>
+                    <div class="geo-name">{{ c.country }} <small>· {{ c.visitors|intcomma }} {% trans "زائر" %}</small></div>
+                    <div class="geo-bar"><i style="width:{% widthratio c.count country_stats.0.count 100 %}%;background:var(--an-primary);"></i></div>
+                    <div class="geo-count">{{ c.count|intcomma }}</div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-globe"></i>
+                    <div class="es-t">{% trans "جاري تجميع بيانات الدول..." %}</div>
+                    <div class="es-d">{% trans "يتم اكتشاف الدولة تلقائياً من عنوان IP عبر قاعدة GeoLite2. البيانات الحالية ستظهر مع الزوار الجدد." %}</div>
+                </div>
+            {% endif %}
         </div>
     </div>
     <div class="col-lg-6">
         <div class="pnl mb-0 h-100">
-            <div class="pnl-t"><i class="fas fa-city"></i> {% trans "المدن" %}</div>
-            <div class="pnl-h">{% trans "المدن الأكثر زيارة لموقعك" %}</div>
-            {% for c in city_stats %}
-            <div class="d-flex align-items-center justify-content-between mb-2 p-2 rounded" style="background:#f8f9fa;">
-                <span style="font-size:.83rem;"><i class="fas fa-map-pin text-primary me-1" style="font-size:.72rem;"></i> {{ c.city }}{% if c.country %} <small class="text-muted">({{ c.country }})</small>{% endif %}</span>
-                <span style="font-size:.78rem;font-weight:600;">{{ c.count|intcomma }}</span>
+            <div class="pnl-t"><i class="fas fa-city"></i> {% trans "أعلى المدن" %}</div>
+            <div class="pnl-h">{% trans "المدن الأكثر إقبالاً — مفيد لاستهداف الإعلانات الجغرافية، وللتخطيط للتوصيل والفروع." %}</div>
+            {% if city_stats %}
+                {% for c in city_stats %}
+                <div class="geo-row">
+                    <div class="geo-flag"><i class="fas fa-map-marker-alt text-success"></i></div>
+                    <div class="geo-name">{{ c.city }}{% if c.country %} <small>· {{ c.country }}</small>{% endif %}</div>
+                    <div class="geo-bar"><i style="width:{% widthratio c.count city_stats.0.count 100 %}%;background:var(--an-success);"></i></div>
+                    <div class="geo-count">{{ c.count|intcomma }}</div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <div class="es-t">{% trans "جاري تجميع بيانات المدن..." %}</div>
+                    <div class="es-d">{% trans "يتم اكتشاف المدينة تلقائياً عند زيارة الموقع. ستبدأ البيانات بالظهور قريباً." %}</div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════ 7. ACQUISITION ═══════════════ -->
+<div class="section-title">
+    <i class="fas fa-bullhorn"></i> {% trans "مصادر الزيارات" %}
+    <small>{% trans "من أين يأتي زبائنك؟ ما القنوات الأكثر فاعلية؟" %}</small>
+</div>
+<div class="pnl mb-0">
+    <div class="pnl-t"><i class="fas fa-external-link-alt"></i> {% trans "أعلى مصادر الإحالة" %}</div>
+    <div class="pnl-h">{% trans "هذه المواقع ترسل لك زواراً مجاناً. <b>إذا كان جوجل في المقدمة</b> = SEO جيد. <b>إذا كانت السوشيال ميديا</b> = تسويق فعّال. ركز ميزانياتك على أكثر القنوات إنتاجاً." %}</div>
+    {% if top_referrers %}
+    <div class="row g-2">
+        {% for domain, count in top_referrers %}
+        <div class="col-md-6 col-lg-4">
+            <div class="geo-row" style="background:#fafbfc;">
+                <div class="geo-flag" style="font-size:1.3rem;">
+                    {% if 'google' in domain %}<i class="fab fa-google text-danger"></i>
+                    {% elif 'facebook' in domain %}<i class="fab fa-facebook text-primary"></i>
+                    {% elif 'instagram' in domain %}<i class="fab fa-instagram text-warning"></i>
+                    {% elif 'twitter' in domain or 'x.com' in domain %}<i class="fab fa-twitter text-info"></i>
+                    {% elif 'linkedin' in domain %}<i class="fab fa-linkedin text-primary"></i>
+                    {% elif 'youtube' in domain %}<i class="fab fa-youtube text-danger"></i>
+                    {% elif 'tiktok' in domain %}<i class="fab fa-tiktok"></i>
+                    {% elif 'whatsapp' in domain %}<i class="fab fa-whatsapp text-success"></i>
+                    {% elif 'bing' in domain %}<i class="fas fa-search text-info"></i>
+                    {% else %}<i class="fas fa-link text-secondary"></i>{% endif %}
+                </div>
+                <div class="geo-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:ltr;text-align:left;">{{ domain }}</div>
+                <div class="geo-count">{{ count|intcomma }}</div>
             </div>
-            {% empty %}<p class="text-muted text-center" style="font-size:.83rem;">{% trans "لا توجد بيانات بعد" %}</p>{% endfor %}
         </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-share-alt"></i>
+        <div class="es-t">{% trans "معظم الزوار يصلون مباشرة" %}</div>
+        <div class="es-d">{% trans "لم يتم تسجيل مصادر إحالة كافية. شارك روابط موقعك على وسائل التواصل ومحركات البحث لزيادة الإحالات وتوسيع جمهورك." %}</div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- ═══════════════ 8. SEARCH BEHAVIOR ═══════════════ -->
+<div class="section-title">
+    <i class="fas fa-search"></i> {% trans "سلوك البحث داخل الموقع" %}
+    <small>{% trans "ماذا يبحث عنه زبائنك؟ ما الذي لا يجدونه؟" %}</small>
+</div>
+
+<div class="guide-box">
+    <i class="fas fa-info-circle"></i>
+    <div>
+        {% trans "<b>الكلمات الأكثر بحثاً</b> تخبرك بما يريده زبائنك. <b>عمليات البحث بدون نتائج</b> فرص ضائعة — كل بحث فاشل قد يعني زبون فقدته! أضف هذه المنتجات أو استخدم مرادفات في صفحات منتجاتك." %}
     </div>
 </div>
 
-<!-- ═══════════════ 5. ACQUISITION ═══════════════ -->
-<div class="section-title"><i class="fas fa-bullhorn"></i> {% trans "مصادر الزيارات" %}</div>
-<div class="row g-3">
-    <div class="col-lg-12">
-        <div class="pnl mb-0">
-            <div class="pnl-t"><i class="fas fa-external-link-alt"></i> {% trans "مصادر الإحالة" %}</div>
-            <div class="pnl-h">{% trans "المواقع التي أتى منها الزوار إلى موقعك" %}</div>
-            <div class="table-responsive"><table class="at">
-                <thead><tr><th>#</th><th>{% trans "المصدر" %}</th><th>{% trans "الزيارات" %}</th></tr></thead>
-                <tbody>
-                {% for domain, count in top_referrers %}
-                <tr>
-                    <td>{{ forloop.counter }}</td>
-                    <td>
-                        {% if 'google' in domain %}<i class="fab fa-google text-danger me-1"></i>
-                        {% elif 'facebook' in domain %}<i class="fab fa-facebook text-primary me-1"></i>
-                        {% elif 'instagram' in domain %}<i class="fab fa-instagram text-warning me-1"></i>
-                        {% elif 'twitter' in domain or 'x.com' in domain %}<i class="fab fa-twitter text-info me-1"></i>
-                        {% elif 'linkedin' in domain %}<i class="fab fa-linkedin text-primary me-1"></i>
-                        {% elif 'youtube' in domain %}<i class="fab fa-youtube text-danger me-1"></i>
-                        {% else %}<i class="fas fa-link text-secondary me-1"></i>{% endif %}
-                        {{ domain }}
-                    </td>
-                    <td><strong>{{ count|intcomma }}</strong></td>
-                </tr>
-                {% empty %}<tr><td colspan="3" class="text-center text-muted py-4">{% trans "لا توجد بيانات إحالة بعد" %}</td></tr>{% endfor %}
-                </tbody>
-            </table></div>
-        </div>
-    </div>
-</div>
-
-<!-- ═══════════════ 6. SEARCH BEHAVIOR ═══════════════ -->
-<div class="section-title"><i class="fas fa-search"></i> {% trans "سلوك البحث" %}</div>
 <div class="row g-3">
     <div class="col-lg-6">
         <div class="pnl mb-0 h-100">
             <div class="pnl-t"><i class="fas fa-search"></i> {% trans "أكثر الكلمات بحثاً" %}</div>
-            <div class="pnl-h">{% trans "ماذا يبحث عنه زوارك داخل الموقع" %}</div>
+            <div class="pnl-h">{% trans "ما يبحث عنه زوارك — استخدمها كأفكار للمحتوى والإعلانات." %}</div>
             <div class="table-responsive"><table class="at">
                 <thead><tr><th>#</th><th>{% trans "كلمة البحث" %}</th><th>{% trans "المرات" %}</th><th>{% trans "النتائج" %}</th></tr></thead>
                 <tbody>
@@ -439,8 +905,8 @@
     </div>
     <div class="col-lg-6">
         <div class="pnl mb-0 h-100">
-            <div class="pnl-t"><i class="fas fa-exclamation-triangle text-warning"></i> {% trans "بحث بدون نتائج" %}</div>
-            <div class="pnl-h">{% trans "كلمات بحث عنها الزوار ولم يجدوا نتائج" %}</div>
+            <div class="pnl-t"><i class="fas fa-exclamation-triangle text-warning"></i> {% trans "بحث بدون نتائج (فرص ضائعة)" %}</div>
+            <div class="pnl-h">{% trans "كل بحث فاشل = زبون محتمل لم يجد ما يريد. أضف هذه المنتجات أو ربطها بكلمات مرادفة." %}</div>
             <div class="table-responsive"><table class="at">
                 <thead><tr><th>#</th><th>{% trans "كلمة البحث" %}</th><th>{% trans "المرات" %}</th><th>{% trans "إجراء" %}</th></tr></thead>
                 <tbody>
@@ -449,43 +915,51 @@
                     <td>{{ forloop.counter }}</td>
                     <td><span class="tg tg-z">{{ s.query }}</span></td>
                     <td><strong>{{ s.count|intcomma }}</strong></td>
-                    <td><a href="{% url 'dashboard:dashboard_products' %}?q={{ s.query }}" class="btn btn-sm btn-outline-primary" style="font-size:.72rem;padding:2px 10px;border-radius:8px;">{% trans "بحث" %}</a></td>
+                    <td><a href="{% url 'dashboard:dashboard_products' %}?q={{ s.query }}" class="btn btn-sm btn-outline-primary" style="font-size:.72rem;padding:2px 10px;border-radius:8px;">{% trans "ابحث" %}</a></td>
                 </tr>
-                {% empty %}<tr><td colspan="4" class="text-center text-muted py-4">{% trans "لا توجد عمليات بحث فارغة" %}</td></tr>{% endfor %}
+                {% empty %}<tr><td colspan="4" class="text-center text-muted py-4">{% trans "ممتاز! لا توجد عمليات بحث فاشلة" %}</td></tr>{% endfor %}
                 </tbody>
             </table></div>
         </div>
     </div>
 </div>
 
-<!-- ═══════════════ 7. TECHNICAL / BOTS ═══════════════ -->
-<div class="section-title"><i class="fas fa-robot"></i> {% trans "الروبوتات ومحركات البحث" %}</div>
-<div class="row g-3 mb-4">
-    <div class="col-lg-12">
-        <div class="pnl mb-0">
-            <div class="pnl-t"><i class="fas fa-spider"></i> {% trans "زيارات الروبوتات" %}</div>
-            <div class="pnl-h">{% trans "الروبوتات التي تزور موقعك مثل محركات البحث" %}</div>
-            <div class="d-flex align-items-center gap-3 mb-3">
-                <div class="ic" style="background:rgba(220,53,69,.1);color:#dc3545;width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;">
-                    <i class="fas fa-robot" style="font-size:1.3rem;"></i>
-                </div>
-                <div>
-                    <div style="font-size:1.5rem;font-weight:700;">{{ bot_hits|intcomma }}</div>
-                    <div style="font-size:.78rem;color:#888;">{% trans "إجمالي زيارات الروبوتات" %}</div>
-                </div>
-            </div>
-            <div class="row g-2">
-            {% for b in bot_browsers %}
-            <div class="col-md-4">
-                <div class="d-flex align-items-center justify-content-between p-2 rounded" style="background:#f8f9fa;">
-                    <span style="font-size:.78rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ b.browser|default:"Unknown" }}</span>
-                    <span style="font-size:.78rem;font-weight:600;">{{ b.count|intcomma }}</span>
-                </div>
-            </div>
-            {% empty %}<div class="col-12"><p class="text-muted text-center mb-0" style="font-size:.83rem;">{% trans "لا توجد زيارات روبوت بعد" %}</p></div>{% endfor %}
-            </div>
+<!-- ═══════════════ 9. SEO / BOTS ═══════════════ -->
+<div class="section-title">
+    <i class="fas fa-robot"></i> {% trans "زحف محركات البحث" %}
+    <small>{% trans "كيف ترى محركات البحث موقعك؟" %}</small>
+</div>
+<div class="pnl mb-4">
+    <div class="pnl-t"><i class="fas fa-spider"></i> {% trans "زيارات الروبوتات" %}</div>
+    <div class="pnl-h">{% trans "<b>الروبوتات</b> برامج آلية لمحركات البحث (جوجل، بنج) وأدوات التحليل (سيمراش، أهرفز). زيارات Googlebot المتكررة دليل صحي = موقعك يتم فهرسته بشكل جيد. غياب الروبوتات = مشكلة في الـ SEO." %}</div>
+    <div class="d-flex align-items-center gap-3 mb-3">
+        <div style="background:rgba(220,53,69,.1);color:var(--an-danger);width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;">
+            <i class="fas fa-robot" style="font-size:1.3rem;"></i>
+        </div>
+        <div>
+            <div style="font-size:1.5rem;font-weight:700;">{{ bot_hits|intcomma }}</div>
+            <div style="font-size:.78rem;color:#888;">{% trans "إجمالي زيارات الروبوتات في الفترة" %}</div>
         </div>
     </div>
+    {% if bot_browsers %}
+    <div class="row g-2">
+        {% for b in bot_browsers %}
+        <div class="col-md-4">
+            <div class="bot-card">
+                <div class="bc-ic"><i class="fas fa-robot"></i></div>
+                <div class="bc-name" title="{{ b.browser }}">{{ b.browser|default:_("غير معروف") }}</div>
+                <div class="bc-count">{{ b.count|intcomma }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-robot"></i>
+        <div class="es-t">{% trans "لا توجد زيارات روبوتات" %}</div>
+        <div class="es-d">{% trans "هذا قد يشير لمشكلة: تأكد من ملف robots.txt وخريطة الموقع، وقدّم الموقع لجوجل سيرش كونسول." %}</div>
+    </div>
+    {% endif %}
 </div>
 
 </div>
@@ -546,18 +1020,60 @@
         });
     }
 
-    /* ── Hourly ── */
+    /* ── Hourly with value labels on top of bars ── */
     var hc = ctx('hourlyChart');
     if(hc){
         var hl=[]; for(var i=0;i<24;i++) hl.push((i<10?'0':'')+i+':00');
+        var hourlyData = {{ hourly_distribution|safe }};
+        var maxVal = Math.max.apply(null, hourlyData);
+
+        var valueLabelPlugin = {
+            id:'valueLabels',
+            afterDatasetsDraw: function(chart){
+                var ctx2 = chart.ctx;
+                ctx2.save();
+                ctx2.font = '600 9px sans-serif';
+                ctx2.textAlign = 'center';
+                ctx2.textBaseline = 'bottom';
+                var ds = chart.data.datasets[0];
+                var meta = chart.getDatasetMeta(0);
+                meta.data.forEach(function(bar, i){
+                    var v = ds.data[i];
+                    if(v > 0 && v >= maxVal * 0.15){
+                        ctx2.fillStyle = v === maxVal ? '#dc3545' : '#666';
+                        ctx2.fillText(v, bar.x, bar.y - 2);
+                    }
+                });
+                ctx2.restore();
+            }
+        };
+
         new Chart(hc, {
             type:'bar',
-            data:{ labels:hl, datasets:[{ label:'{% trans "الزيارات" %}', data:{{ hourly_distribution|safe }}, backgroundColor:C.blL, borderColor:C.bl, borderWidth:1, borderRadius:4 }] },
+            data:{ labels:hl, datasets:[{
+                label:'{% trans "الزيارات" %}',
+                data:hourlyData,
+                backgroundColor: hourlyData.map(function(v){ return v === maxVal && v > 0 ? 'rgba(220,53,69,.7)' : C.blL; }),
+                borderColor: hourlyData.map(function(v){ return v === maxVal && v > 0 ? C.rd : C.bl; }),
+                borderWidth:1,
+                borderRadius:4
+            }] },
             options:{
                 responsive:true, maintainAspectRatio:false,
-                plugins:{ legend:{display:false} },
-                scales:{ y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.04)'},ticks:{precision:0}}, x:{grid:{display:false},ticks:{font:{size:9},maxRotation:0}} }
-            }
+                layout:{ padding:{ top:18 } },
+                plugins:{
+                    legend:{display:false},
+                    tooltip:{
+                        backgroundColor:'rgba(0,0,0,.8)', padding:10, cornerRadius:6,
+                        callbacks:{ title: function(items){ return items[0].label; }, label: function(item){ return item.raw + ' {% trans "زيارة" %}'; } }
+                    }
+                },
+                scales:{
+                    y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.04)'},ticks:{precision:0,font:{size:9}}},
+                    x:{grid:{display:false},ticks:{font:{size:9},maxRotation:0}}
+                }
+            },
+            plugins:[valueLabelPlugin]
         });
     }
 
@@ -566,6 +1082,7 @@
     doughnut('browserChart', {{ browser_labels|safe }}, {{ browser_values|safe }}, [C.bl,C.gn,C.or,C.pp,C.tl,C.rd]);
     doughnut('osChart', {{ os_labels|safe }}, {{ os_values|safe }}, [C.tl,C.bl,C.or,C.pp,C.gn,C.rd]);
     doughnut('nrChart', ['{% trans "جدد" %}','{% trans "عائدين" %}'], [{{ new_visitors }},{{ returning_visitors }}], [C.bl,C.gn]);
+    doughnut('loginChart', ['{% trans "مسجّل" %}','{% trans "ضيف" %}'], [{{ logged_in_visitors }},{{ guest_visitors }}], [C.gn,C.gy]);
 
     /* ── Live refresh ── */
     function refreshLive(){
