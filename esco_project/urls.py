@@ -15,7 +15,7 @@ from django.contrib.sitemaps.views import sitemap, index as sitemap_index
 from django.conf.urls.i18n import i18n_patterns
 
 from core.sitemaps import StaticViewSitemap
-from core.agent_views import MCPServerCardView, A2AAgentCardView, AgentSkillsView, APICatalogView
+from core.agent_views import MCPServerCardView, A2AAgentCardView, AgentSkillsView, APICatalogView, TrafficAdviceView
 from core.llms_view import LlmsTxtView
 from products.sitemaps import ProductSitemap, CategorySitemap, BrandSitemap
 from blog.sitemaps import BlogPostSitemap, BlogCategorySitemap
@@ -190,6 +190,7 @@ urlpatterns += [
         path('agent-card.json', A2AAgentCardView.as_view(), name='a2a-agent-card'),
         path('agent-skills/index.json', AgentSkillsView.as_view(), name='agent-skills'),
         path('api-catalog', APICatalogView.as_view(), name='api-catalog'),
+        path('traffic-advice', TrafficAdviceView.as_view(), name='traffic-advice'),
     ])),
 ]
 

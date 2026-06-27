@@ -56,7 +56,7 @@ BOT_PATTERNS = re.compile(
 )
 
 SKIP_PATHS = re.compile(
-    r'^/(static|media|admin|dashboard|__debug__|favicon\.ico|robots\.txt|sitemap\.xml|api/)'
+    r'^/(static|media|admin|dashboard|__debug__|favicon\.ico|robots\.txt|sitemap\.xml|api/|\.well-known/)'
 )
 SKIP_EXTENSIONS = re.compile(r'\.(css|js|png|jpg|jpeg|gif|svg|ico|woff2?|ttf|map|webp)$', re.IGNORECASE)
 

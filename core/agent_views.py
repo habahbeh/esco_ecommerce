@@ -5,6 +5,20 @@ from django.views import View
 from .models import SiteSettings
 
 
+class TrafficAdviceView(View):
+    """Serve /.well-known/traffic-advice for Chrome Private Prefetch Proxy probes.
+
+    Empty array means: no special prefetch policy, use defaults.
+    See https://github.com/buettner/private-prefetch-proxy/blob/main/traffic-advice.md
+    """
+
+    def get(self, request):
+        return HttpResponse(
+            '[]',
+            content_type='application/trafficadvice+json',
+        )
+
+
 class MCPServerCardView(View):
 
     def get(self, request):
