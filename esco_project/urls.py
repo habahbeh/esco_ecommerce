@@ -234,7 +234,9 @@ urlpatterns += [
     # snake_case variant: /en/ceramic_fiber/2684-Braided_ceramic_fiber_18MM.html
     # Mixed-case: /en/Pneumatic_Cylinders/1450-Air_Cylinder_TN.html
     # (\w matches both upper and lower so we catch all variants now)
-    re_path(r'^en/[A-Za-z][A-Za-z0-9_]*/\d+[-_].*$',
+    # IMPORTANT: must NOT match /en/content/<digits>-... — those are CMS pages
+    # handled by their own rules below.
+    re_path(r'^en/(?!content/)[A-Za-z][A-Za-z0-9_]*/\d+[-_].*$',
             RedirectView.as_view(url='/en/products/', permanent=True),
             name='legacy-prestashop-product'),
 
@@ -252,6 +254,27 @@ urlpatterns += [
     re_path(r'^(en/)?module/.*$',
             RedirectView.as_view(url='/en/products/', permanent=True),
             name='legacy-prestashop-module'),
+
+    # PrestaShop CMS pages: /en/content/<digits>-<slug>
+    #   /en/content/4-about-us       → /en/about/
+    #   /en/content/7-privacy-policy → /en/privacy/
+    #   /en/content/8-sitemap1       → /en/sitemap.xml (will 301 again to actual sitemap)
+    re_path(r'^en/content/\d+-about.*$',
+            RedirectView.as_view(url='/en/about/', permanent=True),
+            name='legacy-prestashop-about'),
+    re_path(r'^en/content/\d+-privacy.*$',
+            RedirectView.as_view(url='/en/privacy/', permanent=True),
+            name='legacy-prestashop-privacy'),
+    re_path(r'^en/content/\d+-terms.*$',
+            RedirectView.as_view(url='/en/terms/', permanent=True),
+            name='legacy-prestashop-terms'),
+    re_path(r'^en/content/\d+-contact.*$',
+            RedirectView.as_view(url='/en/contact/', permanent=True),
+            name='legacy-prestashop-contact'),
+    # Catch-all for any other /en/content/<digit>-<rest>
+    re_path(r'^en/content/\d+-.*$',
+            RedirectView.as_view(url='/en/', permanent=True),
+            name='legacy-prestashop-content-other'),
 
     # Arabic legacy product URLs (mojibake'd UTF-8) that survived the
     # strip-ar-prefix redirect. Catches /<arabic-text>/<digits>-<...>.html

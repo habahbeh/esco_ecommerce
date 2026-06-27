@@ -17,5 +17,31 @@ Disallow: /static/admin/
 Disallow: /static/ckeditor/
 Disallow: /media/exports/
 
+# Block product spec-sheet PDFs from indexing — Google flags them as
+# "Duplicate without user-selected canonical" because PDFs can't declare
+# canonicals. The real product pages already link to them as references.
+Disallow: /media/products/attachments/
+Disallow: /*.pdf$
+
+# Block blog tag pages — thin content (just a list of posts), flagged as
+# "Discovered/Crawled - not indexed". The blog/category/ pages serve the
+# same role with richer descriptions.
+Disallow: /blog/tag/
+Disallow: /en/blog/tag/
+
+# Block faceted/filtered product listings that duplicate /products/ content
+# (Google flagged /products/bestsellers/ and /products/featured/ as
+# "Duplicate, Google chose different canonical than user").
+Disallow: /products/bestsellers/
+Disallow: /products/featured/
+Disallow: /products/new/
+Disallow: /products/offers/
+
+# Block any /events/ paths with junk slugs (e.g. /en/events/hg/)
+Disallow: /events/
+
+# Block chatbot static assets that shouldn't be in search results
+Disallow: /static/chatbot/
+
 # Sitemaps
 Sitemap: {% if site_settings.canonical_domain %}{{ site_settings.canonical_domain }}{% else %}{{ request.scheme }}://{{ request.get_host }}{% endif %}/sitemap.xml

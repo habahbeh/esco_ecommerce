@@ -4,6 +4,9 @@
 
 {% block title %}{% if LANGUAGE_CODE == 'en' and tag.name_en %}{{ tag.name_en }}{% else %}{{ tag.name }}{% endif %} - {% trans "المدونة" %} | {{ site_settings.site_name|default:"ESCO" }}{% endblock %}
 
+{# Tag pages are thin (just post lists). Tell Google not to index, but DO follow links to posts. #}
+{% block extra_meta %}<meta name="robots" content="noindex,follow">{% endblock %}
+
 {% block extra_css %}
 <style>
     .tag-hero {
