@@ -198,6 +198,29 @@ urlpatterns += [
     re_path(r'^ar/(?P<rest>.*)$',
             RedirectView.as_view(url='/%(rest)s', permanent=True, query_string=True),
             name='strip-ar-prefix'),
+
+    # Strip doubled '/products/products/' prefix — old broken links that doubled the
+    # path segment. 301 → /products/<rest>/
+    re_path(r'^products/products/(?P<rest>.*)$',
+            RedirectView.as_view(url='/products/%(rest)s', permanent=True, query_string=True),
+            name='strip-doubled-products'),
+
+    # Legacy PrestaShop URLs from the old site, still in Google's index:
+    #   /en/<CATEGORY_NAME>/<digits>-<TITLE_OR_SKU>.html        → product
+    #   /en/<digits>-<CATEGORY_NAME>                            → category listing
+    #   /en/<CATEGORY_NAME>/<digits><moreDigits>                → product (no .html)
+    # We don't have a perfect mapping to new slugs, so redirect them all to the
+    # English catalog homepage. Google passes link equity through 301 and stops
+    # treating these as broken pages.
+    re_path(r'^en/[A-Z][A-Za-z_]*/\d+[-_].*$',
+            RedirectView.as_view(url='/en/products/', permanent=True),
+            name='legacy-prestashop-product'),
+    re_path(r'^en/\d+-[A-Za-z_]+/?$',
+            RedirectView.as_view(url='/en/products/', permanent=True),
+            name='legacy-prestashop-category'),
+    re_path(r'^en/\d+-\d+-[a-z]+/?$',
+            RedirectView.as_view(url='/en/products/', permanent=True),
+            name='legacy-prestashop-pagination'),
 ]
 
 # URLs للتطبيقات الإضافية (يمكن تفعيلها لاحقاً)
