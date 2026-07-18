@@ -1026,6 +1026,7 @@ class Product(TimeStampedModel, SEOModel):
         User,
         on_delete=models.SET_NULL,
         null=True,
+        blank=True,
         related_name='created_products',
         verbose_name=_("أنشئ بواسطة")
     )

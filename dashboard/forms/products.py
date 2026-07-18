@@ -174,12 +174,6 @@ class ProductForm(forms.ModelForm):
         widget=forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'})
     )
 
-    # حقل مخفي للمستخدم الذي أنشأ المنتج
-    created_by = forms.ModelChoiceField(
-        queryset=User.objects.all(),
-        required=False,
-        widget=forms.HiddenInput()
-    )
 
     # إضافة حقول الملف المرفق
     attachment = forms.FileField(
