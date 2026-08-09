@@ -2,13 +2,12 @@ import json
 import logging
 from collections import Counter
 from datetime import timedelta
-from functools import reduce
-from operator import or_
 from urllib.parse import urlparse
 
 from django.db import models
-from django.db.models import Q, Count, Max, Min, Sum, F
-from django.db.models.functions import TruncDate, TruncHour
+from django.db.models import Q, Count, Max, Min, Sum, F, Subquery, OuterRef
+from django.db.models.functions import TruncDate, TruncHour, ExtractWeekDay, ExtractHour as ExtractHourFunc
+from django.core.cache import cache
 from django.views.generic import UpdateView, ListView, CreateView, DeleteView, TemplateView
 from django.urls import reverse_lazy
 from django.contrib import messages
@@ -285,13 +284,21 @@ class SiteAnalyticsView(SuperuserRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         context['page_title'] = _('تحليلات الموقع')
 
-        now = timezone.now()
         period = self.request.GET.get('period', '30')
         try:
             days = int(period)
         except (ValueError, TypeError):
             days = 30
         days = max(1, min(days, 365))
+
+        lang = self.request.LANGUAGE_CODE or 'en'
+        cache_key = f'seo_analytics_{days}_{lang}'
+        cached = cache.get(cache_key)
+        if cached:
+            context.update(cached)
+            return context
+
+        now = timezone.now()
         start_date = now - timedelta(days=days)
 
         human_qs = PageView.objects.filter(is_bot=False, timestamp__gte=start_date).order_by()
@@ -372,21 +379,16 @@ class SiteAnalyticsView(SuperuserRequiredMixin, TemplateView):
             .order_by('-views')[:10]
         )
 
-        # ── 4. Exit pages — two-step: max timestamp per session, then lookup ──
-        last_per_session = list(
-            session_qs.values('session_key')
-            .annotate(last_ts=Max('timestamp'))
-            .values_list('session_key', 'last_ts')
+        # ── 4. Exit pages — use subquery to find last page per session ──
+        last_ts_subquery = (
+            session_qs.filter(session_key=OuterRef('session_key'))
+            .order_by('-timestamp').values('timestamp')[:1]
         )
-        if last_per_session:
-            exit_filter = reduce(or_, [Q(session_key=sk, timestamp=ts) for sk, ts in last_per_session])
-            exit_pages = list(
-                session_qs.filter(exit_filter)
-                .values('path').annotate(count=Count('id'))
-                .order_by('-count')[:10]
-            )
-        else:
-            exit_pages = []
+        exit_pages = list(
+            session_qs.filter(timestamp=Subquery(last_ts_subquery))
+            .values('path').annotate(count=Count('id'))
+            .order_by('-count')[:10]
+        )
 
         # ── 5. Devices / Browsers / OS ──
         device_stats = list(human_qs.values('device_type').annotate(count=Count('id')).order_by('-count'))
@@ -621,41 +623,41 @@ class SiteAnalyticsView(SuperuserRequiredMixin, TemplateView):
         )
 
         # ── 15. Top landing pages (first page per session) ──
-        first_per_session = list(
-            session_qs.values('session_key')
-            .annotate(first_ts=Min('timestamp'))
-            .values_list('session_key', 'first_ts')[:5000]
+        first_ts_subquery = (
+            session_qs.filter(session_key=OuterRef('session_key'))
+            .order_by('timestamp').values('timestamp')[:1]
         )
-        if first_per_session:
-            landing_filter = reduce(or_, [Q(session_key=sk, timestamp=ts) for sk, ts in first_per_session])
-            landing_pages = list(
-                session_qs.filter(landing_filter)
-                .values('path').annotate(count=Count('id'))
-                .order_by('-count')[:8]
-            )
-        else:
-            landing_pages = []
+        landing_pages = list(
+            session_qs.filter(timestamp=Subquery(first_ts_subquery))
+            .values('path').annotate(count=Count('id'))
+            .order_by('-count')[:8]
+        )
 
         # ── 16. Average session duration (first→last view per session) ──
         try:
-            session_spans = (
+            from django.db.models import Avg as AvgFunc, ExpressionWrapper, DurationField
+            session_durations = (
                 session_qs.values('session_key')
                 .annotate(start=Min('timestamp'), end=Max('timestamp'))
+                .annotate(duration=ExpressionWrapper(F('end') - F('start'), output_field=DurationField()))
+                .filter(duration__gt=timedelta(0))
+                .aggregate(avg_dur=AvgFunc('duration'))
             )
-            durations = [
-                (s['end'] - s['start']).total_seconds()
-                for s in session_spans if s['end'] and s['start']
-            ]
-            multi_page = [d for d in durations if d > 0]
-            avg_session_seconds = int(sum(multi_page) / len(multi_page)) if multi_page else 0
+            avg_dur = session_durations['avg_dur']
+            avg_session_seconds = int(avg_dur.total_seconds()) if avg_dur else 0
         except Exception:
             avg_session_seconds = 0
         avg_session_minutes = round(avg_session_seconds / 60, 1)
 
         # ── 17. Day-of-week distribution ──
         dow_counts = [0] * 7
-        for entry in human_qs.values_list('timestamp', flat=True)[:50000]:
-            dow_counts[entry.weekday()] += 1
+        dow_data = (
+            human_qs.annotate(dow=ExtractWeekDay('timestamp'))
+            .values('dow').annotate(count=Count('id'))
+        )
+        for row in dow_data:
+            idx = (row['dow'] - 2) % 7
+            dow_counts[idx] = row['count']
 
         # ── 18. Insight tags for the headline ──
         peak_hour_idx = hourly_distribution.index(max(hourly_distribution)) if any(hourly_distribution) else None
@@ -667,8 +669,13 @@ class SiteAnalyticsView(SuperuserRequiredMixin, TemplateView):
 
         # ── 19. Hour × Day-of-week heatmap (7 rows x 24 cols) ──
         heatmap = [[0] * 24 for _ in range(7)]
-        for ts in human_qs.values_list('timestamp', flat=True)[:80000]:
-            heatmap[ts.weekday()][ts.hour] += 1
+        heatmap_data = (
+            human_qs.annotate(dow=ExtractWeekDay('timestamp'), hr=ExtractHourFunc('timestamp'))
+            .values('dow', 'hr').annotate(count=Count('id'))
+        )
+        for row in heatmap_data:
+            idx = (row['dow'] - 2) % 7
+            heatmap[idx][row['hr']] = row['count']
         heatmap_max = max((max(row) for row in heatmap), default=0)
 
         # ── 20. Revenue trend (daily) + AOV + RPV ──
@@ -725,15 +732,12 @@ class SiteAnalyticsView(SuperuserRequiredMixin, TemplateView):
         repeat_buyers = 0
         try:
             from orders.models import Order
-            buyer_orders = (
+            buyer_counts = (
                 Order.objects.filter(user__isnull=False, payment_status='paid')
                 .values('user').annotate(c=Count('id'))
             )
-            for b in buyer_orders:
-                if b['c'] == 1:
-                    first_time_buyers += 1
-                else:
-                    repeat_buyers += 1
+            first_time_buyers = buyer_counts.filter(c=1).count()
+            repeat_buyers = buyer_counts.filter(c__gt=1).count()
         except Exception:
             pass
 
@@ -1001,6 +1005,10 @@ class SiteAnalyticsView(SuperuserRequiredMixin, TemplateView):
             'all_time_paid_orders': all_time_paid_orders,
             'all_time_revenue': all_time_revenue,
         })
+
+        cache_data = {k: v for k, v in context.items() if k != 'view'}
+        cache.set(cache_key, cache_data, 600)
+
         return context
 
 
