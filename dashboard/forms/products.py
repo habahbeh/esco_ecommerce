@@ -292,13 +292,26 @@ class ProductForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['sku'].required = True
 
-        # تعبئة القيم الأولية للحقول الجديدة إذا كان المنتج موجودًا
-        if self.instance.pk:
-            # تعبئة المنتجات المرتبطة
-            self.fields['cross_sell_products'].initial = self.instance.cross_sell_products.all()
-            self.fields['upsell_products'].initial = self.instance.upsell_products.all()
+        self.fields['category'].queryset = Category.objects.filter(
+            is_active=True
+        ).select_related('parent').order_by('tree_id', 'lft')
 
-        # باقي الكود كما هو...
+        is_bound = bool(args and args[0])
+        if is_bound:
+            active_products = Product.objects.filter(is_active=True, status='published')
+            self.fields['related_products'].queryset = active_products
+            self.fields['cross_sell_products'].queryset = active_products
+            self.fields['upsell_products'].queryset = active_products
+        elif self.instance.pk:
+            self.fields['cross_sell_products'].queryset = self.instance.cross_sell_products.all()
+            self.fields['cross_sell_products'].initial = self.fields['cross_sell_products'].queryset
+            self.fields['upsell_products'].queryset = self.instance.upsell_products.all()
+            self.fields['upsell_products'].initial = self.fields['upsell_products'].queryset
+            self.fields['related_products'].queryset = self.instance.related_products.all()
+        else:
+            self.fields['related_products'].queryset = Product.objects.none()
+            self.fields['cross_sell_products'].queryset = Product.objects.none()
+            self.fields['upsell_products'].queryset = Product.objects.none()
 
     def clean(self):
         cleaned_data = super().clean()
