@@ -145,6 +145,8 @@ urlpatterns += i18n_patterns(
     path('events/', include('events.urls', namespace='events')),
 
     # Blog - المدونة
+    path('blog/ingco-vs-total-comparison-budget-tools/',
+         RedirectView.as_view(url='/en/blog/ingco-vs-total-vs-stanley-budget-comparison/', permanent=True)),
     path('blog/', include('blog.urls', namespace='blog')),
 
     # Maintenance mode (يمكن تفعيلها عند الحاجة)
@@ -213,6 +215,11 @@ urlpatterns += [
     re_path(r'^products/products/(?P<rest>.*)$',
             RedirectView.as_view(url='/products/%(rest)s', permanent=True, query_string=True),
             name='strip-doubled-products'),
+
+    # Old PrestaShop index.php entry point
+    re_path(r'^index\.php/?$',
+            RedirectView.as_view(url='/', permanent=True),
+            name='legacy-prestashop-index-php'),
 
     # ─── Legacy PrestaShop URL cleanup ───────────────────────────────────────
     # Google Search Console reported 11,115 URLs in "Not found (404)" — all from
