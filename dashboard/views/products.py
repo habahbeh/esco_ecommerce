@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.contrib import messages
-from django.db.models import Q, Count, Sum, Avg, F
+from django.db.models import Q, Count, Sum, Avg, F, Prefetch
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.template.loader import render_to_string
@@ -2237,7 +2237,18 @@ class CategoryFormView(DashboardAccessMixin, View):
             faqs_json = '[]'
             landing_content = None
 
-        parent_categories = Category.objects.exclude(id=category_id if category_id else None)
+        exclude_id = category_id if category_id else None
+        children_qs = Category.objects.all()
+        if exclude_id:
+            children_qs = children_qs.exclude(id=exclude_id)
+        parent_categories = (
+            Category.objects.filter(level=0)
+            .exclude(id=exclude_id)
+            .prefetch_related(
+                Prefetch('children', queryset=children_qs)
+            )
+            .order_by('tree_id', 'lft')
+        )
 
         context = {
             'category': category,
@@ -2312,8 +2323,18 @@ class CategoryFormView(DashboardAccessMixin, View):
             for error in errors:
                 messages.error(request, error)
 
-            # الحصول على قائمة الفئات للاختيار كأب
-            parent_categories = Category.objects.exclude(id=category_id if category_id else None)
+            exclude_id = category_id if category_id else None
+            children_qs = Category.objects.all()
+            if exclude_id:
+                children_qs = children_qs.exclude(id=exclude_id)
+            parent_categories = (
+                Category.objects.filter(level=0)
+                .exclude(id=exclude_id)
+                .prefetch_related(
+                    Prefetch('children', queryset=children_qs)
+                )
+                .order_by('tree_id', 'lft')
+            )
 
             context = {
                 'category': category,
@@ -2448,8 +2469,18 @@ class CategoryFormView(DashboardAccessMixin, View):
             print(f"خطأ عام أثناء حفظ الفئة: {str(e)}")
             messages.error(request, _('حدث خطأ أثناء حفظ الفئة: %s') % str(e))
 
-            # الحصول على قائمة الفئات للاختيار كأب
-            parent_categories = Category.objects.exclude(id=category_id if category_id else None)
+            exclude_id = category_id if category_id else None
+            children_qs = Category.objects.all()
+            if exclude_id:
+                children_qs = children_qs.exclude(id=exclude_id)
+            parent_categories = (
+                Category.objects.filter(level=0)
+                .exclude(id=exclude_id)
+                .prefetch_related(
+                    Prefetch('children', queryset=children_qs)
+                )
+                .order_by('tree_id', 'lft')
+            )
 
             context = {
                 'category': category,
