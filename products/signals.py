@@ -1,5 +1,6 @@
 # products/signals.py
 import logging
+import threading
 from decimal import Decimal, InvalidOperation
 from django.db.models.signals import pre_save, post_save, post_delete
 from django.dispatch import receiver
@@ -79,56 +80,91 @@ def log_product_creation(sender, instance, created, **kwargs):
         )
 
 
+def _sync_vector_db(product_id, product_name, is_active, status):
+    """Run ChromaDB/OpenAI embedding sync in background."""
+    try:
+        from django import db
+        db.connections.close_all()
+        indexer = ProductIndexer()
+        product = Product.objects.get(pk=product_id)
+        indexer.index_single_product(product)
+        log_step(f"✅ تم تحديث: {product_name}")
+    except Exception as e:
+        log_step(f"❌ فشل تحديث: {product_name} - {e}")
+
+
 @receiver(post_save, sender=Product)
 def update_product_in_vector_db(sender, instance, created, **kwargs):
-    """تحديث المنتج في ChromaDB عند الحفظ"""
+    """تحديث المنتج في ChromaDB عند الحفظ (background thread)"""
     update_fields = kwargs.get('update_fields')
     if update_fields and set(update_fields).issubset(PRICE_ONLY_FIELDS):
         return
 
     if instance.is_active and instance.status == 'published':
-        try:
-            indexer = ProductIndexer()
-            indexer.index_single_product(instance)
-            log_step(f"✅ تم تحديث: {instance.name}")
-        except Exception as e:
-            log_step(f"❌ فشل تحديث: {instance.name} - {e}")
+        t = threading.Thread(
+            target=_sync_vector_db,
+            args=(instance.pk, instance.name, instance.is_active, instance.status),
+            daemon=True,
+        )
+        t.start()
+
 
 @receiver(post_delete, sender=Product)
 def delete_product_from_vector_db(sender, instance, **kwargs):
     """حذف المنتج من ChromaDB عند الحذف"""
+    def _delete(product_id, product_name):
+        try:
+            indexer = ProductIndexer()
+            indexer.delete_product(product_id)
+            log_step(f"🗑️ تم حذف: {product_name}")
+        except Exception as e:
+            log_step(f"❌ فشل حذف: {product_name} - {e}")
+
+    t = threading.Thread(target=_delete, args=(instance.id, instance.name), daemon=True)
+    t.start()
+
+
+def _sync_meilisearch(product_id, is_active, status):
+    """Run Meilisearch sync in background."""
     try:
-        indexer = ProductIndexer()
-        indexer.delete_product(instance.id)
-        log_step(f"🗑️ تم حذف: {instance.name}")
+        from django import db
+        db.connections.close_all()
+        from .search.client import is_available
+        if not is_available():
+            return
+        from .search.indexer import MeilisearchIndexer
+        ms_indexer = MeilisearchIndexer()
+        product = Product.objects.get(pk=product_id)
+        if is_active and status == 'published':
+            ms_indexer.index_product(product)
+        else:
+            ms_indexer.delete_product(product_id)
     except Exception as e:
-        log_step(f"❌ فشل حذف: {instance.name} - {e}")
+        logger.warning(f"Meilisearch sync failed for product {product_id}: {e}")
 
 
 @receiver(post_save, sender=Product)
 def update_product_in_meilisearch(sender, instance, created, **kwargs):
-    try:
-        from .search.client import is_available
-        if not is_available():
-            return
-        from .search.indexer import MeilisearchIndexer
-        ms_indexer = MeilisearchIndexer()
-        if instance.is_active and instance.status == 'published':
-            ms_indexer.index_product(instance)
-        else:
-            ms_indexer.delete_product(instance.id)
-    except Exception as e:
-        logger.warning(f"Meilisearch sync failed for product {instance.id}: {e}")
+    t = threading.Thread(
+        target=_sync_meilisearch,
+        args=(instance.pk, instance.is_active, instance.status),
+        daemon=True,
+    )
+    t.start()
 
 
 @receiver(post_delete, sender=Product)
 def delete_product_from_meilisearch(sender, instance, **kwargs):
-    try:
-        from .search.client import is_available
-        if not is_available():
-            return
-        from .search.indexer import MeilisearchIndexer
-        ms_indexer = MeilisearchIndexer()
-        ms_indexer.delete_product(instance.id)
-    except Exception as e:
-        logger.warning(f"Meilisearch delete failed for product {instance.id}: {e}")
+    def _delete(product_id):
+        try:
+            from .search.client import is_available
+            if not is_available():
+                return
+            from .search.indexer import MeilisearchIndexer
+            ms_indexer = MeilisearchIndexer()
+            ms_indexer.delete_product(product_id)
+        except Exception as e:
+            logger.warning(f"Meilisearch delete failed for product {product_id}: {e}")
+
+    t = threading.Thread(target=_delete, args=(instance.id,), daemon=True)
+    t.start()
