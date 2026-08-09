@@ -120,6 +120,8 @@ urlpatterns = [
          name='dashboard_category_edit'),
     path('products/categories/<str:category_id>/delete/', views.CategoryDeleteView.as_view(),
          name='dashboard_category_delete'),
+    path('products/categories/<str:category_id>/children/', views.category_children_api,
+         name='dashboard_category_children'),
 
     # إدارة العلامات التجارية
     path('products/brands/', views.BrandListView.as_view(), name='dashboard_brands'),

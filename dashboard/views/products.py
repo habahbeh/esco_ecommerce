@@ -2187,6 +2187,25 @@ class CategoryListView(DashboardAccessMixin, View):
         return render(request, 'dashboard/products/category_list.html', context)
 
 
+@login_required
+def category_children_api(request, category_id):
+    children = Category.objects.filter(
+        parent_id=category_id
+    ).prefetch_related('children').order_by('sort_order', 'name')
+    data = []
+    for child in children:
+        data.append({
+            'id': str(child.id),
+            'name': child.name,
+            'image_url': child.image.url if child.image else None,
+            'is_active': child.is_active,
+            'is_featured': child.is_featured,
+            'has_children': child.children.exists(),
+            'edit_url': f'/dashboard/products/categories/{child.id}/edit/',
+        })
+    return JsonResponse(data, safe=False)
+
+
 @method_decorator(permission_required('products.add_category'), name='dispatch')
 class CategoryFormView(DashboardAccessMixin, View):
     """عرض إنشاء وتحديث الفئة"""

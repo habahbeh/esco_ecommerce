@@ -338,7 +338,7 @@
                 <ul class="category-tree">
                     {% for category in categories %}
                         <li class="category-tree-item">
-                            <div class="category-tree-item-header" data-category-id="{{ category.id }}">
+                            <div class="category-tree-item-header" data-category-id="{{ category.id }}" data-has-children="true">
                                 <div class="category-name">
                                     <i class="fa fa-chevron-right category-expand-icon"></i>
                                     {% if category.image %}
@@ -359,8 +359,6 @@
                                     {% if category.is_featured %}
                                     <span class="badge bg-warning text-dark category-badge">{% trans 'مميز' %}</span>
                                     {% endif %}
-
-
                                 </div>
                                 <div class="category-actions">
                                     <a href="{% url 'dashboard:dashboard_category_edit' category_id=category.id %}" class="btn btn-sm btn-outline-secondary" title="{% trans 'تعديل' %}">
@@ -371,89 +369,7 @@
                                     </button>
                                 </div>
                             </div>
-
-                            {% if category.children.all %}
-                            <ul class="category-tree-children" id="children-{{ category.id }}">
-                                {% for child in category.children.all %}
-                                <li class="category-tree-item">
-                                    <div class="category-tree-item-header" data-category-id="{{ child.id }}">
-                                        <div class="category-name">
-                                            <i class="fa fa-chevron-right category-expand-icon"></i>
-                                            {% if child.image %}
-                                            <img src="{{ child.image.url }}" alt="{{ child.name }}" class="category-thumbnail me-2">
-                                            {% else %}
-                                            <div class="category-thumbnail-placeholder me-2">
-                                                <i class="fa fa-folder"></i>
-                                            </div>
-                                            {% endif %}
-                                            <span>{{ child.name }}</span>
-
-                                            {% if child.is_active %}
-                                            <span class="badge bg-success category-badge">{% trans 'نشط' %}</span>
-                                            {% else %}
-                                            <span class="badge bg-danger category-badge">{% trans 'غير نشط' %}</span>
-                                            {% endif %}
-
-                                            {% if child.is_featured %}
-                                            <span class="badge bg-warning text-dark category-badge">{% trans 'مميز' %}</span>
-                                            {% endif %}
-
-
-                                        </div>
-                                        <div class="category-actions">
-                                            <a href="{% url 'dashboard:dashboard_category_edit' category_id=child.id %}" class="btn btn-sm btn-outline-secondary" title="{% trans 'تعديل' %}">
-                                                <i class="fa fa-edit"></i>
-                                            </a>
-                                            <button type="button" class="btn btn-sm btn-outline-danger delete-category-btn" title="{% trans 'حذف' %}" data-category-id="{{ child.id }}" data-category-name="{{ child.name }}" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal">
-                                                <i class="fa fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {% if child.children.all %}
-                                    <ul class="category-tree-children" id="children-{{ child.id }}">
-                                        {% for grandchild in child.children.all %}
-                                        <li class="category-tree-item">
-                                            <div class="category-tree-item-header">
-                                                <div class="category-name">
-                                                    {% if grandchild.image %}
-                                                    <img src="{{ grandchild.image.url }}" alt="{{ grandchild.name }}" class="category-thumbnail me-2">
-                                                    {% else %}
-                                                    <div class="category-thumbnail-placeholder me-2">
-                                                        <i class="fa fa-folder"></i>
-                                                    </div>
-                                                    {% endif %}
-                                                    <span>{{ grandchild.name }}</span>
-
-                                                    {% if grandchild.is_active %}
-                                                    <span class="badge bg-success category-badge">{% trans 'نشط' %}</span>
-                                                    {% else %}
-                                                    <span class="badge bg-danger category-badge">{% trans 'غير نشط' %}</span>
-                                                    {% endif %}
-
-                                                    {% if grandchild.is_featured %}
-                                                    <span class="badge bg-warning text-dark category-badge">{% trans 'مميز' %}</span>
-                                                    {% endif %}
-
-
-                                                </div>
-                                                <div class="category-actions">
-                                                    <a href="{% url 'dashboard:dashboard_category_edit' category_id=grandchild.id %}" class="btn btn-sm btn-outline-secondary" title="{% trans 'تعديل' %}">
-                                                        <i class="fa fa-edit"></i>
-                                                    </a>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-category-btn" title="{% trans 'حذف' %}" data-category-id="{{ grandchild.id }}" data-category-name="{{ grandchild.name }}" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal">
-                                                        <i class="fa fa-trash"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </li>
-                                        {% endfor %}
-                                    </ul>
-                                    {% endif %}
-                                </li>
-                                {% endfor %}
-                            </ul>
-                            {% endif %}
+                            <ul class="category-tree-children" id="children-{{ category.id }}"></ul>
                         </li>
                     {% endfor %}
                 </ul>
@@ -598,16 +514,63 @@
             $('#grid-view').show();
         });
 
-        // توسيع/طي الفئات
-        $('.category-tree-item-header').click(function() {
+        // توسيع/طي الفئات مع تحميل AJAX
+        $(document).on('click', '.category-tree-item-header', function(e) {
+            if ($(e.target).closest('.category-actions').length) return;
             let categoryId = $(this).data('category-id');
+            if (!categoryId) return;
             let childrenContainer = $('#children-' + categoryId);
+            let expandIcon = $(this).find('.category-expand-icon');
+            let header = $(this);
 
-            if (childrenContainer.length > 0) {
+            if (childrenContainer.children().length > 0) {
                 childrenContainer.toggle();
-                $(this).find('.category-expand-icon').toggleClass('open');
-                $(this).toggleClass('active');
+                expandIcon.toggleClass('open');
+                header.toggleClass('active');
+                return;
             }
+
+            if (header.data('loading')) return;
+            header.data('loading', true);
+            expandIcon.removeClass('fa-chevron-right').addClass('fa-spinner fa-spin');
+
+            $.getJSON('/dashboard/products/categories/' + categoryId + '/children/', function(data) {
+                if (data.length === 0) {
+                    expandIcon.removeClass('fa-spinner fa-spin').addClass('fa-chevron-right');
+                    header.data('loading', false);
+                    return;
+                }
+                var html = '';
+                data.forEach(function(child) {
+                    var imgHtml = child.image_url
+                        ? '<img src="' + child.image_url + '" alt="" class="category-thumbnail me-2">'
+                        : '<div class="category-thumbnail-placeholder me-2"><i class="fa fa-folder"></i></div>';
+                    var badges = '';
+                    if (child.is_active) badges += '<span class="badge bg-success category-badge">{% trans "نشط" %}</span>';
+                    else badges += '<span class="badge bg-danger category-badge">{% trans "غير نشط" %}</span>';
+                    if (child.is_featured) badges += '<span class="badge bg-warning text-dark category-badge">{% trans "مميز" %}</span>';
+                    var expandHtml = child.has_children ? '<i class="fa fa-chevron-right category-expand-icon"></i>' : '';
+
+                    html += '<li class="category-tree-item">'
+                        + '<div class="category-tree-item-header" data-category-id="' + child.id + '">'
+                        + '<div class="category-name">' + expandHtml + imgHtml
+                        + '<span>' + child.name + '</span>' + badges + '</div>'
+                        + '<div class="category-actions">'
+                        + '<a href="' + child.edit_url + '" class="btn btn-sm btn-outline-secondary" title="{% trans "تعديل" %}"><i class="fa fa-edit"></i></a>'
+                        + '<button type="button" class="btn btn-sm btn-outline-danger delete-category-btn" data-category-id="' + child.id + '" data-category-name="' + child.name + '" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal"><i class="fa fa-trash"></i></button>'
+                        + '</div></div>'
+                        + '<ul class="category-tree-children" id="children-' + child.id + '"></ul>'
+                        + '</li>';
+                });
+                childrenContainer.html(html);
+                childrenContainer.show();
+                expandIcon.removeClass('fa-spinner fa-spin').addClass('fa-chevron-right open');
+                header.addClass('active');
+                header.data('loading', false);
+            }).fail(function() {
+                expandIcon.removeClass('fa-spinner fa-spin').addClass('fa-chevron-right');
+                header.data('loading', false);
+            });
         });
 
         // منع انتشار النقر من الأزرار للعنصر الأب
