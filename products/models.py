@@ -1428,6 +1428,12 @@ class Product(TimeStampedModel, SEOModel):
     @property
     def default_image(self):
         """Get default product image"""
+        if 'images' in getattr(self, '_prefetched_objects_cache', {}):
+            imgs = self._prefetched_objects_cache['images']
+            for img in imgs:
+                if img.is_primary:
+                    return img
+            return imgs[0] if imgs else None
         primary_image = self.images.filter(is_primary=True).first()
         if not primary_image:
             primary_image = self.images.first()

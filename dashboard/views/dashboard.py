@@ -175,7 +175,7 @@ class DashboardHomeView(DashboardAccessMixin, View):
         # --- Top data ---
         latest_orders = Order.objects.select_related('user').order_by('-created_at')[:5]
         latest_users = User.objects.order_by('-date_joined')[:5]
-        top_products = Product.objects.filter(is_active=True).order_by('-sales_count')[:5]
+        top_products = Product.objects.filter(is_active=True).prefetch_related('images').order_by('-sales_count')[:5]
 
         # --- Today's orders ---
         today_orders = Order.objects.filter(created_at__date=today).count()

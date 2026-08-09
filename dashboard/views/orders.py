@@ -140,7 +140,10 @@ class OrderDetailView(DashboardAccessMixin, View):
     """عرض تفاصيل الطلب"""
 
     def get(self, request, order_id):
-        order = get_object_or_404(Order, id=order_id)
+        order = get_object_or_404(
+            Order.objects.select_related('user'),
+            id=order_id
+        )
 
         # جلب عناصر الطلب
         order_items = order.items.all().select_related('product', 'variant')
@@ -828,7 +831,9 @@ class OrderExportView(DashboardAccessMixin, View):
             date_to = None
 
         # جلب الطلبات
-        orders = Order.objects.all().order_by('-created_at')
+        orders = Order.objects.annotate(
+            total_items=Sum('items__quantity')
+        ).order_by('-created_at')
 
         if date_from:
             orders = orders.filter(created_at__gte=date_from)
@@ -862,7 +867,7 @@ class OrderExportView(DashboardAccessMixin, View):
                     order.email,
                     order.get_status_display(),
                     order.get_payment_status_display(),
-                    order.items.aggregate(total=Sum('quantity'))['total'] or 0,
+                    order.total_items or 0,
                     order.total_price,
                     order.shipping_cost,
                     order.tax_amount,

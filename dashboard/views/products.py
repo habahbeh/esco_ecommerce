@@ -1515,7 +1515,7 @@ class ProductListView(DashboardAccessMixin, View):
         products_page = paginator.get_page(page)
 
         # جلب قوائم التصفية
-        categories = Category.objects.filter(level=0)  # الفئات الرئيسية فقط
+        categories = Category.objects.filter(level=0).prefetch_related('children__children')
         brands = Brand.objects.all().order_by('name')
 
         stats = Product.objects.aggregate(
@@ -1556,14 +1556,17 @@ class ProductDetailView(DashboardAccessMixin, View):
     """عرض تفاصيل المنتج"""
 
     def get(self, request, product_id):
-        product = get_object_or_404(Product, id=product_id)
+        product = get_object_or_404(
+            Product.objects.select_related('category', 'brand').prefetch_related('images'),
+            id=product_id
+        )
 
         # جلب البيانات المرتبطة
         variants = product.variants.all()
         images = product.images.all().order_by('sort_order')
         reviews = product.reviews.select_related('user').order_by('-created_at')[:10]
         attributes = product.attribute_values.select_related('attribute').all()
-        related_products = product.related_products.all()
+        related_products = product.related_products.prefetch_related('images').all()
 
         # إحصائيات المبيعات
         sales_data = {
@@ -2766,7 +2769,9 @@ class DiscountListView(DashboardAccessMixin, View):
         status_filter = request.GET.get('status', '')
 
         # قائمة الخصومات
-        discounts = ProductDiscount.objects.all().order_by('-priority', '-start_date')
+        discounts = ProductDiscount.objects.select_related(
+            'category', 'brand'
+        ).prefetch_related('products').all().order_by('-priority', '-start_date')
 
         # تطبيق البحث
         if query:
@@ -3003,7 +3008,7 @@ class ReviewListView(DashboardAccessMixin, View):
         status_filter = request.GET.get('status', '')
 
         # قائمة التقييمات
-        reviews = ProductReview.objects.select_related('user', 'product').order_by('-created_at')
+        reviews = ProductReview.objects.select_related('user', 'product').prefetch_related('product__images').order_by('-created_at')
 
         # تطبيق البحث
         if query:
