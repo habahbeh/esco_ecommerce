@@ -328,19 +328,19 @@ MAX_CART_QUANTITY_PER_ITEM = 10
 
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-        'LOCATION': os.path.join(BASE_DIR, 'django_cache'),
-        'TIMEOUT': 3600,
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'esco-cache',
+        'TIMEOUT': 600,
         'OPTIONS': {
-            'MAX_ENTRIES': 5000
+            'MAX_ENTRIES': 2000
         }
     }
 }
 
-CACHE_MIDDLEWARE_SECONDS = 120
+CACHE_MIDDLEWARE_SECONDS = 300
 CACHE_MIDDLEWARE_KEY_PREFIX = 'esco'
 
-SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
