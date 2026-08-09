@@ -5,7 +5,7 @@ from datetime import timedelta
 from urllib.parse import urlparse
 
 from django.db import models
-from django.db.models import Q, Count, Max, Min, Sum, F, Subquery, OuterRef
+from django.db.models import Q, Count, Max, Min, Sum, F
 from django.db.models.functions import TruncDate, TruncHour, ExtractWeekDay, ExtractHour as ExtractHourFunc
 from django.core.cache import cache
 from django.views.generic import UpdateView, ListView, CreateView, DeleteView, TemplateView
@@ -379,16 +379,26 @@ class SiteAnalyticsView(SuperuserRequiredMixin, TemplateView):
             .order_by('-views')[:10]
         )
 
-        # ── 4. Exit pages — use subquery to find last page per session ──
-        last_ts_subquery = (
-            session_qs.filter(session_key=OuterRef('session_key'))
-            .order_by('-timestamp').values('timestamp')[:1]
-        )
-        exit_pages = list(
-            session_qs.filter(timestamp=Subquery(last_ts_subquery))
-            .values('path').annotate(count=Count('id'))
-            .order_by('-count')[:10]
-        )
+        # ── 4. Exit pages — get last page path per session via raw SQL ──
+        from django.db import connection
+        exit_pages = []
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT path, COUNT(*) as cnt FROM (
+                        SELECT pv.path
+                        FROM core_pageview pv
+                        INNER JOIN (
+                            SELECT session_key, MAX(timestamp) as max_ts
+                            FROM core_pageview
+                            WHERE is_bot = 0 AND timestamp >= %s AND session_key != ''
+                            GROUP BY session_key
+                        ) s ON pv.session_key = s.session_key AND pv.timestamp = s.max_ts
+                    ) t GROUP BY path ORDER BY cnt DESC LIMIT 10
+                """, [start_date])
+                exit_pages = [{'path': row[0], 'count': row[1]} for row in cursor.fetchall()]
+        except Exception:
+            pass
 
         # ── 5. Devices / Browsers / OS ──
         device_stats = list(human_qs.values('device_type').annotate(count=Count('id')).order_by('-count'))
@@ -623,28 +633,40 @@ class SiteAnalyticsView(SuperuserRequiredMixin, TemplateView):
         )
 
         # ── 15. Top landing pages (first page per session) ──
-        first_ts_subquery = (
-            session_qs.filter(session_key=OuterRef('session_key'))
-            .order_by('timestamp').values('timestamp')[:1]
-        )
-        landing_pages = list(
-            session_qs.filter(timestamp=Subquery(first_ts_subquery))
-            .values('path').annotate(count=Count('id'))
-            .order_by('-count')[:8]
-        )
+        landing_pages = []
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT path, COUNT(*) as cnt FROM (
+                        SELECT pv.path
+                        FROM core_pageview pv
+                        INNER JOIN (
+                            SELECT session_key, MIN(timestamp) as min_ts
+                            FROM core_pageview
+                            WHERE is_bot = 0 AND timestamp >= %s AND session_key != ''
+                            GROUP BY session_key
+                        ) s ON pv.session_key = s.session_key AND pv.timestamp = s.min_ts
+                    ) t GROUP BY path ORDER BY cnt DESC LIMIT 8
+                """, [start_date])
+                landing_pages = [{'path': row[0], 'count': row[1]} for row in cursor.fetchall()]
+        except Exception:
+            pass
 
         # ── 16. Average session duration (first→last view per session) ──
         try:
-            from django.db.models import Avg as AvgFunc, ExpressionWrapper, DurationField
-            session_durations = (
-                session_qs.values('session_key')
-                .annotate(start=Min('timestamp'), end=Max('timestamp'))
-                .annotate(duration=ExpressionWrapper(F('end') - F('start'), output_field=DurationField()))
-                .filter(duration__gt=timedelta(0))
-                .aggregate(avg_dur=AvgFunc('duration'))
-            )
-            avg_dur = session_durations['avg_dur']
-            avg_session_seconds = int(avg_dur.total_seconds()) if avg_dur else 0
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT AVG(TIMESTAMPDIFF(SECOND, min_ts, max_ts))
+                    FROM (
+                        SELECT MIN(timestamp) as min_ts, MAX(timestamp) as max_ts
+                        FROM core_pageview
+                        WHERE is_bot = 0 AND timestamp >= %s AND session_key != ''
+                        GROUP BY session_key
+                        HAVING max_ts > min_ts
+                    ) t
+                """, [start_date])
+                result = cursor.fetchone()
+                avg_session_seconds = int(result[0]) if result and result[0] else 0
         except Exception:
             avg_session_seconds = 0
         avg_session_minutes = round(avg_session_seconds / 60, 1)

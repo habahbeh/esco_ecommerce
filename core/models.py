@@ -489,6 +489,7 @@ class PageView(models.Model):
             models.Index(fields=['timestamp', 'is_bot']),
             models.Index(fields=['path', 'timestamp']),
             models.Index(fields=['status_code', 'timestamp']),
+            models.Index(fields=['session_key', 'timestamp']),
         ]
 
     def __str__(self):
