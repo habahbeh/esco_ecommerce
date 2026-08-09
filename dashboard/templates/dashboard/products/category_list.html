@@ -337,7 +337,6 @@
                 {% if categories %}
                 <ul class="category-tree">
                     {% for category in categories %}
-                        {% if category.level == 0 %}
                         <li class="category-tree-item">
                             <div class="category-tree-item-header" data-category-id="{{ category.id }}">
                                 <div class="category-name">
@@ -373,7 +372,7 @@
                                 </div>
                             </div>
 
-                            {% if category.children.exists %}
+                            {% if category.children.all %}
                             <ul class="category-tree-children" id="children-{{ category.id }}">
                                 {% for child in category.children.all %}
                                 <li class="category-tree-item">
@@ -411,7 +410,7 @@
                                         </div>
                                     </div>
 
-                                    {% if child.children.exists %}
+                                    {% if child.children.all %}
                                     <ul class="category-tree-children" id="children-{{ child.id }}">
                                         {% for grandchild in child.children.all %}
                                         <li class="category-tree-item">
@@ -456,7 +455,6 @@
                             </ul>
                             {% endif %}
                         </li>
-                        {% endif %}
                     {% endfor %}
                 </ul>
                 {% else %}

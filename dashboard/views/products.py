@@ -2154,7 +2154,7 @@ class CategoryListView(DashboardAccessMixin, View):
                 # استرجاع الفئات الجذرية مع الفئات الفرعية المطابقة
                 categories = Category.objects.filter(
                     level=0  # فقط الفئات الجذرية
-                ).distinct()
+                ).prefetch_related('children__children').distinct()
 
                 # إعداد قائمة بجميع الفئات المطابقة ومعرفاتها
                 matched_ids = list(matched_categories.values_list('id', flat=True))
@@ -2163,8 +2163,12 @@ class CategoryListView(DashboardAccessMixin, View):
                 context['matched_categories'] = matched_categories
                 context['matched_ids'] = matched_ids
         else:
-            # استرجاع جميع الفئات مرتبة حسب الهيكل الشجري
-            categories = Category.objects.all().order_by('tree_id', 'lft')
+            if view_mode == 'grid':
+                categories = Category.objects.all().order_by('tree_id', 'lft')
+            else:
+                categories = Category.objects.filter(level=0).prefetch_related(
+                    'children__children'
+                ).order_by('tree_id', 'lft')
 
         # الإحصائيات
         stats = Category.objects.aggregate(
