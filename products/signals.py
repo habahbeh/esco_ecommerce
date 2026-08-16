@@ -83,14 +83,15 @@ def log_product_creation(sender, instance, created, **kwargs):
 def _sync_vector_db(product_id, product_name, is_active, status):
     """Run ChromaDB/OpenAI embedding sync in background."""
     try:
-        from django import db
-        db.connections.close_all()
         indexer = ProductIndexer()
         product = Product.objects.get(pk=product_id)
         indexer.index_single_product(product)
         log_step(f"✅ تم تحديث: {product_name}")
     except Exception as e:
         log_step(f"❌ فشل تحديث: {product_name} - {e}")
+    finally:
+        from django import db
+        db.connection.close()
 
 
 @receiver(post_save, sender=Product)
@@ -127,8 +128,6 @@ def delete_product_from_vector_db(sender, instance, **kwargs):
 def _sync_meilisearch(product_id, is_active, status):
     """Run Meilisearch sync in background."""
     try:
-        from django import db
-        db.connections.close_all()
         from .search.client import is_available
         if not is_available():
             return
@@ -141,6 +140,9 @@ def _sync_meilisearch(product_id, is_active, status):
             ms_indexer.delete_product(product_id)
     except Exception as e:
         logger.warning(f"Meilisearch sync failed for product {product_id}: {e}")
+    finally:
+        from django import db
+        db.connection.close()
 
 
 @receiver(post_save, sender=Product)

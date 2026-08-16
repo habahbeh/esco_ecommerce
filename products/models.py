@@ -1796,41 +1796,54 @@ class ProductImage(TimeStampedModel):
         super().save(*args, **kwargs)
 
         if self.image and is_new:
-            self._optimize_on_upload()
+            import threading
+            pk = self.pk
+            image_path = self.image.path
+            t = threading.Thread(
+                target=ProductImage._optimize_in_background,
+                args=(pk, image_path),
+                daemon=True,
+            )
+            t.start()
 
-    def _optimize_on_upload(self):
+    @staticmethod
+    def _optimize_in_background(pk, image_path):
         from products.image_utils import optimize_image, generate_thumbnail, generate_medium
         import logging as _logging
 
         try:
-            image_path = self.image.path
             if not os.path.isfile(image_path):
                 return
+
+            obj = ProductImage.objects.get(pk=pk)
 
             result = optimize_image(image_path)
             if result:
                 content, filename = result
-                self.image.save(filename, content, save=False)
+                obj.image.save(filename, content, save=False)
 
-            optimized_path = self.image.path
+            optimized_path = obj.image.path
 
             result = generate_thumbnail(optimized_path)
             if result:
                 content, filename = result
-                self.image_thumbnail.save(filename, content, save=False)
+                obj.image_thumbnail.save(filename, content, save=False)
 
             result = generate_medium(optimized_path)
             if result:
                 content, filename = result
-                self.image_medium.save(filename, content, save=False)
+                obj.image_medium.save(filename, content, save=False)
 
-            ProductImage.objects.filter(pk=self.pk).update(
-                image=self.image,
-                image_thumbnail=self.image_thumbnail,
-                image_medium=self.image_medium,
+            ProductImage.objects.filter(pk=pk).update(
+                image=obj.image,
+                image_thumbnail=obj.image_thumbnail,
+                image_medium=obj.image_medium,
             )
         except Exception as e:
-            _logging.getLogger(__name__).warning("Image optimization failed for pk=%s: %s", self.pk, e)
+            _logging.getLogger(__name__).warning("Image optimization failed for pk=%s: %s", pk, e)
+        finally:
+            from django import db
+            db.connection.close()
 
     def resize_image(self, image_field, size):
         """
