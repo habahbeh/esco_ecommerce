@@ -1179,6 +1179,17 @@ class Product(TimeStampedModel, SEOModel):
         # Clear cache
         self.clear_cache()
 
+    def delete(self, *args, **kwargs):
+        from django.db import connection
+        with connection.cursor() as c:
+            c.execute(
+                "DELETE FROM products_reviewimage WHERE review_id IN "
+                "(SELECT id FROM products_productreview WHERE product_id = %s)", [self.pk])
+            c.execute(
+                "UPDATE cart_cartitem SET variant_id = NULL WHERE variant_id IN "
+                "(SELECT id FROM products_productvariant WHERE product_id = %s)", [self.pk])
+        return super().delete(*args, **kwargs)
+
     def generate_sku(self):
         """Generate unique SKU"""
         import random
